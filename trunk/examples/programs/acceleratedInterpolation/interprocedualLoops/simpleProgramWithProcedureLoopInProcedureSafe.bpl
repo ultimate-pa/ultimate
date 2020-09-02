@@ -28,7 +28,9 @@ var y : int;
 procedure inc() returns () 
 modifies y;
 {
-	y := y + 1;
+	while (y < 5) {
+		y := y + 1;
+	}
 }
 
 
@@ -41,5 +43,5 @@ modifies y;
     
     call inc();
     call inc();
-    assert (y == 2);
+    assert (y == 5);
 }

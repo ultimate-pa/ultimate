@@ -254,11 +254,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				}
 
 				accelerationFinishedCorrectly = true;
-				// final Term tt = SmtUtils.simplify(mScript, t, mServices, mSimplificationTechnique);
-				// Term ttt = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, tt,
-				// mSimplificationTechnique,
-				// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-				// mLogger.debug(ttt.toStringDirect());
 				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
 				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
 						mSimplificationTechnique, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
@@ -283,8 +278,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		final Interpolator<LETTER> interpolator =
 				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPrefs);
 
-		if (mLoops.isEmpty()) {
-			// No loops -> no acceleration
+		if (mLoops.isEmpty() || mAccelerations.isEmpty()) {
+			// No loops or no acceleration
 			mLogger.info("No loops in this trace, falling back to nested interpolation");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
 			mInterpolants = interpolator.getInterpolants();
@@ -452,7 +447,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			acceleratedTraceSchemeStates.add(lastAcceleratedSPred);
 			acceleratedTraceSchemeStates.add(newExitSPred);
 			final Pair<Integer, Integer> loopSize = mLoopSize.get(l.getTarget());
-			i = loopSize.getSecond();
+			i = i + loopSize.getSecond() - loopSize.getFirst();
 		}
 
 		acceleratedTraceSchemeStates.add(traceStates.get(counterExampleNonAccelerated.size()));

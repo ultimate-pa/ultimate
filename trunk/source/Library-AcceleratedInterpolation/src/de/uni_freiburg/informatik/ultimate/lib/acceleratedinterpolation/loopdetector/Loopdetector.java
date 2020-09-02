@@ -38,10 +38,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -111,6 +113,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 			mLoopExitTransitions.put(loopHead, mTrace.get(loopExitTrans));
 			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
 		}
+		mLogger.debug("Found Loops");
 	}
 
 	/*
@@ -123,17 +126,6 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 			final IcfgLocation loopHead = loop.getKey();
 			final List<Integer> loopBody = new ArrayList<>(loop.getValue());
 			final List<Integer> loopBodyNoProcedures = new ArrayList<>(loopBody);
-			// if (loopHead == procedureEntry) {
-			// for (int j = 0; j < loopBody.size() - 1; j++) {
-			// final Pair<Integer, Integer> currentLoop = new Pair<>(loopBody.get(j), loopBody.get(j + 1));
-			// for (int i = currentLoop.getFirst(); i <= currentLoop.getSecond(); i++) {
-			// final LETTER l = mTrace.get(i);
-			// if (mTrace.get(i) instanceof ICallAction || mTrace.get(i) instanceof IReturnAction) {
-			// loopBodyNoProcedures.remove(currentLoop.getSecond());
-			// }
-			// }
-			// }
-			// }
 			/*
 			 * Allow only loops that either go through a procedure, meaning calling the procedure in another procedure.
 			 * Or only loops inside a procedure. This prevents procedures themselves being recognized as loops
@@ -142,14 +134,23 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 				final Pair<Integer, Integer> currentLoop = new Pair<>(loopBody.get(j), loopBody.get(j + 1));
 				for (int i = currentLoop.getFirst(); i <= currentLoop.getSecond(); i++) {
 					final LETTER l = mTrace.get(i);
-					boolean foundCall = false;
+					/*
+					 * Filter recursive programs.
+					 */
+					if (l instanceof ICallAction) {
+						final Call call = (Call) l;
+						if (call.getSucceedingProcedure().equals(call.getPrecedingProcedure())) {
+							mLogger.debug("Found Recursive call!");
+							loopBodyNoProcedures.remove(currentLoop.getSecond());
+						}
+					}
 					if (l instanceof IReturnAction) {
+						boolean foundCall = false;
 						final Return ret = (Return) l;
-						final IcfgLocation call = ret.getCallerProgramPoint();
-						for (int k = i; k >= currentLoop.getFirst(); k--) {
-							if (mTraceLocations.get(k) == call) {
+						final Call call = ret.getCorrespondingCall();
+						for (int k = i - 1; k > currentLoop.getFirst(); k--) {
+							if (mTrace.get(k) == call) {
 								foundCall = true;
-								break;
 							}
 						}
 						if (!foundCall) {
