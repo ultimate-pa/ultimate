@@ -80,6 +80,7 @@ public final class TAPreferences {
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
+	private final boolean mUseInterpolationForMcr;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -170,6 +171,9 @@ public final class TAPreferences {
 				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
 		mOverrideInterpolantAutomaton =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
+		mUseInterpolationForMcr =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_INTERPOLATION_FOR_MCR);
+
 	}
 
 	/**
@@ -424,4 +428,7 @@ public final class TAPreferences {
 		return mOverrideInterpolantAutomaton;
 	}
 
+	public boolean useInterpolationForMcr() {
+		return mUseInterpolationForMcr;
+	}
 }
