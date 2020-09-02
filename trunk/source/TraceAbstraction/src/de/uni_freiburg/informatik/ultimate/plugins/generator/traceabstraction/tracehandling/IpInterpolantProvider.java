@@ -36,7 +36,6 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	@Override
 	public IPredicate[] getInterpolants(final IPredicate precondition, final List<LETTER> trace,
 			final IPredicate postcondition) {
-		// TODO: Make sure this really produces interpolants (and no errors), as this trace might be feasible
 		final IpTcStrategyModulePreferences<LETTER> ipTc = new IpTcStrategyModulePreferences<>(mTaskIdentifier,
 				mPrefs.getUltimateServices(), mPrefs, new StatelessRun<>(trace), precondition, postcondition,
 				mAssertionOrderModulation, mPredicateUnifier, mPredicateFactory);
