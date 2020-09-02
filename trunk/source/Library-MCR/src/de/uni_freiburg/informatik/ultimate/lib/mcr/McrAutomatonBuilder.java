@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * Class to construct automata based on the MCR relation.
  *
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  */
 public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final List<LETTER> mOriginalTrace;
@@ -369,7 +369,6 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 		final Set<IPredicate> mcrIps = DataStructureUtils.difference(result.getStates(), initIps);
 		mLogger.info("Construction finished. MCR generated " + mcrIps.size() + " new interpolants: " + mcrIps);
-		mLogger.info(result);
 		return result;
 	}
 }
