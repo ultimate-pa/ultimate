@@ -25,6 +25,7 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IPredicateUnifier mPredicateUnifier;
+	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 
 	public WpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
@@ -35,17 +36,17 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mPredicateUnifier = predicateUnifier;
+		mPredicateTransformer =
+				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 	}
 
 	@Override
 	public IPredicate[] getInterpolants(final IPredicate precondition, final List<LETTER> trace,
 			final IPredicate postcondition) {
-		final PredicateTransformer<Term, IPredicate, TransFormula> predicateTransformer =
-				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 		final IPredicate[] result = new IPredicate[trace.size() - 1];
 		IPredicate predicate = postcondition;
 		for (int i = trace.size() - 1; i > 0; i--) {
-			final Term wp = predicateTransformer.weakestPrecondition(predicate, trace.get(i).getTransformula());
+			final Term wp = mPredicateTransformer.weakestPrecondition(predicate, trace.get(i).getTransformula());
 			final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
 					wp, mSimplificationTechnique, mXnfConversionTechnique);
 			predicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);

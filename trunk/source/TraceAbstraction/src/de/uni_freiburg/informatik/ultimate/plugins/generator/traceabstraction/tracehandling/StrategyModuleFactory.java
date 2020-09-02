@@ -106,7 +106,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
 		}
 		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory,
-				mCounterexample, mAbstraction, mTaskIdentifier);
+				mCounterexample, mAbstraction, mTaskIdentifier, createMcrInterpolantProvider());
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,

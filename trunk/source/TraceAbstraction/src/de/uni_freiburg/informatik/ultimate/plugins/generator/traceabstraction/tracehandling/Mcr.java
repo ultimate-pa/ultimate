@@ -41,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -70,8 +68,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	public Mcr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
-			final Set<LETTER> alphabet, final IMcrResultProvider<LETTER> resultProvider)
-			throws AutomataLibraryException {
+			final Set<LETTER> alphabet, final IMcrResultProvider<LETTER> resultProvider,
+			final IInterpolantProvider<LETTER> interpolantProvider) throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mServices = prefs.getUltimateServices();
@@ -82,10 +80,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mResultProvider = resultProvider;
 		mHoareTripleChecker = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
 				TraceAbstractionPreferenceInitializer.HoareTripleChecks.MONOLITHIC, mToolkit, mPredicateUnifier);
-		// TODO: Make this an option (based on the setting)
-		mInterpolantProvider =
-				new WpInterpolantProvider<>(prefs.getUltimateServices(), logger, mToolkit.getManagedScript(),
-						prefs.getSimplificationTechnique(), prefs.getXnfConversionTechnique(), mPredicateUnifier);
+		mInterpolantProvider = interpolantProvider;
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);
 	}
