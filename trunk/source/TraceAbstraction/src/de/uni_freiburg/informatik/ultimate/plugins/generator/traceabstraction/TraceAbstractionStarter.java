@@ -453,7 +453,7 @@ public class TraceAbstractionStarter {
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
 
-		if (computeHoareAnnotation && mOverallResult == Result.SAFE) {
+		if (icfg.isSequential() && computeHoareAnnotation && mOverallResult == Result.SAFE) {
 			mLogger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
 

@@ -1072,7 +1072,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
 		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
 				mServices, mSimplificationTechnique, mXnfConversionTechnique);
-		// writer.addHoareAnnotationToCFG();
+		writer.addHoareAnnotationToCFG();
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
 	}

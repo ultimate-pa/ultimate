@@ -179,7 +179,7 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 			floydHoareAutomata = null;
 		}
 
-		if (computeHoareAnnotation && result == Result.SAFE) {
+		if (root.isSequential() && computeHoareAnnotation && result == Result.SAFE) {
 			basicCegarLoop.computeCFGHoareAnnotation();
 
 			// final Set<? extends IcfgLocation> locsForHoareAnnotation =
