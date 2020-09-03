@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -247,6 +248,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
+	private IPetriNet<LETTER, IPredicate> mPetriNet = null;
+	private Map<Marking<LETTER, IPredicate>, IPredicate> mMarking2State = null;
 	private PetriNetLargeBlockEncoding mLBE;
 
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
@@ -336,8 +339,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
 	}
 
-	private Map<Marking<LETTER, IPredicate>, IPredicate> mMarking2State = null;
-
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		if (isSequential()) {
@@ -363,6 +364,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				net = petrifiedCfg;
 			}
 			try {
+				mPetriNet = net;
 				final PetriNet2FiniteAutomaton<LETTER, IPredicate> conversion = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
 						mStateFactoryForRefinement, net);
 				mAbstraction = conversion.getResult();
@@ -405,7 +407,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				}
 			}
 		}
-
 		if (mWitnessAutomaton != null) {
 			mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(mServices, mAbstraction, mWitnessAutomaton,
 					mCsToolkit, mPredicateFactory, mStateFactoryForRefinement, mLogger, Property.NON_REACHABILITY);
@@ -1132,19 +1133,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	 */
 	public void finish() {
 		if (!isSequential() && mPref.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
-			try {
-				computeOwickiGries(mStateFactoryForRefinement);
-			} catch (AutomataLibraryException e) {
-				throw new RuntimeException(e); // TODO
-			}
+			computeOwickiGries(mStateFactoryForRefinement);
 		}
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 	}
 
-	private void computeOwickiGries(IPetriNet2FiniteAutomatonStateFactory<IPredicate> factory) throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+	private void computeOwickiGries(IPetriNet2FiniteAutomatonStateFactory<IPredicate> factory) {
 
 		Map<IPredicate, IPredicate> floydHoare = computeHoareAnnotationComposer().getLoc2hoare();
-		IHoareTripleChecker htc = null; // TODO
 
 		final Map<Marking<LETTER, IPredicate>, IPredicate> petriFloydHoare = new HashMap<>();
 		for (final Map.Entry<Marking<LETTER, IPredicate>, IPredicate> entry : mMarking2State.entrySet()) {
@@ -1156,10 +1152,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		assert !petriFloydHoare.isEmpty();
 
-		//OwickiGriesAnnotation<LETTER, STATE> annotation = OwickiGriesAnnotation.fromFloydHoare(petriNet,
-		//		petriFloydHoare, htc);
+		//OwickiGriesAnnotation<LETTER, IPredicate> annotation = OwickiGriesAnnotation.fromFloydHoare(mServices, mCsToolkit, mPetriNet, petriFloydHoare);
 		// TODO: simplify
-		//assert annotation.isValidAnnotation() : "Invalid Owicki-Gries annotation";
+		//assert new OwickiGriesValidityCheck<LETTER, IPredicate>(mServices, mCsToolkit, annotation).isValid() : "Invalid Owicki-Gries annotation";
 	}
 
 	@Override

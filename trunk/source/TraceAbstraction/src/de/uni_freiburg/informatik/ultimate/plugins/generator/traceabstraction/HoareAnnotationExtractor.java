@@ -87,7 +87,7 @@ public class HoareAnnotationExtractor<LETTER extends IIcfgTransition<?>>
 	protected Collection<IPredicate> getInitialStates() {
 		final Collection<IPredicate> result = mTraversedNwa.getInitialStates();
 		if (result.size() == 1) {
-			// case where automaton is emtpy minimized and contains only one
+			// case where automaton is empty minimized and contains only one
 			// dummy state.
 			final IPredicate p = result.iterator().next();
 			if (!(p instanceof SPredicate) && !(p instanceof MLPredicate)) {

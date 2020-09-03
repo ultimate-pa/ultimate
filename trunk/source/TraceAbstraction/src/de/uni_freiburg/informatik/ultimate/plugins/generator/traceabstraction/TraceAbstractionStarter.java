@@ -141,13 +141,7 @@ public class TraceAbstractionStarter {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		final boolean computeHoareAnnotation;
-		/*if (taPrefs.computeHoareAnnotation()
-				&& !icfg.isSequential()) {
-			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
-			computeHoareAnnotation = false;
-		} else {*/
-			computeHoareAnnotation = taPrefs.computeHoareAnnotation();
-		//}
+		computeHoareAnnotation = taPrefs.computeHoareAnnotation();
 
 		String settings = "Automizer settings:";
 		settings += " Hoare:" + computeHoareAnnotation;

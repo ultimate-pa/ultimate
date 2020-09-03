@@ -143,8 +143,11 @@ public class HoareAnnotationComposer {
 
 			final Set<IProgramVar> vars = TermVarsProc.computeTermVarsProc(conjunction,
 					mCsToolkit.getManagedScript().getScript(), mCsToolkit.getSymbolTable()).getVars();
+
+			// TODO (2020-09-03 Dominik) Functionality below is probably necessary. Make it work with IPredicate instead of IcfgLocation.
 			//conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
 			//		conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript().getScript());
+
 			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
 					mCsToolkit.getManagedScript(), conjunction, null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			mHoareAnnotationStatisticsGenerator.reportSimplificationInter();
@@ -261,8 +264,8 @@ public class HoareAnnotationComposer {
 	 * @param precondForContext
 	 * @param pp2preds
 	 */
-	private static <STATE, DOM extends STATE> void addHoareAnnotationForCallPred(
-			final HashRelation3<STATE, IPredicate, Term> loc2callPred2invariant,
+	private static <DOM extends IPredicate> void addHoareAnnotationForCallPred(
+			final HashRelation3<IPredicate, IPredicate, Term> loc2callPred2invariant,
 			final IPredicate precondForContext, final HashRelation<DOM, IPredicate> pp2preds) {
 		for (final DOM loc : pp2preds.getDomain()) {
 			final Set<IPredicate> preds = pp2preds.getImage(loc);
