@@ -76,7 +76,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 
 	private final HashRelation<IPredicate, IPredicate> mProgPoint2StatesWithEmptyContext = new HashRelation<>();
 
-	private final Set<? extends IPredicate> mHoareAnnotationPositions;
+	private final Set<IPredicate> mHoareAnnotationPositions;
 
 	private final HoareAnnotationPositions mHoareAnnotationPos;
 
@@ -96,7 +96,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 		return mContext2Entry;
 	}
 
-	public HoareAnnotationFragments(final ILogger logger, final Set<? extends IPredicate> hoareAnnotationLocations,
+	public HoareAnnotationFragments(final ILogger logger, final Set<IPredicate> hoareAnnotationLocations,
 			final HoareAnnotationPositions hoareAnnotationPos) {
 		mLogger = logger;
 		mHoareAnnotationPositions = hoareAnnotationLocations;
@@ -134,7 +134,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	private void update(final IUpdate update, final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> newAbstraction) {
 		final Set<IPredicate> oldStates;
 		if (mPred2ProgPoint.isEmpty()) {
-			oldStates = (Set<IPredicate>) mHoareAnnotationPositions;
+			oldStates = mHoareAnnotationPositions;
 		} else {
 			oldStates = new HashSet<>(mPred2ProgPoint.keySet());
 		}
