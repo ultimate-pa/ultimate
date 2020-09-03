@@ -144,8 +144,12 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 			final List<IPredicate> newStates = update.getNewPredicates(oldState);
 			if (newStates != null) {
 				for (final IPredicate newState : newStates) {
-					assert !mPred2ProgPoint.containsKey(newState);
-					mPred2ProgPoint.put(newState, pp);
+					if (mPred2ProgPoint.containsKey(newState)) {
+						final IPredicate oldPP = mPred2ProgPoint.get(newState);
+						assert oldPP == pp : "State " + newState + " cannot represent both " + oldPP + " and " + pp + "!";
+					} else {
+						mPred2ProgPoint.put(newState, pp);
+					}
 				}
 				mPred2ProgPoint.remove(oldState);
 			}
