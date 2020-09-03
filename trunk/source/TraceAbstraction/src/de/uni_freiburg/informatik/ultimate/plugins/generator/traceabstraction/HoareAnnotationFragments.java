@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -135,7 +136,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 		if (mPred2ProgPoint.isEmpty()) {
 			oldStates = (Set<IPredicate>) mHoareAnnotationPositions;
 		} else {
-			oldStates = mPred2ProgPoint.keySet();
+			oldStates = new HashSet<>(mPred2ProgPoint.keySet());
 		}
 		// TODO possibly merge this loop with the next, avoid redundant computation of getNewPredicates
 		for (final IPredicate oldState : oldStates) {
