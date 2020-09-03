@@ -179,7 +179,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			throw new UnsupportedOperationException(
 					"AbsInt only supports BoogieIcfgLocations and Codeblocks at the moment");
 		}
-		if (!mRoot.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (!mRoot.isSequential()) {
 			throw new UnsupportedOperationException("AbsInt currently does not support concurrent programs");
 		}
 

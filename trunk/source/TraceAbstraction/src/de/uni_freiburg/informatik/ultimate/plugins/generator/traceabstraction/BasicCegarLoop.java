@@ -1212,7 +1212,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private final boolean isSequential() {
-		return super.mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
+		return super.mIcfg.isSequential();
 	}
 
 	@Override

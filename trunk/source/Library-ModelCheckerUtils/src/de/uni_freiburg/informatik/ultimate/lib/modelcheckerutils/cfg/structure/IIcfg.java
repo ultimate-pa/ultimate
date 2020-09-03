@@ -97,6 +97,10 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 		return IcfgGraphProvider.getVisualizationGraph(this);
 	}
 
+	default boolean isSequential() {
+		return getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
+	}
+
 	Class<LOC> getLocationClass();
 
 	default String graphStructureToString() {

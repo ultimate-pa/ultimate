@@ -123,7 +123,7 @@ public class TraceAbstractionStarter {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		// if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		// if (icfg.isSequential()) {
 		runCegarLoops(icfg, witnessAutomaton, rawFloydHoareAutomataFromFile);
 		// } else {
 		// final IcfgPetrifier icfgPetrifier =
@@ -142,7 +142,7 @@ public class TraceAbstractionStarter {
 
 		final boolean computeHoareAnnotation;
 		/*if (taPrefs.computeHoareAnnotation()
-				&& !icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+				&& !icfg.isSequential()) {
 			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
 			computeHoareAnnotation = false;
 		} else {*/
@@ -330,7 +330,7 @@ public class TraceAbstractionStarter {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
 		final CegarLoopResult<IIcfgTransition<?>> clres;
-		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (root.isSequential()) {
 			clres = CegarLoopResult.iterate(mServices, name, root, taPrefs, predicateFactory, errorLocs,
 					witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation, taPrefs.getConcurrency());
 		} else {
@@ -409,7 +409,7 @@ public class TraceAbstractionStarter {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
 		IIcfg<IcfgLocation> icfg;
-		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (root.isSequential()) {
 			icfg = root;
 		} else {
 			final int numberOfThreadInstances = 3;
