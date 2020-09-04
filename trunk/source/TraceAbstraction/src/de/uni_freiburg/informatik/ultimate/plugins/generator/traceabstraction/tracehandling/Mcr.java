@@ -89,7 +89,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			throws AutomataLibraryException {
 		final ManagedScript managedScript = mToolkit.getManagedScript();
 		final McrAutomatonBuilder<LETTER> automatonBuilder = new McrAutomatonBuilder<>(initialTrace, mPredicateUnifier,
-				mEmptyStackStateFactory, mLogger, mAlphabet, mServices);
+				mEmptyStackStateFactory, mLogger, mAlphabet, mServices, mHoareTripleChecker);
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, managedScript, mToolkit.getSymbolTable());
 		final PredicateFactoryRefinement factory = new PredicateFactoryRefinement(mServices, managedScript,

@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -28,9 +29,10 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 
 	public IpAbStrategyModuleMcr(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final IUltimateServiceProvider services,
-			final ILogger logger, final Set<LETTER> alphabet, final IInterpolantProvider<LETTER> interpolantProvider) {
+			final ILogger logger, final Set<LETTER> alphabet, final IInterpolantProvider<LETTER> interpolantProvider,
+			final IHoareTripleChecker htc) {
 		mAutomatonBuilder = new McrAutomatonBuilder<>(trace, predicateUnifier, emptyStackFactory, logger,
-				new VpAlphabet<>(alphabet), services);
+				new VpAlphabet<>(alphabet), services, htc);
 		mTrace = trace;
 		mInterpolantProvider = interpolantProvider;
 	}

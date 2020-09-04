@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -46,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 
 /**
@@ -211,8 +214,11 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 			return new IpAbStrategyModuleAbstractInterpretation<>(mAbstraction, mCounterexample, mPredicateUnifier,
 					(IpTcStrategyModuleAbstractInterpretation<LETTER>) strategy, mEmptyStackFactory);
 		case MCR:
+			final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
+					TraceAbstractionPreferenceInitializer.HoareTripleChecks.MONOLITHIC, mCsToolkit, mPredicateUnifier);
 			return new IpAbStrategyModuleMcr<>(mCounterexample.getWord().asList(), mPredicateUnifier,
-					mEmptyStackFactory, mServices, mLogger, mAbstraction.getAlphabet(), createMcrInterpolantProvider());
+					mEmptyStackFactory, mServices, mLogger, mAbstraction.getAlphabet(), createMcrInterpolantProvider(),
+					htc);
 		case TOTALINTERPOLATION:
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.interpolantAutomaton() + " is unsupported");

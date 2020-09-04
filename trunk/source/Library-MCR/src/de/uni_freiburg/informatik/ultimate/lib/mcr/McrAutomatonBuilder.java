@@ -33,12 +33,15 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -52,9 +55,9 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final List<LETTER> mOriginalTrace;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
+	private final IHoareTripleChecker mHtc;
 	private final VpAlphabet<LETTER> mAlphabet;
 	private final VpAlphabet<Integer> mIntAlphabet;
 
@@ -66,13 +69,13 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	public McrAutomatonBuilder(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final ILogger logger,
-			final VpAlphabet<LETTER> alphabet, final IUltimateServiceProvider services) {
+			final VpAlphabet<LETTER> alphabet, final IUltimateServiceProvider services, final IHoareTripleChecker htc) {
 		mOriginalTrace = trace;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
-		mServices = services;
-		mAutomataServices = new AutomataLibraryServices(mServices);
+		mAutomataServices = new AutomataLibraryServices(services);
 		mEmptyStackFactory = emptyStackFactory;
+		mHtc = htc;
 		mAlphabet = alphabet;
 		mIntAlphabet = new VpAlphabet<>(IntStream.range(0, trace.size()).boxed().collect(Collectors.toSet()));
 		mVariables2Writes = new HashRelation<>();
@@ -305,7 +308,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				if (!result.contains(nextPredicate)) {
 					result.addState(false, false, nextPredicate);
 				}
-				result.addInternalTransition(currentPredicate, mOriginalTrace.get(index), nextPredicate);
+				addTransition(result, currentPredicate, mOriginalTrace.get(index), nextPredicate);
 				currentPredicate = nextPredicate;
 				stateMap.put(currentState, currentPredicate);
 			}
@@ -322,21 +325,10 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 						.internalSuccessors(prevState)) {
 					final LETTER action = mOriginalTrace.get(outgoing.getLetter());
 					final String nextState = outgoing.getSucc();
-					IPredicate nextPredicate = stateMap.get(nextState);
+					final IPredicate nextPredicate = stateMap.get(nextState);
 					final List<LETTER> newTrace = new ArrayList<>(currentTrace.size() + 1);
 					newTrace.addAll(currentTrace);
 					newTrace.add(action);
-					if (nextPredicate == null) {
-						final IPredicate prevPredicate = stateMap.get(prevState);
-						if (prevPredicate != null) {
-							final Iterator<OutgoingInternalTransition<LETTER, IPredicate>> predicateEdges =
-									result.internalSuccessors(prevPredicate, action).iterator();
-							if (predicateEdges.hasNext()) {
-								nextPredicate = predicateEdges.next().getSucc();
-								stateMap.put(nextState, nextPredicate);
-							}
-						}
-					}
 					if (nextPredicate != null) {
 						if (!currentTrace.isEmpty()) {
 							final IPredicate precondition = stateMap.get(currentStates.get(0));
@@ -346,15 +338,12 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 							for (int i = 0; i < ips.length; i++) {
 								final IPredicate ip = ips[i];
 								stateMap.put(currentStates.get(i + 1), ip);
-								if (!result.contains(ip)) {
-									result.addState(false, false, ip);
-								}
-								result.addInternalTransition(lastIp, currentTrace.get(i), ip);
+								addTransition(result, lastIp, currentTrace.get(i), ip);
 								lastIp = ip;
 							}
 						}
+						addTransition(result, stateMap.get(prevState), action, nextPredicate);
 						stateMap.put(nextState, nextPredicate);
-						result.addInternalTransition(stateMap.get(prevState), action, nextPredicate);
 						traceStack.push(Collections.emptyList());
 						stateStack.push(Collections.singletonList(nextState));
 					} else {
@@ -370,5 +359,15 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final Set<IPredicate> mcrIps = DataStructureUtils.difference(result.getStates(), initIps);
 		mLogger.info("Construction finished. MCR generated " + mcrIps.size() + " new interpolants: " + mcrIps);
 		return result;
+	}
+
+	private void addTransition(final NestedWordAutomaton<LETTER, IPredicate> automaton, final IPredicate pred,
+			final LETTER action, final IPredicate succ) {
+		assert mHtc.checkInternal(pred, (IInternalAction) action, succ) != Validity.INVALID : "Invalid hoare triple {"
+				+ pred + "} " + action + " {" + succ + "}";
+		if (!automaton.contains(succ)) {
+			automaton.addState(false, false, succ);
+		}
+		automaton.addInternalTransition(pred, action, succ);
 	}
 }
