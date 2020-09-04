@@ -1132,13 +1132,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	 * method called at the end of the cegar loop
 	 */
 	public void finish() {
-		if (!isSequential() && mPref.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
-			computeOwickiGries(mStateFactoryForRefinement);
-		}
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 	}
 
-	private void computeOwickiGries(IPetriNet2FiniteAutomatonStateFactory<IPredicate> factory) {
+	public void computeOwickiGries() {
+		assert !isSequential() : "Cannot compute Owicki-Gries for sequential program.";
+		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
+			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
+		}
 
 		Map<IPredicate, IPredicate> floydHoare = computeHoareAnnotationComposer().getLoc2hoare();
 

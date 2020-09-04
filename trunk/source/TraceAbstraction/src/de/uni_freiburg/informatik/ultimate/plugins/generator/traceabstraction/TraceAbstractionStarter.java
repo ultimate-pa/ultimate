@@ -447,16 +447,20 @@ public class TraceAbstractionStarter {
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
 
-		if (icfg.isSequential() && computeHoareAnnotation && mOverallResult == Result.SAFE) {
-			mLogger.debug("Computing Hoare annotation of CFG");
-			basicCegarLoop.computeCFGHoareAnnotation();
+		if (computeHoareAnnotation && mOverallResult == Result.SAFE) {
+			if (icfg.isSequential()) {
+				mLogger.debug("Computing Hoare annotation of CFG");
+				basicCegarLoop.computeCFGHoareAnnotation();
 
-			// final Set<? extends IcfgLocation> locsForHoareAnnotation =
-			// TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(
-			// root, taPrefs.getHoareAnnotationPositions());
-			// computeHoareAnnotation(locsForHoareAnnotation);
+				// final Set<? extends IcfgLocation> locsForHoareAnnotation =
+				// TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(
+				// root, taPrefs.getHoareAnnotationPositions());
+				// computeHoareAnnotation(locsForHoareAnnotation);
 
-			writeHoareAnnotationToLogger(root);
+				writeHoareAnnotationToLogger(root);
+			} else {
+				basicCegarLoop.computeOwickiGries();
+			}
 		} else {
 			mLogger.debug("Omitting computation of Hoare annotation");
 

@@ -179,15 +179,19 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 			floydHoareAutomata = null;
 		}
 
-		if (root.isSequential() && computeHoareAnnotation && result == Result.SAFE) {
-			basicCegarLoop.computeCFGHoareAnnotation();
+		if (computeHoareAnnotation && result == Result.SAFE) {
+			if (root.isSequential()) {
+				basicCegarLoop.computeCFGHoareAnnotation();
 
-			// final Set<? extends IcfgLocation> locsForHoareAnnotation =
-			// TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(
-			// root, taPrefs.getHoareAnnotationPositions());
-			// computeHoareAnnotation(locsForHoareAnnotation);
+				// final Set<? extends IcfgLocation> locsForHoareAnnotation =
+				// TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(
+				// root, taPrefs.getHoareAnnotationPositions());
+				// computeHoareAnnotation(locsForHoareAnnotation);
 
-			writeHoareAnnotationToLogger(services, root);
+				writeHoareAnnotationToLogger(services, root);
+			} else {
+				basicCegarLoop.computeOwickiGries();
+			}
 		}
 
 		return new CegarLoopResult<>(result, programExecution, unprovabilityReasons, runningTaskStackProvider,
