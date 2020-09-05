@@ -104,6 +104,7 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 			 * the program unknown, or just return the loop for possible worse performance.
 			 */
 			mFoundAcceleration = false;
+			mLogger.info("FastUPR could not accelerate loop because " + ue);
 			return loop;
 		}
 	}
