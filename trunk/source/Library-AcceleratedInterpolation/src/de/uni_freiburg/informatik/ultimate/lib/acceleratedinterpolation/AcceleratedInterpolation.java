@@ -213,7 +213,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				mReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null,
 						ExceptionHandlingCategory.KNOWN_DEPENDING);
 				mTraceCheckFinishedNormally = true;
-
 			} else {
 				mTraceCheckFinishedNormally = true;
 				mReasonUnknown = null;
@@ -239,13 +238,15 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private LBool acceleratedInterpolationCore() {
 		// After finding loops in the trace, start calculating loop accelerations.
 		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
+		final LoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript);
 		while (loopheadIterator.hasNext()) {
 			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
 			boolean accelerationFinishedCorrectly = false;
 			final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final List<LETTER> loop : loophead.getValue()) {
-				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
+				UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
+				loopRelation = loopPreprocessor.preProcessLoopOctagon(loopRelation);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, loophead.getKey(), AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
