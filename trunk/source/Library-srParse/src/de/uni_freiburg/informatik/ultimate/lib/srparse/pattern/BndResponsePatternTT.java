@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at
- * least "c2" time units
+ * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at least
+ * "c2" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *

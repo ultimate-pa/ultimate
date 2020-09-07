@@ -66,12 +66,12 @@ public class BndRecurrencePattern extends PatternType {
 			ct = counterTrace(phaseT(), phase(R.negate(), BoundTypes.GREATER, c1), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(R.negate().and(P.negate()), BoundTypes.GREATER, c1), phaseT());
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R.negate()), BoundTypes.GREATER, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()),
-					phase(R.negate().and(Q.negate()), BoundTypes.GREATER, c1), phaseT());
+					phase(Q.negate().and(R.negate()), BoundTypes.GREATER, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
 			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.negate(), BoundTypes.GREATER, c1), phaseT());
@@ -79,7 +79,7 @@ public class BndRecurrencePattern extends PatternType {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(R.negate().and(Q.negate()), BoundTypes.GREATER, c1), phase(Q.negate()), phase(Q), phaseT());
+					phase(Q.negate().and(R.negate()), BoundTypes.GREATER, c1), phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that after "R" holds for at least "c1" time units, then "S" holds
+ * {scope}, it is always the case that after "R" holds for at least "c1" time units, then "S" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *

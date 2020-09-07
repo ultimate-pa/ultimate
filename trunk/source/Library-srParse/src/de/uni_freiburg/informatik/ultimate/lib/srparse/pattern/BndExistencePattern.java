@@ -65,14 +65,14 @@ public class BndExistencePattern extends PatternType {
 			ct = counterTrace(phaseT(), phase(R), phase(R.negate()), phase(R), phase(R.negate()), phase(R), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(R.and(P.negate())), phase(R.negate().and(P.negate())),
-					phase(R.and(P.negate())), phase(R.negate().and(P.negate())), phase(R.and(P.negate())), phaseT());
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R)), phase(P.negate().and(R.negate())),
+					phase(P.negate().and(R)), phase(P.negate().and(R.negate())), phase(P.negate().and(R)), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.and(Q.negate())),
-					phase(R.negate().and(Q.negate())), phase(R.and(Q.negate())), phase(R.negate().and(Q.negate())),
-					phase(R.and(Q.negate())), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)),
+					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R)), phase(Q.negate().and(R.negate())),
+					phase(Q.negate().and(R)), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
 			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R), phase(R.negate()), phase(R), phase(R.negate()),
@@ -80,9 +80,9 @@ public class BndExistencePattern extends PatternType {
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(R.and(Q.negate())),
-					phase(R.negate().and(Q.negate())), phase(R.and(Q.negate())), phase(R.negate().and(Q.negate())),
-					phase(R.and(Q.negate())), phase(Q.negate()), phase(Q), phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
+					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R)), phase(Q.negate().and(R.negate())),
+					phase(Q.negate().and(R)), phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}

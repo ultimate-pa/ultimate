@@ -64,11 +64,11 @@ public class InvariantPattern extends PatternType {
 			ct = counterTrace(phaseT(), phase(R.and(S.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R.and(S.negate()))), phaseT());
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R).and(S.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R.and(S.negate()))),
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R).and(S.negate())),
 					phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
@@ -77,7 +77,7 @@ public class InvariantPattern extends PatternType {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(Q.negate().and(R.and(S.negate()))), phase(Q.negate()), phase(Q), phaseT());
+					phase(Q.negate().and(R).and(S.negate())), phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
