@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that once "R" becomes satisfied, it holds for less than "c1" time units
+ * {scope}, it is always the case that "R" holds for less than "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -97,9 +97,9 @@ public class MaxDurationPattern extends PatternType {
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is always the case that once \"");
+		sb.append("it is always the case that \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" becomes satisfied, it holds for less than \"");
+		sb.append("\" holds for less than \"");
 		sb.append(getDuration().get(0));
 		sb.append("\" time units");
 		return sb.toString();
