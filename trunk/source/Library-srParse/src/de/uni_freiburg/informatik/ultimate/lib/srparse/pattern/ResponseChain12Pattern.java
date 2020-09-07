@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
- * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T".
+ * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *

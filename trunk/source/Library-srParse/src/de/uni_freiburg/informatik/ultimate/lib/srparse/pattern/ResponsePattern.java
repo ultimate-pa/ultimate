@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 
 /**
- * "{scope}, it is always the case that if "R" holds, then "S" eventually holds"
+ * {scope}, it is always the case that if "R" holds, then "S" eventually holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -67,7 +67,7 @@ public class ResponsePattern extends PatternType {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R).and(S.negate())),
-					phase(Q.negate().and(S.negate())), phaseT());
+					phase(Q.negate().and(S.negate())), phase(Q), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
