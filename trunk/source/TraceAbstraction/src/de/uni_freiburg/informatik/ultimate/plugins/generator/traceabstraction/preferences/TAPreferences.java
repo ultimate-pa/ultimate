@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.McrInterpolantMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
@@ -80,7 +81,7 @@ public final class TAPreferences {
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
-	private final boolean mUseInterpolationForMcr;
+	private final McrInterpolantMethod mMcrInterpolantMethod;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -171,8 +172,8 @@ public final class TAPreferences {
 				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
 		mOverrideInterpolantAutomaton =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
-		mUseInterpolationForMcr =
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_INTERPOLATION_FOR_MCR);
+		mMcrInterpolantMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_INTERPOLANT_METHOD,
+				McrInterpolantMethod.class);
 
 	}
 
@@ -428,7 +429,7 @@ public final class TAPreferences {
 		return mOverrideInterpolantAutomaton;
 	}
 
-	public boolean useInterpolationForMcr() {
-		return mUseInterpolationForMcr;
+	public McrInterpolantMethod getMcrInterpolantMethod() {
+		return mMcrInterpolantMethod;
 	}
 }

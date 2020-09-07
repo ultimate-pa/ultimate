@@ -226,13 +226,21 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private IInterpolantProvider<LETTER> createMcrInterpolantProvider() {
-		if (mTaPrefs.useInterpolationForMcr()) {
+		switch (mTaPrefs.getMcrInterpolantMethod()) {
+		case INTERPOLATION:
 			return new IpInterpolantProvider<>(mPrefs, mPredicateUnifier, mPredicateFactory,
 					new AssertionOrderModulation<>(mPathProgramCache, mLogger), mTaskIdentifier);
+		case SP:
+			return new SpInterpolantProvider<>(mPrefs.getUltimateServices(), mLogger,
+					mPrefs.getCfgSmtToolkit().getManagedScript(), mPrefs.getSimplificationTechnique(),
+					mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+		case WP:
+			return new WpInterpolantProvider<>(mPrefs.getUltimateServices(), mLogger,
+					mPrefs.getCfgSmtToolkit().getManagedScript(), mPrefs.getSimplificationTechnique(),
+					mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+		default:
+			throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
 		}
-		return new WpInterpolantProvider<>(mPrefs.getUltimateServices(), mLogger,
-				mPrefs.getCfgSmtToolkit().getManagedScript(), mPrefs.getSimplificationTechnique(),
-				mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
 	}
 
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleStraightlineAll() {

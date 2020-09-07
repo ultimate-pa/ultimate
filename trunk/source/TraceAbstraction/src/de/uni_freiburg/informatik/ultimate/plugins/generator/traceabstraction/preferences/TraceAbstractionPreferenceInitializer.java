@@ -277,8 +277,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_OVERRIDE_INTERPOLANT_AUTOMATON = false;
 	public static final String LABEL_OVERRIDE_INTERPOLANT_AUTOMATON =
 			"Override the interpolant automaton setting of the refinement strategy";
-	public static final boolean DEF_USE_INTERPOLATION_FOR_MCR = false;
-	public static final String LABEL_USE_INTERPOLATION_FOR_MCR = "Use interpolation for MCR automaton";
+	public static final McrInterpolantMethod DEF_MCR_INTERPOLANT_METHOD = McrInterpolantMethod.WP;
+	public static final String LABEL_MCR_INTERPOLANT_METHOD = "Method to provide interpolants for the MCR automaton";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
 			"Assert CodeBlocks Term Scoring Heuristic";
@@ -410,8 +410,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,
 						PreferenceType.Combo, InterpolantAutomaton.values()),
-				new UltimatePreferenceItem<>(LABEL_USE_INTERPOLATION_FOR_MCR, DEF_USE_INTERPOLATION_FOR_MCR,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MCR_INTERPOLANT_METHOD, DEF_MCR_INTERPOLANT_METHOD,
+						PreferenceType.Combo, McrInterpolantMethod.values()),
 				new UltimatePreferenceItem<>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo,
 						Format.values()),
@@ -721,5 +721,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Multi-trace analysis.
 		 */
 		MULTI_TRACE,
+	}
+
+	public enum McrInterpolantMethod {
+		WP, SP, INTERPOLATION
 	}
 }
