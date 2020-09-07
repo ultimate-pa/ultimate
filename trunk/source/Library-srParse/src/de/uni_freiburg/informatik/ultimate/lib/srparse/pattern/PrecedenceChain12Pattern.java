@@ -72,16 +72,17 @@ public class PrecedenceChain12Pattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phase(P), phase(Q.negate().and(T.negate())), phase(Q.negate().and(R)), phase(Q.negate()),
-					phase(Q.negate().and(S)), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate().and(T.negate())), phase(Q.negate().and(R)),
+					phase(Q.negate()), phase(Q.negate().and(S)), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P), phase(T.negate()), phase(R), phaseT(), phase(S), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(T.negate()), phase(R), phaseT(), phase(S), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phase(P), phase(Q.negate().and(T.negate())), phase(Q.negate().and(R)), phase(Q.negate()),
-					phase(Q.negate().and(S)), phase(Q), phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(T.negate())),
+					phase(Q.negate().and(R)), phase(Q.negate()), phase(Q.negate().and(S)), phase(Q.negate()), phase(Q),
+					phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
