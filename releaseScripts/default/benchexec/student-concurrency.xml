@@ -3,35 +3,22 @@
     
 	<option name="--force-no-wrapper" />
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-
-    <rundefinition name="Automizer SVCOMP 2020">
+	
+	<rundefinition name="Automizer SVCOMP 2020">
         <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
     </rundefinition>
 
-    <rundefinition name="Automizer FA-SemanticLbe">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf</option>
+    <rundefinition name="Automizer FA">
+        <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA.epf</option>
+	</rundefinition>
+		
+	<rundefinition name="Automizer FA-MCR-Interpolation">
+        <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-Interpolation.epf</option>
 	</rundefinition>
 
-    <rundefinition name="Automizer FA-VariableLbe">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe.epf</option>
+    <rundefinition name="Automizer FA-MCR-WP">
+        <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-WP.epf</option>
 	</rundefinition>
-
-    <rundefinition name="Automizer FA-NoLbe">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
-	</rundefinition>
-    
-    <rundefinition name="Automizer FA-SemanticLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe-McrStrategy.epf</option>
-	</rundefinition>
-
-    <rundefinition name="Automizer FA-VariableLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe-McrStrategy.epf</option>
-	</rundefinition>
-
-    <rundefinition name="Automizer FA-NoLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-McrStrategy.epf</option>
-	</rundefinition>
-
     
 	<tasks name="SVCOMP ConcurrencySafety-Main">
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
