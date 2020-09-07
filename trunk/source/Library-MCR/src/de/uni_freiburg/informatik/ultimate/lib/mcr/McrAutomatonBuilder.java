@@ -305,9 +305,6 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				currentState = succStates.next().getSucc();
 				final IPredicate nextPredicate = i == interpolants.size() ? falsePred
 						: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
-				if (!result.contains(nextPredicate)) {
-					result.addState(false, false, nextPredicate);
-				}
 				addTransition(result, currentPredicate, mOriginalTrace.get(index), nextPredicate);
 				currentPredicate = nextPredicate;
 				stateMap.put(currentState, currentPredicate);
@@ -320,18 +317,24 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			while (!traceStack.empty()) {
 				final List<LETTER> currentTrace = traceStack.pop();
 				final List<String> currentStates = stateStack.pop();
-				final String prevState = currentStates.get(currentStates.size() - 1);
+				final String lastState = currentStates.get(currentStates.size() - 1);
 				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton
-						.internalSuccessors(prevState)) {
+						.internalSuccessors(lastState)) {
 					final LETTER action = mOriginalTrace.get(outgoing.getLetter());
 					final String nextState = outgoing.getSucc();
 					final IPredicate nextPredicate = stateMap.get(nextState);
-					final List<LETTER> newTrace = new ArrayList<>(currentTrace.size() + 1);
-					newTrace.addAll(currentTrace);
-					newTrace.add(action);
+					final List<LETTER> newTrace = DataStructureUtils.concat(currentTrace, action);
 					if (nextPredicate != null) {
 						if (!currentTrace.isEmpty()) {
-							final IPredicate precondition = stateMap.get(currentStates.get(0));
+							final String prevState = currentStates.get(0);
+							final IPredicate precondition = stateMap.get(prevState);
+							// TODO: Maybe use this later?
+							// final int start = Math.max(visitedStates.indexOf(prevState) - 1, 0);
+							// final int end = Math.floorMod(visitedStates.indexOf(nextState) - 1, interpolants.size());
+							// final Set<TermVariable> vars = interpolants.subList(start, end + 1).stream()
+							// .flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable))
+							// .collect(Collectors.toSet());
+							// TODO: Optimization: Try to reuse previous interpolants
 							final IPredicate[] ips =
 									interpolantProvider.getInterpolants(precondition, newTrace, nextPredicate);
 							IPredicate lastIp = precondition;
@@ -342,16 +345,17 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 								lastIp = ip;
 							}
 						}
-						addTransition(result, stateMap.get(prevState), action, nextPredicate);
+						// TODO: This is only a workaround!
+						final IPredicate lastPredicate = stateMap.get(lastState);
+						if (!currentTrace.isEmpty() || checkHoareTriple(lastPredicate, action, nextPredicate)) {
+							addTransition(result, lastPredicate, action, nextPredicate);
+						}
 						stateMap.put(nextState, nextPredicate);
 						traceStack.push(Collections.emptyList());
 						stateStack.push(Collections.singletonList(nextState));
 					} else {
 						traceStack.push(newTrace);
-						final List<String> newStates = new ArrayList<>(currentStates.size() + 1);
-						newStates.addAll(currentStates);
-						newStates.add(nextState);
-						stateStack.push(newStates);
+						stateStack.push(DataStructureUtils.concat(currentStates, nextState));
 					}
 				}
 			}
@@ -363,11 +367,16 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	private void addTransition(final NestedWordAutomaton<LETTER, IPredicate> automaton, final IPredicate pred,
 			final LETTER action, final IPredicate succ) {
-		assert mHtc.checkInternal(pred, (IInternalAction) action, succ) != Validity.INVALID : "Invalid hoare triple {"
-				+ pred + "} " + action + " {" + succ + "}";
+		assert checkHoareTriple(pred, action, succ) : "Invalid hoare triple {" + pred + "} " + action + " {" + succ
+				+ "}";
 		if (!automaton.contains(succ)) {
 			automaton.addState(false, false, succ);
 		}
 		automaton.addInternalTransition(pred, action, succ);
+	}
+
+	private boolean checkHoareTriple(final IPredicate precondition, final LETTER action,
+			final IPredicate postcondition) {
+		return mHtc.checkInternal(precondition, (IInternalAction) action, postcondition) != Validity.INVALID;
 	}
 }
