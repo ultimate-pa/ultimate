@@ -52,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop detector needed for
  *         {@link AcceleratedInterpolation}
  */
-public class Loopdetector<LETTER extends IIcfgTransition<?>> {
+public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdetector<LETTER> {
 
-	private List<LETTER> mTrace;
+	private final List<LETTER> mTrace;
 	private final List<IcfgLocation> mTraceLocations;
 	private final ILogger mLogger;
 	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
@@ -190,18 +190,6 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
-		return mLoops;
-	}
-
-	public Map<IcfgLocation, LETTER> getLoopExitTransitions() {
-		return mLoopExitTransitions;
-	}
-
-	public Map<IcfgLocation, Pair<Integer, Integer>> getLoopSize() {
-		return mLoopSize;
-	}
-
 	/**
 	 * Transform an interval into statements of the trace.
 	 *
@@ -263,8 +251,17 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		return nestedCycles;
 	}
 
-	public void setTrace(final List<LETTER> trace) {
-		mTrace = trace;
+	@Override
+	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
+		return mLoops;
+	}
+
+	public Map<IcfgLocation, LETTER> getLoopExitTransitions() {
+		return mLoopExitTransitions;
+	}
+
+	public Map<IcfgLocation, Pair<Integer, Integer>> getLoopSize() {
+		return mLoopSize;
 	}
 
 	public List<LETTER> getTrace() {

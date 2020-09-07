@@ -25,38 +25,42 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
+package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor;
 
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
-public class LoopPreprocessor<LETTER extends IIcfgTransition<?>> {
+public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> {
 
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
 
-	public LoopPreprocessor(final ILogger logger, final ManagedScript script) {
+	public LoopPreprocessorFastUPR(final ILogger logger, final ManagedScript script) {
 		mLogger = logger;
 		mScript = script;
 	}
 
-	public UnmodifiableTransFormula preProcessLoopOctagon(final UnmodifiableTransFormula loop) {
+	public UnmodifiableTransFormula preProcessLoop(final UnmodifiableTransFormula loop) {
 		final ApplicationTerm loopAppTerm = (ApplicationTerm) loop.getFormula();
+		Term preProcessedLoop = loop.getFormula();
 		final Term[] parameters = loopAppTerm.getParameters();
 		final Deque<Term> stack = new HashDeque<>();
-		final Map<Term, Term> subMap = new HashMap<>();
 		for (final Term t : parameters) {
 			stack.add(t);
 		}
@@ -80,11 +84,24 @@ public class LoopPreprocessor<LETTER extends IIcfgTransition<?>> {
 						throw new UnsupportedOperationException("There is no upper integer limit");
 					}
 					moduloTerm = moduloParams[moduloParams.length - 1 - integerLimitPosition];
-					final Term moduloBound = SmtUtils.greater(mScript.getScript(), integerLimit, moduloTerm);
+					Term moduloUpperBound = SmtUtils.greater(mScript.getScript(), moduloTerm, integerLimit);
 					final Term moduloTermNewValue = SmtUtils.minus(mScript.getScript(), moduloTerm, integerLimit);
 					final Term equality = mScript.getScript().term("=", moduloTerm, moduloTermNewValue);
-					final Term moduloDisjunctionReplacement = SmtUtils.or(mScript.getScript(), moduloBound, equality);
-					subMap.put(appTerm, moduloTerm);
+					final Term moduloLowerBound = SmtUtils.greater(mScript.getScript(), integerLimit, moduloTerm);
+					moduloUpperBound = SmtUtils.and(mScript.getScript(), moduloUpperBound, equality);
+					final Term moduloDisjunctionReplacement =
+							SmtUtils.or(mScript.getScript(), moduloUpperBound, moduloLowerBound);
+					final Map<Term, Term> subMap = new HashMap<>();
+					subMap.put(moduloTerm, moduloTermNewValue);
+					if (!subMap.isEmpty()) {
+						final Substitution sub = new Substitution(mScript, subMap);
+						preProcessedLoop = sub.transform(loopAppTerm);
+						preProcessedLoop =
+								SmtUtils.and(mScript.getScript(), preProcessedLoop, moduloDisjunctionReplacement);
+						mLogger.debug("Preprocessed Loop");
+					}
+					final Term ite = mScript.getScript().term("ite", moduloLowerBound, loopAppTerm, preProcessedLoop);
+					preProcessedLoop = ite;
 					mLogger.debug("Found modulo!");
 				} else {
 					for (final Term tt : appTerm.getParameters()) {
@@ -93,12 +110,18 @@ public class LoopPreprocessor<LETTER extends IIcfgTransition<?>> {
 				}
 			}
 		}
-		if (!subMap.isEmpty()) {
-			final Substitution sub = new Substitution(mScript, subMap);
-			final Term newLoopTerm = sub.transform(loopAppTerm);
-			mLogger.debug("Preprocessed Loop");
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(loop.getInVars(), loop.getOutVars(), true,
+				Collections.emptySet(), true, Collections.emptySet(), false);
+		for (final TermVariable auxVar : loop.getAuxVars()) {
+			tfb.addAuxVar(auxVar);
 		}
-		return loop;
+		tfb.setFormula(preProcessedLoop);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		final UnmodifiableTransFormula preProcessedLoopFormula = tfb.finishConstruction(mScript);
+		/**
+		 * Todo Remove the modulo once and forall.
+		 */
+		return preProcessedLoopFormula;
 
 	}
 

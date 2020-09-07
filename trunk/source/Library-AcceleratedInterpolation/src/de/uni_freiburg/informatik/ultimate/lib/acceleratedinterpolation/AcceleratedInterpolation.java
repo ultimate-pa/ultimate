@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmar
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark.AcceleratedInterpolationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor.LoopPreprocessorFastUPR;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -238,7 +239,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private LBool acceleratedInterpolationCore() {
 		// After finding loops in the trace, start calculating loop accelerations.
 		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
-		final LoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript);
+		final LoopPreprocessorFastUPR<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript);
 		while (loopheadIterator.hasNext()) {
 			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
 			boolean accelerationFinishedCorrectly = false;
@@ -246,14 +247,13 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final List<LETTER> loop : loophead.getValue()) {
 				UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
-				loopRelation = loopPreprocessor.preProcessLoopOctagon(loopRelation);
+				loopRelation = loopPreprocessor.preProcessLoop(loopRelation);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, loophead.getKey(), AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
 					accelerationFinishedCorrectly = false;
 					break;
 				}
-
 				accelerationFinishedCorrectly = true;
 				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
 				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
