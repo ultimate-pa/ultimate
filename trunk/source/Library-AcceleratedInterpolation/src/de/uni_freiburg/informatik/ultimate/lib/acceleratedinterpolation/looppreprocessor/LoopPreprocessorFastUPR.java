@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
-public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> {
+public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implements ILoopPreprocessor<LETTER> {
 
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
@@ -56,6 +56,7 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> {
 		mScript = script;
 	}
 
+	@Override
 	public UnmodifiableTransFormula preProcessLoop(final UnmodifiableTransFormula loop) {
 		final ApplicationTerm loopAppTerm = (ApplicationTerm) loop.getFormula();
 		Term preProcessedLoop = loop.getFormula();

@@ -31,10 +31,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public interface ILoopdetector<T> {
+public interface ILoopdetector<L, T> {
 
-	public Map<IcfgLocation, Set<List<T>>> getLoops();
+	public Map<L, Set<List<T>>> getLoops();
+
+	public Map<L, T> getLoopExitTransitions();
+
+	public Map<L, Pair<Integer, Integer>> getLoopSize();
 
 }

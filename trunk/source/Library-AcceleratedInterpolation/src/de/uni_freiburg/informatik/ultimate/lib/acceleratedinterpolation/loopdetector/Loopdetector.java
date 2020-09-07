@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop detector needed for
  *         {@link AcceleratedInterpolation}
  */
-public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdetector<LETTER> {
+public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdetector<IcfgLocation, LETTER> {
 
 	private final List<LETTER> mTrace;
 	private final List<IcfgLocation> mTraceLocations;
@@ -256,10 +256,12 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 		return mLoops;
 	}
 
+	@Override
 	public Map<IcfgLocation, LETTER> getLoopExitTransitions() {
 		return mLoopExitTransitions;
 	}
 
+	@Override
 	public Map<IcfgLocation, Pair<Integer, Integer>> getLoopSize() {
 		return mLoopSize;
 	}

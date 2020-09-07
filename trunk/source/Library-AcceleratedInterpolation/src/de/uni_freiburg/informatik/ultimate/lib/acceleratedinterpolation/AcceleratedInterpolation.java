@@ -48,7 +48,9 @@ import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.MetaTrac
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark.AcceleratedInterpolationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.ILoopdetector;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor.ILoopPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor.LoopPreprocessorFastUPR;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -140,7 +142,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Map<IcfgLocation, List<UnmodifiableTransFormula>> mAccelerations;
 	private final Accelerator<LETTER> mAccelerator;
-	private final Loopdetector<LETTER> mLoopdetector;
+	private final ILoopdetector<IcfgLocation, LETTER> mLoopdetector;
 	private AccelerationApproximationType mApproximationType;
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<LETTER> mMetaTraceTransformer;
@@ -239,7 +241,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private LBool acceleratedInterpolationCore() {
 		// After finding loops in the trace, start calculating loop accelerations.
 		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
-		final LoopPreprocessorFastUPR<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript);
+		final ILoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript);
 		while (loopheadIterator.hasNext()) {
 			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
 			boolean accelerationFinishedCorrectly = false;
@@ -247,7 +249,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final List<LETTER> loop : loophead.getValue()) {
 				UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
+
 				loopRelation = loopPreprocessor.preProcessLoop(loopRelation);
+
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, loophead.getKey(), AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {

@@ -30,5 +30,5 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppre
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 public interface ILoopPreprocessor<T> {
-	public UnmodifiableTransFormula preProcessLoop();
+	public UnmodifiableTransFormula preProcessLoop(final UnmodifiableTransFormula loop);
 }
