@@ -238,7 +238,7 @@ opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD
 				{: RESULT = new PatternBuilder().setType(PossibilityPattern.class).addCdd(s,r); :}
   			;
   
-rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST duration:c1
+rtpattern ::= expression:r HOLDS FOR AT LEAST duration:c1
 				{: RESULT = new PatternBuilder().setType(MinDurationPattern.class).addCdd(r).addDuration(c1); :}
   			| expression:r HOLDS FOR LESS THAN duration:c1
 				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(r).addDuration(c1); :}
