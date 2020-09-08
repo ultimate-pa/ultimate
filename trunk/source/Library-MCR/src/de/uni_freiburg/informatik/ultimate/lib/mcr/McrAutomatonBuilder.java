@@ -309,82 +309,87 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				currentPredicate = nextPredicate;
 				stateMap.put(currentState, currentPredicate);
 			}
-			// Find all paths containing states without interpolants and get some
-			final Stack<List<LETTER>> traceStack = new Stack<>();
-			final Stack<List<String>> stateStack = new Stack<>();
-			traceStack.push(Collections.emptyList());
-			stateStack.push(Collections.singletonList(automaton.getInitialStates().iterator().next()));
-			while (!traceStack.empty()) {
-				final List<LETTER> currentTrace = traceStack.pop();
-				final List<String> currentStates = stateStack.pop();
-				final String lastState = currentStates.get(currentStates.size() - 1);
-				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton
-						.internalSuccessors(lastState)) {
-					LETTER nextAction = mOriginalTrace.get(outgoing.getLetter());
-					final String nextState = outgoing.getSucc();
-					IPredicate postcondition = stateMap.get(nextState);
-					if (postcondition != null) {
-						traceStack.push(Collections.emptyList());
-						stateStack.push(Collections.singletonList(nextState));
-						if (!currentTrace.isEmpty()) {
-							IPredicate precondition = stateMap.get(currentStates.get(0));
-							// Try to reduce the trace length by looking for already existent edges
-							while (!currentTrace.isEmpty()) {
-								final Iterator<OutgoingInternalTransition<LETTER, IPredicate>> edge =
-										result.internalSuccessors(precondition, currentTrace.get(0)).iterator();
-								if (!edge.hasNext()) {
-									break;
-								}
-								final IPredicate newPredicate = edge.next().getSucc();
-								currentTrace.remove(0);
-								currentStates.remove(0);
-								stateMap.put(currentStates.get(0), newPredicate);
-								precondition = newPredicate;
-							}
-							while (!currentTrace.isEmpty()) {
-								final Iterator<IncomingInternalTransition<LETTER, IPredicate>> edge =
-										result.internalPredecessors(postcondition, nextAction).iterator();
-								if (!edge.hasNext()) {
-									break;
-								}
-								final IPredicate newPredicate = edge.next().getPred();
-								nextAction = currentTrace.remove(currentTrace.size() - 1);
-								stateMap.put(currentStates.remove(currentStates.size() - 1), newPredicate);
-								postcondition = newPredicate;
-							}
-							// TODO: Maybe use this later?
-							// final int start = Math.max(visitedStates.indexOf(prevState) - 1, 0);
-							// final int end = Math.floorMod(visitedStates.indexOf(nextState) - 1, interpolants.size());
-							// final Set<TermVariable> vars = interpolants.subList(start, end + 1).stream()
-							// .flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable))
-							// .collect(Collectors.toSet());
-							// Get interpolants for the given trace and add them to the automaton
-							final IPredicate[] ips = interpolantProvider.getInterpolants(precondition,
-									concat(currentTrace, nextAction), postcondition);
-							IPredicate lastIp = precondition;
-							for (int i = 0; i < ips.length; i++) {
-								final IPredicate ip = ips[i];
-								stateMap.put(currentStates.get(i + 1), ip);
-								addTransition(result, lastIp, currentTrace.get(i), ip);
-								lastIp = ip;
-							}
-						}
-						// TODO: This is only a workaround!
-						final IPredicate lastPredicate = stateMap.get(lastState);
-						if (!currentTrace.isEmpty() || checkHoareTriple(lastPredicate, nextAction, postcondition)) {
-							addTransition(result, lastPredicate, nextAction, postcondition);
-						}
-						stateMap.put(nextState, postcondition);
-					} else {
-						traceStack.push(concat(currentTrace, nextAction));
-						stateStack.push(concat(currentStates, nextState));
-					}
-				}
-			}
+			addInterpolantsAndTransitions(automaton, stateMap, result, interpolantProvider);
 		}
 		final Set<IPredicate> mcrIps = DataStructureUtils.difference(result.getStates(), initIps);
 		mLogger.info("Construction finished. MCR generated " + mcrIps.size() + " new interpolants: " + mcrIps);
 		return result;
+	}
+
+	private void addInterpolantsAndTransitions(final INestedWordAutomaton<Integer, String> mcrAutomaton,
+			final Map<String, IPredicate> stateMap, final NestedWordAutomaton<LETTER, IPredicate> ipAutomaton,
+			final IInterpolantProvider<LETTER> interpolantProvider) {
+		// Find all paths containing states without interpolants and get some
+		final Stack<List<LETTER>> traceStack = new Stack<>();
+		final Stack<List<String>> stateStack = new Stack<>();
+		traceStack.push(Collections.emptyList());
+		stateStack.push(Collections.singletonList(mcrAutomaton.getInitialStates().iterator().next()));
+		while (!traceStack.empty()) {
+			final List<LETTER> currentTrace = traceStack.pop();
+			final List<String> currentStates = stateStack.pop();
+			final String lastState = currentStates.get(currentStates.size() - 1);
+			for (final OutgoingInternalTransition<Integer, String> outgoing : mcrAutomaton
+					.internalSuccessors(lastState)) {
+				LETTER nextAction = mOriginalTrace.get(outgoing.getLetter());
+				final String nextState = outgoing.getSucc();
+				IPredicate postcondition = stateMap.get(nextState);
+				if (postcondition != null) {
+					traceStack.push(Collections.emptyList());
+					stateStack.push(Collections.singletonList(nextState));
+					if (!currentTrace.isEmpty()) {
+						IPredicate precondition = stateMap.get(currentStates.get(0));
+						// Try to reduce the trace length by looking for already existent edges
+						while (!currentTrace.isEmpty()) {
+							final Iterator<OutgoingInternalTransition<LETTER, IPredicate>> edge =
+									ipAutomaton.internalSuccessors(precondition, currentTrace.get(0)).iterator();
+							if (!edge.hasNext()) {
+								break;
+							}
+							final IPredicate newPredicate = edge.next().getSucc();
+							currentTrace.remove(0);
+							currentStates.remove(0);
+							stateMap.put(currentStates.get(0), newPredicate);
+							precondition = newPredicate;
+						}
+						while (!currentTrace.isEmpty()) {
+							final Iterator<IncomingInternalTransition<LETTER, IPredicate>> edge =
+									ipAutomaton.internalPredecessors(postcondition, nextAction).iterator();
+							if (!edge.hasNext()) {
+								break;
+							}
+							final IPredicate newPredicate = edge.next().getPred();
+							nextAction = currentTrace.remove(currentTrace.size() - 1);
+							stateMap.put(currentStates.remove(currentStates.size() - 1), newPredicate);
+							postcondition = newPredicate;
+						}
+						// TODO: Maybe use this later?
+						// final int start = Math.max(visitedStates.indexOf(prevState) - 1, 0);
+						// final int end = Math.floorMod(visitedStates.indexOf(nextState) - 1, interpolants.size());
+						// final Set<TermVariable> vars = interpolants.subList(start, end + 1).stream()
+						// .flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable))
+						// .collect(Collectors.toSet());
+						// Get interpolants for the given trace and add them to the automaton
+						final IPredicate[] ips = interpolantProvider.getInterpolants(precondition,
+								concat(currentTrace, nextAction), postcondition);
+						IPredicate lastIp = precondition;
+						for (int i = 0; i < ips.length; i++) {
+							final IPredicate ip = ips[i];
+							stateMap.put(currentStates.get(i + 1), ip);
+							addTransition(ipAutomaton, lastIp, currentTrace.get(i), ip);
+							lastIp = ip;
+						}
+					}
+					// TODO: This is only a workaround!
+					final IPredicate lastPredicate = stateMap.get(lastState);
+					if (!currentTrace.isEmpty() || checkHoareTriple(lastPredicate, nextAction, postcondition)) {
+						addTransition(ipAutomaton, lastPredicate, nextAction, postcondition);
+					}
+				} else {
+					traceStack.push(concat(currentTrace, nextAction));
+					stateStack.push(concat(currentStates, nextState));
+				}
+			}
+		}
 	}
 
 	private static <T> List<T> concat(final List<T> list, final T elem) {
