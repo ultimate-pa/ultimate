@@ -254,16 +254,6 @@ public class DataStructureUtils {
 		return rtr;
 	}
 
-	public static <T> List<T> concat(final List<T> list, final T elem) {
-		if (list == null || list.isEmpty()) {
-			return Collections.singletonList(elem);
-		}
-		final List<T> rtr = new ArrayList<>(list.size() + 1);
-		rtr.addAll(list);
-		rtr.add(elem);
-		return rtr;
-	}
-
 	/**
 	 * Rather naive powerset implementation
 	 *

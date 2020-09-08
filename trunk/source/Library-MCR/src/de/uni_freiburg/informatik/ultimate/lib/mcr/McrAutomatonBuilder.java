@@ -320,23 +320,47 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				final String lastState = currentStates.get(currentStates.size() - 1);
 				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton
 						.internalSuccessors(lastState)) {
-					final LETTER action = mOriginalTrace.get(outgoing.getLetter());
+					LETTER nextAction = mOriginalTrace.get(outgoing.getLetter());
 					final String nextState = outgoing.getSucc();
-					final IPredicate nextPredicate = stateMap.get(nextState);
-					final List<LETTER> newTrace = DataStructureUtils.concat(currentTrace, action);
-					if (nextPredicate != null) {
+					IPredicate postcondition = stateMap.get(nextState);
+					if (postcondition != null) {
+						traceStack.push(Collections.emptyList());
+						stateStack.push(Collections.singletonList(nextState));
 						if (!currentTrace.isEmpty()) {
-							final String prevState = currentStates.get(0);
-							final IPredicate precondition = stateMap.get(prevState);
+							IPredicate precondition = stateMap.get(currentStates.get(0));
+							// Try to reduce the trace length by looking for already existent edges
+							while (!currentTrace.isEmpty()) {
+								final Iterator<OutgoingInternalTransition<LETTER, IPredicate>> edge =
+										result.internalSuccessors(precondition, currentTrace.get(0)).iterator();
+								if (!edge.hasNext()) {
+									break;
+								}
+								final IPredicate newPredicate = edge.next().getSucc();
+								currentTrace.remove(0);
+								currentStates.remove(0);
+								stateMap.put(currentStates.get(0), newPredicate);
+								precondition = newPredicate;
+							}
+							while (!currentTrace.isEmpty()) {
+								final Iterator<IncomingInternalTransition<LETTER, IPredicate>> edge =
+										result.internalPredecessors(postcondition, nextAction).iterator();
+								if (!edge.hasNext()) {
+									break;
+								}
+								final IPredicate newPredicate = edge.next().getPred();
+								nextAction = currentTrace.remove(currentTrace.size() - 1);
+								stateMap.put(currentStates.remove(currentStates.size() - 1), newPredicate);
+								postcondition = newPredicate;
+							}
 							// TODO: Maybe use this later?
 							// final int start = Math.max(visitedStates.indexOf(prevState) - 1, 0);
 							// final int end = Math.floorMod(visitedStates.indexOf(nextState) - 1, interpolants.size());
 							// final Set<TermVariable> vars = interpolants.subList(start, end + 1).stream()
 							// .flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable))
 							// .collect(Collectors.toSet());
-							// TODO: Optimization: Try to reuse previous interpolants
-							final IPredicate[] ips =
-									interpolantProvider.getInterpolants(precondition, newTrace, nextPredicate);
+							// Get interpolants for the given trace and add them to the automaton
+							final IPredicate[] ips = interpolantProvider.getInterpolants(precondition,
+									concat(currentTrace, nextAction), postcondition);
 							IPredicate lastIp = precondition;
 							for (int i = 0; i < ips.length; i++) {
 								final IPredicate ip = ips[i];
@@ -347,21 +371,26 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 						}
 						// TODO: This is only a workaround!
 						final IPredicate lastPredicate = stateMap.get(lastState);
-						if (!currentTrace.isEmpty() || checkHoareTriple(lastPredicate, action, nextPredicate)) {
-							addTransition(result, lastPredicate, action, nextPredicate);
+						if (!currentTrace.isEmpty() || checkHoareTriple(lastPredicate, nextAction, postcondition)) {
+							addTransition(result, lastPredicate, nextAction, postcondition);
 						}
-						stateMap.put(nextState, nextPredicate);
-						traceStack.push(Collections.emptyList());
-						stateStack.push(Collections.singletonList(nextState));
+						stateMap.put(nextState, postcondition);
 					} else {
-						traceStack.push(newTrace);
-						stateStack.push(DataStructureUtils.concat(currentStates, nextState));
+						traceStack.push(concat(currentTrace, nextAction));
+						stateStack.push(concat(currentStates, nextState));
 					}
 				}
 			}
 		}
 		final Set<IPredicate> mcrIps = DataStructureUtils.difference(result.getStates(), initIps);
 		mLogger.info("Construction finished. MCR generated " + mcrIps.size() + " new interpolants: " + mcrIps);
+		return result;
+	}
+
+	private static <T> List<T> concat(final List<T> list, final T elem) {
+		final List<T> result = new ArrayList<>(list.size() + 1);
+		result.addAll(list);
+		result.add(elem);
 		return result;
 	}
 
