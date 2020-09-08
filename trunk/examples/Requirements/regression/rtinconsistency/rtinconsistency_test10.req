@@ -6,5 +6,5 @@ CONST time_every is 10.0
 
 
 
-req1: Globally It is always the case that once "var4" becomes satisfied, it holds for less than "time_less_than" time units
+req1: Globally It is always the case that "var4" holds for less than "time_less_than" time units
 req2: Globally It is always the case that "!var4" holds at least every "time_every" time units

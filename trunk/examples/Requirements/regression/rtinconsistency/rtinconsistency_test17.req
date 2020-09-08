@@ -7,5 +7,5 @@ CONST MAX_TIME is 50.0
 
 
 
-req1: Globally It is always the case that once "var4" becomes satisfied, it holds for less than "time_less_than" time units
+req1: Globally It is always the case that "var4" holds for less than "time_less_than" time units
 req2: Globally It is always the case that After "var3" holds for at least "MAX_TIME" time units, then "!var4" holds
