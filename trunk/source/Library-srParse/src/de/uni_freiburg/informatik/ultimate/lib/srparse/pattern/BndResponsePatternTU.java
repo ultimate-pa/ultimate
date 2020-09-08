@@ -61,7 +61,7 @@ public class BndResponsePatternTU extends PatternType {
 
 		if (scope instanceof SrParseScopeGlobally) {
 			final CounterTrace ct =
-					counterTrace(phaseT(), phase(R, BoundTypes.GREATER, c1), phase(S.negate()), phaseT());
+					counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phase(S.negate()), phaseT());
 			return Collections.singletonList(ct);
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
