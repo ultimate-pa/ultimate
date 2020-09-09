@@ -7,14 +7,12 @@ assignees: hauff
 
 ---
 
-- Jenkins (history): 
-- Hanfor:
-  [req1](https://ultimate-pa.github.io/hanfor/references/patterns.html),
-  [req2](https://ultimate-pa.github.io/hanfor/references/patterns.html)
+- Jenkins: [history]()
+- Hanfor: [req1](), [req2]()
 
 ### Result
-- Expected: 
-- Actual: 
+- Expected: rt-inconsistent:; vacuous:; inconsistent:;
+- Actual: rt-inconsistent:; vacuous:; inconsistent:;
 
 ### Test (.req file)
 ```
