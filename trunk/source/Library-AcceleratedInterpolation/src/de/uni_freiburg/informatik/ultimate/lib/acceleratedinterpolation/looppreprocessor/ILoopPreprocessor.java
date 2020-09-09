@@ -29,6 +29,19 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppre
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
+/**
+ * Preprocessor for loops. Removing unwanted or unsupported transition in a loop to boost acceleration probability.
+ *
+ * @author Jonas Werner <wernerj@informatik.uni-freiburg.de>
+ *
+ * @param <T>
+ */
 public interface ILoopPreprocessor<T> {
+	/**
+	 * Takes a loop as a {@link UnmodifiableTransFormula} and removes or transforms unwanted transitions.
+	 *
+	 * @param loop
+	 * @return
+	 */
 	public UnmodifiableTransFormula preProcessLoop(final UnmodifiableTransFormula loop);
 }

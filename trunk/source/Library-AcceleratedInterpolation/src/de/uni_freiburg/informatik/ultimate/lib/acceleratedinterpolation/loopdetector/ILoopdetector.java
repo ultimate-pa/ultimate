@@ -33,12 +33,39 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Interface for a loop detector needed for accelerated interpolation.
+ *
+ * @author jonas
+ *
+ * @param <L>
+ *            location types,
+ * @param <T>
+ *            Transition types
+ */
 public interface ILoopdetector<L, T> {
 
+	/**
+	 * Return loops as a map from location to possible loop paths.
+	 *
+	 * @return
+	 */
 	public Map<L, Set<List<T>>> getLoops();
 
+	/**
+	 * Return final transitions of a loop, e.g. transitions that return to the main program. Again as a location
+	 * transition pair.
+	 *
+	 * @return
+	 */
 	public Map<L, T> getLoopExitTransitions();
 
+	/**
+	 * Return the size of a loop as an integer pari. The first integer is the first occurence of the loop head, the last
+	 * is the last. Subsequent loophead findings between those two are subsumed by the size.
+	 *
+	 * @return
+	 */
 	public Map<L, Pair<Integer, Integer>> getLoopSize();
 
 }

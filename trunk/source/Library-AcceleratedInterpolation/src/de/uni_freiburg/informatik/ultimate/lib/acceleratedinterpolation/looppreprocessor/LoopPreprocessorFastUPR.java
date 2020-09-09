@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -46,16 +47,37 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
+/**
+ * Preprocess a given loop by transforming not supported transitions.
+ *
+ * @author Jonas Werner <wernerj@informatik.uni-freiburg.de>
+ *
+ * @param <LETTER>
+ *            transition type
+ */
 public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implements ILoopPreprocessor<LETTER> {
 
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
+	private final IPredicateUnifier mPredUnifier;
 
-	public LoopPreprocessorFastUPR(final ILogger logger, final ManagedScript script) {
+	/**
+	 * Remove for example modulo operations from a loop, because FastUPR does not support it.
+	 *
+	 * @param logger
+	 * @param script
+	 * @param predUnifier
+	 */
+	public LoopPreprocessorFastUPR(final ILogger logger, final ManagedScript script,
+			final IPredicateUnifier predUnifier) {
 		mLogger = logger;
 		mScript = script;
+		mPredUnifier = predUnifier;
 	}
 
+	/**
+	 * Preprocess a loop
+	 */
 	@Override
 	public UnmodifiableTransFormula preProcessLoop(final UnmodifiableTransFormula loop) {
 		final ApplicationTerm loopAppTerm = (ApplicationTerm) loop.getFormula();
@@ -72,7 +94,6 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 				if (appTerm.getFunction() == mScript.getScript().getFunctionSymbol("mod")) {
 					final Term[] moduloParams = appTerm.getParameters();
 					ConstantTerm integerLimit = null;
-					final Term moduloTerm;
 					int integerLimitPosition = -1;
 					for (int i = 0; i < moduloParams.length; i++) {
 						final Term moduloParam = moduloParams[i];
@@ -84,6 +105,7 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 					if (integerLimit == null) {
 						throw new UnsupportedOperationException("There is no upper integer limit");
 					}
+					final Term moduloTerm;
 					moduloTerm = moduloParams[moduloParams.length - 1 - integerLimitPosition];
 					Term moduloUpperBound = SmtUtils.greater(mScript.getScript(), moduloTerm, integerLimit);
 					final Term moduloTermNewValue = SmtUtils.minus(mScript.getScript(), moduloTerm, integerLimit);
@@ -93,15 +115,22 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 					final Term moduloDisjunctionReplacement =
 							SmtUtils.or(mScript.getScript(), moduloUpperBound, moduloLowerBound);
 					final Map<Term, Term> subMap = new HashMap<>();
+					final Map<Term, Term> subMapAppTerm = new HashMap<>();
+					Term appTermNoModulo = null;
+					subMap.put(term, moduloTerm);
+					subMapAppTerm.put(term, moduloTerm);
 					subMap.put(moduloTerm, moduloTermNewValue);
 					if (!subMap.isEmpty()) {
 						final Substitution sub = new Substitution(mScript, subMap);
 						preProcessedLoop = sub.transform(loopAppTerm);
 						preProcessedLoop =
 								SmtUtils.and(mScript.getScript(), preProcessedLoop, moduloDisjunctionReplacement);
+						final Substitution subAppTerm = new Substitution(mScript, subMapAppTerm);
+						appTermNoModulo = subAppTerm.transform(loopAppTerm);
 						mLogger.debug("Preprocessed Loop");
 					}
-					final Term ite = mScript.getScript().term("ite", moduloLowerBound, loopAppTerm, preProcessedLoop);
+					final Term ite =
+							mScript.getScript().term("ite", moduloLowerBound, appTermNoModulo, preProcessedLoop);
 					preProcessedLoop = ite;
 					mLogger.debug("Found modulo!");
 				} else {
@@ -119,9 +148,6 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 		tfb.setFormula(preProcessedLoop);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		final UnmodifiableTransFormula preProcessedLoopFormula = tfb.finishConstruction(mScript);
-		/**
-		 * Todo Remove the modulo once and forall.
-		 */
 		return preProcessedLoopFormula;
 
 	}

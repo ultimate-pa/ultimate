@@ -120,7 +120,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	 *
 	 */
 	private Map<IcfgLocation, List<Integer>> filterProcedures(final Map<IcfgLocation, List<Integer>> possibleCycles) {
-		final Map<String, ? extends IcfgLocation> procEntries = mIcfg.getProcedureEntryNodes();
+		// final Map<String, ? extends IcfgLocation> procEntries = mIcfg.getProcedureEntryNodes();
 		final Map<IcfgLocation, List<Integer>> result = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Integer>> loop : possibleCycles.entrySet()) {
 			final IcfgLocation loopHead = loop.getKey();

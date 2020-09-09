@@ -241,7 +241,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private LBool acceleratedInterpolationCore() {
 		// After finding loops in the trace, start calculating loop accelerations.
 		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
-		final ILoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript);
+		final ILoopPreprocessor<LETTER> loopPreprocessor =
+				new LoopPreprocessorFastUPR<>(mLogger, mScript, mPredUnifier);
 		while (loopheadIterator.hasNext()) {
 			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
 			boolean accelerationFinishedCorrectly = false;
