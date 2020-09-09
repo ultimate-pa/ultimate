@@ -80,8 +80,8 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"transitions to states in which \"y >= 5\" holds occur at most twice",
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" previously held",
 				// timed
-				"it is always the case that once \"y >= 5\" becomes satisfied, it holds for at least 2000 time units",
-				"it is always the case that once \"y >= 5\" becomes satisfied, it holds for less than 2000 time units",
+				"it is always the case that \"y >= 5\" holds for at least 2000 time units",
+				"it is always the case that \"y >= 5\" holds for less than 2000 time units",
 				"it is always the case that \"y >= 5\" holds at least every 2000 time units",
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds after at most 2000 time units",
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds for at least 2000 time units",
