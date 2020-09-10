@@ -88,7 +88,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 		final String peaExGeneratorId =
 				de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.Activator.PLUGIN_ID;
 
-		final String absPathReqDir = TestUtil.getPathFromTrunk(REQ_DIR);
+		final String absPathReqDir = TestUtil.getPathFromTrunk(REQ_DIR + IMG_DIR);
 		final String absPathPythonScript =
 				TestUtil.getPathFromTrunk("../releaseScripts/default/adds/timing_diagram.py");
 
@@ -103,8 +103,9 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 	private static void createReqFiles(final List<PatternType> patterns) {
 		final File absPathReqDir = new File(TestUtil.createPathFromTrunk(REQ_DIR));
 		final File absPathImgDir = new File(TestUtil.createPathFromTrunk(REQ_DIR + IMG_DIR));
-		Stream.of(absPathReqDir.listFiles()).filter(a -> a.getName().endsWith(".req")).forEach(a -> a.delete());
 		assert absPathImgDir.isDirectory() || absPathImgDir.mkdirs() : "Failed to create directory: " + absPathImgDir;
+		Stream.of(absPathReqDir.listFiles()).filter(a -> a.getName().endsWith(".req")).forEach(a -> a.delete());
+		Stream.of(absPathImgDir.listFiles()).filter(a -> a.getName().endsWith(".svg")).forEach(a -> a.delete());
 
 		for (final PatternType pattern : patterns) {
 			final File file = Paths.get(absPathReqDir.getAbsolutePath(),
