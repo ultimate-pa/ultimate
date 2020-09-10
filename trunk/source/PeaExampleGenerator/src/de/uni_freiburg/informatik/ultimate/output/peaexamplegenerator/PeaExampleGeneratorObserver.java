@@ -108,7 +108,9 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				patterns.stream().filter(e -> !(e instanceof InitializationPattern)).collect(Collectors.toList());
 
 		if (nonInitPatterns.isEmpty()) {
-			throw new UnsupportedOperationException("No non-init pattern in: " + PatternContainer.class);
+			throw new UnsupportedOperationException("No non-init pattern in: " + PatternContainer.class + ", have "
+					+ patterns.size() + " patterns: "
+					+ patterns.stream().map(a -> a.getClass().getSimpleName()).collect(Collectors.joining(", ")));
 		}
 		if (nonInitPatterns.size() > 1) {
 			throw new UnsupportedOperationException("Cannot handle more than one pattern, ask Nico to implement it.");
