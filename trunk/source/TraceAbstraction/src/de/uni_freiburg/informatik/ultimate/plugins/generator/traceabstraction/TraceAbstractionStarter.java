@@ -349,9 +349,9 @@ public class TraceAbstractionStarter {
 				for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 					errNodesOfAllProc.addAll(errNodeOfProc);
 				}
-				concurClres = CegarLoopResult.iterate(mServices, name, petrifiedIcfg, taPrefs,
-						predicateFactory1, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile,
-						computeHoareAnnotation, taPrefs.getConcurrency());
+				concurClres = CegarLoopResult.iterate(mServices, name, petrifiedIcfg, taPrefs, predicateFactory1,
+						errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation,
+						taPrefs.getConcurrency());
 				final boolean insufficientThreadInstances = hasInsufficientThreadInstances(concurClres);
 				if (insufficientThreadInstances) {
 					if (false) {
@@ -435,7 +435,7 @@ public class TraceAbstractionStarter {
 					.getTraceElement(basicCegarLoop.getRcfgProgramExecution().getLength() - 1);
 			final IcfgLocation tar = te.getTraceElement().getTarget();
 			final Check check = Check.getAnnotation(tar);
-			if (check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES)) {
+			if (check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES)) {
 				reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program",
 						"unable to analyze", Severity.WARNING));
 				return Result.UNKNOWN;
