@@ -75,7 +75,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		createReqFiles(PatternUtil.createAllPatterns().getFirst());
+		createReqFiles(PatternUtil.createAllPatterns(true).getFirst());
 		addTestCase(TOOLCHAIN, SETTINGS, new DirectoryFileEndingsPair[] { new DirectoryFileEndingsPair(REQ_DIR, REQ) },
 				this::overwriteSettings);
 		return super.createTestCases();

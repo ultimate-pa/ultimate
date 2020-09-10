@@ -163,4 +163,37 @@ public interface ILogger {
 		throw new UnsupportedOperationException(
 				"You should never use the static logger method getLogger(String)! " + loggerName);
 	}
+
+	/**
+	 * @return An ILogger implementation that never logs
+	 */
+	static ILogger getDummyLogger() {
+		return new ILogger() {
+
+			@Override
+			public void setLevel(final LogLevel level) {
+				// do nothing
+			}
+
+			@Override
+			public void log(final LogLevel level, final String message) {
+				// do nothing
+			}
+
+			@Override
+			public boolean isLogLevelEnabled(final LogLevel level) {
+				return false;
+			}
+
+			@Override
+			public void fatal(final Object msg, final Throwable t) {
+				// do nothing
+			}
+
+			@Override
+			public void error(final Object msg, final Throwable t) {
+				// do nothing
+			}
+		};
+	}
 }

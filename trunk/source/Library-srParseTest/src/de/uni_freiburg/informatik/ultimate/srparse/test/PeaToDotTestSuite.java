@@ -336,7 +336,7 @@ public class PeaToDotTestSuite {
 
 	@Parameters()
 	public static Collection<Object[]> data() {
-		final Pair<List<PatternType>, Map<String, Integer>> pair = PatternUtil.createAllPatterns();
+		final Pair<List<PatternType>, Map<String, Integer>> pair = PatternUtil.createAllPatterns(false);
 
 		return pair.getFirst().stream().sorted(new PatternNameComparator())
 				.map(a -> new Object[] { a, pair.getSecond() }).collect(Collectors.toList());
