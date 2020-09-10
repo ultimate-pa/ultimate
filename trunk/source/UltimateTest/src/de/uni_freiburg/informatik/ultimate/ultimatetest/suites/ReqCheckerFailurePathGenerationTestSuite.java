@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -64,6 +65,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 	private static final String TOOLCHAIN = "ReqCheckFailurePathGeneration.xml";
 	private static final String SETTINGS = "default/reqcheck/ReqCheck-ReqToTest.epf";
 	private static final String REQ_DIR = "examples/Requirements/failure-paths";
+	private static final String IMG_DIR = "/img";
 
 	private static final String[] REQ = new String[] { ".req" };
 	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
@@ -99,14 +101,14 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 	}
 
 	private static void createReqFiles(final List<PatternType> patterns) {
-		final String absoluteReqDir = TestUtil.createPathFromTrunk(REQ_DIR);
-		for (final PatternType pattern : patterns) {
-			final File file =
-					Paths.get(absoluteReqDir, pattern.getName() + "_" + pattern.getScope().getName() + ".req").toFile();
+		final File absPathReqDir = new File(TestUtil.createPathFromTrunk(REQ_DIR));
+		final File absPathImgDir = new File(TestUtil.createPathFromTrunk(REQ_DIR + IMG_DIR));
+		Stream.of(absPathReqDir.listFiles()).filter(a -> a.getName().endsWith(".req")).forEach(a -> a.delete());
+		assert absPathImgDir.isDirectory() || absPathImgDir.mkdirs() : "Failed to create directory: " + absPathImgDir;
 
-			if (file.exists()) {
-				continue;
-			}
+		for (final PatternType pattern : patterns) {
+			final File file = Paths.get(absPathReqDir.getAbsolutePath(),
+					pattern.getName() + "_" + pattern.getScope().getName() + ".req").toFile();
 
 			final CDD[] cdds = pattern.getCddsAsArray();
 			final CDD[] scopeCdds = new CDD[] { pattern.getScope().getCdd1(), pattern.getScope().getCdd2() };
