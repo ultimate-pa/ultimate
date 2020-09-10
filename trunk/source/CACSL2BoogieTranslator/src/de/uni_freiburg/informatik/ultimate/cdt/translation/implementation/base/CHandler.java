@@ -377,8 +377,8 @@ public class CHandler {
 			final ICACSL2BoogieBacktranslatorMapping backtranslator, final TranslationSettings settings,
 			final FlatSymbolTable symbolTable, final Map<String, IASTNode> functionTable,
 			final ExpressionTranslation exprTrans, final LocationFactory locationFactory, final TypeSizes typeSizes,
-			final Set<IASTDeclaration> reachableDeclarations, final ITypeHandler typeHandler,
-			final CTranslationResultReporter reporter, final INameHandler nameHandler,
+			final ProcedureManager pm, final AuxVarInfoBuilder avib, final Set<IASTDeclaration> reachableDeclarations,
+			final ITypeHandler typeHandler, final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final StaticObjectsHandler staticObjectsHandler, final Map<String, Integer> functionToIndex,
 			final Set<IASTNode> variablesOnHeap) {
 		mExpressionTranslation = exprTrans;
@@ -410,11 +410,9 @@ public class CHandler {
 		mTypeSizeComputer = new TypeSizeAndOffsetComputer(mTypeSizes, mExpressionTranslation, mTypeHandler,
 				mSettings.useBitpreciseBitfields());
 
-		// the procedure manager has to be replaced between pre-run and main run
-		// the following fields form the transitive dependency hull on the procedure manager
-		mProcedureManager = new ProcedureManager(mLogger, settings);
+		mProcedureManager = pm;
 
-		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, mProcedureManager);
+		mAuxVarInfoBuilder = avib;
 		mMemoryHandler = new MemoryHandler(mTypeSizes, mNameHandler, settings.useSmtBoolArrayWorkaround(), mTypeHandler,
 				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings);
 
@@ -460,8 +458,8 @@ public class CHandler {
 	 * @param typeSizes
 	 */
 	public CHandler(final CHandler prerunCHandler, final ProcedureManager procedureManager,
-			final StaticObjectsHandler staticObjectsHandler, final TypeHandler typeHandler,
-			final ExpressionTranslation expressionTranslation,
+			final AuxVarInfoBuilder avib, final StaticObjectsHandler staticObjectsHandler,
+			final TypeHandler typeHandler, final ExpressionTranslation expressionTranslation,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final INameHandler nameHandler,
 			final FlatSymbolTable symbolTable, final TypeSizes typeSizes) {
 		assert prerunCHandler.mIsPrerun : "CHandler not in prerun mode";
@@ -500,7 +498,7 @@ public class CHandler {
 		// we need to replace the procedure manager and all instances that depend on it
 		mProcedureManager = procedureManager;
 
-		mAuxVarInfoBuilder = new AuxVarInfoBuilder(nameHandler, typeHandler, procedureManager);
+		mAuxVarInfoBuilder = avib;
 
 		// the memory handler also retains information from the prerun
 		mMemoryHandler = new MemoryHandler(prerunCHandler.mMemoryHandler, typeSizes, nameHandler, typeHandler,
@@ -3434,7 +3432,7 @@ public class CHandler {
 				if (cPrimitive.isSmtFloat()) {
 					one = smtOne;
 				} else {
-					final ExpressionResult bvOneResult = mExprResultTransformer
+					final ExpressionResult bvOneResult = mExpressionTranslation
 							.convertToBvFloatIfNecessary(new RValue(smtOne, cPrimitive.getSmtVariant()), loc);
 					erb.addAllExceptLrValue(bvOneResult);
 					one = bvOneResult.getLrValue().getValue();
@@ -3447,7 +3445,7 @@ public class CHandler {
 			final Expression smtValueIncremented =
 					mExpressionTranslation.constructArithmeticExpression(loc, op, expr, cPrimitive, one, cPrimitive);
 			if (cPrimitive.isFloatingType() && !cPrimitive.isSmtFloat()) {
-				final ExpressionResult bvValueIncremented = mExprResultTransformer
+				final ExpressionResult bvValueIncremented = mExpressionTranslation
 						.convertToBvFloatIfNecessary(new RValue(smtValueIncremented, cPrimitive.getSmtVariant()), loc);
 				erb.addAllExceptLrValue(bvValueIncremented);
 				valueIncremented = bvValueIncremented.getLrValue().getValue();
@@ -4103,7 +4101,7 @@ public class CHandler {
 
 		if (lType.isArithmeticType() && rType.isArithmeticType()
 				&& (lType.isFloatingType() || rType.isFloatingType())) {
-			builder.addAllIncludingLrValue(mExprResultTransformer.convertToBvFloatIfNecessary(rval, loc));
+			builder.addAllIncludingLrValue(mExpressionTranslation.convertToBvFloatIfNecessary(rval, loc));
 		} else {
 			builder.setLrValue(rval);
 		}
@@ -4145,7 +4143,7 @@ public class CHandler {
 	 * Handle conditional operator according to Section 6.5.15 of C11. Assumes that opCondition, opPositive, and
 	 * opNegative are the results from handling the operands. Requires that the {@link LRValue} of operands is an
 	 * {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed).
-	 * 
+	 *
 	 * TODO: Check all corner cases, write some testfiles.
 	 *
 	 */
@@ -4481,7 +4479,7 @@ public class CHandler {
 
 		if (lType.isArithmeticType() && rType.isArithmeticType()
 				&& (lType.isFloatingType() || rType.isFloatingType())) {
-			builder.addAllIncludingLrValue(mExprResultTransformer.convertToBvFloatIfNecessary(rval, loc));
+			builder.addAllIncludingLrValue(mExpressionTranslation.convertToBvFloatIfNecessary(rval, loc));
 		} else {
 			builder.setLrValue(rval);
 		}
@@ -4656,7 +4654,7 @@ public class CHandler {
 			// TODO: bitvec procedure here
 			final RValue rval = new RValue(bwexpr, resultType, false);
 			if (resultType.isFloatingType()) {
-				return result.addAllIncludingLrValue(mExprResultTransformer.convertToBvFloatIfNecessary(rval, loc))
+				return result.addAllIncludingLrValue(mExpressionTranslation.convertToBvFloatIfNecessary(rval, loc))
 						.build();
 			}
 			return result.setLrValue(rval).build();

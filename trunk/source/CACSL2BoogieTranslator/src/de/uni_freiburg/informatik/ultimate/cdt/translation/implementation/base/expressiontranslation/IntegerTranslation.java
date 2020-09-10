@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -964,5 +965,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		throw new UnsupportedOperationException("fesetround not supported in non-bitprecise translation");
+	}
+
+	@Override
+	public ExpressionResult convertToBvFloatIfNecessary(final LRValue rvalue, final ILocation loc) {
+		return new ExpressionResult(rvalue);
 	}
 }

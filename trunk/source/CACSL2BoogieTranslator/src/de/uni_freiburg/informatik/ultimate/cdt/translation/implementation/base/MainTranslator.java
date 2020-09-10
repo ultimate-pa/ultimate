@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -180,13 +181,21 @@ public class MainTranslator {
 			final TypeHandler prerunTypeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
 					translationSettings, locationFactory, prerunStaticObjectsHandler);
 
-			final ExpressionTranslation prerunExpressionTranslation =
-					createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, prerunTypeHandler);
+			// the procedure manager has to be replaced between pre-run and main run
+			// the following fields form the transitive dependency hull on the procedure manager
+			final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
+
+			final AuxVarInfoBuilder auxVarInfoBuilder =
+					new AuxVarInfoBuilder(nameHandler, prerunTypeHandler, procedureManager);
+
+			final ExpressionTranslation prerunExpressionTranslation = createExpressionTranslation(translationSettings,
+					auxVarInfoBuilder, flatSymbolTable, typeSizes, prerunTypeHandler);
 
 			final CHandler prerunCHandler = new CHandler(mServices, mLogger, backtranslatorMapping, translationSettings,
 					flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
-					reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler,
-					preRunnerResult.getFunctionToIndex(), preRunnerResult.getVariablesOnHeap());
+					procedureManager, auxVarInfoBuilder, reachableDeclarations, prerunTypeHandler, reporter,
+					nameHandler, prerunStaticObjectsHandler, preRunnerResult.getFunctionToIndex(),
+					preRunnerResult.getVariablesOnHeap());
 
 			final PRDispatcher prerunDispatcher = new PRDispatcher(prerunCHandler, locationFactory, prerunTypeHandler);
 			prerunDispatcher.dispatch(nodes);
@@ -224,14 +233,15 @@ public class MainTranslator {
 		final TypeSizes typeSizes = new TypeSizes(prerunTypeSizes, flatSymbolTable);
 		final TypeHandler typeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
 				translationSettings, locationFactory, staticObjectsHandler, prerunTypeHandler);
+		final AuxVarInfoBuilder avib = new AuxVarInfoBuilder(nameHandler, typeHandler, procedureManager);
 		final ExpressionTranslation expressionTranslation =
-				createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, typeHandler);
+				createExpressionTranslation(translationSettings, avib, flatSymbolTable, typeSizes, typeHandler);
 
 		final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer = new TypeSizeAndOffsetComputer(typeSizes,
 				expressionTranslation, typeHandler, translationSettings.useBitpreciseBitfields());
 
-		final CHandler mainCHandler = new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler,
-				expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes);
+		final CHandler mainCHandler = new CHandler(prerunCHandler, procedureManager, avib, staticObjectsHandler,
+				typeHandler, expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes);
 
 		final PreprocessorHandler ppHandler =
 				new PreprocessorHandler(reporter, locationFactory, translationSettings.isSvcompMode());
@@ -253,9 +263,10 @@ public class MainTranslator {
 	}
 
 	private static ExpressionTranslation createExpressionTranslation(final TranslationSettings translationSettings,
-			final FlatSymbolTable flatSymbolTable, final TypeSizes typeSizes, final TypeHandler typeHandler) {
+			final AuxVarInfoBuilder avib, final FlatSymbolTable flatSymbolTable, final TypeSizes typeSizes,
+			final TypeHandler typeHandler) {
 		if (translationSettings.isBitvectorTranslation()) {
-			return new BitvectorTranslation(typeSizes, translationSettings, flatSymbolTable, typeHandler);
+			return new BitvectorTranslation(typeSizes, translationSettings, flatSymbolTable, typeHandler, avib);
 		}
 		return new IntegerTranslation(typeSizes, translationSettings, typeHandler, flatSymbolTable);
 	}

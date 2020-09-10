@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
@@ -160,6 +161,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	private final Expression mCurrentRoundingModeMacroValue;
 	// holds the current rounding mode ONLY when fesetround is disabled
 	private final IdentifierExpression mCurrentRoundingMode;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
 	public static final String FLOAT_ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER = "FloatRoundingMode";
 	public static final String FLOAT_ROUNDING_MODE_SMT_TYPE_IDENTIFIER = "RoundingMode";
@@ -180,8 +182,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
-			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
+			final FlatSymbolTable symboltable, final ITypeHandler typeHandler, final AuxVarInfoBuilder avib) {
 		super(typeSizeConstants, translationSettings, typeHandler, symboltable);
+		mAuxVarInfoBuilder = avib;
 
 		final CACSLLocation loc = LocationFactory.createIgnoreCLocation();
 		final FloatingPointRoundingMode settingsInitialRoundingMode = mSettings.getInitialRoundingMode();
@@ -559,7 +562,24 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp,
+	public ExpressionResult convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult operand,
+			final CPrimitive resultType) {
+		final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
+		if (operandType.isSmtFloat()) {
+			return convertSmtFloatToInt_NonBool(loc, operand, resultType);
+		}
+
+		// first convert operand to smt float
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(operand);
+		final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
+		final RValue smtOperandRValue =
+				new RValue(transformBitvectorToFloat(loc, operand.getLrValue().getValue(), smtOperandCType.getType()),
+						smtOperandCType);
+		erb.setLrValue(smtOperandRValue);
+		return convertSmtFloatToInt_NonBool(loc, erb.build(), resultType);
+	}
+
+	private ExpressionResult convertSmtFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		final String prefixedFunctionName =
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
@@ -579,10 +599,21 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				new Expression[] { roundingMode, oldExpression }, mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rVal = new RValue(resultExpression, newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
+
 	}
 
 	@Override
-	public ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult rexp,
+	public ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult operand,
+			final CPrimitive resultType) {
+		if (resultType.isSmtFloat()) {
+			return convertIntToSmtFloat(loc, operand, resultType);
+		}
+		final ExpressionResult smtResult = convertIntToSmtFloat(loc, operand, resultType.getSmtVariant());
+		final ExpressionResult bvResult = convertToBvFloatIfNecessary(smtResult.getLrValue(), loc);
+		return new ExpressionResultBuilder().addAllExceptLrValue(smtResult).addAllIncludingLrValue(bvResult).build();
+	}
+
+	private ExpressionResult convertIntToSmtFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		assert rexp.getUnderlyingCType().isIntegerType();
 		assert newType.getUnderlyingType().isFloatingType() && newType.getUnderlyingType().isSmtFloat();
@@ -597,7 +628,68 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
+	public ExpressionResult convertToBvFloatIfNecessary(final LRValue rvalue, final ILocation loc) {
+		final CPrimitive cType = (CPrimitive) rvalue.getCType();
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+		if (cType.isSmtFloat()) {
+			final AuxVarInfo auxvarinfo =
+					mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType.getBvVariant(), SFO.AUXVAR.NONDET);
+			erb.addDeclaration(auxvarinfo.getVarDec());
+			erb.addAuxVar(auxvarinfo);
+
+			assert cType.isSmtFloat() : "not an SMT float";
+			final Expression[] arguments = new Expression[] { rvalue.getValue() };
+			final CallStatement call =
+					StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
+							BitvectorTranslation.FLOAT_PROC_FLOAT_TO_BV + cType.getBvVariant().toString(), arguments);
+			erb.addStatement(call);
+			erb.setLrValue(new RValue(auxvarinfo.getExp(), cType.getBvVariant()));
+			return erb.build();
+		}
+		erb.setLrValue(rvalue);
+		return erb.build();
+	}
+
+	@Override
+	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult operand,
+			final CPrimitive resultType) {
+		final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
+		if (operandType.isSmtFloat()) {
+			if (resultType.isSmtFloat()) {
+				return convertFloatToSmtFloat(loc, operand, resultType);
+			}
+			// operand is SMT, result is BV
+			// 1. perform conversion, 2. convert result to BV
+			final ExpressionResult converted = convertFloatToSmtFloat(loc, operand, resultType.getSmtVariant());
+			return new ExpressionResultBuilder().addAllExceptLrValue(converted)
+					.addAllIncludingLrValue(convertToBvFloatIfNecessary(converted.getLrValue(), loc)).build();
+		}
+
+		if (resultType.isSmtFloat()) {
+			// operand is BV, result is SMT
+			// 1. convert operand to SMT, 2. perform conversion
+			final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
+			final RValue smtOperandRValue = new RValue(
+					transformBitvectorToFloat(loc, operand.getLrValue().getValue(), smtOperandCType.getType()),
+					smtOperandCType);
+			final ExpressionResult smtOperand =
+					new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(smtOperandRValue).build();
+			return convertFloatToSmtFloat(loc, smtOperand, resultType);
+		}
+		// operand is BV, result is BV
+		// 1. convert operand to SMT, 2. perform conversion, 3. convert result to BV
+		final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
+		final RValue smtOperandRValue =
+				new RValue(transformBitvectorToFloat(loc, operand.getLrValue().getValue(), smtOperandCType.getType()),
+						smtOperandCType);
+		final ExpressionResult smtOperand =
+				new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(smtOperandRValue).build();
+		final ExpressionResult converted = convertFloatToSmtFloat(loc, smtOperand, resultType.getSmtVariant());
+		return new ExpressionResultBuilder().addAllExceptLrValue(converted)
+				.addAllIncludingLrValue(convertToBvFloatIfNecessary(converted.getLrValue(), loc)).build();
+	}
+
+	private ExpressionResult convertFloatToSmtFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive targetType) {
 		if (rexp.getUnderlyingCType().equals(targetType.getUnderlyingType())) {
 			// no conversion necessary
@@ -617,7 +709,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 		throw new AssertionError(String.format("Cannot convertFloatToFloat between %s and %s",
 				rexp.getUnderlyingCType(), targetType.getUnderlyingType()));
-
 	}
 
 	@Override
@@ -1220,7 +1311,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			 * The fmod functions return the value x − ny, for some integer n such that, if y is nonzero, the result has
 			 * the same sign as x and magnitude less than the magnitude of y. If y is zero, whether a domain error
 			 * occurs or the fmod functions return zero is implementation- defined.
-			 * 
+			 *
 			 * see also https://en.cppreference.com/w/c/numeric/math/fmod (notes above incomplete)
 			 */
 			// fmod guarantees that the return value is the same sign as the first argument (x)
@@ -1268,20 +1359,20 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		case "copysign":
 			/**
 			 * https://en.cppreference.com/w/c/numeric/math/copysign
-			 * 
+			 *
 			 * If no errors occur, the floating point value with the magnitude of x and the sign of y is returned.
-			 * 
+			 *
 			 * If x is NaN, then NaN with the sign of y is returned.
-			 * 
+			 *
 			 * If y is -0, the result is only negative if the implementation supports the signed zero consistently in
 			 * arithmetic operations.
-			 * 
+			 *
 			 * This function is not subject to any errors specified in math_errhandling. If the implementation supports
 			 * IEEE floating-point arithmetic (IEC 60559), the returned value is exact (FE_INEXACT is never raised) and
 			 * independent of the current rounding mode.
 			 *
-			 * 
-			 * 
+			 *
+			 *
 			 */
 
 			// TODO: Handle negative NaN

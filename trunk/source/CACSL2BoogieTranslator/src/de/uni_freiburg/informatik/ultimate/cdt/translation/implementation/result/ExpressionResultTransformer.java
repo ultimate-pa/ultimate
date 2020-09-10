@@ -39,15 +39,12 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
@@ -57,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -1007,69 +1003,15 @@ public class ExpressionResultTransformer {
 			if (operandType.isIntegerType()) {
 				exprResult = mExprTrans.convertIntToInt(loc, operand, resultType);
 			} else if (operandType.isFloatingType()) {
-				if (operandType.isSmtFloat()) {
-					exprResult = mExprTrans.convertFloatToInt(loc, operand, resultType);
-				} else {
-					// first convert operand to smt float
-					final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(operand);
-					final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
-					final RValue smtOperandRValue = new RValue(mExprTrans.transformBitvectorToFloat(loc,
-							operand.getLrValue().getValue(), smtOperandCType.getType()), smtOperandCType);
-					erb.setLrValue(smtOperandRValue);
-					exprResult = mExprTrans.convertFloatToInt(loc, erb.build(), resultType);
-				}
+				exprResult = mExprTrans.convertFloatToInt(loc, operand, resultType);
 			} else {
 				throw new UnsupportedSyntaxException(loc, "conversion from " + operandType + " to " + resultType);
 			}
 		} else if (resultType.isFloatingType()) {
 			if (operandType.isIntegerType()) {
-				if (resultType.isSmtFloat()) {
-					exprResult = mExprTrans.convertIntToFloat(loc, operand, resultType);
-				} else {
-					final ExpressionResult smtResult =
-							mExprTrans.convertIntToFloat(loc, operand, resultType.getSmtVariant());
-					final ExpressionResult bvResult = convertToBvFloatIfNecessary(smtResult.getLrValue(), loc);
-					exprResult = new ExpressionResultBuilder().addAllExceptLrValue(smtResult)
-							.addAllIncludingLrValue(bvResult).build();
-				}
+				exprResult = mExprTrans.convertIntToFloat(loc, operand, resultType);
 			} else if (operandType.isFloatingType()) {
-				if (operandType.isSmtFloat()) {
-					if (resultType.isSmtFloat()) {
-						exprResult = mExprTrans.convertFloatToFloat(loc, operand, resultType);
-					} else {
-						// operand is SMT, result is BV
-						// 1. perform conversion, 2. convert result to BV
-						final ExpressionResult converted =
-								mExprTrans.convertFloatToFloat(loc, operand, resultType.getSmtVariant());
-						exprResult = new ExpressionResultBuilder().addAllExceptLrValue(converted)
-								.addAllIncludingLrValue(convertToBvFloatIfNecessary(converted.getLrValue(), loc))
-								.build();
-					}
-				} else {
-					if (resultType.isSmtFloat()) {
-						// operand is BV, result is SMT
-						// 1. convert operand to SMT, 2. perform conversion
-						final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
-						final RValue smtOperandRValue = new RValue(mExprTrans.transformBitvectorToFloat(loc,
-								operand.getLrValue().getValue(), smtOperandCType.getType()), smtOperandCType);
-						final ExpressionResult smtOperand = new ExpressionResultBuilder().addAllExceptLrValue(operand)
-								.setLrValue(smtOperandRValue).build();
-						exprResult = mExprTrans.convertFloatToFloat(loc, smtOperand, resultType);
-					} else {
-						// operand is BV, result is BV
-						// 1. convert operand to SMT, 2. perform conversion, 3. convert result to BV
-						final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
-						final RValue smtOperandRValue = new RValue(mExprTrans.transformBitvectorToFloat(loc,
-								operand.getLrValue().getValue(), smtOperandCType.getType()), smtOperandCType);
-						final ExpressionResult smtOperand = new ExpressionResultBuilder().addAllExceptLrValue(operand)
-								.setLrValue(smtOperandRValue).build();
-						final ExpressionResult converted =
-								mExprTrans.convertFloatToFloat(loc, smtOperand, resultType.getSmtVariant());
-						exprResult = new ExpressionResultBuilder().addAllExceptLrValue(converted)
-								.addAllIncludingLrValue(convertToBvFloatIfNecessary(converted.getLrValue(), loc))
-								.build();
-					}
-				}
+				exprResult = mExprTrans.convertFloatToFloat(loc, operand, resultType);
 			} else {
 				throw new UnsupportedSyntaxException(loc, "conversion from " + operandType + " to " + resultType);
 			}
@@ -1095,31 +1037,6 @@ public class ExpressionResultTransformer {
 		}
 		assert nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		return nullPointerConstant;
-	}
-
-	public ExpressionResult convertToBvFloatIfNecessary(final LRValue rvalue, final ILocation loc) {
-		final CPrimitive cType = (CPrimitive) rvalue.getCType();
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-		if (cType.isSmtFloat()) {
-			final AuxVarInfo auxvarinfo =
-					mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType.getBvVariant(), SFO.AUXVAR.NONDET);
-			erb.addDeclaration(auxvarinfo.getVarDec());
-			erb.addAuxVar(auxvarinfo);
-
-			assert cType.isSmtFloat() : "not an SMT float";
-			final Expression[] arguments = new Expression[] { rvalue.getValue() };
-			final CallStatement call =
-					StatementFactory
-							.constructCallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
-									BitvectorTranslation.FLOAT_PROC_FLOAT_TO_BV
-											+ cType.getBvVariant().toString(),
-									arguments);
-			erb.addStatement(call);
-			erb.setLrValue(new RValue(auxvarinfo.getExp(), cType.getBvVariant()));
-			return erb.build();
-		}
-		erb.setLrValue(rvalue);
-		return erb.build();
 	}
 
 	@FunctionalInterface
