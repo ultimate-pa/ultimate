@@ -62,6 +62,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Integer mDelay;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
+	private final Map<IcfgLocation, IcfgLocation> mNestingRelation;
 
 	private final CycleFinder mCycleFinder;
 
@@ -85,6 +86,9 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 		mLoopExitTransitions = new HashMap<>();
 		mLoopSize = new HashMap<>();
 		mDelay = delay;
+
+		mNestingRelation = new HashMap<>();
+
 		mLogger.debug("Loopdetector: created.");
 		mLogger.debug("Loopdetector: Searching for Loops");
 		findLoopPaths();
@@ -245,6 +249,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 						|| firstOccurence < firstOccurenceOther && firstOccurenceOther < lastOccurence
 								&& lastOccurenceOther > lastOccurence) {
 					nestedCycles.add(loopHeadOther);
+					mNestingRelation.put(loopHeadOther, loopHead);
 				}
 			}
 		}

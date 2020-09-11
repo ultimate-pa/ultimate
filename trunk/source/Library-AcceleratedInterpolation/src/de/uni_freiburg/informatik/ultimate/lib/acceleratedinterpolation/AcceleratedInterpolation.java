@@ -236,7 +236,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	/**
-	 * Main function of accelInteprol
+	 * Main function of accelInterpol
 	 */
 	private LBool acceleratedInterpolationCore() {
 		// After finding loops in the trace, start calculating loop accelerations.
