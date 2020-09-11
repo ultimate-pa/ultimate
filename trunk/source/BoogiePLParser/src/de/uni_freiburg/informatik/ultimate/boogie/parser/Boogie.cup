@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.BoogieSymbol;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -85,27 +84,8 @@ action code {:
 		return new StructConstructor(loc, fieldNames, fieldExprs);
 	}
 	
-	private static Check createCheck(final BoogieASTNode boogieASTNode) {
-		if (boogieASTNode instanceof AssertStatement) {
-			final NamedAttribute[] attrib = ((AssertStatement) boogieASTNode).getAttributes();
-			if (attrib != null && attrib.length > 0) {
-				final String namedAttribStr = BoogiePrettyPrinter.print(attrib);
-				return new Check(Check.Spec.ASSERT,
-						a -> String.format("assertion with attributes \"%s\" always holds", namedAttribStr),
-						a -> String.format("assertion with attributes \"%s\" can be violated", namedAttribStr));
-			}
-			return new Check(Check.Spec.ASSERT);
-		} else if (boogieASTNode instanceof LoopInvariantSpecification) {
-			return new Check(Check.Spec.INVARIANT);
-		} else if (boogieASTNode instanceof CallStatement) {
-			return new Check(Check.Spec.PRE_CONDITION);
-		} else if (boogieASTNode instanceof EnsuresSpecification) {
-			return new Check(Check.Spec.POST_CONDITION);
-		} else if (boogieASTNode == null) {
-			throw new IllegalArgumentException();
-		} else {
-			return new Check(Check.Spec.UNKNOWN);
-		}
+	public static Check createCheck(final BoogieASTNode boogieASTNode) {
+		return BoogieASTNode.createDefaultCheck(boogieASTNode);
 	}
 	
 :}

@@ -35,8 +35,10 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
@@ -132,6 +134,28 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 
 	public void accept(final GeneratedBoogieAstVisitor visitor) {
 		throw new UnsupportedOperationException("The base class does not accept visitors");
+	}
+
+	public static Check createDefaultCheck(final BoogieASTNode node) {
+		if (node instanceof AssertStatement) {
+			final NamedAttribute[] attrib = ((AssertStatement) node).getAttributes();
+			if (attrib != null && attrib.length > 0) {
+				final String namedAttribStr = BoogiePrettyPrinter.print(attrib);
+				return new Check(Check.Spec.ASSERT,
+						a -> String.format("assertion with attributes \"%s\" always holds", namedAttribStr),
+						a -> String.format("assertion with attributes \"%s\" can be violated", namedAttribStr));
+			}
+			return new Check(Check.Spec.ASSERT);
+		} else if (node instanceof LoopInvariantSpecification) {
+			return new Check(Check.Spec.INVARIANT);
+		} else if (node instanceof CallStatement) {
+			return new Check(Check.Spec.PRE_CONDITION);
+		} else if (node instanceof EnsuresSpecification) {
+			return new Check(Check.Spec.POST_CONDITION);
+		} else if (node == null) {
+			throw new IllegalArgumentException();
+		}
+		return null;
 	}
 
 	/**

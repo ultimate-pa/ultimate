@@ -27,11 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
@@ -71,14 +67,9 @@ public class BoogieLocation extends DefaultLocation {
 	public void setBoogieASTNode(final BoogieASTNode boogieASTNode) {
 		mBoogieASTNode = boogieASTNode;
 		if (getCheck() == null) {
-			if (mBoogieASTNode instanceof AssertStatement) {
-				new Check(Check.Spec.ASSERT).annotate(mBoogieASTNode);
-			} else if (mBoogieASTNode instanceof LoopInvariantSpecification) {
-				new Check(Check.Spec.INVARIANT).annotate(mBoogieASTNode);
-			} else if (mBoogieASTNode instanceof CallStatement) {
-				new Check(Check.Spec.PRE_CONDITION).annotate(mBoogieASTNode);
-			} else if (mBoogieASTNode instanceof EnsuresSpecification) {
-				new Check(Check.Spec.POST_CONDITION).annotate(mBoogieASTNode);
+			final Check defaultCheck = BoogieASTNode.createDefaultCheck(mBoogieASTNode);
+			if (defaultCheck != null) {
+				defaultCheck.annotate(mBoogieASTNode);
 			}
 		}
 	}
