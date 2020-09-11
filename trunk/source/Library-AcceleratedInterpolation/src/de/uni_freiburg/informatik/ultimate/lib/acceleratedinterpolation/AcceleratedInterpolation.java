@@ -252,7 +252,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
 
 				loopRelation = loopPreprocessor.preProcessLoop(loopRelation);
-
+				final Term quantElim = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
+						loopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_DDA,
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				mLogger.debug("Done Preprocessing");
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, loophead.getKey(), AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {

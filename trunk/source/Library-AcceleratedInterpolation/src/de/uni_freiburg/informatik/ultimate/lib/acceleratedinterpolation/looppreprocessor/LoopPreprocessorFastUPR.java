@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
@@ -76,7 +77,7 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 	}
 
 	/**
-	 * Preprocess a loop
+	 * Preprocess a loop to remove unsupported operations, such as modulo
 	 */
 	@Override
 	public UnmodifiableTransFormula preProcessLoop(final UnmodifiableTransFormula loop) {
@@ -92,46 +93,8 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (appTerm.getFunction() == mScript.getScript().getFunctionSymbol("mod")) {
-					final Term[] moduloParams = appTerm.getParameters();
-					ConstantTerm integerLimit = null;
-					int integerLimitPosition = -1;
-					for (int i = 0; i < moduloParams.length; i++) {
-						final Term moduloParam = moduloParams[i];
-						if (moduloParam instanceof ConstantTerm) {
-							integerLimit = (ConstantTerm) moduloParam;
-							integerLimitPosition = i;
-						}
-					}
-					if (integerLimit == null) {
-						throw new UnsupportedOperationException("There is no upper integer limit");
-					}
-					final Term moduloTerm;
-					moduloTerm = moduloParams[moduloParams.length - 1 - integerLimitPosition];
-					Term moduloUpperBound = SmtUtils.greater(mScript.getScript(), moduloTerm, integerLimit);
-					final Term moduloTermNewValue = SmtUtils.minus(mScript.getScript(), moduloTerm, integerLimit);
-					final Term equality = mScript.getScript().term("=", moduloTerm, moduloTermNewValue);
-					final Term moduloLowerBound = SmtUtils.greater(mScript.getScript(), integerLimit, moduloTerm);
-					moduloUpperBound = SmtUtils.and(mScript.getScript(), moduloUpperBound, equality);
-					final Term moduloDisjunctionReplacement =
-							SmtUtils.or(mScript.getScript(), moduloUpperBound, moduloLowerBound);
-					final Map<Term, Term> subMap = new HashMap<>();
-					final Map<Term, Term> subMapAppTerm = new HashMap<>();
-					Term appTermNoModulo = null;
-					subMap.put(term, moduloTerm);
-					subMapAppTerm.put(term, moduloTerm);
-					subMap.put(moduloTerm, moduloTermNewValue);
-					if (!subMap.isEmpty()) {
-						final Substitution sub = new Substitution(mScript, subMap);
-						preProcessedLoop = sub.transform(loopAppTerm);
-						preProcessedLoop =
-								SmtUtils.and(mScript.getScript(), preProcessedLoop, moduloDisjunctionReplacement);
-						final Substitution subAppTerm = new Substitution(mScript, subMapAppTerm);
-						appTermNoModulo = subAppTerm.transform(loopAppTerm);
-						mLogger.debug("Preprocessed Loop");
-					}
-					final Term ite =
-							mScript.getScript().term("ite", moduloLowerBound, appTermNoModulo, preProcessedLoop);
-					preProcessedLoop = ite;
+					// preProcessedLoop = transformModIte(appTerm, loopAppTerm, preProcessedLoop, term);
+					preProcessedLoop = transformModQuantification(appTerm, loopAppTerm, term);
 					mLogger.debug("Found modulo!");
 				} else {
 					for (final Term tt : appTerm.getParameters()) {
@@ -150,6 +113,98 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 		final UnmodifiableTransFormula preProcessedLoopFormula = tfb.finishConstruction(mScript);
 		return preProcessedLoopFormula;
 
+	}
+
+	/**
+	 * Replace modulo by an existential quantified formula.
+	 *
+	 * @param appTerm
+	 * @param loopAppTerm
+	 * @param term
+	 * @return
+	 */
+	private Term transformModQuantification(final ApplicationTerm appTerm, final ApplicationTerm loopAppTerm,
+			final Term term) {
+		final Term[] moduloParams = appTerm.getParameters();
+		ConstantTerm integerLimit = null;
+		int integerLimitPosition = -1;
+		for (int i = 0; i < moduloParams.length; i++) {
+			final Term moduloParam = moduloParams[i];
+			if (moduloParam instanceof ConstantTerm) {
+				integerLimit = (ConstantTerm) moduloParam;
+				integerLimitPosition = i;
+			}
+		}
+		if (integerLimit == null) {
+			throw new UnsupportedOperationException("There is no upper integer limit");
+		}
+		final Term moduloTerm;
+		moduloTerm = moduloParams[moduloParams.length - 1 - integerLimitPosition];
+
+		final TermVariable tv = mScript.constructFreshTermVariable("k", mScript.getScript().sort("Int"));
+		final Term upperBound = SmtUtils.geq(mScript.getScript(), tv, mScript.getScript().numeral("0"));
+		final Term subtraction =
+				SmtUtils.minus(mScript.getScript(), moduloTerm, mScript.getScript().term("*", tv, integerLimit));
+		final Term subtractionLimit = SmtUtils.greater(mScript.getScript(), integerLimit, subtraction);
+
+		final Map<Term, Term> subMap = new HashMap<>();
+		subMap.put(term, moduloTerm);
+		Substitution sub = new Substitution(mScript, subMap);
+		Term result = sub.transform(loopAppTerm);
+		subMap.clear();
+		subMap.put(moduloTerm, subtraction);
+		sub = new Substitution(mScript, subMap);
+		result = sub.transform(result);
+		result = SmtUtils.and(mScript.getScript(), upperBound, subtractionLimit, result);
+		final TermVariable[] tvs = new TermVariable[1];
+		tvs[0] = tv;
+		result = mScript.getScript().quantifier(QuantifiedFormula.EXISTS, tvs, result);
+		mLogger.debug(result.toStringDirect());
+		return result;
+	}
+
+	/**
+	 * Replace modulo by an if then else clause
+	 */
+	private Term transformModIte(final ApplicationTerm appTerm, final ApplicationTerm loopAppTerm,
+			final Term preProcessedLoopTerm, final Term term) {
+		final Term[] moduloParams = appTerm.getParameters();
+		ConstantTerm integerLimit = null;
+		int integerLimitPosition = -1;
+		for (int i = 0; i < moduloParams.length; i++) {
+			final Term moduloParam = moduloParams[i];
+			if (moduloParam instanceof ConstantTerm) {
+				integerLimit = (ConstantTerm) moduloParam;
+				integerLimitPosition = i;
+			}
+		}
+		if (integerLimit == null) {
+			throw new UnsupportedOperationException("There is no upper integer limit");
+		}
+		final Term moduloTerm;
+		moduloTerm = moduloParams[moduloParams.length - 1 - integerLimitPosition];
+		// final Term moduloUpperBound = SmtUtils.greater(mScript.getScript(), moduloTerm, integerLimit);
+		final Term moduloTermNewValue = SmtUtils.minus(mScript.getScript(), moduloTerm, integerLimit);
+		// final Term equality = mScript.getScript().term("=", moduloTerm, moduloTermNewValue);
+		final Term moduloLowerBound = SmtUtils.greater(mScript.getScript(), integerLimit, moduloTerm);
+		// moduloUpperBound = SmtUtils.and(mScript.getScript(), moduloUpperBound, equality);
+		final Map<Term, Term> subMap = new HashMap<>();
+		final Map<Term, Term> subMapAppTerm = new HashMap<>();
+		Term appTermNoModulo = null;
+		subMap.put(term, moduloTerm);
+		subMapAppTerm.put(term, moduloTerm);
+		Substitution sub = new Substitution(mScript, subMap);
+		Term result = sub.transform(loopAppTerm);
+		subMap.clear();
+		subMap.put(moduloTerm, moduloTermNewValue);
+		sub = new Substitution(mScript, subMap);
+		result = sub.transform(result);
+
+		// preProcessedLoop =
+		// SmtUtils.and(mScript.getScript(), preProcessedLoop, moduloDisjunctionReplacement);
+		final Substitution subAppTerm = new Substitution(mScript, subMapAppTerm);
+		appTermNoModulo = subAppTerm.transform(loopAppTerm);
+		return mScript.getScript().term("ite", moduloLowerBound, appTermNoModulo, result);
 	}
 
 }
