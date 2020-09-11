@@ -11,10 +11,6 @@
     <rundefinition name="Automizer FA">
         <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA.epf</option>
 	</rundefinition>
-		
-	<rundefinition name="Automizer FA-MCR-Interpolation">
-        <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-Interpolation.epf</option>
-	</rundefinition>
 
     <rundefinition name="Automizer FA-MCR-WP">
         <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-WP.epf</option>
