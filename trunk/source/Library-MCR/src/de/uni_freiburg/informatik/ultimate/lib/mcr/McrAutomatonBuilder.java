@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -310,7 +310,6 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final List<IPredicate> interpolants = tp.getPredicates();
 			initIps.addAll(interpolants);
 			final Map<String, IPredicate> stateMap = new HashMap<>();
-			final Stack<String> stack = new Stack<>();
 			// Fill stateMap and automaton with the given interpolants
 			String currentState = automaton.getInitialStates().iterator().next();
 			IPredicate currentPredicate = truePred;
@@ -332,25 +331,26 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				stateMap.put(currentState, currentPredicate);
 			}
 			// Find interpolants for all other states
+			// Therefore start with all states with only labeled successors
+			final ArrayDeque<String> dequeue = new ArrayDeque<>();
 			final Map<String, Set<String>> unlabeledSuccessors = new HashMap<>();
 			for (final String state : automaton.getStates()) {
 				final Set<String> succs = new HashSet<>();
 				for (final OutgoingInternalTransition<Integer, String> edge : automaton.internalSuccessors(state)) {
 					final String succ = edge.getSucc();
-					if (stateMap.containsKey(succ)) {
-						continue;
+					if (!stateMap.containsKey(succ)) {
+						succs.add(succ);
 					}
-					succs.add(succ);
 				}
 				if (succs.isEmpty()) {
-					stack.add(state);
+					dequeue.add(state);
 				} else {
 					unlabeledSuccessors.put(state, succs);
 				}
 			}
 			final Script script = mManagedScript.getScript();
-			while (!stack.isEmpty()) {
-				final String state = stack.pop();
+			while (!dequeue.isEmpty()) {
+				final String state = dequeue.pop();
 				unlabeledSuccessors.remove(state);
 				IPredicate predicate = stateMap.get(state);
 				if (predicate == null) {
@@ -374,18 +374,17 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 							SmtUtils.quantifier(script, QuantifiedFormula.FORALL, unnecessaryVars, wpAnd);
 					final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
 							mManagedScript, wpQuantified, mSimplificationTechnique, mXnfConversionTechnique);
-					// Add it as a predicate
+					// Add the wp conjunction as a predicate
 					predicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
 					stateMap.put(state, predicate);
 					if (!result.contains(predicate)) {
 						result.addState(false, false, predicate);
 					}
-					// Add new states (which only unlabeled successor was state) to the queue
+					// Add new states (with state as only unlabeled successor) to the queue
 					for (final Entry<String, Set<String>> entry : unlabeledSuccessors.entrySet()) {
 						final Set<String> succs = entry.getValue();
-						succs.remove(state);
-						if (succs.isEmpty()) {
-							stack.add(entry.getKey());
+						if (succs.remove(state) && succs.isEmpty()) {
+							dequeue.add(entry.getKey());
 						}
 					}
 				}
