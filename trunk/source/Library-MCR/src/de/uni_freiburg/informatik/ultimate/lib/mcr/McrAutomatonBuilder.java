@@ -328,16 +328,12 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				if (!result.contains(nextPredicate)) {
 					result.addState(false, false, nextPredicate);
 				}
-				result.addInternalTransition(currentPredicate, mOriginalTrace.get(index), nextPredicate);
 				currentPredicate = nextPredicate;
 				stateMap.put(currentState, currentPredicate);
 			}
 			// Find interpolants for all other states
 			final Map<String, Set<String>> unlabeledSuccessors = new HashMap<>();
 			for (final String state : automaton.getStates()) {
-				if (stateMap.containsKey(state)) {
-					continue;
-				}
 				final Set<String> succs = new HashSet<>();
 				for (final OutgoingInternalTransition<Integer, String> edge : automaton.internalSuccessors(state)) {
 					final String succ = edge.getSucc();
@@ -356,42 +352,47 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			while (!stack.isEmpty()) {
 				final String state = stack.pop();
 				unlabeledSuccessors.remove(state);
-				// Calculate the conjunction of wp for all successors
-				final List<Term> wpConjuncts = new ArrayList<>();
-				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton.internalSuccessors(state)) {
-					final IPredicate succ = stateMap.get(outgoing.getSucc());
-					assert succ != null;
-					wpConjuncts.add(mPredicateTransformer.weakestPrecondition(succ,
-							mOriginalTrace.get(outgoing.getLetter()).getTransformula()));
-				}
-				// Quantify variables not contained in the original interpolants away
-				final Term wpAnd = SmtUtils.and(script, wpConjuncts);
-				final Set<TermVariable> ipVars =
-						interpolants.stream().flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable))
-								.collect(Collectors.toSet());
-				final Set<TermVariable> unnecessaryVars =
-						Arrays.stream(wpAnd.getFreeVars()).filter(x -> !ipVars.contains(x)).collect(Collectors.toSet());
-				final Term wpQuantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, unnecessaryVars, wpAnd);
-				final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
-						mManagedScript, wpQuantified, mSimplificationTechnique, mXnfConversionTechnique);
-				// Add it as a predicate
-				final IPredicate predicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
-				stateMap.put(state, predicate);
-				if (!result.contains(predicate)) {
-					result.addState(false, false, predicate);
+				IPredicate predicate = stateMap.get(state);
+				if (predicate == null) {
+					// Calculate the conjunction of wp for all successors
+					final List<Term> wpConjuncts = new ArrayList<>();
+					for (final OutgoingInternalTransition<Integer, String> outgoing : automaton
+							.internalSuccessors(state)) {
+						final IPredicate succ = stateMap.get(outgoing.getSucc());
+						assert succ != null;
+						wpConjuncts.add(mPredicateTransformer.weakestPrecondition(succ,
+								mOriginalTrace.get(outgoing.getLetter()).getTransformula()));
+					}
+					// Quantify variables not contained in the original interpolants away
+					final Term wpAnd = SmtUtils.and(script, wpConjuncts);
+					final Set<TermVariable> ipVars =
+							interpolants.stream().flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable))
+									.collect(Collectors.toSet());
+					final Set<TermVariable> unnecessaryVars = Arrays.stream(wpAnd.getFreeVars())
+							.filter(x -> !ipVars.contains(x)).collect(Collectors.toSet());
+					final Term wpQuantified =
+							SmtUtils.quantifier(script, QuantifiedFormula.FORALL, unnecessaryVars, wpAnd);
+					final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
+							mManagedScript, wpQuantified, mSimplificationTechnique, mXnfConversionTechnique);
+					// Add it as a predicate
+					predicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
+					stateMap.put(state, predicate);
+					if (!result.contains(predicate)) {
+						result.addState(false, false, predicate);
+					}
+					// Add new states (which only unlabeled successor was state) to the queue
+					for (final Entry<String, Set<String>> entry : unlabeledSuccessors.entrySet()) {
+						final Set<String> succs = entry.getValue();
+						succs.remove(state);
+						if (succs.isEmpty()) {
+							stack.add(entry.getKey());
+						}
+					}
 				}
 				// Add the transitions to all successors
 				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton.internalSuccessors(state)) {
 					result.addInternalTransition(predicate, mOriginalTrace.get(outgoing.getLetter()),
 							stateMap.get(outgoing.getSucc()));
-				}
-				// Add new states (which only unlabeled successor was state) to the queue
-				for (final Entry<String, Set<String>> entry : unlabeledSuccessors.entrySet()) {
-					final Set<String> succs = entry.getValue();
-					succs.remove(state);
-					if (succs.isEmpty()) {
-						stack.add(entry.getKey());
-					}
 				}
 			}
 		}
