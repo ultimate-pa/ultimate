@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,16 +33,23 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -55,11 +62,15 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final List<LETTER> mOriginalTrace;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
-	private final IHoareTripleChecker mHtc;
 	private final VpAlphabet<LETTER> mAlphabet;
 	private final VpAlphabet<Integer> mIntAlphabet;
+	private final ManagedScript mManagedScript;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 
 	private List<INestedWordAutomaton<Integer, String>> mThreadAutomata;
 
@@ -69,14 +80,21 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	public McrAutomatonBuilder(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final ILogger logger,
-			final VpAlphabet<LETTER> alphabet, final IUltimateServiceProvider services, final IHoareTripleChecker htc) {
+			final VpAlphabet<LETTER> alphabet, final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mOriginalTrace = trace;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
+		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 		mEmptyStackFactory = emptyStackFactory;
-		mHtc = htc;
 		mAlphabet = alphabet;
+		mManagedScript = managedScript;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
+		mPredicateTransformer =
+				new PredicateTransformer<>(managedScript, new TermDomainOperationProvider(services, managedScript));
 		mIntAlphabet = new VpAlphabet<>(IntStream.range(0, trace.size()).boxed().collect(Collectors.toSet()));
 		mVariables2Writes = new HashRelation<>();
 		mThreads2SortedActions = new HashMap<>();
@@ -271,6 +289,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return result;
 	}
 
+	// TODO: Use interpolantProvider in the future (for now use always "hardcoded" wp)
 	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<LETTER> trace,
 			final Collection<QualifiedTracePredicates> tracePredicates,
 			final IInterpolantProvider<LETTER> interpolantProvider) throws AutomataLibraryException {
@@ -291,6 +310,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final List<IPredicate> interpolants = tp.getPredicates();
 			initIps.addAll(interpolants);
 			final Map<String, IPredicate> stateMap = new HashMap<>();
+			final Stack<String> stack = new Stack<>();
 			// Fill stateMap and automaton with the given interpolants
 			String currentState = automaton.getInitialStates().iterator().next();
 			IPredicate currentPredicate = truePred;
@@ -305,112 +325,78 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				currentState = succStates.next().getSucc();
 				final IPredicate nextPredicate = i == interpolants.size() ? falsePred
 						: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
-				addTransition(result, currentPredicate, mOriginalTrace.get(index), nextPredicate);
+				if (!result.contains(nextPredicate)) {
+					result.addState(false, false, nextPredicate);
+				}
+				result.addInternalTransition(currentPredicate, mOriginalTrace.get(index), nextPredicate);
 				currentPredicate = nextPredicate;
 				stateMap.put(currentState, currentPredicate);
 			}
-			addInterpolantsAndTransitions(automaton, stateMap, result, interpolantProvider);
+			// Find interpolants for all other states
+			final Map<String, Set<String>> unlabeledSuccessors = new HashMap<>();
+			for (final String state : automaton.getStates()) {
+				if (stateMap.containsKey(state)) {
+					continue;
+				}
+				final Set<String> succs = new HashSet<>();
+				for (final OutgoingInternalTransition<Integer, String> edge : automaton.internalSuccessors(state)) {
+					final String succ = edge.getSucc();
+					if (stateMap.containsKey(succ)) {
+						continue;
+					}
+					succs.add(succ);
+				}
+				if (succs.isEmpty()) {
+					stack.add(state);
+				} else {
+					unlabeledSuccessors.put(state, succs);
+				}
+			}
+			final Script script = mManagedScript.getScript();
+			while (!stack.isEmpty()) {
+				final String state = stack.pop();
+				unlabeledSuccessors.remove(state);
+				// Calculate the conjunction of wp for all successors
+				final List<Term> wpConjuncts = new ArrayList<>();
+				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton.internalSuccessors(state)) {
+					final IPredicate succ = stateMap.get(outgoing.getSucc());
+					assert succ != null;
+					wpConjuncts.add(mPredicateTransformer.weakestPrecondition(succ,
+							mOriginalTrace.get(outgoing.getLetter()).getTransformula()));
+				}
+				// Quantify variables not contained in the original interpolants away
+				final Term wpAnd = SmtUtils.and(script, wpConjuncts);
+				final Set<TermVariable> ipVars =
+						interpolants.stream().flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable))
+								.collect(Collectors.toSet());
+				final Set<TermVariable> unnecessaryVars =
+						Arrays.stream(wpAnd.getFreeVars()).filter(x -> !ipVars.contains(x)).collect(Collectors.toSet());
+				final Term wpQuantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, unnecessaryVars, wpAnd);
+				final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
+						mManagedScript, wpQuantified, mSimplificationTechnique, mXnfConversionTechnique);
+				// Add it as a predicate
+				final IPredicate predicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
+				stateMap.put(state, predicate);
+				if (!result.contains(predicate)) {
+					result.addState(false, false, predicate);
+				}
+				// Add the transitions to all successors
+				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton.internalSuccessors(state)) {
+					result.addInternalTransition(predicate, mOriginalTrace.get(outgoing.getLetter()),
+							stateMap.get(outgoing.getSucc()));
+				}
+				// Add new states (which only unlabeled successor was state) to the queue
+				for (final Entry<String, Set<String>> entry : unlabeledSuccessors.entrySet()) {
+					final Set<String> succs = entry.getValue();
+					succs.remove(state);
+					if (succs.isEmpty()) {
+						stack.add(entry.getKey());
+					}
+				}
+			}
 		}
 		final Set<IPredicate> mcrIps = DataStructureUtils.difference(result.getStates(), initIps);
 		mLogger.info("Construction finished. MCR generated " + mcrIps.size() + " new interpolants: " + mcrIps);
 		return result;
-	}
-
-	private void addInterpolantsAndTransitions(final INestedWordAutomaton<Integer, String> mcrAutomaton,
-			final Map<String, IPredicate> stateMap, final NestedWordAutomaton<LETTER, IPredicate> ipAutomaton,
-			final IInterpolantProvider<LETTER> interpolantProvider) {
-		// Find all paths containing states without interpolants and get some
-		final Stack<List<LETTER>> traceStack = new Stack<>();
-		final Stack<List<String>> stateStack = new Stack<>();
-		traceStack.push(Collections.emptyList());
-		stateStack.push(Collections.singletonList(mcrAutomaton.getInitialStates().iterator().next()));
-		while (!traceStack.empty()) {
-			final List<LETTER> currentTrace = traceStack.pop();
-			final List<String> currentStates = stateStack.pop();
-			final String lastState = currentStates.get(currentStates.size() - 1);
-			for (final OutgoingInternalTransition<Integer, String> outgoing : mcrAutomaton
-					.internalSuccessors(lastState)) {
-				LETTER nextAction = mOriginalTrace.get(outgoing.getLetter());
-				final String nextState = outgoing.getSucc();
-				IPredicate postcondition = stateMap.get(nextState);
-				if (postcondition != null) {
-					traceStack.push(Collections.emptyList());
-					stateStack.push(Collections.singletonList(nextState));
-					if (!currentTrace.isEmpty()) {
-						IPredicate precondition = stateMap.get(currentStates.get(0));
-						// Try to reduce the trace length by looking for already existent edges
-						while (!currentTrace.isEmpty()) {
-							final Iterator<OutgoingInternalTransition<LETTER, IPredicate>> edge =
-									ipAutomaton.internalSuccessors(precondition, currentTrace.get(0)).iterator();
-							if (!edge.hasNext()) {
-								break;
-							}
-							final IPredicate newPredicate = edge.next().getSucc();
-							currentTrace.remove(0);
-							currentStates.remove(0);
-							stateMap.put(currentStates.get(0), newPredicate);
-							precondition = newPredicate;
-						}
-						while (!currentTrace.isEmpty()) {
-							final Iterator<IncomingInternalTransition<LETTER, IPredicate>> edge =
-									ipAutomaton.internalPredecessors(postcondition, nextAction).iterator();
-							if (!edge.hasNext()) {
-								break;
-							}
-							final IPredicate newPredicate = edge.next().getPred();
-							nextAction = currentTrace.remove(currentTrace.size() - 1);
-							stateMap.put(currentStates.remove(currentStates.size() - 1), newPredicate);
-							postcondition = newPredicate;
-						}
-						// TODO: Maybe use this later?
-						// final int start = Math.max(visitedStates.indexOf(prevState) - 1, 0);
-						// final int end = Math.floorMod(visitedStates.indexOf(nextState) - 1, interpolants.size());
-						// final Set<TermVariable> vars = interpolants.subList(start, end + 1).stream()
-						// .flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable))
-						// .collect(Collectors.toSet());
-						// Get interpolants for the given trace and add them to the automaton
-						final IPredicate[] ips = interpolantProvider.getInterpolants(precondition,
-								concat(currentTrace, nextAction), postcondition);
-						IPredicate lastIp = precondition;
-						for (int i = 0; i < ips.length; i++) {
-							final IPredicate ip = ips[i];
-							stateMap.put(currentStates.get(i + 1), ip);
-							addTransition(ipAutomaton, lastIp, currentTrace.get(i), ip);
-							lastIp = ip;
-						}
-					}
-					// TODO: This is only a workaround!
-					final IPredicate lastPredicate = stateMap.get(lastState);
-					if (!currentTrace.isEmpty() || checkHoareTriple(lastPredicate, nextAction, postcondition)) {
-						addTransition(ipAutomaton, lastPredicate, nextAction, postcondition);
-					}
-				} else {
-					traceStack.push(concat(currentTrace, nextAction));
-					stateStack.push(concat(currentStates, nextState));
-				}
-			}
-		}
-	}
-
-	private static <T> List<T> concat(final List<T> list, final T elem) {
-		final List<T> result = new ArrayList<>(list.size() + 1);
-		result.addAll(list);
-		result.add(elem);
-		return result;
-	}
-
-	private void addTransition(final NestedWordAutomaton<LETTER, IPredicate> automaton, final IPredicate pred,
-			final LETTER action, final IPredicate succ) {
-		assert checkHoareTriple(pred, action, succ) : "Invalid hoare triple {" + pred + "} " + action + " {" + succ
-				+ "}";
-		if (!automaton.contains(succ)) {
-			automaton.addState(false, false, succ);
-		}
-		automaton.addInternalTransition(pred, action, succ);
-	}
-
-	private boolean checkHoareTriple(final IPredicate precondition, final LETTER action,
-			final IPredicate postcondition) {
-		return mHtc.checkInternal(precondition, (IInternalAction) action, postcondition) != Validity.INVALID;
 	}
 }

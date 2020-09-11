@@ -41,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -58,6 +60,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataServices;
 	private final CfgSmtToolkit mToolkit;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final VpAlphabet<LETTER> mAlphabet;
 	private final IMcrResultProvider<LETTER> mResultProvider;
@@ -76,6 +80,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mAutomataServices = new AutomataLibraryServices(mServices);
 		mAlphabet = new VpAlphabet<>(alphabet);
 		mToolkit = prefs.getCfgSmtToolkit();
+		mSimplificationTechnique = prefs.getSimplificationTechnique();
+		mXnfConversionTechnique = prefs.getXnfConversionTechnique();
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mResultProvider = resultProvider;
 		mHoareTripleChecker = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
@@ -88,8 +94,9 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private McrTraceCheckResult<LETTER> exploreInterleavings(final List<LETTER> initialTrace)
 			throws AutomataLibraryException {
 		final ManagedScript managedScript = mToolkit.getManagedScript();
-		final McrAutomatonBuilder<LETTER> automatonBuilder = new McrAutomatonBuilder<>(initialTrace, mPredicateUnifier,
-				mEmptyStackStateFactory, mLogger, mAlphabet, mServices, mHoareTripleChecker);
+		final McrAutomatonBuilder<LETTER> automatonBuilder =
+				new McrAutomatonBuilder<>(initialTrace, mPredicateUnifier, mEmptyStackStateFactory, mLogger, mAlphabet,
+						mServices, managedScript, mSimplificationTechnique, mXnfConversionTechnique);
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, managedScript, mToolkit.getSymbolTable());
 		final PredicateFactoryRefinement factory = new PredicateFactoryRefinement(mServices, managedScript,
