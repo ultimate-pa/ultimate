@@ -583,7 +583,7 @@ public class PolynomialRelationTest {
 	public void relationIntDivEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 7 x) y )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 
 	}
 
@@ -591,21 +591,21 @@ public class PolynomialRelationTest {
 	public void relationIntDivEQ2() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 x) (* 7 y) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivEQ3() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 x) (+ (* 7 y) (* 5 z)) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivEQ4() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 6 (+ y x)) (* 7 z) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
@@ -625,8 +625,8 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntDivDISTINCT() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
-		final String inputSTR = "(not(= (* 3 x) y ))";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		final String inputSTR = "(not (= (* 3 x) y ))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
