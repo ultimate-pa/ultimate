@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -104,7 +105,27 @@ public class Monomial extends Term {
 	 * @return
 	 */
 	public boolean isLinear() {
-		return getVariable2Exponent().entrySet().size() == 1 && getVariable2Exponent().values().contains(Rational.ONE);
+//		return getVariable2Exponent().entrySet().size() == 1 && getVariable2Exponent().values().contains(Rational.ONE);
+		return getSingleVariable() != null;
+	}
+
+	/**
+	 * @return The variable x if this monomial consists of a single variable whose
+	 *         exponent is one, return null otherwise.
+	 */
+	public Term getSingleVariable() {
+		final Iterator<Entry<Term, Rational>> it = getVariable2Exponent().entrySet().iterator();
+		if (!it.hasNext()) {
+			throw new AssertionError("empty monomial are not supported");
+		}
+		final Entry<Term, Rational> first = it.next();
+		if (!first.getValue().equals(Rational.ONE)) {
+			return null;
+		}
+		if (it.hasNext()) {
+			return null;
+		}
+		return first.getKey();
 	}
 
 	/**
