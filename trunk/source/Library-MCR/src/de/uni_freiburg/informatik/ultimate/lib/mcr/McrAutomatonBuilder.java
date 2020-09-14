@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -303,12 +303,9 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final IPredicate falsePred = mPredicateUnifier.getFalsePredicate();
 		result.addState(true, false, truePred);
 		result.addState(false, true, falsePred);
-		final Set<IPredicate> initIps = new HashSet<>();
-		initIps.add(truePred);
-		initIps.add(falsePred);
+		final Set<IPredicate> mcrIps = new HashSet<>();
 		for (final QualifiedTracePredicates tp : tracePredicates) {
 			final List<IPredicate> interpolants = tp.getPredicates();
-			initIps.addAll(interpolants);
 			final Map<String, IPredicate> stateMap = new HashMap<>();
 			// Fill stateMap and automaton with the given interpolants
 			String currentState = automaton.getInitialStates().iterator().next();
@@ -374,10 +371,17 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 							SmtUtils.quantifier(script, QuantifiedFormula.FORALL, unnecessaryVars, wpAnd);
 					final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
 							mManagedScript, wpQuantified, mSimplificationTechnique, mXnfConversionTechnique);
+					// Ignore the interpolant (and all its transitions), if it still contains quantifiers or stores
+					// TODO: Can this be done better?
+					if (!QuantifierUtils.isQuantifierFree(wpEliminated)
+							|| SmtUtils.containsFunctionApplication(wpEliminated, "store")) {
+						continue;
+					}
 					// Add the wp conjunction as a predicate
 					predicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
 					stateMap.put(state, predicate);
 					if (!result.contains(predicate)) {
+						mcrIps.add(predicate);
 						result.addState(false, false, predicate);
 					}
 					// Add new states (with state as only unlabeled successor) to the queue
@@ -390,12 +394,11 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				}
 				// Add the transitions to all successors
 				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton.internalSuccessors(state)) {
-					result.addInternalTransition(predicate, mOriginalTrace.get(outgoing.getLetter()),
-							stateMap.get(outgoing.getSucc()));
+					final LETTER letter = mOriginalTrace.get(outgoing.getLetter());
+					result.addInternalTransition(predicate, letter, stateMap.get(outgoing.getSucc()));
 				}
 			}
 		}
-		final Set<IPredicate> mcrIps = DataStructureUtils.difference(result.getStates(), initIps);
 		mLogger.info("Construction finished. MCR generated " + mcrIps.size() + " new interpolants: " + mcrIps);
 		return result;
 	}
