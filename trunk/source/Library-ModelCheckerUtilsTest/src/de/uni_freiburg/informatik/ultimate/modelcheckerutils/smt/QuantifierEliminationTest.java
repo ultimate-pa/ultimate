@@ -28,9 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -1058,58 +1055,6 @@ public class QuantifierEliminationTest {
 		final String formulaAsString = "(exists ((main_~a~0 Int) (main_~b~0 Int)) (and (<= 1 (mod (+ (* main_~b~0 4294967295) main_~a~0) 4294967296)) (= 0 main_~b~0) (not (< (mod main_~b~0 4294967296) (mod main_~a~0 4294967296))) (<= (mod main_~a~0 4294967296) 1)))";
 		final String expectedResult = "false";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-
-
-
-
-	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
-			final String formulaAsString) {
-		// TODO: DD: Somehow the quantified formulas are too large / strange for
-		// TermParseUtils.parseTerm, but this way
-		// should also work
-		final String[] splitted = quantVars.split("\\)");
-		final List<TermVariable> vars = new ArrayList<>();
-		for (int i = 0; i < splitted.length; ++i) {
-			final String current = splitted[i];
-			final String[] tuple = current.substring(2).split(" ");
-			final Sort sort;
-			switch (tuple[1]) {
-			case "Int":
-				sort = SmtSortUtils.getIntSort(mMgdScript);
-				break;
-			case "Bool":
-				sort = SmtSortUtils.getBoolSort(mMgdScript);
-				break;
-			case "Real":
-				sort = SmtSortUtils.getRealSort(mMgdScript);
-				break;
-			default:
-				throw new UnsupportedOperationException(tuple[1]);
-			}
-			mScript.declareFun(tuple[0], new Sort[0], sort);
-			vars.add(mScript.variable(tuple[0], sort));
-		}
-
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		return mScript.quantifier(quantor, vars.toArray(new TermVariable[vars.size()]), formulaAsTerm);
-	}
-
-	private Term elim(final Term quantFormula) {
-		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantFormula,
-				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-	}
-
-	/**
-	 * Special method for partial quantifier elimination that applies only local elimination techniques and replaces the
-	 * outermost quantifier by an existential quantifier.
-	 */
-	private Term elim2(final Term term) {
-		final QuantifiedFormula quantFormula = (QuantifiedFormula) term;
-		return PartialQuantifierElimination.quantifierCustom(mServices, mLogger, mMgdScript, PqeTechniques.ALL_LOCAL,
-				QuantifiedFormula.EXISTS, Arrays.asList(quantFormula.getVariables()), quantFormula.getSubformula(),
-				new Term[0]);
 	}
 
 }
