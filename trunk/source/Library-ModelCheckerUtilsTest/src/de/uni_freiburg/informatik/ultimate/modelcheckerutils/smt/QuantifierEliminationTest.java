@@ -906,9 +906,6 @@ public class QuantifierEliminationTest {
 		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
-
-
 	@Test
 	public void bugTirAntiDer() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "b") };
@@ -916,7 +913,6 @@ public class QuantifierEliminationTest {
 		final String expectedResultAsString = "(and (< b 12) (exists ((a Int)) (and (< a 3) (> (* 4 a) b))))";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 	@Test
 	public void ironModulo() {
@@ -970,7 +966,6 @@ public class QuantifierEliminationTest {
 		final String formulaAsString = "(exists ((x Int) ) (forall ((y Int) (z Int)) (or (p z) (and (p x) (distinct y 0) ))))";
 		runQuantifierPusherTest(funDecls, formulaAsString, "(forall ((z Int)) (p z))", false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 	@Test
 	public void innerPush() {
@@ -1079,6 +1074,12 @@ public class QuantifierEliminationTest {
 		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (and (< 0 (mod (+ (* main_~b~0 4294967295) moda) 4294967296)) (<= (mod (+ (* main_~b~0 4294967295) moda) 4294967296) 1)) (> 0 moda) (>= moda 4294967296) (<= (+ (* 4294967296 diva) moda) (mod main_~i~0 4294967296)) (< (mod (+ main_~i~0 1) 4294967296) moda) (< (+ (* 4294967296 diva) moda) 0)))";
 		final String expectedResult = "false";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Deprecated
+	private Term elim(final Term quantFormula) {
+		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantFormula,
+				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 
 }
