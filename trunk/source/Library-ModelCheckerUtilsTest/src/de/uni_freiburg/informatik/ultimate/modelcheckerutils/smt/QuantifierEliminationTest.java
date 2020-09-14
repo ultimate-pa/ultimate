@@ -976,7 +976,7 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void Wildboellen() {
+	public void wildboellen() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "z", "y") };
 		final String formulaAsString = "(forall ((x Int) ) (or (= 0 x) (not (= (* z (+ x 1)) y))))";
 		final String expectedResult = "(let ((.cse0 (+ y (- z))) (.cse1 (= 0 z))) (and (or (not (= 0 .cse0)) (not .cse1)) (or (= 0 (div .cse0 z)) (not (= 0 (mod (+ y (* z (- 1))) z))) .cse1)))";
@@ -984,7 +984,7 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void Oppenau() {
+	public void oppenau() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getIntSort, "square"),
 			new FunDecl(SmtSortUtils::getIntSort, "x", "y"),
