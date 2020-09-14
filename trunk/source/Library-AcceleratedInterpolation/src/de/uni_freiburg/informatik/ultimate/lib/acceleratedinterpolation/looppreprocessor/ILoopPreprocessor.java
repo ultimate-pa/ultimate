@@ -27,6 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -43,5 +48,5 @@ public interface ILoopPreprocessor<T> {
 	 * @param loop
 	 * @return
 	 */
-	public UnmodifiableTransFormula preProcessLoop(final UnmodifiableTransFormula loop);
+	public Map<IcfgLocation, Set<List<T>>> preProcessLoop(final Map<IcfgLocation, Set<List<T>>> loop);
 }
