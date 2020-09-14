@@ -707,10 +707,12 @@ public class SolveForSubjectUtils {
 		final SupportingTerm divisibilityConstraint = new SupportingTerm(divisibilityConstraintTerm,
 				IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
 		suppTerms.add(divisibilityConstraint);
-		final SupportingTerm inRelationToZero = constructInRelationToZeroSupportingTerm(script,
-				SmtUtils.mul(script, stageTwoRhs.getSort(), divisorAsArray),
-				negateForCnf(RelationSymbol.DISTINCT, xnf));
-		suppTerms.add(inRelationToZero);
+		if (divisorAsArray.length > 1 || !(divisorAsArray[0] instanceof ConstantTerm)) {
+			final SupportingTerm inRelationToZero = constructInRelationToZeroSupportingTerm(script,
+					SmtUtils.mul(script, stageTwoRhs.getSort(), divisorAsArray),
+					negateForCnf(RelationSymbol.DISTINCT, xnf));
+			suppTerms.add(inRelationToZero);
+		}
 		final Case result = new Case(null, suppTerms, xnf);
 		return result;
 	}
