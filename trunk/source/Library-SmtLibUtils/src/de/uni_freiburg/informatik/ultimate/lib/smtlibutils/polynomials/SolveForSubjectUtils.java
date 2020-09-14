@@ -277,8 +277,14 @@ public class SolveForSubjectUtils {
 				if (var2exp.getKey() == subject) {
 					// do nothing
 				} else {
+					RelationSymbol resultRelationSymbol;
+					if (isOriginalCoefficientPositive) {
+						resultRelationSymbol = polyRel.getRelationSymbol();
+					} else {
+						resultRelationSymbol = polyRel.getRelationSymbol().swapParameters();
+					}
 					cases.add(constructDivByVarEqualZeroCase(script, var2exp.getKey(), stageTwoRhs,
-							polyRel.getRelationSymbol(), xnf));
+							resultRelationSymbol, xnf));
 					final int exp = var2exp.getValue().numerator().intValueExact();
 					for (int i = 0; i < exp; i++) {
 						divisorAsList.add(var2exp.getKey());
@@ -727,6 +733,13 @@ public class SolveForSubjectUtils {
 	private static SolvedBinaryRelation constructSolvedBinaryRelation(final Script script, final Term subject,
 			final Term stageTwoRhs, final RelationSymbol relSymb, final boolean isDivisorPositive,
 			final Term[] divisor) {
+		final RelationSymbol resultRelationSymbol;
+		if (isDivisorPositive) {
+			resultRelationSymbol = relSymb;
+		} else {
+			// if coefficient is negative we have to use the "swapped" RelationSymbol
+			resultRelationSymbol = relSymb.swapParameters();
+		}
 		final Term resultRhs;
 		if (divisor.length == 0) {
 			resultRhs = stageTwoRhs;
@@ -736,13 +749,6 @@ public class SolveForSubjectUtils {
 			} else {
 				resultRhs = SmtUtils.divReal(script, prepend(stageTwoRhs, divisor));
 			}
-		}
-		final RelationSymbol resultRelationSymbol;
-		if (isDivisorPositive) {
-			resultRelationSymbol = relSymb;
-		} else {
-			// if coefficient is negative we have to use the "swapped" RelationSymbol
-			resultRelationSymbol = relSymb.swapParameters();
 		}
 		final IntricateOperation intricateOp = divisor.length == 0 ? null : IntricateOperation.DIV_BY_INTEGER_CONSTANT;
 		final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, resultRhs, resultRelationSymbol,
