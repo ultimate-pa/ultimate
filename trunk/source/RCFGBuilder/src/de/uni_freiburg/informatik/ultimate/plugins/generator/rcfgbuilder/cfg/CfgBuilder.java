@@ -180,11 +180,14 @@ public class CfgBuilder {
 
 	private final Set<String> mAllGotoTargets;
 
+	private final boolean mRemoveAssumeTrueStmt;
+
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) throws IOException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAddAssumeForEachAssert = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
+		mRemoveAssumeTrueStmt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_REMOVE_ASSUME_TRUE);
 
 		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
 		final String filename = new File(pathAndFilename).getName();
@@ -465,8 +468,8 @@ public class CfgBuilder {
 		return mRcfgBacktranslator;
 	}
 
-	private static boolean isAssumeTrueStatement(final Statement st) {
-		if (st instanceof AssumeStatement) {
+	private boolean isAssumeTrueStatement(final Statement st) {
+		if (mRemoveAssumeTrueStmt && st instanceof AssumeStatement) {
 			final AssumeStatement as = (AssumeStatement) st;
 			if (as.getFormula() instanceof BooleanLiteral) {
 				final BooleanLiteral bl = (BooleanLiteral) as.getFormula();
