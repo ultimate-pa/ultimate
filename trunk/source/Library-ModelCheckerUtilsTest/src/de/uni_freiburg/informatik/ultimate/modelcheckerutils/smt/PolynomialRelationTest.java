@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
  */
 public class PolynomialRelationTest {
 
-	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = !false;
+	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_MAIN_TRACK_SCRIPT_IF_UNKNOWN_TO_FILE = false;
 
 	private static final String SOLVER_COMMAND_Z3 =
