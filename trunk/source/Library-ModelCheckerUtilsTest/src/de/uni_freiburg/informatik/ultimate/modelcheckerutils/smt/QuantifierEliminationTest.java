@@ -991,7 +991,7 @@ public class QuantifierEliminationTest {
 		};
 		final String formulaAsString = "(exists ((v_proc_i_AFTER_CALL_1 Int) (v_f_4 Int) (v_proc_res_BEFORE_RETURN_1 Int)) (and (exists ((v_f_4 Int)) (<= (+ x (square v_f_4)) v_proc_i_AFTER_CALL_1)) (<= v_proc_res_BEFORE_RETURN_1 y) (<= (+ x (square v_f_4)) v_proc_i_AFTER_CALL_1) (<= v_proc_i_AFTER_CALL_1 v_proc_res_BEFORE_RETURN_1)))";
 		final String expectedResult = null;
-		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
