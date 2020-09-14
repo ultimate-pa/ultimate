@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -246,6 +247,32 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 		minimalValue = minimalValue.add(getConstant());
 		maximalValue = maximalValue.add(getConstant());
 		return new Pair<>(maximalValue, minimalValue);
+	}
+
+	@Override
+	public AbstractGeneralizedAffineTerm<Term> removeAndNegate(final Monomial monomialOfSubject) {
+		 final HashMap<Term, Rational> newAbstractVariable2Coefficient = new HashMap<>();
+		 for (final Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			 if (!entry.getKey().equals(monomialOfSubject.getSingleVariable())) {
+				 newAbstractVariable2Coefficient.put(entry.getKey(), entry.getValue().negate());
+			 }
+		 }
+		 return new AffineTerm(getSort(), getConstant().negate(), newAbstractVariable2Coefficient);
+	}
+
+	@Override
+	public AffineTerm divInvertible(final Rational divisor) {
+		final HashMap<Term, Rational> newAbstractVariable2Coefficient = new HashMap<>();
+		for (final Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			final Rational newCoefficient = PolynomialTermUtils.divInvertible(getSort(), entry.getValue(), divisor);
+			if (newCoefficient == null) {
+				return null;
+			} else {
+				newAbstractVariable2Coefficient.put(entry.getKey(), newCoefficient);
+			}
+		}
+		final Rational newConstant = PolynomialTermUtils.divInvertible(getSort(), getConstant(), divisor);
+		return new AffineTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
 	}
 
 }

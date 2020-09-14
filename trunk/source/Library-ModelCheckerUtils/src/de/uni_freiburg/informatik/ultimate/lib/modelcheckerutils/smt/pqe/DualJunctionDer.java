@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCase
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SupportingTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -263,16 +262,6 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		return true;
 	}
 
-	private static Xnf getXnf(final int quantifier) {
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			return Xnf.DNF;
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			return Xnf.CNF;
-		} else {
-			throw new AssertionError();
-		}
-	}
-
 
 	public static SolvedBinaryRelation tryPlr(final Script script, final int quantifier, final TermVariable eliminatee, final Term atom) {
 		final Term rightHandSide;
@@ -419,7 +408,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			if (pr == null) {
 				return null;
 			}
-			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee, getXnf(quantifier));
+			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee, Xnf.fromQuantifier(quantifier));
 			if (mcsbr == null) {
 				return null;
 			}

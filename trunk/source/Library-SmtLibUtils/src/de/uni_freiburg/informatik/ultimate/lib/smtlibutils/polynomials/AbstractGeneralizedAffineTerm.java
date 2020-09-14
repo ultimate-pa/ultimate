@@ -359,4 +359,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		}
 	}
 
+	public abstract AbstractGeneralizedAffineTerm<AVAR> removeAndNegate(Monomial monomialOfSubject);
+
 }

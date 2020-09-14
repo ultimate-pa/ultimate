@@ -457,4 +457,40 @@ public class PolynomialTermUtils {
 	public interface TriFunction<T, U, R, S> {
 		public S apply(T script, U sort, R term);
 	}
+
+
+	/**
+	 * Divide the given divident by the given divisor. Return the result only if for
+	 * the given sort there is some "inverse" element invrs such that a
+	 * multiplication of the result with invrs is equivalent to the divident. Return
+	 * null if no such inverse element exists. We assume that for reals the division
+	 * is "/" for ints the division is "div" and for bitvectors the division is
+	 * "bvudiv".
+	 */
+	public static Rational divInvertible(final Sort sort, final Rational divident, final Rational divisor) {
+		final Rational result;
+		if (divisor.equals(Rational.ZERO)) {
+			result = null;
+		} else {
+			final Rational quot = divident.div(divisor);
+			if (SmtSortUtils.isRealSort(sort)) {
+				result = quot;
+			} else if (SmtSortUtils.isIntSort(sort)) {
+				if (quot.isIntegral()) {
+					result = quot;
+				} else {
+					result = null;
+				}
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
+				if (divisor.equals(Rational.ONE) || divisor.equals(Rational.MONE)) {
+					result = quot;
+				} else {
+					result = null;
+				}
+			} else {
+				throw new AssertionError("unsupported sort");
+			}
+		}
+		return result;
+	}
 }
