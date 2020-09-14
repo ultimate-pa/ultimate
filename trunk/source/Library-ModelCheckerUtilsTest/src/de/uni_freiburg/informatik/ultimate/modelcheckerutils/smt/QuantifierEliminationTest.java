@@ -1057,4 +1057,28 @@ public class QuantifierEliminationTest {
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void choirNightTrezor03Gearshiftnut() {
+		final FunDecl[] funDecls = new FunDecl[] {};
+		final String formulaAsString = "(forall ((v_main_~i~0_6 Int) (v_main_~b~0_8 Int)) (or (< (div (+ (* (mod v_main_~i~0_6 4294967296) (- 1)) (* v_main_~b~0_8 (- 4294967295))) (- 4294967296)) (+ (div (+ (* v_main_~b~0_8 4294967295) (- 4294967296)) 4294967296) 2)) (not (and (= 0 v_main_~i~0_6) (= 0 v_main_~b~0_8)))))";
+		final String expectedResult = "true";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_~i~0", "main_~b~0"), };
+		final String formulaAsString = "(forall ((aux_div_aux_mod_main_~a~0_26_37 Int) (aux_mod_aux_mod_main_~a~0_26_37 Int)) (or (<= 4294967296 (+ (* 4294967296 aux_div_aux_mod_main_~a~0_26_37) aux_mod_aux_mod_main_~a~0_26_37)) (and (< 0 (mod (+ (* main_~b~0 4294967295) aux_mod_aux_mod_main_~a~0_26_37) 4294967296)) (<= (mod (+ (* main_~b~0 4294967295) aux_mod_aux_mod_main_~a~0_26_37) 4294967296) 1)) (> 0 aux_mod_aux_mod_main_~a~0_26_37) (>= aux_mod_aux_mod_main_~a~0_26_37 4294967296) (<= (+ (* 4294967296 aux_div_aux_mod_main_~a~0_26_37) aux_mod_aux_mod_main_~a~0_26_37) (mod main_~i~0 4294967296)) (< (mod (+ main_~i~0 1) 4294967296) aux_mod_aux_mod_main_~a~0_26_37) (< (+ (* 4294967296 aux_div_aux_mod_main_~a~0_26_37) aux_mod_aux_mod_main_~a~0_26_37) 0)))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon1() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_~i~0", "main_~b~0"), };
+		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (and (< 0 (mod (+ (* main_~b~0 4294967295) moda) 4294967296)) (<= (mod (+ (* main_~b~0 4294967295) moda) 4294967296) 1)) (> 0 moda) (>= moda 4294967296) (<= (+ (* 4294967296 diva) moda) (mod main_~i~0 4294967296)) (< (mod (+ main_~i~0 1) 4294967296) moda) (< (+ (* 4294967296 diva) moda) 0)))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 }
