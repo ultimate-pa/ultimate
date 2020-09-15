@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl.SortCon
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
+//@formatter:off
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -288,6 +289,34 @@ public class QuantifierEliminationTest {
 		final String formulaAsString = "(exists ((x Bool)) (and (p x) (not (not (not (not x))))))";
 		final String expextedResultAsString = "(p true)";
 		runQuantifierPusherTest(formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void plrTest12Performance() {
+		/*
+		 * Example generated from synthetic requirement benchmarks on ReqAnalyzer
+		 *
+		 * Interesting because:
+		 * - We generate many (binominal scaling) similar checks on these examples, and speedups would accumulate.
+		 * - Solvers are currently much slower to prove validity of these formulas compared to PQE,
+		 *   so they might make interesting benchmarks
+		 *
+		 */
+		final FunDecl funDecl = new FunDecl(SmtSortUtils::getRealSort, "clock");
+		final String formulaAsString = "(exists"
+				+ "  ((A Bool) (B Bool) (C Bool) (D Bool) (E Bool) (F Int) (G Bool) (H Bool) (I Bool) (J Bool) "
+				+ "(K Bool) (L Bool) (M Bool) (N Bool))" + "  (and "
+				+ "(or (not A) (not (= 0 F))) (or G (not (= 7 F))) (or B (not (= 3 F))) (or (not B) (not (= 2 F))) "
+				+ "(or (not M) (not (= F 9))) (or E (not (= 4 F))) (or (not (= 5 F)) (not H)) (or C (not (= 2 F))) "
+				+ "(or (not (= 0 F)) (= 1 F) (and (not (= 1 F)) (= 0 F) N) (not N)) (or (not (= 1 F)) (not C)) "
+				+ "(or (not D) (not (= 4 F))) (or (not G) (not (= 6 F))) (or H (not (= 6 F))) (or (not (= F 10)) M) "
+				+ "(or (not (= 5 F)) D) (or (not (= F 9)) I) (or (and (or (= 1 F) (not (= 2 F)) K L) (= 1 F)) "
+				+ "(and (not (= 1 F)) (or (not (= 2 F)) K L) (< clock 10.0)) (and (not K) (not (= 1 F)) (= 2 F) "
+				+ "(not L) (< clock 10.0))) (or (not (= 7 F)) (not J)) (or (not (= 3 F)) (not E)) "
+				+ "(or (not (= 1 F)) A) (or (not (= 8 F)) J) (or (not (= 8 F)) (not I))))";
+		final String expextedResultAsString = "true";
+		runQuantifierPusherTest(new FunDecl[] { funDecl }, formulaAsString, expextedResultAsString, true, mServices,
+				mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -1083,3 +1112,4 @@ public class QuantifierEliminationTest {
 	}
 
 }
+//@formatter:on
