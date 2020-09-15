@@ -40,11 +40,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -142,7 +142,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 					 * Filter recursive programs.
 					 */
 					if (l instanceof ICallAction) {
-						final Call call = (Call) l;
+						final IIcfgCallTransition<IcfgLocation> call = (IIcfgCallTransition<IcfgLocation>) l;
 						if (call.getSucceedingProcedure().equals(call.getPrecedingProcedure())) {
 							mLogger.debug("Found Recursive call!");
 							loopBodyNoProcedures.remove(currentLoop.getSecond());
@@ -150,8 +150,9 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 					}
 					if (l instanceof IReturnAction) {
 						boolean foundCall = false;
-						final Return ret = (Return) l;
-						final Call call = ret.getCorrespondingCall();
+						final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> ret =
+								(IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) l;
+						final IIcfgCallTransition<IcfgLocation> call = ret.getCorrespondingCall();
 						for (int k = i - 1; k > currentLoop.getFirst(); k--) {
 							if (mTrace.get(k) == call) {
 								foundCall = true;

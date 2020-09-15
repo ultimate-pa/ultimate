@@ -176,7 +176,7 @@ public class OctagonDetector extends NonRecursive {
 		} else if (t instanceof ApplicationTerm) {
 			final ApplicationTerm aT = (ApplicationTerm) t;
 			final String functionName = aT.getFunction().getName();
-			final List<String> validNames = Arrays.asList("<=", "<", ">", ">=", "=", "+", "-");
+			final List<String> validNames = Arrays.asList("<=", "<", ">", ">=", "=", "+");
 			if (validNames.contains(functionName)) {
 				for (final Term arg : aT.getParameters()) {
 					enqueueWalker(new OctagonDetectionWalker(arg));

@@ -105,6 +105,10 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 			for (final List<LETTER> loopTransitions : loopSet.getValue()) {
 				final TransFormula loopRelation = mPredHelper.traceToTf(loopTransitions);
 				final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", true);
+				if (applicationTermFinder.findMatchingSubterms(loopRelation.getFormula()).isEmpty()) {
+					disjuncts.add((UnmodifiableTransFormula) loopRelation);
+					continue;
+				}
 				final ModuloNeighborTransformation modNeighborTransformer =
 						new ModuloNeighborTransformation(mServices, true);
 				final ModifiableTransFormula modTf =
