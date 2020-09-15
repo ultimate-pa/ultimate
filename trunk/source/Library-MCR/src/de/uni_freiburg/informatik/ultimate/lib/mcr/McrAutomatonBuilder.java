@@ -346,18 +346,28 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				}
 			}
 			final Script script = mManagedScript.getScript();
+			final Set<String> ignored = new HashSet<>();
 			while (!dequeue.isEmpty()) {
 				final String state = dequeue.pop();
 				unlabeledSuccessors.remove(state);
 				IPredicate predicate = stateMap.get(state);
 				if (predicate == null) {
-					// Calculate the conjunction of wp for all successors
+					// Add new states (with state as only unlabeled successor) to the queue
+					for (final Entry<String, Set<String>> entry : unlabeledSuccessors.entrySet()) {
+						final Set<String> succs = entry.getValue();
+						if (succs.remove(state) && succs.isEmpty()) {
+							dequeue.add(entry.getKey());
+						}
+					}
+					// Calculate the conjunction of wp for all successors (if not ignored)
 					final List<Term> wpConjuncts = new ArrayList<>();
 					for (final OutgoingInternalTransition<Integer, String> outgoing : automaton
 							.internalSuccessors(state)) {
-						final IPredicate succ = stateMap.get(outgoing.getSucc());
-						assert succ != null;
-						wpConjuncts.add(mPredicateTransformer.weakestPrecondition(succ,
+						final String succ = outgoing.getSucc();
+						if (ignored.contains(succ)) {
+							continue;
+						}
+						wpConjuncts.add(mPredicateTransformer.weakestPrecondition(stateMap.get(succ),
 								mOriginalTrace.get(outgoing.getLetter()).getTransformula()));
 					}
 					// Quantify variables not contained in the original interpolants away
@@ -371,10 +381,11 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 							SmtUtils.quantifier(script, QuantifiedFormula.FORALL, unnecessaryVars, wpAnd);
 					final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
 							mManagedScript, wpQuantified, mSimplificationTechnique, mXnfConversionTechnique);
-					// Ignore the interpolant (and all its transitions), if it still contains quantifiers or stores
+					// Ignore the interpolant, if it still contains quantifiers or stores
 					// TODO: Can this be done better?
 					if (!QuantifierUtils.isQuantifierFree(wpEliminated)
 							|| SmtUtils.containsFunctionApplication(wpEliminated, "store")) {
+						ignored.add(state);
 						continue;
 					}
 					// Add the wp conjunction as a predicate
@@ -384,18 +395,15 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 						mcrIps.add(predicate);
 						result.addState(false, false, predicate);
 					}
-					// Add new states (with state as only unlabeled successor) to the queue
-					for (final Entry<String, Set<String>> entry : unlabeledSuccessors.entrySet()) {
-						final Set<String> succs = entry.getValue();
-						if (succs.remove(state) && succs.isEmpty()) {
-							dequeue.add(entry.getKey());
-						}
-					}
 				}
-				// Add the transitions to all successors
+				// Add the transitions to all successors (if not ignored)
 				for (final OutgoingInternalTransition<Integer, String> outgoing : automaton.internalSuccessors(state)) {
+					final String succ = outgoing.getSucc();
+					if (ignored.contains(succ)) {
+						continue;
+					}
 					final LETTER letter = mOriginalTrace.get(outgoing.getLetter());
-					result.addInternalTransition(predicate, letter, stateMap.get(outgoing.getSucc()));
+					result.addInternalTransition(predicate, letter, stateMap.get(succ));
 				}
 			}
 		}
