@@ -48,5 +48,5 @@ public interface ILoopPreprocessor<T> {
 	 * @param loop
 	 * @return
 	 */
-	public Map<IcfgLocation, Set<List<T>>> preProcessLoop(final Map<IcfgLocation, Set<List<T>>> loop);
+	public Map<IcfgLocation, List<UnmodifiableTransFormula>> preProcessLoop(final Map<IcfgLocation, Set<List<T>>> loop);
 }

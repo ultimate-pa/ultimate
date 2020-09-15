@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,10 +46,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformat
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Preprocess a given loop by transforming not supported transitions.
@@ -91,13 +96,15 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 	 * Preprocess a loop to remove unsupported operations, such as modulo
 	 */
 	@Override
-	public Map<IcfgLocation, Set<List<LETTER>>> preProcessLoop(final Map<IcfgLocation, Set<List<LETTER>>> loop) {
+	public Map<IcfgLocation, List<UnmodifiableTransFormula>>
+			preProcessLoop(final Map<IcfgLocation, Set<List<LETTER>>> loop) {
+		final Map<IcfgLocation, List<UnmodifiableTransFormula>> result = new HashMap<>();
 		for (final Entry<IcfgLocation, Set<List<LETTER>>> loopSet : loop.entrySet()) {
 			final IcfgLocation loophead = loopSet.getKey();
-
+			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
 			for (final List<LETTER> loopTransitions : loopSet.getValue()) {
 				final TransFormula loopRelation = mPredHelper.traceToTf(loopTransitions);
-				final List<ApplicationTerm> modTermSubs = new ArrayList<>();
+				final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", true);
 				final ModuloNeighborTransformation modNeighborTransformer =
 						new ModuloNeighborTransformation(mServices, true);
 				final ModifiableTransFormula modTf =
@@ -110,16 +117,23 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 					e.printStackTrace();
 				}
 				if (modTfTransformed != null) {
-					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", true);
-					final Set<ApplicationTerm> remainModTerms =
-							applicationTermFinder.findMatchingSubterms(modTfTransformed.getFormula());
-					mLogger.debug("remaining mods");
+					final ApplicationTerm modAppTermTransformed = (ApplicationTerm) modTfTransformed.getFormula();
+					for (final Term param : modAppTermTransformed.getParameters()) {
+						if (applicationTermFinder.findMatchingSubterms(param).isEmpty()) {
+							final TransFormulaBuilder tfb = new TransFormulaBuilder(loopRelation.getInVars(),
+									loopRelation.getOutVars(), true, null, true, null, false);
+							tfb.setFormula(param);
+							tfb.addAuxVarsButRenameToFreshCopies(loopRelation.getAuxVars(), mScript);
+							tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+							disjuncts.add(tfb.finishConstruction(mScript));
+						}
+					}
 				}
 			}
+			result.put(loophead, disjuncts);
 			mLogger.debug("Found modulo");
 		}
-
-		return loop;
+		return result;
 	}
 
 }
