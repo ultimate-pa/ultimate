@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -61,36 +61,30 @@ public class MaxDurationPattern extends PatternType {
 		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
-		final List<CounterTrace> ct = new ArrayList<>();
+		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct.add(counterTrace(phase(R, BoundTypes.GREATEREQUAL, c1), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT()));
+			ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct.add(counterTrace(phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT()));
-			ct.add(counterTrace(phase(P.negate()), phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT()));
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()),
-					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT()));
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct.add(counterTrace(phaseT(), phase(P), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P), phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT()));
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())),
-					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phase(Q.negate()), phase(Q), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phase(Q.negate()), phase(Q), phaseT()));
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 
-		return ct;
+		return Collections.singletonList(ct);
 	}
 
 	@Override
