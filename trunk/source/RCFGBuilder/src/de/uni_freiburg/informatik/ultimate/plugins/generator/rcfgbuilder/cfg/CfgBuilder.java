@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -305,21 +306,41 @@ public class CfgBuilder {
 		return icfg;
 	}
 
+	private Stream<BoogieIcfgLocation> getAllLocations() {
+		return mIcfg.getProgramPoints().entrySet().stream().flatMap(e -> e.getValue().values().stream());
+	}
+
 	private boolean isAtomicCompositionComplete() {
-		return IcfgLocationIterator.asStream(mIcfg).allMatch(loc -> {
-			if (isStartOfAtomicBlock(loc)) {
-				return loc.getOutgoingNodes().stream().allMatch(successor -> {
-					if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation) successor).isErrorLocation()) {
-						return true;
-					}
-					mLogger.warn(
-							"Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.",
-							successor);
-					return ((BoogieIcfgLocation) successor).getOutgoingNodes().isEmpty();
-				});
+		return getAllLocations().allMatch(this::isAtomicCompositionComplete);
+	}
+
+	private boolean isAtomicCompositionComplete(BoogieIcfgLocation pp) {
+		final boolean incomingCorrect;
+		if (isStartOfAtomicBlock(pp)) {
+			incomingCorrect = pp.getOutgoingNodes().stream().allMatch(successor -> {
+				if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation) successor).isErrorLocation()) {
+					return true;
+				}
+				mLogger.warn(
+						"Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.",
+						successor);
+				return ((BoogieIcfgLocation) successor).getOutgoingNodes().isEmpty();
+			});
+		} else {
+			incomingCorrect = true;
+		}
+
+		final boolean outgoingCorrect;
+		if (isEndOfAtomicBlock(pp)) {
+			outgoingCorrect = pp.getIncomingNodes().stream().allMatch(CfgBuilder::isStartOfAtomicBlock);
+			if (!outgoingCorrect) {
+				mLogger.warn("Atomic end node %s has at least one non-atomic predecessor (%s)", pp, pp.getIncomingNodes());
 			}
-			return true;
-		});
+		} else {
+			outgoingCorrect = true;
+		}
+
+		return incomingCorrect && outgoingCorrect;
 	}
 
 	public Boogie2SMT getBoogie2Smt() {
