@@ -381,9 +381,8 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 							SmtUtils.quantifier(script, QuantifiedFormula.FORALL, unnecessaryVars, wpAnd);
 					final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
 							mManagedScript, wpQuantified, mSimplificationTechnique, mXnfConversionTechnique);
-					// Ignore the interpolant, if it still contains quantifiers or stores
-					// TODO: Can this be done better?
-					if (!QuantifierUtils.isQuantifierFree(wpEliminated)
+					// Ignore the interpolant, if it still contains quantifiers or stores or has no successors
+					if (wpConjuncts.isEmpty() || !QuantifierUtils.isQuantifierFree(wpEliminated)
 							|| SmtUtils.containsFunctionApplication(wpEliminated, "store")) {
 						ignored.add(state);
 						continue;
