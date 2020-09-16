@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that "R" holds for at least "c1" time units
+ * {scope}, it is always the case that once "R" becomes satisfied, it holds for at least "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -61,42 +61,33 @@ public class MinDurationPattern extends PatternType {
 		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
-		final List<CounterTrace> ct = new ArrayList<>();
+		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct.add(counterTrace(phase(R, BoundTypes.LESS, c1), phase(R.negate()), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(R.negate()), phase(R, BoundTypes.LESS, c1), phase(R.negate()),
-					phaseT()));
+			ct = counterTrace(phaseT(), phase(R.negate()), phase(R, BoundTypes.LESS, c1), phase(R.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct.add(counterTrace(phase(P.negate().and(R), BoundTypes.LESS, c1), phase(P.negate().and(R.negate())),
-					phaseT()));
-			ct.add(counterTrace(phase(P.negate()), phase(P.negate().and(R.negate())),
-					phase(P.negate().and(R), BoundTypes.LESS, c1), phase(P.negate().and(R.negate())), phaseT()));
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R.negate())),
+					phase(P.negate().and(R), BoundTypes.LESS, c1), phase(P.negate().and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate().and(R), BoundTypes.LESS, c1),
-					phase(Q.negate().and(R.negate())), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R.negate())),
-					phase(Q.negate().and(R), BoundTypes.LESS, c1), phase(Q.negate().and(R.negate())), phaseT()));
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R.negate())),
+					phase(Q.negate().and(R), BoundTypes.LESS, c1), phase(Q.negate().and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct.add(counterTrace(phaseT(), phase(P), phase(R, BoundTypes.LESS, c1), phase(R.negate()), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P), phaseT(), phase(R.negate()), phase(R, BoundTypes.LESS, c1),
-					phase(R.negate()), phaseT()));
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.negate()), phase(R, BoundTypes.LESS, c1),
+					phase(R.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(R), BoundTypes.LESS, c1),
-					phase(Q.negate().and(R.negate())), phase(Q.negate()), phase(Q), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R), BoundTypes.LESS, c1),
-					phase(Q.negate().and(R.negate())), phase(Q.negate()), phase(Q), phaseT()));
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R.negate())),
+					phase(Q.negate().and(R), BoundTypes.LESS, c1), phase(Q.negate().and(R.negate())), phase(Q.negate()),
+					phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 
-		return ct;
+		return Collections.singletonList(ct);
 	}
 
 	@Override
@@ -109,9 +100,9 @@ public class MinDurationPattern extends PatternType {
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is always the case that \"");
+		sb.append("it is always the case that once \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds for at least \"");
+		sb.append("\" becomes satisfied, it holds for at least \"");
 		sb.append(getDuration().get(0));
 		sb.append("\" time units");
 		return sb.toString();
