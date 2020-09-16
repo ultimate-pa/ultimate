@@ -1611,12 +1611,7 @@ public class CfgBuilder {
 				collectAtomicPoints();
 			}
 
-			for (final String proc : mIcfg.getProgramPoints().keySet()) {
-				for (final DebugIdentifier position : mIcfg.getProgramPoints().get(proc).keySet()) {
-					final BoogieIcfgLocation pp = mIcfg.getProgramPoints().get(proc).get(position);
-					considerCompositionCandidate(pp);
-				}
-			}
+			getAllLocations().forEach(pp -> considerCompositionCandidate(pp));
 
 			// We distinguish 3 types of compositions: straight-line sequential compositions, parallel compositions, and Y-to-V sequential compositions.
 			// We employ Y-to-V compositions extremely sparingly, as they can lead to the creation of an exponential number of edges for complex branching code.
@@ -1654,14 +1649,7 @@ public class CfgBuilder {
 			final Set<BoogieIcfgLocation> visited = new HashSet<BoogieIcfgLocation>();
 
 			// Begin at start nodes of atomic blocks
-			for (final String proc : mIcfg.getProgramPoints().keySet()) {
-				for (final DebugIdentifier position : mIcfg.getProgramPoints().get(proc).keySet()) {
-					final BoogieIcfgLocation pp = mIcfg.getProgramPoints().get(proc).get(position);
-					if (isStartOfAtomicBlock(pp)) {
-						worklist.add(pp);
-					}
-				}
-			}
+			getAllLocations().filter(CfgBuilder::isStartOfAtomicBlock).forEach(worklist::add);
 
 			while (!worklist.isEmpty()) {
 				final BoogieIcfgLocation pp = worklist.poll();
@@ -1673,7 +1661,7 @@ public class CfgBuilder {
 				if (!isStartOfAtomicBlock(pp) && !isEndOfAtomicBlock(pp)) {
 					mAtomicPoints.add(pp);
 				}
-				if (!isEndOfAtomicBlock(pp)) {
+				if (!isEndOfAtomicBlock(pp) || isStartOfAtomicBlock(pp)) {
 					for (final IcfgEdge edge : pp.getOutgoingEdges()) {
 						worklist.add((BoogieIcfgLocation)edge.getTarget());
 					}
