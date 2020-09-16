@@ -83,7 +83,7 @@ public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
 	private static final boolean CREATE_NEW_FILES = false;
 
-	private static final File ROOT_DIR = new File("/mnt/data/projects/hanfor/documentation/docs");
+	private static final File ROOT_DIR = new File("/media/Daten/Projekte/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 	private static final File POS_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/positive");
@@ -191,15 +191,8 @@ public class PeaToDotTestSuite {
 		fmt.format(LINE_SEP);
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
-		fmt.format("%s```%sCountertraces: ", LINE_SEP, LINE_SEP);
-
-		for (int i = 0; i < cts.size(); i++) {
-			fmt.format("(%s)", cts.get(i));
-			if (i != (cts.size() - 1)) {
-				fmt.format(", ");
-			}
-		}
-
+		fmt.format("%s```%sCountertraces:%s", LINE_SEP, LINE_SEP, LINE_SEP);
+		fmt.format("%s", cts.stream().collect(Collectors.joining(LINE_SEP)));
 		fmt.format("%s```%s", LINE_SEP, LINE_SEP);
 
 		assert (numPea == cts.size());
