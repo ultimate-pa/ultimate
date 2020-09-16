@@ -334,7 +334,8 @@ public class CfgBuilder {
 		if (isEndOfAtomicBlock(pp)) {
 			outgoingCorrect = pp.getIncomingNodes().stream().allMatch(CfgBuilder::isStartOfAtomicBlock);
 			if (!outgoingCorrect) {
-				mLogger.warn("Atomic end node %s has at least one non-atomic predecessor (%s)", pp, pp.getIncomingNodes());
+				mLogger.warn("Atomic end node %s has at least one non-atomic predecessor (%s)", pp,
+						pp.getIncomingNodes());
 			}
 		} else {
 			outgoingCorrect = true;
@@ -1611,33 +1612,40 @@ public class CfgBuilder {
 				collectAtomicPoints();
 			}
 
-			getAllLocations().forEach(pp -> considerCompositionCandidate(pp));
+			getAllLocations().forEach(pp -> considerCompositionCandidate(pp, true));
 
 			// We distinguish 3 types of compositions: straight-line sequential compositions, parallel compositions, and Y-to-V sequential compositions.
 			// We employ Y-to-V compositions extremely sparingly, as they can lead to the creation of an exponential number of edges for complex branching code.
-			// Often, all these edges would be reduced through parallel composition to very few edges.
+			// Often, all these edges are later reduced through parallel composition to very few edges (but a timeout occurs before this happens).
 			while (!mSequentialQueue.isEmpty() || !mParallelQueue.isEmpty() || !mComplexSequentialQueue.isEmpty()) {
-				if (!mSequentialQueue.isEmpty()) {
-					final BoogieIcfgLocation superfluousPP = mSequentialQueue.iterator().next();
-					mSequentialQueue.remove(superfluousPP);
+				while (mSequentialQueue.isEmpty() && mParallelQueue.isEmpty() && !mComplexSequentialQueue.isEmpty()) {
+					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.iterator().next();
+					mComplexSequentialQueue.remove(superfluousPP);
 					composeSequential(superfluousPP);
-					mLogger.debug("sequential composition at %s", superfluousPP);
+					mLogger.info("Y2V composition at %s", superfluousPP);
+				}
+				mComplexSequentialQueue.clear();
 
-				} else if (!mParallelQueue.isEmpty()) {
+				while (mSequentialQueue.isEmpty() && !mParallelQueue.isEmpty()) {
 					final Entry<BoogieIcfgLocation, List<CodeBlock>> superfluous =
 							mParallelQueue.entrySet().iterator().next();
 					final BoogieIcfgLocation pp = superfluous.getKey();
 					final List<CodeBlock> outgoing = superfluous.getValue();
 					mParallelQueue.remove(pp);
 					composeParallel(pp, outgoing);
-					mLogger.debug("parallel composition at %s", pp);
-
-				} else /* i.e., !mComplexSequentialQueue.isEmpty() */ {
-					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.iterator().next();
-					mComplexSequentialQueue.remove(superfluousPP);
-					composeSequential(superfluousPP);
-					mLogger.debug("Y2V composition at %s", superfluousPP);
+					mLogger.info("parallel composition at %s", pp);
 				}
+				mParallelQueue.clear();
+
+				while (!mSequentialQueue.isEmpty()) {
+					final BoogieIcfgLocation superfluousPP = mSequentialQueue.iterator().next();
+					mSequentialQueue.remove(superfluousPP);
+					composeSequential(superfluousPP);
+					mLogger.info("sequential composition at %s", superfluousPP);
+				}
+				mSequentialQueue.clear();
+
+				getAllLocations().forEach(pp -> considerCompositionCandidate(pp, true));
 			}
 		}
 
@@ -1684,7 +1692,7 @@ public class CfgBuilder {
 		 * Determines if the given node is a composition candidate.
 		 * If so, it is placed in the appropriate queue, depending on what kind of composition is to be performed.
 		 */
-		private void considerCompositionCandidate(final BoogieIcfgLocation pp) {
+		private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowY2V) {
 			final SequentialCompositionType seq = classifySequentialCompositionNode(pp);
 			if (seq == SequentialCompositionType.STRAIGHTLINE) {
 				mSequentialQueue.add(pp);
@@ -1695,7 +1703,7 @@ public class CfgBuilder {
 			final List<CodeBlock> list = computeOutgoingCandidatesForParallelComposition(pp);
 			if (list != null) {
 				mParallelQueue.put(pp, list);
-			} else if (seq == SequentialCompositionType.Y2V) {
+			} else if (seq == SequentialCompositionType.Y2V && allowY2V) {
 				mComplexSequentialQueue.add(pp);
 			}
 		}
@@ -1736,14 +1744,13 @@ public class CfgBuilder {
 				currentCodeblock.disconnectTarget();
 			}
 
-			// continue composition where needed
-			// for correct detection, this must happen after edge removal
-			for (final IcfgEdge edge : newEdges) {
-				final BoogieIcfgLocation predecessor = (BoogieIcfgLocation) edge.getSource();
-				considerCompositionCandidate(predecessor);
-
-				final BoogieIcfgLocation successor = (BoogieIcfgLocation) edge.getTarget();
-				considerCompositionCandidate(successor);
+			// Continue composition where needed.
+			// For correct detection, this must happen after edge removal.
+			final Set<BoogieIcfgLocation> candidates = new HashSet<>();
+			newEdges.forEach(e -> candidates.add((BoogieIcfgLocation)e.getSource()));
+			newEdges.forEach(e -> candidates.add((BoogieIcfgLocation)e.getTarget()));
+			for (final BoogieIcfgLocation candidate : candidates) {
+				considerCompositionCandidate(candidate, false);
 			}
 
 			// remove location from Icfg
@@ -1760,8 +1767,8 @@ public class CfgBuilder {
 			final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.get(0).getTarget();
 			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
 					mXnfConversionTechnique, mSimplificationTechnique);
-			considerCompositionCandidate(pp);
-			considerCompositionCandidate(successor);
+			considerCompositionCandidate(pp, false);
+			considerCompositionCandidate(successor, false);
 		}
 
 		/**
@@ -1877,7 +1884,7 @@ public class CfgBuilder {
 			case ONLY_ATOMIC_BLOCK:
 				// In order to only perform compositions within atomic blocks, we have this condition.
 				// It would also be sound to return true, as more parallel compositions are not a threat to soundness.
-				return isStartOfAtomicBlock(pp);
+				return isStartOfAtomicBlock(pp) || mAtomicPoints.contains(pp);
 			default:
 				throw new AssertionError("unknown value " + mInternalLbeMode);
 			}
@@ -1897,7 +1904,7 @@ public class CfgBuilder {
 				// In order to catch all possible compositions within atomic blocks,
 				// we would also have to allow error locations and possibly (see atomicModeCorrect) return / exit nodes.
 				// However, this is not strictly necessary, as less parallel compositions are not a threat to soundness.
-				return isEndOfAtomicBlock(pp);
+				return mAtomicPoints.contains(pp) || isEndOfAtomicBlock(pp);
 			default:
 				throw new AssertionError("unknown value " + mInternalLbeMode);
 			}
