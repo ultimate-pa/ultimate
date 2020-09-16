@@ -203,6 +203,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		 * Find loops in the trace.
 		 */
 		mLoops = mLoopdetector.getLoops();
+		mLogger.debug("Done Preprocessing");
+
 		final ILoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices,
 				mPredUnifier, mPredHelper, mIcfg.getCfgSmtToolkit());
 		mLoopsTf = loopPreprocessor.preProcessLoop(mLoops);
@@ -257,10 +259,13 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				// final Term quantElim = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
 				// loopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_DDA,
 				// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-				mLogger.debug("Done Preprocessing");
+
+				mLogger.debug("Starting acceleration");
+
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loop, loophead.getKey(), AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
+					mLogger.debug("No acceleration found");
 					accelerationFinishedCorrectly = false;
 					break;
 				}

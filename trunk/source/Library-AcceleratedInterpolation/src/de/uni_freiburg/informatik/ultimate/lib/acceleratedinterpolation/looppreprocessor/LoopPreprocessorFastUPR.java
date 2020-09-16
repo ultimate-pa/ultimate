@@ -99,12 +99,14 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 	public Map<IcfgLocation, List<UnmodifiableTransFormula>>
 			preProcessLoop(final Map<IcfgLocation, Set<List<LETTER>>> loop) {
 		final Map<IcfgLocation, List<UnmodifiableTransFormula>> result = new HashMap<>();
+
 		for (final Entry<IcfgLocation, Set<List<LETTER>>> loopSet : loop.entrySet()) {
 			final IcfgLocation loophead = loopSet.getKey();
 			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
+
 			for (final List<LETTER> loopTransitions : loopSet.getValue()) {
 				final TransFormula loopRelation = mPredHelper.traceToTf(loopTransitions);
-				final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", true);
+				final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", false);
 				if (applicationTermFinder.findMatchingSubterms(loopRelation.getFormula()).isEmpty()) {
 					disjuncts.add((UnmodifiableTransFormula) loopRelation);
 					continue;
@@ -117,9 +119,13 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 				try {
 					modTfTransformed = modNeighborTransformer.process(mScript, modTf);
 				} catch (final TermException e) {
+					mLogger.debug("Could not deal with modulo");
 					modTfTransformed = null;
 					e.printStackTrace();
 				}
+				/*
+				 * TODO: programs with multiple modulos
+				 */
 				if (modTfTransformed != null) {
 					final ApplicationTerm modAppTermTransformed = (ApplicationTerm) modTfTransformed.getFormula();
 					for (final Term param : modAppTermTransformed.getParameters()) {
