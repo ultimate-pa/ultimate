@@ -35,7 +35,7 @@ fi
 if ! git diff-index --quiet HEAD
 then
 	echo "Current branch is dirty."
-	#exit 1
+	exit 1
 fi
 
 
