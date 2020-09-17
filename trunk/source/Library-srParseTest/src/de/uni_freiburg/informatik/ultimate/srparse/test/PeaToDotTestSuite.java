@@ -190,23 +190,28 @@ public class PeaToDotTestSuite {
 			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
 			fmt.format("## %s%s", mPatternName, LINE_SEP);
 		}
-
 		fmt.format(LINE_SEP);
+
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
-		fmt.format("%s```%sCountertraces:%s", LINE_SEP, LINE_SEP, LINE_SEP);
+		fmt.format(LINE_SEP);
+
+		fmt.format("#### Countertraces%s", LINE_SEP);
+		fmt.format("```%s", LINE_SEP);
 		fmt.format("%s", cts.stream().collect(Collectors.joining(LINE_SEP)));
 		fmt.format("%s```%s", LINE_SEP, LINE_SEP);
+		fmt.format(LINE_SEP);
 
+		fmt.format("#### Phase Event Automata%s", LINE_SEP);
 		assert (numPea == cts.size());
 		for (int i = numPea; i > 0; i--) {
-			fmt.format(LINE_SEP);
 			fmt.format("![](%s/%s/%s_%s_%d.svg)%s", "..", ROOT_DIR.toPath().relativize(PEA_IMAGE_DIR.toPath()),
 					mPatternName, mScopeName, (numPea - i), LINE_SEP);
 		}
+		fmt.format(LINE_SEP);
 
+		fmt.format("#### Examples%s%s", LINE_SEP, LINE_SEP);
 		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
-			fmt.format(LINE_SEP);
 			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
 			fmt.format("| Positive Example | Negative Example |%s", LINE_SEP);
 			fmt.format("| --- | --- |%s", LINE_SEP);
