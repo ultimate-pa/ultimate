@@ -3,6 +3,7 @@
 # Author: Nico Hauff (hauffn@informatik.uni-freiburg.de)
 
 ultimate_dir="/media/Daten/Projekte/ultimate"
+ultimate_adds_dir="${ultimate_dir}/releaseScripts/default/adds"
 ultimate_maven_dir="${ultimate_dir}/trunk/source/BA_MavenParentUltimate"
 ultimate_failure_paths_image_dir="${ultimate_dir}/trunk/examples/Requirements/failure-paths/img"
 hanfor_dir="/media/Daten/Projekte/hanfor"
@@ -22,6 +23,13 @@ do
    esac
 done
 
+# Check if Ultimate adds directory is in PATH variable.
+if ! echo $PATH | grep -q $ultimate_adds_dir
+then
+	echo "Could not find Ultimate adds directory in PATH."
+	echo "Try: export PATH=\$PATH:$ultimate_adds_dir"
+	exit 1
+fi
 
 # Check if branch is dev and is not dirty.
 cd $ultimate_dir
@@ -46,7 +54,7 @@ git rev-parse HEAD > "${hanfor_pattern_dir}/ultimate_revision.txt"
 # Uninstall Windows or format some hard drive. 
 if $run_req_checker_failure_path_generation
 then
-	cd $maven_dir
+	cd $ultimate_maven_dir
 	echo "Current working directory:" $PWD
 	echo "Run ReqCheckerFailurePathGenerationTestSuite ..."
 	mvn clean integration-test -Pmanualtest -Dtest=ReqCheckerFailurePathGenerationTestSuite
@@ -65,7 +73,7 @@ fi
 
 if $run_pea_to_dot
 then
-  	cd $maven_dir
+  	cd $ultimate_maven_dir
 	echo "Current working directory:" $PWD
 	echo "Run PeaToDotTestSuite ..."
 	mvn clean integration-test -Pmanualtest -Dtest=PeaToDotTestSuite
