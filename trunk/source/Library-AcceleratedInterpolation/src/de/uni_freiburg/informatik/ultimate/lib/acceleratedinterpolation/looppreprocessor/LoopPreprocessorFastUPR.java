@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.ModuloNeighborTransformation;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RemoveNegation;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDisequality;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.PredicateHelper;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -45,13 +50,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -67,11 +73,12 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
-	private final IPredicateUnifier mPredUnifier;
+	// private final IPredicateUnifier mPredUnifier;
 	private final PredicateHelper<LETTER> mPredHelper;
 	private final IUltimateServiceProvider mServices;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final CfgSmtToolkit mCsToolkit;
+	private final List<String> mOptions;
 
 	/**
 	 * Remove for example modulo operations from a loop, because FastUPR does not support it.
@@ -85,11 +92,13 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 			final PredicateHelper<LETTER> predHelper, final CfgSmtToolkit toolkit) {
 		mLogger = logger;
 		mScript = script;
-		mPredUnifier = predUnifier;
+		// mPredUnifier = predUnifier;
 		mPredHelper = predHelper;
 		mServices = services;
 		mCsToolkit = toolkit;
 		mReplacementVarFactory = new ReplacementVarFactory(mCsToolkit, false);
+
+		mOptions = new ArrayList<>(Arrays.asList("mod", "not"));
 	}
 
 	/**
@@ -105,45 +114,134 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
 
 			for (final List<LETTER> loopTransitions : loopSet.getValue()) {
-				final TransFormula loopRelation = mPredHelper.traceToTf(loopTransitions);
-				final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", false);
-				if (applicationTermFinder.findMatchingSubterms(loopRelation.getFormula()).isEmpty()) {
-					disjuncts.add((UnmodifiableTransFormula) loopRelation);
-					continue;
-				}
-				final ModuloNeighborTransformation modNeighborTransformer =
-						new ModuloNeighborTransformation(mServices, true);
-				final ModifiableTransFormula modTf =
-						ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
-				ModifiableTransFormula modTfTransformed;
-				try {
-					modTfTransformed = modNeighborTransformer.process(mScript, modTf);
-				} catch (final TermException e) {
-					mLogger.debug("Could not deal with modulo");
-					modTfTransformed = null;
-					e.printStackTrace();
-				}
-				/*
-				 * TODO: programs with multiple modulos
-				 */
-				if (modTfTransformed != null) {
-					final ApplicationTerm modAppTermTransformed = (ApplicationTerm) modTfTransformed.getFormula();
-					for (final Term param : modAppTermTransformed.getParameters()) {
-						if (applicationTermFinder.findMatchingSubterms(param).isEmpty()) {
-							final TransFormulaBuilder tfb = new TransFormulaBuilder(loopRelation.getInVars(),
-									loopRelation.getOutVars(), true, null, true, null, false);
-							tfb.setFormula(param);
-							tfb.addAuxVarsButRenameToFreshCopies(loopRelation.getAuxVars(), mScript);
-							tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-							disjuncts.add(tfb.finishConstruction(mScript));
-						}
+				UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loopTransitions);
+				for (final String option : mOptions) {
+					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
+					if (!applicationTermFinder.findMatchingSubterms(loopRelation.getFormula()).isEmpty()) {
+						loopRelation = preProcessing(option, loopRelation);
 					}
+					mLogger.debug("Preprocess");
 				}
+				disjuncts.addAll(splitDisjunction(loopRelation));
 			}
 			result.put(loophead, disjuncts);
-			mLogger.debug("Found modulo");
+			mLogger.debug("Loop preprocessed");
 		}
 		return result;
 	}
 
+	private UnmodifiableTransFormula preProcessing(final String option, final UnmodifiableTransFormula loopRelation) {
+		switch (option) {
+		case "mod":
+			return moduloTransformation(loopRelation);
+		case "not":
+			return notTransformation(loopRelation);
+		case "div":
+			return divisionTransformation(loopRelation);
+		default:
+			break;
+		}
+		return loopRelation;
+	}
+
+	private List<UnmodifiableTransFormula> splitDisjunction(final UnmodifiableTransFormula loopRelation) {
+		final DNF dnfConverter = new DNF(mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final ModifiableTransFormula modTf =
+				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
+		ModifiableTransFormula dnfModTf;
+		try {
+			dnfModTf = dnfConverter.process(mScript, modTf);
+		} catch (final TermException e) {
+			e.printStackTrace();
+			throw new UnsupportedOperationException("Could not turn into DNF");
+		}
+		final List<UnmodifiableTransFormula> result = new ArrayList<>();
+		final ApplicationTerm dnfAppTerm = (ApplicationTerm) dnfModTf.getFormula();
+		if (dnfAppTerm.getFunction().getName() != "or") {
+			result.add(loopRelation);
+		} else {
+			for (final Term disjunct : dnfAppTerm.getParameters()) {
+				final TransFormulaBuilder tfb = new TransFormulaBuilder(loopRelation.getInVars(),
+						loopRelation.getOutVars(), true, null, true, null, false);
+				tfb.setFormula(disjunct);
+				tfb.addAuxVarsButRenameToFreshCopies(loopRelation.getAuxVars(), mScript);
+				tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+				result.add(tfb.finishConstruction(mScript));
+			}
+		}
+		return result;
+	}
+
+	private final UnmodifiableTransFormula notTransformation(final UnmodifiableTransFormula loopRelation) {
+		mLogger.debug("Transforming not");
+		final ModifiableTransFormula modTf =
+				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
+		final RemoveNegation rn = new RemoveNegation();
+		final RewriteDisequality rd = new RewriteDisequality();
+		ModifiableTransFormula negFreeTf;
+		try {
+			negFreeTf = rn.process(mScript, modTf);
+			negFreeTf = rd.process(mScript, negFreeTf);
+		} catch (final TermException e) {
+			mLogger.debug("Could not deal with modulo");
+			negFreeTf = null;
+			e.printStackTrace();
+		}
+		return buildFormula(loopRelation, negFreeTf.getFormula());
+	}
+
+	private UnmodifiableTransFormula moduloTransformation(final UnmodifiableTransFormula loopRelation) {
+		mLogger.debug("Transforming modulo");
+		final ModifiableTransFormula modTf =
+				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
+		final ModuloNeighborTransformation modNeighborTransformer = new ModuloNeighborTransformation(mServices, true);
+		ModifiableTransFormula modTfTransformed;
+		try {
+			modTfTransformed = modNeighborTransformer.process(mScript, modTf);
+		} catch (final TermException e) {
+			mLogger.debug("Could not deal with modulo");
+			modTfTransformed = null;
+			e.printStackTrace();
+		}
+		/*
+		 * TODO: programs with multiple modulos
+		 */
+		final List<Term> result = new ArrayList<>();
+		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", false);
+		if (modTfTransformed != null) {
+			final ApplicationTerm modAppTermTransformed = (ApplicationTerm) modTfTransformed.getFormula();
+			for (final Term param : modAppTermTransformed.getParameters()) {
+				if (applicationTermFinder.findMatchingSubterms(param).isEmpty()) {
+					result.add(param);
+				}
+			}
+		}
+		final Term disjunctionNoMod = SmtUtils.or(mScript.getScript(), result);
+		return buildFormula(loopRelation, disjunctionNoMod);
+	}
+
+	private UnmodifiableTransFormula divisionTransformation(final UnmodifiableTransFormula loopRelation) {
+		mLogger.debug("Transforming division");
+		final ModifiableTransFormula modTf =
+				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
+		final RewriteDivision rd = new RewriteDivision(mReplacementVarFactory);
+		ModifiableTransFormula divModTf;
+		try {
+			divModTf = rd.process(mScript, modTf);
+		} catch (final TermException e) {
+			mLogger.debug("Could not deal with division");
+			divModTf = null;
+			e.printStackTrace();
+		}
+		return buildFormula(loopRelation, divModTf.getFormula());
+	}
+
+	private UnmodifiableTransFormula buildFormula(final UnmodifiableTransFormula origin, final Term term) {
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(origin.getInVars(), origin.getOutVars(), true, null, true, null, false);
+		tfb.setFormula(term);
+		tfb.addAuxVarsButRenameToFreshCopies(origin.getAuxVars(), mScript);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mScript);
+	}
 }

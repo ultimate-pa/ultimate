@@ -7,14 +7,18 @@
  */
 
 procedure main() {
-	var x, y : int;
+	var x, y, z : int;
 	x := 0;
 	y := 0;
+	z := 0;
 	
 	while (x < 5000) {
 		x := x + 1;
 		while (y < 10000) {
 			y := y + 1;
+			while (z < 5000) {
+				z := z + 1;
+			}
 		}
 	}
 	assert x == 5000;
