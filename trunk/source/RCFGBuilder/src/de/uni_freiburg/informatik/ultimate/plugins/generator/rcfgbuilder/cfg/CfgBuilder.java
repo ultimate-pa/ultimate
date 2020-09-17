@@ -1836,7 +1836,7 @@ public class CfgBuilder {
 			}
 			assert edge instanceof StatementSequence || edge instanceof SequentialComposition
 					|| edge instanceof ParallelComposition || edge instanceof Summary
-					|| edge instanceof GotoEdge : "unexpected type of incoming edge: "
+					|| edge instanceof GotoEdge : "unexpected type of edge: "
 							+ edge.getClass().getSimpleName();
 			return true;
 		}
