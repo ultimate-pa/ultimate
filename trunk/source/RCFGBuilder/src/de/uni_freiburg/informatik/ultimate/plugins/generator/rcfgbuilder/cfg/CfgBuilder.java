@@ -1622,9 +1622,8 @@ public class CfgBuilder {
 					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.iterator().next();
 					mComplexSequentialQueue.remove(superfluousPP);
 					composeSequential(superfluousPP);
-					mLogger.info("Y2V composition at %s", superfluousPP);
+					mLogger.debug("Y2V composition at %s", superfluousPP);
 				}
-				mComplexSequentialQueue.clear();
 
 				while (mSequentialQueue.isEmpty() && !mParallelQueue.isEmpty()) {
 					final Entry<BoogieIcfgLocation, List<CodeBlock>> superfluous =
@@ -1633,16 +1632,18 @@ public class CfgBuilder {
 					final List<CodeBlock> outgoing = superfluous.getValue();
 					mParallelQueue.remove(pp);
 					composeParallel(pp, outgoing);
-					mLogger.info("parallel composition at %s", pp);
+					mLogger.debug("parallel composition at %s", pp);
 				}
-				mParallelQueue.clear();
 
 				while (!mSequentialQueue.isEmpty()) {
 					final BoogieIcfgLocation superfluousPP = mSequentialQueue.iterator().next();
 					mSequentialQueue.remove(superfluousPP);
 					composeSequential(superfluousPP);
-					mLogger.info("sequential composition at %s", superfluousPP);
+					mLogger.debug("sequential composition at %s", superfluousPP);
 				}
+
+				mComplexSequentialQueue.clear();
+				mParallelQueue.clear();
 				mSequentialQueue.clear();
 
 				getAllLocations().forEach(pp -> considerCompositionCandidate(pp, true));
