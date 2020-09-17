@@ -4,9 +4,10 @@
 
 ultimate_dir="/media/Daten/Projekte/ultimate"
 ultimate_maven_dir="${ultimate_dir}/trunk/source/BA_MavenParentUltimate"
-ultimate_failure_paths_image_dir="${ultimate_dir}/trunk/examples/Requirements/failure-paths"
+ultimate_failure_paths_image_dir="${ultimate_dir}/trunk/examples/Requirements/failure-paths/img"
 hanfor_dir="/media/Daten/Projekte/hanfor"
 hanfor_pattern_dir="${hanfor_dir}/documentation/docs/references/patterns"
+hanfor_failure_paths_image_dir="${hanfor_dir}/documentation/docs/img/failure_paths/positive"
 
 run_req_checker_failure_path_generation=false
 run_pea_to_dot=false
@@ -27,13 +28,14 @@ cd $ultimate_dir
 
 current_branch=$(git branch --show-current)
 if [ "$current_branch" != "dev" ]; then
-	echo "Current branch must be 'dev', but it is: '$current_branch'"
+	echo "Current branch must be 'dev', but it is: $current_branch"
 	exit 1
 fi
 
-if ! git diff-index --quiet HEAD; then
+if ! git diff-index --quiet HEAD
+then
 	echo "Current branch is dirty."
-	exit 1
+	#exit 1
 fi
 
 
@@ -46,13 +48,26 @@ if $run_req_checker_failure_path_generation
 then
 	cd $maven_dir
 	echo "Current working directory:" $PWD
+	echo "Run ReqCheckerFailurePathGenerationTestSuite ..."
 	mvn clean integration-test -Pmanualtest -Dtest=ReqCheckerFailurePathGenerationTestSuite
+fi
+
+# Copy generated failure path images to hanfor docs.
+if ls $ultimate_failure_paths_image_dir/*.svg &> /dev/null
+then
+	echo "Copy failure path image files to '$ultimate_failure_paths_image_dir' ..."
+	rm $hanfor_failure_paths_image_dir/*.svg
+	cp $ultimate_failure_paths_image_dir/*.svg $hanfor_failure_paths_image_dir
+else
+	echo "Could not find failure path image files in: $ultimate_failure_paths_image_dir"
+	exit 1
 fi
 
 if $run_pea_to_dot
 then
   	cd $maven_dir
 	echo "Current working directory:" $PWD
+	echo "Run PeaToDotTestSuite ..."
 	mvn clean integration-test -Pmanualtest -Dtest=PeaToDotTestSuite
 fi
 
