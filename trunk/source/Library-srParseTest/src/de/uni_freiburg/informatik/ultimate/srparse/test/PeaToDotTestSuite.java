@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.srparse.test;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -81,13 +83,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final boolean CREATE_NEW_FILES = false;
+	private static final boolean CREATE_NEW_FILES = true;
 
 	private static final File ROOT_DIR = new File("/media/Daten/Projekte/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 	private static final File POS_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/positive");
 	private static final File NEG_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/negative");
+	private static final File ULTIMATE_REVISION_FILE = new File(MARKDOWN_DIR + "/ultimate_revision.txt");
 
 	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
 
@@ -215,12 +218,10 @@ public class PeaToDotTestSuite {
 					lhs = "![](../" + ROOT_DIR.toPath().relativize(POS_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
 							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
 				}
-
 				if (i < negFailureImages.length) {
 					rhs = "![](../" + ROOT_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
 							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
 				}
-
 				fmt.format("| %s | %s |%s", lhs, rhs, LINE_SEP);
 			}
 		}
@@ -315,6 +316,17 @@ public class PeaToDotTestSuite {
 
 		final Formatter fmt = new Formatter();
 		fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
+
+		if (ULTIMATE_REVISION_FILE.canRead()) {
+			final BufferedReader reader = new BufferedReader(new FileReader(ULTIMATE_REVISION_FILE));
+			final String ultimateRevision = reader.readLine();
+			reader.close();
+
+			// fmt.format("### Ultimate revision at GitHub%s", LINE_SEP);
+			fmt.format("Ultimate revision on Github that corresponds to this documention: %s", LINE_SEP);
+			fmt.format("[%s](https://github.com/ultimate-pa/ultimate/tree/%s \"%s\")%s%s", ultimateRevision,
+					ultimateRevision, ultimateRevision, LINE_SEP, LINE_SEP);
+		}
 
 		final String markdownDir = ROOT_DIR.toPath().relativize(MARKDOWN_DIR.toPath()).toString();
 		Arrays.stream(MARKDOWN_DIR.list()).filter(e -> e.endsWith(".md"))
