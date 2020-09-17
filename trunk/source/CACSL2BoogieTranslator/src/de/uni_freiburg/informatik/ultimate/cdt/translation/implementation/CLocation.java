@@ -34,7 +34,6 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -45,9 +44,8 @@ public class CLocation extends CACSLLocation {
 	private final IASTNode mNode;
 	private final LineDirectiveMapping mLineDirectiveMapping;
 
-	protected CLocation(final IASTNode node, final Check checkedSpec, final boolean ignoreDuringBacktranslation,
-			final LineDirectiveMapping lineDirectiveMapping) {
-		super(checkedSpec, ignoreDuringBacktranslation);
+	protected CLocation(final IASTNode node, final boolean ignoreDuringBacktranslation, final LineDirectiveMapping lineDirectiveMapping) {
+		super(ignoreDuringBacktranslation);
 		mNode = node;
 		mLineDirectiveMapping = lineDirectiveMapping;
 	}
@@ -136,7 +134,6 @@ public class CLocation extends CACSLLocation {
 		}
 		if (other instanceof CLocation) {
 			final CLocation otherCloc = (CLocation) other;
-			final Check mergedCheck = Check.mergeCheck(getCheck(), otherCloc.getCheck());
 			final boolean ignoreDuringBacktranslation =
 					ignoreDuringBacktranslation() && otherCloc.ignoreDuringBacktranslation();
 			final IASTNode node = getMergedNode(otherCloc);
@@ -146,7 +143,7 @@ public class CLocation extends CACSLLocation {
 			} else {
 				resultLineDirectiveMapping = mLineDirectiveMapping;
 			}
-			return new CLocation(node, mergedCheck, ignoreDuringBacktranslation, resultLineDirectiveMapping);
+			return new CLocation(node, ignoreDuringBacktranslation, resultLineDirectiveMapping);
 		} else if (other instanceof ILocation) {
 			return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
 		}

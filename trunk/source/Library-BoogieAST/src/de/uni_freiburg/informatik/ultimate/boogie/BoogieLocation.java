@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -42,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 public class BoogieLocation extends DefaultLocation {
 	private static final long serialVersionUID = 4495864682359937328L;
 
-	private BoogieASTNode mBoogieASTNode;
-
 	public BoogieLocation(final String fileName, final int startLine, final int endLine, final int startColum,
 			final int endColumn) {
 		super(fileName, startLine, endLine, startColum, endColumn);
@@ -53,25 +49,6 @@ public class BoogieLocation extends DefaultLocation {
 	public String toString() {
 		return "BPL: " + getFileName() + ":" + getStartLine() + "/" + getStartColumn() + "-" + getEndLine() + "/"
 				+ getEndColumn();
-	}
-
-	@Override
-	public Check getCheck() {
-		return Check.getAnnotation(mBoogieASTNode);
-	}
-
-	public BoogieASTNode getBoogieASTNode() {
-		return mBoogieASTNode;
-	}
-
-	public void setBoogieASTNode(final BoogieASTNode boogieASTNode) {
-		mBoogieASTNode = boogieASTNode;
-		if (getCheck() == null) {
-			final Check defaultCheck = BoogieASTNode.createDefaultCheck(mBoogieASTNode);
-			if (defaultCheck != null) {
-				defaultCheck.annotate(mBoogieASTNode);
-			}
-		}
 	}
 
 	@Override

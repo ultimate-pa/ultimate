@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
@@ -89,10 +88,6 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 		super();
 		if (location == null) {
 			return;
-		}
-		if (location instanceof BoogieLocation) {
-			final BoogieLocation bplLocation = (BoogieLocation) location;
-			bplLocation.setBoogieASTNode(this);
 		}
 		location.annotate(this);
 	}

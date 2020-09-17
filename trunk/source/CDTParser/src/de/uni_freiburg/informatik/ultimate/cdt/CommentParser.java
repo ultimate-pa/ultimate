@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.Activator;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -235,11 +234,6 @@ public class CommentParser {
 		@Override
 		public int getEndColumn() {
 			return mNode.getLocation().getEndColumn();
-		}
-
-		@Override
-		public IAnnotations getCheck() {
-			return null;
 		}
 	}
 }

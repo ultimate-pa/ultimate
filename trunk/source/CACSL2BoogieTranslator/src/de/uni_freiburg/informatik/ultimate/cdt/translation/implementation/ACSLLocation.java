@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -37,8 +36,8 @@ public class ACSLLocation extends CACSLLocation {
 	private static final long serialVersionUID = -4361747376994862578L;
 	private final ACSLNode mNode;
 
-	ACSLLocation(final ACSLNode acslNode, final Check checkedSpec, final boolean ignoreDuringBacktranslation) {
-		super(checkedSpec, ignoreDuringBacktranslation);
+	ACSLLocation(final ACSLNode acslNode, final boolean ignoreDuringBacktranslation) {
+		super(ignoreDuringBacktranslation);
 		mNode = acslNode;
 	}
 
