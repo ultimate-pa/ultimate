@@ -99,7 +99,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.LoopEntryDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.OrdinaryDebugIdentifier;
@@ -1677,8 +1676,8 @@ public class CfgBuilder {
 				}
 			}
 
-			assert IcfgLocationIterator.asStream(mIcfg).allMatch(this::allPredecessorsAtomic) : "Atomic point with unexpected non-atomic predecessor!";
-			assert IcfgLocationIterator.asStream(mIcfg).allMatch(this::allSuccessorsAtomic) : "Atomic point with unexpected non-atomic successor!";
+			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp) || allPredecessorsAtomic(pp)) : "Atomic point with unexpected non-atomic predecessor!";
+			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp) || allSuccessorsAtomic(pp)) : "Atomic point with unexpected non-atomic successor!";
 		}
 
 		private boolean allPredecessorsAtomic(BoogieIcfgLocation pp) {
