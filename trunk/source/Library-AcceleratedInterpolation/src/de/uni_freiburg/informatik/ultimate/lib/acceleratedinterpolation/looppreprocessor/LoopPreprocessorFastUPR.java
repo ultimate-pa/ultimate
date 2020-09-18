@@ -188,7 +188,7 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 	 * @param loopRelation
 	 * @return
 	 */
-	private final UnmodifiableTransFormula notTransformation(final UnmodifiableTransFormula loopRelation) {
+	private UnmodifiableTransFormula notTransformation(final UnmodifiableTransFormula loopRelation) {
 		mLogger.debug("Transforming not");
 		final ModifiableTransFormula modTf =
 				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
@@ -199,7 +199,7 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 			negFreeTf = rn.process(mScript, modTf);
 			negFreeTf = rd.process(mScript, negFreeTf);
 		} catch (final TermException e) {
-			mLogger.debug("Could not deal with modulo");
+			mLogger.debug("Could not deal with not");
 			negFreeTf = null;
 			e.printStackTrace();
 		}
