@@ -314,33 +314,28 @@ public class CfgBuilder {
 	}
 
 	private boolean isAtomicCompositionComplete(BoogieIcfgLocation pp) {
-		final boolean incomingCorrect;
 		if (isStartOfAtomicBlock(pp)) {
-			incomingCorrect = pp.getOutgoingNodes().stream().allMatch(successor -> {
+			return pp.getOutgoingNodes().stream().allMatch(successor -> {
 				if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation) successor).isErrorLocation()) {
 					return true;
 				}
 				mLogger.warn(
 						"Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.",
 						successor);
-				return ((BoogieIcfgLocation) successor).getOutgoingNodes().isEmpty();
+
+				// We tolerate nodes without successors, such as thread exit locations.
+				return successor.getOutgoingEdges().isEmpty();
 			});
 		} else {
-			incomingCorrect = true;
+			return true;
 		}
 
-		final boolean outgoingCorrect;
-		if (isEndOfAtomicBlock(pp)) {
-			outgoingCorrect = pp.getIncomingNodes().stream().allMatch(CfgBuilder::isStartOfAtomicBlock);
-			if (!outgoingCorrect) {
-				mLogger.warn("Atomic end node %s has at least one non-atomic predecessor (%s)", pp,
-						pp.getIncomingNodes());
-			}
-		} else {
-			outgoingCorrect = true;
-		}
-
-		return incomingCorrect && outgoingCorrect;
+		// Dominik 2020-09-18:
+		// There is no corresponding check for end-points of atomic blocks.
+		// The reason is that such points may be reached in other ways than through the atomic block.
+		// For instance, consider a loop whose body is an atomic block.
+		// The end point of the body is also the loop head, and thus has a predecessor outside the atomic block.
+		// A second (but less important) effect is that orphaned __VERIFIER_atomic_end() statements do not cause an error.
 	}
 
 	public Boogie2SMT getBoogie2Smt() {
