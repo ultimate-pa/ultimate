@@ -156,6 +156,16 @@ public class FastUprTest {
 				"(and (<= (+ c_x 2) c_x_primed) (<= 6 (* 2 c_x)) (<= (* 2 c_x) 20) (<= c_x_primed (+ c_x 2)))", mMgdZ3);
 	}
 
+	// @Test disable because it runs reeeeally long
+	public void tfEx05_Z3() {
+		runAndTestAcceleration(this::getTfEx05LoopBody, "false", mMgdZ3);
+	}
+
+	@Test
+	public void tfEx05_SmtInterpol() {
+		runAndTestAcceleration(this::getTfEx05LoopBody, "false", mMgdSmtInterpol);
+	}
+
 	// @Test disabled because Z3 runs out of ressources during acceleration
 	public void tfEx02_Z3() {
 		runAndTestAcceleration(this::getTfEx02LoopBody, "???", mMgdZ3);
@@ -320,6 +330,47 @@ public class FastUprTest {
 		return tfb.finishConstruction(managedScript);
 	}
 
+	/**
+	 * Create loop body for
+	 *
+	 * (and (< (+ c_x 4026531841) 0) (= c_x_primed (+ c_x 2)) (<= 0 (+ c_x 4294967296)))
+	 *
+	 * x + 4026531841 < 0 && x' = x +2 && 0 <= x + 4294967296
+	 *
+	 * (accelerated interpolation 3)
+	 *
+	 * Formula:
+	 *
+	 * (and (< (+ c_x 4026531841) 0) (= c_x_primed (+ c_x 2)) (<= 0 (+ c_x 4294967296))) InVars {main_~x~0=c_x}
+	 * OutVars{main_~x~0=c_x_primed} AuxVars[] AssignedVars[main_~x~0]
+	 *
+	 */
+	private UnmodifiableTransFormula getTfEx05LoopBody(final ManagedScript managedScript) {
+		final Script script = managedScript.getScript();
+		managedScript.lock(this);
+		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+				managedScript, this);
+		managedScript.unlock(this);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+
+		final TermVariable in = managedScript.constructFreshCopy(varX.getTermVariable());
+		final TermVariable out = managedScript.constructFreshCopy(varX.getTermVariable());
+
+		tfb.addInVar(varX, in);
+		tfb.addOutVar(varX, out);
+
+		final Term zero = script.numeral("0");
+		final Term guard1 = script.term("<", script.term("+", in, script.numeral("4026531841")), zero);
+		final Term guard2 = script.term("<=", zero, script.term("+", in, script.numeral("4294967296")));
+		final Term body = script.term("=", out, script.term("+", in, script.numeral("2")));
+
+		final Term term = script.term("and", guard1, body, guard2);
+
+		tfb.setFormula(term);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(managedScript);
+	}
+
 	private void runAndTestAcceleration(final TestData input, final String expected,
 			final ManagedScript managedScript) {
 		final UnmodifiableTransFormula loopBody = input.getLoopBody(managedScript);
@@ -336,7 +387,7 @@ public class FastUprTest {
 		final UnmodifiableTransFormula accelerated =
 				new FastUPRCore(input, managedScript, mLogger, mServices).getResult();
 		final Term actualT = accelerated.getClosedFormula();
-		mLogger.info("Input            : %s", input.getClosedFormula());
+		mLogger.info("Input            : %s", input.getClosedFormula().toStringDirect());
 		mLogger.info("Output           : %s", actualT.toStringDirect());
 		mLogger.info("Expected formula : %s", expected);
 
