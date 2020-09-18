@@ -115,6 +115,9 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 
 			for (final List<LETTER> loopTransitions : loopSet.getValue()) {
 				UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loopTransitions);
+				/*
+				 * Transform found unsupported operations:
+				 */
 				for (final String option : mOptions) {
 					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
 					if (!applicationTermFinder.findMatchingSubterms(loopRelation.getFormula()).isEmpty()) {
@@ -144,6 +147,13 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 		return loopRelation;
 	}
 
+	/**
+	 * In case of modulo transformation we get a disjunction covering different cases of integer value intervals. For
+	 * acceleration split these disjunctions for underapprox
+	 *
+	 * @param loopRelation
+	 * @return
+	 */
 	private List<UnmodifiableTransFormula> splitDisjunction(final UnmodifiableTransFormula loopRelation) {
 		final DNF dnfConverter = new DNF(mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final ModifiableTransFormula modTf =
@@ -172,6 +182,12 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 		return result;
 	}
 
+	/**
+	 * Rewrite not formulas such as != and not(< x y)
+	 *
+	 * @param loopRelation
+	 * @return
+	 */
 	private final UnmodifiableTransFormula notTransformation(final UnmodifiableTransFormula loopRelation) {
 		mLogger.debug("Transforming not");
 		final ModifiableTransFormula modTf =
@@ -190,6 +206,12 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 		return buildFormula(loopRelation, negFreeTf.getFormula());
 	}
 
+	/**
+	 * substitute modulo by a disjunction
+	 *
+	 * @param loopRelation
+	 * @return
+	 */
 	private UnmodifiableTransFormula moduloTransformation(final UnmodifiableTransFormula loopRelation) {
 		mLogger.debug("Transforming modulo");
 		final ModifiableTransFormula modTf =
@@ -220,6 +242,12 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 		return buildFormula(loopRelation, disjunctionNoMod);
 	}
 
+	/**
+	 * Rewrite division
+	 *
+	 * @param loopRelation
+	 * @return
+	 */
 	private UnmodifiableTransFormula divisionTransformation(final UnmodifiableTransFormula loopRelation) {
 		mLogger.debug("Transforming division");
 		final ModifiableTransFormula modTf =
