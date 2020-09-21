@@ -25,11 +25,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * TODO
@@ -37,29 +42,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes Rochin
  *
- * @param <LETTER>
  * @param <PLACE>
  */
-public class OwickiGriesValidityCheck<LETTER, PLACE> {
-	private final boolean mIsInductive;
-	private final boolean mIsInterferenceFree;
-	private final IHoareTripleChecker mHoareTripleChecker;
-	private final BasicPredicateFactory mPredicateFactory;
+public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
+	private final OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> mAnnotation;
 
-	public OwickiGriesValidityCheck(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
-			OwickiGriesAnnotation<LETTER, PLACE> annotation) {
-		mPredicateFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
+	public OwickiGriesConstruction(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
+			IPetriNet<IIcfgTransition<LOC>, PLACE> net,
+			Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> floydHoare) {
+		final BasicPredicateFactory factory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable());
-		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
 
-		// TODO Use mPredicateFactory.and(preds)
-		// TODO Use mHoareTripleChecker.checkInternal(pre, act, succ)
+		// TODO Use factory.and(preds)
+		// ...
 
-		mIsInductive = false; // TODO
-		mIsInterferenceFree = false; // TODO
+		mAnnotation = new OwickiGriesAnnotation<>();
 	}
 
-	public boolean isValid() {
-		return mIsInductive && mIsInterferenceFree;
+	public OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> getResult() {
+		return mAnnotation;
 	}
 }
