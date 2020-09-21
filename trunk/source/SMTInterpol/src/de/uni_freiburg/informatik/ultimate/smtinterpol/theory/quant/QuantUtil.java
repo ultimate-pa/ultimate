@@ -29,13 +29,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 
 /**
- * Info class for quantified terms. This class contains helper methods to classify quantified terms.
+ * This class contains helper methods to classify quantified terms and literals.
  * 
  * @author Tanja Schindler
  */
-public class QuantifiedTermInfo {
+public class QuantUtil {
 
-	private QuantifiedTermInfo() {
+	private QuantUtil() {
 		// Not meant to be instantiated
 	}
 
@@ -89,21 +89,39 @@ public class QuantifiedTermInfo {
 		}
 	}
 
-	public static boolean containsArithmeticOnlyAtTopLevel(final QuantLiteral atom) {
+	/**
+	 * Check if a quantified atom contains arithmetic on quantified terms only at top level, i.e., the left and right
+	 * hand side of the (in)equality are affine terms where the summands do not contain arithmetic on quantified terms
+	 * themselves.
+	 * 
+	 * @param atom
+	 *            the quantified atom.
+	 * @return true if the literal contains arithmetic on quantified terms only at top level, false else.
+	 */
+	public static boolean containsArithmeticOnQuantOnlyAtTopLevel(final QuantLiteral atom) {
 		assert !atom.isNegated();
 		if (atom instanceof QuantBoundConstraint) {
-			return containsArithmeticOnlyAtTopLevel(((QuantBoundConstraint) atom).getAffineTerm());
+			return containsArithmeticOnQuantOnlyAtTopLevel(((QuantBoundConstraint) atom).getAffineTerm());
 		} else {
 			final QuantEquality eq = (QuantEquality) atom;
 			final SMTAffineTerm lhsAff = new SMTAffineTerm(eq.getLhs());
-			if (containsArithmeticOnlyAtTopLevel(lhsAff)) {
+			if (containsArithmeticOnQuantOnlyAtTopLevel(lhsAff)) {
 				final SMTAffineTerm rhsAff = new SMTAffineTerm(eq.getRhs());
-				return containsArithmeticOnlyAtTopLevel(rhsAff);
+				return containsArithmeticOnQuantOnlyAtTopLevel(rhsAff);
 			}
 		}
 		return false;
 	}
 
+	/**
+	 * Check that any variable occurring in a quantified literal appears at least once in a function application within
+	 * this literal, excluding top level arithmetic function applications.
+	 * 
+	 * @param atom
+	 *            the quantified atom.
+	 * @return true if each variable appears at least once in a function application, false else.
+	 * @see QuantUtil.containsArithmeticOnlyAtTopLevel(final QuantLiteral atom) for top level arithmetic.
+	 */
 	public static boolean containsAppTermsForEachVar(final QuantLiteral atom) {
 		assert !atom.isNegated();
 		final Set<Term> allSummandsWithoutCoeffs = new HashSet<>();
@@ -132,9 +150,16 @@ public class QuantifiedTermInfo {
 		return varTerms.isEmpty();
 	}
 
-	public static boolean containsArithmeticOnlyAtTopLevel(final SMTAffineTerm at) {
+	/**
+	 * Check if an affine term contains arithmetic on quantified terms only at top level, i.e., its summands do not
+	 * contain arithmetic on quantified terms.
+	 * 
+	 * @param at
+	 *            the SMTAffineTerm to check
+	 */
+	public static boolean containsArithmeticOnQuantOnlyAtTopLevel(final SMTAffineTerm at) {
 		for (final Term smd : at.getSummands().keySet()) {
-			if (!(smd instanceof TermVariable) && !isNonVarUFTerm(smd)) {
+			if (!(smd instanceof TermVariable) && !isSimpleEU(smd)) {
 				return false;
 			}
 		}
@@ -152,7 +177,7 @@ public class QuantifiedTermInfo {
 	 *            the term to check.
 	 * @return true, if the term is a "simple" EU term, false otherwise.
 	 */
-	public static boolean isNonVarUFTerm(final Term term) {
+	public static boolean isSimpleEU(final Term term) {
 		if (term.getFreeVars().length != 0) {
 			if (term instanceof TermVariable) {
 				return false;
@@ -165,15 +190,15 @@ public class QuantifiedTermInfo {
 				}
 				final Term[] args = at.getParameters();
 				if (func.getName().equals("select")) {
-					if (!isNonVarUFTerm(args[0])) {
+					if (!isSimpleEU(args[0])) {
 						return false; // Quantified arrays are not allowed.
 					}
-					if (!(args[1] instanceof TermVariable) && !isNonVarUFTerm(args[1])) {
+					if (!(args[1] instanceof TermVariable) && !isSimpleEU(args[1])) {
 						return false;
 					}
 				} else {
 					for (final Term arg : args) {
-						if (!(arg instanceof TermVariable) && !isNonVarUFTerm(arg)) {
+						if (!(arg instanceof TermVariable) && !isSimpleEU(arg)) {
 							return false;
 						}
 					}
@@ -184,9 +209,10 @@ public class QuantifiedTermInfo {
 	}
 
 	/**
-	 * Check if a term is an application term with an internal {@literal @}AUX function used by the clausifier.
+	 * Check if a term is an application term with an internal {@literal @}AUX function.
+	 * 
 	 * @param term
-	 * @return
+	 *            the term to check.
 	 */
 	public static boolean isAuxApplication(final Term term) {
 		if (term instanceof ApplicationTerm) {

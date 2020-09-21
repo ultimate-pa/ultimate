@@ -23,6 +23,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * The proof tracker interface. There are two implementations, one that builds the proof and one that only builds the
@@ -60,13 +61,15 @@ public interface IProofTracker {
 	public Term reflexivity(Term x);
 
 	/**
-	 * Create a proof that input term x equals z from a proof for {@code (= x y)} and a proof for {@code (= y z)}.
+	 * Create a proof that input term x equals (or implies) z from a proof for {@code (= x y)} (or {@code (=> x y)}) and
+	 * a proof for {@code (= y z)} (or {@code (=> y z)}).
 	 *
 	 * @param y
-	 *            the intermediate term annotated with a proof {@code (= x y)}.
+	 *            the intermediate term annotated with a proof {@code (= x y)} (or {@code (=> x y)}).
 	 * @param z
-	 *            the final term annotated with a proof {@code (= y z)}.
-	 * @return the term z annotated with a proof {@code (= x z)}.
+	 *            the final term annotated with a proof {@code (= y z)} (or {@code (=> y z)}).
+	 * @return the term z annotated with a proof {@code (= x z)} (or {@code (=> x z)} if at least one of the input
+	 *         proofs proves an implication).
 	 */
 	public Term transitivity(Term y, Term z);
 
@@ -83,6 +86,21 @@ public interface IProofTracker {
 	public Term congruence(Term a, Term[] b);
 
 	/**
+	 * Create a proof that input term x implies {@code (or b[0] ... b[n]} from a proof for {@code (= x a)} where
+	 * {@code a = (or a[0],...,a[n])}, and an array of b each annotated with a proof that {@code (=> a[i] b[i])} (or
+	 * {@code (= a[i] b[i])}).
+	 *
+	 * @param a
+	 *            the term a=(or a[0] ... a[n]) with a proof {@code (= x a)}
+	 * @param b
+	 *            an array of terms b[i] annotated with proofs {@code (=> a[i] b[i])} (or {@code (= a[i] b[i])})
+	 * @return the term {@code (or b[0] ... b[n]} annotated with a proof
+	 *         {@code (=> (or a[0] ... a[n]) (or b[0] ... b[n])} or {@code (=> (or a[0] ... a[n]) (or b[0] ... b[n])} if
+	 *         the proofs for the b[i] contain no implication proof.
+	 */
+	public Term orMonotony(Term a, Term[] b);
+
+	/**
 	 * Lift a rewrite over an exists, i.e. convert a proof for {@code (= f g)} into a proof for
 	 * {@code (= (exists varlist f) (exists varlist g))}
 	 *
@@ -97,8 +115,8 @@ public interface IProofTracker {
 	/* == rewrite rules == */
 
 	/**
-	 * Create a rewrite proof for {@code (= orig res)}. This function doesn't check if the rewrite proof is sound but
-	 * trusts the caller.
+	 * Create a rewrite proof for {@code (= orig res)} or {@code (=> orig res)}, respectively. This function doesn't
+	 * check if the rewrite proof is sound but trusts the caller.
 	 *
 	 * @param orig
 	 *            the original term
@@ -106,7 +124,7 @@ public interface IProofTracker {
 	 *            the rewritten term
 	 * @param rule
 	 *            the rewrite rule, one of {@link ProofConstants}.RW_*
-	 * @return res annotated with proof of {@code (= orig res)}.
+	 * @return res annotated with proof of {@code (= orig res)} or {@code (=> orig res)}, respectively.
 	 */
 	public Term buildRewrite(Term orig, Term res, Annotation rule);
 
@@ -182,6 +200,17 @@ public interface IProofTracker {
 	public Term split(Term formula, Term subterm, Annotation splitKind);
 
 	/**
+	 * Introduce a universal quantifier.
+	 *
+	 * @param formula
+	 *            The formula containing free variables annotated with its proof.
+	 * @param vars
+	 *            the variables to quantify
+	 * @return The universally quantified formula annotated with its proof.
+	 */
+	public Term allIntro(Term formula, TermVariable[] vars);
+
+	/**
 	 * Annotate an asserted formula with its proof {@code (@asserted formula)}.
 	 *
 	 * @param formula
@@ -191,15 +220,15 @@ public interface IProofTracker {
 	public Term asserted(Term formula);
 
 	/**
-	 * Create a proof of g from the proof of f and the rewrite proof of (= f g) for g.
+	 * Create a proof of g from the proof of f and the rewrite proof of {@code (= f g)} (or {@code (=> f g)}) for g.
 	 *
 	 * @param asserted
 	 *            the asserted formula f annotated with its proof.
 	 * @param rewrite
-	 *            the simplified formula g annotated with a proof of {@code (= f g)}.
+	 *            the simplified formula g annotated with a proof of {@code (= f g)} (or {@code (=> f g)}).
 	 * @return the resulting simpFormula annotated with the complete proof
 	 */
-	public Term getRewriteProof(Term asserted, Term rewrite);
+	public Term modusPonens(Term asserted, Term rewrite);
 
 	/**
 	 * Creates the clause proof of t. This is usually the annotation of t.

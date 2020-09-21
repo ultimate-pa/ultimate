@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LASharedTerm
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory.InstanceOrigin;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.SubstitutionHelper.SubstitutionResult;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.dawg.Dawg;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching.EMatching;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching.EMatching.SubstitutionInfo;
@@ -76,9 +76,9 @@ public class InstantiationManager {
 	private final InstanceValue mDefaultValueForLitDawgs;
 	private final InstanceValue[] mRelevantValuesForCheckpoint;
 
-	public InstantiationManager(final Clausifier clausifier, final QuantifierTheory quantTheory) {
-		mClausifier = clausifier;
+	public InstantiationManager(final QuantifierTheory quantTheory) {
 		mQuantTheory = quantTheory;
+		mClausifier = quantTheory.getClausifier();
 		mEMatching = quantTheory.getEMatching();
 		mClauseInstances = new HashMap<>();
 		mDefaultValueForLitDawgs =
@@ -89,7 +89,7 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Add the clause to the instance map.
+	 * Add the clause to the instantiation manager.
 	 *
 	 * @param qClause
 	 *            the quantified clause.
@@ -98,11 +98,20 @@ public class InstantiationManager {
 		mClauseInstances.put(qClause, new LinkedHashMap<>());
 	}
 
+	/**
+	 * Remove the clause from the instantiation manager.
+	 *
+	 * @param clause
+	 *            the quantified clause.
+	 */
 	public void removeClause(final QuantClause clause) {
 		assert mClauseInstances.containsKey(clause);
 		mClauseInstances.remove(clause);
 	}
 
+	/**
+	 * Remove all existing InstClauses from the instantiation manager.
+	 */
 	public void removeAllInstClauses() {
 		for (final Map<List<Term>, InstClause> instClauses : mClauseInstances.values()) {
 			instClauses.clear();
@@ -379,13 +388,33 @@ public class InstantiationManager {
 		return clauseDawg;
 	}
 
-	final InstanceValue combineForCheckpoint(final InstanceValue first, final InstanceValue second) {
+	/**
+	 * Combine two InstanceValue keeping only the values defined relevant for the checkpoint.
+	 * 
+	 * @param first
+	 *            the first InstanceValue
+	 * @param second
+	 *            the second InstanceValue
+	 * @return the combined InstanceValue if it is among the relevant values for checkpoint, irrelevant else.
+	 */
+	private InstanceValue combineForCheckpoint(final InstanceValue first, final InstanceValue second) {
 		return first.combine(second).keepOnlyRelevant(mRelevantValuesForCheckpoint);
 	}
 
-	final InstantiationInfo combineForCheckpoint(final InstantiationInfo first, final InstantiationInfo second) {
-		final InstanceValue combinedValue =
-				first.getInstValue().combine(second.getInstValue()).keepOnlyRelevant(mRelevantValuesForCheckpoint);
+	/**
+	 * Combine two InstantiationInfo for the checkpoint. The values are combined as usual in checkpoint, and the
+	 * (partial) substitutions are combined by preferring the term of the first substitution if both have a term for a
+	 * variable (in this case, they must have the same representative).
+	 * 
+	 * @param first
+	 *            the first InstantiationInfo
+	 * @param second
+	 *            the second InstantiationInfo
+	 * @return the combined InstantiationInfo if their combined value is among the relevant values for checkpoint, an
+	 *         InstantiationInfo with empty substitution else.
+	 */
+	private InstantiationInfo combineForCheckpoint(final InstantiationInfo first, final InstantiationInfo second) {
+		final InstanceValue combinedValue = combineForCheckpoint(first.getInstValue(), second.getInstValue());
 		if (combinedValue == InstanceValue.IRRELEVANT) {
 			return new InstantiationInfo(combinedValue, new ArrayList<>());
 		}
@@ -412,7 +441,7 @@ public class InstantiationManager {
 		return new InstantiationInfo(combinedValue, combinedSubs);
 	}
 
-	final boolean isUsedValueForCheckpoint(final InstanceValue value) {
+	private boolean isUsedValueForCheckpoint(final InstanceValue value) {
 		if (value == InstanceValue.IRRELEVANT) {
 			return true;
 		}
@@ -475,7 +504,7 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Evaluate a literal for a given substitution.
+	 * Evaluate a literal for a given SubstitutionInfo.
 	 *
 	 * @param qLit
 	 *            a quantified literal.
@@ -488,7 +517,7 @@ public class InstantiationManager {
 		final QuantLiteral qAtom = qLit.getAtom();
 		if (info == mEMatching.getEmptySubs()) {
 			if (mQuantTheory.mPropagateNewAux && !mQuantTheory.mPropagateNewTerms && qAtom instanceof QuantEquality) {
-				if (QuantifiedTermInfo.isAuxApplication(((QuantEquality) qAtom).getLhs())) {
+				if (QuantUtil.isAuxApplication(((QuantEquality) qAtom).getLhs())) {
 					return InstanceValue.ONE_UNDEF;
 				}
 			}
@@ -518,6 +547,15 @@ public class InstantiationManager {
 		return val;
 	}
 
+	/**
+	 * Evaluate a literal for a given substitution.
+	 *
+	 * @param quantLit
+	 *            a quantified literal.
+	 * @param substitution
+	 *            a term substitution for the variables in quantLit
+	 * @return the InstanceValue of the literal for the substitution.
+	 */
 	private InstanceValue evaluateLitInstance(final QuantLiteral quantLit, final List<Term> substitution) {
 		InstanceValue litValue = mDefaultValueForLitDawgs;
 		final boolean isNeg = quantLit.isNegated();
@@ -661,12 +699,14 @@ public class InstantiationManager {
 	 *
 	 * @param qClause
 	 *            the quantified clause.
+	 * @param clauseDawg
+	 *            the corresponding clause evaluation dawg.
 	 * @return the variable substitutions for the clause that lead to conflict or unit instances.
 	 */
 	private Collection<List<Term>> getConflictAndUnitSubsFromDawg(final QuantClause qClause,
 			final Dawg<Term, InstantiationInfo> clauseDawg) {
 		final Collection<List<Term>> conflictAndUnitSubs = new ArrayList<>();
-		for (final InstantiationInfo info : clauseDawg.values()) { // TODO take dawg.values
+		for (final InstantiationInfo info : clauseDawg.values()) {
 			assert !Config.EXPENSIVE_ASSERTS || isUsedValueForCheckpoint(info.getInstValue());
 			if (info.getInstValue() != InstanceValue.IRRELEVANT) {
 				// Replace the nulls (standing for the "else" case) with the suitable lambda
@@ -709,13 +749,11 @@ public class InstantiationManager {
 	 *            an SMTAffineTerm including quantified terms.
 	 * @param sharedForQuantSmds
 	 *            the equivalent shared terms for the quantified summands.
-	 * @param source
-	 *            the SourceAnnotation of the clause this SMTAffineTerm stems from.
 	 * @return a MutableAffineTerm if each summand of the SMTAffineTerm either is ground or has an equivalent Term
 	 *         storing a LinVar, null otherwise.
 	 */
 	private MutableAffineTerm buildMutableAffineTerm(final SMTAffineTerm smtAff,
-			final Map<Term, Term> sharedForQuantSmds, final SourceAnnotation source) {
+			final Map<Term, Term> sharedForQuantSmds) {
 		final MutableAffineTerm at = new MutableAffineTerm();
 		for (final Entry<Term, Rational> entry : smtAff.getSummands().entrySet()) {
 			final Term sharedTerm;
@@ -742,7 +780,6 @@ public class InstantiationManager {
 		return at;
 	}
 
-	@SuppressWarnings("unchecked")
 	/**
 	 * Compute the substitutions for an arithmetical literal from a partial clause dawg, and from the bounds on the
 	 * variables.
@@ -755,6 +792,7 @@ public class InstantiationManager {
 	 *            the partial clause dawg containing information for all literals but the arithmetical ones.
 	 * @return for each variable in the clause, the interesting substitutions.
 	 */
+	@SuppressWarnings("unchecked")
 	private Term[][] computeSubsForArithmetical(final QuantClause clause, final Collection<QuantLiteral> arLits,
 			final Dawg<Term, InstantiationInfo> clauseDawg) {
 		// TODO Rework this method
@@ -847,17 +885,15 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Evaluate which value a potential instance of a given clause would have. We distinguish three values: FALSE if all
-	 * literals would be false, ONE_UNDEF if all but one literal would be false and this one undefined, and TRUE for all
-	 * other cases.
+	 * Evaluate which value a potential instance of a given clause would have.
 	 *
 	 * @param quantClause
 	 *            the quantified clause which we evaluate an instance for.
-	 * @param instantiation
-	 *            the ground terms to instantiate.
+	 * @param substitution
+	 *            the ground substitution producing this instance.
 	 * @return the InstanceValue of the potential instance.
 	 */
-	private InstanceValue evaluateClauseInstance(final QuantClause quantClause, final List<Term> instantiation) {
+	private InstanceValue evaluateClauseInstance(final QuantClause quantClause, final List<Term> substitution) {
 		InstanceValue clauseValue = InstanceValue.FALSE;
 
 		// Check ground literals first.
@@ -877,7 +913,7 @@ public class InstantiationManager {
 
 		// Check quantified literals. TODO: Use SubstitutionHelper
 		for (final QuantLiteral quantLit : quantClause.getQuantLits()) {
-			final InstanceValue litValue = evaluateLitInstance(quantLit, instantiation);
+			final InstanceValue litValue = evaluateLitInstance(quantLit, substitution);
 			clauseValue = combineForCheckpoint(clauseValue, litValue);
 			if (clauseValue == InstanceValue.IRRELEVANT) {
 				return clauseValue;
@@ -886,10 +922,21 @@ public class InstantiationManager {
 		return clauseValue;
 	}
 
+	/**
+	 * Evaluate which value a potential instance of a given clause would have. This method must only be used for new
+	 * instances.
+	 *
+	 * @param quantClause
+	 *            the quantified clause which we evaluate an instance for.
+	 * @param substitution
+	 *            the ground substitution producing this instance.
+	 * @return a pair containing the InstanceValue of the potential instance and a Boolean which is true iff the
+	 *         instance contains only known terms.
+	 */
 	private Pair<InstanceValue, Boolean> evaluateNewClauseInstanceFinalCheck(final QuantClause quantClause,
-			final List<Term> instantiation) {
+			final List<Term> substitution) {
 		assert !mClauseInstances.containsKey(quantClause)
-				|| !mClauseInstances.get(quantClause).containsKey(instantiation);
+				|| !mClauseInstances.get(quantClause).containsKey(substitution);
 		InstanceValue clauseValue = InstanceValue.FALSE;
 
 		// Check for true ground literals first.
@@ -903,7 +950,8 @@ public class InstantiationManager {
 		// Check quantified literals. TODO: Use SubstitutionHelper
 		boolean hasOnlyKnownTerms = true;
 		for (final QuantLiteral quantLit : quantClause.getQuantLits()) {
-			final InstanceValue litValue = evaluateLitInstance(quantLit, instantiation); // TODO evaluateLitInstanceFinalCheck
+			final InstanceValue litValue = evaluateLitInstance(quantLit, substitution);
+			// TODO evaluateLitInstanceFinalCheck
 			if (litValue == InstanceValue.UNKNOWN_TERM) {
 				hasOnlyKnownTerms = false;
 			}
@@ -922,8 +970,10 @@ public class InstantiationManager {
 	 *            a clause containing at least one quantified literal.
 	 * @param subs
 	 *            the substitution terms for the variables in the clause.
+	 * @param origin
+	 *            the InstanceOrigin determining if the instance was produced in checkpoint or finalcheck
 	 *
-	 * @return the set of ground literals, or null if the clause would be trivially true.
+	 * @return the resulting InstClause, or null if the clause would be trivially true.
 	 */
 	private InstClause computeClauseInstance(final QuantClause clause, final List<Term> subs,
 			final InstanceOrigin origin) {
@@ -938,21 +988,17 @@ public class InstantiationManager {
 		}
 		final SubstitutionHelper instHelper = new SubstitutionHelper(mQuantTheory, clause.getGroundLits(),
 				clause.getQuantLits(), clause.getSource(), sigma);
-		instHelper.substituteInClause();
-		Literal[] resultingLits = null;
-		if (instHelper.getResultingClauseTerm() != mQuantTheory.getTheory().mTrue) {
-			assert instHelper.getResultingQuantLits().length == 0;
-			resultingLits = instHelper.getResultingGroundLits();
-		}
-
-		final InstClause inst =
-				resultingLits != null ? new InstClause(clause, subs, Arrays.asList(resultingLits), -1, origin)
-						: null;
-		mClauseInstances.get(clause).put(subs, inst);
-		if (resultingLits != null) {
+		final SubstitutionResult result = instHelper.substituteInClause();
+		final InstClause inst;
+		if (result.isTriviallyTrue()) {
+			inst = null;
+		} else {
+			assert result.isGround();
 			mQuantTheory.getLogger().debug("Quant: instantiating quant clause %s results in %s", clause,
-					Arrays.asList(resultingLits));
+					Arrays.asList(result.mGroundLits));
+			inst = new InstClause(clause, subs, Arrays.asList(result.mGroundLits), -1, origin, result.mSimplified);
 		}
+		mClauseInstances.get(clause).put(subs, inst);
 		mQuantTheory.mNumInstancesProduced++;
 		if (origin.equals(InstanceOrigin.CHECKPOINT)) {
 			mQuantTheory.mNumInstancesProducedCP++;
@@ -963,14 +1009,13 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Determine the value that an equality literal between two given CCTerm would have.
+	 * Determine the value that an equality literal would have in CC for the given substitution.
 	 *
-	 * @param left
-	 *            The left side of the equality.
-	 * @param right
-	 *            The right side of the equality.
-	 * @return Value True if the two terms are in the same congruence class, False if they are definitely distinct,
-	 *         otherwise Undef if both CCTerms exists, Unknown else.
+	 * @param qEq
+	 *            the quantified equality literal.
+	 * @param info
+	 *            the substitution info containing the known ground terms for the quantified terms in the literal.
+	 * @return the InstanceValue of the substituted literal.
 	 */
 	private InstanceValue evaluateCCEqualityKnownShared(final QuantEquality qEq, final SubstitutionInfo info) {
 		final CCTerm leftCC, rightCC;
@@ -997,18 +1042,17 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Determine the value that an equality literal between two given Term would have.
+	 * Determine the value that an equality literal would have in CC for the given substitution.
 	 *
-	 * @param left
-	 *            The left side of the equality.
-	 * @param right
-	 *            The right side of the equality.
-	 * @return Value True if the two terms are in the same congruence class, False if they are definitely distinct,
-	 *         Undef else.
+	 * @param qEq
+	 *            the quantified equality literal.
+	 * @param subs
+	 *            the variable substitution.
+	 * @return the InstanceValue of the substituted literal.
 	 */
 	private InstanceValue evaluateCCEquality(final QuantEquality qEq, final List<Term> subs) {
 		final QuantClause qClause = qEq.getClause();
-		final TermFinder finder = new TermFinder(qClause.getSource(), qClause.getVars(), subs);
+		final TermFinder finder = new TermFinder(qClause.getVars(), subs);
 		final Term left = finder.findEquivalentShared(qEq.getLhs());
 		final Term right = finder.findEquivalentShared(qEq.getRhs());
 		if (left != null && right != null) {
@@ -1027,18 +1071,19 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Determine the value that an equality MutableAffineTerm = 0 would have if instantiated.
+	 * Determine the value that an equality literal would have in LA for the given substitution.
 	 *
-	 * @param at
-	 *            a MutableAffineTerm representing an LAEquality.
-	 * @return Value True if both the lower and upper bound of at are 0, False if the lower bound is greater or the
-	 *         upper bound is smaller than 0, Undef/Unknown else.
+	 * @param qEq
+	 *            the quantified equality literal.
+	 * @param sharedForQuant
+	 *            a map containing the known ground terms for the quantified terms in the literal.
+	 * @return the InstanceValue of the substituted literal.
 	 */
 	private InstanceValue evaluateLAEqualityKnownShared(final QuantEquality qEq, final Map<Term, Term> sharedForQuant) {
 		final SMTAffineTerm diff = new SMTAffineTerm(qEq.getLhs());
 		diff.add(Rational.MONE, new SMTAffineTerm(qEq.getRhs()));
 
-		final MutableAffineTerm at = buildMutableAffineTerm(diff, sharedForQuant, qEq.getClause().getSource());
+		final MutableAffineTerm at = buildMutableAffineTerm(diff, sharedForQuant);
 		if (at != null) {
 			final InfinitesimalNumber upperBound = mQuantTheory.mLinArSolve.getUpperBound(at);
 			at.negate();
@@ -1054,19 +1099,20 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Determine the value that an equality SMTAffineTerm = 0 would have if instantiated.
+	 * Determine the value that an equality literal would have in LA for the given substitution.
 	 *
-	 * @param at
-	 *            a MutableAffineTerm representing an LAEquality.
-	 * @return Value True if both the lower and upper bound of at exist and are equal to 0, False if the lower bound
-	 *         exists and is greater than 0, or the upper bound exists and is smaller than 0, Undef else.
+	 * @param qEq
+	 *            the quantified equality literal.
+	 * @param subs
+	 *            the variable substitution.
+	 * @return the InstanceValue of the substituted literal.
 	 */
 	private InstanceValue evaluateLAEquality(final QuantEquality qEq, final List<Term> subs) {
 		final SMTAffineTerm diff = new SMTAffineTerm(qEq.getLhs());
 		diff.add(Rational.MONE, qEq.getRhs());
 
 		final QuantClause qClause = qEq.getClause();
-		final TermFinder finder = new TermFinder(qClause.getSource(), qClause.getVars(), subs);
+		final TermFinder finder = new TermFinder(qClause.getVars(), subs);
 		final SMTAffineTerm smtAff = finder.findEquivalentAffine(diff);
 		if (smtAff != null) {
 			final InfinitesimalNumber upperBound = mQuantTheory.mLinArSolve.getUpperBound(mClausifier, smtAff);
@@ -1083,17 +1129,18 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Determine the value that a bound constraint "term <= 0" would have.
+	 * Determine the value that an inequality literal would have for the given substitution.
 	 *
-	 * @param affine
-	 *            The linear term for a constraint "term <= 0".
-	 * @return Value True if the term has an upper bound <= 0, False if -term has a lower bound < 0, or Undef/Unknown
-	 *         otherwise.
+	 * @param qBc
+	 *            the quantified bound constraint.
+	 * @param sharedForQuant
+	 *            a map containing the known ground terms for the quantified terms in the literal.
+	 * @return the InstanceValue of the substituted literal.
 	 */
 	private InstanceValue evaluateBoundConstraintKnownShared(final QuantBoundConstraint qBc,
 			final Map<Term, Term> sharedForQuant) {
 		final MutableAffineTerm at =
-				buildMutableAffineTerm(qBc.getAffineTerm(), sharedForQuant, qBc.getClause().getSource());
+				buildMutableAffineTerm(qBc.getAffineTerm(), sharedForQuant);
 		if (at == null) {
 			return mDefaultValueForLitDawgs;
 		}
@@ -1112,14 +1159,16 @@ public class InstantiationManager {
 	}
 
 	/**
-	 * Determine the value that a bound constraint "term <= 0" would have.
+	 * Determine the value that an inequality literal would have for the given substitution.
 	 *
-	 * @param affine
-	 *            The linear term for a constraint "term <= 0".
-	 * @return Value True if the term has an upper bound <= 0, False if -term has a lower bound < 0, or Undef otherwise.
+	 * @param qBc
+	 *            the quantified bound constraint.
+	 * @param subs
+	 *            the variable substitution.
+	 * @return the InstanceValue of the substituted literal.
 	 */
 	private InstanceValue evaluateBoundConstraint(final QuantBoundConstraint qBc, final List<Term> subs) {
-		final TermFinder finder = new TermFinder(qBc.getClause().getSource(), qBc.getClause().getVars(), subs);
+		final TermFinder finder = new TermFinder(qBc.getClause().getVars(), subs);
 		final SMTAffineTerm affine = finder.findEquivalentAffine(qBc.getAffineTerm());
 		if (affine == null) {
 			return mDefaultValueForLitDawgs;
@@ -1138,16 +1187,18 @@ public class InstantiationManager {
 		}
 	}
 
+	/**
+	 * This class is used to find an equivalent known term for a given (possibly quantified) term under a given ground
+	 * substitution.
+	 */
 	private class TermFinder extends NonRecursive {
-		private final SourceAnnotation mSource;
 		private final List<TermVariable> mVars;
-		private final List<Term> mInstantiation;
+		private final List<Term> mSubstitution;
 		private final Map<Term, Term> mTerms;
 
-		TermFinder(final SourceAnnotation source, final TermVariable[] vars, final List<Term> instantiation) {
-			mSource = source;
+		TermFinder(final TermVariable[] vars, final List<Term> substitution) {
 			mVars = Arrays.asList(vars);
-			mInstantiation = instantiation;
+			mSubstitution = substitution;
 			mTerms = new HashMap<>();
 		}
 
@@ -1191,7 +1242,7 @@ public class InstantiationManager {
 					if (mTerm.getFreeVars().length == 0) {
 						mTerms.put(mTerm, mTerm);
 					} else if (mTerm instanceof TermVariable) {
-						mTerms.put(mTerm, mInstantiation.get(mVars.indexOf(mTerm)));
+						mTerms.put(mTerm, mSubstitution.get(mVars.indexOf(mTerm)));
 					} else {
 						assert mTerm instanceof ApplicationTerm;
 						final ApplicationTerm appTerm = (ApplicationTerm) mTerm;
@@ -1268,6 +1319,9 @@ public class InstantiationManager {
 		}
 	}
 
+	/**
+	 * Container class to store a substitution together with the corresponding instance value.
+	 */
 	private class InstantiationInfo {
 		private final InstanceValue mValue;
 		private final List<Term> mSubs;
@@ -1309,8 +1363,8 @@ public class InstantiationManager {
 	 * For pre-evaluation of QuantLiteral and QuantClause instances, we define the following values: TRUE if at least
 	 * one literal evaluates to true, FALSE if all literals evaluate to false, ONE_UNDEF if all but one literal evaluate
 	 * to false, and for this one all terms are known but not the value, UNKNOWN similarly but the terms are not known,
-	 * OTHER for all other cases.
-	 *
+	 * OTHER for all other cases. An additional value IRRELEVANT can be used to mark instances that are not useful for a
+	 * certain purpose.
 	 */
 	private enum InstanceValue {
 		TRUE, FALSE, ONE_UNDEF, UNKNOWN_TERM, OTHER, IRRELEVANT;

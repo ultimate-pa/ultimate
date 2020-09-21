@@ -1,6 +1,4 @@
 (set-option :print-success false)
-(set-option :produce-proofs true)
-(set-option :proof-check-mode true)
 (set-info :smt-lib-version 2.6)
 (set-logic UF)
 (set-info :status unknown)
