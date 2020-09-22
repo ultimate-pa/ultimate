@@ -116,7 +116,11 @@ public class PreferencesInlineSelector implements IInlineSelector {
 				while (outgoingEdgeLabelsIterator.hasNext() && outgoingNodesIterator.hasNext()) {
 					final CallGraphEdgeLabel callLabel = outgoingEdgeLabelsIterator.next();
 					final CallGraphNode callee = outgoingNodesIterator.next();
-					callLabel.setInlineFlag(filter.accept(caller, callLabel, callee));
+					boolean inline = filter.accept(caller, callLabel, callee);
+					if (caller.getId() == "ULTIMATE.start") { // TODO this is a hack and should not be merged into dev
+						inline = false;
+					}
+					callLabel.setInlineFlag(inline);
 				}
 				assert outgoingEdgeLabelsIterator.hasNext() == outgoingNodesIterator.hasNext();
 			}
