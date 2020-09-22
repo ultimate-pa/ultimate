@@ -4644,16 +4644,22 @@ public class CHandler {
 			}
 			operand = mExprResultTransformer.rexBoolToInt(operand, loc);
 			operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
-			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
+			final CPrimitive opType = (CPrimitive) operand.getLrValue().getCType();
 			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
-			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
-				addIntegerBoundsCheck(loc, result, resultType, op, hook, operand.getLrValue().getValue());
+			if (op == IASTUnaryExpression.op_minus && opType.isIntegerType()) {
+				addIntegerBoundsCheck(loc, result, opType, op, hook, operand.getLrValue().getValue());
 			}
-			final Expression bwexpr = mExpressionTranslation.constructUnaryExpression(loc, op,
-					operand.getLrValue().getValue(), resultType);
+			final Expression bwexpr =
+					mExpressionTranslation.constructUnaryExpression(loc, op, operand.getLrValue().getValue(), opType);
 			// TODO: bitvec procedure here
+			final CPrimitive resultType;
+			if (opType.isFloatingType()) {
+				resultType = opType.getSmtVariant();
+			} else {
+				resultType = opType;
+			}
 			final RValue rval = new RValue(bwexpr, resultType, false);
-			if (resultType.isFloatingType()) {
+			if (opType.isFloatingType()) {
 				return result.addAllIncludingLrValue(mExpressionTranslation.convertToBvFloatIfNecessary(rval, loc))
 						.build();
 			}

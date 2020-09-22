@@ -858,6 +858,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		switch (nodeOperator) {
 		case IASTUnaryExpression.op_minus:
 			smtFunctionName = "fp.neg";
+			assert type.isFloatingType() && type.isSmtFloat();
 			break;
 		default:
 			final String msg = "Unknown or unsupported unary expression";
