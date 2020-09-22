@@ -77,7 +77,7 @@ public class ParseAllPatternsTestsuite {
 
 	@Parameters(name = "{1}")
 	public static Collection<Object[]> data() {
-		return PatternUtil.createAllPatterns().getFirst().stream().map(a -> new Object[] { a, a.getClass().getSimpleName() })
+		return PatternUtil.createAllPatterns(false).getFirst().stream().map(a -> new Object[] { a, a.getClass().getSimpleName() })
 				.collect(Collectors.toList());
 	}
 

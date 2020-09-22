@@ -7,12 +7,6 @@
             id="GeneratedUltimatePreferences"
 	/>
 	
-	<page	name="Core"
-            category="GeneratedUltimatePreferences"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="Core"
-	/>  
-            
 	<page	name="Source Plugins"
             category="GeneratedUltimatePreferences"
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"

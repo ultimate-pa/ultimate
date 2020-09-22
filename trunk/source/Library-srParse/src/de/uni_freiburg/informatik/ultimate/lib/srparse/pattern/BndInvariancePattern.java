@@ -54,8 +54,11 @@ public class BndInvariancePattern extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+		assert cdds.length == 2 && durations.length == 1;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
-		// note: P and Q are reserved for scope, cdds are parsed in reverse order
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
@@ -70,7 +73,7 @@ public class BndInvariancePattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(R.and(Q.negate())),
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.and(Q.negate())),
 					phase(Q.negate(), BoundTypes.LESS, c1), phase(S.negate().and(Q.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();

@@ -44,10 +44,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpolator.InterpolationMethod;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.MetaTraceTransformer.MetaTraceApplicationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark.AcceleratedInterpolationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.ILoopdetector;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor.ILoopPreprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor.LoopPreprocessorFastUPR;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -110,7 +114,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	 * How to deal with loops.
 	 */
 	public enum AccelerationMethod {
-		NONE, FAST_UPR
+		NONE, FAST_UPR, UNDERAPPROXIMATION, OVERAPPROXIMATION_WERNER
 	}
 
 	private final ILogger mLogger;
@@ -134,15 +138,27 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
+	private final Map<IcfgLocation, List<UnmodifiableTransFormula>> mLoopsTf;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Map<IcfgLocation, List<UnmodifiableTransFormula>> mAccelerations;
 	private final Accelerator<LETTER> mAccelerator;
-	private final Loopdetector<LETTER> mLoopdetector;
+	private final ILoopdetector<IcfgLocation, LETTER> mLoopdetector;
 	private AccelerationApproximationType mApproximationType;
+	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
+	private final MetaTraceTransformer<LETTER> mMetaTraceTransformer;
 
 	private final AcceleratedInterpolationBenchmark mAccelInterpolBench;
 
+	/**
+	 * Interpolation using loopacceleration
+	 *
+	 * @param logger
+	 * @param prefs
+	 * @param script
+	 * @param predicateUnifier
+	 * @param counterexample
+	 */
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate> counterexample) {
@@ -174,21 +190,29 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
+		mMetaTraceTransformer = new MetaTraceTransformer<>(mLogger, mScript, mCounterexample, mPredUnifier, mServices,
+				mPredTransformer);
 		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
 
 		mApproximationType = AccelerationApproximationType.PRECISE;
+		mMetaTraceApplicationMethod = MetaTraceApplicationMethod.ONLY_AT_FIRST_LOOP_ENTRY;
+
 		mReasonUnknown = null;
 		mTraceCheckFinishedNormally = true;
 		/*
 		 * Find loops in the trace.
 		 */
 		mLoops = mLoopdetector.getLoops();
+		mLogger.debug("Done Preprocessing");
+
+		final ILoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices,
+				mPredUnifier, mPredHelper, mIcfg.getCfgSmtToolkit());
+		mLoopsTf = loopPreprocessor.preProcessLoop(mLoops);
 		mLoopExitTransitions = mLoopdetector.getLoopExitTransitions();
 		mLoopSize = mLoopdetector.getLoopSize();
 
 		try {
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE);
-			mLogger.info("Starting analysis with loop acceleration approximation " + mApproximationType.toString());
 			mIsTraceCorrect = acceleratedInterpolationCore();
 
 			/*
@@ -198,7 +222,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				mReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null,
 						ExceptionHandlingCategory.KNOWN_DEPENDING);
 				mTraceCheckFinishedNormally = true;
-
 			} else {
 				mTraceCheckFinishedNormally = true;
 				mReasonUnknown = null;
@@ -219,39 +242,39 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	/**
-	 * Main function of accelInteprol
+	 * Main function of accelInterpol
 	 */
 	private LBool acceleratedInterpolationCore() {
 		// After finding loops in the trace, start calculating loop accelerations.
-		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
+		final Iterator<Entry<IcfgLocation, List<UnmodifiableTransFormula>>> loopheadIterator =
+				mLoopsTf.entrySet().iterator();
 		while (loopheadIterator.hasNext()) {
-			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
+			final Entry<IcfgLocation, List<UnmodifiableTransFormula>> loophead = loopheadIterator.next();
 			boolean accelerationFinishedCorrectly = false;
 			final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
-			for (final List<LETTER> loop : loophead.getValue()) {
-				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
+			for (final UnmodifiableTransFormula loop : loophead.getValue()) {
+				// final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
+
+				// final Term quantElim = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
+				// loopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_DDA,
+				// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+				mLogger.debug("Starting acceleration");
+
 				final UnmodifiableTransFormula acceleratedLoopRelation =
-						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
+						mAccelerator.accelerateLoop(loop, loophead.getKey(), AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
+					mLogger.debug("No acceleration found");
 					accelerationFinishedCorrectly = false;
 					break;
 				}
 				accelerationFinishedCorrectly = true;
-				Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
-						acceleratedLoopRelation.getFormula(), mSimplificationTechnique,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-				t = mPredHelper.makeReflexive(t, acceleratedLoopRelation);
+				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
+				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
+						mSimplificationTechnique, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
-				// final TransFormulaBuilder tfb = new TransFormulaBuilder(acceleratedLoopRelation.getInVars(),
-				// acceleratedLoopRelation.getOutVars(), true, Collections.emptySet(), true,
-				// Collections.emptySet(), false);
-				// for (final TermVariable auxVar : acceleratedLoopRelation.getAuxVars()) {
-				// tfb.addAuxVar(auxVar);
-				// }
-				// tfb.setFormula(t);
-				// tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-				// final UnmodifiableTransFormula accelerationNoQuantifiersTf = tfb.finishConstruction(mScript);
+				mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
 				accelerations.add(tf);
 			}
 			if (!accelerationFinishedCorrectly) {
@@ -263,6 +286,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				mApproximationType = AccelerationApproximationType.UNDERAPPROXIMATION;
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
+			mLogger.info("Starting analysis with loop acceleration approximation " + mApproximationType.toString());
 		}
 
 		// Use new Script for interpolation:
@@ -270,113 +294,59 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		final Interpolator<LETTER> interpolator =
 				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPrefs);
 
-		if (mLoops.isEmpty()) {
-			// No loops -> no acceleration
+		if (mLoops.isEmpty() || mAccelerations.isEmpty()) {
+			// No loops or no acceleration
 			mLogger.info("No loops in this trace, falling back to nested interpolation");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
 			mInterpolants = interpolator.getInterpolants();
 		} else {
 			// translate the given trace into a meta trace which makes use of the loop acceleration.
-			final NestedRun<LETTER, IPredicate> traceScheme = generateMetaTrace();
-			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, traceScheme);
+			final NestedRun<LETTER, IPredicate> metaTrace = generateMetaTrace();
+			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
 			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
 				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
-				final IPredicate[] inductiveInterpolants = constructInductive(tempInterpolants);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Meta-Trace: ");
+					for (int i = 0; i < metaTrace.getLength() - 1; i++) {
+						mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
+					}
+					mLogger.debug("Is " + interpolator.getTraceCheckResult().toString());
+				}
+				final IPredicate[] inductiveInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(
+						tempInterpolants, mAccelerations, mLoopSize, mMetaTraceApplicationMethod);
 				mInterpolants = inductiveInterpolants;
 			}
 		}
 		return interpolator.getTraceCheckResult();
 	}
 
-	/**
-	 * Transforms the tracescheme interpolants to inductive interpolants Problem
-	 */
-	private IPredicate[] constructInductive(final IPredicate[] preds) {
-		final IPredicate[] actualInterpolants = new IPredicate[mCounterexample.size() - 1];
-		int cnt = 0;
-		for (int i = 0; i < actualInterpolants.length; i++) {
-			final IcfgLocation target = mCounterexample.get(i).getTarget();
-			/*
-			 * When the next location is a loophead, use loopaccelerations
-			 */
-			if (mAccelerations.containsKey(target)) {
-				final Pair<Integer, Integer> loopSize = mLoopSize.get(target);
-				final List<UnmodifiableTransFormula> loopAccelerations = new ArrayList<>(mAccelerations.get(target));
-
-				final List<Term> loopAccelerationsForEntryLocation = new ArrayList<>();
-				loopAccelerationsForEntryLocation.add(preds[cnt].getFormula());
-
-				final int maxLoopPredicates = 2 * loopAccelerations.size();
-				/*
-				 * In case there are multiple loop accelerations, construct post of meta trace's interpolant and
-				 * corresponding loop acceleration
-				 */
-				final Term loopAccelerationsForEntryLocationDisjunction;
-				if (loopAccelerations.size() > 1) {
-					int currentPredCounter = cnt;
-					// int currentIterationCounter = 0;
-					while (currentPredCounter < maxLoopPredicates) {
-						final IPredicate loopEntryInterpolantMetaTrace = preds[currentPredCounter];
-						loopAccelerationsForEntryLocation.add(loopEntryInterpolantMetaTrace.getFormula());
-						// currentIterationCounter++;
-						currentPredCounter = currentPredCounter + 3;
-					}
-					loopAccelerationsForEntryLocationDisjunction =
-							SmtUtils.and(mScript.getScript(), loopAccelerationsForEntryLocation);
-				} else {
-					final IPredicate loopEntryInterpolantMetaTrace = preds[cnt];
-					final UnmodifiableTransFormula loopAccelerationForCorrespondingLoop = loopAccelerations.get(0);
-					final Term postInterpolantLoopacceleration = mPredTransformer.strongestPostcondition(
-							loopEntryInterpolantMetaTrace, loopAccelerationForCorrespondingLoop);
-					loopAccelerationsForEntryLocationDisjunction = postInterpolantLoopacceleration;
-					// loopAccelerationsForEntryLocation.add(postInterpolantLoopacceleration);
-					// loopAccelerationsForEntryLocationDisjunction =
-					// SmtUtils.or(mScript.getScript(), loopAccelerationsForEntryLocation);
-				}
-
-				cnt = cnt + maxLoopPredicates - 1;
-				final IPredicate interpolantPred =
-						mPredUnifier.getOrConstructPredicate(loopAccelerationsForEntryLocationDisjunction);
-
-				actualInterpolants[i] = interpolantPred;
-				int j = i + 1;
-				/*
-				 * Because the meta trace interpolants are too few, we need to post through the whole loop to get an
-				 * inductive interpolant sequence
-				 */
-				while (j < loopSize.getSecond() + 1) {
-					final LETTER l = mCounterexample.get(j);
-					final UnmodifiableTransFormula transRel = l.getTransformula();
-					final IPredicate loopPostTerm;
-					// if (loopAccelerations.size() > 1 && l.getSource() == target) {
-					// loopPostTerm = interpolantPred;
-					// } else {
-					loopPostTerm = actualInterpolants[j - 1];
-					// }
-					final Term postTfPred = mPredTransformer.strongestPostcondition(loopPostTerm, transRel);
-					actualInterpolants[j] = mPredUnifier.getOrConstructPredicate(postTfPred);
-					j++;
-				}
-				i = loopSize.getSecond() - 1;
-			} else {
-				final IPredicate prevInterpol;
-				/*
-				 * post does not work well with false, there are instances where the interpolant on the loopexit in the
-				 * meta trace is false, this, however, may not always be inductive.
-				 */
-				if (SmtUtils.isFalseLiteral(preds[cnt].getFormula()) && i != 0) {
-					final IPredicate tmpPrevInterpol = actualInterpolants[i - 1];
-					final Term post = mPredTransformer.strongestPostcondition(tmpPrevInterpol,
-							mCounterexample.get(i).getTransformula());
-					prevInterpol = mPredUnifier.getOrConstructPredicate(post);
-				} else {
-					prevInterpol = preds[cnt];
-				}
-				actualInterpolants[i] = prevInterpol;
-			}
-			cnt++;
+	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> computeProgramExecution() {
+		// TODO: construct a real IProgramExecution using
+		// IcfgProgramExecutionBuilder (DD needs to refactor s.t. the
+		// class becomes available here).
+		if (mIsTraceCorrect == LBool.SAT) {
+			return IProgramExecution.emptyExecution(Term.class, IcfgEdge.class);
 		}
-		return actualInterpolants;
+		return null;
+	}
+
+	/**
+	 * Constructs a Transformula where every variable is unchanged.
+	 *
+	 * @param tf
+	 * @return
+	 */
+	private UnmodifiableTransFormula constructEpsilon(final UnmodifiableTransFormula tf) {
+		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
+		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
+		final ArrayList<Term> lhs = new ArrayList<>(inVars.values());
+		final ArrayList<Term> rhs = new ArrayList<>(outVars.values());
+
+		final Term equality = SmtUtils.pairwiseEquality(mScript.getScript(), lhs, rhs);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, false, null, true);
+		tfb.setFormula(equality);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mScript);
 	}
 
 	/**
@@ -493,7 +463,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			acceleratedTraceSchemeStates.add(lastAcceleratedSPred);
 			acceleratedTraceSchemeStates.add(newExitSPred);
 			final Pair<Integer, Integer> loopSize = mLoopSize.get(l.getTarget());
-			i = loopSize.getSecond();
+			i = i + loopSize.getSecond() - loopSize.getFirst();
 		}
 
 		acceleratedTraceSchemeStates.add(traceStates.get(counterExampleNonAccelerated.size()));
@@ -502,99 +472,20 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		 * Turn the new trace into a nested word for easier interpolation
 		 */
 		final NestedWord<LETTER> traceSchemeNestedWord = TraceCheckUtils.toNestedWord(counterExampleAcceleratedLetter);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Current trace");
+			mCounterexample.forEach(a -> mLogger.debug(a.getTransformula()));
+
+			mLogger.debug("Simpified acceleration");
+			for (final LETTER letter : traceSchemeNestedWord) {
+				mLogger.debug(SmtUtils.simplify(mScript, letter.getTransformula().getFormula(), mServices,
+						SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
+				mLogger.debug(letter.getTransformula());
+			}
+		}
+
 		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
-	}
-
-	/**
-	 * Constructs a Transformula where every variable is unchanged.
-	 *
-	 * @param tf
-	 * @return
-	 */
-	private UnmodifiableTransFormula constructEpsilon(final UnmodifiableTransFormula tf) {
-		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
-		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
-		final ArrayList<Term> lhs = new ArrayList<>(inVars.values());
-		final ArrayList<Term> rhs = new ArrayList<>(outVars.values());
-
-		final Term equality = SmtUtils.pairwiseEquality(mScript.getScript(), lhs, rhs);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, false, null, true);
-		tfb.setFormula(equality);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(mScript);
-	}
-
-	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> computeProgramExecution() {
-		// TODO: construct a real IProgramExecution using
-		// IcfgProgramExecutionBuilder (DD needs to refactor s.t. the
-		// class becomes available here).
-		if (mIsTraceCorrect == LBool.SAT) {
-			return IProgramExecution.emptyExecution(Term.class, IcfgEdge.class);
-		}
-		return null;
-	}
-
-	@Override
-	public LBool isCorrect() {
-		return mIsTraceCorrect;
-	}
-
-	@Override
-	public IPredicate getPrecondition() {
-		return mPredUnifier.getTruePredicate();
-	}
-
-	@Override
-	public IPredicate getPostcondition() {
-		return mPredUnifier.getFalsePredicate();
-	}
-
-	@Override
-	public Map<Integer, IPredicate> getPendingContexts() {
-		return Collections.emptyMap();
-	}
-
-	@Override
-	public boolean providesRcfgProgramExecution() {
-		return mIsTraceCorrect != LBool.SAT;
-	}
-
-	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
-		if (mFeasibleProgramExecution == null) {
-			mFeasibleProgramExecution = computeProgramExecution();
-		}
-		return mFeasibleProgramExecution;
-	}
-
-	@Override
-	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
-		return mReasonUnknown;
-	}
-
-	@Override
-	public boolean wasTracecheckFinishedNormally() {
-		return mTraceCheckFinishedNormally;
-	}
-
-	@Override
-	public List<LETTER> getTrace() {
-		return mCounterexample;
-	}
-
-	@Override
-	public IPredicate[] getInterpolants() {
-		return mInterpolants;
-	}
-
-	@Override
-	public IPredicateUnifier getPredicateUnifier() {
-		return mPredUnifier;
-	}
-
-	@Override
-	public boolean isPerfectSequence() {
-		return isCorrect() == LBool.UNSAT;
 	}
 
 	@Override
@@ -609,9 +500,72 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	@Override
+	public IPredicate[] getInterpolants() {
+		return mInterpolants;
+	}
+
+	@Override
+	public Map<Integer, IPredicate> getPendingContexts() {
+		return Collections.emptyMap();
+	}
+
+	@Override
+	public IPredicate getPostcondition() {
+		return mPredUnifier.getFalsePredicate();
+	}
+
+	@Override
+	public IPredicate getPrecondition() {
+		return mPredUnifier.getTruePredicate();
+	}
+
+	@Override
+	public IPredicateUnifier getPredicateUnifier() {
+		return mPredUnifier;
+	}
+
+	@Override
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+		if (mFeasibleProgramExecution == null) {
+			mFeasibleProgramExecution = computeProgramExecution();
+		}
+		return mFeasibleProgramExecution;
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public List<LETTER> getTrace() {
+		return mCounterexample;
+	}
+
+	@Override
+	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
+		return mReasonUnknown;
+	}
+
+	@Override
+	public LBool isCorrect() {
+		return mIsTraceCorrect;
+	}
+
+	@Override
+	public boolean isPerfectSequence() {
+		return isCorrect() == LBool.UNSAT;
+	}
+
+	@Override
+	public boolean providesRcfgProgramExecution() {
+		return mIsTraceCorrect != LBool.SAT;
+	}
+
+	@Override
+	public boolean wasTracecheckFinishedNormally() {
+		return mTraceCheckFinishedNormally;
 	}
 
 }

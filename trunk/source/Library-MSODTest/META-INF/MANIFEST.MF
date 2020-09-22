@@ -19,3 +19,4 @@ Import-Package: de.uni_freiburg.informatik.ultimate.acsl.parser,
  org.junit.runner,
  org.junit.runner.notification,
  org.junit.runners
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.mso.test

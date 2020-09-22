@@ -20,3 +20,4 @@ Import-Package: junit.framework,
  org.junit.runner,
  org.junit.runner.notification,
  org.junit.runners
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.pea2boogie.test

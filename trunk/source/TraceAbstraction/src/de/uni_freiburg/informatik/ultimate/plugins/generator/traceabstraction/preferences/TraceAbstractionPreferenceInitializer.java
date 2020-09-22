@@ -27,11 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.AStarHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
@@ -275,6 +277,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_OVERRIDE_INTERPOLANT_AUTOMATON = false;
 	public static final String LABEL_OVERRIDE_INTERPOLANT_AUTOMATON =
 			"Override the interpolant automaton setting of the refinement strategy";
+	public static final McrInterpolantMethod DEF_MCR_INTERPOLANT_METHOD = McrInterpolantMethod.WP;
+	public static final String LABEL_MCR_INTERPOLANT_METHOD = "Method to provide interpolants for the MCR automaton";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
 			"Assert CodeBlocks Term Scoring Heuristic";
@@ -303,6 +307,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			AssertCodeBlockOrder.DEF_SCORE_THRESHOLD;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
+	public static final String LABEL_ADDITIONAL_SMT_OPTIONS = RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS;
+	public static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS =
+			RcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
 
 	/**
 	 * Constructor.
@@ -403,6 +410,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,
 						PreferenceType.Combo, InterpolantAutomaton.values()),
+				new UltimatePreferenceItem<>(LABEL_MCR_INTERPOLANT_METHOD, DEF_MCR_INTERPOLANT_METHOD,
+						PreferenceType.Combo, McrInterpolantMethod.values()),
 				new UltimatePreferenceItem<>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo,
 						Format.values()),
@@ -466,8 +475,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
 						DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH, DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH,
-						PreferenceType.Directory), };
-
+						PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
+						PreferenceType.KeyValue), };
 	}
 
 	/**
@@ -711,5 +721,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Multi-trace analysis.
 		 */
 		MULTI_TRACE,
+	}
+
+	public enum McrInterpolantMethod {
+		WP, SP, INTERPOLATION
 	}
 }

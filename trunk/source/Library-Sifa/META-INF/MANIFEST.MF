@@ -19,3 +19,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.sifa,
  de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag,
  de.uni_freiburg.informatik.ultimate.lib.sifa.statistics,
  de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.sifa

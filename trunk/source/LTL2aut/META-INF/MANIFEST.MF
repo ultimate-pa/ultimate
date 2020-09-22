@@ -21,3 +21,4 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.ltl2aut.ast,
  de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa
 Import-Package: org.apache.commons.io
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.ltl2aut

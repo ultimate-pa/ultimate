@@ -32,3 +32,4 @@ Export-Package: javax.xml.parsers,
  org.xml.sax.ext,
  org.xml.sax.helpers
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Automatic-Module-Name: org.apache.xerces

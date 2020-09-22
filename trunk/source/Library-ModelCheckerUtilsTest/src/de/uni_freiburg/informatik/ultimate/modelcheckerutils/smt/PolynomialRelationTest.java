@@ -68,14 +68,15 @@ public class PolynomialRelationTest {
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_MAIN_TRACK_SCRIPT_IF_UNKNOWN_TO_FILE = false;
 
-	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:6000 -memory:2024 -smt2 -in smt.arith.solver=2";
-	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=6000";
+	private static final String SOLVER_COMMAND_Z3 =
+			"z3 SMTLIB2_COMPLIANT=true -t:6000 -memory:2024 -smt2 -in smt.arith.solver=2";
+	private static final String SOLVER_COMMAND_CVC4 =
+			"cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	/**
-	 * If DEFAULT_SOLVER_COMMAND is not null we ignore the solver specified for each
-	 * test and use only the solver specified here. This can be useful to check if
-	 * there is a suitable solver for all tests and this can be useful for
-	 * generating difficult SMT-LIB benchmarks.
+	 * If DEFAULT_SOLVER_COMMAND is not null we ignore the solver specified for each test and use only the solver
+	 * specified here. This can be useful to check if there is a suitable solver for all tests and this can be useful
+	 * for generating difficult SMT-LIB benchmarks.
 	 */
 	private static final String DEFAULT_SOLVER_COMMAND = null;
 
@@ -84,7 +85,7 @@ public class PolynomialRelationTest {
 
 	@Before
 	public void setUp() throws IOException {
-//		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		// mServices = UltimateMocks.createUltimateServiceProviderMock();
 	}
 
 	@After
@@ -120,12 +121,12 @@ public class PolynomialRelationTest {
 		return result;
 	}
 
+
 	@Test
 	public void relationRealDefault() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(= (+ 7.0 x) y )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
-
 	}
 
 	@Test
@@ -133,7 +134,6 @@ public class PolynomialRelationTest {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(= (* 7.0 x) y )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
-
 	}
 
 	@Test
@@ -358,9 +358,8 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * One of the supporting terms in the y-not-zero-case
-	 * is not (< x (div z y)) but (< x (+ (div (- z 1)  y) 1))
-	 * You can see the problem for y=2, x=1, and z=3
+	 * One of the supporting terms in the y-not-zero-case is not (< x (div z y)) but (< x (+ (div (- z 1) y) 1)) You can
+	 * see the problem for y=2, x=1, and z=3
 	 *
 	 */
 	// @Test Insufficient resources to check soundness
@@ -433,7 +432,7 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
-	@Test
+	// @Test >8h on Jenkins although it runs fine on Matthias' maschine with the same mathsat
 	public void relationIntPolyCVC4MATHSATEQ11() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 y x) (* 333 y y y))";
@@ -469,9 +468,8 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Currently fails because some coefficient is null, this probably will be
-	 * handled when the "Todo if no constantTErm throw error or handle it" is
-	 * finished
+	 * Currently fails because some coefficient is null, this probably will be handled when the "Todo if no constantTErm
+	 * throw error or handle it" is finished
 	 */
 	@Test
 	public void relationIntPolyUnknownEQ16() {
@@ -488,11 +486,12 @@ public class PolynomialRelationTest {
 		}
 		mScript = script;
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
-		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
-				.convert(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
-				.solveForSubject(mScript, subject, Xnf.DNF);
+		final MultiCaseSolvedBinaryRelation sbr =
+				PolynomialRelation.convert(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
+						.solveForSubject(mScript, subject, Xnf.DNF);
 		Assert.assertNull(sbr);
 	}
+
 
 	private void testSolveForX(final String solverCommand, final String inputAsString, final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
@@ -521,7 +520,6 @@ public class PolynomialRelationTest {
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
 	}
-
 
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) {
 		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
@@ -585,7 +583,7 @@ public class PolynomialRelationTest {
 	public void relationIntDivEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 7 x) y )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 
 	}
 
@@ -593,21 +591,21 @@ public class PolynomialRelationTest {
 	public void relationIntDivEQ2() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 x) (* 7 y) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivEQ3() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 x) (+ (* 7 y) (* 5 z)) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivEQ4() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 6 (+ y x)) (* 7 z) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
@@ -627,8 +625,8 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntDivDISTINCT() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
-		final String inputSTR = "(not(= (* 3 x) y ))";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		final String inputSTR = "(not (= (* 3 x) y ))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
@@ -864,6 +862,30 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
+	/**
+	 * Example that is motivated by the problem that the terms of the following two
+	 * lines do not evaluate to the same value for Euclidean division of integers.
+	 *
+	 * <pre>
+	 * 20 / (-2 * 7)  =  20 / -14  =  -1    (the remainder is 6)
+	 * 20 / -2 / 7  =  -10 / 7  =   -2    (the remainder is 4)
+	 * </pre>
+	 *
+	 * So if we have -2 * y * x = 20 * t the intermediate transformation to y * x =
+	 * -10 * t is unsound.
+	 */
+	@Test
+	public void relationIntNonlin01MilkFactoryOutlet() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= 20 (* 2 x y))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
 
+	@Test
+	public void relationIntNonlin01FactoryOutletLinear() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= 20 (* 2 x 6))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
 
 }

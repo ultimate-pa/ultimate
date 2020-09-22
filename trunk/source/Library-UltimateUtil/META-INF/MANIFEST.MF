@@ -14,3 +14,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.scc,
  de.uni_freiburg.informatik.ultimate.util.statistics,
  de.uni_freiburg.informatik.ultimate.util.simplifier
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.util

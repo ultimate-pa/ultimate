@@ -27,12 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -46,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 public class BoogieLocation extends DefaultLocation {
 	private static final long serialVersionUID = 4495864682359937328L;
 
-	protected BoogieASTNode mBoogieASTNode;
-
 	public BoogieLocation(final String fileName, final int startLine, final int endLine, final int startColum,
 			final int endColumn) {
 		super(fileName, startLine, endLine, startColum, endColumn);
@@ -57,31 +49,6 @@ public class BoogieLocation extends DefaultLocation {
 	public String toString() {
 		return "BPL: " + getFileName() + ":" + getStartLine() + "/" + getStartColumn() + "-" + getEndLine() + "/"
 				+ getEndColumn();
-	}
-
-	@Override
-	public Check getCheck() {
-		if (mBoogieASTNode instanceof AssertStatement) {
-			return new Check(Check.Spec.ASSERT);
-		} else if (mBoogieASTNode instanceof LoopInvariantSpecification) {
-			return new Check(Check.Spec.INVARIANT);
-		} else if (mBoogieASTNode instanceof CallStatement) {
-			return new Check(Check.Spec.PRE_CONDITION);
-		} else if (mBoogieASTNode instanceof EnsuresSpecification) {
-			return new Check(Check.Spec.POST_CONDITION);
-		} else if (mBoogieASTNode == null) {
-			throw new IllegalArgumentException();
-		} else {
-			return new Check(Check.Spec.UNKNOWN);
-		}
-	}
-
-	public BoogieASTNode getBoogieASTNode() {
-		return mBoogieASTNode;
-	}
-
-	public void setBoogieASTNode(final BoogieASTNode boogieASTNode) {
-		mBoogieASTNode = boogieASTNode;
 	}
 
 	@Override

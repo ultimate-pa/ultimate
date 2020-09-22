@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
@@ -155,10 +154,6 @@ public final class ResultUtil {
 		final ILocation loc = ILocation.getAnnotation(element);
 		if (loc == null) {
 			return null;
-		}
-		final IAnnotations checkCand = loc.getCheck();
-		if (checkCand instanceof Check) {
-			return (Check) checkCand;
 		}
 		return null;
 	}

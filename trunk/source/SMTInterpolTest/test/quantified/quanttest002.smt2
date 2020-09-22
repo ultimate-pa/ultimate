@@ -1,5 +1,4 @@
 (set-option :print-success false)
-(set-option :produce-proofs false)
 (set-logic UFLIA)
 (set-info :source |Simple quantified example that needs Destructive Equality Reasoning.|)
 (set-info :smt-lib-version 2.0)

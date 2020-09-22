@@ -46,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
@@ -135,8 +138,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 	private List<Term> tryToEliminateSingleDisjuct(final int quantifier, final Term disjunct,
-			final TermVariable eliminatee, final Set<TermVariable> allEliminatees) {
-		final Term conjunction = tryToEliminateConjuncts(mServices, mScript, quantifier, disjunct, eliminatee, allEliminatees);
+			final TermVariable eliminatee, final Set<TermVariable> bannedForDivCapture) {
+		final Term conjunction = tryToEliminateConjuncts(mServices, mScript, quantifier, disjunct, eliminatee, bannedForDivCapture);
 		if (conjunction == null) {
 			return null;
 		}
@@ -170,7 +173,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
-			final int quantifier, final Term disjunct, final TermVariable eliminatee, final Set<TermVariable> allEliminatees) {
+			final int quantifier, final Term disjunct, final TermVariable eliminatee,
+			final Set<TermVariable> bannedForDivCapture) {
 		final Term[] inputAtoms  = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
 		final List<Term> termsWithoutEliminatee = new ArrayList<>();
 		final List<Bound> upperBounds = new ArrayList<>();
@@ -198,24 +202,40 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					// eliminatee occurs probably only in select
 					return null;
 				}
-				final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, eliminatee);
+				SolvedBinaryRelation sbr = polyRel.solveForSubject(script, eliminatee);
+				final boolean divByIntegerConstant;
 				if (sbr == null) {
+					final MultiCaseSolvedBinaryRelation mcsbr = polyRel.solveForSubject(script, eliminatee,
+							Xnf.fromQuantifier(quantifier));
+					if (mcsbr == null) {
+						return null;
+					}
+					if (mcsbr.getCases().size() > 2) {
+						return null;
+					}
+					if (mcsbr.getIntricateOperations().size() > 1) {
+						return null;
+					}
+					sbr = mcsbr.getCases().get(0).getSolvedBinaryRelation();
+					divByIntegerConstant = mcsbr.getIntricateOperations()
+							.contains(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
+				} else {
+					divByIntegerConstant = false;
+				}
+				if (SolveForSubjectUtils.isVariableDivCaptured(sbr, bannedForDivCapture)) {
 					return null;
 				}
-				if (SolveForSubjectUtils.isVariableDivCaptured(sbr, allEliminatees)) {
-					return null;
-				}
-				if (!sbr.getAssumptionsMap().isEmpty()
-						&& !sbr.getRelationSymbol().equals(RelationSymbol.DISTINCT)
-						&& !sbr.getRelationSymbol().equals(RelationSymbol.EQ)) {
-					return null;
-				}
+//				if (!sbr.getAssumptionsMap().isEmpty()
+//						&& !sbr.getRelationSymbol().equals(RelationSymbol.DISTINCT)
+//						&& !sbr.getRelationSymbol().equals(RelationSymbol.EQ)) {
+//					return null;
+//				}
 				final Term eliminateeOnLhs = sbr.asTerm(script);
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
 				switch (bnr.getRelationSymbol()) {
 				case DISTINCT:
 					if (quantifier == QuantifiedFormula.EXISTS) {
-						if (!sbr.getAssumptionsMap().isEmpty()) {
+						if (divByIntegerConstant) {
 							antiDer.add(antiDerWithAssumption(script, QuantifiedFormula.EXISTS, term, eliminatee));
 						} else {
 							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
@@ -228,7 +248,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					break;
 				case EQ:
 					if (quantifier == QuantifiedFormula.FORALL) {
-						if (!sbr.getAssumptionsMap().isEmpty()) {
+						if (divByIntegerConstant) {
 							antiDer.add(antiDerWithAssumption(script, QuantifiedFormula.FORALL, term, eliminatee));
 						} else {
 							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));

@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrTraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -42,12 +43,15 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 	private final List<LETTER> mCounterexample;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final TaskIdentifier mTaskIdentifier;
+	private final IInterpolantProvider<LETTER> mInterpolantProvider;
+
 	private final List<QualifiedTracePredicates> mUsedPredicates;
 
 	public StrategyModuleMcr(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final StrategyFactory<LETTER> strategyFactory, final IRun<LETTER, ?> counterexample,
-			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier) {
+			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
+			final IInterpolantProvider<LETTER> interpolantProvider) {
 		mPrefs = prefs;
 		mStrategyFactory = strategyFactory;
 		mLogger = logger;
@@ -56,6 +60,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 		mCounterexample = counterexample.getWord().asList();
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
+		mInterpolantProvider = interpolantProvider;
 		mUsedPredicates = new ArrayList<>();
 	}
 
@@ -123,7 +128,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 		if (mMcr == null) {
 			try {
 				mMcr = new Mcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample,
-						mAbstraction.getAlphabet(), this);
+						mAbstraction.getAlphabet(), this, mInterpolantProvider);
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);
 			}

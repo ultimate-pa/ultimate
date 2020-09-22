@@ -40,13 +40,13 @@ public class EnumOption<E extends Enum<E>> extends Option {
 	private E mDefaultValue;
 	private final Class<E> mClass;
 
-	public EnumOption(E defaultValue, boolean onlineModifiable, Class<E> cls,
-			String description) {
+	public EnumOption(final E defaultValue, final boolean onlineModifiable, final Class<E> cls,
+			final String description) {
 		super(onlineModifiable, description);
 		mValue = mDefaultValue = defaultValue;
 		mClass = cls;
 	}
-	EnumOption(EnumOption<E> other) {
+	EnumOption(final EnumOption<E> other) {
 		super(other.isOnlineModifiable(), other.getDescription());
 		mValue = other.mValue;
 		mDefaultValue = other.mDefaultValue;
@@ -54,11 +54,11 @@ public class EnumOption<E extends Enum<E>> extends Option {
 	}
 	@Override
 	public Option copy() {
-		return new EnumOption<E>(this);
+		return new EnumOption<>(this);
 	}
 	@SuppressWarnings("unchecked")
 	@Override
-	public void set(Object value) {
+	public void set(final Object value) {
 		if (value instanceof String) {
 			try {
 				mValue = Enum.valueOf(mClass, (String) value);
@@ -70,13 +70,13 @@ public class EnumOption<E extends Enum<E>> extends Option {
 					throwException(value);
 				}
 			}
-		} else if (value.getClass().getSuperclass() == mClass) {
+		} else if (mClass.isInstance(value)) {
 			mValue = (E) value;
 		} else {
 			throwException(value);
 		}
 	}
-	private final void throwException(Object value) {
+	private final void throwException(final Object value) {
 		final StringBuilder sb = new StringBuilder(50); // NOCHECKSTYLE
 		sb.append("Illegal value: ").append(value);
 		sb.append(". Only ");

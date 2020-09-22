@@ -513,7 +513,7 @@ public class BoogieOutput {
 	 * @param attributes
 	 *            the attributes to handle.
 	 */
-	private void appendAttributes(final StringBuilder sb, final Attribute[] attributes) {
+	public void appendAttributes(final StringBuilder sb, final Attribute[] attributes) {
 		if (attributes == null) {
 			return;
 		}
@@ -961,11 +961,11 @@ public class BoogieOutput {
 	}
 
 	/*
-	 * 
+	 *
 	 * Print statement.
 	 *
 	 * @param s the statement to print.
-	 * 
+	 *
 	 * @param indent the current indent level.
 	 *
 	 * public void printStatement(final Statement s, final String indent) { final StringBuilder sb = new

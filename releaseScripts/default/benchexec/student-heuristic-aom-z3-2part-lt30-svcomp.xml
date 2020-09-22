@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="8GB" cpuCores="2">
+
+  <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+
+  <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
+  <option name="--traceabstraction.compute.interpolants.along.a.counterexample">FPandBPonlyIfFpWasNotPerfect</option>
+
+
+  <rundefinition name="Automizer DEFAULT">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.assert.codeblocks">NOT_INCREMENTALLY</option>
+  </rundefinition>
+
+  <rundefinition name="Automizer Heuristic AssertCodeBlocks NUM_FUNCTIONS, FIXED_NUM_PARTITIONS 2">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.assert.codeblocks">SMT_FEATURE_HEURISTIC</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic">NUM_FUNCTIONS</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.partitioning.strategy">FIXED_NUM_PARTITIONS</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.number.of.partitions">2</option>
+  </rundefinition>
+  
+  <rundefinition name="Automizer Heuristic AssertCodeBlocks NUM_VARIABLES, FIXED_NUM_PARTITIONS 2">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.assert.codeblocks">SMT_FEATURE_HEURISTIC</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic">NUM_VARIABLES</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.partitioning.strategy">FIXED_NUM_PARTITIONS</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.number.of.partitions">2</option>
+  </rundefinition>
+  
+  <rundefinition name="Automizer Heuristic AssertCodeBlocks DAGSIZE, FIXED_NUM_PARTITIONS 2">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.assert.codeblocks">SMT_FEATURE_HEURISTIC</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic">DAGSIZE</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.partitioning.strategy">FIXED_NUM_PARTITIONS</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.number.of.partitions">2</option>
+  </rundefinition>
+
+  <rundefinition name="Automizer Heuristic AssertCodeBlocks BIGGEST_EQUIVALENCE_CLASS, FIXED_NUM_PARTITIONS 2">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.assert.codeblocks">SMT_FEATURE_HEURISTIC</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic">BIGGEST_EQUIVALENCE_CLASS</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.partitioning.strategy">FIXED_NUM_PARTITIONS</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.number.of.partitions">2</option>
+  </rundefinition>
+
+</benchmark>

@@ -34,11 +34,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -57,8 +60,13 @@ public final class PatternUtil {
 	/**
 	 * Create for all subclasses of {@link PatternType} and {@link SrParseScope} an instantiated requirements pattern
 	 * that can be used to create a PEA.
+	 *
+	 * @param withoutNotImplemented
+	 *            If true, do not generate patterns for which no countertrace is implemented (i.e., the ones that throw
+	 *            {@link PatternScopeNotImplemented} when their {@link PatternType#transformToPea(ILogger, Map)} method
+	 *            is called.
 	 */
-	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns() {
+	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns(final boolean withoutNotImplemented) {
 		// first, create some observables and durartions
 		final int count = 10;
 		int duration = 5;
@@ -90,6 +98,7 @@ public final class PatternUtil {
 
 		final List<PatternType> patterns = new ArrayList<>();
 		int id = 0;
+		final ILogger dummyLogger = ILogger.getDummyLogger();
 		for (final Class<? extends PatternType> patternTypeClazz : patternTypeClazzes) {
 			// all patterns except the initializationpattern have a constructor of the form
 			// (final SrParseScope scope,
@@ -108,8 +117,18 @@ public final class PatternUtil {
 						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
 				final List<String> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
-				patterns.add(ReflectionUtil.instantiateClass(patternTypeClazz, scope, "ID_" + String.valueOf(id),
-						currentCdds, currentDurations));
+				final PatternType pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
+						"ID_" + String.valueOf(id), currentCdds, currentDurations);
+
+				if (withoutNotImplemented) {
+					try {
+						final ReqPeas pea = pattern.transformToPea(dummyLogger, duration2bounds);
+						dummyLogger.info(pea);
+					} catch (final PatternScopeNotImplemented ex) {
+						continue;
+					}
+				}
+				patterns.add(pattern);
 				id++;
 			}
 		}

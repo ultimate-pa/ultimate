@@ -32,7 +32,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNodeLabel;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
@@ -47,12 +47,10 @@ public enum PreferenceItem {
 
 	LABEL_ENABLE_INLINING_FOR("───  I n l i n e  ───"),
 
-	INLINE_UNIMPLEMENTED("Inline calls to unimplemented procedures",
-			"Inline calls to unimplemented procedures.",
+	INLINE_UNIMPLEMENTED("Inline calls to unimplemented procedures", "Inline calls to unimplemented procedures.",
 			Boolean.FALSE, PreferenceType.Boolean),
 
-	INLINE_IMPLEMENTED("Inline calls to implemented procedures",
-			"When to inline calls to implemented procedures.",
+	INLINE_IMPLEMENTED("Inline calls to implemented procedures", "When to inline calls to implemented procedures.",
 			EnableWhen.ALWAYS, PreferenceType.Combo, EnableWhen.values()),
 
 	LABEL_IGNORE_CALLS("───  I g n o r e  ───"),
@@ -72,40 +70,34 @@ public enum PreferenceItem {
 
 	IGNORE_RECURSIVE("Ignore calls to recursive procedures",
 			"Do not inline calls to recursive procedures (attempting to inline these can cause exceptions).",
-			Boolean.TRUE,
-			PreferenceType.Boolean),
+			Boolean.TRUE, PreferenceType.Boolean),
 
 	IGNORE_MULTIPLE_CALLED("Ignore calls to procedures called more than once",
-			"When to ignore calls to procedures called more than once.",
-			EnableWhen.NEVER, PreferenceType.Combo, EnableWhen.values()),
+			"When to ignore calls to procedures called more than once.", EnableWhen.NEVER, PreferenceType.Combo,
+			EnableWhen.values()),
 
 	LABEL_USER_LIST("───  U s e r   L i s t  ───"),
 
-	USER_LIST_TYPE("User list type",
-			UserListType.description(),
-			UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
+	USER_LIST_TYPE("User list type", UserListType.description(), UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo,
+			UserListType.values()),
 
-	USER_LIST("User list",
-			"Procedure IDs/names separated by whitespace",
-			"", PreferenceType.MultilineString),
+	USER_LIST("User list", "Procedure IDs/names separated by whitespace", "", PreferenceType.MultilineString),
 
 	LABEL_ENTRY_PROCEDURE_HANDLING("───  E n t r y   P o i n t s  ───"),
 
-	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures",
-			null, Boolean.TRUE, PreferenceType.Boolean),
+	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures", null, Boolean.TRUE,
+			PreferenceType.Boolean),
 
-	ENTRY_PROCEDURES("Entry procedures",
-			"Procedure IDs/names separated by whitespace.",
-			"ULTIMATE.start", PreferenceType.String),
+	ENTRY_PROCEDURES("Entry procedures", "Procedure IDs/names separated by whitespace.", "ULTIMATE.start",
+			PreferenceType.String),
 
 	ENTRY_PROCEDURE_FALLBACK("Fallback to processing everything",
 			"If no entry procedure can be found, just treat every procedure as potential entry procedure.",
 			Boolean.TRUE, PreferenceType.Boolean),
 
 	/** @see CallGraphNodeLabel#isDead() */
-	ELIMINATE_DEAD_CODE("Remove dead code",
-			"Eliminate dead code after inlining.",
-			Boolean.TRUE, PreferenceType.Boolean);
+	ELIMINATE_DEAD_CODE("Remove dead code", "Eliminate dead code after inlining.", Boolean.TRUE,
+			PreferenceType.Boolean);
 
 	private final String mName;
 	private final Object mDefaultValue;
@@ -117,13 +109,12 @@ public enum PreferenceItem {
 		this(name, null, null, PreferenceType.Label, null);
 	}
 
-	PreferenceItem(final String name, final String description, final Object defaultValue,
-			final PreferenceType type) {
+	PreferenceItem(final String name, final String description, final Object defaultValue, final PreferenceType type) {
 		this(name, description, defaultValue, type, null);
 	}
 
-	PreferenceItem(final String name, final String description, final Object defaultValue,
-			final PreferenceType type, final Object[] choices) {
+	PreferenceItem(final String name, final String description, final Object defaultValue, final PreferenceType type,
+			final Object[] choices) {
 		mName = name;
 		mDefaultValue = defaultValue;
 		mType = type;
@@ -152,9 +143,8 @@ public enum PreferenceItem {
 		final String trimmedStringValue = services.getPreferenceProvider(Activator.PLUGIN_ID).getString(mName).trim();
 		if (trimmedStringValue.isEmpty()) {
 			return Collections.emptyList();
-		} else {
-			return Arrays.asList(trimmedStringValue.split("\\s+"));
 		}
+		return Arrays.asList(trimmedStringValue.split("\\s+"));
 	}
 
 	public UltimatePreferenceItem<?> newUltimatePreferenceItem() {

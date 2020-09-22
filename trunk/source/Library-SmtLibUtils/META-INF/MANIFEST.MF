@@ -19,3 +19,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  net.sf.javabdd
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.smtlibutils

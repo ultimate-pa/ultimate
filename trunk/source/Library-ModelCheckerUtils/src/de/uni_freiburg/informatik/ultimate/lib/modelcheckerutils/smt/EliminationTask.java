@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -54,6 +55,18 @@ public class EliminationTask {
 	private final int mQuantifier;
 	private final LinkedHashSet<TermVariable> mEliminatees;
 	private final Term mTerm;
+	private final Set<TermVariable> mBannedForDivCapture;
+
+	public EliminationTask(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
+			final Set<TermVariable> additionallyBannedForDivCapture) {
+		super();
+		assert (quantifier == QuantifiedFormula.EXISTS || quantifier == QuantifiedFormula.FORALL);
+		mQuantifier = quantifier;
+		mEliminatees = QuantifierUtils.projectToFreeVars(eliminatees, term);
+		mTerm = term;
+		mBannedForDivCapture = new HashSet<>(mEliminatees);
+		mBannedForDivCapture.addAll(additionallyBannedForDivCapture);
+	}
 
 	public EliminationTask(final int quantifier, final Set<TermVariable> eliminatees, final Term term) {
 		super();
@@ -61,6 +74,7 @@ public class EliminationTask {
 		mQuantifier = quantifier;
 		mEliminatees = QuantifierUtils.projectToFreeVars(eliminatees, term);
 		mTerm = term;
+		mBannedForDivCapture = mEliminatees;
 	}
 
 	public EliminationTask(final QuantifiedFormula quantifiedFormula) {
@@ -69,6 +83,18 @@ public class EliminationTask {
 		mEliminatees = QuantifierUtils.projectToFreeVars(Arrays.asList(quantifiedFormula.getVariables()),
 				quantifiedFormula.getSubformula());
 		mTerm = quantifiedFormula.getSubformula();
+		mBannedForDivCapture = mEliminatees;
+	}
+
+	public EliminationTask(final QuantifiedFormula quantifiedFormula,
+			final Set<TermVariable> additionallyBannedForDivCapture) {
+		super();
+		mQuantifier = quantifiedFormula.getQuantifier();
+		mEliminatees = QuantifierUtils.projectToFreeVars(Arrays.asList(quantifiedFormula.getVariables()),
+				quantifiedFormula.getSubformula());
+		mTerm = quantifiedFormula.getSubformula();
+		mBannedForDivCapture = new HashSet<>(mEliminatees);
+		mBannedForDivCapture.addAll(additionallyBannedForDivCapture);
 	}
 
 	public int getQuantifier() {
@@ -81,6 +107,10 @@ public class EliminationTask {
 
 	public Term getTerm() {
 		return mTerm;
+	}
+
+	public Set<TermVariable> getBannedForDivCapture() {
+		return Collections.unmodifiableSet(mBannedForDivCapture);
 	}
 
 	public Term toTerm(final Script script) {

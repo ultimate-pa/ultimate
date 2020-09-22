@@ -16,3 +16,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.smtlib
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.core

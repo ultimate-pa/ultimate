@@ -22,3 +22,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  org.eclipse.ui.navigator,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.cdt

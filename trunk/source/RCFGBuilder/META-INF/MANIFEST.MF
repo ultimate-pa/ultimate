@@ -20,3 +20,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilde
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.generator.rcfgbuilder

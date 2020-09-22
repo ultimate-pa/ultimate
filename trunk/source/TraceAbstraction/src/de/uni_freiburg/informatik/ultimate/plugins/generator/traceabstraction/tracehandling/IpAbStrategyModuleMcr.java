@@ -9,12 +9,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
@@ -23,15 +27,17 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 	private final McrAutomatonBuilder<LETTER> mAutomatonBuilder;
 	private IpAbStrategyModuleResult<LETTER> mResult;
 	private final List<LETTER> mTrace;
+	private final IInterpolantProvider<LETTER> mInterpolantProvider;
 
 	public IpAbStrategyModuleMcr(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final ILogger logger,
-			final ITraceCheckPreferences prefs, final Set<LETTER> alphabet) {
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final IUltimateServiceProvider services,
+			final ILogger logger, final Set<LETTER> alphabet, final IInterpolantProvider<LETTER> interpolantProvider,
+			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mAutomatonBuilder = new McrAutomatonBuilder<>(trace, predicateUnifier, emptyStackFactory, logger,
-				new VpAlphabet<>(alphabet), prefs.getUltimateServices(), prefs.getCfgSmtToolkit().getManagedScript(),
-				prefs.getXnfConversionTechnique(), prefs.getSimplificationTechnique());
+				new VpAlphabet<>(alphabet), services, managedScript, simplificationTechnique, xnfConversionTechnique);
 		mTrace = trace;
-
+		mInterpolantProvider = interpolantProvider;
 	}
 
 	@Override
@@ -41,7 +47,7 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 			try {
 				final List<QualifiedTracePredicates> qtp = perfectIpps.isEmpty() ? imperfectIpps : perfectIpps;
 				final NestedWordAutomaton<LETTER, IPredicate> ipAutomaton =
-						mAutomatonBuilder.buildInterpolantAutomaton(mTrace, qtp);
+						mAutomatonBuilder.buildInterpolantAutomaton(mTrace, qtp, mInterpolantProvider);
 				return new IpAbStrategyModuleResult<>(ipAutomaton, qtp);
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);

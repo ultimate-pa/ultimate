@@ -61,37 +61,36 @@ public class LocationFactory {
 	}
 
 	public CACSLLocation createCLocation(final IASTNode cNode) {
-		return new CLocation(cNode, new Check(Check.Spec.UNKNOWN), false, mLineDirectiveMapping);
+		return new CLocation(cNode, false, mLineDirectiveMapping);
 	}
 
 	public static CACSLLocation createIgnoreCLocation(final IASTNode cNode) {
-		return new CLocation(cNode, new Check(Check.Spec.UNKNOWN), true, null);
+		return new CLocation(cNode, true, null);
 	}
 
 	public static CACSLLocation createIgnoreCLocation() {
-		return new CLocation(null, new Check(Check.Spec.UNKNOWN), true, null);
+		return new CLocation(null, true, null);
 	}
 
 	public CACSLLocation createACSLLocation(final ACSLNode acslNode) {
-		return new ACSLLocation(acslNode, new Check(Check.Spec.UNKNOWN), false);
+		return new ACSLLocation(acslNode, false);
 	}
 
 	public CACSLLocation createACSLLocation(final ACSLNode acslNode, final Check type) {
-		return new ACSLLocation(acslNode, type, false);
+		return new ACSLLocation(acslNode, false);
 	}
 
 	public CACSLLocation createCLocation(final IASTNode cNode, final Check type) {
-		return new CLocation(cNode, type, false, mLineDirectiveMapping);
+		return new CLocation(cNode, false, mLineDirectiveMapping);
 	}
 
 	public static CACSLLocation createLocation(final CACSLLocation loc) {
 		if (loc instanceof ACSLLocation) {
 			final ACSLLocation realLoc = (ACSLLocation) loc;
-			return new ACSLLocation(realLoc.getNode(), realLoc.getCheck(), realLoc.ignoreDuringBacktranslation());
+			return new ACSLLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation());
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), realLoc.getCheck(), realLoc.ignoreDuringBacktranslation(),
-					realLoc.getLineDirectiveMapping());
+			return new CLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation(), realLoc.getLineDirectiveMapping());
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -100,11 +99,10 @@ public class LocationFactory {
 	public static CACSLLocation createLocation(final CACSLLocation loc, final Check type) {
 		if (loc instanceof ACSLLocation) {
 			final ACSLLocation realLoc = (ACSLLocation) loc;
-			return new ACSLLocation(realLoc.getNode(), type, realLoc.ignoreDuringBacktranslation());
+			return new ACSLLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation());
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), type, realLoc.ignoreDuringBacktranslation(),
-					realLoc.getLineDirectiveMapping());
+			return new CLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation(), realLoc.getLineDirectiveMapping());
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -113,10 +111,10 @@ public class LocationFactory {
 	public static CACSLLocation createIgnoreLocation(final ILocation loc) {
 		if (loc instanceof ACSLLocation) {
 			final ACSLLocation realLoc = (ACSLLocation) loc;
-			return new ACSLLocation(realLoc.getNode(), realLoc.getCheck(), true);
+			return new ACSLLocation(realLoc.getNode(), true);
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), realLoc.getCheck(), true, realLoc.getLineDirectiveMapping());
+			return new CLocation(realLoc.getNode(), true, realLoc.getLineDirectiveMapping());
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -142,7 +140,7 @@ public class LocationFactory {
 		public Set<String> getFilenames() {
 			return mFilenames;
 		}
-		
+
 		@Override
 		public IAnnotations merge(final IAnnotations other) {
 			if (other == null) {

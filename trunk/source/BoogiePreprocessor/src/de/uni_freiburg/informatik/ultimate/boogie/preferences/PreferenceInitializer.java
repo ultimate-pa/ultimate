@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.preferences;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 /**

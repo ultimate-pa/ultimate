@@ -12,3 +12,4 @@ Export-Package: org.jdom,
  org.jdom.transform,
  org.jdom.xpath
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Automatic-Module-Name: org.jdom

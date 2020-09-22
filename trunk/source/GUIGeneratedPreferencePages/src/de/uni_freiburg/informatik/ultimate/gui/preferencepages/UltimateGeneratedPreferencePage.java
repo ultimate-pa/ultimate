@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE GUIGeneratedPreferencePages plug-in.
- * 
+ *
  * The ULTIMATE GUIGeneratedPreferencePages plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE GUIGeneratedPreferencePages plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE GUIGeneratedPreferencePages plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE GUIGeneratedPreferencePages plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE GUIGeneratedPreferencePages plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE GUIGeneratedPreferencePages plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -54,10 +54,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.gui.customeditors.KeyValueGridEditor;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.MultiLineTextFieldEditor;
+import de.uni_freiburg.informatik.ultimate.gui.customeditors.UltimateLabelFieldEditor;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -69,14 +71,14 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	private final ScopedPreferenceStore mPreferenceStore;
 	private final Map<FieldEditor, UltimatePreferenceItem<?>> mCheckedFields;
 
-	public UltimateGeneratedPreferencePage(String pluginID, String title, BaseUltimatePreferenceItem[] preferences) {
+	public UltimateGeneratedPreferencePage(final String pluginID, final String title,
+			final BaseUltimatePreferenceItem[] preferences) {
 		super(GRID);
 		mPluginID = pluginID;
 		mDefaultPreferences = preferences;
 		mTitle = title;
-		mPreferenceStore = new ScopedPreferenceStore(new RcpPreferenceProvider(mPluginID).getScopeContext(),
-				mPluginID);
-		mCheckedFields = new HashMap<FieldEditor, UltimatePreferenceItem<?>>();
+		mPreferenceStore = new ScopedPreferenceStore(new RcpPreferenceProvider(mPluginID).getScopeContext(), mPluginID);
+		mCheckedFields = new HashMap<>();
 		setPreferenceStore(mPreferenceStore);
 		setTitle(mTitle);
 	}
@@ -100,7 +102,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 					break;
 				case Double:
 					editor = createDoubleFieldEditor(item.getLabel());
-					break;	
+					break;
 				case Boolean:
 					editor = createBooleanFieldEditor(item.getLabel());
 					break;
@@ -128,9 +130,12 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				case Color:
 					editor = createColorEditor(item.getLabel());
 					break;
+				case KeyValue:
+					editor = createKeyValueEditor(item.getLabel());
+					break;
 				default:
 					throw new UnsupportedOperationException(
-					        "You need to implement the new enum type \"" + item.getType() + "\" here");
+							"You need to implement the new enum type \"" + item.getType() + "\" here");
 				}
 
 				final String tooltip = item.getToolTip();
@@ -145,7 +150,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		}
 	}
 
-	private void setTooltip(final FieldEditor editor, final Composite parent, final String tooltip) {
+	private static void setTooltip(final FieldEditor editor, final Composite parent, final String tooltip) {
 		if (editor instanceof BooleanFieldEditor) {
 			((BooleanFieldEditor) editor).getDescriptionControl(parent).setToolTipText(tooltip);
 		} else {
@@ -165,7 +170,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	}
 
 	@Override
-	public void propertyChange(PropertyChangeEvent event) {
+	public void propertyChange(final PropertyChangeEvent event) {
 		super.propertyChange(event);
 		if (event.getProperty().equals(FieldEditor.VALUE)) {
 			checkState((FieldEditor) event.getSource());
@@ -173,8 +178,8 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	}
 
 	@Override
-	public void init(IWorkbench workbench) {
-
+	public void init(final IWorkbench workbench) {
+		// not needed
 	}
 
 	@Override
@@ -188,7 +193,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	}
 
 	@SuppressWarnings("unchecked")
-	private void checkState(FieldEditor editor) {
+	private void checkState(final FieldEditor editor) {
 		if (editor.isValid()) {
 			final UltimatePreferenceItem<?> preferenceDescriptor = mCheckedFields.get(editor);
 			if (preferenceDescriptor == null) {
@@ -220,7 +225,10 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				validateField((IUltimatePreferenceItemValidator<String>) validator,
 						((MultiLineTextFieldEditor) editor).getStringValue());
 				break;
-
+			case KeyValue:
+				validateField((IUltimatePreferenceItemValidator<Map<String, String>>) validator,
+						((KeyValueGridEditor) editor).getValue());
+				break;
 			case Label:
 			case Combo:
 			case Radio:
@@ -235,7 +243,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		}
 	}
 
-	private <T> void validateField(IUltimatePreferenceItemValidator<T> validator, T value) {
+	private <T> void validateField(final IUltimatePreferenceItemValidator<T> validator, final T value) {
 		if (!validator.isValid(value)) {
 			setErrorMessage(validator.getInvalidValueErrorMessage(value));
 			setValid(false);
@@ -245,60 +253,63 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		}
 	}
 
-	private FieldEditor createColorEditor(String label) {
+	private FieldEditor createColorEditor(final String label) {
 		return new ColorFieldEditor(label, label, getFieldEditorParent());
 	}
 
-	private FileFieldEditor createFileFieldEditor(UltimatePreferenceItem<?> item) {
+	private FileFieldEditor createFileFieldEditor(final UltimatePreferenceItem<?> item) {
 		return new FileFieldEditor(item.getLabel(), item.getLabel(), getFieldEditorParent());
 	}
 
-	private MultiLineTextFieldEditor createMultilineFieldEditor(String label) {
+	private MultiLineTextFieldEditor createMultilineFieldEditor(final String label) {
 		return new MultiLineTextFieldEditor(label, label, getFieldEditorParent());
 	}
 
-	private PathEditor createPathFieldEditor(UltimatePreferenceItem<?> item) {
+	private PathEditor createPathFieldEditor(final UltimatePreferenceItem<?> item) {
 		return new PathEditor(item.getLabel(), item.getLabel(), item.getLabel(), getFieldEditorParent());
 	}
 
-	private RadioGroupFieldEditor createRadioGroupFieldEditor(UltimatePreferenceItem<?> item) {
+	private RadioGroupFieldEditor createRadioGroupFieldEditor(final UltimatePreferenceItem<?> item) {
 		final RadioGroupFieldEditor editor = new RadioGroupFieldEditor(item.getLabel(), item.getLabel(), 1,
 				item.getComboFieldEntries(), getFieldEditorParent());
 		editor.loadDefault();
 		return editor;
 	}
 
-	private ComboFieldEditor createComboEditor(UltimatePreferenceItem<?> item) {
+	private ComboFieldEditor createComboEditor(final UltimatePreferenceItem<?> item) {
 		return new ComboFieldEditor(item.getLabel(), item.getLabel(), item.getComboFieldEntries(),
 				getFieldEditorParent());
 	}
 
-	private IntegerFieldEditor createIntegerFieldEditor(String label) {
+	private IntegerFieldEditor createIntegerFieldEditor(final String label) {
 		final IntegerFieldEditor editor = new IntegerFieldEditor(label, label, getFieldEditorParent());
 		editor.setValidRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
 		return editor;
 	}
-	
-	private DoubleFieldEditor createDoubleFieldEditor(String label) {
+
+	private DoubleFieldEditor createDoubleFieldEditor(final String label) {
 		final DoubleFieldEditor editor = new DoubleFieldEditor(label, label, getFieldEditorParent());
 		editor.setValidRange(Double.MIN_VALUE, Double.MAX_VALUE);
 		return editor;
 	}
 
-
-	private BooleanFieldEditor createBooleanFieldEditor(String label) {
+	private BooleanFieldEditor createBooleanFieldEditor(final String label) {
 		return new BooleanFieldEditor(label, label, getFieldEditorParent());
 	}
 
-	private UltimateLabelFieldEditor createLabel(String label) {
+	private UltimateLabelFieldEditor createLabel(final String label) {
 		return new UltimateLabelFieldEditor(label, getFieldEditorParent());
 	}
 
-	private DirectoryFieldEditor createDirectoryEditor(String label) {
+	private DirectoryFieldEditor createDirectoryEditor(final String label) {
 		return new DirectoryFieldEditor(label, label, getFieldEditorParent());
 	}
 
-	private StringFieldEditor createStringEditor(String label) {
+	private StringFieldEditor createStringEditor(final String label) {
 		return new StringFieldEditor(label, label, getFieldEditorParent());
+	}
+
+	private FieldEditor createKeyValueEditor(final String label) {
+		return new KeyValueGridEditor(label, label, getFieldEditorParent());
 	}
 }

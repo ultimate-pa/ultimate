@@ -20,3 +20,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.pea.util,
  de.uni_freiburg.informatik.ultimate.lib.pea.util.z
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.pea

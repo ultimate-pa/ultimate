@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Represents an term of the form ψ ▷ φ, where ψ and φ are
@@ -229,7 +230,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<Term> term,
 			final RelationSymbol symbol) {
 		if (!term.isConstant()) {
-			return TrivialityStatus.NONTRIVIAL;
+			return checkMinMaxValues(term, symbol);
 		}
 
 		switch (symbol) {
@@ -248,6 +249,73 @@ public class PolynomialRelation implements IBinaryRelation {
 		default:
 			throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
 		}
+	}
+
+	private static TrivialityStatus checkMinMaxValues(final AbstractGeneralizedAffineTerm<Term> term,
+			final RelationSymbol symbol) {
+		final Pair<Rational, Rational> minMaxValues = term.computeMinMax();
+		final TrivialityStatus result;
+		if (minMaxValues == null) {
+			result = TrivialityStatus.NONTRIVIAL;
+		} else {
+			final Rational minimalValue = minMaxValues.getFirst();
+			final Rational maximalValue = minMaxValues.getSecond();
+			switch (symbol) {
+			case DISTINCT:
+				if (minimalValue.compareTo(Rational.ZERO) > 0 || maximalValue.compareTo(Rational.ZERO) < 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				} else {
+					result = TrivialityStatus.NONTRIVIAL;
+				}
+				break;
+			case EQ:
+				if (minimalValue.compareTo(Rational.ZERO) > 0 || maximalValue.compareTo(Rational.ZERO) < 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_FALSE;
+				} else {
+					result = TrivialityStatus.NONTRIVIAL;
+				}
+				break;
+			case LESS:
+				if (maximalValue.compareTo(Rational.ZERO) < 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				} else if (minimalValue.compareTo(Rational.ZERO) >= 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_FALSE;
+				} else {
+					result = TrivialityStatus.NONTRIVIAL;
+				}
+				break;
+			case GREATER:
+				if (minimalValue.compareTo(Rational.ZERO) > 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				} else if (maximalValue.compareTo(Rational.ZERO) <= 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_FALSE;
+				} else {
+					result = TrivialityStatus.NONTRIVIAL;
+				}
+				break;
+			case GEQ:
+				if (minimalValue.compareTo(Rational.ZERO) >= 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				} else if (maximalValue.compareTo(Rational.ZERO) < 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_FALSE;
+				} else {
+					result = TrivialityStatus.NONTRIVIAL;
+				}
+				break;
+			case LEQ:
+				if (maximalValue.compareTo(Rational.ZERO) <= 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				} else if (minimalValue.compareTo(Rational.ZERO) > 0) {
+					result = TrivialityStatus.EQUIVALENT_TO_FALSE;
+				} else {
+					result = TrivialityStatus.NONTRIVIAL;
+				}
+				break;
+			default:
+				throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
+			}
+		}
+		return result;
 	}
 
 	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<Term> term,

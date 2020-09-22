@@ -6,4 +6,5 @@ Bundle-Version: 1.0.0
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: com.github.jhoenicke.javacup.runtime
 Bundle-ClassPath: .
+Automatic-Module-Name: com.github.jhoenicke.javacup
 

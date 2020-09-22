@@ -34,8 +34,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
@@ -64,39 +66,37 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 public class OctagonCalculatorTest {
 
 	private IUltimateServiceProvider mServices;
-	private Script mScript;
-	private ManagedScript mMgdScript;
+	private Script mZ3;
+	private ManagedScript mMgdZ3;
 	private ILogger mLogger;
 
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		mScript = UltimateMocks.createZ3Script();
-		// script = new SMTInterpol();
-		mMgdScript = new ManagedScript(mServices, mScript);
-
-		mScript.setLogic(Logics.ALL);
-		mLogger.info("Before finished");
+		mZ3 = UltimateMocks.createZ3Script(LogLevel.INFO);
+		mZ3.setLogic(Logics.ALL);
+		mMgdZ3 = new ManagedScript(mServices, mZ3);
+		mLogger.info("setUp() finished");
 	}
 
 	@Test
-	public void SequentializeTest() {
+	public void sequentializeTest() {
 		mLogger.debug("SequentializeTest:");
-		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdScript);
+		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdZ3);
 		final OctConjunction example = new OctConjunction();
 		final BoogieVar x = new LocalBoogieVar("x", "x", BoogieType.createPlaceholderType(0),
-				mMgdScript.constructFreshTermVariable("c", mScript.sort("Int")),
-				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
+				mMgdZ3.constructFreshTermVariable("c", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
+				(ApplicationTerm) mZ3.term("false"));
 		final BoogieVar y = new LocalBoogieVar("y", "y", BoogieType.createPlaceholderType(0),
-				mMgdScript.constructFreshTermVariable("d", mScript.sort("Int")),
-				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
+				mMgdZ3.constructFreshTermVariable("d", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
+				(ApplicationTerm) mZ3.term("false"));
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));
-		final TermVariable inVarY = mMgdScript.constructFreshTermVariable("yin", mScript.sort("Int"));
-		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("xout", mScript.sort("Int"));
-		final TermVariable outVarY = mMgdScript.constructFreshTermVariable("yout", mScript.sort("Int"));
+		final TermVariable inVarX = mMgdZ3.constructFreshTermVariable("xin", mZ3.sort("Int"));
+		final TermVariable inVarY = mMgdZ3.constructFreshTermVariable("yin", mZ3.sort("Int"));
+		final TermVariable outVarX = mMgdZ3.constructFreshTermVariable("xout", mZ3.sort("Int"));
+		final TermVariable outVarY = mMgdZ3.constructFreshTermVariable("yout", mZ3.sort("Int"));
 		inVars.put(x, inVarX);
 		inVars.put(y, inVarY);
 		outVars.put(x, outVarX);
@@ -115,22 +115,22 @@ public class OctagonCalculatorTest {
 	}
 
 	@Test
-	public void BinarySequentializeTest() {
+	public void binarySequentializeTest() {
 		mLogger.debug("BinarySequentializeTest:");
-		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdScript);
+		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdZ3);
 		final OctConjunction example = new OctConjunction();
 		final BoogieVar x = new LocalBoogieVar("x", "x", BoogieType.createPlaceholderType(0),
-				mMgdScript.constructFreshTermVariable("c", mScript.sort("Int")),
-				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
+				mMgdZ3.constructFreshTermVariable("c", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
+				(ApplicationTerm) mZ3.term("false"));
 		final BoogieVar y = new LocalBoogieVar("y", "y", BoogieType.createPlaceholderType(0),
-				mMgdScript.constructFreshTermVariable("d", mScript.sort("Int")),
-				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
+				mMgdZ3.constructFreshTermVariable("d", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
+				(ApplicationTerm) mZ3.term("false"));
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));
-		final TermVariable inVarY = mMgdScript.constructFreshTermVariable("yin", mScript.sort("Int"));
-		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("xout", mScript.sort("Int"));
-		final TermVariable outVarY = mMgdScript.constructFreshTermVariable("yout", mScript.sort("Int"));
+		final TermVariable inVarX = mMgdZ3.constructFreshTermVariable("xin", mZ3.sort("Int"));
+		final TermVariable inVarY = mMgdZ3.constructFreshTermVariable("yin", mZ3.sort("Int"));
+		final TermVariable outVarX = mMgdZ3.constructFreshTermVariable("xout", mZ3.sort("Int"));
+		final TermVariable outVarY = mMgdZ3.constructFreshTermVariable("yout", mZ3.sort("Int"));
 		inVars.put(x, inVarX);
 		inVars.put(y, inVarY);
 		outVars.put(x, outVarX);
@@ -148,11 +148,12 @@ public class OctagonCalculatorTest {
 				example.toString());
 		Assert.assertEquals("(2*v_yin_1 <= 10) and (v_xout_1 -v_xin_1 <= 2) and (-v_xout_1 +v_xin_1 <= -2)",
 				result.toString());
+
 	}
 
 	@After
 	public void executeAfterEachTest() {
-		System.out.println("After");
+		mZ3.exit();
+		mLogger.info("--");
 	}
-
 }

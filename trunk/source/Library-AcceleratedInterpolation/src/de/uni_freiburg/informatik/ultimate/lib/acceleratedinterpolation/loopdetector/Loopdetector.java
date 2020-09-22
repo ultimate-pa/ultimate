@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -50,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop detector needed for
  *         {@link AcceleratedInterpolation}
  */
-public class Loopdetector<LETTER extends IIcfgTransition<?>> {
+public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdetector<IcfgLocation, LETTER> {
 
-	private List<LETTER> mTrace;
+	private final List<LETTER> mTrace;
 	private final List<IcfgLocation> mTraceLocations;
 	private final ILogger mLogger;
 	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
@@ -60,6 +62,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Integer mDelay;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
+	private final Map<IcfgLocation, IcfgLocation> mNestingRelation;
 
 	private final CycleFinder mCycleFinder;
 
@@ -83,6 +86,9 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		mLoopExitTransitions = new HashMap<>();
 		mLoopSize = new HashMap<>();
 		mDelay = delay;
+
+		mNestingRelation = new HashMap<>();
+
 		mLogger.debug("Loopdetector: created.");
 		mLogger.debug("Loopdetector: Searching for Loops");
 		findLoopPaths();
@@ -111,28 +117,48 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 			mLoopExitTransitions.put(loopHead, mTrace.get(loopExitTrans));
 			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
 		}
+		mLogger.debug("Found Loops");
 	}
 
 	/*
 	 *
 	 */
 	private Map<IcfgLocation, List<Integer>> filterProcedures(final Map<IcfgLocation, List<Integer>> possibleCycles) {
-		final Map<String, ? extends IcfgLocation> procEntries = mIcfg.getProcedureEntryNodes();
+		// final Map<String, ? extends IcfgLocation> procEntries = mIcfg.getProcedureEntryNodes();
 		final Map<IcfgLocation, List<Integer>> result = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Integer>> loop : possibleCycles.entrySet()) {
 			final IcfgLocation loopHead = loop.getKey();
-			final IcfgLocation procedureEntry = procEntries.get(loopHead.getProcedure());
 			final List<Integer> loopBody = new ArrayList<>(loop.getValue());
 			final List<Integer> loopBodyNoProcedures = new ArrayList<>(loopBody);
 			/*
 			 * Allow only loops that either go through a procedure, meaning calling the procedure in another procedure.
 			 * Or only loops inside a procedure. This prevents procedures themselves being recognized as loops
 			 */
-			if (loopHead == procedureEntry) {
-				for (int j = 0; j < loopBody.size() - 1; j++) {
-					final Pair<Integer, Integer> currentLoop = new Pair<>(loopBody.get(j), loopBody.get(j + 1));
-					for (int i = currentLoop.getFirst(); i < currentLoop.getSecond(); i++) {
-						if (mTrace.get(i) instanceof ICallAction || mTrace.get(i) instanceof IReturnAction) {
+			for (int j = 0; j < loopBody.size() - 1; j++) {
+				final Pair<Integer, Integer> currentLoop = new Pair<>(loopBody.get(j), loopBody.get(j + 1));
+				for (int i = currentLoop.getFirst(); i <= currentLoop.getSecond(); i++) {
+					final LETTER l = mTrace.get(i);
+					/*
+					 * Filter recursive programs.
+					 */
+					if (l instanceof ICallAction) {
+						final IIcfgCallTransition<IcfgLocation> call = (IIcfgCallTransition<IcfgLocation>) l;
+						if (call.getSucceedingProcedure().equals(call.getPrecedingProcedure())) {
+							mLogger.debug("Found Recursive call!");
+							loopBodyNoProcedures.remove(currentLoop.getSecond());
+						}
+					}
+					if (l instanceof IReturnAction) {
+						boolean foundCall = false;
+						final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> ret =
+								(IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) l;
+						final IIcfgCallTransition<IcfgLocation> call = ret.getCorrespondingCall();
+						for (int k = i - 1; k > currentLoop.getFirst(); k--) {
+							if (mTrace.get(k) == call) {
+								foundCall = true;
+							}
+						}
+						if (!foundCall) {
 							loopBodyNoProcedures.remove(currentLoop.getSecond());
 						}
 					}
@@ -167,18 +193,6 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 				mLoopExitTransitions.remove(loop.getKey());
 			}
 		}
-	}
-
-	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
-		return mLoops;
-	}
-
-	public Map<IcfgLocation, LETTER> getLoopExitTransitions() {
-		return mLoopExitTransitions;
-	}
-
-	public Map<IcfgLocation, Pair<Integer, Integer>> getLoopSize() {
-		return mLoopSize;
 	}
 
 	/**
@@ -236,14 +250,26 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 						|| firstOccurence < firstOccurenceOther && firstOccurenceOther < lastOccurence
 								&& lastOccurenceOther > lastOccurence) {
 					nestedCycles.add(loopHeadOther);
+					mNestingRelation.put(loopHeadOther, loopHead);
 				}
 			}
 		}
 		return nestedCycles;
 	}
 
-	public void setTrace(final List<LETTER> trace) {
-		mTrace = trace;
+	@Override
+	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
+		return mLoops;
+	}
+
+	@Override
+	public Map<IcfgLocation, LETTER> getLoopExitTransitions() {
+		return mLoopExitTransitions;
+	}
+
+	@Override
+	public Map<IcfgLocation, Pair<Integer, Integer>> getLoopSize() {
+		return mLoopSize;
 	}
 
 	public List<LETTER> getTrace() {

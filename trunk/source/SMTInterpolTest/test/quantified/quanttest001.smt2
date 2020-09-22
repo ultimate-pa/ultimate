@@ -1,6 +1,4 @@
 (set-option :print-success false)
-(set-option :produce-proofs false)
-(set-option :verbosity 5)
 (set-logic UFLIA)
 (set-info :source |Simple Array Property Example (arrays as uninterpreted functions)|)
 (set-info :smt-lib-version 2.0)

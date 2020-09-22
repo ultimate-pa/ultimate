@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.KeyValueUtil;
 
 /**
  * A {@link PreferenceLayer} instance allows you to supplement preference provider with your own preferences at runtime.
@@ -138,6 +139,11 @@ public class PreferenceLayer implements IPreferenceProvider {
 	@Override
 	public long getLong(final String key, final long defaultValue) {
 		return getFromOverlay(key, Long::parseLong, a -> mBacking.getLong(a, defaultValue));
+	}
+
+	@Override
+	public Map<String, String> getKeyValueMap(final String key) {
+		return getFromOverlay(key, KeyValueUtil::toMap, mBacking::getKeyValueMap);
 	}
 
 	@Override

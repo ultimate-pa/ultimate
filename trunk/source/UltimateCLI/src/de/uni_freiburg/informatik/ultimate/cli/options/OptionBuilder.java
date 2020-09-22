@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -80,18 +79,8 @@ public class OptionBuilder {
 		mCliControllerOptions = createCliOptions(requireToolchain, requireInputFiles);
 	}
 
-	/**
-	 * Given the long name of a CLI option, return a pair consisting of
-	 *
-	 * @param longOptName
-	 * @return
-	 */
-	public Pair<String, String> getUltimatePreference(final String longOptName) {
-		final Triple<String, String, UltimatePreferenceItem<?>> triple = mCliName2UltimatePreferences.get(longOptName);
-		if (triple == null) {
-			return null;
-		}
-		return new Pair<>(triple.getFirst(), triple.getSecond());
+	public Triple<String, String, UltimatePreferenceItem<?>> getUltimatePreference(final String longOptName) {
+		return mCliName2UltimatePreferences.get(longOptName);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -249,6 +238,8 @@ public class OptionBuilder {
 			return builder.hasArg(true).numberOfArgs(1).type(Integer.class).build();
 		case Double:
 			return builder.hasArg(true).numberOfArgs(1).type(Double.class).build();
+		case KeyValue:
+			// return builder.hasArg().numberOfArgs(1).type(String.class).build();
 		case Combo:
 		case Color:
 		case Directory:
@@ -305,6 +296,12 @@ public class OptionBuilder {
 			break;
 		case Integer:
 			sb.append("<arg> is a string representing an integer. ");
+			break;
+		case KeyValue:
+			sb.append("<arg> is a string of the form <key>=<value> representing a key-value pair. ");
+			sb.append("You can specify multiple key-value pairs by repeating this option. ");
+			sb.append("All key-value pairs are collected in a map where every key has to be unique. ");
+			sb.append("Keys and values may not contain the symbols \"=\" and \";\". ");
 			break;
 		case MultilineString:
 		case String:

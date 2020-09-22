@@ -23,3 +23,4 @@ Import-Package: de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.automata.nestedword,
  de.uni_freiburg.informatik.ultimate.automata.statefactory,
  de.uni_freiburg.informatik.ultimate.reqtotest.req
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.reqtotestpowerset

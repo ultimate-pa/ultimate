@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units for at least "c2"
- * time units
+ * {scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units for at least "c2" time
+ * units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -53,21 +53,24 @@ public class BndDelayedResponsePatternUT extends PatternType {
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 2 && durations.length == 2;
 
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
-		// note: P and Q are reserved for scope, cdds are parsed in reverse order
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
 		final int c2 = durations[1];
 
+		final List<CounterTrace> ct = new ArrayList<>();
 		if (scope instanceof SrParseScopeGlobally) {
-			final List<CounterTrace> ct = new ArrayList<>();
 			ct.add(counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.GREATER, c1), phaseT()));
 			ct.add(counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.LESSEQUAL, c1),
 					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
-			return ct;
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+
+		return ct;
 	}
 
 	@Override

@@ -10,3 +10,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.cookiefy

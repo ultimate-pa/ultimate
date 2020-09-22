@@ -47,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -206,6 +208,11 @@ public class RtInconcistencyConditionGenerator {
 				return script.term("true");
 			}
 			return script.term("false");
+		} else if (expr instanceof UnaryExpression) {
+			final UnaryExpression uexpr = (UnaryExpression) expr;
+			if (uexpr.getOperator() == Operator.ARITHNEGATIVE) {
+				return SmtUtils.neg(script, literalToTerm(script, uexpr.getExpr()));
+			}
 		}
 		throw new IllegalArgumentException(BoogiePrettyPrinter.print(expr) + " is no literal");
 	}

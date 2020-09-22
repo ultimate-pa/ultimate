@@ -2337,6 +2337,10 @@ public final class SmtUtils {
 				.collect(Collectors.toSet());
 	}
 
+	public static Set<Term> extractApplicationTerms(final String fun, final Term term) {
+		return new SubTermFinder(x -> isFunctionApplication(x, fun)).findMatchingSubterms(term);
+	}
+
 	public static Term unzipNot(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;

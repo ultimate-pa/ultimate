@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TaMinimization;

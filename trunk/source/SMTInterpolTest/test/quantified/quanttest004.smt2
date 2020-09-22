@@ -1,6 +1,4 @@
 (set-option :print-success false)
-(set-option :produce-proofs false)
-(set-option :verbosity 5)
 (set-logic UF)
 (set-info :source |Simple example for quantifiers|)
 (set-info :smt-lib-version 2.0)

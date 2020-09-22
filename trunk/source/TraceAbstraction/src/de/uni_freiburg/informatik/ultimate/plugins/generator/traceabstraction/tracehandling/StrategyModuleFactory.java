@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -105,7 +106,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
 		}
 		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory,
-				mCounterexample, mAbstraction, mTaskIdentifier);
+				mCounterexample, mAbstraction, mTaskIdentifier, createMcrInterpolantProvider());
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
@@ -211,10 +212,30 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 					(IpTcStrategyModuleAbstractInterpretation<LETTER>) strategy, mEmptyStackFactory);
 		case MCR:
 			return new IpAbStrategyModuleMcr<>(mCounterexample.getWord().asList(), mPredicateUnifier,
-					mEmptyStackFactory, mLogger, mPrefs, mAbstraction.getAlphabet());
+					mEmptyStackFactory, mServices, mLogger, mAbstraction.getAlphabet(), createMcrInterpolantProvider(),
+					mPrefs.getCfgSmtToolkit().getManagedScript(), mPrefs.getSimplificationTechnique(),
+					mPrefs.getXnfConversionTechnique());
 		case TOTALINTERPOLATION:
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.interpolantAutomaton() + " is unsupported");
+		}
+	}
+
+	private IInterpolantProvider<LETTER> createMcrInterpolantProvider() {
+		switch (mTaPrefs.getMcrInterpolantMethod()) {
+		// case INTERPOLATION:
+		// return new IpInterpolantProvider<>(mPrefs, mPredicateUnifier, mPredicateFactory,
+		// new AssertionOrderModulation<>(mPathProgramCache, mLogger), mTaskIdentifier);
+		// case SP:
+		// return new SpInterpolantProvider<>(mPrefs.getUltimateServices(), mLogger,
+		// mPrefs.getCfgSmtToolkit().getManagedScript(), mPrefs.getSimplificationTechnique(),
+		// mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+		case WP:
+			return new WpInterpolantProvider<>(mPrefs.getUltimateServices(), mLogger,
+					mPrefs.getCfgSmtToolkit().getManagedScript(), mPrefs.getSimplificationTechnique(),
+					mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+		default:
+			throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
 		}
 	}
 

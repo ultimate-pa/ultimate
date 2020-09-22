@@ -9,3 +9,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  org.eclipse.ui.workbench,
  org.eclipse.jface
 Export-Package: de.uni_freiburg.informatik.ultimate.gui.views
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.gui.logging

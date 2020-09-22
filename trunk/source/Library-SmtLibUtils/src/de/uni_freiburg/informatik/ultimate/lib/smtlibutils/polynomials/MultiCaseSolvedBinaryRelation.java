@@ -86,7 +86,17 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 	}
 
 	public enum Xnf {
-		CNF, DNF
+		CNF, DNF;
+
+		public static Xnf fromQuantifier(final int quantifier) {
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				return Xnf.DNF;
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				return Xnf.CNF;
+			} else {
+				throw new AssertionError();
+			}
+		}
 	}
 
 	private final Term mSubject;

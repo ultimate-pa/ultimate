@@ -37,3 +37,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
  net.sf.javabdd
 Import-Package: org.apache.commons.lang3
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.modelcheckerutils

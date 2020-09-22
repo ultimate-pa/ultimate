@@ -8,3 +8,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
  de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex
 Import-Package: de.uni_freiburg.informatik.ultimate.util.datastructures.relation
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.pathexpressions

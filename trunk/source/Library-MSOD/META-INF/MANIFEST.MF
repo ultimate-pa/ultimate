@@ -11,3 +11,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.automata
 Export-Package: de.uni_freiburg.informatik.ultimate.mso
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.mso

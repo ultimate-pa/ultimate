@@ -10,3 +10,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util
 Export-Package: de.uni_freiburg.informatik.ultimate.cli,
  de.uni_freiburg.informatik.ultimate.cli.exceptions
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.cli

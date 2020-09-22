@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Common superclass of {@link AffineTerm} and {@link PolynomialTerm}. This class represents an affine term whose kinds
@@ -337,5 +338,27 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		}
 		return true;
 	}
+
+	protected abstract Pair<Rational, Rational> computeMinMax();
+
+
+	/**
+	 * @return absolut value of divisor if term is modulo term, null otherwise
+	 */
+	protected Rational checkForModTerm(final Term term) {
+		final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(term, "mod");
+		if (appTerm == null) {
+			return null;
+		}
+		final Term divisorAsTerm = appTerm.getParameters()[1];
+		final Rational divisorAsRational = SmtUtils.tryToConvertToLiteral(divisorAsTerm);
+		if (divisorAsRational == null) {
+			return null;
+		} else {
+			return divisorAsRational.abs();
+		}
+	}
+
+	public abstract AbstractGeneralizedAffineTerm<AVAR> removeAndNegate(Monomial monomialOfSubject);
 
 }

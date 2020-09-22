@@ -28,9 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -72,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl.SortCon
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
+//@formatter:off
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -291,6 +289,34 @@ public class QuantifierEliminationTest {
 		final String formulaAsString = "(exists ((x Bool)) (and (p x) (not (not (not (not x))))))";
 		final String expextedResultAsString = "(p true)";
 		runQuantifierPusherTest(formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void plrTest12Performance() {
+		/*
+		 * Example generated from synthetic requirement benchmarks on ReqAnalyzer
+		 *
+		 * Interesting because:
+		 * - We generate many (binominal scaling) similar checks on these examples, and speedups would accumulate.
+		 * - Solvers are currently much slower to prove validity of these formulas compared to PQE,
+		 *   so they might make interesting benchmarks
+		 *
+		 */
+		final FunDecl funDecl = new FunDecl(SmtSortUtils::getRealSort, "clock");
+		final String formulaAsString = "(exists"
+				+ "  ((A Bool) (B Bool) (C Bool) (D Bool) (E Bool) (F Int) (G Bool) (H Bool) (I Bool) (J Bool) "
+				+ "(K Bool) (L Bool) (M Bool) (N Bool))" + "  (and "
+				+ "(or (not A) (not (= 0 F))) (or G (not (= 7 F))) (or B (not (= 3 F))) (or (not B) (not (= 2 F))) "
+				+ "(or (not M) (not (= F 9))) (or E (not (= 4 F))) (or (not (= 5 F)) (not H)) (or C (not (= 2 F))) "
+				+ "(or (not (= 0 F)) (= 1 F) (and (not (= 1 F)) (= 0 F) N) (not N)) (or (not (= 1 F)) (not C)) "
+				+ "(or (not D) (not (= 4 F))) (or (not G) (not (= 6 F))) (or H (not (= 6 F))) (or (not (= F 10)) M) "
+				+ "(or (not (= 5 F)) D) (or (not (= F 9)) I) (or (and (or (= 1 F) (not (= 2 F)) K L) (= 1 F)) "
+				+ "(and (not (= 1 F)) (or (not (= 2 F)) K L) (< clock 10.0)) (and (not K) (not (= 1 F)) (= 2 F) "
+				+ "(not L) (< clock 10.0))) (or (not (= 7 F)) (not J)) (or (not (= 3 F)) (not E)) "
+				+ "(or (not (= 1 F)) A) (or (not (= 8 F)) J) (or (not (= 8 F)) (not I))))";
+		final String expextedResultAsString = "true";
+		runQuantifierPusherTest(new FunDecl[] { funDecl }, formulaAsString, expextedResultAsString, true, mServices,
+				mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -909,9 +935,6 @@ public class QuantifierEliminationTest {
 		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
-
-
 	@Test
 	public void bugTirAntiDer() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "b") };
@@ -919,7 +942,6 @@ public class QuantifierEliminationTest {
 		final String expectedResultAsString = "(and (< b 12) (exists ((a Int)) (and (< a 3) (> (* 4 a) b))))";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 	@Test
 	public void ironModulo() {
@@ -974,7 +996,6 @@ public class QuantifierEliminationTest {
 		runQuantifierPusherTest(funDecls, formulaAsString, "(forall ((z Int)) (p z))", false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
 	@Test
 	public void innerPush() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "b") };
@@ -984,7 +1005,7 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void Wildboellen() {
+	public void wildboellen() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "z", "y") };
 		final String formulaAsString = "(forall ((x Int) ) (or (= 0 x) (not (= (* z (+ x 1)) y))))";
 		final String expectedResult = "(let ((.cse0 (+ y (- z))) (.cse1 (= 0 z))) (and (or (not (= 0 .cse0)) (not .cse1)) (or (= 0 (div .cse0 z)) (not (= 0 (mod (+ y (* z (- 1))) z))) .cse1)))";
@@ -992,14 +1013,14 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void Oppenau() {
+	public void oppenau() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getIntSort, "square"),
 			new FunDecl(SmtSortUtils::getIntSort, "x", "y"),
 		};
 		final String formulaAsString = "(exists ((v_proc_i_AFTER_CALL_1 Int) (v_f_4 Int) (v_proc_res_BEFORE_RETURN_1 Int)) (and (exists ((v_f_4 Int)) (<= (+ x (square v_f_4)) v_proc_i_AFTER_CALL_1)) (<= v_proc_res_BEFORE_RETURN_1 y) (<= (+ x (square v_f_4)) v_proc_i_AFTER_CALL_1) (<= v_proc_i_AFTER_CALL_1 v_proc_res_BEFORE_RETURN_1)))";
 		final String expectedResult = null;
-		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -1060,56 +1081,35 @@ public class QuantifierEliminationTest {
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
-
-
-
-	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
-			final String formulaAsString) {
-		// TODO: DD: Somehow the quantified formulas are too large / strange for
-		// TermParseUtils.parseTerm, but this way
-		// should also work
-		final String[] splitted = quantVars.split("\\)");
-		final List<TermVariable> vars = new ArrayList<>();
-		for (int i = 0; i < splitted.length; ++i) {
-			final String current = splitted[i];
-			final String[] tuple = current.substring(2).split(" ");
-			final Sort sort;
-			switch (tuple[1]) {
-			case "Int":
-				sort = SmtSortUtils.getIntSort(mMgdScript);
-				break;
-			case "Bool":
-				sort = SmtSortUtils.getBoolSort(mMgdScript);
-				break;
-			case "Real":
-				sort = SmtSortUtils.getRealSort(mMgdScript);
-				break;
-			default:
-				throw new UnsupportedOperationException(tuple[1]);
-			}
-			mScript.declareFun(tuple[0], new Sort[0], sort);
-			vars.add(mScript.variable(tuple[0], sort));
-		}
-
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		return mScript.quantifier(quantor, vars.toArray(new TermVariable[vars.size()]), formulaAsTerm);
+	@Test
+	public void choirNightTrezor03Gearshiftnut() {
+		final FunDecl[] funDecls = new FunDecl[] {};
+		final String formulaAsString = "(forall ((v_main_~i~0_6 Int) (v_main_~b~0_8 Int)) (or (< (div (+ (* (mod v_main_~i~0_6 4294967296) (- 1)) (* v_main_~b~0_8 (- 4294967295))) (- 4294967296)) (+ (div (+ (* v_main_~b~0_8 4294967295) (- 4294967296)) 4294967296) 2)) (not (and (= 0 v_main_~i~0_6) (= 0 v_main_~b~0_8)))))";
+		final String expectedResult = "true";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void choirNightTrezor04Triathlon() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_~i~0", "main_~b~0"), };
+		final String formulaAsString = "(forall ((aux_div_aux_mod_main_~a~0_26_37 Int) (aux_mod_aux_mod_main_~a~0_26_37 Int)) (or (<= 4294967296 (+ (* 4294967296 aux_div_aux_mod_main_~a~0_26_37) aux_mod_aux_mod_main_~a~0_26_37)) (and (< 0 (mod (+ (* main_~b~0 4294967295) aux_mod_aux_mod_main_~a~0_26_37) 4294967296)) (<= (mod (+ (* main_~b~0 4294967295) aux_mod_aux_mod_main_~a~0_26_37) 4294967296) 1)) (> 0 aux_mod_aux_mod_main_~a~0_26_37) (>= aux_mod_aux_mod_main_~a~0_26_37 4294967296) (<= (+ (* 4294967296 aux_div_aux_mod_main_~a~0_26_37) aux_mod_aux_mod_main_~a~0_26_37) (mod main_~i~0 4294967296)) (< (mod (+ main_~i~0 1) 4294967296) aux_mod_aux_mod_main_~a~0_26_37) (< (+ (* 4294967296 aux_div_aux_mod_main_~a~0_26_37) aux_mod_aux_mod_main_~a~0_26_37) 0)))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon1() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_~i~0", "main_~b~0"), };
+		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (and (< 0 (mod (+ (* main_~b~0 4294967295) moda) 4294967296)) (<= (mod (+ (* main_~b~0 4294967295) moda) 4294967296) 1)) (> 0 moda) (>= moda 4294967296) (<= (+ (* 4294967296 diva) moda) (mod main_~i~0 4294967296)) (< (mod (+ main_~i~0 1) 4294967296) moda) (< (+ (* 4294967296 diva) moda) 0)))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Deprecated
 	private Term elim(final Term quantFormula) {
 		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantFormula,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 
-	/**
-	 * Special method for partial quantifier elimination that applies only local elimination techniques and replaces the
-	 * outermost quantifier by an existential quantifier.
-	 */
-	private Term elim2(final Term term) {
-		final QuantifiedFormula quantFormula = (QuantifiedFormula) term;
-		return PartialQuantifierElimination.quantifierCustom(mServices, mLogger, mMgdScript, PqeTechniques.ALL_LOCAL,
-				QuantifiedFormula.EXISTS, Arrays.asList(quantFormula.getVariables()), quantFormula.getSubformula(),
-				new Term[0]);
-	}
-
 }
+//@formatter:on

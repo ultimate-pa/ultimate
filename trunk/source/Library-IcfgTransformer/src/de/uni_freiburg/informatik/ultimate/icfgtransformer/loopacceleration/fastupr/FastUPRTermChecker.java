@@ -47,14 +47,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class FastUPRTermChecker {
 
-	private final FastUPRUtils mUtils;
 	private final ManagedScript mManagedScript;
 	private final OctagonCalculator mCalc;
 	private Map<IProgramVar, TermVariable> mInVars;
 	private Map<IProgramVar, TermVariable> mOutVars;
 	private OctConjunction mConjunc;
 	private final Script mScript;
-	private final IUltimateServiceProvider mServices;
 	private final FastUPRTermTransformer mTermTransformer;
 
 	/**
@@ -65,17 +63,15 @@ public class FastUPRTermChecker {
 	 * @param formulaBuilder
 	 * @param services
 	 */
-	public FastUPRTermChecker(FastUPRUtils utils, ManagedScript managedScript, OctagonCalculator calc,
-			FastUPRFormulaBuilder formulaBuilder, IUltimateServiceProvider services) {
-		mServices = services;
+	public FastUPRTermChecker(final FastUPRUtils utils, final ManagedScript managedScript, final OctagonCalculator calc,
+			final FastUPRFormulaBuilder formulaBuilder, final IUltimateServiceProvider services) {
 		mCalc = calc;
 		mManagedScript = managedScript;
-		mUtils = utils;
 		mScript = mManagedScript.getScript();
 		mTermTransformer = new FastUPRTermTransformer(mScript);
 	}
 
-	public void setConjunction(OctConjunction conjunc) {
+	public void setConjunction(final OctConjunction conjunc) {
 		mConjunc = conjunc;
 	}
 
@@ -85,18 +81,18 @@ public class FastUPRTermChecker {
 	 * @param inVars
 	 * @param outVars
 	 */
-	public void setConjunction(OctConjunction conjunc, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+	public void setConjunction(final OctConjunction conjunc, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
 		mConjunc = conjunc;
 		mInVars = inVars;
 		mOutVars = outVars;
 	}
 
-	public void setInVars(Map<IProgramVar, TermVariable> inVars) {
+	public void setInVars(final Map<IProgramVar, TermVariable> inVars) {
 		mInVars = inVars;
 	}
 
-	public void setOutVars(Map<IProgramVar, TermVariable> outVars) {
+	public void setOutVars(final Map<IProgramVar, TermVariable> outVars) {
 		mOutVars = outVars;
 	}
 
@@ -106,7 +102,7 @@ public class FastUPRTermChecker {
 	 * @param c
 	 * @return
 	 */
-	public int checkConsistency(int b, int c) {
+	public int checkConsistency(final int b, final int c) {
 		for (int k = 0; k <= 2; k++) {
 			if (!checkSequentialized(b + (k * c))) {
 				return k;
@@ -115,7 +111,7 @@ public class FastUPRTermChecker {
 		return -1;
 	}
 
-	private boolean checkSequentialized(int count) {
+	private boolean checkSequentialized(final int count) {
 		final Script script = mManagedScript.getScript();
 		final OctConjunction toCheck = mCalc.sequentialize(mConjunc, mInVars, mOutVars, count);
 		return checkTerm(toCheck.toTerm(script));
@@ -127,10 +123,9 @@ public class FastUPRTermChecker {
 	 *
 	 * @param term
 	 *            The term to check.
-	 * @return TRUE if the term is satisfiable, FALSE if unknown or
-	 *         unsatisfiable.
+	 * @return TRUE if the term is satisfiable, FALSE if unknown or unsatisfiable.
 	 */
-	public boolean checkQuantifiedTerm(Term term) {
+	public boolean checkQuantifiedTerm(final Term term) {
 		final Term withOutReal = mTermTransformer.transformToInt(term);
 		final LBool result = SmtUtils.checkSatTerm(mScript, withOutReal);
 		return result != LBool.UNSAT;
@@ -141,10 +136,9 @@ public class FastUPRTermChecker {
 	 *
 	 * @param term
 	 *            The term to check.
-	 * @return TRUE if the term is satisfiable, FALSE if unknown or
-	 *         unsatisfiable.
+	 * @return TRUE if the term is satisfiable, FALSE if unknown or unsatisfiable.
 	 */
-	public boolean checkTerm(Term term) {
+	public boolean checkTerm(final Term term) {
 
 		final Term withOutReal = mTermTransformer.transformToInt(term);
 

@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.printer.preferences;
 
 import de.uni_freiburg.informatik.ultimate.boogie.printer.Activator;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {

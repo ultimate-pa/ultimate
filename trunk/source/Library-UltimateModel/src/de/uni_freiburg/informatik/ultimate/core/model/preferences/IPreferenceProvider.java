@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.core.model.preferences;
 
+import java.util.Map;
+
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -65,6 +67,8 @@ public interface IPreferenceProvider {
 	long getLong(String key);
 
 	long getLong(String key, long defaultValue);
+
+	Map<String, String> getKeyValueMap(String key);
 
 	void put(String key, String value);
 

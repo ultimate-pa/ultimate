@@ -24,3 +24,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
  de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates,
  de.uni_freiburg.informatik.ultimate.lassoranker.variables
 Import-Package: org.apache.commons.lang3
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.lassoranker

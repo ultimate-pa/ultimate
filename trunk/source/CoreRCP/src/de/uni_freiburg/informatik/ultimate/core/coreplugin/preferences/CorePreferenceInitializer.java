@@ -28,12 +28,16 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
@@ -51,6 +55,18 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
 	public enum WitnessVerifierType {
 		CPACHECKER
+	}
+
+	/**
+	 * {@link InheritableLogLevel} corresponds to log4j's {@link Level} but adds an
+	 * {@link InheritableLogLevel#INHERITED} value that defers the actual value to the
+	 * {@link CorePreferenceInitializer#LABEL_PLUGINS_PREF} setting.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum InheritableLogLevel {
+		OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL, INHERITED
 	}
 
 	public static final String PLUGINID = Activator.PLUGIN_ID;
@@ -125,20 +141,13 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String LABEL_TMP_DIRECTORY = "Repository directory";
 	public static final String VALUE_TMP_DIRECTORY;
 
-	public static final String LABEL_LOGLEVEL_ROOT = "ultimate.logging.root";
-	public static final String LABEL_LOGLEVEL_CORE = "ultimate.logging.core";
-	public static final String LABEL_LOGLEVEL_CONTROLLER = "ultimate.logging.controller";
-	public static final String LABEL_LOGLEVEL_TOOLS = "ultimate.logging.tools";
-	public static final String LABEL_LOGLEVEL_PLUGINS = "ultimate.logging.plugins";
-	public static final String LABEL_LOGLEVEL_PLUGIN_SPECIFIC = "ultimate.logging.details";
-	public static final String LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC = "ultimate.logging.tooldetails";
-
 	public static final String LABEL_ROOT_PREF = "Root log level";
 	public static final String LABEL_TOOLS_PREF = "Log level for external tools";
 	public static final String LABEL_CORE_PREF = "Log level for core plugin";
 	public static final String LABEL_CONTROLLER_PREF = "Log level for controller plugin";
 	public static final String LABEL_PLUGINS_PREF = "Log level for plugins";
-	public static final String LABEL_PLUGIN_DETAIL_PREF = "Log levels for specific plugins";
+	private static final String LABEL_LOGLEVEL_PLUGIN_SPECIFIC = "Log level for";
+	public static final String LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC = "Log level for specific external tool";
 
 	public static final String DEFAULT_VALUE_ROOT_PREF = "DEBUG";
 	public static final String DEFAULT_VALUE_TOOLS_PREF = "WARN";
@@ -190,12 +199,33 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	}
 
 	public CorePreferenceInitializer() {
-		super(Activator.PLUGIN_ID, "General");
+		super(Activator.PLUGIN_ID, "Core");
+	}
+
+	public static String getLabelLogLevelForSpecificPlugin(final String pluginId) {
+		return LABEL_LOGLEVEL_PLUGIN_SPECIFIC + " " + pluginId;
+	}
+
+	public static String getPluginIdFromLabelLogLevelForSpecificPlugin(final String settingsLabel) {
+		return settingsLabel.substring(LABEL_LOGLEVEL_PLUGIN_SPECIFIC.length() + 1);
 	}
 
 	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem[] {
+	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
+
+		final UltimatePreferenceItemContainer pluginSpecificLevels =
+				new UltimatePreferenceItemContainer("Plugin-specific log levels");
+
+		final String[] plugins = UltimateCore.getPluginNames();
+		Arrays.sort(plugins);
+		for (int i = 0; i < plugins.length; i++) {
+			pluginSpecificLevels.addItem(new UltimatePreferenceItem<>(getLabelLogLevelForSpecificPlugin(plugins[i]),
+					InheritableLogLevel.INHERITED, PreferenceType.Combo, InheritableLogLevel.values()));
+		}
+
+		return new BaseUltimatePreferenceItem[] {
+				// container
+				pluginSpecificLevels,
 
 				// Core
 				new UltimatePreferenceItem<>(LABEL_SHOWUSABLEPARSER, VALUE_SHOWUSABLEPARSER_DEFAULT,
@@ -234,8 +264,9 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 						null, new LogLevelValidator()),
 				new UltimatePreferenceItem<>(LABEL_TOOLS_PREF, DEFAULT_VALUE_TOOLS_PREF, PreferenceType.String, null,
 						new LogLevelValidator()),
-				new UltimatePreferenceItem<>(LABEL_LOGLEVEL_PLUGIN_SPECIFIC, "", PreferenceType.String, null, true,
-						null, null),
+
+				new UltimatePreferenceItem<>(LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC, Collections.emptyMap(),
+						PreferenceType.KeyValue),
 
 				// Log colours
 				new UltimatePreferenceItem<>(LABEL_COLOR_DEBUG, DEFAULT_VALUE_COLOR_DEBUG, PreferenceType.Color),

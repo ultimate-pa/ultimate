@@ -96,4 +96,14 @@ public interface IPolynomialTerm {
 
 	Sort getSort();
 
+
+	/**
+	 * @return Divide this {@link IPolynomialTerm} by divisor. Return the result
+	 *         only if there is some "inverse" element invrs such that a
+	 *         multiplication with invrs is equivalent to the original
+	 *         {@link IPolynomialTerm}. Return null if no such inverse element
+	 *         exists.
+	 */
+	IPolynomialTerm divInvertible(Rational divisor);
+
 }

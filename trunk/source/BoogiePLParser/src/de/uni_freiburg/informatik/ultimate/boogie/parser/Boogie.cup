@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import com.github.jhoenicke.javacup.runtime.Symbol;
-
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.BoogieSymbol;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -84,6 +83,11 @@ action code {:
 		}
 		return new StructConstructor(loc, fieldNames, fieldExprs);
 	}
+	
+	public static Check createCheck(final BoogieASTNode boogieASTNode) {
+		return BoogieASTNode.createDefaultCheck(boogieASTNode);
+	}
+	
 :}
 
 /*init with {: getScanner().init(); :} */
@@ -700,7 +704,7 @@ stmt ::=
 	  ID:i COLON
 	  {: RESULT = new Label(getLocation(i$,i$), i); :}
 	| ASSERT:x attributes:attr expr:e SEMI
-	  {: RESULT = new AssertStatement(getLocation(x$,e$), attr, e); Check check = new Check(Spec.ASSERT); check.annotate(RESULT); :}
+	  {: RESULT = new AssertStatement(getLocation(x$,e$), attr, e); Check check = createCheck(RESULT); check.annotate(RESULT); :}
 	| ASSUME:x attributes:attr expr:e SEMI
 	  {: RESULT = new AssumeStatement(getLocation(x$,e$), attr, e); :}
 	| HAVOC:x varCommaPlus:i SEMI

@@ -24,3 +24,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.icfgtransformer

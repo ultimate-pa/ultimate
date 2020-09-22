@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -127,8 +129,7 @@ public class FastUPRTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Tries to transform all ConstantTerms to ConstantTerms with
-	 * {@link Sort.INT_SORT}.
+	 * Tries to transform all ConstantTerms to ConstantTerms with {@link Sort.INT_SORT}.
 	 *
 	 * @param term
 	 *            The term to be transformed.
@@ -156,11 +157,34 @@ public class FastUPRTermTransformer extends NonRecursive {
 			}
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			final Term[] subTerms = new Term[appTerm.getParameters().length];
-			for (int i = 0; i < appTerm.getParameters().length; i++) {
-				subTerms[i] = transformToInt(appTerm.getParameters()[i]);
+
+			boolean removeZero = false;
+			if ("+".equals(appTerm.getFunction().getName())) {
+				removeZero = true;
 			}
-			mCurrentTerm = mScript.term(appTerm.getFunction().getName(), subTerms);
+
+			final List<Term> subTerms = new ArrayList<>();
+			for (int i = 0; i < appTerm.getParameters().length; i++) {
+				final Term param = appTerm.getParameters()[i];
+				if (removeZero && param instanceof ConstantTerm) {
+					final ConstantTerm val = (ConstantTerm) param;
+					switch (val.toString()) {
+					case "0":
+					case "0.0":
+						continue;
+					default:
+						break;
+					}
+				}
+				subTerms.add(transformToInt(param));
+			}
+			if (subTerms.size() == 1) {
+				mCurrentTerm = subTerms.get(0);
+			} else {
+				mCurrentTerm =
+						mScript.term(appTerm.getFunction().getName(), subTerms.toArray(new Term[subTerms.size()]));
+			}
+
 		} else if (term instanceof LetTerm) {
 			final LetTerm letTerm = (LetTerm) term;
 			final Term[] subTerms = new Term[letTerm.getValues().length];
@@ -187,9 +211,8 @@ public class FastUPRTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Replaces all occurences of a {@link TermVariable} in the term with
-	 * another one.
-	 * 
+	 * Replaces all occurences of a {@link TermVariable} in the term with another one.
+	 *
 	 * @param term
 	 *            The term to be transformed.
 	 * @param toReplace
@@ -238,8 +261,7 @@ public class FastUPRTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Converts any Term that is a {@link QuantifiedFormula} into an one with
-	 * existential Quantifier.
+	 * Converts any Term that is a {@link QuantifiedFormula} into an one with existential Quantifier.
 	 *
 	 * @param term
 	 *            The term to be transformed.

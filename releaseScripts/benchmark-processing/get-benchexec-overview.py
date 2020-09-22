@@ -79,7 +79,7 @@ class Run:
 
     def __init__(self, xml_run: ET.Element, logfile_basename: str) -> None:
         self.logfile_basename = logfile_basename
-        self.options = xml_run.attrib["options"]
+        self.options = xml_run.attrib["options"] if "options" in xml_run.attrib else ""
         self.status = Run.__get_column_value(xml_run, "status")
         self.category = Run.__get_column_value(xml_run, "category")
         self.cputime = Run.__time_to_float(Run.__get_column_value(xml_run, "cputime"))
@@ -397,6 +397,7 @@ def process_direct_call_log(file: str) -> List[Result]:
     with open(file) as f:
         version = ""
         lines = [line.rstrip("\n") for line in f].__iter__()
+        call = None
         for line in lines:
             if not line:
                 continue

@@ -60,7 +60,8 @@ public class OctagonDetector extends NonRecursive {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	public OctagonDetector(ILogger logger, ManagedScript managedScript, IUltimateServiceProvider services) {
+	public OctagonDetector(final ILogger logger, final ManagedScript managedScript,
+			final IUltimateServiceProvider services) {
 		super();
 		mLogger = logger;
 		mCheckedTerms = new HashSet<>();
@@ -75,12 +76,12 @@ public class OctagonDetector extends NonRecursive {
 
 		private final Term mTerm;
 
-		public ConjunctionWalker(Term t) {
+		public ConjunctionWalker(final Term t) {
 			mTerm = t;
 		}
 
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			((OctagonDetector) engine).addConjunctTerms(mTerm);
 		}
 
@@ -90,12 +91,12 @@ public class OctagonDetector extends NonRecursive {
 
 		private final Term mTerm;
 
-		OctagonDetectionWalker(Term t) {
+		OctagonDetectionWalker(final Term t) {
 			mTerm = t;
 		}
 
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			((OctagonDetector) engine).check(mTerm);
 
 		}
@@ -109,7 +110,7 @@ public class OctagonDetector extends NonRecursive {
 	 *            The Term to split
 	 * @return Set of Subterms
 	 */
-	public Set<Term> getConjunctSubTerms(Term t) {
+	public Set<Term> getConjunctSubTerms(final Term t) {
 		final Term cnfRelation = SmtUtils.toCnf(mServices, mManagedScript, t,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mCheckedTerms.clear();
@@ -117,7 +118,7 @@ public class OctagonDetector extends NonRecursive {
 		return mSubTerms;
 	}
 
-	private void addConjunctTerms(Term t) {
+	private void addConjunctTerms(final Term t) {
 		mLogger.debug("Current Term:" + t.toString());
 
 		if (mCheckedTerms.contains(t)) {
@@ -145,14 +146,13 @@ public class OctagonDetector extends NonRecursive {
 	}
 
 	/**
-	 * Checks if a given Term t is a valid Term in the conjunction of an
-	 * Octagon.
+	 * Checks if a given Term t is a valid Term in the conjunction of an Octagon.
 	 *
 	 * @param t
 	 *            The Term to check.
 	 * @return TRUE if the given term is a valid OctTerm.
 	 */
-	public boolean isOctTerm(Term t) {
+	public boolean isOctTerm(final Term t) {
 		mCheckedTerms.clear();
 		mIsOctTerm = true;
 		mCurrentVars.clear();
@@ -161,7 +161,7 @@ public class OctagonDetector extends NonRecursive {
 		return mIsOctTerm;
 	}
 
-	private void check(Term t) {
+	private void check(final Term t) {
 		if (!mIsOctTerm) {
 			return;
 		}

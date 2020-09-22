@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCase
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SupportingTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -148,6 +147,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			}
 			aquiredEliminatees.addAll(er.getNewEliminatees());
 			currentEt = er.getEliminationTask();
+			if (!aquiredEliminatees.isEmpty()) {
+				break;
+			}
 			if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
 					er.getEliminationTask().getTerm())) {
 				// we can push the quantifier, no further iterations
@@ -194,6 +196,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			}
 			aquiredEliminatees.addAll(er.getNewEliminatees());
 			currentEt = er.getEliminationTask();
+			if (!aquiredEliminatees.isEmpty()) {
+				break;
+			}
 			if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
 					er.getEliminationTask().getTerm())) {
 				// we can push the quantifier, no further iterations
@@ -217,7 +222,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	 */
 	private EliminationResult tryToEliminateOne(final IDerHelper<?> derHelper, final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt, inputEt.getEliminatees());
+			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt,
+					inputEt.getBannedForDivCapture());
 			if (er != null) {
 				return er;
 			}
@@ -254,16 +260,6 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			}
 		}
 		return true;
-	}
-
-	private static Xnf getXnf(final int quantifier) {
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			return Xnf.DNF;
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			return Xnf.CNF;
-		} else {
-			throw new AssertionError();
-		}
 	}
 
 
@@ -305,9 +301,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	private static abstract class IDerHelper<SR> {
 
 		public Pair<Integer, SR> findBestReplacementSbr(final Script script, final int quantifier,
-				final TermVariable eliminatee, final Term[] dualJuncts, final Set<TermVariable> allEliminatees) {
+				final TermVariable eliminatee, final Term[] dualJuncts, final Set<TermVariable> bannedForDivCapture) {
 			for (int i = 0; i < dualJuncts.length; i++) {
-				final SR sbr = solveForSubject(script, quantifier, eliminatee, dualJuncts[i], allEliminatees);
+				final SR sbr = solveForSubject(script, quantifier, eliminatee, dualJuncts[i], bannedForDivCapture);
 				if (sbr != null) {
 					return new Pair<Integer, SR>(i, sbr);
 				}
@@ -316,13 +312,13 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		}
 
 		protected abstract SR solveForSubject(final Script script, final int quantifier, final TermVariable eliminatee,
-				final Term term, Set<TermVariable> allEliminatees);
+				final Term term, Set<TermVariable> bannedForDivCapture);
 
 		private EliminationResult tryToEliminateSbr(final ManagedScript mgdScript, final TermVariable eliminatee,
-				final EliminationTask et, final Set<TermVariable> allEliminatees) {
+				final EliminationTask et, final Set<TermVariable> bannedForDivCapture) {
 			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript.getScript(), et.getQuantifier(), eliminatee,
-					dualJuncts, allEliminatees);
+					dualJuncts, bannedForDivCapture);
 			if (pair == null) {
 				return null;
 			}
@@ -342,7 +338,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 		@Override
 		public SolvedBinaryRelation solveForSubject(final Script script, final int quantifier,
-				final TermVariable eliminatee, final Term term, final Set<TermVariable> allEliminatees) {
+				final TermVariable eliminatee, final Term term, final Set<TermVariable> bannedForDivCapture) {
 			if (SmtSortUtils.isBoolSort(eliminatee.getSort()) && SmtSortUtils.isBoolSort(term.getSort())) {
 				final SolvedBinaryRelation sbr = DualJunctionDer.tryPlr(script, quantifier, eliminatee, term);
 				if (sbr != null) {
@@ -367,7 +363,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			if (!sfs.getAssumptionsMap().isEmpty()) {
 				return null;
 			}
-			if (SolveForSubjectUtils.isVariableDivCaptured(sfs, allEliminatees)) {
+			if (SolveForSubjectUtils.isVariableDivCaptured(sfs, bannedForDivCapture)) {
 				return null;
 			}
 			if (QuantifierUtils.isDerRelationSymbol(quantifier, sfs.getRelationSymbol())) {
@@ -407,12 +403,12 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 		@Override
 		public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final int quantifier,
-				final TermVariable eliminatee, final Term term, final Set<TermVariable> allEliminatees) {
+				final TermVariable eliminatee, final Term term, final Set<TermVariable> bannedForDivCapture) {
 			final PolynomialRelation pr = PolynomialRelation.convert(script, term);
 			if (pr == null) {
 				return null;
 			}
-			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee, getXnf(quantifier));
+			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee, Xnf.fromQuantifier(quantifier));
 			if (mcsbr == null) {
 				return null;
 			}
@@ -435,7 +431,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			default:
 				throw new AssertionError("unknon value " + mIntricateOperations);
 			}
-			if (SolveForSubjectUtils.isVariableDivCaptured(mcsbr, allEliminatees)) {
+			if (SolveForSubjectUtils.isVariableDivCaptured(mcsbr, bannedForDivCapture)) {
 				return null;
 			}
 			if (eachCaseHasDerRelationSymbol(mcsbr, quantifier)) {

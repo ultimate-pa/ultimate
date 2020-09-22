@@ -110,3 +110,4 @@ Export-Package: junit.extensions,
  org.junit.runners,
  org.junit.runners.model
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Automatic-Module-Name: net.sourceforge.czt

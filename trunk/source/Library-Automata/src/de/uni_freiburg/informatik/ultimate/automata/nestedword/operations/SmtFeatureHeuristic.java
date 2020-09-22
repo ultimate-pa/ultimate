@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LETTER> {
 
-	private final Map<LETTER, Double> mScoreCache;
+	private Map<LETTER, Double> mScoreCache;
 	private final ScoringMethod mScoringMethod;
 	private final SMTFeatureExtractor mFeatureExtractor;
 
@@ -83,6 +84,7 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 
 	public void compareSuccessors(final List<IsEmptyHeuristic<LETTER, STATE>.Item> successors) {
 		final Map<SMTFeature, LETTER> featureToSuccessor = new HashMap<>();
+
 		mScoreCache.clear();
 
 		if (successors.size() == 1) {
@@ -95,11 +97,8 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 			final LETTER trans = e.getLetter();
 			UnmodifiableTransFormula transformula = null;
 			// We only want to consider IAction's
-			if (trans instanceof IAction) {
-				transformula = ((IAction) trans).getTransformula();
-				featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()), trans);
-			}
-
+			transformula = ((IAction) trans).getTransformula();
+			featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()), trans);
 			// TODO: what happens with transitions, that are no IActions, can that even happen?
 		});
 
@@ -125,6 +124,8 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 				}
 			}
 		}
+		mScoreCache = mScoreCache.entrySet().stream().collect(Collectors.toMap(Entry::getKey,
+				e -> SMTFeatureExtractionTermClassifier.normalize(e.getValue(), 0.5, 1.0)));
 	}
 
 	public ScoringMethod getScoringMethod() {

@@ -29,7 +29,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -66,11 +65,6 @@ public class CheckedReqLocation extends DefaultLocation {
 	@Override
 	public String toString() {
 		return mCheckedSpecification.toString();
-	}
-
-	@Override
-	public Check getCheck() {
-		return mCheckedSpecification;
 	}
 
 	@Override

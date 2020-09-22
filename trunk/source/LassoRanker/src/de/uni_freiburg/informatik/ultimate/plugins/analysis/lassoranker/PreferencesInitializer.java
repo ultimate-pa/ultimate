@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;

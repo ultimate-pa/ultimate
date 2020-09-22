@@ -154,13 +154,13 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		/**
 		 * An {@link IntegerValidator} that allows all values from 0 to Integer.MAX_VALUE
 		 */
-		public static final IntegerValidator ONLY_POSITIVE = new IntegerValidator(0, Integer.MAX_VALUE);
-		public static final IntegerValidator ONLY_POSITIVE_NON_ZERO = new IntegerValidator(1, Integer.MAX_VALUE);
-		public static final IntegerValidator GEQ_TWO = new IntegerValidator(2, Integer.MAX_VALUE);
+		IntegerValidator ONLY_POSITIVE = new IntegerValidator(0, Integer.MAX_VALUE);
+		IntegerValidator ONLY_POSITIVE_NON_ZERO = new IntegerValidator(1, Integer.MAX_VALUE);
+		IntegerValidator GEQ_TWO = new IntegerValidator(2, Integer.MAX_VALUE);
 
-		public boolean isValid(T value);
+		boolean isValid(T value);
 
-		public String getInvalidValueErrorMessage(T value);
+		String getInvalidValueErrorMessage(T value);
 
 		public class IntegerValidator implements IUltimatePreferenceItemValidator<Integer> {
 
@@ -182,7 +182,7 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 				return "Valid range is " + mMin + " <= value <= " + mMax;
 			}
 		}
-		
+
 		public class DoubleValidator implements IUltimatePreferenceItemValidator<Double> {
 
 			private final double mMin;

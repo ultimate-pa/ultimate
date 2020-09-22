@@ -40,10 +40,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
@@ -57,8 +59,11 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChang
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LogfileException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer.InheritableLogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.KeyValueUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
@@ -74,19 +79,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
  *
  */
 public final class Log4JLoggingService implements IStorable, ILoggingService {
-
-	private static final String[] RELEVANT_SETTINGS = new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN,
-			CorePreferenceInitializer.LABEL_LOGFILE, CorePreferenceInitializer.LABEL_LOGFILE_NAME,
-			CorePreferenceInitializer.LABEL_LOGFILE_DIR, CorePreferenceInitializer.LABEL_APPEXLOGFILE,
-			CorePreferenceInitializer.LABEL_LOGLEVEL_ROOT, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGINS,
-			CorePreferenceInitializer.LABEL_LOGLEVEL_TOOLS, CorePreferenceInitializer.LABEL_LOGLEVEL_CONTROLLER,
-			CorePreferenceInitializer.LABEL_LOGLEVEL_CORE, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC,
-			CorePreferenceInitializer.LABEL_ROOT_PREF, CorePreferenceInitializer.LABEL_TOOLS_PREF,
-			CorePreferenceInitializer.LABEL_CORE_PREF, CorePreferenceInitializer.LABEL_CONTROLLER_PREF,
-			CorePreferenceInitializer.LABEL_PLUGINS_PREF, CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF,
-			CorePreferenceInitializer.LABEL_COLOR_DEBUG, CorePreferenceInitializer.LABEL_COLOR_INFO,
-			CorePreferenceInitializer.LABEL_COLOR_WARNING, CorePreferenceInitializer.LABEL_COLOR_ERROR,
-			CorePreferenceInitializer.LABEL_COLOR_FATAL, CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
 
 	private static final String APPENDER_NAME_CONSOLE = "ConsoleAppender";
 	private static final String APPENDER_NAME_LOGFILE = "LogfileAppender";
@@ -117,6 +109,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	private boolean mIsAttached;
 
 	private Map<String, Level> mSettingsLogger2LogLevel;
+	private Set<String> mRelevantSettings;
+	private List<String> mPluginSpecificLogLevelSettingLabels;
 
 	private Log4JLoggingService() {
 		mPreferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
@@ -214,15 +208,14 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		rtr.put(LOGGER_NAME_TOOLS, getLogLevelPreference(CorePreferenceInitializer.LABEL_TOOLS_PREF));
 		rtr.put(LOGGER_NAME_CORE, getLogLevelPreference(CorePreferenceInitializer.LABEL_CORE_PREF));
 		// settings for specific plugins
-		final Map<String, Level> pluginLevels =
-				getSettingPluginSpecificLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC);
+		final Map<String, Level> pluginLevels = getSettingPluginSpecificLogLevels();
 		for (final Entry<String, Level> entry : pluginLevels.entrySet()) {
 			rtr.put(getPluginLoggerName(entry.getKey()), entry.getValue());
 		}
 
 		// settings for specific tools
 		final Map<String, Level> toolLevels =
-				getSettingPluginSpecificLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
+				getSettingToolSpecificLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
 		for (final Entry<String, Level> entry : toolLevels.entrySet()) {
 			rtr.put(getToolLoggerName(entry.getKey()), entry.getValue());
 		}
@@ -343,18 +336,30 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		getLog4JRootLogger().removeAppender(appender);
 	}
 
-	private Map<String, Level> getSettingPluginSpecificLogLevels(final String settingsLabel) {
-		final String pluginSpecificLogLevels = mPreferenceStore.getString(settingsLabel);
-		final StringTokenizer tokenizer =
-				new StringTokenizer(pluginSpecificLogLevels, CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
-
-		final Map<String, Level> rtr = new HashMap<>();
-		while (tokenizer.hasMoreTokens()) {
-			final String token = tokenizer.nextToken();
-			final String[] keyValue = token.split("=");
-			rtr.put(keyValue[0], Level.toLevel(keyValue[1]));
+	/**
+	 *
+	 * @return Map from plugin ID to overwritten log level (i.e., when a plugin specific log level is set, it occurs
+	 *         here)
+	 */
+	private Map<String, Level> getSettingPluginSpecificLogLevels() {
+		final LinkedHashMap<String, Level> rtr = new LinkedHashMap<>();
+		for (final String key : getPluginSpecificLogLevelSettingLabels()) {
+			final InheritableLogLevel value = mPreferenceStore.getEnum(key, InheritableLogLevel.class);
+			if (value == InheritableLogLevel.INHERITED) {
+				continue;
+			}
+			rtr.put(CorePreferenceInitializer.getPluginIdFromLabelLogLevelForSpecificPlugin(key),
+					Level.toLevel(value.toString()));
 		}
+		return rtr;
+	}
 
+	private Map<String, Level> getSettingToolSpecificLogLevels(final String settingsLabel) {
+		final Map<String, String> map = KeyValueUtil.toMap(mPreferenceStore.getString(settingsLabel));
+		final LinkedHashMap<String, Level> rtr = new LinkedHashMap<>();
+		for (final Entry<String, String> entry : map.entrySet()) {
+			rtr.put(entry.getKey(), Level.toLevel(entry.getValue()));
+		}
 		return rtr;
 	}
 
@@ -403,6 +408,38 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		mSettingsLogger2LogLevel.put(getPluginLoggerName(id), Level.toLevel(level.toString()));
 	}
 
+	private List<String> getPluginSpecificLogLevelSettingLabels() {
+		if (mPluginSpecificLogLevelSettingLabels == null) {
+			mPluginSpecificLogLevelSettingLabels = Arrays.stream(UltimateCore.getPluginNames())
+					.map(CorePreferenceInitializer::getLabelLogLevelForSpecificPlugin).collect(Collectors.toList());
+		}
+		return mPluginSpecificLogLevelSettingLabels;
+	}
+
+	private Set<String> getRelevantSettings() {
+		if (mRelevantSettings == null) {
+			mRelevantSettings = new HashSet<>();
+			mRelevantSettings.addAll(getPluginSpecificLogLevelSettingLabels());
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_LOGFILE);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_LOGFILE_NAME);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_LOGFILE_DIR);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_APPEXLOGFILE);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_ROOT_PREF);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_TOOLS_PREF);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_CORE_PREF);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_PLUGINS_PREF);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_COLOR_DEBUG);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_COLOR_INFO);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_COLOR_WARNING);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_COLOR_ERROR);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_COLOR_FATAL);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN);
+		}
+		return mRelevantSettings;
+	}
+
 	private final class RefreshingPreferenceChangeListener implements IPreferenceChangeListener {
 
 		@Override
@@ -420,11 +457,10 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			}
 
 			final String ek = event.getKey();
-			if (!Arrays.stream(RELEVANT_SETTINGS).anyMatch(ek::equals)) {
+			if (!getRelevantSettings().contains(ek)) {
 				// it does not concern us, just break
 				return;
 			}
-
 			// this is an event for which we should refresh the logging service
 			reloadLoggers();
 		}

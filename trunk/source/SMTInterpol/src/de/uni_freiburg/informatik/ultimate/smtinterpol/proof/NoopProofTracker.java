@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 /**
@@ -80,7 +81,15 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term getRewriteProof(final Term asserted, final Term simpFormula) {
+	public Term orMonotony(Term a, Term[] b) {
+		assert a instanceof ApplicationTerm && ((ApplicationTerm) a).getFunction().getName() == "or";
+		assert b.length > 1;
+		final Theory theory = a.getSort().getTheory();
+		return theory.term("or", b);
+	}
+
+	@Override
+	public Term modusPonens(final Term asserted, final Term simpFormula) {
 		return simpFormula;
 	}
 
@@ -118,5 +127,12 @@ public class NoopProofTracker implements IProofTracker {
 	public Term forall(final QuantifiedFormula quant, final Term negNewBody) {
 		final Theory theory = quant.getTheory();
 		return theory.term("not", theory.exists(quant.getVariables(), negNewBody));
+	}
+
+	@Override
+	public Term allIntro(Term formula, TermVariable[] vars) {
+		final Theory theory = formula.getTheory();
+		return theory.annotatedTerm(new Annotation[] { new Annotation(":quoted", null) },
+				theory.forall(vars, formula));
 	}
 }

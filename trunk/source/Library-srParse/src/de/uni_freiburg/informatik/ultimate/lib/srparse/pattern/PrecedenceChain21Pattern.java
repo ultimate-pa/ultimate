@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that if "P" holds, then "S", previously held and was preceded by "T"
+ * {scope}, it is always the case that if "R" holds, then "S" previously held and was preceded by "T"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -53,36 +53,78 @@ public class PrecedenceChain21Pattern extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+		assert cdds.length == 3 && durations.length == 0;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
-		// note: Q and R are reserved for scope, cdds are parsed in reverse order
-		final CDD P = cdds[2];
+		final CDD R = cdds[2];
 		final CDD S = cdds[1];
 		final CDD T = cdds[0];
 
-		// final CDD Q = scope.getCdd1();
-		// final CDD R = scope.getCdd2();
-
-		final CounterTrace ct;
+		final List<CounterTrace> ct = new ArrayList<>();
 		if (scope instanceof SrParseScopeGlobally) {
-			// TODO: needs 2 ct formulas
-			ct = counterTrace(phase(S.negate()), phase(S.and(T.negate())), phase(T.negate()), phase(P), phaseT());
+			// ct.add(counterTrace(phase(S.negate()), phase(R), phaseT()));
+			// ct.add(counterTrace(phase(T.negate()), phase(S), phase(T.negate()), phase(R), phaseT()));
+			ct.add(counterTrace(phase(T.negate()), phase(R), phaseT()));
+			ct.add(counterTrace(phase(S.negate()), phase(R), phaseT()));
+			ct.add(counterTrace(phase(T.negate()), phase(T.negate().and(S)), phase(T.negate()),
+					phase(T.and(S.negate())), phase(S.negate()), phase(R), phaseT()));
 		} else if (scope instanceof SrParseScopeBefore) {
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD P = scope.getCdd1();
+			// ct.add(counterTrace(phase(P.negate().and(S.negate())), phase(P.negate().and(R)), phaseT()));
+			// ct.add(counterTrace(phase(P.negate().and(T.negate())), phase(P.negate().and(S)),
+			// phase(P.negate().and(T.negate())), phase(P.negate().and(R)), phaseT()));
+			ct.add(counterTrace(phase(P.negate().and(T.negate())), phase(P.negate().and(R)), phaseT()));
+			ct.add(counterTrace(phase(P.negate().and(S.negate())), phase(P.negate().and(R)), phaseT()));
+			ct.add(counterTrace(phase(P.negate().and(T.negate())), phase(P.negate().and(T.negate()).and(S)),
+					phase(P.negate().and(T.negate())), phase(P.negate().and(T).and(S.negate())),
+					phase(P.negate().and(S.negate())), phase(P.negate().and(R)), phaseT()));
 		} else if (scope instanceof SrParseScopeAfterUntil) {
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			// ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate().and(S.negate())), phase(Q.negate().and(R)),
+			// phaseT()));
+			// ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate().and(T.negate())), phase(Q.negate().and(S)),
+			// phase(Q.negate().and(T.negate())), phase(Q.negate().and(R)), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate().and(T.negate())), phase(Q.negate().and(R)),
+					phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate().and(S.negate())), phase(Q.negate().and(R)),
+					phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate().and(T.negate())),
+					phase(Q.negate().and(T.negate()).and(S)), phase(Q.negate().and(T.negate())),
+					phase(Q.negate().and(T).and(S.negate())), phase(Q.negate().and(S.negate())),
+					phase(Q.negate().and(R)), phaseT()));
 		} else if (scope instanceof SrParseScopeAfter) {
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD P = scope.getCdd1();
+			// ct.add(counterTrace(phaseT(), phase(P), phase(S.negate()), phase(R), phaseT()));
+			// ct.add(counterTrace(phaseT(), phase(P), phase(T.negate()), phase(S), phase(T.negate()), phase(R),
+			// phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(T.negate()), phase(R), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(S.negate()), phase(R), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(T.negate()), phase(T.negate().and(S)), phase(T.negate()),
+					phase(T.and(S.negate())), phase(S.negate()), phase(R), phaseT()));
 		} else if (scope instanceof SrParseScopeBetween) {
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			// ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(S.negate())),
+			// phase(Q.negate().and(R)), phase(Q.negate()), phase(Q), phaseT()));
+			// ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(T.negate())),
+			// phase(Q.negate().and(S)), phase(Q.negate().and(T.negate())), phase(Q.negate().and(R)), phase(Q.negate()),
+			// phase(Q), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(T.negate())),
+					phase(Q.negate().and(R)), phase(Q.negate()), phase(Q), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(S.negate())),
+					phase(Q.negate().and(R)), phase(Q.negate()), phase(Q), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(T.negate())),
+					phase(Q.negate().and(T.negate()).and(S)), phase(Q.negate().and(T.negate())),
+					phase(Q.negate().and(T).and(S.negate())), phase(Q.negate().and(S.negate())),
+					phase(Q.negate().and(R)), phase(Q.negate()), phase(Q), phaseT()));
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 
-		return Collections.singletonList(ct);
+		return ct;
 	}
 
 	@Override

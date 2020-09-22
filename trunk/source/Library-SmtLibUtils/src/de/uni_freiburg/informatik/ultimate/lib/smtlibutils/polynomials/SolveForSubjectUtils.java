@@ -277,8 +277,14 @@ public class SolveForSubjectUtils {
 				if (var2exp.getKey() == subject) {
 					// do nothing
 				} else {
+					RelationSymbol resultRelationSymbol;
+					if (isOriginalCoefficientPositive) {
+						resultRelationSymbol = polyRel.getRelationSymbol();
+					} else {
+						resultRelationSymbol = polyRel.getRelationSymbol().swapParameters();
+					}
 					cases.add(constructDivByVarEqualZeroCase(script, var2exp.getKey(), stageTwoRhs,
-							polyRel.getRelationSymbol(), xnf));
+							resultRelationSymbol, xnf));
 					final int exp = var2exp.getValue().numerator().intValueExact();
 					for (int i = 0; i < exp; i++) {
 						divisorAsList.add(var2exp.getKey());
@@ -707,10 +713,12 @@ public class SolveForSubjectUtils {
 		final SupportingTerm divisibilityConstraint = new SupportingTerm(divisibilityConstraintTerm,
 				IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
 		suppTerms.add(divisibilityConstraint);
-		final SupportingTerm inRelationToZero = constructInRelationToZeroSupportingTerm(script,
-				SmtUtils.mul(script, stageTwoRhs.getSort(), divisorAsArray),
-				negateForCnf(RelationSymbol.DISTINCT, xnf));
-		suppTerms.add(inRelationToZero);
+		if (divisorAsArray.length > 1 || !(divisorAsArray[0] instanceof ConstantTerm)) {
+			final SupportingTerm inRelationToZero = constructInRelationToZeroSupportingTerm(script,
+					SmtUtils.mul(script, stageTwoRhs.getSort(), divisorAsArray),
+					negateForCnf(RelationSymbol.DISTINCT, xnf));
+			suppTerms.add(inRelationToZero);
+		}
 		final Case result = new Case(null, suppTerms, xnf);
 		return result;
 	}
@@ -725,6 +733,13 @@ public class SolveForSubjectUtils {
 	private static SolvedBinaryRelation constructSolvedBinaryRelation(final Script script, final Term subject,
 			final Term stageTwoRhs, final RelationSymbol relSymb, final boolean isDivisorPositive,
 			final Term[] divisor) {
+		final RelationSymbol resultRelationSymbol;
+		if (isDivisorPositive) {
+			resultRelationSymbol = relSymb;
+		} else {
+			// if coefficient is negative we have to use the "swapped" RelationSymbol
+			resultRelationSymbol = relSymb.swapParameters();
+		}
 		final Term resultRhs;
 		if (divisor.length == 0) {
 			resultRhs = stageTwoRhs;
@@ -734,13 +749,6 @@ public class SolveForSubjectUtils {
 			} else {
 				resultRhs = SmtUtils.divReal(script, prepend(stageTwoRhs, divisor));
 			}
-		}
-		final RelationSymbol resultRelationSymbol;
-		if (isDivisorPositive) {
-			resultRelationSymbol = relSymb;
-		} else {
-			// if coefficient is negative we have to use the "swapped" RelationSymbol
-			resultRelationSymbol = relSymb.swapParameters();
 		}
 		final IntricateOperation intricateOp = divisor.length == 0 ? null : IntricateOperation.DIV_BY_INTEGER_CONSTANT;
 		final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, resultRhs, resultRelationSymbol,
@@ -879,23 +887,24 @@ public class SolveForSubjectUtils {
 
 	public static boolean isVariableDivCaptured(final SolvedBinaryRelation sbr, final Set<TermVariable> termVariables) {
 		if (sbr.getIntricateOperation() == IntricateOperation.DIV_BY_INTEGER_CONSTANT) {
-			if (SmtUtils.getFunctionApplication(sbr.getRightHandSide(), "div") != null) {
-				return Arrays.stream(sbr.getRightHandSide().getFreeVars()).anyMatch(termVariables::contains);
-			}
+			final Term term = sbr.getRightHandSide();
+			return someGivenTermVariableOccursInTerm(term, termVariables);
 		}
 		return false;
+	}
+
+	private static boolean someGivenTermVariableOccursInTerm(final Term term, final Set<TermVariable> termVariables) {
+		final Set<Term> divSubterms = SmtUtils.extractApplicationTerms("div", term);
+		return divSubterms.stream().anyMatch(x -> Arrays.stream(x.getFreeVars()).anyMatch(termVariables::contains));
 	}
 
 	public static boolean isVariableDivCaptured(final MultiCaseSolvedBinaryRelation mcsbr,
 			final Set<TermVariable> termVariables) {
 		if (mcsbr.getIntricateOperations().contains(IntricateOperation.DIV_BY_INTEGER_CONSTANT)) {
 			for (final Case c : mcsbr.getCases()) {
-				if (c.getSolvedBinaryRelation() != null && SmtUtils
-						.getFunctionApplication(c.getSolvedBinaryRelation().getRightHandSide(), "div") != null) {
-					if (Arrays.stream(c.getSolvedBinaryRelation().getRightHandSide().getFreeVars())
-							.anyMatch(termVariables::contains)) {
-						return true;
-					}
+				if (c.getSolvedBinaryRelation() != null && someGivenTermVariableOccursInTerm(
+						c.getSolvedBinaryRelation().getRightHandSide(), termVariables)) {
+					return true;
 				}
 				for (final SupportingTerm st : c.getSupportingTerms()) {
 					if (st.getIntricateOperation() == IntricateOperation.DIV_BY_INTEGER_CONSTANT

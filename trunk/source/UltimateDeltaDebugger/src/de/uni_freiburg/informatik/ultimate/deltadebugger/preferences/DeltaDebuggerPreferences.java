@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxCheckerSyntaxE
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;

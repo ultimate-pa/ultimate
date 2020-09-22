@@ -50,15 +50,18 @@ public class BndResponsePatternTU extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+		assert cdds.length == 2 && durations.length == 1;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
-		// note: P and Q are reserved for scope, cdds are parsed in reverse order
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
 
 		if (scope instanceof SrParseScopeGlobally) {
 			final CounterTrace ct =
-					counterTrace(phaseT(), phase(R, BoundTypes.GREATER, c1), phase(S.negate()), phaseT());
+					counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phase(S.negate()), phaseT());
 			return Collections.singletonList(ct);
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());

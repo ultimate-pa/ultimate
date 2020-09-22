@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This represents an affine term in the form of
@@ -123,14 +125,14 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	public static IPolynomialTerm divide(final IPolynomialTerm[] affineArgs, final Script script) {
 		return constructDivision(affineArgs, "/", script);
 	}
-	
+
 	/**
 	 * Construct the division of the given polynomialTerms. If this is not possible, treat the whole
 	 * division term as a variable and return it, wrapped in an AffineTerm. To distinguish, which
 	 * division is used here, funcName is needed. This should be either "div" or "/".
 	 */
-	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] affineArgs, 
-													 final String funcName, 
+	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] affineArgs,
+													 final String funcName,
 													 final Script script) {
 		final IPolynomialTerm affineTerm;
 		Rational multiplier;
@@ -165,8 +167,8 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 		}
 		return result;
 	}
-	
-	
+
+
 
 	/**
 	 * Returns an AffineTerm which represents the integral quotient of the given arguments (see
@@ -218,13 +220,59 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	protected Term abstractVariableToTerm(final Script script, final Term abstractVariable) {
 		return abstractVariable;
 	}
-	
+
 	@Override
 	protected Term abstractVariableTimesCoeffToTerm(final Script script, final Term abstractVariable, final Rational coeff) {
-		Term[] factors = new Term[2];
+		final Term[] factors = new Term[2];
 		factors[0] = abstractVariable;
 		factors[1] = SmtUtils.rational2Term(script, coeff, mSort);
 		return SmtUtils.mul(script, mSort, factors);
+	}
+
+	@Override
+	protected Pair<Rational, Rational> computeMinMax() {
+		Rational minimalValue = Rational.ZERO;
+		Rational maximalValue = Rational.ZERO;
+		for (final Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			final Rational absOfDivisor = checkForModTerm(entry.getKey());
+			if (absOfDivisor == null) {
+				return null;
+			}
+			if (entry.getValue().isNegative()) {
+				maximalValue = maximalValue.add(entry.getValue().mul(absOfDivisor.add(Rational.MONE)));
+			} else {
+				minimalValue = minimalValue.add(entry.getValue().mul(absOfDivisor.add(Rational.MONE)));
+			}
+		}
+		minimalValue = minimalValue.add(getConstant());
+		maximalValue = maximalValue.add(getConstant());
+		return new Pair<>(maximalValue, minimalValue);
+	}
+
+	@Override
+	public AbstractGeneralizedAffineTerm<Term> removeAndNegate(final Monomial monomialOfSubject) {
+		 final HashMap<Term, Rational> newAbstractVariable2Coefficient = new HashMap<>();
+		 for (final Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			 if (!entry.getKey().equals(monomialOfSubject.getSingleVariable())) {
+				 newAbstractVariable2Coefficient.put(entry.getKey(), entry.getValue().negate());
+			 }
+		 }
+		 return new AffineTerm(getSort(), getConstant().negate(), newAbstractVariable2Coefficient);
+	}
+
+	@Override
+	public AffineTerm divInvertible(final Rational divisor) {
+		final HashMap<Term, Rational> newAbstractVariable2Coefficient = new HashMap<>();
+		for (final Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			final Rational newCoefficient = PolynomialTermUtils.divInvertible(getSort(), entry.getValue(), divisor);
+			if (newCoefficient == null) {
+				return null;
+			} else {
+				newAbstractVariable2Coefficient.put(entry.getKey(), newCoefficient);
+			}
+		}
+		final Rational newConstant = PolynomialTermUtils.divInvertible(getSort(), getConstant(), divisor);
+		return new AffineTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
 	}
 
 }

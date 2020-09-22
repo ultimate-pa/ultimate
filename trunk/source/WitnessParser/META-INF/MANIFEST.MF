@@ -12,3 +12,4 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.witnessparser.graph,
  de.uni_freiburg.informatik.ultimate.witnessparser.preferences
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.witnessparser
