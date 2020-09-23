@@ -530,6 +530,9 @@ public class PolynomialRelationTest {
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term subject = TermParseUtils.parseTerm(script, "x");
+		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript,
+				subject);
+		Assert.assertNull("Solvable, but unsolvable expected", sbr);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
 	}
@@ -625,14 +628,14 @@ public class PolynomialRelationTest {
 	public void relationIntDivGEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "lo") };
 		final String inputSTR = "(>= (* 3 x) lo )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivLEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "hi") };
 		final String inputSTR = "(<= (* 3 x) hi )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
@@ -646,14 +649,14 @@ public class PolynomialRelationTest {
 	public void relationIntDivGREATER() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "lo") };
 		final String inputSTR = "(> (* 3 x) lo )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivLESS() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "hi") };
 		final String inputSTR = "(< (* 4 x) hi )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
@@ -808,7 +811,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntDefaultModEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
-		final String inputSTR = "(= (+ (mod (mod y 7) 3)  x) eq )";
+		final String inputSTR = "(= (+ (mod (mod x 7) 3) y) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
