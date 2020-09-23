@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -78,44 +77,46 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 				unlabeledSuccessors.put(state, succs);
 			}
 		}
-		final Script script = mManagedScript.getScript();
 		while (!dequeue.isEmpty()) {
 			final STATE state = dequeue.pop();
 			unlabeledSuccessors.remove(state);
-			IPredicate predicate = stateMap.get(state);
-			if (predicate == null) {
-				// Add new states (with state as only unlabeled successor) to the queue
-				for (final Entry<STATE, Set<STATE>> entry : unlabeledSuccessors.entrySet()) {
-					final Set<STATE> succs = entry.getValue();
-					if (succs.remove(state) && succs.isEmpty()) {
-						dequeue.add(entry.getKey());
-					}
-				}
-				// Calculate the conjunction of wp for all successors (if not ignored)
-				final List<Term> wpConjuncts = new ArrayList<>();
-				for (final OutgoingInternalTransition<LETTER, STATE> outgoing : automaton.internalSuccessors(state)) {
-					final IPredicate succ = stateMap.get(outgoing.getSucc());
-					if (succ != null) {
-						wpConjuncts.add(mPredicateTransformer.weakestPrecondition(succ,
-								outgoing.getLetter().getTransformula()));
-					}
-				}
-				// Quantify variables not contained in the original interpolants away
-				final Term wpAnd = SmtUtils.and(script, wpConjuncts);
-				final Set<TermVariable> unnecessaryVars =
-						Arrays.stream(wpAnd.getFreeVars()).filter(x -> !ipVars.contains(x)).collect(Collectors.toSet());
-				final Term wpQuantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, unnecessaryVars, wpAnd);
-				final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
-						mManagedScript, wpQuantified, mSimplificationTechnique, mXnfConversionTechnique);
-				// Ignore the interpolant, if it still contains quantifiers or stores or has no successors
-				if (wpConjuncts.isEmpty() || !QuantifierUtils.isQuantifierFree(wpEliminated)
-						|| SmtUtils.containsFunctionApplication(wpEliminated, "store")) {
-					continue;
-				}
-				// Add the wp conjunction as a predicate
-				predicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
-				stateMap.put(state, predicate);
+			if (stateMap.containsKey(state)) {
+				continue;
 			}
+			// Add new states (with state as only unlabeled successor) to the queue
+			for (final Entry<STATE, Set<STATE>> entry : unlabeledSuccessors.entrySet()) {
+				final Set<STATE> succs = entry.getValue();
+				if (succs.remove(state) && succs.isEmpty()) {
+					dequeue.add(entry.getKey());
+				}
+			}
+			// Calculate the conjunction of wp for all successors (if not ignored)
+			final List<Term> wpConjuncts = new ArrayList<>();
+			for (final OutgoingInternalTransition<LETTER, STATE> outgoing : automaton.internalSuccessors(state)) {
+				final IPredicate succ = stateMap.get(outgoing.getSucc());
+				if (succ != null) {
+					wpConjuncts.add(
+							mPredicateTransformer.weakestPrecondition(succ, outgoing.getLetter().getTransformula()));
+				}
+			}
+			if (wpConjuncts.isEmpty()) {
+				continue;
+			}
+			// Quantify variables not contained in the original interpolants away
+			final Term wp = SmtUtils.and(mManagedScript.getScript(), wpConjuncts);
+			final Set<TermVariable> unnecessaryVars =
+					Arrays.stream(wp.getFreeVars()).filter(x -> !ipVars.contains(x)).collect(Collectors.toSet());
+			final Term quantified =
+					SmtUtils.quantifier(mManagedScript.getScript(), QuantifiedFormula.FORALL, unnecessaryVars, wp);
+			final Term term = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
+					quantified, mSimplificationTechnique, mXnfConversionTechnique);
+			// Ignore the interpolant, if it still contains quantifiers or store
+			// This is workaround to avoid "too big" interpolants
+			if (!QuantifierUtils.isQuantifierFree(term) || SmtUtils.containsFunctionApplication(term, "store")) {
+				continue;
+			}
+			// Add the wp conjunction as a predicate
+			stateMap.put(state, mPredicateUnifier.getOrConstructPredicate(term));
 		}
 		return stateMap;
 	}
