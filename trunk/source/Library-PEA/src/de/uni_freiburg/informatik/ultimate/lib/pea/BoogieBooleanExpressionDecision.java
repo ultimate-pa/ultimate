@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
@@ -284,6 +285,13 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 
 		@Override
 		public boolean visit(final QuantifierExpression node) {
+			// stop descend, take the whole remaining expression as decision
+			mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.TRUE_CHILDS));
+			return false;
+		}
+
+		@Override
+		public boolean visit(final FunctionApplication node) {
 			// stop descend, take the whole remaining expression as decision
 			mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.TRUE_CHILDS));
 			return false;
