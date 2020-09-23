@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * TODO
  * 
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Miriam Lagunes Rochin
+ * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
  * @param <LETTER>
  * @param <PLACE>
@@ -48,6 +48,7 @@ public class OwickiGriesValidityCheck<LETTER, PLACE> {
 
 	public OwickiGriesValidityCheck(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
 			OwickiGriesAnnotation<LETTER, PLACE> annotation) {
+		
 		mPredicateFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable());
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);

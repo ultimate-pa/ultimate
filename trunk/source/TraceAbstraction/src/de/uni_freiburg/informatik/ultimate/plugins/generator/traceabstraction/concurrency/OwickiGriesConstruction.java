@@ -25,7 +25,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -33,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -40,26 +45,87 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * TODO
  * 
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Miriam Lagunes Rochin
+ * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
+ * 
  *
  * @param <PLACE>
  */
 public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
+	
 	private final OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> mAnnotation;
+	private final IPetriNet<IIcfgTransition<LOC>, PLACE> mNet;
+	private final BasicPredicateFactory mFactory;
+	private final Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> mFloydHoareAnnotation;
+	private final Map<PLACE, IProgramVar> mGhostVariables;
 
 	public OwickiGriesConstruction(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
 			IPetriNet<IIcfgTransition<LOC>, PLACE> net,
 			Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> floydHoare) {
-		final BasicPredicateFactory factory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
+			
+			mNet = net;	
+			mFloydHoareAnnotation = floydHoare;
+			mFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable());
+			mGhostVariables = getGhostVariables();
+ 
+	  //Omega:
+	  //Gamma
+	  //Ghost Variables set/map (to assign to place for GhostAssignments)
 
-		// TODO Use factory.and(preds)
-		// ...
+		
+
 
 		mAnnotation = new OwickiGriesAnnotation<>();
 	}
+	
+	public Map<PLACE, IPredicate> getFormulaMapping () {
+		Map<PLACE, IPredicate> Mapping = new HashMap<PLACE, IPredicate>();
+		
+		//Assign predicate to All place in PetriNet
+	    Collection<PLACE> Places = mNet.getPlaces();
+	    for (PLACE place: Places) {
+	    	//Find Markings in FloydHoareAnn containing place
+	    	Set<IPredicate> Clauses = new HashSet<>();
+	    	mFloydHoareAnnotation.forEach((key,value)-> {
+	    		if(mFloydHoareAnnotation.containsKey(place)) {
+	    			Clauses.add(getMarkingPredicate(place, key));}});
+	    	//Disjunction of Clauses in Set
+	    	//Assign Predicate to Place
+	    }
+	    
+		
+		return Mapping;
+	}
+	
+	private  IPredicate getMarkingPredicate(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
+		//TODO: Conjunction of Vars not in Marking
+		IPredicate clause = null;	
+		
+		//terms = Ghost Variables of place in MArking + marking predicate
+		Set<IPredicate> terms = null;
+		//Conjunction of GhostVariables		
+		//mFactory.and(terms)
+		return clause;
+		
+	}
+	
+	private Map<PLACE, IProgramVar> getGhostVariables(){
+		Map<PLACE, IProgramVar> GhostVars = new HashMap<PLACE, IProgramVar>();
+		for(PLACE place: mNet.getPlaces()) {
+			//IProgramVar var = null;
+			//TODO: extend IProgramVar: name, place, type, value.
+			//GhostVars.put(place, var);
+		}
+		//create-add variables per place
+		return mGhostVariables;
+		
+	}
+
+	
 
 	public OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> getResult() {
 		return mAnnotation;
 	}
+	
+	
 }

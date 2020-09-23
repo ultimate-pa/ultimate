@@ -26,15 +26,20 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.Collection;
+import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * TODO
  * 
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Miriam Lagunes Rochin
+ * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
  * @param <LETTER>
  * @param <PLACE>
@@ -44,13 +49,25 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	// Petri net
 	private final IPetriNet<LETTER, PLACE> mPetriNet;
 
-	//
+	//Omega: Predicate -> Place
 	private final Map<PLACE, IPredicate> mFormulaMapping;
-	// ...
+	
+	//Gamma: GhostAssignment -> transition
+	private final Map<ITransition<LETTER,PLACE>, LETTER> mAssignmentMapping;
+	
+	//VGhost: set of Ghost Variables
+	private final Set<IProgramVar> mGhostVariables;
+	
+	//rho(VGhost): value -> GhostVariables
+	private final Map<ITransition,LETTER> mGhostAssignment;
 
 	public OwickiGriesAnnotation() {
 		mPetriNet = null;
 		mFormulaMapping = null;
+		mAssignmentMapping = null;
+		mGhostVariables = null;
+		mGhostAssignment = null;	
+		
 	}
 
 	public int getSize() {
