@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -83,6 +84,9 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	protected AbstractGeneralizedAffineTerm(final Sort s, final Rational constant,
 			final Map<AVAR, Rational> variables2coeffcient) {
 		super(0);
+		Objects.nonNull(s);
+		Objects.nonNull(constant);
+		Objects.nonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
 		mAbstractVariable2Coefficient = variables2coeffcient;
@@ -359,6 +363,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		}
 	}
 
-	public abstract AbstractGeneralizedAffineTerm<AVAR> removeAndNegate(Monomial monomialOfSubject);
+	public abstract AbstractGeneralizedAffineTerm<?> removeAndNegate(Monomial monomialOfSubject);
 
 }

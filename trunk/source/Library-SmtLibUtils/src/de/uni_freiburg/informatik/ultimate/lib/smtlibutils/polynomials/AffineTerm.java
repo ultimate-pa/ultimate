@@ -76,7 +76,7 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	/**
 	 * Constructor to be used of all static methods that construct an affineTerm.
 	 */
-	AffineTerm(final Sort s, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
+	public AffineTerm(final Sort s, final Rational constant, final Map<Term, Rational> variables2coeffcient) {
 		super(s, constant, variables2coeffcient);
 	}
 
@@ -272,7 +272,11 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 			}
 		}
 		final Rational newConstant = PolynomialTermUtils.divInvertible(getSort(), getConstant(), divisor);
-		return new AffineTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
+		if (newConstant == null) {
+			return null;
+		} else {
+			return new AffineTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
+		}
 	}
 
 }
