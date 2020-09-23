@@ -472,18 +472,22 @@ public class PolynomialTermUtils {
 		if (divisor.equals(Rational.ZERO)) {
 			result = null;
 		} else {
-			final Rational quot = divident.div(divisor);
 			if (SmtSortUtils.isRealSort(sort)) {
+				final Rational quot = divident.div(divisor);
 				result = quot;
 			} else if (SmtSortUtils.isIntSort(sort)) {
+				final Rational quot = divident.div(divisor);
 				if (quot.isIntegral()) {
 					result = quot;
 				} else {
 					result = null;
 				}
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				if (divisor.equals(Rational.ONE) || divisor.equals(Rational.MONE)) {
-					result = quot;
+				if (divisor.equals(Rational.ONE) || SmtUtils.isBvMinusOne(divisor, sort)) {
+					// We use multiplication instead of division
+					// because we know that in this special case divisor is
+					// always its own multiplicative inverse.
+					result = PolynomialTermUtils.bringValueInRange(divident.mul(divisor), sort);
 				} else {
 					result = null;
 				}
