@@ -26,12 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Polynomial relation in which we explicitly state which {@link Monomial}
@@ -131,8 +140,53 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		if (newLhsCoefficient == null) {
 			return null;
 		}
-		final RelationSymbol newRelationSymbol = divisor.isNegative() ? mRelationSymbol.negate() : mRelationSymbol;
-		return new ExplicitLhsPolynomialRelation(newRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
+		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
+				mRelationSymbol, divisor);
+		return new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
+	}
+
+	private RelationSymbol determineResultRelationSymbol(final Sort sort, final RelationSymbol relationSymbol,
+			final Rational divisor) {
+		final RelationSymbol resultRelationSymbol = swapOfRelationSymbolRequired(divisor, sort)
+				? relationSymbol.swapParameters()
+				: relationSymbol;
+		return resultRelationSymbol;
+	}
+
+	public static boolean swapOfRelationSymbolRequired(final Rational divisor, final Sort sort) {
+		return divisor.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOne(divisor, sort));
+	}
+
+	public SolvedBinaryRelation divideByIntegerCoefficientForInequalities(final Script script,
+			final Set<TermVariable> bannedForDivCapture) {
+		if (mLhsCoefficient.equals(Rational.ZERO)) {
+			throw new AssertionError("div by zero");
+		}
+		if (!SmtSortUtils.isIntSort(mLhsMonomial.getSort())) {
+			throw new AssertionError("no int");
+		}
+		switch (mRelationSymbol) {
+		case DISTINCT:
+		case EQ:
+			throw new AssertionError("no inequality");
+		case GEQ:
+		case GREATER:
+		case LEQ:
+		case LESS:
+			break;
+		default:
+			throw new AssertionError("unknown value " + mRelationSymbol);
+		}
+		final Term rhsAsTerm = mRhs.toTerm(script);
+		if (Arrays.stream(rhsAsTerm.getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
+			return null;
+		}
+		final Term rhs = SolveForSubjectUtils.constructRhsIntegerQuotient(script, mRelationSymbol, mRhs.toTerm(script),
+				!mLhsCoefficient.isNegative(), mLhsCoefficient.toTerm(mLhsMonomial.getSort()));
+		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
+				mRelationSymbol, mLhsCoefficient);
+		return new SolvedBinaryRelation(mLhsMonomial.getSingleVariable(), rhs, resultRelationSymbol,
+				Collections.emptyMap(), IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 	}
 
 	@Override
