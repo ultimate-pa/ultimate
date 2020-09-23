@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.ExplicitLhsPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
@@ -303,8 +305,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	 * uses solveForSubject on both disjuncts to get the right hand side of the both relations.
 	 * returns lower/upper bound right hand side.
 	 */
-	private static Pair<Term, Term> antiDerWithAssumption(final Script script, final int quantifier, final Term originalTerm,
-			final Term eliminatee) {
+	private static Pair<Term, Term> antiDerWithAssumption(final Script script, final int quantifier,
+			final Term originalTerm, final Term eliminatee) {
 		// Strict to NONStrict transformation is done in the method "computeBound"
 		final TransformInequality transform = TransformInequality.NO_TRANFORMATION;
 		RelationSymbol lowerRelationSymbol;
@@ -320,14 +322,22 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 		final BinaryNumericRelation lowerBoundBnr = bnr.changeRelationSymbol(lowerRelationSymbol);
 		final PolynomialRelation relLower = PolynomialRelation.convert(script, lowerBoundBnr.toTerm(script), transform);
-		final SolvedBinaryRelation sbrLower = relLower.solveForSubject(script, eliminatee);
+		final ExplicitLhsPolynomialRelation elprLower = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
+				eliminatee, relLower);
+		// TODO use bannedforDivCapture
+		final SolvedBinaryRelation sbrLower = elprLower.divideByIntegerCoefficientForInequalities(script,
+				Collections.emptySet());
 
 		final BinaryNumericRelation upperBoundBnr = bnr.changeRelationSymbol(upperRelationSymbol);
 		final PolynomialRelation relUpper = PolynomialRelation.convert(script, upperBoundBnr.toTerm(script), transform);
-		final SolvedBinaryRelation sbrUpper = relUpper.solveForSubject(script, eliminatee);
+		final ExplicitLhsPolynomialRelation elprUpper = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
+				eliminatee, relUpper);
+		// TODO use bannedforDivCapture
+		final SolvedBinaryRelation sbrUpper = elprUpper.divideByIntegerCoefficientForInequalities(script,
+				Collections.emptySet());
 
 		if ((sbrLower == null) || (sbrUpper == null)) {
-			return null;
+			throw new AssertionError("suddenly unsolvable");
 		}
 		final Term lowerBound = sbrLower.getRightHandSide();
 		final Term upperBound = sbrUpper.getRightHandSide();
