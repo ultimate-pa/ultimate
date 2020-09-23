@@ -212,9 +212,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 					(IpTcStrategyModuleAbstractInterpretation<LETTER>) strategy, mEmptyStackFactory);
 		case MCR:
 			return new IpAbStrategyModuleMcr<>(mCounterexample.getWord().asList(), mPredicateUnifier,
-					mEmptyStackFactory, mServices, mLogger, mAbstraction.getAlphabet(), createMcrInterpolantProvider(),
-					mPrefs.getCfgSmtToolkit().getManagedScript(), mPrefs.getSimplificationTechnique(),
-					mPrefs.getXnfConversionTechnique());
+					mEmptyStackFactory, mServices, mLogger, mAbstraction.getAlphabet(), createMcrInterpolantProvider());
 		case TOTALINTERPOLATION:
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.interpolantAutomaton() + " is unsupported");

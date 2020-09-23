@@ -1,7 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
-import java.util.List;
+import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -10,5 +11,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface IInterpolantProvider<LETTER> {
-	IPredicate[] getInterpolants(IPredicate precondition, List<LETTER> trace, IPredicate postcondition);
+	<STATE> Map<STATE, IPredicate> getInterpolants(INestedWordAutomaton<LETTER, STATE> automaton,
+			Map<STATE, IPredicate> stateMap);
 }

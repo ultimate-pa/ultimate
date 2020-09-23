@@ -1,17 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
  *
@@ -36,13 +36,15 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	@Override
-	public IPredicate[] getInterpolants(final IPredicate precondition, final List<LETTER> trace,
-			final IPredicate postcondition) {
-		final IInterpolatingTraceCheck<LETTER> traceCheck = new IpTcStrategyModulePreferences<>(mTaskIdentifier,
-				mPrefs.getUltimateServices(), mPrefs, new StatelessRun<>(trace), precondition, postcondition,
-				mAssertionOrderModulation, mPredicateUnifier, mPredicateFactory).getOrConstruct();
-		assert traceCheck.isCorrect() == LBool.UNSAT : "The trace " + trace + " is feasible";
-		return traceCheck.getInterpolants();
+	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final Map<STATE, IPredicate> stateMap) {
+		// TODO: Adapt for DAG interpolation
+		// final IInterpolatingTraceCheck<LETTER> traceCheck = new IpTcStrategyModulePreferences<>(mTaskIdentifier,
+		// mPrefs.getUltimateServices(), mPrefs, new StatelessRun<>(trace), precondition, postcondition,
+		// mAssertionOrderModulation, mPredicateUnifier, mPredicateFactory).getOrConstruct();
+		// assert traceCheck.isCorrect() == LBool.UNSAT : "The trace " + trace + " is feasible";
+		// return traceCheck.getInterpolants();
+		return null;
 	}
 }
 

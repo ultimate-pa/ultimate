@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -16,9 +17,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
@@ -31,11 +29,9 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 
 	public IpAbStrategyModuleMcr(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final IUltimateServiceProvider services,
-			final ILogger logger, final Set<LETTER> alphabet, final IInterpolantProvider<LETTER> interpolantProvider,
-			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final ILogger logger, final Set<LETTER> alphabet, final IInterpolantProvider<LETTER> interpolantProvider) {
 		mAutomatonBuilder = new McrAutomatonBuilder<>(trace, predicateUnifier, emptyStackFactory, logger,
-				new VpAlphabet<>(alphabet), services, managedScript, simplificationTechnique, xnfConversionTechnique);
+				new VpAlphabet<>(alphabet), services);
 		mTrace = trace;
 		mInterpolantProvider = interpolantProvider;
 	}
@@ -45,10 +41,11 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 			final List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException {
 		if (mResult == null) {
 			try {
-				final List<QualifiedTracePredicates> qtp = perfectIpps.isEmpty() ? imperfectIpps : perfectIpps;
-				final NestedWordAutomaton<LETTER, IPredicate> ipAutomaton =
-						mAutomatonBuilder.buildInterpolantAutomaton(mTrace, qtp, mInterpolantProvider);
-				return new IpAbStrategyModuleResult<>(ipAutomaton, qtp);
+				final QualifiedTracePredicates tracePredicate =
+						perfectIpps.isEmpty() ? imperfectIpps.get(0) : perfectIpps.get(0);
+				final NestedWordAutomaton<LETTER, IPredicate> ipAutomaton = mAutomatonBuilder
+						.buildInterpolantAutomaton(mTrace, tracePredicate.getPredicates(), mInterpolantProvider);
+				return new IpAbStrategyModuleResult<>(ipAutomaton, Collections.singletonList(tracePredicate));
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);
 			}

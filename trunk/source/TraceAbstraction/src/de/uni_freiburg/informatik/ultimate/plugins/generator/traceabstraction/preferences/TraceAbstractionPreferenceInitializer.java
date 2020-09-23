@@ -278,7 +278,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_OVERRIDE_INTERPOLANT_AUTOMATON =
 			"Override the interpolant automaton setting of the refinement strategy";
 	public static final McrInterpolantMethod DEF_MCR_INTERPOLANT_METHOD = McrInterpolantMethod.WP;
-	public static final String LABEL_MCR_INTERPOLANT_METHOD = "Method to provide interpolants for the MCR automaton";
+	public static final String LABEL_MCR_INTERPOLANT_METHOD =
+			"Method to provide additional interpolants for the MCR automaton";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
 			"Assert CodeBlocks Term Scoring Heuristic";
@@ -724,6 +725,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum McrInterpolantMethod {
-		WP, SP, INTERPOLATION
+		WP, INTERPOLATION
 	}
 }
