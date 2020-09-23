@@ -579,7 +579,7 @@ public class SolveForSubjectUtils {
 	 * and ensures that no information is lost.</li>
 	 * </ul>
 	 */
-	private static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb, final Term rhs,
+	public static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb, final Term rhs,
 			final boolean divisorIsPositive, final Term... divisor) {
 		final Term result;
 		switch (relSymb) {
@@ -863,18 +863,12 @@ public class SolveForSubjectUtils {
 
 	private static boolean isBvAndCantBeSolved(final Rational coeffOfSubject, final Monomial monomialOfSubject) {
 		return SmtSortUtils.isBitvecSort(monomialOfSubject.getSort()) && (!monomialOfSubject.isLinear()
-				|| !(coeffOfSubject.equals(Rational.ONE) || isBvMinusOne(coeffOfSubject, monomialOfSubject.getSort())));
+				|| !(coeffOfSubject.equals(Rational.ONE) || SmtUtils.isBvMinusOne(coeffOfSubject, monomialOfSubject.getSort())));
 	}
 
-	private static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
-		final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
-		final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
-		final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
-		return number.equals(rationalMinusOne);
-	}
-
+	@Deprecated
 	private static boolean isNegative(final Rational coeffOfSubject, final Sort sort) {
-		return coeffOfSubject.isNegative() || (SmtSortUtils.isBitvecSort(sort) && isBvMinusOne(coeffOfSubject, sort));
+		return coeffOfSubject.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOne(coeffOfSubject, sort));
 	}
 
 	private static LBool assumptionImpliesEquivalence(final Script script, final Term originalTerm,
@@ -893,6 +887,7 @@ public class SolveForSubjectUtils {
 		return false;
 	}
 
+	@Deprecated
 	private static boolean someGivenTermVariableOccursInTerm(final Term term, final Set<TermVariable> termVariables) {
 		final Set<Term> divSubterms = SmtUtils.extractApplicationTerms("div", term);
 		return divSubterms.stream().anyMatch(x -> Arrays.stream(x.getFreeVars()).anyMatch(termVariables::contains));
