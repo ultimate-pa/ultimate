@@ -343,6 +343,19 @@ public class PolynomialRelationTest {
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
+	/**
+	 * The mapping {x->2, y->6} is a satisfying assignment because 2*2=4 and 2*6=4
+	 * because we have to take everything modulo 8. If we would divide both sides by
+	 * 2 this mapping is not a satisfying assignment any more.
+	 */
+	@Test
+	public void relationBvEQ06NoDiv() {
+		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x", "y") };
+		final String inputSTR = "(= (bvmul (_ bv2 8) x) (bvmul (_ bv2 8) y ))";
+		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+
 	// @Test Insufficient resources to check soundness
 	public void relationIntPolyPuristEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
