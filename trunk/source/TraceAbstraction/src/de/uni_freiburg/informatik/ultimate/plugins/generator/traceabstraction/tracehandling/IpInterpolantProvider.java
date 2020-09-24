@@ -159,8 +159,8 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 					seqTfs.add(assignVarToTrue(variables.get(succ)));
 				} else {
 					// Add [!succPredicate]
-					TransFormulaBuilder.constructTransFormulaFromTerm(SmtUtils.not(script, succPredicate.getFormula()),
-							succPredicate.getVars(), mManagedScript);
+					seqTfs.add(TransFormulaBuilder.constructTransFormulaFromTerm(
+							SmtUtils.not(script, succPredicate.getFormula()), succPredicate.getVars(), mManagedScript));
 				}
 				succTfs.add(sequentialComposition(seqTfs));
 			}
@@ -179,7 +179,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 				final UnmodifiableTransFormula pre =
 						TransFormulaBuilder.constructTransFormulaFromPredicate(predicate, mManagedScript);
 				initialTfs.add(sequentialComposition(
-						Arrays.asList(pre, edge.getLetter().getTransformula(), assignVarToTrue(var))));
+						Arrays.asList(pre, initialTransition.getTransformula(), assignVarToTrue(var))));
 			}
 		}
 		// Set all cfgVariables initially to false
@@ -187,7 +187,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 				TransFormulaBuilder.constructAssignment(new ArrayList<>(variables.values()),
 						Collections.nCopies(variables.size(), script.term("false")), mSymbolTable, mManagedScript);
 		final UnmodifiableTransFormula initialTf =
-				sequentialComposition(Arrays.asList(parallelComposition(initialTfs), initialFalse));
+				sequentialComposition(Arrays.asList(initialFalse, parallelComposition(initialTfs)));
 		result.add(0, createTransition(initialTransition, initialTf));
 		return result;
 	}
