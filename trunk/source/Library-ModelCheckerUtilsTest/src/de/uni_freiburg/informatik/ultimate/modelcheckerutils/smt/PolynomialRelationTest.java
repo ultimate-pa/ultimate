@@ -540,7 +540,7 @@ public class PolynomialRelationTest {
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) {
 		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
 		mScript.echo(new QuotedObject("Checking if input and output of solveForSubject are equivalent"));
-		Assert.assertTrue(assumptionsImpliesEquality(inputAsTerm, sbr));
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.asTerm(mScript), inputAsTerm, mScript));
 	}
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
@@ -573,18 +573,6 @@ public class PolynomialRelationTest {
 			throw new AssertionError("unknown value " + equivalent);
 		}
 
-	}
-
-	@Deprecated
-	private boolean assumptionsImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
-		if (sbr.getAssumptionsMap().isEmpty()) {
-			return SmtUtils.areFormulasEquivalent(sbr.asTerm(mScript), originalTerm, mScript);
-		} else {
-			final Term disJ = SmtUtils.not(mScript, SmtUtils.and(mScript, sbr.getAssumptionsMap().values()));
-			final Term impli1 = SmtUtils.or(mScript, disJ, sbr.asTerm(mScript));
-			final Term impli2 = SmtUtils.or(mScript, disJ, originalTerm);
-			return SmtUtils.areFormulasEquivalent(impli1, impli2, mScript);
-		}
 	}
 
 	@Test

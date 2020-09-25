@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUti
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Case;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
@@ -360,9 +358,6 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			if (sfs == null) {
 				return null;
 			}
-			if (!sfs.getAssumptionsMap().isEmpty()) {
-				return null;
-			}
 			if (SolveForSubjectUtils.isVariableDivCaptured(sfs, bannedForDivCapture)) {
 				return null;
 			}
@@ -378,12 +373,6 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				final Term[] dualJuncts, final Pair<Integer, SolvedBinaryRelation> pair) {
 			final List<Term> dualJunctsResult = new ArrayList<>();
 			final SolvedBinaryRelation sbr = pair.getSecond();
-			if (!sbr.getAssumptionsMap().isEmpty()) {
-				for (final Entry<AssumptionForSolvability, Term> entry : sbr.getAssumptionsMap().entrySet()) {
-					dualJunctsResult.add(QuantifierUtils.negateIfUniversal(mgdScript.getScript(), et.getQuantifier(),
-							entry.getValue()));
-				}
-			}
 			final Term dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), dualJuncts, pair,
 					dualJunctsResult);
 			return new EliminationResult(
