@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -186,7 +185,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
 				mRelationSymbol, mLhsCoefficient);
 		return new SolvedBinaryRelation(mLhsMonomial.getSingleVariable(), rhs, resultRelationSymbol,
-				Collections.emptyMap(), IntricateOperation.DIV_BY_INTEGER_CONSTANT);
+				IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 	}
 
 	@Override

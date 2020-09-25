@@ -271,7 +271,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			return null;
 		}
 		final RelationSymbol relationSymbol = QuantifierUtils.getDerOperator(quantifier);
-		return new SolvedBinaryRelation(eliminatee, rightHandSide, relationSymbol, Collections.emptyMap(), null);
+		return new SolvedBinaryRelation(eliminatee, rightHandSide, relationSymbol, null);
 	}
 
 	private static boolean occursPositive(final TermVariable eliminatee, final Term atom) {

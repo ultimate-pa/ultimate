@@ -89,7 +89,7 @@ public class SolveForSubjectUtils {
 				return null;
 			} else {
 				assert subject.equals(solvedElpr.getLhsMonomial().getSingleVariable());
-				final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, solvedElpr.getRhs().toTerm(script), solvedElpr.getRelationSymbol(), Collections.emptyMap(), null);
+				final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, solvedElpr.getRhs().toTerm(script), solvedElpr.getRelationSymbol(), null);
 				final Term relationToTerm = result.asTerm(script);
 				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(polyRel.positiveNormalForm(script),
 				relationToTerm, script) != LBool.SAT : "transformation to AffineRelation unsound";
@@ -775,7 +775,7 @@ public class SolveForSubjectUtils {
 		}
 		final IntricateOperation intricateOp = divisor.length == 0 ? null : IntricateOperation.DIV_BY_INTEGER_CONSTANT;
 		final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, resultRhs, resultRelationSymbol,
-				Collections.emptyMap(), intricateOp);
+				intricateOp);
 		return sbr;
 	}
 
