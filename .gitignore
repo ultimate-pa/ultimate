@@ -12,6 +12,7 @@
 /trunk/examples/svcomp/*
 /trunk/examples/ultbench
 /trunk/examples/ultbench/*
+trunk/examples/concurrent/bpl/VMCAI2021/generated/*.bpl
 **/.metadata/*
 **/.settings/*
 **/target/*
