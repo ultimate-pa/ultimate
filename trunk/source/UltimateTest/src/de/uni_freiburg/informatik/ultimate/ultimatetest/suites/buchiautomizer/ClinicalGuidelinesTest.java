@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.LTLCheckerTestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.TermcompTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.AbstractExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
@@ -76,7 +75,7 @@ public class ClinicalGuidelinesTest extends AbstractBuchiAutomizerTestSuite {
 		mProperties.put("AP(!hasSymptoms)", false);
 	}
 
-	private static final String[] mCToolchains = { "LTLAutomizer.xml", };
+	private static final String[] mCToolchains = { "LTLAutomizerInlineNoBE.xml", };
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
