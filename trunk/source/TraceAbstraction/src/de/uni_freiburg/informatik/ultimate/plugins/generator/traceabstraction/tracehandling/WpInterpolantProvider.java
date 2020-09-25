@@ -32,6 +32,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
+/**
+ * IInterpolantProvider using weakest precondition. For every state we use the conjunction of wp for all outgoing
+ * transitions. For better interpolants, we abstract all variables away (using forall), that are not present in the
+ * initial interpolants.
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements IInterpolantProvider<LETTER> {
 
 	private final ManagedScript mManagedScript;
@@ -71,8 +78,7 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			}
 			successors.put(state, succs);
 		}
-		final TopologicalSorter<STATE> sorter = new TopologicalSorter<>(successors::get);
-		return sorter.reversedTopologicalOrdering(successors.keySet()).get();
+		return new TopologicalSorter<>(successors::get).reversedTopologicalOrdering(successors.keySet()).get();
 	}
 
 	@Override
@@ -83,11 +89,11 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		for (final STATE state : revTopSort(automaton, stateMap)) {
 			// Calculate the conjunction of wp for all successors (if not ignored)
 			final List<Term> wpConjuncts = new ArrayList<>();
-			for (final OutgoingInternalTransition<LETTER, STATE> outgoing : automaton.internalSuccessors(state)) {
-				final IPredicate succ = stateMap.get(outgoing.getSucc());
+			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
+				final IPredicate succ = stateMap.get(edge.getSucc());
 				if (succ != null) {
-					wpConjuncts.add(
-							mPredicateTransformer.weakestPrecondition(succ, outgoing.getLetter().getTransformula()));
+					final Term wp = mPredicateTransformer.weakestPrecondition(succ, edge.getLetter().getTransformula());
+					wpConjuncts.add(wp);
 				}
 			}
 			if (wpConjuncts.isEmpty()) {

@@ -24,8 +24,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
@@ -49,7 +49,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final List<LETTER> mOriginalTrace;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
-	private final AutomataLibraryServices mAutomataServices;
+	private final AutomataLibraryServices mServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final VpAlphabet<LETTER> mAlphabet;
 	private final VpAlphabet<Integer> mIntAlphabet;
@@ -66,7 +66,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		mOriginalTrace = trace;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
-		mAutomataServices = new AutomataLibraryServices(services);
+		mServices = new AutomataLibraryServices(services);
 		mEmptyStackFactory = emptyStackFactory;
 		mAlphabet = alphabet;
 		mIntAlphabet = new VpAlphabet<>(IntStream.range(0, trace.size()).boxed().collect(Collectors.toSet()));
@@ -118,7 +118,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			// Construct automata for the MHB relation
 			for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, mIntAlphabet, factory);
+						new NestedWordAutomaton<>(mServices, mIntAlphabet, factory);
 				final Set<Integer> threadActionSet = new HashSet<>(threadActions);
 				for (int i = 0; i <= threadActions.size(); i++) {
 					nwa.addState(i == 0, i == threadActions.size(), getState(i));
@@ -152,18 +152,16 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final INestedWordAutomaton<Integer, String> automaton, final Function<String, STATE> stateFunction,
 			final IEmptyStackStateFactory<STATE> emptyStateFactory) {
 		final NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, emptyStateFactory);
+				new NestedWordAutomaton<>(mServices, mAlphabet, emptyStateFactory);
 		final Set<STATE> initialStates =
 				automaton.getInitialStates().stream().map(stateFunction).collect(Collectors.toSet());
-		final Set<STATE> finalStates =
-				automaton.getFinalStates().stream().map(stateFunction).collect(Collectors.toSet());
-		for (final String state : automaton.getStates()) {
+		for (final String state : automaton.getFinalStates()) {
 			final STATE stateT = stateFunction.apply(state);
-			if (stateT != null && !result.contains(stateT)) {
-				result.addState(initialStates.contains(stateT), finalStates.contains(stateT), stateT);
+			if (stateT != null) {
+				result.addState(initialStates.contains(stateT), true, stateT);
 			}
 		}
-		final ArrayDeque<String> dequeue = new ArrayDeque<>(automaton.getInitialStates());
+		final ArrayDeque<String> dequeue = new ArrayDeque<>(automaton.getFinalStates());
 		final Set<String> visited = new HashSet<>();
 		while (!dequeue.isEmpty()) {
 			final String state = dequeue.pop();
@@ -171,16 +169,21 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			if (!visited.add(state) || stateT == null) {
 				continue;
 			}
-			for (final OutgoingInternalTransition<Integer, String> edge : automaton.internalSuccessors(state)) {
-				final STATE succT = stateFunction.apply(edge.getSucc());
-				if (succT == null) {
+			for (final IncomingInternalTransition<Integer, String> edge : automaton.internalPredecessors(state)) {
+				final String pred = edge.getPred();
+				final STATE predT = stateFunction.apply(pred);
+				if (predT == null) {
 					continue;
 				}
-				result.addInternalTransition(stateT, mOriginalTrace.get(edge.getLetter()), succT);
-				dequeue.add(edge.getSucc());
+				if (!result.contains(predT)) {
+					result.addState(initialStates.contains(predT), false, predT);
+				}
+				result.addInternalTransition(predT, mOriginalTrace.get(edge.getLetter()), stateT);
+				dequeue.add(pred);
 			}
 		}
 		return result;
+
 	}
 
 	private List<Integer> getIntTrace(final List<LETTER> trace) {
@@ -222,7 +225,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				final Integer write = entry.getValue();
 				final IProgramVar var = entry.getKey();
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, mIntAlphabet, factory);
+						new NestedWordAutomaton<>(mServices, mIntAlphabet, factory);
 				final Set<Integer> writesOnVar = mVariables2Writes.getImage(var);
 				nwa.addState(write == null, false, getState(1));
 				nwa.addState(false, true, getState(2));
@@ -246,14 +249,14 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				automata.add(nwa);
 			}
 		}
-		return new RemoveDeadEnds<>(mAutomataServices, intersectNwa(automata)).getResult();
+		return intersectNwa(automata);
 	}
 
 	private INestedWordAutomaton<Integer, String> intersectNwa(
 			final Collection<INestedWordAutomaton<Integer, String>> automata) throws AutomataLibraryException {
 		mLogger.info("Started intersection.");
 		final INestedWordAutomaton<Integer, String> result =
-				new NestedWordAutomatonReachableStates<>(mAutomataServices, intersect(automata));
+				new NestedWordAutomatonReachableStates<>(mServices, intersect(automata));
 		mLogger.info("Finished intersection with " + result.sizeInformation());
 		return result;
 	}
@@ -314,8 +317,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private boolean isInterleaving(final List<Integer> intTrace) throws AutomataLibraryException {
-		final INwaOutgoingLetterAndTransitionProvider<Integer, String> mhbAutomaton = intersect(getThreadAutomata());
 		final Word<Integer> word = new Word<>(intTrace.toArray(new Integer[intTrace.size()]));
-		return new Accepts<>(mAutomataServices, mhbAutomaton, NestedWord.nestedWord(word)).getResult();
+		return new Accepts<>(mServices, intersect(getThreadAutomata()), NestedWord.nestedWord(word)).getResult();
 	}
 }

@@ -45,7 +45,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
 /**
- *
+ * IInterpolantProvider using DAG interpolation. To apply DAG interpolation, we encode the DAG in a (linear) trace and
+ * calculate interpolants for this trace.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
@@ -144,8 +145,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			}
 			successors.put(state, succs);
 		}
-		final TopologicalSorter<STATE> sorter = new TopologicalSorter<>(successors::get);
-		return sorter.topologicalOrdering(successors.keySet()).get();
+		return new TopologicalSorter<>(successors::get).topologicalOrdering(successors.keySet()).get();
 	}
 
 	private <STATE> List<LETTER> encodeDag(final INestedWordAutomaton<LETTER, STATE> automaton,
