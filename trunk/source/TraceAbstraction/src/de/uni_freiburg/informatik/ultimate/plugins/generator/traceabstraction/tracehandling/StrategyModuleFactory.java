@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -221,15 +220,13 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private IInterpolantProvider<LETTER> createMcrInterpolantProvider() {
-		final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
 		switch (mTaPrefs.getMcrInterpolantMethod()) {
 		case INTERPOLATION:
-			return new IpInterpolantProvider<>(mPrefs, mPredicateUnifier, mPredicateFactory,
-					new AssertionOrderModulation<>(mPathProgramCache, mLogger), mTaskIdentifier, mLogger, mServices,
-					managedScript, mPrefs.getCfgSmtToolkit());
+			return new IpInterpolantProvider<>(mPrefs, mPredicateUnifier,
+					new AssertionOrderModulation<>(mPathProgramCache, mLogger), mTaskIdentifier, mLogger);
 		case WP:
-			return new WpInterpolantProvider<>(mServices, mLogger, managedScript, mPrefs.getSimplificationTechnique(),
-					mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+			return new WpInterpolantProvider<>(mServices, mLogger, mPrefs.getCfgSmtToolkit().getManagedScript(),
+					mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
 		}

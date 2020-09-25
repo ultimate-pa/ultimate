@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -31,14 +31,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
 /**
@@ -53,28 +56,25 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final TaskIdentifier mTaskIdentifier;
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
-	private final IIcfgSymbolTable mSymbolTable;
+	private final DefaultIcfgSymbolTable mSymbolTable;
 	private final IcfgEdgeFactory mEdgeFactory;
+	private final IUltimateServiceProvider mServices;
 
-	// TODO: Allow third variant (besides WP and Interpolation), with only dummy predicates.
-	// However we need to ensure that no additional edges are added for them, otherwise this is unsound!
 	public IpInterpolantProvider(final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation, final TaskIdentifier taskIdentifier,
-			final ILogger logger, final IUltimateServiceProvider services, final ManagedScript managedScript,
-			final CfgSmtToolkit toolkit) {
+			final IPredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
+			final TaskIdentifier taskIdentifier, final ILogger logger) {
 		mPrefs = prefs;
+		mServices = prefs.getUltimateServices();
 		mPredicateUnifier = predicateUnifier;
-		mPredicateFactory = predicateFactory;
 		mAssertionOrderModulation = assertionOrderModulation;
 		mTaskIdentifier = taskIdentifier;
 		mLogger = logger;
-		mServices = services;
-		mManagedScript = managedScript;
-		mSymbolTable = toolkit.getSymbolTable();
-		mEdgeFactory = toolkit.getIcfgEdgeFactory();
+		final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
+		mManagedScript = cfgSmtToolkit.getManagedScript();
+		mSymbolTable = new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
+		mPredicateFactory = new PredicateFactory(mServices, mManagedScript, mSymbolTable);
+		mEdgeFactory = cfgSmtToolkit.getIcfgEdgeFactory();
 	}
 
 	@Override
@@ -85,18 +85,25 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		final Map<STATE, IProgramVar> variables = new HashMap<>();
 		for (int i = 0; i < topOrder.size(); i++) {
 			final STATE state = topOrder.get(i);
-			final IProgramVar var = ProgramVarUtils.constructGlobalProgramVarPair("loc_" + i,
+			// TODO: This is only a workaround for a fresh variable name...
+			final TermVariable tv =
+					mManagedScript.constructFreshTermVariable("loc_" + i, SmtSortUtils.getBoolSort(mManagedScript));
+			final IProgramVar var = ProgramVarUtils.constructGlobalProgramVarPair(tv.getName(),
 					SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
 			variables.put(state, var);
+			mSymbolTable.add(var);
 		}
+		mSymbolTable.finishConstruction();
 		// Encode the DAG in a trace and get interpolants for it
 		final List<LETTER> trace = encodeDag(automaton, stateMap, topOrder, variables);
-		final IInterpolatingTraceCheck<LETTER> traceCheck = new IpTcStrategyModulePreferences<>(mTaskIdentifier,
-				mPrefs.getUltimateServices(), mPrefs, new StatelessRun<>(trace), mPredicateUnifier.getTruePredicate(),
-				mPredicateUnifier.getFalsePredicate(), mAssertionOrderModulation, mPredicateUnifier, mPredicateFactory)
-						.getOrConstruct();
+		mLogger.info("Encoded the DAG in a trace of size " + trace.size());
+		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices, mManagedScript,
+				mPredicateFactory, mSymbolTable, SimplificationTechnique.NONE, mPrefs.getXnfConversionTechnique());
+		final IInterpolatingTraceCheck<LETTER> traceCheck =
+				new IpTcStrategyModulePreferences<>(mTaskIdentifier, mServices, mPrefs, new StatelessRun<>(trace),
+						predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(),
+						mAssertionOrderModulation, predicateUnifier, mPredicateFactory).getOrConstruct();
 		assert traceCheck.isCorrect() == LBool.UNSAT : "The trace is feasible";
-		// TODO: The interpolants here are simplified and therefore simplified twice. Can this be avoided?
 		final IPredicate[] interpolants = traceCheck.getInterpolants();
 		assert interpolants.length == topOrder.size();
 		// Map the states (sorted topologically) to the corresponding interpolants
@@ -204,13 +211,11 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	private UnmodifiableTransFormula sequentialComposition(final List<UnmodifiableTransFormula> transformulas) {
-		// TODO: Simplify, eliminate auxVars?
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false, false, null,
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, true, false, null,
 				null, transformulas);
 	}
 
 	private UnmodifiableTransFormula parallelComposition(final List<UnmodifiableTransFormula> transformulas) {
-		// TODO: What to use as serialNumber? (or rework it?)
 		return TransFormulaUtils.parallelComposition(mLogger, mServices, transformulas.hashCode(), mManagedScript, null,
 				false, null, transformulas.toArray(new UnmodifiableTransFormula[transformulas.size()]));
 	}
