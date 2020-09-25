@@ -1,13 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
 public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements IInterpolantProvider<LETTER> {
 
@@ -56,14 +55,13 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 	}
 
-	@Override
-	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
+	private <STATE> List<STATE> revTopSort(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Map<STATE, IPredicate> stateMap) {
-		final Set<TermVariable> ipVars = stateMap.values().stream()
-				.flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable)).collect(Collectors.toSet());
-		final ArrayDeque<STATE> dequeue = new ArrayDeque<>();
-		final Map<STATE, Set<STATE>> unlabeledSuccessors = new HashMap<>();
+		final Map<STATE, Set<STATE>> successors = new HashMap<>();
 		for (final STATE state : automaton.getStates()) {
+			if (stateMap.containsKey(state)) {
+				continue;
+			}
 			final Set<STATE> succs = new HashSet<>();
 			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
 				final STATE succ = edge.getSucc();
@@ -71,25 +69,18 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 					succs.add(succ);
 				}
 			}
-			if (succs.isEmpty()) {
-				dequeue.add(state);
-			} else {
-				unlabeledSuccessors.put(state, succs);
-			}
+			successors.put(state, succs);
 		}
-		while (!dequeue.isEmpty()) {
-			final STATE state = dequeue.pop();
-			unlabeledSuccessors.remove(state);
-			if (stateMap.containsKey(state)) {
-				continue;
-			}
-			// Add new states (with state as only unlabeled successor) to the queue
-			for (final Entry<STATE, Set<STATE>> entry : unlabeledSuccessors.entrySet()) {
-				final Set<STATE> succs = entry.getValue();
-				if (succs.remove(state) && succs.isEmpty()) {
-					dequeue.add(entry.getKey());
-				}
-			}
+		final TopologicalSorter<STATE> sorter = new TopologicalSorter<>(successors::get);
+		return sorter.reversedTopologicalOrdering(successors.keySet()).get();
+	}
+
+	@Override
+	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final Map<STATE, IPredicate> stateMap) {
+		final Set<TermVariable> ipVars = stateMap.values().stream()
+				.flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable)).collect(Collectors.toSet());
+		for (final STATE state : revTopSort(automaton, stateMap)) {
 			// Calculate the conjunction of wp for all successors (if not ignored)
 			final List<Term> wpConjuncts = new ArrayList<>();
 			for (final OutgoingInternalTransition<LETTER, STATE> outgoing : automaton.internalSuccessors(state)) {

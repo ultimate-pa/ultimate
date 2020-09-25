@@ -144,7 +144,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			}
 			successors.put(state, succs);
 		}
-		final TopologicalSorter<STATE> sorter = new TopologicalSorter<STATE>(successors::get);
+		final TopologicalSorter<STATE> sorter = new TopologicalSorter<>(successors::get);
 		return sorter.topologicalOrdering(successors.keySet()).get();
 	}
 
