@@ -186,7 +186,7 @@ public class SmtUtilsTest {
 		// check that intermediate literals are not simplified by multiplication
 		// check that a non-initial zero cannot be simplified
 		final String inputAsString01 = "(div 10 2 3 x 0 3 5 y)";
-		final String expectedOutputAsString01 = "(div 5 3 x 0 3 5 y)";
+		final String expectedOutputAsString01 = "(div 1 x 0 3 5 y)";
 		divIntTest(inputAsString01, expectedOutputAsString01);
 		// check that initial zero can be simplified
 		// check that intermediate one is dropped
