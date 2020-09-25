@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -245,7 +246,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				automata.add(nwa);
 			}
 		}
-		return intersectNwa(automata);
+		return new RemoveDeadEnds<>(mAutomataServices, intersectNwa(automata)).getResult();
 	}
 
 	private INestedWordAutomaton<Integer, String> intersectNwa(

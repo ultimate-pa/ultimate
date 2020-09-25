@@ -82,6 +82,9 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			final Map<STATE, IPredicate> stateMap) {
 		// Sort the DAG topologically and create aux vars for each state
 		final List<STATE> topOrder = topSort(automaton, stateMap);
+		if (topOrder.isEmpty()) {
+			return Collections.emptyMap();
+		}
 		final Map<STATE, IProgramVar> variables = new HashMap<>();
 		for (int i = 0; i < topOrder.size(); i++) {
 			final STATE state = topOrder.get(i);
