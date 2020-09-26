@@ -22,14 +22,30 @@ modifies x;
   x := 0;
 " >> "$FILE"
 
-  for i in $(seq 1 $k)
-  do
-    echo "  fork $i thread$i();" >> "$FILE"
-  done
+  unset THREAD_ID
+  declare -a THREAD_ID
 
   for i in $(seq 1 $k)
   do
-    echo "  join $i;" >> "$FILE"
+    # Construct a thread ID as i-tuple of value i.
+    # This way, there is only one compatible join!
+    ID=""
+    for j in $(seq 1 $i)
+    do
+      ID="$ID$i"
+      if (( j < i ))
+      then
+        ID="$ID,"
+      fi
+    done
+    THREAD_ID+=("$ID")
+
+    echo "  fork $ID thread$i();" >> "$FILE"
+  done
+
+  for id in "${THREAD_ID[@]}"
+  do
+    echo "  join $id;" >> "$FILE"
   done
 
   echo "
@@ -43,10 +59,9 @@ modifies x;
 procedure thread$i()
 modifies x;
 {
-  //while (*) {
+  while (*) {
     x := x + $i;
-  //  x := x * $i;
-  //}
+  }
 }
 " >> "$FILE"
   done
