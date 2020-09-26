@@ -275,6 +275,13 @@ public class SolveForSubjectUtils {
 				stageTwoCoefficient = null;
 			}
 		}
+		return divideByMonomial(script, subject, polyRel.getRelationSymbol(), xnf, monomialOfSubject, stageTwoRhs,
+				stageTwoCoefficient, isOriginalCoefficientPositive);
+	}
+
+	public static MultiCaseSolvedBinaryRelation divideByMonomial(final Script script, final Term subject,
+			final RelationSymbol relSymb, final MultiCaseSolvedBinaryRelation.Xnf xnf, final Monomial monomialOfSubject,
+			final Term stageTwoRhs, final Rational stageTwoCoefficient, final boolean isOriginalCoefficientPositive) {
 		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
 		final Collection<Case> cases = new ArrayList<>();
 		final Term[] divisorAsArray;
@@ -302,9 +309,9 @@ public class SolveForSubjectUtils {
 				} else {
 					RelationSymbol resultRelationSymbol;
 					if (isOriginalCoefficientPositive) {
-						resultRelationSymbol = polyRel.getRelationSymbol();
+						resultRelationSymbol = relSymb;
 					} else {
-						resultRelationSymbol = polyRel.getRelationSymbol().swapParameters();
+						resultRelationSymbol = relSymb.swapParameters();
 					}
 					cases.add(constructDivByVarEqualZeroCase(script, var2exp.getKey(), stageTwoRhs,
 							resultRelationSymbol, xnf));
@@ -312,7 +319,7 @@ public class SolveForSubjectUtils {
 					for (int i = 0; i < exp; i++) {
 						divisorAsList.add(var2exp.getKey());
 					}
-					if (isEqOrDistinct(polyRel.getRelationSymbol()) || exp % 2 == 0) {
+					if (isEqOrDistinct(relSymb) || exp % 2 == 0) {
 						twoCaseVariables.add(var2exp.getKey());
 						distinctZeroSupportingTerms.add(constructInRelationToZeroSupportingTerm(script,
 								var2exp.getKey(), negateForCnf(RelationSymbol.DISTINCT, xnf)));
@@ -332,12 +339,12 @@ public class SolveForSubjectUtils {
 			// final Term resultRhs = SmtUtils.division(script, rhsTerm.getSort(),
 			// divisorAsList.toArray(new Term[divisorAsList.size()]));
 			if (threeCaseVariables.isEmpty()) {
-				final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, stageTwoRhs,
-						polyRel.getRelationSymbol(), isOriginalCoefficientPositive, divisorAsArray);
+				final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, stageTwoRhs, relSymb,
+						isOriginalCoefficientPositive, divisorAsArray);
 				final Set<SupportingTerm> thisCaseSupportingTerms = new HashSet<>(distinctZeroSupportingTerms);
-				if (isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(), polyRel.getRelationSymbol())) {
+				if (isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(), relSymb)) {
 					final SupportingTerm divisibilityConstraint = constructDerIntegerDivisionSupportingTerm(script,
-							stageTwoRhs, polyRel.getRelationSymbol(), divisorAsArray);
+							stageTwoRhs, relSymb, divisorAsArray);
 					thisCaseSupportingTerms.add(divisibilityConstraint);
 				}
 				cases.add(new Case(sbr, thisCaseSupportingTerms, xnf));
@@ -352,7 +359,7 @@ public class SolveForSubjectUtils {
 					final boolean isDivisorPositive = ((BigInteger.valueOf(i).bitCount()
 							% 2 == 0) == isOriginalCoefficientPositive);
 					final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, stageTwoRhs,
-							polyRel.getRelationSymbol(), isDivisorPositive, divisorAsArray);
+							relSymb, isDivisorPositive, divisorAsArray);
 					final Set<SupportingTerm> thisCaseSupportingTerms = new HashSet<>(distinctZeroSupportingTerms);
 					for (int j = 0; j < threeCaseVariables.size(); j++) {
 						SupportingTerm posOrNegSupportingTerm;
@@ -363,10 +370,9 @@ public class SolveForSubjectUtils {
 						}
 						thisCaseSupportingTerms.add(posOrNegSupportingTerm);
 					}
-					if (isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(),
-							polyRel.getRelationSymbol())) {
+					if (isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(), relSymb)) {
 						final SupportingTerm divisibilityConstraint = constructDerIntegerDivisionSupportingTerm(script,
-								stageTwoRhs, polyRel.getRelationSymbol(), divisorAsArray);
+								stageTwoRhs, relSymb, divisorAsArray);
 						thisCaseSupportingTerms.add(divisibilityConstraint);
 					}
 					cases.add(new Case(sbr, thisCaseSupportingTerms, xnf));
@@ -379,23 +385,22 @@ public class SolveForSubjectUtils {
 			} else {
 				divisorAsArray = new Term[] { stageTwoCoefficient.toTerm(subject.getSort()) };
 			}
-			final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, stageTwoRhs,
-					polyRel.getRelationSymbol(), isDivisorPositive, divisorAsArray);
+			final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, stageTwoRhs, relSymb,
+					isDivisorPositive, divisorAsArray);
 			final Set<SupportingTerm> supportingTerms;
-			if (stageTwoCoefficient != null && isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(),
-					polyRel.getRelationSymbol())) {
+			if (stageTwoCoefficient != null
+					&& isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(), relSymb)) {
 				final SupportingTerm divisibilityConstraint = constructDerIntegerDivisionSupportingTerm(script,
-						stageTwoRhs, polyRel.getRelationSymbol(), divisorAsArray);
+						stageTwoRhs, relSymb, divisorAsArray);
 				supportingTerms = Collections.singleton(divisibilityConstraint);
 			} else {
 				supportingTerms = Collections.emptySet();
 			}
 			cases.add(new Case(sbr, supportingTerms, xnf));
 		}
-		if (divisorAsArray.length > 0
-				&& isAntiDerIntegerDivisionCaseRequired(xnf, subject.getSort(), polyRel.getRelationSymbol())) {
-			final Case result = constructAntiDerIntegerDivisibilityCase(script, xnf, stageTwoRhs,
-					polyRel.getRelationSymbol(), divisorAsArray);
+		if (divisorAsArray.length > 0 && isAntiDerIntegerDivisionCaseRequired(xnf, subject.getSort(), relSymb)) {
+			final Case result = constructAntiDerIntegerDivisibilityCase(script, xnf, stageTwoRhs, relSymb,
+					divisorAsArray);
 			cases.add(result);
 		}
 		mcsb.splitCases(cases);
@@ -415,8 +420,10 @@ public class SolveForSubjectUtils {
 		// recVarName ensures different names in each recursion, since AffineRelation is
 		// made new each time
 		final int recVarName = divModSubterm.toString().length();
-		final TermVariable auxDiv = script.variable("aux_div_" + recVarName, termSort);
-		final TermVariable auxMod = script.variable("aux_mod_" + recVarName, termSort);
+		final TermVariable auxDiv = script
+				.variable(SmtUtils.removeSmtQuoteCharacters("aux_div_" + subject + "_" + recVarName), termSort);
+		final TermVariable auxMod = script
+				.variable(SmtUtils.removeSmtQuoteCharacters("aux_mod_" + subject + "_" + recVarName), termSort);
 		if (Arrays.stream(pnf.getFreeVars()).anyMatch(x -> x.getName().equals(auxDiv.getName()))) {
 			throw new AssertionError("Possible infinite loop detected " + auxDiv + " already exists");
 		}
