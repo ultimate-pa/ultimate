@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDec
 public class VMCAI2021ExampleSuite extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] SETTINGS = {
-			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf",
-			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf" };
+			"automizer/concurrent/VMCAI2021_FA.epf",
+			"automizer/concurrent/VMCAI2021_PN.epf" };
 
 	private static final String TOOLCHAIN = "AutomizerBplInline.xml";
 
