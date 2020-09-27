@@ -27,11 +27,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Map;
 import java.util.Set;
-import java.util.Collection;
-import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -46,23 +45,32 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public class OwickiGriesAnnotation<LETTER, PLACE> {
 
-	// Petri net
-	private final IPetriNet<LETTER, PLACE> mPetriNet;
+	// Petri net //TODO: Still is this PetriNet needed here?
+	//protected IPetriNet<LETTER, PLACE> mPetriNet;
 
-	//Omega: Predicate -> Place
-	private final Map<PLACE, IPredicate> mFormulaMapping;
+	/**
+	 * Omega: maps Predicate -> Place
+	 */
+	protected Map<PLACE, IPredicate> mFormulaMapping;
 	
-	//Gamma: GhostAssignment -> transition
-	private final Map<ITransition<LETTER,PLACE>, LETTER> mAssignmentMapping;
+	/**
+	 * Gamma: maps GhostAssignment -> transition
+	 */
+	protected Map<ITransition<LETTER,PLACE>, LETTER> mAssignmentMapping;
 	
-	//VGhost: set of Ghost Variables
-	private final Set<IProgramVar> mGhostVariables;
+	/**
+	 * VGhost: maps Ghost Variables to set
+	 */	
+	protected Map<PLACE, IProgramVar> mGhostVariables;
 	
-	//rho(VGhost): value -> GhostVariables
-	private final Map<ITransition,LETTER> mGhostAssignment;
+	/**
+	 * rho(VGhost):  set of predicate value -> GhostVariables
+	 */
+	//protected Map<ITransition<LETTER,PLACE>,LETTER> mGhostAssignment;
+	protected Set<IIcfgTransition<IcfgLocation>> mGhostAssignment;
 
 	public OwickiGriesAnnotation() {
-		mPetriNet = null;
+		//mPetriNet = null;
 		mFormulaMapping = null;
 		mAssignmentMapping = null;
 		mGhostVariables = null;
@@ -70,6 +78,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		
 	}
 
+	//TODO: define OGAnnotation Size
 	public int getSize() {
 		// ...
 		return 0;

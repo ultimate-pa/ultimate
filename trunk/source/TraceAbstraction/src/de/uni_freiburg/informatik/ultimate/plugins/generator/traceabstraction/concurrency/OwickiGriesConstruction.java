@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -50,79 +49,105 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *
  * @param <PLACE>
  */
-public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
+public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {	
 	
-	private final OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> mAnnotation;
-	private final IPetriNet<IIcfgTransition<LOC>, PLACE> mNet;
-	private final BasicPredicateFactory mFactory;
+	private final IPetriNet<IIcfgTransition<LOC>, PLACE> mNet; 	
 	private final Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> mFloydHoareAnnotation;
-	private final Map<PLACE, IProgramVar> mGhostVariables;
+	
+	private final OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> mAnnotation;	
+	private final BasicPredicateFactory mFactory;
+	
 
 	public OwickiGriesConstruction(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
 			IPetriNet<IIcfgTransition<LOC>, PLACE> net,
-			Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> floydHoare) {
-			
+			Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> floydHoare) {			
 			mNet = net;	
 			mFloydHoareAnnotation = floydHoare;
 			mFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable());
-			mGhostVariables = getGhostVariables();
- 
-	  //Omega:
-	  //Gamma
-	  //Ghost Variables set/map (to assign to place for GhostAssignments)
+				csToolkit.getSymbolTable());	
+			
+			mAnnotation = new OwickiGriesAnnotation<>();
+			mAnnotation.mGhostVariables = getGhostVariables();
+			mAnnotation.mFormulaMapping = getFormulaMapping();
+			//TODO: m.Annotation.mAssignmentMapping =
+			mAnnotation.mGhostInitAssignment = getGhostInitAssignment();
+	}	 
 
-		
-
-
-		mAnnotation = new OwickiGriesAnnotation<>();
-	}
-	
+	/**
+	 * Predicate: disjunction of Markings predicate.
+	 * Markings predicate: Conjunction of GhostVariable and FH predicate.
+	 * @return a Map with a predicate for each place in Net.
+	 */	
 	public Map<PLACE, IPredicate> getFormulaMapping () {
-		Map<PLACE, IPredicate> Mapping = new HashMap<PLACE, IPredicate>();
-		
-		//Assign predicate to All place in PetriNet
-	    Collection<PLACE> Places = mNet.getPlaces();
-	    for (PLACE place: Places) {
-	    	//Find Markings in FloydHoareAnn containing place
-	    	Set<IPredicate> Clauses = new HashSet<>();
+		Map<PLACE, IPredicate> Mapping = new HashMap<PLACE, IPredicate>();	     
+	    for (PLACE place: mNet.getPlaces()) {
+	    	Set<IPredicate> Clauses = new HashSet<>();	    	  	
 	    	mFloydHoareAnnotation.forEach((key,value)-> {
-	    		if(mFloydHoareAnnotation.containsKey(place)) {
+	    	if(mFloydHoareAnnotation.containsKey(place)) {
 	    			Clauses.add(getMarkingPredicate(place, key));}});
-	    	//Disjunction of Clauses in Set
-	    	//Assign Predicate to Place
-	    }
-	    
-		
-		return Mapping;
+	    	Mapping.put(place, mFactory.or(Clauses)); }	    	
+		return Mapping;	
 	}
 	
+	/**
+	 * @param place
+	 * @param marking
+	 * @return Predicate with conjunction of Ghost variables and predicate of marking
+	 */
 	private  IPredicate getMarkingPredicate(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
-		//TODO: Conjunction of Vars not in Marking
-		IPredicate clause = null;	
-		
-		//terms = Ghost Variables of place in MArking + marking predicate
-		Set<IPredicate> terms = null;
-		//Conjunction of GhostVariables		
-		//mFactory.and(terms)
-		return clause;
-		
+		//TODO: Conjunction of variables not in Marking
+		Set<IPredicate> terms =  new HashSet<>(); //Conjunction of GhostVariables of places in marking
+		marking.forEach(element -> terms.add(getGhostPredicate(element)));
+		terms.add(mFloydHoareAnnotation.get(place)); //Predicate of marking		
+		return  mFactory.and(terms);		
 	}
 	
+	/** 
+	 * @param place
+	 * @return Predicate place's GhostVariable
+	 */
+	private IPredicate getGhostPredicate(PLACE place) {
+	//TODO: Value assignment ??
+	 return mFactory.newPredicate(mAnnotation.mGhostVariables.get(place).getTerm());
+	 }
+	
+	/**
+	 * @return Map of GhostVariables to Places
+	 */
 	private Map<PLACE, IProgramVar> getGhostVariables(){
+	//TODO: Extend IProgramVar?: name, place, type, value. 
+	//TODO: Deal with not place Ghost variables?
 		Map<PLACE, IProgramVar> GhostVars = new HashMap<PLACE, IProgramVar>();
 		for(PLACE place: mNet.getPlaces()) {
-			//IProgramVar var = null;
-			//TODO: extend IProgramVar: name, place, type, value.
-			//GhostVars.put(place, var);
-		}
-		//create-add variables per place
-		return mGhostVariables;
-		
+			IProgramVar var = null;			
+			GhostVars.put(place, var);}
+		return GhostVars;
 	}
-
 	
-
+	/**
+	 * @return set of Initial value assignment of all GhostVariables.
+	 */
+	private Set<IIcfgTransition<LOC>> getGhostInitAssignment(){		
+		Set<IIcfgTransition<LOC>> InitAssignments = new HashSet<>();
+		mNet.getInitialPlaces().forEach(place -> InitAssignments.add(getGhostAssignment(place))); //true
+		Set<PLACE> NotInit = new HashSet<>(mNet.getPlaces());
+		NotInit.removeAll(mNet.getInitialPlaces());
+		NotInit.forEach(place -> InitAssignments.add(getGhostAssignment(place))); //false
+		return InitAssignments;
+	}
+	
+	/**
+	 * 
+	 * @param place
+	 * @return assignment of the place's GhostVariable.
+	 */
+	private IIcfgTransition<LOC> getGhostAssignment(PLACE place){
+		//TODO: Generate assignment/statement from GhostVar
+		IIcfgTransition<LOC> assignment = null;	
+		mAnnotation.mGhostVariables.get(place);		
+		return assignment;
+	}
+	
 	public OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> getResult() {
 		return mAnnotation;
 	}
