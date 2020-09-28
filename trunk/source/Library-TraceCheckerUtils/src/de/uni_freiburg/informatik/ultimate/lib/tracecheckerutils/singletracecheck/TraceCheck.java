@@ -280,7 +280,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
-		if (mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
+		if (true /*mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY*/) {
 			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization(mTcSmtManager, ssa,
 					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder,
 					mServices);

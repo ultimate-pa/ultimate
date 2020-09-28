@@ -46,6 +46,10 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
@@ -205,7 +209,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 
-		final AssertCodeBlockOrderType orderType = mAssertCodeBlocksOrder.getAssertCodeBlockOrderType();
+		final AssertCodeBlockOrderType orderType = AssertCodeBlockOrderType.FORK_JOINS_LAST; // mAssertCodeBlocksOrder.getAssertCodeBlockOrderType();
 
 		if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1) {
 			mSatisfiable = annotateAndAssertOutsideLoopFirst1(callPositions, pendingReturnPositions, depth2Statements);
@@ -222,6 +226,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			mSatisfiable = annotateAndAssertTermsWithSmallConstantsFirst(mTrace, callPositions, pendingReturnPositions);
 		} else if (orderType == AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC) {
 			mSatisfiable = annotateAndAssertStmtsSmtFeatureHeuristic(mTrace, callPositions, pendingReturnPositions);
+		} else if (orderType == AssertCodeBlockOrderType.FORK_JOINS_LAST) {
+			mSatisfiable = annotateAndAssertStmtsForkJoinLast(mTrace, callPositions, pendingReturnPositions);
 		} else {
 			throw new AssertionError("unknown heuristic " + mAssertCodeBlocksOrder);
 		}
@@ -231,6 +237,48 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	private void countCheckSat() {
 		mCheckSat++;
+	}
+
+	private LBool annotateAndAssertStmtsForkJoinLast(NestedWord<? extends IAction> mTrace,
+			Collection<Integer> callPositions, Collection<Integer> pendingReturnPositions) {
+		// Separate "normal" from fork/join statements
+		final Set<Integer> otherStmts = new HashSet<>();
+		for (int i = 0; i < mTrace.length(); ++i) {
+			final IAction stmt = mTrace.getSymbol(i);
+			if (!isForkJoin(stmt)) {
+				otherStmts.add(i);
+			}
+		}
+
+		// First, annotate and assert normal statements
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions, otherStmts);
+
+		countCheckSat();
+		LBool sat = mMgdScriptTc.getScript().checkSat();
+		// Report benchmarks
+		mTcbg.reportNewCheckSat();
+		mTcbg.reportNewAssertedCodeBlocks(otherStmts.size());
+		// If the normal statements are not unsatisfiable, then annotate and assert also
+		// the rest of the statements
+		if (sat != LBool.UNSAT && otherStmts.size() != mTrace.length()) {
+			final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
+			final Set<Integer> forkJoins = integerSetDifference(integersFromTrace, otherStmts);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
+					forkJoins);
+			assert callPositions.containsAll(mTrace.getCallPositions());
+			assert mTrace.getCallPositions().containsAll(callPositions);
+			countCheckSat();
+			sat = mMgdScriptTc.getScript().checkSat();
+			// Report benchmarks
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(forkJoins.size());
+		}
+		return sat;
+	}
+
+	private boolean isForkJoin(IAction x) {
+		return x instanceof IForkActionThreadCurrent || x instanceof IForkActionThreadOther
+				|| x instanceof IJoinActionThreadCurrent || x instanceof IJoinActionThreadOther;
 	}
 
 	private LBool annotateAndAssertOutsideLoopFirst1(final Collection<Integer> callPositions,

@@ -96,7 +96,9 @@ public interface ITraceCheckPreferences {
 		/**
 		 * Use the SMT feature heuristic together with additional parameters.
 		 */
-		SMT_FEATURE_HEURISTIC
+		SMT_FEATURE_HEURISTIC,
+
+		FORK_JOINS_LAST
 	}
 
 	public enum SmtFeatureHeuristicPartitioningType {
