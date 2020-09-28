@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
@@ -50,6 +51,7 @@ public class SupportingTerm implements ITermProvider {
 	public SupportingTerm(final Term term, final IntricateOperation intricateOperation,
 			final Set<TermVariable> newAuxiliaryVariables) {
 		super();
+		Objects.requireNonNull(term);
 		mTerm = term;
 		mIntricateOperation = intricateOperation;
 		mNewAuxiliaryVariables = newAuxiliaryVariables;
@@ -75,7 +77,7 @@ public class SupportingTerm implements ITermProvider {
 	public Term asTerm() {
 		return mTerm;
 	}
-	
+
 	@Override
 	public String toString() {
 		String info = "[";
