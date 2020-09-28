@@ -58,6 +58,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	private final List<IcfgLocation> mTraceLocations;
 	private final ILogger mLogger;
 	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
+	private final Map<IcfgLocation, Set<List<LETTER>>> mNestedLoops;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Integer mDelay;
@@ -83,6 +84,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 		mIcfg = icfg;
 		mTraceLocations = mCycleFinder.statementsToLocations(mTrace);
 		mLoops = new HashMap<>();
+		mNestedLoops = new HashMap<>();
 		mLoopExitTransitions = new HashMap<>();
 		mLoopSize = new HashMap<>();
 		mDelay = delay;
@@ -104,11 +106,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 		final Map<IcfgLocation, List<Integer>> possibleCycles = mCycleFinder.getCyclesInTrace(mTraceLocations);
 		final Set<IcfgLocation> nestedCycles = getNestedCycles(possibleCycles);
 		Map<IcfgLocation, List<Integer>> withoutNestedCycles = new HashMap<>(possibleCycles);
-		for (final IcfgLocation nestedHead : nestedCycles) {
-			withoutNestedCycles.remove(nestedHead);
-		}
 		withoutNestedCycles = filterProcedures(withoutNestedCycles);
-		mLoops = cyclePaths(withoutNestedCycles);
 		for (final Entry<IcfgLocation, List<Integer>> loop : withoutNestedCycles.entrySet()) {
 			final IcfgLocation loopHead = loop.getKey();
 			final List<Integer> loopSize = loop.getValue();
@@ -117,6 +115,13 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 			mLoopExitTransitions.put(loopHead, mTrace.get(loopExitTrans));
 			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
 		}
+		for (final IcfgLocation nestedHead : nestedCycles) {
+			final Set<List<LETTER>> nestedLoop = cyclePaths(withoutNestedCycles).get(nestedHead);
+			mNestedLoops.put(nestedHead, nestedLoop);
+			withoutNestedCycles.remove(nestedHead);
+		}
+		mLoops = cyclePaths(withoutNestedCycles);
+
 		mLogger.debug("Found Loops");
 	}
 
@@ -250,7 +255,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 						|| firstOccurence < firstOccurenceOther && firstOccurenceOther < lastOccurence
 								&& lastOccurenceOther > lastOccurence) {
 					nestedCycles.add(loopHeadOther);
-					mNestingRelation.put(loopHeadOther, loopHead);
+					mNestingRelation.put(loopHead, loopHeadOther);
 				}
 			}
 		}
@@ -260,6 +265,11 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	@Override
 	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
 		return mLoops;
+	}
+
+	@Override
+	public Map<IcfgLocation, IcfgLocation> getNestingRelation() {
+		return mNestingRelation;
 	}
 
 	@Override
@@ -278,5 +288,10 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 
 	public List<IcfgLocation> getTraceLocations() {
 		return mTraceLocations;
+	}
+
+	@Override
+	public Map<IcfgLocation, Set<List<LETTER>>> getNestedLoops() {
+		return mNestedLoops;
 	}
 }

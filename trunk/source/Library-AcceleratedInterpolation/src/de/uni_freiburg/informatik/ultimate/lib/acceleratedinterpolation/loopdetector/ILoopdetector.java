@@ -36,10 +36,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Interface for a loop detector needed for accelerated interpolation.
  *
- * @author jonas
+ * @author Jonas Werner <wernerj@informatik.uni-freiburg.de>
  *
  * @param <L>
- *            location types,
+ *            Location Types,
  * @param <T>
  *            Transition types
  */
@@ -50,7 +50,7 @@ public interface ILoopdetector<L, T> {
 	 *
 	 * @return
 	 */
-	public Map<L, Set<List<T>>> getLoops();
+	Map<L, Set<List<T>>> getLoops();
 
 	/**
 	 * Return final transitions of a loop, e.g. transitions that return to the main program. Again as a location
@@ -58,7 +58,7 @@ public interface ILoopdetector<L, T> {
 	 *
 	 * @return
 	 */
-	public Map<L, T> getLoopExitTransitions();
+	Map<L, T> getLoopExitTransitions();
 
 	/**
 	 * Return the size of a loop as an integer pari. The first integer is the first occurence of the loop head, the last
@@ -66,6 +66,20 @@ public interface ILoopdetector<L, T> {
 	 *
 	 * @return
 	 */
-	public Map<L, Pair<Integer, Integer>> getLoopSize();
+	Map<L, Pair<Integer, Integer>> getLoopSize();
+
+	/**
+	 * Maps a nesting loop head to a nested loophead
+	 *
+	 * @return
+	 */
+	Map<L, L> getNestingRelation();
+
+	/**
+	 * Map of Loops that are nested
+	 *
+	 * @return
+	 */
+	Map<L, Set<List<T>>> getNestedLoops();
 
 }

@@ -138,6 +138,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
+	private final Map<IcfgLocation, IcfgLocation> mNestingRelation;
+	private final Map<IcfgLocation, Set<List<LETTER>>> mNestedLoops;
 	private final Map<IcfgLocation, List<UnmodifiableTransFormula>> mLoopsTf;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
@@ -203,6 +205,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		 * Find loops in the trace.
 		 */
 		mLoops = mLoopdetector.getLoops();
+		mNestingRelation = mLoopdetector.getNestingRelation();
+		mNestedLoops = mLoopdetector.getNestedLoops();
 		mLogger.debug("Done Preprocessing");
 
 		final ILoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices,
@@ -254,14 +258,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final UnmodifiableTransFormula loop : loophead.getValue()) {
-				// final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
-
-				// final Term quantElim = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
-				// loopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_DDA,
-				// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
 				mLogger.debug("Starting acceleration");
-
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loop, loophead.getKey(), AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {

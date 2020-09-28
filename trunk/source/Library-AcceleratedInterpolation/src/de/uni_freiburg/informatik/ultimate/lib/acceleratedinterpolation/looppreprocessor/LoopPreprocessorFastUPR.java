@@ -226,8 +226,9 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 			e.printStackTrace();
 		}
 		/*
-		 * TODO: programs with multiple modulos
+		 * TODO: programs with multiple modulos Use SubTermPropertyChecker -> returns multiple terms
 		 */
+
 		final List<Term> result = new ArrayList<>();
 		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", false);
 		if (modTfTransformed != null) {
