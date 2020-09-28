@@ -85,8 +85,8 @@ public class DPLLEngine {
 	private final SimpleList<Clause> mClauses = new SimpleList<>();
 
 	/**
-	 * Empty clause. This is a cache that speeds up detecting unsatisfiability in the case our proof does not depend on
-	 * a newly pushed formula.
+	 * Empty clause. This is a cache that speeds up detecting unsatisfiability in
+	 * the case our proof does not depend on a newly pushed formula.
 	 */
 	private Clause mUnsatClause = null;
 
@@ -109,15 +109,19 @@ public class DPLLEngine {
 	double mClsScale = 1 - 1.0 / Config.CLS_ACTIVITY_FACTOR;
 
 	/**
-	 * The list of unit clauses that are not yet decided.
+	 * The list of watchers that need to be rechecked. A watcher is added if the
+	 * clause was just added, or when backtracking, because the watcher was moved to
+	 * the backtrack list of a true literal, or because the watched literal was just
+	 * set to false.
 	 */
-	WatchList mWatcherSetList = new WatchList();
-	WatchList mWatcherBackList = new WatchList();
+	WatchList mPendingWatcherList = new WatchList();
 
 	/**
-	 * The DPLL stack is the stack of all literals that are currently assigned true. Every decided or propagated literal
-	 * is added to the DPLL stack and removed on backtracking. The DPLL stack usually works as a stack, but there are
-	 * some exceptions where literals are created and inserted into the middle of the stack.
+	 * The DPLL stack is the stack of all literals that are currently assigned true.
+	 * Every decided or propagated literal is added to the DPLL stack and removed on
+	 * backtracking. The DPLL stack usually works as a stack, but there are some
+	 * exceptions where literals are created and inserted into the middle of the
+	 * stack.
 	 */
 	ArrayList<Literal> mDPLLStack = new ArrayList<>();
 
@@ -308,27 +312,39 @@ public class DPLLEngine {
 		}
 	}
 
+	/**
+	 * Go through the watcher list and check for pending conflict or unit clauses.
+	 * This returns early if a literal was propagated. The caller needs to check if
+	 * the dpllStack changed to conclude if it has to re-check for theory
+	 * propagations.
+	 *
+	 * @return a conflict clause, null if no conflict was found.
+	 */
 	private Clause propagateClauses() {
 		long time = 0;
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime() - mSetTime;
 		}
-		while (!mWatcherBackList.isEmpty()) {
-			final int index = mWatcherBackList.mHeadIndex;
-			Clause clause = mWatcherBackList.removeFirst();
+
+		// logger.info("new set: "+watcherSetList.size());
+		nextList: while (!mPendingWatcherList.isEmpty()) {
+			final int index = mPendingWatcherList.getIndex();
+			Clause clause = mPendingWatcherList.removeFirst();
 			/* check if clause was already removed */
 			if (clause.mNext == null) {
-				// System.err.println("Found removed clause in progation: " + clause);
-				continue;
+				continue nextList;
 			}
 			final Literal[] lits = clause.mLiterals;
 			final Literal myLit = lits[index];
-			final Literal status = myLit.getAtom().mDecideStatus;
+			final Literal myLitStatus = myLit.getAtom().mDecideStatus;
+
 			/* Special case unit clause: propagate or return as conflict clause */
 			if (lits.length == 1) {
+				assert index == 0;
+				/* put it on backtrack watchers so it is reconsidered when we backtrack. */
 				myLit.getAtom().mBacktrackWatchers.append(clause, index);
-				if (status != myLit) {
-					if (status == null) {
+				if (myLitStatus != myLit) {
+					if (myLitStatus == null) {
 						/* Propagate the unit clause. */
 						myLit.getAtom().mExplanation = clause;
 						mProps++;
@@ -339,24 +355,19 @@ public class DPLLEngine {
 					}
 					return clause;
 				}
-			} else if (status == myLit.negate()) {
-				mWatcherSetList.append(clause, index);
-			} else {
-				myLit.mWatchers.append(clause, index);
-			}
-		}
-
-		// logger.info("new set: "+watcherSetList.size());
-		nextList: while (!mWatcherSetList.isEmpty()) {
-			final int index = mWatcherSetList.getIndex();
-			Clause clause = mWatcherSetList.removeFirst();
-			/* check if clause was already removed */
-			if (clause.mNext == null) {
 				continue nextList;
 			}
-			final Literal[] lits = clause.mLiterals;
-			assert lits[index].getAtom().mDecideStatus == lits[index].negate();
-			assert lits.length >= 2;
+
+			if (myLitStatus != myLit.negate()) {
+				/* The watcher is still fine. Put it on the mWatchers list of that literal */
+				myLit.mWatchers.append(clause, index);
+				continue nextList;
+			}
+
+			/*
+			 * myLit is set to false and there are other literals. Check if we can propagate
+			 * the other literal, or if there are other undecided or true literals.
+			 */
 			final Literal otherLit = lits[1 - index];
 			final DPLLAtom otherAtom = otherLit.getAtom();
 			if (otherAtom.mDecideStatus == otherLit) {
@@ -388,19 +399,27 @@ public class DPLLEngine {
 				}
 			}
 			/*
-			 * Now we haven't found another atom to watch. Hence we have a unit clause or conflict clause.
+			 * Now we haven't found another atom to watch. Hence we have a unit clause or
+			 * conflict clause.
+			 *
+			 * Note that we propagate otherAtom.
 			 */
-			// put the entry back into the watch list of the literal. Until
-			// the literal changes again, the watcher is not needed anymore.
-			lits[index].mWatchers.append(clause, index);
 			if (otherAtom.mDecideStatus == null) {
+				/*
+				 * Put it on backtrack watchers of the other atom so it is reconsidered when we
+				 * backtrack.
+				 */
+				otherAtom.mBacktrackWatchers.append(clause, index);
 				/* Propagate the unit clause. */
 				otherAtom.mExplanation = clause;
 				mProps++;
 				clause = setLiteral(otherLit);
-				if (clause == null) {
-					clause = propagateTheories();
-				}
+			} else {
+				/*
+				 * clause is a conflict clause. After resolving this, we need to re-check this
+				 * clause.
+				 */
+				mPendingWatcherList.append(clause, index);
 			}
 			/* Conflict clause */
 			if (Config.PROFILE_TIME) {
@@ -423,11 +442,10 @@ public class DPLLEngine {
 	}
 
 	/**
-	 * Sets a literal to true and tells all theories about it. The literal must be undecided when this function is
-	 * called.
+	 * Sets a literal to true and tells all theories about it. The literal must be
+	 * undecided when this function is called.
 	 *
-	 * @param literal
-	 *            the literal to set.
+	 * @param literal the literal to set.
 	 * @return a conflict clause if a conflict was detected.
 	 */
 	@SuppressWarnings("unused")
@@ -443,7 +461,7 @@ public class DPLLEngine {
 		atom.mLastStatus = atom.mDecideStatus;
 		mAtoms.remove(atom);
 		assert !Config.EXPENSIVE_ASSERTS || checkDecideLevel();
-		mWatcherSetList.moveAll(literal.negate().mWatchers);
+		mPendingWatcherList.moveAll(literal.negate().mWatchers);
 		long time;
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();
@@ -474,52 +492,16 @@ public class DPLLEngine {
 					mUnsatClause = clause;
 				}
 			} else {
-				// Make sure the unit literal is actually a unit
-				if (mAssumptionLiterals.contains(clause.getLiteral(0).negate())) {
-					mUnsatClause = clause;
-					return;
-				}
 				/* propagate unit clause: only register watcher zero. */
-				mWatcherBackList.append(clause, 0);
+				mPendingWatcherList.append(clause, 0);
 			}
 		} else {
-			// Move unset literals upfront
-			int dest = 0;
-			while (dest < 2) {
-				if (mAssumptionLiterals.contains(clause.getLiteral(dest).negate())) {
-					boolean found = false;
-					for (int i = dest + 1; i < clause.getSize(); ++i) {
-						if (!mAssumptionLiterals.contains(clause.getLiteral(i).negate())) {
-							// swap literal @dest with literal @i
-							final Literal tmp = clause.mLiterals[i];
-							clause.mLiterals[i] = clause.mLiterals[dest];
-							clause.mLiterals[dest] = tmp;
-							found = true;
-							break;
-						}
-					}
-					if (found) {
-						dest++;
-					} else if (dest == 0) {
-						// We only found assumptions in this clause.
-						mUnsatClause = clause;
-						return;
-					} else {
-						assert dest == 1;
-						// We found a unit clause
-						/* propagate unit clause: only register watcher zero. */
-						mWatcherBackList.append(clause, 0);
-						return;
-					}
-				} else {
-					dest++;
-				}
-			}
 			/*
-			 * A clause is "watched" if it appears on either the watcherBack/SetList or the watchers list of some atom.
+			 * A clause is "watched" if it appears on either the watcherBack/SetList or the
+			 * watchers list of some atom.
 			 */
-			mWatcherBackList.append(clause, 0);
-			mWatcherBackList.append(clause, 1);
+			mPendingWatcherList.append(clause, 0);
+			mPendingWatcherList.append(clause, 1);
 		}
 	}
 
@@ -603,12 +585,12 @@ public class DPLLEngine {
 	}
 
 	/**
-	 * Explain one conflict clause. DO NOT CALL THIS FUNCTION DIRECTLY!!! USE {@link #explain(Clause)} INSTEAD SINCE
-	 * THIS FUNCTION DOES A CORRECT LOOP INCLUDING {@link #finalizeBacktrack()} AND HENCE DOES NOT LEAVE BEHIND
+	 * Explain one conflict clause. DO NOT CALL THIS FUNCTION DIRECTLY!!! USE
+	 * {@link #explain(Clause)} INSTEAD SINCE THIS FUNCTION DOES A CORRECT LOOP
+	 * INCLUDING {@link #finalizeBacktrack()} AND HENCE DOES NOT LEAVE BEHIND
 	 * INCONSISTENT THEORY SOLVERS.
 	 *
-	 * @param clause
-	 *            Conflict clause
+	 * @param clause Conflict clause
 	 * @return Explanation
 	 */
 	private Clause explainConflict(final Clause clause) {
@@ -840,11 +822,11 @@ public class DPLLEngine {
 	}
 
 	/**
-	 * Explain all conflicts currently present in the solver starting with a given initial conflict. Returns
-	 * <code>true</code> if and only if the empty clause has been derived.
+	 * Explain all conflicts currently present in the solver starting with a given
+	 * initial conflict. Returns <code>true</code> if and only if the empty clause
+	 * has been derived.
 	 *
-	 * @param conflict
-	 *            The initial conflict.
+	 * @param conflict The initial conflict.
 	 * @return Is the solver inconsistent?
 	 */
 	private boolean explain(Clause conflict) {
@@ -951,7 +933,6 @@ public class DPLLEngine {
 	}
 
 	private Clause finalizeBacktrack() {
-		mWatcherBackList.moveAll(mWatcherSetList);
 		for (final ITheory t : mTheories) {
 			final Clause conflict = t.backtrackComplete();
 			if (conflict != null) {
@@ -980,15 +961,6 @@ public class DPLLEngine {
 		long time;
 		mLogger.debug("B %s", literal);
 		final DPLLAtom atom = literal.getAtom();
-		mWatcherBackList.moveAll(atom.mBacktrackWatchers);
-		if (atom.mExplanation == null) {
-			decreaseDecideLevel();
-		}
-		atom.mExplanation = null;
-		atom.mDecideStatus = null;
-		atom.mDecideLevel = -1;
-		atom.mStackPosition = -1;
-		mAtoms.add(atom);
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();
 		}
@@ -998,6 +970,15 @@ public class DPLLEngine {
 		if (Config.PROFILE_TIME) {
 			mBacktrackTime += System.nanoTime() - time;
 		}
+		mPendingWatcherList.moveAll(atom.mBacktrackWatchers);
+		if (atom.mExplanation == null) {
+			decreaseDecideLevel();
+		}
+		atom.mExplanation = null;
+		atom.mDecideStatus = null;
+		atom.mDecideLevel = -1;
+		atom.mStackPosition = -1;
+		mAtoms.add(atom);
 	}
 
 	private Clause checkConsistency() {
@@ -1167,7 +1148,7 @@ public class DPLLEngine {
 								suggested = true;
 							}
 							// @assert conflict != null ==> suggested == true
-							if (!suggested && mWatcherBackList.isEmpty() && mAtoms.isEmpty()) {
+							if (!suggested && mPendingWatcherList.isEmpty() && mAtoms.isEmpty()) {
 								/* We found a model */
 								if (mLogger.isInfoEnabled()) {
 									printStatistics();
@@ -1410,8 +1391,9 @@ public class DPLLEngine {
 				backtrackLiteral(lit);
 			}
 			mDPLLStack.clear();
-			final Clause conflict = finalizeBacktrack();
-			assert conflict == null;
+			for (final ITheory t : mTheories) {
+				t.backtrackAll();
+			}
 		}
 		unlearnClauses(targetstacklevel);
 		assert mCurrentDecideLevel == 0;
@@ -1659,8 +1641,8 @@ public class DPLLEngine {
 	}
 
 	/**
-	 * Run a quick and incomplete check on the current context. This only uses propagations and a conflict explanation
-	 * to the empty clause.
+	 * Run a quick and incomplete check on the current context. This only uses
+	 * propagations and a conflict explanation to the empty clause.
 	 *
 	 * @return <code>false</code> if and only if the empty clause could be derived.
 	 */
@@ -1674,8 +1656,9 @@ public class DPLLEngine {
 	}
 
 	/**
-	 * Propagate as much as possible. In contrast to {@link #quickCheck()}, this function tells the theory solvers to
-	 * start a check. This might get more propagations than {@link #quickCheck()}.
+	 * Propagate as much as possible. In contrast to {@link #quickCheck()}, this
+	 * function tells the theory solvers to start a check. This might get more
+	 * propagations than {@link #quickCheck()}.
 	 *
 	 * @return <code>false</code> if and only if the empty clause could be derived.
 	 */
@@ -1737,7 +1720,8 @@ public class DPLLEngine {
 	}
 
 	/**
-	 * Returns the list of all input clauses. This list does not contain any learned clauses!
+	 * Returns the list of all input clauses. This list does not contain any learned
+	 * clauses!
 	 */
 	public SimpleList<Clause> getClauses() {
 		return mClauses;
@@ -1826,6 +1810,9 @@ public class DPLLEngine {
 	 */
 	public void clearAssumptions() {
 		/* check if we need to clear any assumptions */
+		if (mCurrentDecideLevel == 0) {
+			return;
+		}
 		mAssumptionLiterals.clear();
 		mLogger.debug("Clearing Assumptions (Baselevel is %d)", mBaseLevel);
 		while (mCurrentDecideLevel > 0) {
@@ -1846,10 +1833,10 @@ public class DPLLEngine {
 	}
 
 	/**
-	 * Add some literals and prepare for a check-sat. Trivial inconsistencies between assumptions are detected.
+	 * Add some literals and prepare for a check-sat. Trivial inconsistencies
+	 * between assumptions are detected.
 	 *
-	 * @param lits
-	 *            The literals to assume.
+	 * @param lits The literals to assume.
 	 * @return <code>false</code> if the assumptions are trivially inconsistent.
 	 */
 	public boolean assume(final Literal[] lits) {
@@ -1866,8 +1853,7 @@ public class DPLLEngine {
 					// We have the assumption lit, but we know ~lit holds.
 					// Build the unsatClause from the level0 proof.
 					if (mAssumptionLiterals.contains(lit.negate())) {
-						mUnsatClause = new Clause(new Literal[] { lit },
-								new LeafNode(LeafNode.ASSUMPTION, null));
+						mUnsatClause = new Clause(new Literal[] { lit }, new LeafNode(LeafNode.ASSUMPTION, null));
 					} else {
 						mUnsatClause = getLevel0(lit.negate());
 					}

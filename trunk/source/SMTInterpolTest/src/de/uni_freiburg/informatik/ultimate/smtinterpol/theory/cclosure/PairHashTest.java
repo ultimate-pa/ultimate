@@ -73,6 +73,7 @@ public final class PairHashTest {
 		mCClosure.createCCEquality(0, mTerms[15], mTerms[53]);// NOCHECKSTYLE
 		mCClosure.createCCEquality(0, mTerms[4], mTerms[12]);// NOCHECKSTYLE
 		mCClosure.createCCEquality(0, mTerms[5], mTerms[13]);// NOCHECKSTYLE
+		mCClosure.increasedDecideLevel(1);
 		for (int i = 1; i < 100; i += i) {// NOCHECKSTYLE
 			for (int j = 0; j + i < 100; j += 2 * i) {// NOCHECKSTYLE
 				mTerms[j].merge(mCClosure, mTerms[j + i], mCClosure.createCCEquality(1, mTerms[j], mTerms[j + i]));
@@ -85,23 +86,7 @@ public final class PairHashTest {
 		mCClosure.createCCEquality(0, mTerms[5], mTerms[12]);// NOCHECKSTYLE
 		mCClosure.createCCEquality(0, mTerms[4], mTerms[13]);// NOCHECKSTYLE
 
-		for (int i = 64; i >= 1; i /= 2) {// NOCHECKSTYLE
-			for (int j = 99 / 2 / i * 2 * i; j >= 0; j -= 2 * i) {// NOCHECKSTYLE
-				if (j + i < 100) {// NOCHECKSTYLE
-					final CCTerm lhs = mTerms[j];
-					final CCTerm rhs = mTerms[j + i];
-					final CCTerm tmp = mCClosure.mMerges.pop();
-					if (tmp == lhs) {
-						lhs.mRepStar.invertEqualEdges(mCClosure);
-						lhs.undoMerge(mCClosure, rhs);
-					} else {
-						assert tmp == rhs;
-						rhs.mRepStar.invertEqualEdges(mCClosure);
-						rhs.undoMerge(mCClosure, lhs);
-					}
-				}
-			}
-		}
+		mCClosure.decreasedDecideLevel(0);
 		Assert.assertNotNull(mCClosure.mPairHash.getInfo(mTerms[15], mTerms[9]));// NOCHECKSTYLE
 		Assert.assertNotNull(mCClosure.mPairHash.getInfo(mTerms[11], mTerms[32]));// NOCHECKSTYLE
 		Assert.assertNotNull(mCClosure.mPairHash.getInfo(mTerms[3], mTerms[34]));// NOCHECKSTYLE

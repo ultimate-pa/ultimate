@@ -189,7 +189,6 @@ public class CongruentAddTest {
 		conflict = mDPLL.setLiteral(mCD);
 		Assert.assertNull(conflict);
 		mDPLL.increaseDecideLevel();
-		mBC.mStackDepth = mDPLL.getDecideLevel();
 		conflict = mDPLL.setLiteral(mBC);
 		Assert.assertNull(conflict);
 		// System.err.println("a.repStar = " + a.getRepresentative());

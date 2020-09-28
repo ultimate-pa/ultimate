@@ -497,6 +497,12 @@ public class LinArSolve implements ITheory {
 	}
 
 	@Override
+	public void backtrackAll() {
+		mProplist.clear();
+		mSuggestions.clear();
+	}
+
+	@Override
 	public Clause backtrackComplete() {
 		mProplist.clear();
 		mSuggestions.clear();

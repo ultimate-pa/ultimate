@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
 /**
  * Solver for quantified formulas within the almost uninterpreted fragment (Restrictions on terms and literals are
  * explained in the corresponding classes. For reference, see Ge & de Moura, 2009).
- * 
+ *
  * For formulas outside the fragment, the solver may still find a proof of unsatisfiability but SMTInterpol will not
  * return {@code satisfiable} in this case.
  *
@@ -320,6 +320,13 @@ public class QuantifierTheory implements ITheory {
 	}
 
 	@Override
+	public void backtrackAll() {
+		mEMatching.removeAllTriggers();
+		mInstantiationManager.resetInterestingTerms();
+		mPotentialConflictAndUnitClauses.clear();
+	}
+
+	@Override
 	public Clause backtrackComplete() {
 		final int decisionLevel = mClausifier.getEngine().getDecideLevel();
 		mEMatching.undo(decisionLevel);
@@ -382,7 +389,7 @@ public class QuantifierTheory implements ITheory {
 	 * <p>
 	 * This method also brings equality atoms in the form (var = term), if there exists a TermVariable at top level. For
 	 * integers, only if the variable has factor ±1; for reals always.
-	 * 
+	 *
 	 * @param lhs
 	 *            the left side of the equality.
 	 * @param rhs
@@ -461,7 +468,7 @@ public class QuantifierTheory implements ITheory {
 	 * method can therefore return negated literals! For reals x, we normalize atoms (kx-t<= 0) to get (±x-t<=0).
 	 * <p>
 	 * TODO Offsets? (See paper)
-	 * 
+	 *
 	 * @param positive
 	 *            should be true if the literal appears positively in the clause and false else
 	 * @param lhs
@@ -574,7 +581,7 @@ public class QuantifierTheory implements ITheory {
 
 	/**
 	 * Perform destructive equality reasoning.
-	 * 
+	 *
 	 * @param clause
 	 *            The quantified clause term, annotated with its proof if proof production is enabled.
 	 * @param groundLits
@@ -763,7 +770,7 @@ public class QuantifierTheory implements ITheory {
 
 	/**
 	 * Get the term that is the current CC representative of the given term, if such term exists.
-	 * 
+	 *
 	 * @param term
 	 *            a term.
 	 * @return the the term corresponding to the current CC representative of the given term, if it exists, the input
