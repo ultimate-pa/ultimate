@@ -348,7 +348,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			}
 		}
 		if (allMonomialsAreLinear) {
-			final Map<Term, Rational> map = mAbstractVariable2Coefficient.entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSingleVariable(), x -> x.getValue()));
+			final Map<Term, Rational> map = newAbstractVariable2Coefficient.entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSingleVariable(), x -> x.getValue()));
 			return new AffineTerm(getSort(), getConstant().negate(), map);
 		} else {
 			return new PolynomialTerm(getSort(), getConstant().negate(), newAbstractVariable2Coefficient);
