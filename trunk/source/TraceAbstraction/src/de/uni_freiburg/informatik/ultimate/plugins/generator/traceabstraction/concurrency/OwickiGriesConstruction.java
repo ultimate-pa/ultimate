@@ -37,8 +37,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * TODO
@@ -70,7 +74,15 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 			mAnnotation.mGhostVariables = getGhostVariables();
 			mAnnotation.mFormulaMapping = getFormulaMapping();
 			//TODO: m.Annotation.mAssignmentMapping =
-			mAnnotation.mGhostInitAssignment = getGhostInitAssignment();
+			// mAnnotation.mGhostInitAssignment = getGhostInitAssignment();
+
+			// TODO Code to set variables to false.
+			// Similarly for true.
+			// Use TransformulaUtils.sequentialComposition to combine.
+			//
+			// final UnmodifiableTransFormula setToFalse =
+			//		TransFormulaBuilder.constructAssignment(new ArrayList<>(variables.values()),
+			//				Collections.nCopies(variables.size(), script.term("false")), mSymbolTable, mManagedScript);
 	}	 
 
 	/**
@@ -120,6 +132,11 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 		Map<PLACE, IProgramVar> GhostVars = new HashMap<PLACE, IProgramVar>();
 		for(PLACE place: mNet.getPlaces()) {
 			IProgramVar var = null;			
+			// TODO Code to create a new boolean variable.
+			//final TermVariable tv =
+			//		mManagedScript.constructFreshTermVariable("loc_" + i, SmtSortUtils.getBoolSort(mManagedScript));
+			//final IProgramVar var = ProgramVarUtils.constructGlobalProgramVarPair(tv.getName(),
+			//		SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
 			GhostVars.put(place, var);}
 		return GhostVars;
 	}

@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -40,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <LETTER>
  * @param <PLACE>
  */
-public class OwickiGriesValidityCheck<LETTER, PLACE> {
+public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	private final boolean mIsInductive;
 	private final boolean mIsInterferenceFree;
 	private final IHoareTripleChecker mHoareTripleChecker;
@@ -54,6 +55,7 @@ public class OwickiGriesValidityCheck<LETTER, PLACE> {
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
 
 		// TODO Use mPredicateFactory.and(preds)
+		// TODO Use BasicInternalAction to create an IInternalAction ("act" below) from ghost assignments
 		// TODO Use mHoareTripleChecker.checkInternal(pre, act, succ)
 
 		mIsInductive = false; // TODO

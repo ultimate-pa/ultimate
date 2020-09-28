@@ -51,6 +51,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	/**
 	 * Omega: maps Predicate -> Place
 	 */
+	// TODO These fields should be private final; and set in the constructor; and there should be getter methods
 	protected Map<PLACE, IPredicate> mFormulaMapping;
 	
 	/**
