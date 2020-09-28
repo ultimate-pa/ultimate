@@ -32,11 +32,5 @@ int main(void)
     x = -0.0;
     rtr = signbit(x);
     __VERIFIER_assert(rtr != 0);
-    x = NAN;
-    rtr = signbit(x);
-    __VERIFIER_assert(rtr == 0);
-    x = 0.0 / 0.0;
-    rtr = signbit(x);
-    __VERIFIER_assert(rtr != 0);
     return 0;
 }
