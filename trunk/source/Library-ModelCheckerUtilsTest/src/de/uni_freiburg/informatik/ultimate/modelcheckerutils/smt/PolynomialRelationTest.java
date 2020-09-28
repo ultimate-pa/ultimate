@@ -356,6 +356,7 @@ public class PolynomialRelationTest {
 	}
 
 
+	// Result in DNF: (or (and (= y 0) (= z 0)) (and (= (mod z y) 0) (not (= y 0)) (= x (div z y))))
 	// @Test Insufficient resources to check soundness
 	public void relationIntPolyPuristEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
@@ -363,7 +364,10 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
-	@Test
+
+	// Result in DNF: (or (and (distinct x (div z y)) (not (= y 0))) (and (not (= y 0)) (not (= (mod z y) 0))) (and (not (= z 0)) (= y 0)))
+	// Result in CNF: (and (or (not (= z 0)) (not (= y 0))) (or (= y 0) (distinct x (div z y)) (not (= (mod z y) 0))))
+	// @Test Commented because mathsat does not terminate
 	public void relationIntPolyPuristDistinct() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(not (= (* y x) z))";
@@ -379,6 +383,13 @@ public class PolynomialRelationTest {
 	public void relationIntPolyPuristLeq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(< (* y x) z )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	@Test
+	public void relationIntPolyEqRhsLiteral() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
+		final String inputSTR = "(= (* 17 y z x) 42 )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
