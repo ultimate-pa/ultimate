@@ -51,3 +51,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ the\ following\ directory=/home/matthias/ultimate/dump/auto
+
+
+#Thu Nov 06 16:26:23 CET 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=false
