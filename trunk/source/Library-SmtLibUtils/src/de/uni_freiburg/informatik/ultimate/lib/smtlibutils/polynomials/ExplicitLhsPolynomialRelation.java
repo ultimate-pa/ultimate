@@ -35,11 +35,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinar
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Polynomial relation in which we explicitly state which {@link Monomial}
@@ -156,7 +158,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		return divisor.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOne(divisor, sort));
 	}
 
-	public SolvedBinaryRelation divideByIntegerCoefficientForInequalities(final Script script,
+	public Pair<ExplicitLhsPolynomialRelation, Term> divideByIntegerCoefficient(final Script script,
 			final Set<TermVariable> bannedForDivCapture) {
 		if (mLhsCoefficient.equals(Rational.ZERO)) {
 			throw new AssertionError("div by zero");
@@ -164,6 +166,44 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		if (!SmtSortUtils.isIntSort(mLhsMonomial.getSort())) {
 			throw new AssertionError("no int");
 		}
+		// TODO optimized check for polynomial: can divide if each coefficient can be
+		// divided, divisibility of constant not required
+		final Term rhsAsTerm = mRhs.toTerm(script);
+		if (Arrays.stream(rhsAsTerm.getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
+			return null;
+		}
+		final Term divisor = mLhsCoefficient.toTerm(mLhsMonomial.getSort());
+		final Term divisibilityConstraint;
+		switch (mRelationSymbol) {
+		case DISTINCT:
+			divisibilityConstraint = SolveForSubjectUtils.constructDivisibilityConstraint(script, true, rhsAsTerm,
+					divisor);
+			break;
+		case EQ:
+			divisibilityConstraint = SolveForSubjectUtils.constructDivisibilityConstraint(script, false, rhsAsTerm,
+					divisor);
+			break;
+		case GEQ:
+		case GREATER:
+		case LEQ:
+		case LESS:
+			divisibilityConstraint = null;
+			break;
+		default:
+			throw new AssertionError("unknown value " + mRelationSymbol);
+		}
+		final Term rhs = SolveForSubjectUtils.constructRhsIntegerQuotient(script, mRelationSymbol, mRhs.toTerm(script),
+				!mLhsCoefficient.isNegative(), divisor);
+		final IPolynomialTerm resultRhs = (IPolynomialTerm) new PolynomialTermTransformer(script).transform(rhs);
+		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
+				mRelationSymbol, mLhsCoefficient);
+		final ExplicitLhsPolynomialRelation resultElpr = new ExplicitLhsPolynomialRelation(resultRelationSymbol,
+				Rational.ONE, getLhsMonomial(), resultRhs);
+		return new Pair<ExplicitLhsPolynomialRelation, Term>(resultElpr, divisibilityConstraint);
+	}
+
+	public SolvedBinaryRelation divideByIntegerCoefficientForInequalities(final Script script,
+			final Set<TermVariable> bannedForDivCapture) {
 		switch (mRelationSymbol) {
 		case DISTINCT:
 		case EQ:
@@ -176,16 +216,21 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		default:
 			throw new AssertionError("unknown value " + mRelationSymbol);
 		}
-		final Term rhsAsTerm = mRhs.toTerm(script);
-		if (Arrays.stream(rhsAsTerm.getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
-			return null;
+		final Pair<ExplicitLhsPolynomialRelation, Term> tmp = divideByIntegerCoefficient(script, bannedForDivCapture);
+		assert (tmp.getSecond() == null);
+		final ExplicitLhsPolynomialRelation resultElpr = tmp.getFirst();
+		return new SolvedBinaryRelation(mLhsMonomial.getSingleVariable(), resultElpr.getRhs().toTerm(script),
+				resultElpr.getRelationSymbol(), IntricateOperation.DIV_BY_INTEGER_CONSTANT);
+	}
+
+	public MultiCaseSolvedBinaryRelation divByMonomial(final Script script, final Term subject, final Xnf xnf,
+			final Set<TermVariable> bannedForDivCapture, final Term intLiteralDivConstraint,
+			final IntricateOperation additionalIo) {
+		if (!mLhsCoefficient.equals(Rational.ONE)) {
+			throw new AssertionError("could be supported, but should not be used in our applications");
 		}
-		final Term rhs = SolveForSubjectUtils.constructRhsIntegerQuotient(script, mRelationSymbol, mRhs.toTerm(script),
-				!mLhsCoefficient.isNegative(), mLhsCoefficient.toTerm(mLhsMonomial.getSort()));
-		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
-				mRelationSymbol, mLhsCoefficient);
-		return new SolvedBinaryRelation(mLhsMonomial.getSingleVariable(), rhs, resultRelationSymbol,
-				IntricateOperation.DIV_BY_INTEGER_CONSTANT);
+		return SolveForSubjectUtils.divideByMonomial(script, subject, mRelationSymbol, xnf, mLhsMonomial,
+				mRhs.toTerm(script), mLhsCoefficient, true, intLiteralDivConstraint, additionalIo);
 	}
 
 	@Override
