@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -77,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -105,9 +103,10 @@ public class RtInconcistencyConditionGenerator {
 	private static final boolean SIMPLIFY_BEFORE_QELIM = false;
 	private static final boolean TRY_SOLVER_BEFORE_QELIM = false;
 	private static final boolean PRINT_STATS = true;
-	private static final String SOLVER_LOGFILE = null;
 	private static final boolean PRINT_QUANTIFIED_FORMULAS = false;
-	// private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
+
+	private static final String SOLVER_LOG_DIR = null;
+	// private static final String SOLVER_LOG_DIR = "C:\\Users\\firefox\\Desktop\\dump\\";
 
 	private static final boolean PRINT_NON_TRIVIAL_CHECKS = false;
 
@@ -262,21 +261,19 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.getDisjuncts(stateInv).length != 1;
 	}
 
-	private Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
+	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
 
-		final SolverSettings settings =
+		SolverSettings settings =
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
 						.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
-		if (SOLVER_LOGFILE == null) {
-			return solver;
+		// SolverSettings settings =
+		// SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
+		// .setSolverLogics(Logics.ALL);
+		if (SOLVER_LOG_DIR != null) {
+			settings = settings.setDumpSmtScriptToFile(true, SOLVER_LOG_DIR,
+					RtInconcistencyConditionGenerator.class.getSimpleName(), false);
 		}
-		try {
-			return new LoggingScript(solver, SOLVER_LOGFILE, false);
-		} catch (final IOException e) {
-			mLogger.error("Could not create log file for solver, disabling logging. ");
-			return solver;
-		}
+		return SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
@@ -517,12 +514,12 @@ public class RtInconcistencyConditionGenerator {
 			// qelim failed to eliminate all quantifiers, perhaps the solver is better?
 			printQuantifiedFormula("Before qelim", () -> quantifiedFormula);
 			printQuantifiedFormula("After qelim", () -> (QuantifiedFormula) afterQelimFormula);
+
 			if (querySolverIsTrue(afterQelimFormula)) {
 				return mTrue;
 			}
 			printQuantifiedFormula("After solver", () -> (QuantifiedFormula) afterQelimFormula);
 		}
-
 		return afterQelimFormula;
 	}
 
