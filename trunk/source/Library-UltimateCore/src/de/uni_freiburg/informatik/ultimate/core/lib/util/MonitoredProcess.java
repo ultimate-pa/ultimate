@@ -495,7 +495,7 @@ public final class MonitoredProcess implements IStorable {
 		return processId + " " + command;
 	}
 
-	private boolean isRunning() {
+	public synchronized boolean isRunning() {
 		return !mProcessCompleted;
 	}
 

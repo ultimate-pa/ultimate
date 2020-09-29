@@ -127,14 +127,15 @@ class Executor {
 	}
 
 	public void exit() {
-		input("(exit)");
-		// 2015-11-12 Matthias: Do not parse "success" after exit.
-		// Some solvers do return success (Barcelogic, CVC4, Z3) some solvers
-		// don't do it (Princess, SMTInterpol).
-		// parseSuccess();
-		mProcess.forceShutdown();
+		if (mProcess != null && mProcess.isRunning()) {
+			input("(exit)");
+			// 2015-11-12 Matthias: Do not parse "success" after exit.
+			// Some solvers do return success (Barcelogic, CVC4, Z3) some solvers
+			// don't do it (Princess, SMTInterpol).
+			// parseSuccess();
+			mProcess.forceShutdown();
+		}
 		mProcess = null;
-
 	}
 
 	public static List<Symbol> parseSexpr(final Lexer lexer) throws IOException {
