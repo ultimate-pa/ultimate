@@ -36,8 +36,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Program Execution defined by a finite trace and (partial) program states at each position of this trace. This
@@ -101,6 +105,21 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	boolean isConcurrent();
 
 	@Override
+	default Spliterator<AtomicTraceElement<TE>> spliterator() {
+		return Spliterators.spliterator(iterator(), getLength(),
+				Spliterator.SIZED | Spliterator.IMMUTABLE | Spliterator.ORDERED);
+	}
+
+	/**
+	 * Returns a sequential {@code Stream} with this collection as its source.
+	 *
+	 * @return a sequential {@code Stream} over the atomic trace elements of this program execution
+	 */
+	default Stream<AtomicTraceElement<TE>> stream() {
+		return StreamSupport.stream(spliterator(), false);
+	}
+
+	@Override
 	default Iterator<AtomicTraceElement<TE>> iterator() {
 		return new Iterator<AtomicTraceElement<TE>>() {
 
@@ -125,8 +144,10 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	IBacktranslationValueProvider<TE, E> getBacktranslationValueProvider();
 
 	/**
-	 * @param <E>  Type of the expressions that are used to denote program variables and their values.
-	 * @param <TE> Type of the elements whose sequence are the trace.
+	 * @param <E>
+	 *            Type of the expressions that are used to denote program variables and their values.
+	 * @param <TE>
+	 *            Type of the elements whose sequence are the trace.
 	 */
 	public static <TE, E> IProgramExecution<TE, E> emptyExecution(final Class<E> exprClass,
 			final Class<? extends TE> teClass) {
@@ -208,7 +229,7 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 		 * @param expressionToString
 		 *            Function that maps each expression of type E to a string.
 		 */
-		public String toString(final Function<E,String> expressionToString) {
+		public String toString(final Function<E, String> expressionToString) {
 			final List<Entry<E, Collection<E>>> toSort = constructSortedListOfEntries(mVariable2Values);
 			final StringBuilder sb = new StringBuilder();
 			boolean first = true;
@@ -234,8 +255,8 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 			return sb.toString();
 		}
 
-		private static <E> List<Entry<E, Collection<E>>> constructSortedListOfEntries(
-				final Map<E, Collection<E>> variable2values) {
+		private static <E> List<Entry<E, Collection<E>>>
+				constructSortedListOfEntries(final Map<E, Collection<E>> variable2values) {
 			final List<Entry<E, Collection<E>>> toSort = new ArrayList<>(variable2values.entrySet());
 			Collections.sort(toSort, new Comparator<Entry<E, Collection<E>>>() {
 				@Override
