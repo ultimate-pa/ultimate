@@ -13,6 +13,7 @@
 /trunk/examples/ultbench
 /trunk/examples/ultbench/*
 trunk/examples/concurrent/bpl/VMCAI2021/generated/*.bpl
+trunk/examples/concurrent/bpl/VMCAI2021/generated/*.yml
 **/.metadata/*
 **/.settings/*
 **/target/*

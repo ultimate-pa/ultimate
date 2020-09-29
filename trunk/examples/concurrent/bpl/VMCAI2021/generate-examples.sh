@@ -6,12 +6,15 @@ MAX_THREADS=${1:-20}
 mkdir -p "$DIR"
 echo "Cleaning folder $DIR ..."
 rm -rf $DIR/example2_N=*.bpl
+rm -rf $DIR/example2_N=*.yml
 
 echo "Generating $MAX_THREADS benchmarks ..."
 for k in $(seq 1 $MAX_THREADS)
 do
   printf -v k_pad "%02d" $k
-  FILE="$DIR/example2_N=$k_pad.bpl"
+  NAME="example2_N=$k_pad"
+
+  FILE="$DIR/$NAME.bpl"
 
   echo "// #Safe
 var x : int;
@@ -65,4 +68,13 @@ modifies x;
 }
 " >> "$FILE"
   done
+
+  YAML="$DIR/$NAME.yml"
+  echo "format_version: '1.0'
+
+input_files: '$NAME.bpl'
+
+properties:
+  - property_file: ../properties/unreach-call.prp
+    expected_verdict: true" >> "$YAML"
 done

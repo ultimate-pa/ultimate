@@ -6,6 +6,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
 
 public class VMCAI2021ExampleSuite extends AbstractTraceAbstractionTestSuite {
 
@@ -19,7 +20,7 @@ public class VMCAI2021ExampleSuite extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(UltimateRunDefinition ultimateRunDefinition) {
-		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
+		return new SvcompReachTestResultDecider(ultimateRunDefinition, false);
 	}
 
 	@Override
