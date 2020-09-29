@@ -24,7 +24,7 @@ public class VMCAI2021ExampleSuite extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 120 * 1000;
+		return 300 * 1000;
 	}
 
 	@Override
