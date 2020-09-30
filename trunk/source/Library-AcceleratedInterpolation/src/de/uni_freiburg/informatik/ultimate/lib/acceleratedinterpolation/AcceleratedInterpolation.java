@@ -254,11 +254,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		final ILoopPreprocessor<IcfgLocation, UnmodifiableTransFormula> loopPreprocessor =
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
-		mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoopsAsTf);
+		if (!mNestedLoops.isEmpty()) {
+			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoopsAsTf);
 
-		/**
-		 * DEAL WITH NESTED LOOPS HERE!
-		 */
+		}
 
 		mLoopsTf = loopPreprocessor.preProcessLoop(mLoopsAsTf);
 		mLogger.debug("Done Preprocessing");
@@ -498,13 +497,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
 	}
 
-	private void accelerateNestedLoops(final IcfgLocation loophead, final List<UnmodifiableTransFormula> loopTf) {
-		if (mNestingRelation.containsKey(loophead)) {
-			final IcfgLocation nestedLoophead = mNestingRelation.get(loophead);
-			final List<UnmodifiableTransFormula> nestedLoop = mNestedLoopsTf.get(nestedLoophead);
-			if (mNestingRelation.containsKey(nestedLoophead)) {
+	private void accelerateNestedLoops() {
+		for (final Entry<IcfgLocation, IcfgLocation> nesting : mNestingRelation.entrySet()) {
 
-			}
 		}
 	}
 

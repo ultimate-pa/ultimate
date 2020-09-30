@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -117,7 +118,8 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
 
 			for (final List<UnmodifiableTransFormula> loopTransitions : loopSet.getValue()) {
 				UnmodifiableTransFormula loopRelation = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						mScript, true, true, false, null, null, loopTransitions);
+						mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+						SimplificationTechnique.SIMPLIFY_DDA, loopTransitions);
 				/*
 				 * Transform found unsupported operations:
 				 */

@@ -61,7 +61,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
 	private final Map<IcfgLocation, Set<List<LETTER>>> mNestedLoops;
-	private Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mNestedLoopsAsTf;
+	private final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mNestedLoopsAsTf;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Integer mDelay;
@@ -89,6 +89,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 		mLoops = new HashMap<>();
 		mLoopsAsTf = new HashMap<>();
 		mNestedLoops = new HashMap<>();
+		mNestedLoopsAsTf = new HashMap<>();
 		mLoopExitTransitions = new HashMap<>();
 		mLoopSize = new HashMap<>();
 		mDelay = delay;
