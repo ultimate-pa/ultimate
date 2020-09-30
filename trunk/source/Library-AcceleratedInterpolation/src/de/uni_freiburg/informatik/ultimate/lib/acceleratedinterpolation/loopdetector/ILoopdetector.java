@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -51,6 +53,8 @@ public interface ILoopdetector<L, T> {
 	 * @return
 	 */
 	Map<L, Set<List<T>>> getLoops();
+
+	Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> getLoopsTf();
 
 	/**
 	 * Return final transitions of a loop, e.g. transitions that return to the main program. Again as a location

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -58,6 +59,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	private final List<IcfgLocation> mTraceLocations;
 	private final ILogger mLogger;
 	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
+	private Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
 	private final Map<IcfgLocation, Set<List<LETTER>>> mNestedLoops;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
@@ -84,6 +86,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 		mIcfg = icfg;
 		mTraceLocations = mCycleFinder.statementsToLocations(mTrace);
 		mLoops = new HashMap<>();
+		mLoopsAsTf = new HashMap<>();
 		mNestedLoops = new HashMap<>();
 		mLoopExitTransitions = new HashMap<>();
 		mLoopSize = new HashMap<>();
@@ -116,11 +119,14 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
 		}
 		for (final IcfgLocation nestedHead : nestedCycles) {
-			final Set<List<LETTER>> nestedLoop = cyclePaths(withoutNestedCycles).get(nestedHead);
+			final Set<List<LETTER>> nestedLoop = cyclePaths(withoutNestedCycles).getFirst().get(nestedHead);
 			mNestedLoops.put(nestedHead, nestedLoop);
 			withoutNestedCycles.remove(nestedHead);
 		}
-		mLoops = cyclePaths(withoutNestedCycles);
+		final Pair<Map<IcfgLocation, Set<List<LETTER>>>, Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>>> cycledPaths =
+				cyclePaths(withoutNestedCycles);
+		mLoops = cycledPaths.getFirst();
+		mLoopsAsTf = cycledPaths.getSecond();
 
 		mLogger.debug("Found Loops");
 	}
@@ -206,21 +212,30 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	 * @param possibleCycles
 	 * @return
 	 */
-	private Map<IcfgLocation, Set<List<LETTER>>> cyclePaths(final Map<IcfgLocation, List<Integer>> cycles) {
+	private Pair<Map<IcfgLocation, Set<List<LETTER>>>, Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>>>
+			cyclePaths(final Map<IcfgLocation, List<Integer>> cycles) {
 		final Map<IcfgLocation, Set<List<LETTER>>> cycleTransitions = new HashMap<>();
+		final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> cycleTransitionsTf = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Integer>> cycle : cycles.entrySet()) {
 			final Set<List<LETTER>> statements = new HashSet<>();
+			final Set<List<UnmodifiableTransFormula>> statementsTf = new HashSet<>();
 			final IcfgLocation loopHead = cycle.getKey();
 			int i = 1;
 			while (i < cycle.getValue().size()) {
 				final List<LETTER> trace =
 						new ArrayList<>(mTrace.subList(cycle.getValue().get(i - 1), cycle.getValue().get(i)));
 				statements.add(trace);
+				final List<UnmodifiableTransFormula> traceTf = new ArrayList<>();
+				for (final LETTER l : trace) {
+					traceTf.add(l.getTransformula());
+				}
+				statementsTf.add(traceTf);
 				i++;
 			}
 			cycleTransitions.put(loopHead, statements);
+			cycleTransitionsTf.put(loopHead, statementsTf);
 		}
-		return cycleTransitions;
+		return new Pair<>(cycleTransitions, cycleTransitionsTf);
 	}
 
 	/**
@@ -265,6 +280,11 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	@Override
 	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
 		return mLoops;
+	}
+
+	@Override
+	public Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> getLoopsTf() {
+		return mLoopsAsTf;
 	}
 
 	@Override

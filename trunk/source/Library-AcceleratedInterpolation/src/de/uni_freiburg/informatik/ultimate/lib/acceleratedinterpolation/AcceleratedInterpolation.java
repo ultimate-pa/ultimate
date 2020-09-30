@@ -138,9 +138,11 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
+	private final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
 	private final Map<IcfgLocation, IcfgLocation> mNestingRelation;
 	private final Map<IcfgLocation, Set<List<LETTER>>> mNestedLoops;
-	private final Map<IcfgLocation, List<UnmodifiableTransFormula>> mLoopsTf;
+	private Map<IcfgLocation, List<UnmodifiableTransFormula>> mNestedLoopsTf;
+	private Map<IcfgLocation, List<UnmodifiableTransFormula>> mLoopsTf;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Map<IcfgLocation, List<UnmodifiableTransFormula>> mAccelerations;
@@ -205,17 +207,21 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		 * Find loops in the trace.
 		 */
 		mLoops = mLoopdetector.getLoops();
+		mLoopsAsTf = mLoopdetector.getLoopsTf();
 		mNestingRelation = mLoopdetector.getNestingRelation();
 		mNestedLoops = mLoopdetector.getNestedLoops();
-		mLogger.debug("Done Preprocessing");
-
-		final ILoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices,
-				mPredUnifier, mPredHelper, mIcfg.getCfgSmtToolkit());
-		mLoopsTf = loopPreprocessor.preProcessLoop(mLoops);
-		mLoopExitTransitions = mLoopdetector.getLoopExitTransitions();
 		mLoopSize = mLoopdetector.getLoopSize();
+		mLoopExitTransitions = mLoopdetector.getLoopExitTransitions();
+		mLoopsTf = new HashMap<>();
+		mNestedLoopsTf = new HashMap<>();
 
 		try {
+			final ILoopPreprocessor<LETTER> loopPreprocessor = new LoopPreprocessorFastUPR<>(mLogger, mScript,
+					mServices, mPredUnifier, mPredHelper, mIcfg.getCfgSmtToolkit());
+			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoops);
+			mLoopsTf = loopPreprocessor.preProcessLoop(mLoops);
+			mLogger.debug("Done Preprocessing");
+
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE);
 			mIsTraceCorrect = acceleratedInterpolationCore();
 
@@ -250,14 +256,15 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	 */
 	private LBool acceleratedInterpolationCore() {
 		// After finding loops in the trace, start calculating loop accelerations.
-		final Iterator<Entry<IcfgLocation, List<UnmodifiableTransFormula>>> loopheadIterator =
-				mLoopsTf.entrySet().iterator();
+		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
 		while (loopheadIterator.hasNext()) {
-			final Entry<IcfgLocation, List<UnmodifiableTransFormula>> loophead = loopheadIterator.next();
+			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
+			final List<UnmodifiableTransFormula> loopTf = mLoopsTf.get(loophead.getKey());
+
 			boolean accelerationFinishedCorrectly = false;
 			final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
-			for (final UnmodifiableTransFormula loop : loophead.getValue()) {
+			for (final UnmodifiableTransFormula loop : loopTf) {
 				mLogger.debug("Starting acceleration");
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loop, loophead.getKey(), AccelerationMethod.FAST_UPR);
