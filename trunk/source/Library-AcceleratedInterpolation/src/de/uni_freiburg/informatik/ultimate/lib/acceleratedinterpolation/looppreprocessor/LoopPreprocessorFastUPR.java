@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformat
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -69,7 +70,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @param <LETTER>
  *            transition type
  */
-public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implements ILoopPreprocessor<LETTER> {
+public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
+		implements ILoopPreprocessor<IcfgLocation, UnmodifiableTransFormula> {
 
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
@@ -106,15 +108,16 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>> implemen
 	 */
 	@Override
 	public Map<IcfgLocation, List<UnmodifiableTransFormula>>
-			preProcessLoop(final Map<IcfgLocation, Set<List<LETTER>>> loop) {
+			preProcessLoop(final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> loop) {
 		final Map<IcfgLocation, List<UnmodifiableTransFormula>> result = new HashMap<>();
 
-		for (final Entry<IcfgLocation, Set<List<LETTER>>> loopSet : loop.entrySet()) {
+		for (final Entry<IcfgLocation, Set<List<UnmodifiableTransFormula>>> loopSet : loop.entrySet()) {
 			final IcfgLocation loophead = loopSet.getKey();
 			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
 
-			for (final List<LETTER> loopTransitions : loopSet.getValue()) {
-				UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loopTransitions);
+			for (final List<UnmodifiableTransFormula> loopTransitions : loopSet.getValue()) {
+				UnmodifiableTransFormula loopRelation = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+						mScript, true, true, false, null, null, loopTransitions);
 				/*
 				 * Transform found unsupported operations:
 				 */

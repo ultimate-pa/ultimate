@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -41,12 +40,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
  *
  * @param <T>
  */
-public interface ILoopPreprocessor<T> {
+public interface ILoopPreprocessor<L, T> {
 	/**
 	 * Takes a loop as a {@link UnmodifiableTransFormula} and removes or transforms unwanted transitions.
 	 *
 	 * @param loop
 	 * @return
 	 */
-	public Map<IcfgLocation, List<UnmodifiableTransFormula>> preProcessLoop(final Map<IcfgLocation, Set<List<T>>> loop);
+	public Map<L, List<T>> preProcessLoop(final Map<L, Set<List<T>>> loop);
 }

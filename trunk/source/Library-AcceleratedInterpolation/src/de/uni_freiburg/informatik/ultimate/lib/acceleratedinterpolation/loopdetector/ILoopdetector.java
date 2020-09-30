@@ -56,6 +56,8 @@ public interface ILoopdetector<L, T> {
 
 	Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> getLoopsTf();
 
+	Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> getNestedLoopsTf();
+
 	/**
 	 * Return final transitions of a loop, e.g. transitions that return to the main program. Again as a location
 	 * transition pair.

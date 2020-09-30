@@ -61,6 +61,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
 	private final Map<IcfgLocation, Set<List<LETTER>>> mNestedLoops;
+	private Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mNestedLoopsAsTf;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Integer mDelay;
@@ -119,8 +120,11 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
 		}
 		for (final IcfgLocation nestedHead : nestedCycles) {
-			final Set<List<LETTER>> nestedLoop = cyclePaths(withoutNestedCycles).getFirst().get(nestedHead);
+			final Pair<Map<IcfgLocation, Set<List<LETTER>>>, Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>>> cycledNested =
+					cyclePaths(withoutNestedCycles);
+			final Set<List<LETTER>> nestedLoop = cycledNested.getFirst().get(nestedHead);
 			mNestedLoops.put(nestedHead, nestedLoop);
+			mNestedLoopsAsTf.put(nestedHead, cycledNested.getSecond().get(nestedHead));
 			withoutNestedCycles.remove(nestedHead);
 		}
 		final Pair<Map<IcfgLocation, Set<List<LETTER>>>, Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>>> cycledPaths =
@@ -285,6 +289,11 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	@Override
 	public Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> getLoopsTf() {
 		return mLoopsAsTf;
+	}
+
+	@Override
+	public Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> getNestedLoopsTf() {
+		return mNestedLoopsAsTf;
 	}
 
 	@Override
