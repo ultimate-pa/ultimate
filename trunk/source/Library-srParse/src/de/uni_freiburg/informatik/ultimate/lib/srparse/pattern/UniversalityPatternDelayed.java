@@ -45,11 +45,17 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  *
  */
-public class UniversalityPatternDelayed extends PatternType {
+public class UniversalityPatternDelayed extends PatternType<UniversalityPatternDelayed> {
 
 	public UniversalityPatternDelayed(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public UniversalityPatternDelayed create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new UniversalityPatternDelayed(scope, id, cdds, durations);
 	}
 
 	@Override

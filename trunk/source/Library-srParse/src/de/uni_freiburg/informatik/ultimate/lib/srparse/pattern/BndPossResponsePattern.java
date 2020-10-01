@@ -39,11 +39,17 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndPossResponsePattern extends PatternType {
+public class BndPossResponsePattern extends PatternType<BndPossResponsePattern> {
 
 	public BndPossResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public BndPossResponsePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new BndPossResponsePattern(scope, id, cdds, durations);
 	}
 
 	@Override

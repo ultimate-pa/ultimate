@@ -42,10 +42,16 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ResponsePattern extends PatternType {
+public class ResponsePattern extends PatternType<ResponsePattern> {
 	public ResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public ResponsePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new ResponsePattern(scope, id, cdds, durations);
 	}
 
 	@Override

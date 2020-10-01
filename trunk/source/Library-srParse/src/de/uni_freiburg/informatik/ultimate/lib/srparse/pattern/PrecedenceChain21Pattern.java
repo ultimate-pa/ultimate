@@ -44,11 +44,17 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class PrecedenceChain21Pattern extends PatternType {
+public class PrecedenceChain21Pattern extends PatternType<PrecedenceChain21Pattern> {
 
 	public PrecedenceChain21Pattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public PrecedenceChain21Pattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new PrecedenceChain21Pattern(scope, id, cdds, durations);
 	}
 
 	@Override

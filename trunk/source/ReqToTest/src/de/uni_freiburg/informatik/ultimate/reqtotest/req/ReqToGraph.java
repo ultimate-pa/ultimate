@@ -102,7 +102,7 @@ public class ReqToGraph {
 	 * "{scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at
 	 * least "c2" time units
 	 */
-	private ReqGuardGraph getBndResponsePatternTTPattern(final PatternType pattern) {
+	private ReqGuardGraph getBndResponsePatternTTPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -155,7 +155,7 @@ public class ReqToGraph {
 	 * "{scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units for at least "c2"
 	 * time units
 	 */
-	private ReqGuardGraph getBndDelayedResponsePatternUT(final PatternType pattern) {
+	private ReqGuardGraph getBndDelayedResponsePatternUT(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -202,7 +202,7 @@ public class ReqToGraph {
 	/*
 	 * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards.
 	 */
-	private ReqGuardGraph getBndResponsePatternTUPattern(final PatternType pattern) {
+	private ReqGuardGraph getBndResponsePatternTUPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -252,7 +252,7 @@ public class ReqToGraph {
 	/*
 	 * * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units.
 	 */
-	private ReqGuardGraph getBndInvariance(final PatternType pattern) {
+	private ReqGuardGraph getBndInvariance(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -300,7 +300,7 @@ public class ReqToGraph {
 	 *
 	 * Assuming stability of output ( R, R & S, R & !S, R & S,.....) not intended behavior
 	 */
-	private ReqGuardGraph getBndResponsePatternUTPattern(final PatternType pattern) {
+	private ReqGuardGraph getBndResponsePatternUTPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -563,7 +563,7 @@ public class ReqToGraph {
 	/*
 	 * * "{scope}, it is always the case that if P holds then S toggles T at most c1 time units later."
 	 */
-	private ReqGuardGraph getTogglePatternDelayed(final PatternType pattern) {
+	private ReqGuardGraph getTogglePatternDelayed(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term P = mCddToSmt.toSmt(args.get(0));

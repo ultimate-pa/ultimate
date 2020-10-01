@@ -37,10 +37,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
@@ -69,6 +77,19 @@ public class Req2Pea implements IReq2Pea {
 		mLogger = logger;
 		mServices = services;
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
+
+		// Replace FunctionAplication 'prev()' in scope and cdds of all requirements.
+		for (int i = 0; i < requirements.size(); i++) {
+			final PatternType<?> req = requirements.get(i);
+
+			final SrParseScope scope = req.getScope().create(new CDDTransformer().transform(req.getScope().getCdd1()),
+					new CDDTransformer().transform(req.getScope().getCdd2()));
+
+			final List<CDD> cdds =
+					req.getCdds().stream().map(e -> new CDDTransformer().transform(e)).collect(Collectors.toList());
+
+			requirements.set(i, req.create(scope, req.getId(), cdds, req.getDuration()));
+		}
 
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 
@@ -168,5 +189,86 @@ public class Req2Pea implements IReq2Pea {
 	@Override
 	public IReq2PeaAnnotator getAnnotator() {
 		return new ReqCheckAnnotator(mServices, mLogger, mPattern2Peas, mSymbolTable);
+	}
+
+	/**
+	 * Transform a {@link CDD} such that occurrences of {@link FunctionApplication} 'prev()' in
+	 * {@link BoogieBooleanExpressionDecision} are replaced by the old value of its argument.
+	 *
+	 * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
+	 */
+	private final class CDDTransformer {
+
+		public CDD transform(final CDD cdd) {
+			if (cdd == null || cdd == CDD.TRUE || cdd == CDD.FALSE) {
+				return cdd;
+			}
+
+			// Traverse the given CDD.
+			final CDD[] childs = cdd.getChilds();
+			for (int i = 0; i < childs.length; i++) {
+				childs[i] = transform(childs[i]);
+			}
+
+			// Transform BoogieBooleanExpressionDecision, if it contains some 'prev()'.
+			Decision<?> decision = cdd.getDecision();
+			if (decision instanceof BoogieBooleanExpressionDecision) {
+				final Expression expr = ((BoogieBooleanExpressionDecision) decision).getExpression()
+						.accept(new PrevFunctionApplicationTransformer());
+				decision = BoogieBooleanExpressionDecision.createWithoutReduction(expr).getDecision();
+			}
+
+			return CDD.create(decision, childs);
+		}
+	}
+
+	/**
+	 * Replace any {@link FunctionApplication} 'prev()' by the old value of its argument.
+	 *
+	 * @throws IllegalArgumentException
+	 *             if the number of arguments is not exactly one.
+	 *
+	 * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
+	 */
+	private final class PrevFunctionApplicationTransformer extends GeneratedBoogieAstTransformer {
+
+		@Override
+		public Expression transform(final FunctionApplication node) {
+			if (!node.getIdentifier().equals("prev")) {
+				return node;
+			}
+
+			final Expression[] args = node.getArguments();
+			if (args.length != 1) {
+				throw new IllegalArgumentException();
+			}
+
+			return args[0].accept(new PrevFunctionApplicationArgumentTransformer());
+		}
+
+		/**
+		 * Replace any {@link IdentifierExpression} by its old value.
+		 *
+		 * @throws IllegalArgumentException
+		 *             if there exist a {@link FunctionApplication} 'prev()'.
+		 *
+		 * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
+		 */
+		private final class PrevFunctionApplicationArgumentTransformer extends GeneratedBoogieAstTransformer {
+
+			@Override
+			public Expression transform(final FunctionApplication node) {
+				if (node.getIdentifier().equals("prev")) {
+					throw new IllegalArgumentException();
+				}
+				return node;
+			}
+
+			@Override
+			public Expression transform(final IdentifierExpression node) {
+				return new IdentifierExpression(node.getLoc(), node.getType(), "'" + node.getIdentifier(),
+						node.getDeclarationInformation());
+			}
+		}
 	}
 }

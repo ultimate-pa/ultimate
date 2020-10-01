@@ -45,10 +45,16 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class MinDurationPattern extends PatternType {
+public class MinDurationPattern extends PatternType<MinDurationPattern> {
 	public MinDurationPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public MinDurationPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new MinDurationPattern(scope, id, cdds, durations);
 	}
 
 	@Override

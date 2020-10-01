@@ -43,10 +43,16 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class InvariantPattern extends PatternType {
+public class InvariantPattern extends PatternType<InvariantPattern> {
 	public InvariantPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public InvariantPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new InvariantPattern(scope, id, cdds, durations);
 	}
 
 	@Override

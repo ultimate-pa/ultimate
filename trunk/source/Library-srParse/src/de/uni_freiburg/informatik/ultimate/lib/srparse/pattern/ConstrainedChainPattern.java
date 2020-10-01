@@ -39,11 +39,17 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
-public class ConstrainedChainPattern extends PatternType {
+public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern> {
 
 	public ConstrainedChainPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public ConstrainedChainPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new ConstrainedChainPattern(scope, id, cdds, durations);
 	}
 
 	@Override

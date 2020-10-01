@@ -46,11 +46,17 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class UniversalityPattern extends PatternType {
+public class UniversalityPattern extends PatternType<UniversalityPattern> {
 
 	public UniversalityPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public UniversalityPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new UniversalityPattern(scope, id, cdds, durations);
 	}
 
 	@Override

@@ -42,11 +42,17 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  */
-public class BndTriggeredEntryConditionPattern extends PatternType {
+public class BndTriggeredEntryConditionPattern extends PatternType<BndTriggeredEntryConditionPattern> {
 
 	public BndTriggeredEntryConditionPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public BndTriggeredEntryConditionPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new BndTriggeredEntryConditionPattern(scope, id, cdds, durations);
 	}
 
 	@Override

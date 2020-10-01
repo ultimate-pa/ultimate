@@ -45,10 +45,16 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class MaxDurationPattern extends PatternType {
+public class MaxDurationPattern extends PatternType<MaxDurationPattern> {
 	public MaxDurationPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public MaxDurationPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new MaxDurationPattern(scope, id, cdds, durations);
 	}
 
 	@Override

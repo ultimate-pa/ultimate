@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class PatternType {
+public abstract class PatternType<T extends PatternType> {
 
 	private final List<CDD> mCdds;
 	private final List<String> mDurations;
@@ -64,6 +64,9 @@ public abstract class PatternType {
 		mCdds = cdds;
 		mDurations = durations;
 	}
+
+	public abstract T create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations);
 
 	public List<String> getDuration() {
 		return Collections.unmodifiableList(mDurations);
@@ -293,5 +296,4 @@ public abstract class PatternType {
 			return mPeas;
 		}
 	}
-
 }

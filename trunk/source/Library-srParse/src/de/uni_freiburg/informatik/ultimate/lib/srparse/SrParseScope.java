@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
-public abstract class SrParseScope {
+public abstract class SrParseScope<T extends SrParseScope> {
 
 	private final CDD mCdd1;
 	private final CDD mCdd2;
@@ -11,6 +11,8 @@ public abstract class SrParseScope {
 		mCdd1 = cdd1;
 		mCdd2 = cdd2;
 	}
+
+	public abstract T create(CDD cdd1, CDD cdd2);
 
 	public CDD getCdd1() {
 		return mCdd1;
@@ -62,7 +64,7 @@ public abstract class SrParseScope {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final SrParseScope other = (SrParseScope) obj;
+		final SrParseScope<?> other = (SrParseScope<?>) obj;
 		if (mCdd1 == null) {
 			if (other.mCdd1 != null) {
 				return false;

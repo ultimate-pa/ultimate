@@ -42,11 +42,23 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndDelayedResponsePatternUT extends PatternType {
+public class BndDelayedResponsePatternUT extends PatternType<BndDelayedResponsePatternUT> {
 
 	public BndDelayedResponsePatternUT(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	// @Override
+	// public BndDelayedResponsePatternUT create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	// final List<String> durations) {
+	// return new BndDelayedResponsePatternUT(scope, id, cdds, durations);
+	// }
+
+	@Override
+	public BndDelayedResponsePatternUT create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new BndDelayedResponsePatternUT(scope, id, cdds, durations);
 	}
 
 	@Override

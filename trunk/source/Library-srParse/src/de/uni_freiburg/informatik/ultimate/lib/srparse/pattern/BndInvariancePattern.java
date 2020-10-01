@@ -45,11 +45,17 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndInvariancePattern extends PatternType {
+public class BndInvariancePattern extends PatternType<BndInvariancePattern> {
 
 	public BndInvariancePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public BndInvariancePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new BndInvariancePattern(scope, id, cdds, durations);
 	}
 
 	@Override
