@@ -25,24 +25,36 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+
 
 /**
  * TODO
@@ -58,31 +70,48 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	private final IPetriNet<IIcfgTransition<LOC>, PLACE> mNet; 	
 	private final Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> mFloydHoareAnnotation;
 	
-	private final OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> mAnnotation;	
+	private final OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> mAnnotation;
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mManagedScript;
+	private final Script mScript;
 	private final BasicPredicateFactory mFactory;
+	private final IIcfgSymbolTable mSymbolTable;
 	
-
+	//Variables for Annotation construction
+	private final Map<PLACE, IProgramVar> mGhostVariables;
+	private final Map<PLACE, IPredicate> mFormulaMapping;
+	private final Set<UnmodifiableTransFormula> mGhostInitAssignment;
+	private final Map<ITransition<IIcfgTransition<LOC>, PLACE>,UnmodifiableTransFormula> mAssignmentMapping;
+	
 	public OwickiGriesConstruction(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
 			IPetriNet<IIcfgTransition<LOC>, PLACE> net,
 			Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> floydHoare) {			
 			mNet = net;	
-			mFloydHoareAnnotation = floydHoare;
-			mFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable());	
+			mFloydHoareAnnotation = floydHoare;			
+			mScript = null; 
+			mManagedScript = csToolkit.getManagedScript();
+			mSymbolTable = csToolkit.getSymbolTable();
+			mServices = services;
+			mFactory = new BasicPredicateFactory(mServices, mManagedScript,
+				csToolkit.getSymbolTable());
+			
+			
+			mGhostVariables = getGhostVariables();
+			mFormulaMapping = getFormulaMapping();
+			mGhostInitAssignment = getGhostInitAssignment();
+			mAssignmentMapping = getAssignmentMapping();
 			
 			mAnnotation = new OwickiGriesAnnotation<>();
-			mAnnotation.mGhostVariables = getGhostVariables();
-			mAnnotation.mFormulaMapping = getFormulaMapping();
-			//TODO: m.Annotation.mAssignmentMapping =
-			// mAnnotation.mGhostInitAssignment = getGhostInitAssignment();
+			
+			//TODO: Cambiar esto a mandarlo a Annotation constructor
+			//TODO: assignment AssignmentMapping =
+			 
 
 			// TODO Code to set variables to false.
 			// Similarly for true.
-			// Use TransformulaUtils.sequentialComposition to combine.
-			//
-			// final UnmodifiableTransFormula setToFalse =
-			//		TransFormulaBuilder.constructAssignment(new ArrayList<>(variables.values()),
-			//				Collections.nCopies(variables.size(), script.term("false")), mSymbolTable, mManagedScript);
+	
+		
+
 	}	 
 
 	/**
@@ -107,7 +136,13 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @return Predicate with conjunction of Ghost variables and predicate of marking
 	 */
 	private  IPredicate getMarkingPredicate(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
-		//TODO: Conjunction of variables not in Marking
+		//TODO: Conjunction of variables not in Marking 
+		//OptionA: Just Marking shared variables, Which variables?: Find if marking is subset of another.
+			//If marking if subset of another marking in FHAnn, get variables and set to false from SuperMarking\marking.
+		//OptionB: Negation of all other Ghost variables not in Marking.
+			//Complement set: GhostVariables(Only for places/ only construction??)\marking places
+		
+		
 		Set<IPredicate> terms =  new HashSet<>(); //Conjunction of GhostVariables of places in marking
 		marking.forEach(element -> terms.add(getGhostPredicate(element)));
 		terms.add(mFloydHoareAnnotation.get(place)); //Predicate of marking		
@@ -127,29 +162,33 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @return Map of GhostVariables to Places
 	 */
 	private Map<PLACE, IProgramVar> getGhostVariables(){
-	//TODO: Extend IProgramVar?: name, place, type, value. 
-	//TODO: Deal with not place Ghost variables?
 		Map<PLACE, IProgramVar> GhostVars = new HashMap<PLACE, IProgramVar>();
+		int i = 0;
 		for(PLACE place: mNet.getPlaces()) {
-			IProgramVar var = null;			
-			// TODO Code to create a new boolean variable.
-			//final TermVariable tv =
-			//		mManagedScript.constructFreshTermVariable("loc_" + i, SmtSortUtils.getBoolSort(mManagedScript));
-			//final IProgramVar var = ProgramVarUtils.constructGlobalProgramVarPair(tv.getName(),
-			//		SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
-			GhostVars.put(place, var);}
+			final TermVariable tVar = mManagedScript.constructFreshTermVariable
+					("np_" + i, SmtSortUtils.getBoolSort(mManagedScript));
+			final IProgramVar pVar = ProgramVarUtils.constructGlobalProgramVarPair
+					(tVar.getName(), SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);	
+			GhostVars.put(place, pVar);
+			i++;
+		}
 		return GhostVars;
 	}
 	
 	/**
 	 * @return set of Initial value assignment of all GhostVariables.
+	 * TODO: result: Set with twoTransFormula, or a single Transformula?
+	 * 
 	 */
-	private Set<IIcfgTransition<LOC>> getGhostInitAssignment(){		
-		Set<IIcfgTransition<LOC>> InitAssignments = new HashSet<>();
-		mNet.getInitialPlaces().forEach(place -> InitAssignments.add(getGhostAssignment(place))); //true
-		Set<PLACE> NotInit = new HashSet<>(mNet.getPlaces());
-		NotInit.removeAll(mNet.getInitialPlaces());
-		NotInit.forEach(place -> InitAssignments.add(getGhostAssignment(place))); //false
+	private Set<UnmodifiableTransFormula> getGhostInitAssignment(){		
+		Set<UnmodifiableTransFormula> InitAssignments = new HashSet<>();		
+		Collection<IProgramVar> InitGhostVariables = new HashSet<>();//Get all GhostVariables from Initial places
+		mNet.getInitialPlaces().forEach(place -> 
+		InitGhostVariables.add(mGhostVariables.get(place)));
+		Collection<IProgramVar> NotInitGhostVariables = mGhostVariables.values();
+		NotInitGhostVariables.removeAll(InitGhostVariables); //Ghost variables of not Initial places
+		InitAssignments.add(getGhostAssignment(InitGhostVariables, "true"));
+		InitAssignments.add(getGhostAssignment(NotInitGhostVariables, "false"));
 		return InitAssignments;
 	}
 	
@@ -158,11 +197,42 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @param place
 	 * @return assignment of the place's GhostVariable.
 	 */
-	private IIcfgTransition<LOC> getGhostAssignment(PLACE place){
-		//TODO: Generate assignment/statement from GhostVar
-		IIcfgTransition<LOC> assignment = null;	
-		mAnnotation.mGhostVariables.get(place);		
-		return assignment;
+	private UnmodifiableTransFormula getGhostAssignment(Collection<IProgramVar> vars, String term){
+		return  TransFormulaBuilder.constructAssignment(new ArrayList<>(vars),
+						Collections.nCopies(vars.size(), mScript.term(term)), mSymbolTable, mManagedScript);
+	}	
+
+	/**
+	 * 
+	 * @return Map of Places' Ghost Variables assignments to Transitions
+	 * 
+	 */
+	
+	private Map<ITransition<IIcfgTransition<LOC>, PLACE>,UnmodifiableTransFormula> getAssignmentMapping(){
+		Map<ITransition<IIcfgTransition<LOC>,PLACE>,UnmodifiableTransFormula> AssignmentMapping = 
+				new HashMap <ITransition<IIcfgTransition<LOC>,PLACE>, UnmodifiableTransFormula>();
+		Collection<ITransition<IIcfgTransition<LOC>,PLACE>> Transitions = mNet.getTransitions();
+		Transitions.forEach(transition -> AssignmentMapping.put(transition, getTransitionAssignment(transition)));				
+		return AssignmentMapping;
+	}
+	
+	/**
+	 * 
+	 * @param transition
+	 * @return Transformula of sequential compositions of GhostVariables assignments.
+	 * GhostVariables of Predecessors Places are assign to false,
+	 * GhostVariables of Successors Places are assign to truel
+	 */
+	private UnmodifiableTransFormula getTransitionAssignment(ITransition<IIcfgTransition<LOC>,PLACE> transition) {			
+		List<UnmodifiableTransFormula> assignments = new ArrayList<>();
+		Set<PLACE> Places = mNet.getPredecessors(transition);
+		Places.forEach(place -> assignments.add
+				(getGhostAssignment(Collections.nCopies(1,mGhostVariables.get(place)),"false")));
+		Places = mNet.getSuccessors(transition);	
+		Places.forEach(place -> assignments.add
+				(getGhostAssignment(Collections.nCopies(1,mGhostVariables.get(place)),"true")));
+		return TransFormulaUtils.sequentialComposition(null, mServices, mManagedScript, 
+				false, false, false, null, null, assignments);			
 	}
 	
 	public OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> getResult() {
