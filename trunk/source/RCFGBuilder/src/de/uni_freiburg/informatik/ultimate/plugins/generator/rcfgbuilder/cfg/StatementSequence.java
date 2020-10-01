@@ -97,11 +97,10 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	 * Return, Summary.
 	 */
 	public void addStatement(final Statement st) {
-		if (!(st instanceof AssumeStatement) && !(st instanceof AssignmentStatement)
-				&& !(st instanceof HavocStatement) && !(st instanceof CallStatement)) {
-			throw new IllegalArgumentException(
-					"Only Assignment, Assume and HavocStatement allowed in InternalEdge."
-							+ " Additionally CallStatements are allowed if the callee is a procedure without implementation and has an emtpy requires clause.");
+		if (!(st instanceof AssumeStatement) && !(st instanceof AssignmentStatement) && !(st instanceof HavocStatement)
+				&& !(st instanceof CallStatement)) {
+			throw new IllegalArgumentException("Only Assignment, Assume and HavocStatement allowed in InternalEdge."
+					+ " Additionally CallStatements are allowed if the callee is a procedure without implementation and has an emtpy requires clause.");
 		}
 		mStatements.add(st);
 		mPrettyPrintedStatements = null;
@@ -132,9 +131,8 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	public String toString() {
 		if (ADD_SERIAL_NUMBER_IN_TO_STRING_REPRESENTATION) {
 			return "#" + getSerialNumber() + "#" + getPrettyPrintedStatements();
-		} else {
-			return getPrettyPrintedStatements();
 		}
+		return getPrettyPrintedStatements();
 	}
 
 }
