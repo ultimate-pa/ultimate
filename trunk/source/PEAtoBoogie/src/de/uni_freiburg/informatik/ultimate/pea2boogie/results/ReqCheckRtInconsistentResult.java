@@ -26,32 +26,44 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.results;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
-public class ReqCheckFailResult<E extends IElement> extends AbstractResultAtElement<E> {
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ * @param <LOC>
+ */
+public final class ReqCheckRtInconsistentResult<LOC extends IElement, TE extends IElement, E>
+		extends ReqCheckFailResult<LOC> {
 
-	private final ReqCheck mReqCheck;
+	private final IProgramExecution<TE, E> mProgramExecution;
+	private String mProgramExecutionAsString;
 
-	public ReqCheckFailResult(final E element, final String plugin, final IBacktranslationService translatorSequence) {
+	public ReqCheckRtInconsistentResult(final LOC element, final String plugin,
+			final IBacktranslationService translatorSequence, final IProgramExecution<TE, E> pe) {
 		super(element, plugin, translatorSequence);
-		mReqCheck = (ReqCheck) ResultUtil.getCheckedSpecification(element);
-	}
-
-	@Override
-	public String getShortDescription() {
-		return mReqCheck.getNegativeMessage();
+		mProgramExecution = pe;
 	}
 
 	@Override
 	public String getLongDescription() {
-		return mReqCheck.getNegativeMessage();
+		final StringBuilder sb = new StringBuilder();
+		sb.append(getShortDescription());
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append("We found a FailurePath: ");
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append(getProgramExecutionAsString());
+		return sb.toString();
 	}
 
-	public ReqCheck getCheck() {
-		return mReqCheck;
+	public String getProgramExecutionAsString() {
+		if (mProgramExecutionAsString == null) {
+			mProgramExecutionAsString = mProgramExecution.toString();
+		}
+		return mProgramExecutionAsString;
 	}
-
 }

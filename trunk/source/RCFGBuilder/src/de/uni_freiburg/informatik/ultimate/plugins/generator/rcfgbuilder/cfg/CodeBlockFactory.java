@@ -205,4 +205,15 @@ public class CodeBlockFactory implements IStorable {
 		storage.putStorable(CodeBlockFactory.class.getName(), this);
 	}
 
+	/**
+	 * DD 2020-10-01: This is a dirty hack that I inserted to try various algorithms. I will remove it as soon as the
+	 * POC is finished.
+	 *
+	 * @return the toolkit that was used during the construction of the Icfg.
+	 */
+	@Deprecated
+	public CfgSmtToolkit getToolkit() {
+		return mMgvManager;
+	}
+
 }

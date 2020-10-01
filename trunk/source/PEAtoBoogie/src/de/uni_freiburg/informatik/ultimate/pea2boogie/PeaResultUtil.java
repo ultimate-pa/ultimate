@@ -26,9 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -43,15 +49,35 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.RequirementInconsistentErrorResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.RequirementTransformationErrorResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.RequirementTypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Utility class that helps with reporting results.
@@ -132,31 +158,106 @@ public class PeaResultUtil {
 			return result;
 		}
 
-		if (reqCheck.getSpec() == null || reqCheck.getSpec().isEmpty()) {
-			mLogger.error("Ignoring illegal empty check");
-			return result;
-		} else if (reqCheck.getSpec().size() == 1) {
-			final Spec spec = reqCheck.getSpec().iterator().next();
-			// a counterexample for consistency and vacuity means that the requirements are consistent or non-vacuous
-			switch (spec) {
-			case CONSISTENCY:
-			case VACUOUS:
-				// fall-through is deliberately
+		final Set<Spec> specs = reqCheck.getSpec();
+		if (specs == null || specs.isEmpty()) {
+			throw new AssertionError("Result without specification: " + oldRes.getShortDescription());
+		} else if (specs.size() == 1) {
+			final Spec spec = specs.iterator().next();
+			dieIfUnsupported(spec);
+
+			if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
+				// a counterexample for consistency and vacuity means that the requirements are consistent or
+				// non-vacuous
 				isPositive = !isPositive;
-			case RTINCONSISTENT:
-				final IElement element = oldRes.getElement();
-				final String plugin = oldRes.getPlugin();
-				final IBacktranslationService translatorSequence = oldRes.getCurrentBacktranslation();
-				return isPositive ? new ReqCheckSuccessResult<>(element, plugin, translatorSequence)
-						: new ReqCheckFailResult<>(element, plugin, translatorSequence);
-			default:
-				mLogger.error("Ignoring illegal check type " + spec);
-				return result;
 			}
+			final IElement element = oldRes.getElement();
+			final String plugin = oldRes.getPlugin();
+			final IBacktranslationService translatorSequence = oldRes.getCurrentBacktranslation();
+
+			if (isPositive) {
+				return new ReqCheckSuccessResult<>(element, plugin, translatorSequence);
+			}
+
+			if (spec == Spec.RTINCONSISTENT) {
+				final IcfgProgramExecution newPe = generateRtInconsistencyResult(
+						((CounterExampleResult<?, ?, ?>) oldRes).getProgramExecution(), reqCheck);
+				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, newPe);
+
+			}
+			return new ReqCheckFailResult<>(element, plugin, translatorSequence);
+
 		} else {
-			mLogger.error("Ignoring multi-check");
-			return result;
+			throw new UnsupportedOperationException("Multi-checks of " + specs + " are not yet supported");
 		}
+	}
+
+	private static void dieIfUnsupported(final Spec spec) {
+		switch (spec) {
+		case CONSISTENCY:
+		case VACUOUS:
+		case RTINCONSISTENT:
+			return;
+		default:
+			throw new UnsupportedOperationException("Unknown spec type " + spec);
+		}
+	}
+
+	private IcfgProgramExecution generateRtInconsistencyResult(final IProgramExecution<?, ?> pe,
+			final ReqCheck reqCheck) {
+		final List<CodeBlock> trace = new ArrayList<>(pe.getLength());
+		pe.stream().map(a -> (CodeBlock) a.getTraceElement())
+				.filter(a -> !"true".equals(a.getTransformula().getClosedFormula().toString())).forEach(trace::add);
+		mLogger.info(reqCheck.getIds());
+
+		trace.stream().forEach(a -> mLogger.info("In: %s Out: %s", a.getTransformula().getInVars().keySet(),
+				a.getTransformula().getOutVars().keySet()));
+
+		final CodeBlockFactory cbf = CodeBlockFactory.getFactory((IToolchainStorage) mServices);
+		final CfgSmtToolkit toolkit = cbf.getToolkit();
+
+		final ManagedScript mgdScript = toolkit.getManagedScript();
+		final Script script = mgdScript.getScript();
+		final BasicPredicateFactory bpf = new BasicPredicateFactory(mServices, mgdScript, toolkit.getSymbolTable());
+		final BasicPredicate truePred = bpf.newPredicate(script.term("true"));
+		final BasicPredicate falsePred = bpf.newPredicate(script.term("false"));
+
+		final AssertCodeBlockOrder assertionOrder =
+				new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
+		final List<List<IAction>> flattenedTraces = flattenTrace(trace);
+		mLogger.info("Checking %s flattened traces", flattenedTraces.size());
+		for (final List<IAction> flatTrace : flattenedTraces) {
+			final TraceCheck<IAction> tc = new TraceCheck<>(truePred, falsePred, new TreeMap<Integer, IPredicate>(),
+					NestedWord.nestedWord(new Word<>(flatTrace.toArray(new IAction[flatTrace.size()]))), mServices,
+					toolkit, assertionOrder, true, false);
+			if (tc.isCorrect() == LBool.SAT) {
+				return tc.getRcfgProgramExecution();
+			}
+		}
+		throw new AssertionError("At least one of the flattened traces must be SAT");
+
+	}
+
+	/**
+	 * TODO: Rather inefficient to compute all combinations and then check. Better: compute combinations iteratively and
+	 * take the first that is sat.
+	 */
+	private List<List<IAction>> flattenTrace(final List<CodeBlock> trace) {
+		List<List<IAction>> rtr = new ArrayList<>();
+		for (final CodeBlock cb : trace) {
+			if (cb instanceof SequentialComposition) {
+				rtr = DataStructureUtils.crossProduct(rtr, flattenTrace(((SequentialComposition) cb).getCodeBlocks()));
+			} else if (cb instanceof ParallelComposition) {
+				final List<CodeBlock> blocks = ((ParallelComposition) cb).getCodeBlocks();
+				final List<List<IAction>> newRtr = new ArrayList<>();
+				for (final CodeBlock block : blocks) {
+					newRtr.addAll(DataStructureUtils.crossProduct(rtr, flattenTrace(Collections.singletonList(block))));
+				}
+				rtr = newRtr;
+			} else {
+				rtr = DataStructureUtils.crossProduct(rtr, Collections.singletonList(Collections.singletonList(cb)));
+			}
+		}
+		return rtr;
 	}
 
 	private void errorAndAbort(final IResult result) {
