@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SemanticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
