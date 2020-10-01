@@ -210,7 +210,7 @@ public class Req2Pea implements IReq2Pea {
 				childs[i] = transform(childs[i]);
 			}
 
-			// Transform BoogieBooleanExpressionDecision, if it contains some 'prev()'.
+			// Transform BoogieBooleanExpressionDecision.
 			Decision<?> decision = cdd.getDecision();
 			if (decision instanceof BoogieBooleanExpressionDecision) {
 				final Expression expr = ((BoogieBooleanExpressionDecision) decision).getExpression()
@@ -240,7 +240,8 @@ public class Req2Pea implements IReq2Pea {
 
 			final Expression[] args = node.getArguments();
 			if (args.length != 1) {
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException(
+						"Unexpected number of arguments for FunctionApplication: " + args.length);
 			}
 
 			return args[0].accept(new PrevFunctionApplicationArgumentTransformer());
@@ -259,7 +260,7 @@ public class Req2Pea implements IReq2Pea {
 			@Override
 			public Expression transform(final FunctionApplication node) {
 				if (node.getIdentifier().equals("prev")) {
-					throw new IllegalArgumentException();
+					throw new IllegalArgumentException("Unsupported nested FunctionApplication prev().");
 				}
 				return node;
 			}
