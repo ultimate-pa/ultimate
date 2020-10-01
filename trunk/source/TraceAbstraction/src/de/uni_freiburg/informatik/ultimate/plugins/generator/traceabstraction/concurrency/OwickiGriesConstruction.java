@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -86,7 +87,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	public OwickiGriesConstruction(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
 			IPetriNet<IIcfgTransition<LOC>, PLACE> net,
 			Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> floydHoare) {			
-			mNet = net;	
+			mNet = net;				
 			mFloydHoareAnnotation = floydHoare;			
 			mScript = null; 
 			mManagedScript = csToolkit.getManagedScript();
@@ -103,15 +104,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 			
 			mAnnotation = new OwickiGriesAnnotation<>();
 			
-			//TODO: Cambiar esto a mandarlo a Annotation constructor
-			//TODO: assignment AssignmentMapping =
-			 
-
-			// TODO Code to set variables to false.
-			// Similarly for true.
-	
-		
-
+			//TODO: Cambiar esto a mandarlo a Annotation constructor, notas en Annotation class	 
 	}	 
 
 	/**
@@ -142,20 +135,44 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 		//OptionB: Negation of all other Ghost variables not in Marking.
 			//Complement set: GhostVariables(Only for places/ only construction??)\marking places
 		
+		//TODO:Formula Type: Conjunction and Implication		
 		
-		Set<IPredicate> terms =  new HashSet<>(); //Conjunction of GhostVariables of places in marking
-		marking.forEach(element -> terms.add(getGhostPredicate(element)));
-		terms.add(mFloydHoareAnnotation.get(place)); //Predicate of marking		
+		Set<IPredicate> terms =  new HashSet<>(); 
+		marking.forEach(element -> terms.add(getGhostPredicate(element))); //GhostVariables of places in marking		
+		terms.addAll(getAllNotMarking(marking)); //OptionB
+		terms.add(mFloydHoareAnnotation.get(place)); //Predicate of marking	
 		return  mFactory.and(terms);		
 	}
+	
+	private Set<IPredicate> getAllNotMarking(Marking<IIcfgTransition<LOC>, PLACE> marking){
+	//Formula MethodB: GhostVariables of all other places not in marking
+		Set<IPredicate> predicates = new HashSet<>();
+	    Collection<PLACE> notMarking = mNet.getPlaces();
+		notMarking.removeAll(marking.stream().collect(Collectors.toSet()));		
+	    notMarking.forEach(element -> predicates.add(mFactory.not(getGhostPredicate(element))));
+	    return predicates;		
+	}
+	
+	private Set<IPredicate> getSubsetMarking(Marking<IIcfgTransition<LOC>, PLACE> marking){
+	//Formula MethodB: GhostVariables of all other places not in marking
+		
+		Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
+		//Get all Supersets of Marking
+		mFloydHoareAnnotation.keySet().forEach(marking -> );
+		Set<IPredicate> predicates = new HashSet<>();
+	    Collection<PLACE> notMarking = mNet.getPlaces();
+		notMarking.removeAll(markPlaces);		
+	    notMarking.forEach(element -> predicates.add(mFactory.not(getGhostPredicate(element))));
+	    return predicates;		
+	}
+	
 	
 	/** 
 	 * @param place
 	 * @return Predicate place's GhostVariable
 	 */
 	private IPredicate getGhostPredicate(PLACE place) {
-	//TODO: Value assignment ??
-	 return mFactory.newPredicate(mAnnotation.mGhostVariables.get(place).getTerm());
+	  return mFactory.newPredicate(mAnnotation.mGhostVariables.get(place).getTerm());
 	 }
 	
 	/**
@@ -219,9 +236,9 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	/**
 	 * 
 	 * @param transition
-	 * @return Transformula of sequential compositions of GhostVariables assignments.
+	 * @return TransFormula of sequential compositions of GhostVariables assignments.
 	 * GhostVariables of Predecessors Places are assign to false,
-	 * GhostVariables of Successors Places are assign to truel
+	 * GhostVariables of Successors Places are assign to true.
 	 */
 	private UnmodifiableTransFormula getTransitionAssignment(ITransition<IIcfgTransition<LOC>,PLACE> transition) {			
 		List<UnmodifiableTransFormula> assignments = new ArrayList<>();
