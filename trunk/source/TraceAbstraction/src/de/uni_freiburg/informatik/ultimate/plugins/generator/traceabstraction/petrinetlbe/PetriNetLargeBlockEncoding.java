@@ -68,12 +68,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 
 /**
- * Performs a Large Block Encoding on Petri nets. This operation performs Lipton
- * reduction ({@link LiptonReduction}) and instantiates the parameters in a way
- * suitable (and sound) for Trace abstraction.
- * 
- * Furthermore, it implements backtranslation of {@link IProgramExecution}s
- * containing fused transitions as created by Lipton reductions.
+ * Performs a Large Block Encoding on Petri nets. This operation performs Lipton reduction ({@link LiptonReduction}) and
+ * instantiates the parameters in a way suitable (and sound) for Trace abstraction.
+ *
+ * Furthermore, it implements backtranslation of {@link IProgramExecution}s containing fused transitions as created by
+ * Lipton reductions.
  *
  * @author Elisabeth Schanno
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -92,24 +91,28 @@ public class PetriNetLargeBlockEncoding {
 	private final Map<IIcfgTransition<?>, Set<IIcfgTransition<?>>> mChoiceCompositions;
 	private final Map<IIcfgTransition<?>, TermVariable> mBranchEncoderMap;
 
-	private int mNoOfCompositions = 0;
-	private int mMoverChecks = 0;
+	private final int mNoOfCompositions = 0;
+	private final int mMoverChecks = 0;
 	private final IUltimateServiceProvider mServices;
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mPetriNetLargeBlockEncodingStatistics;
 
 	/**
 	 * Performs Large Block Encoding on the given Petri net.
 	 *
-	 * @param services            A {@link IUltimateServiceProvider} instance.
-	 * @param cfgSmtToolkit       A {@link CfgSmtToolkit} instance that has to
-	 *                            contain all procedures and variables that may
-	 *                            occur in this {@link IIcfg}.
-	 * @param petriNet            The Petri net on which the large block encoding
-	 *                            should be performed.
-	 * @param petriNetLbeSettings Determines the independence relation to be used.
+	 * @param services
+	 *            A {@link IUltimateServiceProvider} instance.
+	 * @param cfgSmtToolkit
+	 *            A {@link CfgSmtToolkit} instance that has to contain all procedures and variables that may occur in
+	 *            this {@link IIcfg}.
+	 * @param petriNet
+	 *            The Petri net on which the large block encoding should be performed.
+	 * @param petriNetLbeSettings
+	 *            Determines the independence relation to be used.
 	 *
-	 * @throws AutomataOperationCanceledException if operation was canceled.
-	 * @throws PetriNetNot1SafeException          if Petri net is not 1-safe.
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled.
+	 * @throws PetriNetNot1SafeException
+	 *             if Petri net is not 1-safe.
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings)
@@ -120,7 +123,8 @@ public class PetriNetLargeBlockEncoding {
 
 		final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(services, cfgSmtToolkit);
 
-		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> variableCheck = new SyntacticIndependenceRelation<>();
+		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> variableCheck =
+				new SyntacticIndependenceRelation<>();
 		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck;
 		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> moverCheck;
 		switch (petriNetLbeSettings) {
@@ -129,8 +133,8 @@ public class PetriNetLargeBlockEncoding {
 		case SEMANTIC_BASED_MOVER_CHECK:
 			mLogger.info("Petri net LBE is using semantic-based independence relation.");
 			semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
-			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> unionCheck = new UnionIndependenceRelation<>(
-					Arrays.asList(variableCheck, semanticCheck));
+			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> unionCheck =
+					new UnionIndependenceRelation<>(Arrays.asList(variableCheck, semanticCheck));
 			moverCheck = new CachedIndependenceRelation<>(unionCheck);
 			break;
 		case VARIABLE_BASED_MOVER_CHECK:
@@ -156,15 +160,15 @@ public class PetriNetLargeBlockEncoding {
 			mChoiceCompositions = lipton.getChoiceCompositions();
 			mBranchEncoderMap = compositionFactory.getBranchEncoders();
 
-//			mPetriNetLargeBlockEncodingStatistics.setNumberOfFixpointIterations(numberOfFixpointIterations);
+			// mPetriNetLargeBlockEncodingStatistics.setNumberOfFixpointIterations(numberOfFixpointIterations);
 			mLogger.info("Checked pairs total: " + mMoverChecks);
-//			mLogger.info(
-//					"Positive Checks: " + (mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize()));
-//			mLogger.info(
-//					"Negative Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize()));
-//			mLogger.info(
-//					"Total Mover Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()
-//							+ mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize()));
+			// mLogger.info(
+			// "Positive Checks: " + (mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize()));
+			// mLogger.info(
+			// "Negative Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize()));
+			// mLogger.info(
+			// "Total Mover Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()
+			// + mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize()));
 			mLogger.info("Total number of compositions: " + mNoOfCompositions);
 			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SemanticIndependenceRelation) semanticCheck);
 			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SyntacticIndependenceRelation<?>) variableCheck);
@@ -181,13 +185,13 @@ public class PetriNetLargeBlockEncoding {
 			mPetriNetLargeBlockEncodingStatistics.stop(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
 		}
 
-//		mPetriNetLargeBlockEncodingStatistics
-//				.reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize());
-//		mPetriNetLargeBlockEncodingStatistics
-//				.reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize());
-//		mPetriNetLargeBlockEncodingStatistics
-//				.reportMoverChecksTotal(mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()
-//						+ mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize());
+		// mPetriNetLargeBlockEncodingStatistics
+		// .reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize());
+		// mPetriNetLargeBlockEncodingStatistics
+		// .reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize());
+		// mPetriNetLargeBlockEncodingStatistics
+		// .reportMoverChecksTotal(mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()
+		// + mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize());
 		mPetriNetLargeBlockEncodingStatistics.reportCheckedPairsTotal(mMoverChecks);
 		mPetriNetLargeBlockEncodingStatistics.reportTotalNumberOfCompositions(mNoOfCompositions);
 		mPetriNetLargeBlockEncodingStatistics.setProgramPointsAfterwards(mResult.getPlaces().size());
@@ -200,14 +204,15 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	/**
-	 * Translates an execution from the new net to an execution of the old net.
-	 * (Code adapted from BlockEncodingBacktranslator)
+	 * Translates an execution from the new net to an execution of the old net. (Code adapted from
+	 * BlockEncodingBacktranslator)
 	 *
-	 * @param execution The execution of the new Petri Net.
+	 * @param execution
+	 *            The execution of the new Petri Net.
 	 * @return The corresponding execution of the old Petri Net.
 	 */
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> translateExecution(
-			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term>
+			translateExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
 		if (execution == null) {
 			throw new IllegalArgumentException("execution is null");
 		}
@@ -258,12 +263,13 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	/**
-	 * Translate a transition that is the result of arbitrarily nested sequential
-	 * and choice compositions back to the sequence of original transitions.
+	 * Translate a transition that is the result of arbitrarily nested sequential and choice compositions back to the
+	 * sequence of original transitions.
 	 *
-	 * @param transition     The transition to translate back.
-	 * @param branchEncoders Branch encoders indicating which branch of a choice
-	 *                       composition was taken.
+	 * @param transition
+	 *            The transition to translate back.
+	 * @param branchEncoders
+	 *            Branch encoders indicating which branch of a choice composition was taken.
 	 */
 	private Collection<IIcfgTransition<?>> translateBack(final IIcfgTransition<?> transition,
 			final Map<TermVariable, Boolean> branchEncoders) {
