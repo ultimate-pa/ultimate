@@ -71,7 +71,7 @@ public class LiptonReduction<LETTER, PLACE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final ICompositionFactory<LETTER> mCompositionFactory;
-	private final IIndependenceRelation<PLACE, LETTER> mMoverCheck;
+	private final IIndependenceRelation<?, LETTER> mMoverCheck;
 
 	private final CoenabledRelation<LETTER> mCoEnabledRelation;
 	private final Map<LETTER, List<LETTER>> mSequentialCompositions = new HashMap<>();
@@ -99,7 +99,7 @@ public class LiptonReduction<LETTER, PLACE> {
 	 */
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> petriNet,
 			final ICompositionFactory<LETTER> compositionFactory,
-			final IIndependenceRelation<PLACE, LETTER> independenceRelation)
+			final IIndependenceRelation<?, LETTER> independenceRelation)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
