@@ -89,10 +89,9 @@ public class PetriNetLargeBlockEncoding {
 	private final Map<IIcfgTransition<?>, Set<IIcfgTransition<?>>> mChoiceCompositions;
 	private final Map<IIcfgTransition<?>, TermVariable> mBranchEncoderMap;
 
-	private final int mNoOfCompositions = 0;
-	private final int mMoverChecks = 0;
 	private final IUltimateServiceProvider mServices;
-	private final PetriNetLargeBlockEncodingStatisticsGenerator mPetriNetLargeBlockEncodingStatistics;
+	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics =
+			new PetriNetLargeBlockEncodingStatisticsGenerator();
 
 	/**
 	 * Performs Large Block Encoding on the given Petri net.
@@ -119,12 +118,10 @@ public class PetriNetLargeBlockEncoding {
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
 
-		final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(services, cfgSmtToolkit);
-
 		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> variableCheck =
 				new SyntacticIndependenceRelation<>();
 		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck;
-		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> moverCheck;
+		final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> moverCheck;
 		switch (petriNetLbeSettings) {
 		case OFF:
 			throw new IllegalArgumentException("do not call LBE if you don't want to use it");
@@ -145,12 +142,8 @@ public class PetriNetLargeBlockEncoding {
 		}
 
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
-		mPetriNetLargeBlockEncodingStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator();
-		mPetriNetLargeBlockEncodingStatistics.start(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
-		mPetriNetLargeBlockEncodingStatistics.setProgramPointsBefore(petriNet.getPlaces().size());
-		mPetriNetLargeBlockEncodingStatistics.setTransitionsBefore(petriNet.getTransitions().size());
-
 		try {
+			final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(services, cfgSmtToolkit);
 			final LiptonReduction<IIcfgTransition<?>, IPredicate> lipton = new LiptonReduction<>(
 					new AutomataLibraryServices(services), petriNet, compositionFactory, moverCheck);
 			mResult = lipton.getResult();
@@ -158,18 +151,9 @@ public class PetriNetLargeBlockEncoding {
 			mChoiceCompositions = lipton.getChoiceCompositions();
 			mBranchEncoderMap = compositionFactory.getBranchEncoders();
 
-			// mPetriNetLargeBlockEncodingStatistics.setNumberOfFixpointIterations(numberOfFixpointIterations);
-			mLogger.info("Checked pairs total: " + mMoverChecks);
-			// mLogger.info(
-			// "Positive Checks: " + (mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize()));
-			// mLogger.info(
-			// "Negative Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize()));
-			// mLogger.info(
-			// "Total Mover Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()
-			// + mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize()));
-			mLogger.info("Total number of compositions: " + mNoOfCompositions);
-			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SemanticIndependenceRelation) semanticCheck);
-			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SyntacticIndependenceRelation<?>) variableCheck);
+			mStatistics.extractStatistics((SemanticIndependenceRelation) semanticCheck);
+			mStatistics.extractStatistics((SyntacticIndependenceRelation<?>) variableCheck);
+			mStatistics.extractStatistics(moverCheck);
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
@@ -179,21 +163,7 @@ public class PetriNetLargeBlockEncoding {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			tce.addRunningTaskInfo(runningTaskInfo);
 			throw tce;
-		} finally {
-			mPetriNetLargeBlockEncodingStatistics.stop(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
 		}
-
-		// mPetriNetLargeBlockEncodingStatistics
-		// .reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize());
-		// mPetriNetLargeBlockEncodingStatistics
-		// .reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize());
-		// mPetriNetLargeBlockEncodingStatistics
-		// .reportMoverChecksTotal(mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()
-		// + mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize());
-		mPetriNetLargeBlockEncodingStatistics.reportCheckedPairsTotal(mMoverChecks);
-		mPetriNetLargeBlockEncodingStatistics.reportTotalNumberOfCompositions(mNoOfCompositions);
-		mPetriNetLargeBlockEncodingStatistics.setProgramPointsAfterwards(mResult.getPlaces().size());
-		mPetriNetLargeBlockEncodingStatistics.setTransitionsAfterwards(mResult.getTransitions().size());
 
 	}
 
@@ -325,6 +295,6 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	public PetriNetLargeBlockEncodingBenchmarks getPetriNetLargeBlockEncodingStatistics() {
-		return new PetriNetLargeBlockEncodingBenchmarks(mPetriNetLargeBlockEncodingStatistics);
+		return new PetriNetLargeBlockEncodingBenchmarks(mStatistics);
 	}
 }

@@ -55,11 +55,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  * See "Reduction: a method of proving properties of parallel programs" (https://dl.acm.org/doi/10.1145/361227.361234)
  *
- * Our implementation here can also perform choice (or "parallel") compositions of transitions with the same pre- and
+ * Our implementation here also performs choice (or "parallel") compositions of transitions with the same pre- and
  * post-sets.
  *
  * @author Elisabeth Schanno
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            The type of letters labeling the net's transitions.
+ * @param <PLACE>
+ *            The type of places in the net.
  */
 public class LiptonReduction<LETTER, PLACE> {
 
@@ -73,8 +78,7 @@ public class LiptonReduction<LETTER, PLACE> {
 	private final Map<LETTER, Set<LETTER>> mChoiceCompositions = new HashMap<>();
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
-	private int mNoOfCompositions = 0;
-	private int mMoverChecks = 0;
+	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -102,43 +106,33 @@ public class LiptonReduction<LETTER, PLACE> {
 		mCompositionFactory = compositionFactory;
 		mMoverCheck = independenceRelation;
 
-		// mPetriNetLargeBlockEncodingStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator();
-		// mPetriNetLargeBlockEncodingStatistics.start(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
-		// mPetriNetLargeBlockEncodingStatistics.setProgramPointsBefore(petriNet.getPlaces().size());
-		// mPetriNetLargeBlockEncodingStatistics.setTransitionsBefore(petriNet.getTransitions().size());
-
+		mStatistics.start(LiptonReductionStatisticsDefinitions.ReductionTime);
+		mStatistics.collectInitialStatistics(petriNet);
 		mLogger.info("Starting Lipton reduction on Petri net that " + petriNet.sizeInformation());
+
 		try {
 			mCoEnabledRelation = CoenabledRelation.fromPetriNet(mServices, petriNet);
+
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
 			mLogger.info("Number of co-enabled transitions " + coEnabledRelationSize);
-			// mPetriNetLargeBlockEncodingStatistics.setCoEnabledTransitionPairs(coEnabledRelationSize);
+			mStatistics.setCoEnabledTransitionPairs(coEnabledRelationSize);
 
 			BoundedPetriNet<LETTER, PLACE> resultLastIteration;
 			BoundedPetriNet<LETTER, PLACE> resultCurrentIteration = CopySubnet.copy(services, petriNet,
 					new HashSet<>(petriNet.getTransitions()), petriNet.getAlphabet(), true);
 			do {
+				mStatistics.reportFixpointIteration();
 				resultLastIteration = resultCurrentIteration;
 
 				resultCurrentIteration = sequenceRule(resultLastIteration);
 				resultCurrentIteration = choiceRule(resultCurrentIteration);
 			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size());
-
-			// mPetriNetLargeBlockEncodingStatistics.setNumberOfFixpointIterations(numberOfFixpointIterations);
-			mLogger.info("Checked pairs total: " + mMoverChecks);
-			// mLogger.info(
-			// "Positive Checks: " + (mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize()));
-			// mLogger.info(
-			// "Negative Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize()));
-			// mLogger.info(
-			// "Total Mover Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()
-			// + mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize()));
-			mLogger.info("Total number of compositions: " + mNoOfCompositions);
 			mResult = resultCurrentIteration;
-			// mPetriNetLargeBlockEncodingStatistics.extractStatistics((SemanticIndependenceRelation)
-			// semanticBasedCheck);
-			// mPetriNetLargeBlockEncodingStatistics
-			// .extractStatistics((SyntacticIndependenceRelation<?>) variableBasedCheckIr);
+
+			mLogger.info("Checked pairs total: "
+					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.MoverChecksTotal));
+			mLogger.info("Total number of compositions: "
+					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.TotalNumberOfCompositions));
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			aoce.addRunningTaskInfo(runningTaskInfo);
@@ -148,30 +142,19 @@ public class LiptonReduction<LETTER, PLACE> {
 			tce.addRunningTaskInfo(runningTaskInfo);
 			throw tce;
 		} finally {
-			// mPetriNetLargeBlockEncodingStatistics.stop(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
+			mStatistics.stop(LiptonReductionStatisticsDefinitions.ReductionTime);
 		}
 
-		// mPetriNetLargeBlockEncodingStatistics
-		// .reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize());
-		// mPetriNetLargeBlockEncodingStatistics
-		// .reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize());
-		// mPetriNetLargeBlockEncodingStatistics
-		// .reportMoverChecksTotal(mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()
-		// + mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize());
-		// mPetriNetLargeBlockEncodingStatistics.reportCheckedPairsTotal(mMoverChecks);
-		// mPetriNetLargeBlockEncodingStatistics.reportTotalNumberOfCompositions(mNoOfCompositions);
-		// mPetriNetLargeBlockEncodingStatistics.setProgramPointsAfterwards(mResult.getPlaces().size());
-		// mPetriNetLargeBlockEncodingStatistics.setTransitionsAfterwards(mResult.getTransitions().size());
+		mStatistics.collectFinalStatistics(mResult);
 
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<LETTER, PLACE> petriNet) {
 		if (mCoEnabledRelation == null) {
-			return "applying PetriNetLargeBlockEncoding to Petri net that " + petriNet.sizeInformation();
-		} else {
-			return "applying PetriNetLargeBlockEncoding to Petri net that " + petriNet.sizeInformation() + " and "
-					+ mCoEnabledRelation.size() + " co-enabled transitions pairs.";
+			return "applying " + getClass().getSimpleName() + " to Petri net that " + petriNet.sizeInformation();
 		}
+		return "applying " + getClass().getSimpleName() + " to Petri net that " + petriNet.sizeInformation() + " and "
+				+ mCoEnabledRelation.size() + " co-enabled transitions pairs.";
 	}
 
 	private void transferMoverProperties(final LETTER composition, final LETTER t1, final LETTER t2) {
@@ -238,8 +221,7 @@ public class LiptonReduction<LETTER, PLACE> {
 					composedTransitions.add(t1);
 					composedTransitions.add(t2);
 
-					// mPetriNetLargeBlockEncodingStatistics
-					// .reportComposition(PetriNetLargeBlockEncodingStatisticsDefinitions.ChoiceCompositions);
+					mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
 				}
 			}
 		}
@@ -322,14 +304,12 @@ public class LiptonReduction<LETTER, PLACE> {
 						obsoleteTransitions.add(t2);
 						composed = true;
 
-						mNoOfCompositions++;
-						// if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
-						// mPetriNetLargeBlockEncodingStatistics.reportComposition(
-						// PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialYvCompositions);
-						// } else {
-						// mPetriNetLargeBlockEncodingStatistics.reportComposition(
-						// PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentYvCompositions);
-						// }
+						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
+							mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.TrivialYvCompositions);
+						} else {
+							mStatistics
+									.reportComposition(LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions);
+						}
 					}
 				}
 				if (completeComposition && composed) {
@@ -357,14 +337,13 @@ public class LiptonReduction<LETTER, PLACE> {
 						obsoleteTransitions.add(t2);
 						composed = true;
 
-						mNoOfCompositions++;
-						// if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
-						// mPetriNetLargeBlockEncodingStatistics.reportComposition(
-						// PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialSequentialCompositions);
-						// } else {
-						// mPetriNetLargeBlockEncodingStatistics.reportComposition(
-						// PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentSequentialCompositions);
-						// }
+						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
+							mStatistics.reportComposition(
+									LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions);
+						} else {
+							mStatistics.reportComposition(
+									LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions);
+						}
 					}
 				}
 				if (completeComposition && composed) {
@@ -490,9 +469,8 @@ public class LiptonReduction<LETTER, PLACE> {
 	 * @return true iff t1 is left mover.
 	 */
 	private boolean isLeftMover(final ITransition<LETTER, PLACE> t1) {
-		// Filter which elements of coEnabledRelation are relevant.
 		final Set<LETTER> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
-		mMoverChecks += coEnabledTransitions.size();
+		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
 	}
 
@@ -503,9 +481,8 @@ public class LiptonReduction<LETTER, PLACE> {
 	 * @return true iff t1 is right mover.
 	 */
 	private boolean isRightMover(final ITransition<LETTER, PLACE> t1) {
-		// Filter which elements of coEnabledRelation are relevant.
 		final Set<LETTER> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
-		mMoverChecks += coEnabledTransitions.size();
+		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
 	}
 
