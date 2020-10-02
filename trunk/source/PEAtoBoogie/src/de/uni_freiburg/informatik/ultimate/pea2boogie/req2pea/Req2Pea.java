@@ -68,12 +68,12 @@ public class Req2Pea implements IReq2Pea {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResultUtil;
-	private final Map<PatternType, ReqPeas> mPattern2Peas;
+	private final Map<PatternType<?>, ReqPeas> mPattern2Peas;
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
 
 	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger,
-			final List<InitializationPattern> init, final List<PatternType> requirements) {
+			final List<InitializationPattern> init, final List<PatternType<?>> requirements) {
 		mLogger = logger;
 		mServices = services;
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
@@ -82,8 +82,9 @@ public class Req2Pea implements IReq2Pea {
 		for (int i = 0; i < requirements.size(); i++) {
 			final PatternType<?> req = requirements.get(i);
 
-			final SrParseScope scope = req.getScope().create(new CDDTransformer().transform(req.getScope().getCdd1()),
-					new CDDTransformer().transform(req.getScope().getCdd2()));
+			final SrParseScope<?> scope =
+					req.getScope().create(new CDDTransformer().transform(req.getScope().getCdd1()),
+							new CDDTransformer().transform(req.getScope().getCdd2()));
 
 			final List<CDD> cdds =
 					req.getCdds().stream().map(e -> new CDDTransformer().transform(e)).collect(Collectors.toList());
@@ -94,14 +95,12 @@ public class Req2Pea implements IReq2Pea {
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 
 		for (final InitializationPattern pattern : init) {
-			if (pattern instanceof InitializationPattern) {
-				builder.addInitPattern(pattern);
-			}
+			builder.addInitPattern(pattern);
 		}
 		final Map<String, Integer> id2bounds = builder.getId2Bounds();
 		mPattern2Peas = generatePeas(requirements, id2bounds);
 
-		for (final Entry<PatternType, ReqPeas> entry : mPattern2Peas.entrySet()) {
+		for (final Entry<PatternType<?>, ReqPeas> entry : mPattern2Peas.entrySet()) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
 				builder.addPea(entry.getKey(), pea.getValue());
 			}
@@ -122,7 +121,7 @@ public class Req2Pea implements IReq2Pea {
 	}
 
 	@Override
-	public Map<PatternType, ReqPeas> getPattern2Peas() {
+	public Map<PatternType<?>, ReqPeas> getPattern2Peas() {
 		return Collections.unmodifiableMap(mPattern2Peas);
 	}
 
@@ -131,14 +130,14 @@ public class Req2Pea implements IReq2Pea {
 		return mSymbolTable;
 	}
 
-	private Map<PatternType, ReqPeas> generatePeas(final List<PatternType> patterns,
+	private Map<PatternType<?>, ReqPeas> generatePeas(final List<PatternType<?>> patterns,
 			final Map<String, Integer> id2bounds) {
-		final Map<PatternType, ReqPeas> req2automata = new LinkedHashMap<>();
+		final Map<PatternType<?>, ReqPeas> req2automata = new LinkedHashMap<>();
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
 		final Map<Class<?>, Integer> counter = new HashMap<>();
 
-		for (final PatternType pat : patterns) {
+		for (final PatternType<?> pat : patterns) {
 			final ReqPeas pea;
 			try {
 				if (ENABLE_DEBUG_LOGS) {

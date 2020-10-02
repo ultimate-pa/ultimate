@@ -66,7 +66,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 
 	private final ILogger mLogger;
 	private final List<InitializationPattern> mInitPattern;
-	private final Map<PatternType, ReqPeas> mPattern2Peas;
+	private final Map<PatternType<?>, ReqPeas> mPattern2Peas;
 	private IReqSymbolTable mSymbolTable;
 	private boolean mHasErrors;
 	private final IUltimateServiceProvider mServices;
@@ -87,7 +87,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 
 	@Override
 	public void transform(final IReq2Pea req2pea) {
-		final Map<PatternType, ReqPeas> simplePeas = req2pea.getPattern2Peas();
+		final Map<PatternType<?>, ReqPeas> simplePeas = req2pea.getPattern2Peas();
 		final IReqSymbolTable oldSymbolTable = req2pea.getSymboltable();
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 		for (final InitializationPattern p : mInitPattern) {
@@ -96,8 +96,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				builder.addAuxvar(ReqTestAnnotator.getTrackingVar(p.getId()), "bool", p);
 			}
 		}
-		for (final Entry<PatternType, ReqPeas> entry : simplePeas.entrySet()) {
-			final PatternType pattern = entry.getKey();
+		for (final Entry<PatternType<?>, ReqPeas> entry : simplePeas.entrySet()) {
+			final PatternType<?> pattern = entry.getKey();
 			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = entry.getValue().getCounterTrace2Pea();
 			final List<Entry<CounterTrace, PhaseEventAutomata>> newCt2pea = new ArrayList<>(ct2pea.size());
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
@@ -118,7 +118,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	 * violate the requirement. The lower automaton (upper half of the array) keeps information over the determindness
 	 * of all variables.
 	 */
-	private PhaseEventAutomata transformPea(final PatternType pattern, final PhaseEventAutomata oldPea,
+	private PhaseEventAutomata transformPea(final PatternType<?> pattern, final PhaseEventAutomata oldPea,
 			final IReqSymbolTable oldSymbolTable, final DCPhase[] dcFormula) {
 		final CDD effectCdd = Req2CauseTrackingCDD.getEffectCDD(pattern);
 		final Set<String> effectVars = Req2CauseTrackingCDD.getCddVariables(effectCdd);
@@ -130,8 +130,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final int dcEffectPhase = getHighestDCPhase(oldLocations);
 		mLogger.info(new StringBuilder("Effect Variables of ").append(pattern.toString()).append(": ")
 				.append(effectVars.toString()).toString() + ", with effect phase: " + Integer.toString(dcEffectPhase));
-		final Phase[] newLocations =
-				transformLocations(oldPea, oldSymbolTable, effectVars, dcEffectPhase, dcFormula);
+		final Phase[] newLocations = transformLocations(oldPea, oldSymbolTable, effectVars, dcEffectPhase, dcFormula);
 		final Phase[] newInit = getInitialLocations(oldLocations);
 		copyOldTransitions(oldPea.getPhases(), newLocations);
 		copyTransitionsToLower(oldLocations, newLocations, effectVars, oldSymbolTable, dcEffectPhase, effectCdd);
@@ -182,7 +181,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			return false;
 		}
 		final PhaseBits pb = location.getPhaseBits();
-		return (pb.isActive(effectDCPhaseIndex) &&!pb.isWaiting(effectDCPhaseIndex)) || pb.isExact(effectDCPhaseIndex);
+		return (pb.isActive(effectDCPhaseIndex) && !pb.isWaiting(effectDCPhaseIndex)) || pb.isExact(effectDCPhaseIndex);
 	}
 
 	private static boolean isEffectTransition(final Phase source, final Transition transition, final int effectDCPhase,
@@ -209,16 +208,17 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			trackThoseVars.removeAll(reqSymbolTable.getConstVars());
 			trackThoseVars.removeAll(reqSymbolTable.getInputVars());
 
-			//final CDD upperStateInvar = mCddTransformer.transformInvariantUpper(oldPhase.getStateInvariant(), effectVars,
-			//		reqSymbolTable.getInputVars(), reqSymbolTable.getConstVars(), activePhaseVars, isEffectLocation(oldPhase, effectPhase));
+			// final CDD upperStateInvar = mCddTransformer.transformInvariantUpper(oldPhase.getStateInvariant(),
+			// effectVars,
+			// reqSymbolTable.getInputVars(), reqSymbolTable.getConstVars(), activePhaseVars, isEffectLocation(oldPhase,
+			// effectPhase));
 			final CDD upperStateInvar = oldPhase.getStateInvariant();
 			newPhases[i] = new Phase(oldPhase.getName(), upperStateInvar, oldPhase.getClockInvariant());
 
-
 			final CDD trackingStateInvar = mCddTransformer.transformInvariantTracking(oldPhase.getStateInvariant(),
 					trackThoseVars, effectVars, isEffectLocation(oldPhase, effectPhase));
-			final Phase trackingLocation =
-					new Phase(oldPhase.getName() + LOWER_AUTOMATON_SUFFIX, trackingStateInvar, oldPhase.getClockInvariant());
+			final Phase trackingLocation = new Phase(oldPhase.getName() + LOWER_AUTOMATON_SUFFIX, trackingStateInvar,
+					oldPhase.getClockInvariant());
 			newPhases[oldPhases.length + i] = trackingLocation;
 			if (oldPhase.isInit) {
 				trackingLocation.isInit = true;
@@ -227,29 +227,29 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return newPhases;
 	}
 
-	private Set<String> getAllToTrackVars(final Phase location, final DCPhase[] dcFormula, final int effectPhase,
-			final Set<String> effectVars){
+	private static Set<String> getAllToTrackVars(final Phase location, final DCPhase[] dcFormula, final int effectPhase,
+			final Set<String> effectVars) {
 		final Set<String> toTrackVars = new HashSet<>();
 		final PhaseBits pb = location.getPhaseBits();
 		final CDD effectCDD = dcFormula[effectPhase].getInvariant();
 		if (pb == null) {
 			return Collections.emptySet();
 		}
-		for(int i = 0; i < dcFormula.length; i++) {
-			if((pb.isActive(i) && !pb.isWaiting(i)) || pb.isExact(i)) {
+		for (int i = 0; i < dcFormula.length; i++) {
+			if ((pb.isActive(i) && !pb.isWaiting(i)) || pb.isExact(i)) {
 				final CDD invar = dcFormula[i].getInvariant();
 				final Set<String> cddVars = Req2CauseTrackingCDD.getCddVariables(invar);
-				//if the prior to last phase is a true phase, look ahead and see what we have to do to NOT
+				// if the prior to last phase is a true phase, look ahead and see what we have to do to NOT
 				// enter the effect phase on accident
 				if (invar == CDD.TRUE && i == effectPhase) {
-					cddVars.addAll(Req2CauseTrackingCDD.getCddVariables(dcFormula[i+1].getInvariant()));
+					cddVars.addAll(Req2CauseTrackingCDD.getCddVariables(dcFormula[i + 1].getInvariant()));
 				}
 				if (effectPhase == i) {
-					//if this phase is also an effect phase then remove all effect vars from the phases vars
+					// if this phase is also an effect phase then remove all effect vars from the phases vars
 					cddVars.removeAll(effectVars);
 				}
-				if (pb.isWaiting(effectPhase)){
-					//we are waiting for the effect to happen so do not try to prove absence of effect
+				if (pb.isWaiting(effectPhase)) {
+					// we are waiting for the effect to happen so do not try to prove absence of effect
 					final Set<Decision<?>> effectObservables = Req2CauseTrackingCDD.getDecisions(effectCDD);
 					final Set<Decision<?>> invarObservables = Req2CauseTrackingCDD.getDecisions(invar);
 					invarObservables.removeAll(effectObservables);
@@ -261,7 +261,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return toTrackVars;
 	}
 
-	private int getHighestDCPhase(final Phase[] oldLocations) {
+	private static int getHighestDCPhase(final Phase[] oldLocations) {
 		// Find the last phase that is mentioned in automaton. Its the effect phase.
 		int lastDcPhase = 0;
 		for (int i = 0; i < oldLocations.length; i++) {
@@ -297,8 +297,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	}
 
 	/*
-	 * Copy all transitions from the upper automaton to the lower automaton.
-	 * Add tracking guards and clock transformations in the process.
+	 * Copy all transitions from the upper automaton to the lower automaton. Add tracking guards and clock
+	 * transformations in the process.
 	 */
 	private void copyTransitionsToLower(final Phase[] oldLocations, final Phase[] newLocations,
 			final Set<String> effectVars, final IReqSymbolTable reqSymbolTable, final int effectDCPhaseId,
@@ -318,7 +318,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				final PhaseBits pbSource = oldLocations[i].getPhaseBits();
 				final PhaseBits pbDest = oldLocations[dest].getPhaseBits();
 				if (pbSource != null && pbSource.isWaiting(effectDCPhaseId) &&
-						//if pbDest is null, it is a sink state after having waited
+				// if pbDest is null, it is a sink state after having waited
 						(pbDest == null || !pbDest.isWaiting(effectDCPhaseId))) {
 					guard = guard.and(mCddTransformer.upperToLowerBoundCdd(sourcePhase.getClockInvariant(), true));
 				}
@@ -329,15 +329,14 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	}
 
 	/*
-	 * Connect lower and upper automaton by the following transitions:
-	 * - connect every location with its copy in the lower automaton iff upper location is initial
-	 * - connect every location in the lower automaton with its copy in the upper automaton
-	 * iff the location does not encode any obligation for the future (i.e. has an edge to the first phase).
-	 * Add timing bounds so that the test generator can not bail to the upper automaton before all obligations
+	 * Connect lower and upper automaton by the following transitions: - connect every location with its copy in the
+	 * lower automaton iff upper location is initial - connect every location in the lower automaton with its copy in
+	 * the upper automaton iff the location does not encode any obligation for the future (i.e. has an edge to the first
+	 * phase). Add timing bounds so that the test generator can not bail to the upper automaton before all obligations
 	 * are fulfilled.
 	 */
-	private void connectUpperToLowerAutomaton(final Phase[] newLocations, final Phase[] oldLocations, final List<String> clocks,
-			final int effectDCPhaseId) {
+	private void connectUpperToLowerAutomaton(final Phase[] newLocations, final Phase[] oldLocations,
+			final List<String> clocks, final int effectDCPhaseId) {
 		final int seem = newLocations.length / 2;
 		for (int i = 0; i < seem; i++) {
 			CDD clockGuard = CDD.TRUE;
@@ -360,7 +359,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	}
 
 	@Override
-	public Map<PatternType, ReqPeas> getPattern2Peas() {
+	public Map<PatternType<?>, ReqPeas> getPattern2Peas() {
 		return mPattern2Peas;
 	}
 

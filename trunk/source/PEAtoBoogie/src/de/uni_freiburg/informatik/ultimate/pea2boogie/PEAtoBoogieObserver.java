@@ -35,7 +35,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 			return false;
 		}
 		@SuppressWarnings("unchecked")
-		final List<PatternType> rawPatterns = (List<PatternType>) ((ObjectContainer<?>) root).getValue();
+		final List<PatternType<?>> rawPatterns = (List<PatternType<?>>) ((ObjectContainer<?>) root).getValue();
 
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return false;
@@ -46,9 +46,9 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		if (prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_CHECK) {
-			final PeaResultUtil mReporter = new PeaResultUtil(mLogger, mServices);
+			final PeaResultUtil reporter = new PeaResultUtil(mLogger, mServices);
 			// register CEX transformer that removes program executions from CEX.
-			final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
+			final Function<IResult, IResult> resultTransformer = reporter::convertTraceAbstractionResult;
 			mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		}
 
@@ -59,7 +59,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		return mBoogieAST;
 	}
 
-	private IElement generateBoogie(final List<PatternType> patterns) {
+	private IElement generateBoogie(final List<PatternType<?>> patterns) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final PEATransformerMode mode =
 				prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE, PEATransformerMode.class);
@@ -72,11 +72,11 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		}
 	}
 
-	private IElement generateReqCheckBoogie(final List<PatternType> patterns) {
+	private IElement generateReqCheckBoogie(final List<PatternType<?>> patterns) {
 		return new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList()).getUnit();
 	}
 
-	private IElement generateReqTestBoogie(final List<PatternType> patterns) {
+	private IElement generateReqTestBoogie(final List<PatternType<?>> patterns) {
 		// TODO: would it be nicer to get the symbol table via annotations?
 		final Req2CauseTrackingPeaTransformer transformer = new Req2CauseTrackingPeaTransformer(mServices, mLogger);
 		final Req2BoogieTranslator translator =

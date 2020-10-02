@@ -141,7 +141,7 @@ public class RtInconcistencyConditionGenerator {
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable,
-			final Map<PatternType, ReqPeas> req2Automata, final BoogieDeclarations boogieDeclarations,
+			final Map<PatternType<?>, ReqPeas> req2Automata, final BoogieDeclarations boogieDeclarations,
 			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mReqSymboltable = symboltable;
 		mServices = services;
@@ -219,12 +219,12 @@ public class RtInconcistencyConditionGenerator {
 	/**
 	 * Return a subset of requirements that should be used for generating rt-inconsistency checks.
 	 */
-	public List<Entry<PatternType, PhaseEventAutomata>>
-			getRelevantRequirements(final Map<PatternType, ReqPeas> req2Automata) {
+	public List<Entry<PatternType<?>, PhaseEventAutomata>>
+			getRelevantRequirements(final Map<PatternType<?>, ReqPeas> req2Automata) {
 		// we only consider automata that do not represent invariants or which have a disjunctive invariant
-		final List<Entry<PatternType, PhaseEventAutomata>> rtr = new ArrayList<>();
-		for (final Entry<PatternType, ReqPeas> entry : req2Automata.entrySet()) {
-			final PatternType pattern = entry.getKey();
+		final List<Entry<PatternType<?>, PhaseEventAutomata>> rtr = new ArrayList<>();
+		for (final Entry<PatternType<?>, ReqPeas> entry : req2Automata.entrySet()) {
+			final PatternType<?> pattern = entry.getKey();
 			final ReqPeas peas = entry.getValue();
 
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : peas.getCounterTrace2Pea()) {
@@ -413,11 +413,11 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
-	private Term constructPrimedStateInvariant(final Map<PatternType, ReqPeas> req2Automata)
+	private Term constructPrimedStateInvariant(final Map<PatternType<?>, ReqPeas> req2Automata)
 			throws InvariantInfeasibleException {
 
-		final Map<PatternType, CDD> primedStateInvariants = new HashMap<>();
-		for (final Entry<PatternType, ReqPeas> entry : req2Automata.entrySet()) {
+		final Map<PatternType<?>, CDD> primedStateInvariants = new HashMap<>();
+		for (final Entry<PatternType<?>, ReqPeas> entry : req2Automata.entrySet()) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
 				if (filterReqs(pea.getValue())) {
 					// this is not an invariant we want to consider
@@ -429,11 +429,11 @@ public class RtInconcistencyConditionGenerator {
 		}
 
 		final Term result;
-		final Map<PatternType, Term> terms;
+		final Map<PatternType<?>, Term> terms;
 		if (primedStateInvariants.isEmpty()) {
 			return mTrue;
 		} else if (primedStateInvariants.size() == 1) {
-			final Entry<PatternType, CDD> entry = primedStateInvariants.entrySet().iterator().next();
+			final Entry<PatternType<?>, CDD> entry = primedStateInvariants.entrySet().iterator().next();
 			result = mCddToSmt.toSmt(entry.getValue());
 			terms = Collections.singletonMap(entry.getKey(), result);
 		} else {
@@ -444,7 +444,7 @@ public class RtInconcistencyConditionGenerator {
 		return handleInconsistentStateInvariant(terms, simplify(handleInconsistentStateInvariant(terms, result)));
 	}
 
-	private Term handleInconsistentStateInvariant(final Map<PatternType, Term> terms, final Term invariant)
+	private Term handleInconsistentStateInvariant(final Map<PatternType<?>, Term> terms, final Term invariant)
 			throws InvariantInfeasibleException {
 		if (mFalse != invariant) {
 			return invariant;
@@ -453,8 +453,8 @@ public class RtInconcistencyConditionGenerator {
 		final Function<TermVariable, IProgramVar> funTermVar2ProgVar = a -> mVars.get(a.getName());
 		final SimplePredicateFactory pfac = new SimplePredicateFactory(mManagedScript, funTermVar2ProgVar);
 		mScript.push(1);
-		final Map<Term, PatternType> name2Req = new HashMap<>();
-		for (final Entry<PatternType, Term> entry : terms.entrySet()) {
+		final Map<Term, PatternType<?>> name2Req = new HashMap<>();
+		for (final Entry<PatternType<?>, Term> entry : terms.entrySet()) {
 			final Term term = entry.getValue();
 			final BasicPredicate pred = pfac.newPredicate(term);
 			final Term namedTerm = SmtUtils.annotateAndAssert(mScript, pred.getClosedFormula(), entry.getKey().getId());
@@ -462,7 +462,7 @@ public class RtInconcistencyConditionGenerator {
 		}
 		final LBool result = mScript.checkSat();
 		assert result == LBool.UNSAT;
-		final Collection<PatternType> responsibleRequirements = new HashSet<>();
+		final Collection<PatternType<?>> responsibleRequirements = new HashSet<>();
 		final Term[] unsatCore = mScript.getUnsatCore();
 		Arrays.stream(unsatCore).map(a -> name2Req.get(a)).forEach(responsibleRequirements::add);
 		mScript.pop(1);
@@ -575,15 +575,15 @@ public class RtInconcistencyConditionGenerator {
 	public static final class InvariantInfeasibleException extends Exception {
 
 		private static final long serialVersionUID = 1L;
-		private final Collection<PatternType> mResponsibleRequirements;
+		private final Collection<PatternType<?>> mResponsibleRequirements;
 
-		private InvariantInfeasibleException(final Collection<PatternType> responsibleRequirements) {
+		private InvariantInfeasibleException(final Collection<PatternType<?>> responsibleRequirements) {
 			super("Some invariants are already infeasible. Responsible requirements: "
 					+ responsibleRequirements.stream().map(a -> a.getId()).collect(Collectors.joining(", ")));
 			mResponsibleRequirements = responsibleRequirements;
 		}
 
-		public Collection<PatternType> getResponsibleRequirements() {
+		public Collection<PatternType<?>> getResponsibleRequirements() {
 			return mResponsibleRequirements;
 		}
 

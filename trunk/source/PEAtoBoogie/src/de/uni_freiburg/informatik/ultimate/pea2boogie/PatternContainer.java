@@ -47,13 +47,13 @@ public final class PatternContainer extends ModernAnnotations {
 	private static final String KEY = PatternContainer.class.getName();
 
 	@Visualizable
-	private final List<PatternType> mPatterns;
+	private final List<PatternType<?>> mPatterns;
 
-	public PatternContainer(final List<PatternType> patterns) {
+	public PatternContainer(final List<PatternType<?>> patterns) {
 		mPatterns = patterns;
 	}
 
-	public List<PatternType> getPatterns() {
+	public List<PatternType<?>> getPatterns() {
 		return mPatterns;
 	}
 

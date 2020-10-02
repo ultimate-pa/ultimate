@@ -22,15 +22,16 @@ public class Req2CauseTrackingPeaTransformer implements IReq2PeaTransformer {
 		mServices = services;
 	}
 
-	public Map<PhaseEventAutomata, ReqEffectStore> getEffectStore(){
+	public Map<PhaseEventAutomata, ReqEffectStore> getEffectStore() {
 		return mPea2EffectStore;
 	}
 
 	@Override
-	public IReq2Pea transform(IReq2Pea req2pea, List<InitializationPattern> init, List<PatternType> requirements) {
-		final Req2CauseTrackingPea req2CauseTracking = new Req2CauseTrackingPea(mServices, mLogger , init);
+	public IReq2Pea transform(final IReq2Pea req2pea, final List<InitializationPattern> init,
+			final List<PatternType<?>> requirements) {
+		final Req2CauseTrackingPea req2CauseTracking = new Req2CauseTrackingPea(mServices, mLogger, init);
 		req2CauseTracking.transform(req2pea);
-		//TODO: find a more elegant way to access this data for postprocessing
+		// TODO: find a more elegant way to access this data for postprocessing
 		mPea2EffectStore = req2CauseTracking.getEffectStore();
 		return req2CauseTracking;
 	}

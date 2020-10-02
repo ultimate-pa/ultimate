@@ -99,12 +99,12 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 			throw new UnsupportedOperationException("Unable to extract pattern from model.");
 		}
 
-		final List<PatternType> patterns = patternContainer.getPatterns();
+		final List<PatternType<?>> patterns = patternContainer.getPatterns();
 		if (patterns == null || patterns.isEmpty()) {
 			throw new UnsupportedOperationException("No pattern in: " + PatternContainer.class);
 		}
 
-		final List<PatternType> nonInitPatterns =
+		final List<PatternType<?>> nonInitPatterns =
 				patterns.stream().filter(e -> !(e instanceof InitializationPattern)).collect(Collectors.toList());
 
 		if (nonInitPatterns.isEmpty()) {
@@ -116,7 +116,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 			throw new UnsupportedOperationException("Cannot handle more than one pattern, ask Nico to implement it.");
 		}
 
-		final PatternType pattern = nonInitPatterns.iterator().next();
+		final PatternType<?> pattern = nonInitPatterns.iterator().next();
 		mScopeName = pattern.getScope().getName();
 		mPatternName = pattern.getName();
 
@@ -178,8 +178,8 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		}
 	}
 
-	private void parseAssignment(final String identifier, final Collection<Expression> expression, final int waitTime,
-			final Map<String, String> observables) {
+	private static void parseAssignment(final String identifier, final Collection<Expression> expression,
+			final int waitTime, final Map<String, String> observables) {
 
 		final String values = observables.computeIfAbsent(identifier, e -> new String());
 		String value = "x";
@@ -208,6 +208,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				result.append(", ");
 			}
 			result.append(fmt.toString());
+			fmt.close();
 		}
 
 		result.insert(0, "{\"signal\": [");

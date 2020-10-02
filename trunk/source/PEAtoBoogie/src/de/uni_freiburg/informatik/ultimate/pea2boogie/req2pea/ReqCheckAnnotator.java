@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
 /**
- * 
+ *
  * @author Vincent Langenfeld <langenfv@tf.uni-freiburg.de>
  *
  */
@@ -97,10 +97,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	private final IReqSymbolTable mSymbolTable;
-	private final Map<PatternType, ReqPeas> mReq2Automata;
+	private final Map<PatternType<?>, ReqPeas> mReq2Automata;
 
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger,
-			final Map<PatternType, ReqPeas> pattern2Peas, final IReqSymbolTable symbolTable) {
+			final Map<PatternType<?>, ReqPeas> pattern2Peas, final IReqSymbolTable symbolTable) {
 		mLogger = logger;
 		mServices = services;
 		mSymbolTable = symbolTable;
@@ -181,7 +181,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// get all automata for which conditions should be generated
 
-		final List<Entry<PatternType, PhaseEventAutomata>> consideredAutomata =
+		final List<Entry<PatternType<?>, PhaseEventAutomata>> consideredAutomata =
 				mRtInconcistencyConditionGenerator.getRelevantRequirements(mReq2Automata);
 
 		final int count = consideredAutomata.size();
@@ -204,7 +204,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		final List<Statement> stmtList = new ArrayList<>();
 		@SuppressWarnings("unchecked")
-		final List<Entry<PatternType, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
+		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
 				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
 		int subsetsSize = subsets.size();
 		if (subsetsSize > 10000) {
@@ -214,7 +214,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			mLogger.info("Computing rt-inconsistency assertions for " + subsetsSize + " subsets");
 		}
 
-		for (final Entry<PatternType, PhaseEventAutomata>[] subset : subsets) {
+		for (final Entry<PatternType<?>, PhaseEventAutomata>[] subset : subsets) {
 			if (subsetsSize % 100 == 0 && !mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(),
 						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
@@ -238,7 +238,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 	}
 
-	private Statement genAssertRTInconsistency(final Entry<PatternType, PhaseEventAutomata>[] subset) {
+	private Statement genAssertRTInconsistency(final Entry<PatternType<?>, PhaseEventAutomata>[] subset) {
 		final Set<PhaseEventAutomata> automataSet =
 				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
 		assert automataSet.size() == subset.length;
@@ -294,8 +294,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
-			final PatternType pattern = entry.getKey();
+		for (final Entry<PatternType<?>, ReqPeas> entry : mReq2Automata.entrySet()) {
+			final PatternType<?> pattern = entry.getKey();
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
 				final Statement assertStmt = genAssertNonVacuous(pattern, pea.getValue(), bl);
 				if (assertStmt != null) {
@@ -304,9 +304,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			}
 		}
 		return stmtList;
+
 	}
 
-	private Statement genAssertNonVacuous(final PatternType req, final PhaseEventAutomata aut,
+	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl) {
 		final Phase[] phases = aut.getPhases();
 
@@ -346,15 +347,15 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	@SafeVarargs
 	private static ReqCheck createReqCheck(final Check.Spec reqSpec,
-			final Entry<PatternType, PhaseEventAutomata>... subset) {
-		final PatternType[] reqs = new PatternType[subset.length];
+			final Entry<PatternType<?>, PhaseEventAutomata>... subset) {
+		final PatternType<?>[] reqs = new PatternType<?>[subset.length];
 		for (int i = 0; i < subset.length; ++i) {
 			reqs[i] = subset[i].getKey();
 		}
 		return createReqCheck(reqSpec, reqs);
 	}
 
-	private static ReqCheck createReqCheck(final Check.Spec reqSpec, final PatternType... req) {
+	private static ReqCheck createReqCheck(final Check.Spec reqSpec, final PatternType<?>... req) {
 		if (req == null || req.length == 0) {
 			throw new IllegalArgumentException("req cannot be null or empty");
 		}

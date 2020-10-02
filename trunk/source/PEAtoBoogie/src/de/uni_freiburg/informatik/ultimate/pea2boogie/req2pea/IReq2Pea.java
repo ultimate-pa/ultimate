@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
  */
 public interface IReq2Pea {
 
-	Map<PatternType, ReqPeas> getPattern2Peas();
+	Map<PatternType<?>, ReqPeas> getPattern2Peas();
 
 	IReqSymbolTable getSymboltable();
 
