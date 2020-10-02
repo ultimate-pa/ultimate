@@ -49,23 +49,24 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class PatternType<T extends PatternType> {
+public abstract class PatternType<T extends PatternType<?>> {
 
 	private final List<CDD> mCdds;
 	private final List<String> mDurations;
-	private final SrParseScope mScope;
+	private final SrParseScope<?> mScope;
 	private final String mId;
 
 	private ReqPeas mPEAs;
 
-	public PatternType(final SrParseScope scope, final String id, final List<CDD> cdds, final List<String> durations) {
+	public PatternType(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
 		mScope = scope;
 		mId = id;
 		mCdds = cdds;
 		mDurations = durations;
 	}
 
-	public abstract T create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public abstract T create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations);
 
 	public List<String> getDuration() {
@@ -97,11 +98,11 @@ public abstract class PatternType<T extends PatternType> {
 		return mId;
 	}
 
-	public SrParseScope getScope() {
+	public SrParseScope<?> getScope() {
 		return mScope;
 	}
 
-	public abstract PatternType rename(String newName);
+	public abstract PatternType<T> rename(String newName);
 
 	public ReqPeas transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
 		if (mPEAs == null) {
@@ -205,7 +206,7 @@ public abstract class PatternType<T extends PatternType> {
 		if (mScope == null) {
 			suffix = "NoScope";
 		} else {
-			// remove SrParseScope from scope class name
+			// remove SrParseScope<?>from scope class name
 			suffix = mScope.getClass().getSimpleName().substring(12);
 		}
 		final String className = getClass().getSimpleName();
@@ -246,7 +247,7 @@ public abstract class PatternType<T extends PatternType> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final PatternType other = (PatternType) obj;
+		final PatternType<?> other = (PatternType<?>) obj;
 		if (mDurations == null) {
 			if (other.mDurations != null) {
 				return false;
@@ -277,10 +278,10 @@ public abstract class PatternType<T extends PatternType> {
 	 *
 	 */
 	public static final class ReqPeas {
-		private final PatternType mReq;
+		private final PatternType<?> mReq;
 		private final List<Entry<CounterTrace, PhaseEventAutomata>> mPeas;
 
-		public ReqPeas(final PatternType req, final List<Entry<CounterTrace, PhaseEventAutomata>> peas) {
+		public ReqPeas(final PatternType<?> req, final List<Entry<CounterTrace, PhaseEventAutomata>> peas) {
 			mReq = Objects.requireNonNull(req);
 			mPeas = Collections.unmodifiableList(Objects.requireNonNull(peas));
 			if (mPeas.isEmpty()) {
@@ -288,7 +289,7 @@ public abstract class PatternType<T extends PatternType> {
 			}
 		}
 
-		public PatternType getPattern() {
+		public PatternType<?> getPattern() {
 			return mReq;
 		}
 

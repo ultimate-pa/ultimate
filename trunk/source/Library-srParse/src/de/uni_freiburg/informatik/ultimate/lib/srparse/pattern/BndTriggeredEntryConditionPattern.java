@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class BndTriggeredEntryConditionPattern extends PatternType<BndTriggeredEntryConditionPattern> {
 
-	public BndTriggeredEntryConditionPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndTriggeredEntryConditionPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public BndTriggeredEntryConditionPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndTriggeredEntryConditionPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new BndTriggeredEntryConditionPattern(scope, id, cdds, durations);
 	}
@@ -61,7 +61,7 @@ public class BndTriggeredEntryConditionPattern extends PatternType<BndTriggeredE
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD T = cdds[2];
 		final CDD S = cdds[1];
 		final CDD R = cdds[0];
@@ -99,7 +99,7 @@ public class BndTriggeredEntryConditionPattern extends PatternType<BndTriggeredE
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndTriggeredEntryConditionPattern rename(final String newName) {
 		return new BndTriggeredEntryConditionPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

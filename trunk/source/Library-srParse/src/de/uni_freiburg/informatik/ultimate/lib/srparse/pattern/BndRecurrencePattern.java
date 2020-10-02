@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  *
  */
 public class BndRecurrencePattern extends PatternType<BndRecurrencePattern> {
-	public BndRecurrencePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndRecurrencePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public BndRecurrencePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndRecurrencePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new BndRecurrencePattern(scope, id, cdds, durations);
 	}
@@ -63,7 +63,7 @@ public class BndRecurrencePattern extends PatternType<BndRecurrencePattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
@@ -112,7 +112,7 @@ public class BndRecurrencePattern extends PatternType<BndRecurrencePattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndRecurrencePattern rename(final String newName) {
 		return new BndRecurrencePattern(getScope(), newName, getCdds(), getDuration());
 	}
 

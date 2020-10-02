@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class PrecedencePattern extends PatternType<PrecedencePattern> {
 
-	public PrecedencePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public PrecedencePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public PrecedencePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public PrecedencePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new PrecedencePattern(scope, id, cdds, durations);
 	}
@@ -63,7 +63,7 @@ public class PrecedencePattern extends PatternType<PrecedencePattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 
@@ -112,7 +112,7 @@ public class PrecedencePattern extends PatternType<PrecedencePattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public PrecedencePattern rename(final String newName) {
 		return new PrecedencePattern(getScope(), newName, getCdds(), getDuration());
 	}
 

@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  *
  */
 public class MaxDurationPattern extends PatternType<MaxDurationPattern> {
-	public MaxDurationPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public MaxDurationPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public MaxDurationPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public MaxDurationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new MaxDurationPattern(scope, id, cdds, durations);
 	}
@@ -63,7 +63,7 @@ public class MaxDurationPattern extends PatternType<MaxDurationPattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
@@ -112,7 +112,7 @@ public class MaxDurationPattern extends PatternType<MaxDurationPattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public MaxDurationPattern rename(final String newName) {
 		return new MaxDurationPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

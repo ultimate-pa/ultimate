@@ -48,13 +48,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  *
  */
 public class BndResponsePatternUT extends PatternType<BndResponsePatternUT> {
-	public BndResponsePatternUT(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndResponsePatternUT(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public BndResponsePatternUT create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndResponsePatternUT create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new BndResponsePatternUT(scope, id, cdds, durations);
 	}
@@ -65,7 +65,7 @@ public class BndResponsePatternUT extends PatternType<BndResponsePatternUT> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
@@ -119,7 +119,7 @@ public class BndResponsePatternUT extends PatternType<BndResponsePatternUT> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndResponsePatternUT rename(final String newName) {
 		return new BndResponsePatternUT(getScope(), newName, getCdds(), getDuration());
 	}
 

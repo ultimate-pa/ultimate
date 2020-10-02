@@ -41,13 +41,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  */
 public class BndPossResponsePattern extends PatternType<BndPossResponsePattern> {
 
-	public BndPossResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndPossResponsePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public BndPossResponsePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndPossResponsePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new BndPossResponsePattern(scope, id, cdds, durations);
 	}
@@ -58,7 +58,7 @@ public class BndPossResponsePattern extends PatternType<BndPossResponsePattern> 
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
@@ -84,7 +84,7 @@ public class BndPossResponsePattern extends PatternType<BndPossResponsePattern> 
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndPossResponsePattern rename(final String newName) {
 		return new BndPossResponsePattern(getScope(), newName, getCdds(), getDuration());
 	}
 

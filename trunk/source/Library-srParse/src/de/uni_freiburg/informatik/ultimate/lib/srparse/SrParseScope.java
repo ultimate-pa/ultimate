@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
-public abstract class SrParseScope<T extends SrParseScope> {
+public abstract class SrParseScope<T extends SrParseScope<?>> {
 
 	private final CDD mCdd1;
 	private final CDD mCdd2;

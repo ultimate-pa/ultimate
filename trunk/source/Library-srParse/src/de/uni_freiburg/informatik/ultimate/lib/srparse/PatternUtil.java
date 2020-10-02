@@ -66,7 +66,8 @@ public final class PatternUtil {
 	 *            {@link PatternScopeNotImplemented} when their {@link PatternType#transformToPea(ILogger, Map)} method
 	 *            is called.
 	 */
-	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns(final boolean withoutNotImplemented) {
+	public static Pair<List<? extends PatternType<?>>, Map<String, Integer>>
+			createAllPatterns(final boolean withoutNotImplemented) {
 		// first, create some observables and durartions
 		final int count = 10;
 		int duration = 5;
@@ -81,7 +82,7 @@ public final class PatternUtil {
 		}
 
 		// instantiate scopes
-		final List<? extends SrParseScope> scopes = ReflectionUtil
+		final List<? extends SrParseScope<?>> scopes = ReflectionUtil
 				.getClassesFromFolder(SrParseScope.class, RcpUtils.getBundleProtocolResolver()).stream()
 				.filter(c -> !ReflectionUtil.isAbstractClass(c))
 				.filter(c -> ReflectionUtil.isSubclassOfClass(c, SrParseScope.class))
@@ -89,17 +90,19 @@ public final class PatternUtil {
 		Collections.sort(scopes, new ClassNameComparator());
 
 		// instantiate patterns
-		final List<Class<? extends PatternType>> patternTypeClazzes =
+		@SuppressWarnings("unchecked")
+		final List<Class<? extends PatternType<?>>> patternTypeClazzes =
 				ReflectionUtil.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
 						.filter(c -> !ReflectionUtil.isAbstractClass(c))
 						.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
-						.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
+						.filter(c -> !c.equals(InitializationPattern.class)).map(a -> (Class<PatternType<?>>) a)
+						.collect(Collectors.toList());
 		Collections.sort(patternTypeClazzes, new ClassNameComparator());
 
-		final List<PatternType> patterns = new ArrayList<>();
+		final List<PatternType<?>> patterns = new ArrayList<>();
 		int id = 0;
 		final ILogger dummyLogger = ILogger.getDummyLogger();
-		for (final Class<? extends PatternType> patternTypeClazz : patternTypeClazzes) {
+		for (final Class<? extends PatternType<?>> patternTypeClazz : patternTypeClazzes) {
 			// all patterns except the initializationpattern have a constructor of the form
 			// (final SrParseScope scope,
 			// final String id, final List<CDD> cdds,
@@ -108,16 +111,17 @@ public final class PatternUtil {
 			// actually need, and then we
 			// instantiate it again for real for every scope
 
-			final PatternType dummyInstance = ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null);
+			final PatternType<?> dummyInstance =
+					ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null);
 			final int cddCount = dummyInstance.getExpectedCddSize();
 			final int durationCount = dummyInstance.getExpectedDurationSize();
 
-			for (final SrParseScope scope : scopes) {
+			for (final SrParseScope<?> scope : scopes) {
 				final List<CDD> currentCdds =
 						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
 				final List<String> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
-				final PatternType pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
+				final PatternType<?> pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
 						"ID_" + String.valueOf(id), currentCdds, currentDurations);
 
 				if (withoutNotImplemented) {

@@ -75,7 +75,7 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 	}
 
 	@Override
-	public InitializationPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public InitializationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		throw new UnsupportedOperationException();
 	}
@@ -161,7 +161,7 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public InitializationPattern rename(final String newName) {
 		return new InitializationPattern(newName, getType(), getCategory(), getExpression());
 	}
 

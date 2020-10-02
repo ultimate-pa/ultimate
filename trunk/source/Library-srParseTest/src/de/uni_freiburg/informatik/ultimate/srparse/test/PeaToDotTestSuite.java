@@ -97,13 +97,13 @@ public class PeaToDotTestSuite {
 	private final IUltimateServiceProvider mServiceProvider;
 	private final ILogger mLogger;
 
-	private final PatternType mPattern;
+	private final PatternType<?> mPattern;
 	private final String mPatternName;
 	private final String mPatternString;
 	private final String mScopeName;
 	private final Map<String, Integer> mDurationToBounds;
 
-	public PeaToDotTestSuite(final PatternType pattern, final Map<String, Integer> durationToBounds) {
+	public PeaToDotTestSuite(final PatternType<?> pattern, final Map<String, Integer> durationToBounds) {
 		mServiceProvider = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = mServiceProvider.getLoggingService().getLogger("");
 
@@ -346,14 +346,14 @@ public class PeaToDotTestSuite {
 
 	@Parameters()
 	public static Collection<Object[]> data() {
-		final Pair<List<PatternType>, Map<String, Integer>> pair = PatternUtil.createAllPatterns(false);
+		final Pair<List<? extends PatternType<?>>, Map<String, Integer>> pair = PatternUtil.createAllPatterns(false);
 
 		return pair.getFirst().stream().sorted(new PatternNameComparator())
 				.map(a -> new Object[] { a, pair.getSecond() }).collect(Collectors.toList());
 	}
 
-	private static final class PatternNameComparator implements Comparator<PatternType> {
-		private static final Map<Class<? extends SrParseScope>, Integer> SCOPE_ORDER = new HashMap<>();
+	private static final class PatternNameComparator implements Comparator<PatternType<?>> {
+		private static final Map<Class<? extends SrParseScope<?>>, Integer> SCOPE_ORDER = new HashMap<>();
 
 		static {
 			SCOPE_ORDER.put(SrParseScopeGlobally.class, 0);
@@ -364,7 +364,7 @@ public class PeaToDotTestSuite {
 		}
 
 		@Override
-		public int compare(final PatternType lhs, final PatternType rhs) {
+		public int compare(final PatternType<?> lhs, final PatternType<?> rhs) {
 			final int order = lhs.getClass().getSimpleName().compareTo(rhs.getClass().getSimpleName());
 
 			if (order != 0) {

@@ -100,7 +100,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 		return overlay;
 	}
 
-	private static void createReqFiles(final List<PatternType> patterns) {
+	private static void createReqFiles(final List<? extends PatternType<?>> patterns) {
 		final File absPathReqDir = new File(TestUtil.createPathFromTrunk(REQ_DIR));
 		final File absPathImgDir = new File(TestUtil.createPathFromTrunk(REQ_DIR + IMG_DIR));
 		assert absPathImgDir.isDirectory() || absPathImgDir.mkdirs() : "Failed to create directory: " + absPathImgDir;

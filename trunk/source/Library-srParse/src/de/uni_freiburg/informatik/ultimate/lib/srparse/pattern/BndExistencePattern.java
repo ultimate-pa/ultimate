@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class BndExistencePattern extends PatternType<BndExistencePattern> {
 
-	public BndExistencePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndExistencePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public BndExistencePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndExistencePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new BndExistencePattern(scope, id, cdds, durations);
 	}
@@ -63,7 +63,7 @@ public class BndExistencePattern extends PatternType<BndExistencePattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[0];
 
 		final CounterTrace ct;
@@ -113,7 +113,7 @@ public class BndExistencePattern extends PatternType<BndExistencePattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndExistencePattern rename(final String newName) {
 		return new BndExistencePattern(getScope(), newName, getCdds(), getDuration());
 	}
 

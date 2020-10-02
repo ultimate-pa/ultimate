@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class PrecedenceChain12Pattern extends PatternType<PrecedenceChain12Pattern> {
 
-	public PrecedenceChain12Pattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public PrecedenceChain12Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public PrecedenceChain12Pattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public PrecedenceChain12Pattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new PrecedenceChain12Pattern(scope, id, cdds, durations);
 	}
@@ -63,7 +63,7 @@ public class PrecedenceChain12Pattern extends PatternType<PrecedenceChain12Patte
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[2];
 		final CDD S = cdds[1];
 		final CDD T = cdds[0];
@@ -117,7 +117,7 @@ public class PrecedenceChain12Pattern extends PatternType<PrecedenceChain12Patte
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public PrecedenceChain12Pattern rename(final String newName) {
 		return new PrecedenceChain12Pattern(getScope(), newName, getCdds(), getDuration());
 	}
 

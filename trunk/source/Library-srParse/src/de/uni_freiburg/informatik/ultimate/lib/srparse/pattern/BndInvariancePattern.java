@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class BndInvariancePattern extends PatternType<BndInvariancePattern> {
 
-	public BndInvariancePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndInvariancePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public BndInvariancePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndInvariancePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new BndInvariancePattern(scope, id, cdds, durations);
 	}
@@ -64,7 +64,7 @@ public class BndInvariancePattern extends PatternType<BndInvariancePattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
@@ -119,7 +119,7 @@ public class BndInvariancePattern extends PatternType<BndInvariancePattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndInvariancePattern rename(final String newName) {
 		return new BndInvariancePattern(getScope(), newName, getCdds(), getDuration());
 	}
 

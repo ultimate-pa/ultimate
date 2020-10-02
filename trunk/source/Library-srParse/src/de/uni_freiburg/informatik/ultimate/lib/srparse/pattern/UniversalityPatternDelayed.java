@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class UniversalityPatternDelayed extends PatternType<UniversalityPatternDelayed> {
 
-	public UniversalityPatternDelayed(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public UniversalityPatternDelayed(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public UniversalityPatternDelayed create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public UniversalityPatternDelayed create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new UniversalityPatternDelayed(scope, id, cdds, durations);
 	}
@@ -64,7 +64,7 @@ public class UniversalityPatternDelayed extends PatternType<UniversalityPatternD
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
@@ -114,7 +114,7 @@ public class UniversalityPatternDelayed extends PatternType<UniversalityPatternD
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public UniversalityPatternDelayed rename(final String newName) {
 		return new UniversalityPatternDelayed(getScope(), newName, getCdds(), getDuration());
 	}
 

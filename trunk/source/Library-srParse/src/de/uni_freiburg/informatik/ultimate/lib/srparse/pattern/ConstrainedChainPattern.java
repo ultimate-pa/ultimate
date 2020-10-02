@@ -41,13 +41,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern> {
 
-	public ConstrainedChainPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public ConstrainedChainPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public ConstrainedChainPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public ConstrainedChainPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new ConstrainedChainPattern(scope, id, cdds, durations);
 	}
@@ -58,7 +58,7 @@ public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
@@ -90,7 +90,7 @@ public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public ConstrainedChainPattern rename(final String newName) {
 		return new ConstrainedChainPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

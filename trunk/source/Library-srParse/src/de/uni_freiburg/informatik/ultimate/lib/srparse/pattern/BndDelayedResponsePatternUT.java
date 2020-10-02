@@ -44,19 +44,19 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class BndDelayedResponsePatternUT extends PatternType<BndDelayedResponsePatternUT> {
 
-	public BndDelayedResponsePatternUT(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndDelayedResponsePatternUT(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	// @Override
-	// public BndDelayedResponsePatternUT create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	// public BndDelayedResponsePatternUT create(final SrParseScope<?>scope, final String id, final List<CDD> cdds,
 	// final List<String> durations) {
 	// return new BndDelayedResponsePatternUT(scope, id, cdds, durations);
 	// }
 
 	@Override
-	public BndDelayedResponsePatternUT create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndDelayedResponsePatternUT create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new BndDelayedResponsePatternUT(scope, id, cdds, durations);
 	}
@@ -67,7 +67,7 @@ public class BndDelayedResponsePatternUT extends PatternType<BndDelayedResponseP
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
@@ -108,7 +108,7 @@ public class BndDelayedResponsePatternUT extends PatternType<BndDelayedResponseP
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndDelayedResponsePatternUT rename(final String newName) {
 		return new BndDelayedResponsePatternUT(getScope(), newName, getCdds(), getDuration());
 	}
 

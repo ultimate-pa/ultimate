@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class InvariantPattern extends PatternType<InvariantPattern> {
-	public InvariantPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public InvariantPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public InvariantPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public InvariantPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new InvariantPattern(scope, id, cdds, durations);
 	}
@@ -61,7 +61,7 @@ public class InvariantPattern extends PatternType<InvariantPattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 
@@ -110,7 +110,7 @@ public class InvariantPattern extends PatternType<InvariantPattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public InvariantPattern rename(final String newName) {
 		return new InvariantPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

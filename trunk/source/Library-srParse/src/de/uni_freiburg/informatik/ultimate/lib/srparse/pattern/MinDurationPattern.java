@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  *
  */
 public class MinDurationPattern extends PatternType<MinDurationPattern> {
-	public MinDurationPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public MinDurationPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public MinDurationPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public MinDurationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new MinDurationPattern(scope, id, cdds, durations);
 	}
@@ -63,7 +63,7 @@ public class MinDurationPattern extends PatternType<MinDurationPattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
@@ -115,7 +115,7 @@ public class MinDurationPattern extends PatternType<MinDurationPattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public MinDurationPattern rename(final String newName) {
 		return new MinDurationPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

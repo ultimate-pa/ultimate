@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class BndEntryConditionPattern extends PatternType<BndEntryConditionPattern> {
 
-	public BndEntryConditionPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndEntryConditionPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public BndEntryConditionPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndEntryConditionPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new BndEntryConditionPattern(scope, id, cdds, durations);
 	}
@@ -64,7 +64,7 @@ public class BndEntryConditionPattern extends PatternType<BndEntryConditionPatte
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
@@ -118,7 +118,7 @@ public class BndEntryConditionPattern extends PatternType<BndEntryConditionPatte
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndEntryConditionPattern rename(final String newName) {
 		return new BndEntryConditionPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

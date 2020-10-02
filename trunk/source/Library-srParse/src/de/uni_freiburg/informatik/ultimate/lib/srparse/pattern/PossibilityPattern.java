@@ -39,13 +39,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class PossibilityPattern extends PatternType<PossibilityPattern> {
-	public PossibilityPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public PossibilityPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public PossibilityPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public PossibilityPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new PossibilityPattern(scope, id, cdds, durations);
 	}
@@ -56,7 +56,7 @@ public class PossibilityPattern extends PatternType<PossibilityPattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
@@ -80,7 +80,7 @@ public class PossibilityPattern extends PatternType<PossibilityPattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public PossibilityPattern rename(final String newName) {
 		return new PossibilityPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

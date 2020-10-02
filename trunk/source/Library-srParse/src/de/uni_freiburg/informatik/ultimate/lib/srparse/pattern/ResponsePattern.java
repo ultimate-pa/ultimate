@@ -43,13 +43,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
  *
  */
 public class ResponsePattern extends PatternType<ResponsePattern> {
-	public ResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public ResponsePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public ResponsePattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public ResponsePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new ResponsePattern(scope, id, cdds, durations);
 	}
@@ -60,7 +60,7 @@ public class ResponsePattern extends PatternType<ResponsePattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 
@@ -105,7 +105,7 @@ public class ResponsePattern extends PatternType<ResponsePattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public ResponsePattern rename(final String newName) {
 		return new ResponsePattern(getScope(), newName, getCdds(), getDuration());
 	}
 

@@ -43,13 +43,13 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class InstAbsPattern extends PatternType<InstAbsPattern> {
-	public InstAbsPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public InstAbsPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public InstAbsPattern create(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public InstAbsPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		return new InstAbsPattern(scope, id, cdds, durations);
 	}
@@ -60,7 +60,7 @@ public class InstAbsPattern extends PatternType<InstAbsPattern> {
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
-		final SrParseScope scope = getScope();
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[0];
 
 		final CounterTrace ct;
@@ -102,7 +102,7 @@ public class InstAbsPattern extends PatternType<InstAbsPattern> {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public InstAbsPattern rename(final String newName) {
 		return new InstAbsPattern(getScope(), newName, getCdds(), getDuration());
 	}
 
