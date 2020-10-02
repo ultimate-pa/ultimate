@@ -10,47 +10,48 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 
-public class DirectTriggerDependency extends ModifiableLabeledEdgesMultigraph<DirectTriggerDependency, Set<? extends Term>> {
+public class DirectTriggerDependency
+		extends ModifiableLabeledEdgesMultigraph<DirectTriggerDependency, Set<? extends Term>> {
 
 	private static final long serialVersionUID = 5734209642364260026L;
-	
+
 	protected ReqGuardGraph mReqAut;
-	protected Set<TermVariable> mInputs = new HashSet<TermVariable>();
-	protected Set<TermVariable> mOutputs = new HashSet<TermVariable>();
-	
-	public DirectTriggerDependency(ReqGuardGraph reqAut) {
+	protected Set<TermVariable> mInputs = new HashSet<>();
+	protected Set<TermVariable> mOutputs = new HashSet<>();
+
+	public DirectTriggerDependency(final ReqGuardGraph reqAut) {
 		mReqAut = reqAut;
 	}
-	
+
 	public ReqGuardGraph getReqAut() {
 		return mReqAut;
 	}
-	
-	public void addInputs(Set<TermVariable> variables) {
+
+	public void addInputs(final Set<TermVariable> variables) {
 		mInputs.addAll(variables);
 	}
-	
-	public Set<TermVariable> getInputs(){
+
+	public Set<TermVariable> getInputs() {
 		return mInputs;
 	}
-	
-	public void addOutputs(Set<TermVariable> variables) {
+
+	public void addOutputs(final Set<TermVariable> variables) {
 		mOutputs.addAll(variables);
 	}
-	
-	public Set<TermVariable> getOutputs(){
+
+	public Set<TermVariable> getOutputs() {
 		return mOutputs;
 	}
-	
+
 	public void disconnect() {
-		for(DirectTriggerDependency in: getIncomingNodes()) {
+		for (final DirectTriggerDependency in : getIncomingNodes()) {
 			in.disconnectOutgoing(this);
 		}
-		List<DirectTriggerDependency> remove = new ArrayList<>();
-		for(DirectTriggerDependency out: getOutgoingNodes()) {
+		final List<DirectTriggerDependency> remove = new ArrayList<>();
+		for (final DirectTriggerDependency out : getOutgoingNodes()) {
 			remove.add(out);
 		}
-		for(DirectTriggerDependency out: remove) {
+		for (final DirectTriggerDependency out : remove) {
 			removeOutgoingNode(out);
 		}
 	}

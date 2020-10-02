@@ -31,7 +31,7 @@ public class ReqToInOut {
 	private final LinkedHashSet<TermVariable> mHidden;
 	private final LinkedHashSet<TermVariable> mOutputs;
 
-	private final boolean UNIVERSALITY_IS_DEFINITNG = false;
+	private static final boolean UNIVERSALITY_IS_DEFINITNG = false;
 
 	public ReqToInOut(final ILogger logger, final Req2TestReqSymbolTable reqSymbolExpressionTable,
 			final CddToSmt cddToSmt) {
@@ -44,8 +44,8 @@ public class ReqToInOut {
 		mOutputs = new LinkedHashSet<>();
 	}
 
-	public void requirementToInOut(final List<PatternType> patternList) {
-		for (final PatternType pattern : patternList) {
+	public void requirementToInOut(final List<PatternType<?>> patternList) {
+		for (final PatternType<?> pattern : patternList) {
 			if (!(pattern instanceof InitializationPattern)) {
 				addRequirement(pattern);
 			}
@@ -73,7 +73,7 @@ public class ReqToInOut {
 	 * BndResponsePatternTU X InvariantPattern X InstAbsPattern X UniversalityPattern X TogglePatternDelayed X
 	 */
 
-	public void addRequirement(final PatternType pattern) {
+	public void addRequirement(final PatternType<?> pattern) {
 		if (pattern instanceof InvariantPattern) {
 			addInvariantPattern(pattern);
 		} else if (pattern instanceof BndResponsePatternUT) {
@@ -137,7 +137,7 @@ public class ReqToInOut {
 	 * "{scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at
 	 * least "c2" time units
 	 */
-	private void addBndResponsePatternTTPattern(final PatternType pattern) {
+	private void addBndResponsePatternTTPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -152,7 +152,7 @@ public class ReqToInOut {
 	/*
 	 * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards.
 	 */
-	private void addBndResponsePatternTUPattern(final PatternType pattern) {
+	private void addBndResponsePatternTUPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -167,7 +167,7 @@ public class ReqToInOut {
 	/*
 	 * * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units.
 	 */
-	private void addBndInvariance(final PatternType pattern) {
+	private void addBndInvariance(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -182,10 +182,10 @@ public class ReqToInOut {
 
 	/*
 	 * {scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units.
-	 * 
+	 *
 	 * Assuming stability of output ( R, R & S, R & !S, R & S,.....) not intended behavior
 	 */
-	private void addBndResponsePatternUTPattern(final PatternType pattern) {
+	private void addBndResponsePatternUTPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -208,7 +208,7 @@ public class ReqToInOut {
 	/*
 	 * * {scope}, it is always the case that if "R" holds, then "S" holds as well.
 	 */
-	private void addInvariantPattern(final PatternType pattern) {
+	private void addInvariantPattern(final PatternType<?> pattern) {
 		if (UNIVERSALITY_IS_DEFINITNG) {
 			return;
 		}
@@ -234,7 +234,7 @@ public class ReqToInOut {
 	/*
 	 * * {scope}, it is always the case that if "S" holds.
 	 */
-	private void addUniversalityPattern(final PatternType pattern) {
+	private void addUniversalityPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term S = mCddToSmt.toSmt(args.get(0));
@@ -247,7 +247,7 @@ public class ReqToInOut {
 	/*
 	 * * {scope}, it is never the case that if "S" holds.
 	 */
-	private void addInstAbsPattern(final PatternType pattern) {
+	private void addInstAbsPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term S = mCddToSmt.toSmt(args.get(0));
@@ -262,7 +262,7 @@ public class ReqToInOut {
 	 * This pattern is for discrete Step LTL * {scope}, it is always the case that if "R" holds, then "S" holds in the
 	 * next Step.
 	 */
-	private void getImmediateResponsePatternToAutomaton(final PatternType pattern) {
+	private void getImmediateResponsePatternToAutomaton(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -274,7 +274,7 @@ public class ReqToInOut {
 		}
 	}
 
-	private void addTogglePatternDelayed(final PatternType pattern) {
+	private void addTogglePatternDelayed(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term P = mCddToSmt.toSmt(args.get(0));
@@ -288,7 +288,7 @@ public class ReqToInOut {
 		}
 	}
 
-	private void scopeNotImplementedWarning(final PatternType pattern) {
+	private void scopeNotImplementedWarning(final PatternType<?> pattern) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Scope not implemented: ");
 		sb.append(pattern.getScope().toString());

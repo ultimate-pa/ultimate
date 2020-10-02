@@ -49,9 +49,9 @@ public class ReqToGraph {
 		mSmtTrue = mScript.term("true");
 	}
 
-	public List<ReqGuardGraph> patternListToBuechi(final List<PatternType> patternList) {
+	public List<ReqGuardGraph> patternListToBuechi(final List<PatternType<?>> patternList) {
 		final List<ReqGuardGraph> gs = new ArrayList<>();
-		for (final PatternType pattern : patternList) {
+		for (final PatternType<?> pattern : patternList) {
 			if (!(pattern instanceof InitializationPattern)) {
 				final ReqGuardGraph aut = patternToTestAutomaton(pattern);
 				if (aut != null) {
@@ -65,9 +65,8 @@ public class ReqToGraph {
 	private Term getDurationTerm(final String duration) {
 		if (mReqSymbolTable.isConstVar(duration)) {
 			return mScript.variable(duration, mScript.sort("Int"));
-		} else {
-			return mScript.numeral(duration);
 		}
+		return mScript.numeral(duration);
 	}
 
 	/*
@@ -76,7 +75,7 @@ public class ReqToGraph {
 	 * TogglePatternDelayed X
 	 */
 
-	public ReqGuardGraph patternToTestAutomaton(final PatternType pattern) {
+	public ReqGuardGraph patternToTestAutomaton(final PatternType<?> pattern) {
 		if (pattern instanceof InvariantPattern) {
 			return getInvariantPattern(pattern);
 		} else if (pattern instanceof BndResponsePatternUT) {
@@ -94,7 +93,7 @@ public class ReqToGraph {
 		} else if (pattern instanceof BndResponsePatternTU) {
 			return getBndResponsePatternTUPattern(pattern);
 		} else {
-			throw new RuntimeException("Pattern type is not supported at:" + pattern.toString());
+			throw new UnsupportedOperationException("Pattern type is not supported at:" + pattern.toString());
 		}
 	}
 
@@ -145,10 +144,9 @@ public class ReqToGraph {
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), mSmtTrue, clockIdent));
 
 			return q0;
-		} else {
-			scopeNotImplementedWarning(pattern);
-			return null;
 		}
+		scopeNotImplementedWarning(pattern);
+		return null;
 	}
 
 	/*
@@ -193,10 +191,9 @@ public class ReqToGraph {
 			q2.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, dS, S), effectEq, true));
 
 			return q0;
-		} else {
-			scopeNotImplementedWarning(pattern);
-			return null;
 		}
+		scopeNotImplementedWarning(pattern);
+		return null;
 	}
 
 	/*
@@ -243,10 +240,9 @@ public class ReqToGraph {
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), clockIdent));
 
 			return q0;
-		} else {
-			scopeNotImplementedWarning(pattern);
-			return null;
 		}
+		scopeNotImplementedWarning(pattern);
+		return null;
 	}
 
 	/*
@@ -289,10 +285,9 @@ public class ReqToGraph {
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, dS, S), mSmtTrue, clockIdent, true));
 
 			return q0;
-		} else {
-			scopeNotImplementedWarning(pattern);
-			return null;
 		}
+		scopeNotImplementedWarning(pattern);
+		return null;
 	}
 
 	/*
@@ -416,7 +411,7 @@ public class ReqToGraph {
 	/*
 	 * * {scope}, it is always the case that if "R" holds, then "S" holds as well.
 	 */
-	private ReqGuardGraph getInvariantPattern(final PatternType pattern) {
+	private ReqGuardGraph getInvariantPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -473,7 +468,7 @@ public class ReqToGraph {
 	/*
 	 * * {scope}, it is always the case that if "S" holds.
 	 */
-	private ReqGuardGraph getUniversalityPattern(final PatternType pattern) {
+	private ReqGuardGraph getUniversalityPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term S = mCddToSmt.toSmt(args.get(0));
@@ -487,16 +482,15 @@ public class ReqToGraph {
 				q0.connectOutgoing(q0, new TimedLabel(S, mSmtTrue));
 			}
 			return q0;
-		} else {
-			scopeNotImplementedWarning(pattern);
-			return null;
 		}
+		scopeNotImplementedWarning(pattern);
+		return null;
 	}
 
 	/*
 	 * * {scope}, it is never the case that if "S" holds.
 	 */
-	private ReqGuardGraph getInstAbsPattern(final PatternType pattern) {
+	private ReqGuardGraph getInstAbsPattern(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term S = mCddToSmt.toSmt(args.get(0));
@@ -509,10 +503,9 @@ public class ReqToGraph {
 			final Term nS = SmtUtils.not(mScript, S);
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nS, dS), mSmtTrue, true));
 			return q0;
-		} else {
-			scopeNotImplementedWarning(pattern);
-			return null;
 		}
+		scopeNotImplementedWarning(pattern);
+		return null;
 	}
 
 	/*
@@ -520,7 +513,7 @@ public class ReqToGraph {
 	 * next Step.
 	 */
 	@SuppressWarnings("unused")
-	private ReqGuardGraph getImmediateResponsePatternToAutomaton(final PatternType pattern) {
+	private ReqGuardGraph getImmediateResponsePatternToAutomaton(final PatternType<?> pattern) {
 		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final String id = pattern.getId();
@@ -554,10 +547,9 @@ public class ReqToGraph {
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), mSmtTrue));
 
 			return q0;
-		} else {
-			scopeNotImplementedWarning(pattern);
-			return null;
 		}
+		scopeNotImplementedWarning(pattern);
+		return null;
 	}
 
 	/*
@@ -602,13 +594,12 @@ public class ReqToGraph {
 			// changes
 			return q0;
 
-		} else {
-			scopeNotImplementedWarning(pattern);
-			return null;
 		}
+		scopeNotImplementedWarning(pattern);
+		return null;
 	}
 
-	private void scopeNotImplementedWarning(final PatternType pattern) {
+	private void scopeNotImplementedWarning(final PatternType<?> pattern) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Scope not implemented: ");
 		sb.append(pattern.getScope().toString());
