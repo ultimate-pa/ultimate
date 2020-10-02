@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum PetriNetLargeBlockEncodingStatisticsDefinitions implements IStatisticsElement {
@@ -45,7 +46,10 @@ public enum PetriNetLargeBlockEncodingStatisticsDefinitions implements IStatisti
 
 	SemBasedMoverCheckTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	CheckedPairsTotal(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),;
+	CheckedPairsTotal(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	LiptonReductionStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;

@@ -498,6 +498,10 @@ public class LiptonReduction<LETTER, PLACE> {
 		return mChoiceCompositions;
 	}
 
+	public LiptonReductionStatisticsGenerator getStatistics() {
+		return mStatistics;
+	}
+
 	/**
 	 * An interface that supports sequential and parallel composition of letters.
 	 *

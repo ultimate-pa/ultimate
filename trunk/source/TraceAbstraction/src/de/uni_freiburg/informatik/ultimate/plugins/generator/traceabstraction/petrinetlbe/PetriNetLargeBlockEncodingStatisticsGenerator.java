@@ -29,22 +29,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
 public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGeneratorWithStopwatches
 		implements IStatisticsDataProvider {
 
-	private long mVarBasedMoverChecksPositive = 0;
-	private long mVarBasedMoverChecksNegative = 0;
-	private long mSemBasedMoverChecksPositive = 0;
-	private long mSemBasedMoverChecksNegative = 0;
-	private long mSemBasedMoverChecksUnknown = 0;
-	private long mSemBasedMoverCheckTime = 0;
-	private int mCheckedPairsTotal = 0;
+	private long mVarBasedMoverChecksPositive;
+	private long mVarBasedMoverChecksNegative;
+	private long mSemBasedMoverChecksPositive;
+	private long mSemBasedMoverChecksNegative;
+	private long mSemBasedMoverChecksUnknown;
+	private long mSemBasedMoverCheckTime;
+	private long mCheckedPairsTotal;
+	private final StatisticsData mLiptonStatistics = new StatisticsData();
 
 	public void reportCheckedPairsTotal(final int i) {
 		mCheckedPairsTotal += i;
@@ -67,6 +70,10 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	public void extractStatistics(final CachedIndependenceRelation<?, ?> cachedCheck) {
 		mCheckedPairsTotal += cachedCheck.getPositiveCacheSize();
 		mCheckedPairsTotal += cachedCheck.getNegativeCacheSize();
+	}
+
+	public void addLiptonStatistics(final LiptonReductionStatisticsGenerator stat) {
+		mLiptonStatistics.aggregateBenchmarkData(stat);
 	}
 
 	@Override
@@ -93,6 +100,8 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			return mSemBasedMoverCheckTime;
 		case CheckedPairsTotal:
 			return mCheckedPairsTotal;
+		case LiptonReductionStatistics:
+			return mLiptonStatistics;
 		default:
 			throw new AssertionError("unknown data");
 		}

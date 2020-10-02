@@ -154,6 +154,7 @@ public class PetriNetLargeBlockEncoding {
 			mStatistics.extractStatistics((SemanticIndependenceRelation) semanticCheck);
 			mStatistics.extractStatistics((SyntacticIndependenceRelation<?>) variableCheck);
 			mStatistics.extractStatistics(moverCheck);
+			mStatistics.addLiptonStatistics(lipton.getStatistics());
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
