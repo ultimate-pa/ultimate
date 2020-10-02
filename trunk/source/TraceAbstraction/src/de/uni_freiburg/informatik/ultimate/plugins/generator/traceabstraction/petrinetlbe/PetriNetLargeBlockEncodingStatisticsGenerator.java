@@ -35,10 +35,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
-public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGeneratorWithStopwatches
-		implements IStatisticsDataProvider {
+public class PetriNetLargeBlockEncodingStatisticsGenerator implements IStatisticsDataProvider {
 
 	private long mVarBasedMoverChecksPositive;
 	private long mVarBasedMoverChecksNegative;
@@ -105,11 +103,6 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 		default:
 			throw new AssertionError("unknown data");
 		}
-	}
-
-	@Override
-	public String[] getStopwatches() {
-		return new String[] {};
 	}
 
 	@Override
