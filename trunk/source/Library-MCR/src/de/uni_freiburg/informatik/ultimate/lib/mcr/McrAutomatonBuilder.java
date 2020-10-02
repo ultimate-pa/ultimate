@@ -139,13 +139,11 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	public NestedWordAutomaton<LETTER, IPredicate> buildMhbAutomaton(final PredicateFactory predicateFactory)
 			throws AutomataLibraryException {
-		final INestedWordAutomaton<Integer, String> intAutomaton = intersectNwa(getThreadAutomata());
-		final Map<String, IPredicate> states2Predicates = new HashMap<>();
+		final INestedWordAutomaton<Integer, String> automaton = intersectNwa(getThreadAutomata());
 		final Term trueTerm = mPredicateUnifier.getTruePredicate().getFormula();
-		for (final String state : intAutomaton.getStates()) {
-			states2Predicates.put(state, predicateFactory.newSPredicate(null, trueTerm));
-		}
-		return transformAutomaton(intAutomaton, states2Predicates::get, mEmptyStackFactory);
+		final Map<String, IPredicate> stateMap = automaton.getStates().stream()
+				.collect(Collectors.toMap(x -> x, x -> predicateFactory.newSPredicate(null, trueTerm)));
+		return transformAutomaton(automaton, stateMap::get, mEmptyStackFactory);
 	}
 
 	private <STATE> NestedWordAutomaton<LETTER, STATE> transformAutomaton(

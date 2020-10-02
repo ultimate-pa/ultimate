@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -27,9 +28,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
 /**
@@ -86,6 +91,11 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			final Map<STATE, IPredicate> stateMap) {
 		final Set<TermVariable> ipVars = stateMap.values().stream()
 				.flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable)).collect(Collectors.toSet());
+		final Script script = mManagedScript.getScript();
+		// ArrayIndexEqualityManager to eliminate stores with true as context (i.e. without any known equalities)
+		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(),
+				script.term("true"), QuantifiedFormula.EXISTS, mLogger, mManagedScript);
+		aiem.unlockSolver();
 		for (final STATE state : revTopSort(automaton, stateMap)) {
 			// Calculate the conjunction of wp for all successors (if not ignored)
 			final List<Term> wpConjuncts = new ArrayList<>();
@@ -105,14 +115,19 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 					Arrays.stream(wp.getFreeVars()).filter(x -> !ipVars.contains(x)).collect(Collectors.toSet());
 			final Term quantified =
 					SmtUtils.quantifier(mManagedScript.getScript(), QuantifiedFormula.FORALL, unnecessaryVars, wp);
-			final Term term = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
-					quantified, mSimplificationTechnique, mXnfConversionTechnique);
-			// Ignore the interpolant, if it still contains quantifiers or store
-			// This is workaround to avoid "too big" interpolants
-			if (!QuantifierUtils.isQuantifierFree(term) || SmtUtils.containsFunctionApplication(term, "store")) {
+			Term term = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantified,
+					mSimplificationTechnique, mXnfConversionTechnique);
+			// Ignore the interpolant, if it still contains quantifiers
+			if (!QuantifierUtils.isQuantifierFree(term)) {
 				continue;
 			}
-			// Add the wp conjunction as a predicate
+			// Eliminate all stores (using case distinction on index equalities)
+			final List<MultiDimensionalSelectOverNestedStore> stores =
+					MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(script, term);
+			for (final MultiDimensionalSelectOverNestedStore m : stores) {
+				term = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, aiem, term, m);
+			}
+			// Add the simplified wp conjunction as a predicate
 			stateMap.put(state, mPredicateUnifier.getOrConstructPredicate(term));
 		}
 		return stateMap;

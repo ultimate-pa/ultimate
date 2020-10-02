@@ -161,18 +161,17 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
 				final STATE succ = edge.getSucc();
 				final IPredicate succPredicate = stateMap.get(succ);
-				final List<UnmodifiableTransFormula> seqTfs = new ArrayList<>(2);
 				transition = edge.getLetter();
-				seqTfs.add(transition.getTransformula());
+				final UnmodifiableTransFormula tf = transition.getTransformula();
 				if (succPredicate == null) {
 					// Add var := true
-					seqTfs.add(assignVarToTrue(variables.get(succ)));
+					succTfs.add(sequentialComposition(Arrays.asList(tf, assignVarToTrue(variables.get(succ)))));
 				} else {
 					// Add [!succPredicate]
-					seqTfs.add(TransFormulaBuilder.constructTransFormulaFromTerm(
-							SmtUtils.not(script, succPredicate.getFormula()), succPredicate.getVars(), mManagedScript));
+					final UnmodifiableTransFormula notPred = TransFormulaBuilder.constructTransFormulaFromTerm(
+							SmtUtils.not(script, succPredicate.getFormula()), succPredicate.getVars(), mManagedScript);
+					succTfs.add(sequentialComposition(Arrays.asList(tf, notPred)));
 				}
-				succTfs.add(sequentialComposition(seqTfs));
 			}
 			final IProgramVar var = variables.get(state);
 			// Add [!var] as a disjunct
