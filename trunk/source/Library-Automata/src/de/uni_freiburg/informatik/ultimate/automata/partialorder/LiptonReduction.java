@@ -170,19 +170,18 @@ public class LiptonReduction<LETTER, PLACE> {
 	}
 
 	/**
-	 * Performs the choice rule on a Petri Net.
-	 *
-	 * NOTE: Backtranslation for this rule is not yet fully implemented.
+	 * Performs the choice rule on a Petri net.
 	 *
 	 * @param services
 	 *            A {@link AutomataLibraryServices} instance.
 	 * @param petriNet
-	 *            The Petri Net on which the choice rule should be performed.
-	 * @return new Petri Net, where the choice rule had been performed.
+	 *            The Petri net on which the choice rule should be performed.
+	 * @return new Petri net, where the choice rule has been performed.
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
 	 * @throws PetriNetNot1SafeException
-	 *             if Petri Net is not 1-safe.
+	 *             if Petri net is not 1-safe.
 	 */
 	private BoundedPetriNet<LETTER, PLACE> choiceRule(final BoundedPetriNet<LETTER, PLACE> petriNet)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -245,17 +244,18 @@ public class LiptonReduction<LETTER, PLACE> {
 	}
 
 	/**
-	 * Performs the sequence rule on the Petri Net.
+	 * Performs the sequence rule on the Petri net.
 	 *
 	 * @param services
 	 *            A {@link AutomataLibraryServices} instance.
 	 * @param petriNet
-	 *            The Petri Net on which the sequence rule should be performed.
-	 * @return new Petri Net, where the sequence rule had been performed.
+	 *            The Petri net on which the sequence rule should be performed.
+	 * @return new Petri net, where the sequence rule has been performed.
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
 	 * @throws PetriNetNot1SafeException
-	 *             if Petri Net is not 1-safe.
+	 *             if Petri net is not 1-safe.
 	 */
 	private BoundedPetriNet<LETTER, PLACE> sequenceRule(final BoundedPetriNet<LETTER, PLACE> petriNet)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -377,29 +377,29 @@ public class LiptonReduction<LETTER, PLACE> {
 	/**
 	 * Updates the mSequentialCompositions. This is needed for the backtranslation.
 	 *
-	 * @param sequentialIcfgEdge
-	 *            The sequentially composed IcfgEdge.
-	 * @param t1
-	 *            The first transition that had been sequentially composed.
-	 * @param t2
-	 *            The second transition that had been sequentially composed.
+	 * @param composedLetter
+	 *            The sequentially composed letter.
+	 * @param letter1
+	 *            The first letter that has been sequentially composed.
+	 * @param letter2
+	 *            The second letter that has been sequentially composed.
 	 */
-	private void updateSequentialCompositions(final LETTER sequentialIcfgEdge, final LETTER t1, final LETTER t2) {
+	private void updateSequentialCompositions(final LETTER composedLetter, final LETTER letter1, final LETTER letter2) {
 		final List<LETTER> combined = new ArrayList<>();
 
-		if (mSequentialCompositions.containsKey(t1)) {
-			combined.addAll(mSequentialCompositions.get(t1));
+		if (mSequentialCompositions.containsKey(letter1)) {
+			combined.addAll(mSequentialCompositions.get(letter1));
 		} else {
-			combined.add(t1);
+			combined.add(letter1);
 		}
 
-		if (mSequentialCompositions.containsKey(t2)) {
-			combined.addAll(mSequentialCompositions.get(t2));
+		if (mSequentialCompositions.containsKey(letter2)) {
+			combined.addAll(mSequentialCompositions.get(letter2));
 		} else {
-			combined.add(t2);
+			combined.add(letter2);
 		}
 
-		mSequentialCompositions.put(sequentialIcfgEdge, combined);
+		mSequentialCompositions.put(composedLetter, combined);
 	}
 
 	/**
@@ -435,8 +435,8 @@ public class LiptonReduction<LETTER, PLACE> {
 	 * @param petriNet
 	 *            The original Petri Net.
 	 * @param pendingCompositions
-	 *            A set that contains Triples (t1, t2, t3), where t1 is the new IcfgEdge consisting of the old
-	 *            ITransitions t2 and t3.
+	 *            A set that contains Triples (ab, a, b), where ab is the new letter resulting from the composition of a
+	 *            and b.
 	 * @return a new Petri Net with composed edges and without the edges that are not needed anymore.
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
