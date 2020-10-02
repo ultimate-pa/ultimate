@@ -230,7 +230,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 			throw new AssertionError("could be supported, but should not be used in our applications");
 		}
 		return SolveForSubjectUtils.divideByMonomial(script, subject, mRelationSymbol, xnf, mLhsMonomial,
-				mRhs.toTerm(script), mLhsCoefficient, true, intLiteralDivConstraint, additionalIo);
+				mRhs.toTerm(script), intLiteralDivConstraint, additionalIo);
 	}
 
 	@Override
