@@ -107,7 +107,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 		Stream.of(absPathReqDir.listFiles()).filter(a -> a.getName().endsWith(".req")).forEach(a -> a.delete());
 		Stream.of(absPathImgDir.listFiles()).filter(a -> a.getName().endsWith(".svg")).forEach(a -> a.delete());
 
-		for (final PatternType pattern : patterns) {
+		for (final PatternType<?> pattern : patterns) {
 			final File file = Paths.get(absPathReqDir.getAbsolutePath(),
 					pattern.getName() + "_" + pattern.getScope().getName() + ".req").toFile();
 
