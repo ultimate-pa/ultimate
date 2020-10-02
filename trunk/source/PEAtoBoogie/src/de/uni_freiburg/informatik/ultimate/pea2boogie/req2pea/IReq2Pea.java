@@ -26,10 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
-import java.util.Map;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 
@@ -43,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
  */
 public interface IReq2Pea {
 
-	Map<PatternType<?>, ReqPeas> getPattern2Peas();
+	List<ReqPeas> getReqPeas();
 
 	IReqSymbolTable getSymboltable();
 

@@ -140,9 +140,9 @@ public class RtInconcistencyConditionGenerator {
 	private final ILogger mPQELogger;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
-			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable,
-			final Map<PatternType<?>, ReqPeas> req2Automata, final BoogieDeclarations boogieDeclarations,
-			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
+			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable, final List<ReqPeas> reqPeas,
+			final BoogieDeclarations boogieDeclarations, final boolean separateInvariantHandling)
+			throws InvariantInfeasibleException {
 		mReqSymboltable = symboltable;
 		mServices = services;
 		mLogger = logger;
@@ -175,7 +175,7 @@ public class RtInconcistencyConditionGenerator {
 		mConstInliner = new Substitution(mScript, constToValue);
 
 		if (mSeparateInvariantHandling) {
-			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
+			mPrimedInvariant = constructPrimedStateInvariant(reqPeas);
 			mLogger.info("Finished generating primed state invariant of size " + new DAGSize().size(mPrimedInvariant));
 		} else {
 			mPrimedInvariant = mTrue;
@@ -219,15 +219,12 @@ public class RtInconcistencyConditionGenerator {
 	/**
 	 * Return a subset of requirements that should be used for generating rt-inconsistency checks.
 	 */
-	public List<Entry<PatternType<?>, PhaseEventAutomata>>
-			getRelevantRequirements(final Map<PatternType<?>, ReqPeas> req2Automata) {
+	public List<Entry<PatternType<?>, PhaseEventAutomata>> getRelevantRequirements(final List<ReqPeas> reqPeas) {
 		// we only consider automata that do not represent invariants or which have a disjunctive invariant
 		final List<Entry<PatternType<?>, PhaseEventAutomata>> rtr = new ArrayList<>();
-		for (final Entry<PatternType<?>, ReqPeas> entry : req2Automata.entrySet()) {
-			final PatternType<?> pattern = entry.getKey();
-			final ReqPeas peas = entry.getValue();
-
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : peas.getCounterTrace2Pea()) {
+		for (final ReqPeas reqPea : reqPeas) {
+			final PatternType<?> pattern = reqPea.getPattern();
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPea.getCounterTrace2Pea()) {
 				rtr.add(new Pair<>(pattern, pea.getValue()));
 			}
 		}
@@ -413,17 +410,16 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
-	private Term constructPrimedStateInvariant(final Map<PatternType<?>, ReqPeas> req2Automata)
-			throws InvariantInfeasibleException {
+	private Term constructPrimedStateInvariant(final List<ReqPeas> reqPeas) throws InvariantInfeasibleException {
 
 		final Map<PatternType<?>, CDD> primedStateInvariants = new HashMap<>();
-		for (final Entry<PatternType<?>, ReqPeas> entry : req2Automata.entrySet()) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+		for (final ReqPeas reqpea : reqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
 				if (filterReqs(pea.getValue())) {
 					// this is not an invariant we want to consider
 					continue;
 				}
-				primedStateInvariants.put(entry.getKey(),
+				primedStateInvariants.put(reqpea.getPattern(),
 						pea.getValue().getPhases()[0].getStateInvariant().prime(mReqSymboltable.getConstVars()));
 			}
 		}

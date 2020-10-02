@@ -68,7 +68,7 @@ public class Req2Pea implements IReq2Pea {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResultUtil;
-	private final Map<PatternType<?>, ReqPeas> mPattern2Peas;
+	private final List<ReqPeas> mPattern2Peas;
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
 
@@ -100,9 +100,9 @@ public class Req2Pea implements IReq2Pea {
 		final Map<String, Integer> id2bounds = builder.getId2Bounds();
 		mPattern2Peas = generatePeas(requirements, id2bounds);
 
-		for (final Entry<PatternType<?>, ReqPeas> entry : mPattern2Peas.entrySet()) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
-				builder.addPea(entry.getKey(), pea.getValue());
+		for (final ReqPeas reqpea : mPattern2Peas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
+				builder.addPea(reqpea.getPattern(), pea.getValue());
 			}
 		}
 
@@ -121,8 +121,8 @@ public class Req2Pea implements IReq2Pea {
 	}
 
 	@Override
-	public Map<PatternType<?>, ReqPeas> getPattern2Peas() {
-		return Collections.unmodifiableMap(mPattern2Peas);
+	public List<ReqPeas> getReqPeas() {
+		return Collections.unmodifiableList(mPattern2Peas);
 	}
 
 	@Override
@@ -130,8 +130,7 @@ public class Req2Pea implements IReq2Pea {
 		return mSymbolTable;
 	}
 
-	private Map<PatternType<?>, ReqPeas> generatePeas(final List<PatternType<?>> patterns,
-			final Map<String, Integer> id2bounds) {
+	private List<ReqPeas> generatePeas(final List<PatternType<?>> patterns, final Map<String, Integer> id2bounds) {
 		final Map<PatternType<?>, ReqPeas> req2automata = new LinkedHashMap<>();
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
@@ -172,7 +171,7 @@ public class Req2Pea implements IReq2Pea {
 
 		mLogger.info(String.format("Finished transforming %s requirements to PEAs", patterns.size()));
 
-		return req2automata;
+		return req2automata.entrySet().stream().map(a -> a.getValue()).collect(Collectors.toList());
 	}
 
 	@Override

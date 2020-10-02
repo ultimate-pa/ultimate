@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -66,7 +65,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 
 	private final ILogger mLogger;
 	private final List<InitializationPattern> mInitPattern;
-	private final Map<PatternType<?>, ReqPeas> mPattern2Peas;
+	private final List<ReqPeas> mReqPeas;
 	private IReqSymbolTable mSymbolTable;
 	private boolean mHasErrors;
 	private final IUltimateServiceProvider mServices;
@@ -81,13 +80,13 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		mLogger = logger;
 		mInitPattern = init;
 		mPea2EffectStore = new HashMap<>();
-		mPattern2Peas = new LinkedHashMap<>();
+		mReqPeas = new ArrayList<>();
 		mCddTransformer = new Req2CauseTrackingCDD(mLogger);
 	}
 
 	@Override
 	public void transform(final IReq2Pea req2pea) {
-		final Map<PatternType<?>, ReqPeas> simplePeas = req2pea.getPattern2Peas();
+		final List<ReqPeas> simplePeas = req2pea.getReqPeas();
 		final IReqSymbolTable oldSymbolTable = req2pea.getSymboltable();
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 		for (final InitializationPattern p : mInitPattern) {
@@ -96,9 +95,9 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				builder.addAuxvar(ReqTestAnnotator.getTrackingVar(p.getId()), "bool", p);
 			}
 		}
-		for (final Entry<PatternType<?>, ReqPeas> entry : simplePeas.entrySet()) {
-			final PatternType<?> pattern = entry.getKey();
-			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = entry.getValue().getCounterTrace2Pea();
+		for (final ReqPeas reqpea : simplePeas) {
+			final PatternType<?> pattern = reqpea.getPattern();
+			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqpea.getCounterTrace2Pea();
 			final List<Entry<CounterTrace, PhaseEventAutomata>> newCt2pea = new ArrayList<>(ct2pea.size());
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
 				final PhaseEventAutomata newPea =
@@ -106,7 +105,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				newCt2pea.add(new Pair<>(pea.getKey(), newPea));
 				builder.addPea(pattern, newPea);
 			}
-			mPattern2Peas.put(pattern, new ReqPeas(pattern, newCt2pea));
+			mReqPeas.add(new ReqPeas(pattern, newCt2pea));
 		}
 		// builder.addAuxvar(mLocation, ReqTestAnnotator.INITIAL_STEP_FLAG , "bool");
 		mSymbolTable = builder.constructSymbolTable();
@@ -359,8 +358,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	}
 
 	@Override
-	public Map<PatternType<?>, ReqPeas> getPattern2Peas() {
-		return mPattern2Peas;
+	public List<ReqPeas> getReqPeas() {
+		return mReqPeas;
 	}
 
 	@Override
