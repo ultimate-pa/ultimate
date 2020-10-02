@@ -107,12 +107,14 @@ public abstract class PatternType<T extends PatternType<?>> {
 	public ReqPeas transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
 		if (mPEAs == null) {
 			final List<CounterTrace> cts = constructCounterTrace(id2bounds);
-			final String name = getId() + "_" + createPeaSuffix();
+			final String name = getId();
 
 			final List<Entry<CounterTrace, PhaseEventAutomata>> peas = new ArrayList<>(cts.size());
+			int i = 0;
 			for (final CounterTrace ct : cts) {
 				final Trace2PeaCompilerStateless compiler =
-						new Trace2PeaCompilerStateless(logger, name, ct, id2bounds.keySet());
+						new Trace2PeaCompilerStateless(logger, name + "_ct" + i, ct, id2bounds.keySet());
+				++i;
 				peas.add(new Pair<>(ct, compiler.getResult()));
 			}
 			mPEAs = new ReqPeas(this, peas);
