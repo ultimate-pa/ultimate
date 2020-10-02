@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
@@ -53,6 +52,7 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
+	private final ArrayIndexEqualityManager mAiem;
 
 	public WpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
@@ -65,6 +65,10 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		mPredicateUnifier = predicateUnifier;
 		mPredicateTransformer =
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
+		// ArrayIndexEqualityManager to eliminate stores with true as context (i.e. without any known equalities)
+		mAiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(),
+				mManagedScript.getScript().term("true"), QuantifiedFormula.EXISTS, mLogger, mManagedScript);
+		mAiem.unlockSolver();
 	}
 
 	private <STATE> List<STATE> revTopSort(final INestedWordAutomaton<LETTER, STATE> automaton,
@@ -91,11 +95,6 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			final Map<STATE, IPredicate> stateMap) {
 		final Set<TermVariable> ipVars = stateMap.values().stream()
 				.flatMap(x -> x.getVars().stream().map(IProgramVar::getTermVariable)).collect(Collectors.toSet());
-		final Script script = mManagedScript.getScript();
-		// ArrayIndexEqualityManager to eliminate stores with true as context (i.e. without any known equalities)
-		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(),
-				script.term("true"), QuantifiedFormula.EXISTS, mLogger, mManagedScript);
-		aiem.unlockSolver();
 		for (final STATE state : revTopSort(automaton, stateMap)) {
 			// Calculate the conjunction of wp for all successors (if not ignored)
 			final List<Term> wpConjuncts = new ArrayList<>();
@@ -122,10 +121,10 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 				continue;
 			}
 			// Eliminate all stores (using case distinction on index equalities)
-			final List<MultiDimensionalSelectOverNestedStore> stores =
-					MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(script, term);
+			final List<MultiDimensionalSelectOverNestedStore> stores = MultiDimensionalSelectOverNestedStore
+					.extractMultiDimensionalSelectOverStores(mManagedScript.getScript(), term);
 			for (final MultiDimensionalSelectOverNestedStore m : stores) {
-				term = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, aiem, term, m);
+				term = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, term, m);
 			}
 			// Add the simplified wp conjunction as a predicate
 			stateMap.put(state, mPredicateUnifier.getOrConstructPredicate(term));
