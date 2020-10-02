@@ -59,18 +59,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * Implements an {@link ICompositionFactory} that is suitable for Trace
- * Abstraction. This class is used by {@link PetriNetLargeBlockEncoding}.
+ * Implements an {@link ICompositionFactory} that is suitable for Trace Abstraction. This class is used by
+ * {@link PetriNetLargeBlockEncoding}.
  *
  * @author Elisabeth Schanno
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (sourceheizmann@informatik.uni-freiburg.de)
  *
  */
 public class IcfgCompositionFactory implements ICompositionFactory<IIcfgTransition<?>> {
 
-	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique mXnfConversionTechnique =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -96,12 +97,13 @@ public class IcfgCompositionFactory implements ICompositionFactory<IIcfgTransiti
 	}
 
 	@Override
-	public IIcfgTransition<IcfgLocation> composeSequential(IIcfgTransition<?> first, IIcfgTransition<?> second) {
+	public IIcfgTransition<IcfgLocation> composeSequential(final IIcfgTransition<?> first,
+			final IIcfgTransition<?> second) {
 		// Simplify resulting TransFormula because various other algorithms in Ultimate
 		// have to work with this term.
 		final boolean simplify = true;
 		// Try to eliminate auxiliary variables to avoid quantifier alterations in
-		// subsequent SlettersMT solver calls during verification.
+		// subsequent SMT solver calls during verification.
 		final boolean tryAuxVarElimination = true;
 
 		final IcfgLocation source = first.getSource();
@@ -111,11 +113,11 @@ public class IcfgCompositionFactory implements ICompositionFactory<IIcfgTransiti
 		assert isComposable(transitions) : "You cannot have calls or returns in sequential compositions";
 
 		// TODO This partially duplicates code in IcfgEdgeBuilder
-		final List<UnmodifiableTransFormula> transFormulas = transitions.stream().map(IcfgUtils::getTransformula)
-				.collect(Collectors.toList());
-		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript,
-				simplify, tryAuxVarElimination, false, mXnfConversionTechnique, mSimplificationTechnique,
-				transFormulas);
+		final List<UnmodifiableTransFormula> transFormulas =
+				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
+		final UnmodifiableTransFormula tf =
+				TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
+						tryAuxVarElimination, false, mXnfConversionTechnique, mSimplificationTechnique, transFormulas);
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 
@@ -123,7 +125,7 @@ public class IcfgCompositionFactory implements ICompositionFactory<IIcfgTransiti
 	}
 
 	@Override
-	public IIcfgTransition<IcfgLocation> composeParallel(List<IIcfgTransition<?>> transitions) {
+	public IIcfgTransition<IcfgLocation> composeParallel(final List<IIcfgTransition<?>> transitions) {
 		assert !transitions.isEmpty() : "Cannot compose 0 transitions";
 		assert isComposable(transitions) : "You cannot have calls or returns in parallel compositions";
 
@@ -133,20 +135,20 @@ public class IcfgCompositionFactory implements ICompositionFactory<IIcfgTransiti
 				&& t.getTarget() == target) : "Can only compose transitions with equal sources and targets.";
 
 		// TODO This partially duplicates code in IcfgEdgeBuilder
-		final List<UnmodifiableTransFormula> transFormulas = transitions.stream().map(IcfgUtils::getTransformula)
-				.collect(Collectors.toList());
-		final UnmodifiableTransFormula[] tfArray = transFormulas
-				.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
+		final List<UnmodifiableTransFormula> transFormulas =
+				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
+		final UnmodifiableTransFormula[] tfArray =
+				transFormulas.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
 		// TODO Matthias 2019-11-13: Serial number should be unique!!!?!
 		// Maybe we should move these constructions to the edge factory
 		// which can construct unique serial numbers
 		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				serialNumber, mManagedScript, null, false, mXnfConversionTechnique, tfArray);
-		final LinkedHashMap<TermVariable, IIcfgTransition<?>> branchIndicator2edge = constructBranchIndicatorToEdgeMapping(
-				serialNumber, mManagedScript, transitions);
-		final TermVariable[] branchIndicatorArray = branchIndicator2edge.keySet()
-				.toArray(new TermVariable[branchIndicator2edge.size()]);
+		final LinkedHashMap<TermVariable, IIcfgTransition<?>> branchIndicator2edge =
+				constructBranchIndicatorToEdgeMapping(serialNumber, mManagedScript, transitions);
+		final TermVariable[] branchIndicatorArray =
+				branchIndicator2edge.keySet().toArray(new TermVariable[branchIndicator2edge.size()]);
 		final UnmodifiableTransFormula parallelWithBranchIndicators = TransFormulaUtils.parallelComposition(mLogger,
 				mServices, serialNumber, mManagedScript, branchIndicatorArray, false, mXnfConversionTechnique, tfArray);
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null,
@@ -154,7 +156,7 @@ public class IcfgCompositionFactory implements ICompositionFactory<IIcfgTransiti
 		ModelUtils.mergeAnnotations(transitions, rtr);
 
 		// Update info for back translation
-		updateChoiceCompositions(rtr, branchIndicator2edge);
+		storeBranchEncoders(branchIndicator2edge);
 
 		return rtr;
 	}
@@ -173,8 +175,7 @@ public class IcfgCompositionFactory implements ICompositionFactory<IIcfgTransiti
 		return result;
 	}
 
-	private void updateChoiceCompositions(final IIcfgTransition<?> choiceIcfgEdge,
-			final Map<TermVariable, IIcfgTransition<?>> indicators) {
+	private void storeBranchEncoders(final Map<TermVariable, IIcfgTransition<?>> indicators) {
 		for (final Map.Entry<TermVariable, IIcfgTransition<?>> entry : indicators.entrySet()) {
 			assert !mBranchEncoders.containsKey(entry.getValue()) : "Ambiguous branch encoder for transition";
 			mBranchEncoders.put(entry.getValue(), entry.getKey());

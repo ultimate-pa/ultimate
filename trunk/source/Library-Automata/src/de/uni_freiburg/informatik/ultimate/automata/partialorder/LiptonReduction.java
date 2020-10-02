@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * Performs a form of Lipton reduction on Petri nets. This reduction fuses sequences of transition into one, if given
  * independence properties ("left / right mover") are satisfied w.r.t. to all concurrent transitions.
  *
- * See "Reduction: a method of proving properties of parallel programs", <https://dl.acm.org/doi/10.1145/361227.361234>
+ * See "Reduction: a method of proving properties of parallel programs" (https://dl.acm.org/doi/10.1145/361227.361234)
  *
  * Our implementation here can also perform choice (or "parallel") compositions of transitions with the same pre- and
  * post-sets.
@@ -439,9 +439,13 @@ public class LiptonReduction<LETTER, PLACE> {
 	private boolean sequenceRuleCheck(final ITransition<LETTER, PLACE> t1, final ITransition<LETTER, PLACE> t2,
 			final PLACE place, final BoundedPetriNet<LETTER, PLACE> petriNet) {
 
-		return mCompositionFactory.isComposable(t1.getSymbol()) && mCompositionFactory.isComposable(t2.getSymbol())
-				&& petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(place)
-				&& (isRightMover(t1) || isLeftMover(t2));
+		final boolean composable =
+				mCompositionFactory.isComposable(t1.getSymbol()) && mCompositionFactory.isComposable(t2.getSymbol());
+		final boolean structurallyCorrect =
+				petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(place);
+		final boolean moverProperties = isRightMover(t1) || isLeftMover(t2);
+
+		return composable && structurallyCorrect && moverProperties;
 	}
 
 	/**

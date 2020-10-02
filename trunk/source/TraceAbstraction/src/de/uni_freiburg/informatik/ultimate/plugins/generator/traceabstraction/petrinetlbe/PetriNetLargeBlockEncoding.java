@@ -81,8 +81,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
  */
 public class PetriNetLargeBlockEncoding {
 
-	public static int MAX_ITERATIONS = Integer.MAX_VALUE;
-
 	private final ILogger mLogger;
 	private final BoundedPetriNet<IIcfgTransition<?>, IPredicate> mResult;
 	private final ManagedScript mManagedScript;
