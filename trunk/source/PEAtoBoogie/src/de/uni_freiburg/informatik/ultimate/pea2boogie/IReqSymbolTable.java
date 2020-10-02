@@ -73,7 +73,7 @@ public interface IReqSymbolTable {
 
 	Collection<Declaration> getDeclarations();
 
-	Map<PatternType, BoogieLocation> getLocations();
+	Map<PatternType<?>, BoogieLocation> getLocations();
 
 	Map<String, Expression> getConstToValue();
 

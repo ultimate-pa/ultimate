@@ -354,7 +354,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public Map<PatternType, BoogieLocation> getLocations() {
+	public Map<PatternType<?>, BoogieLocation> getLocations() {
 		// TODO Auto-generated method stub
 		return null;
 	}

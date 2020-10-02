@@ -94,7 +94,7 @@ public class ReqSymboltableBuilder {
 	private final Set<String> mClockVars;
 	private final Map<String, Expression> mConst2Value;
 	private final Map<String, Integer> mId2Bounds;
-	private final Map<PatternType, BoogieLocation> mReq2Loc;
+	private final Map<PatternType<?>, BoogieLocation> mReq2Loc;
 	private final Set<String> mInputVars;
 	private final Set<String> mOutputVars;
 
@@ -159,7 +159,7 @@ public class ReqSymboltableBuilder {
 	 * Add the variables and clocks of a PEA generated from a pattern to the symbol table.
 	 *
 	 */
-	public void addPea(final PatternType pattern, final PhaseEventAutomata pea) {
+	public void addPea(final PatternType<?> pattern, final PhaseEventAutomata pea) {
 		addVar(getPcName(pea), BoogieType.TYPE_INT, pattern, mPcVars);
 		pea.getClocks().forEach(a -> addVar(a, BoogieType.TYPE_REAL, pattern, mClockVars));
 
@@ -188,7 +188,7 @@ public class ReqSymboltableBuilder {
 		}
 	}
 
-	public void addAuxvar(final String name, final String typeString, final PatternType source) {
+	public void addAuxvar(final String name, final String typeString, final PatternType<?> source) {
 		addVar(name, toPrimitiveType(typeString), source, mStateVars);
 	}
 
@@ -277,7 +277,7 @@ public class ReqSymboltableBuilder {
 		return val;
 	}
 
-	private Integer tryParseInt(final PatternType pattern, final String val) {
+	private Integer tryParseInt(final PatternType<?> pattern, final String val) {
 		try {
 			return new BigDecimal(val).toBigIntegerExact().intValueExact();
 		} catch (final NumberFormatException ex) {
@@ -290,7 +290,7 @@ public class ReqSymboltableBuilder {
 		}
 	}
 
-	private void addVar(final String name, final BoogieType type, final PatternType source, final Set<String> kind) {
+	private void addVar(final String name, final BoogieType type, final PatternType<?> source, final Set<String> kind) {
 		addVarOneKind(name, type, source, kind);
 		if (source instanceof InitializationPattern
 				&& ((InitializationPattern) source).getCategory() == VariableCategory.CONST) {
@@ -301,7 +301,7 @@ public class ReqSymboltableBuilder {
 		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
 	}
 
-	private void addVarOneKind(final String name, final BoogieType type, final PatternType source,
+	private void addVarOneKind(final String name, final BoogieType type, final PatternType<?> source,
 			final Set<String> kind) {
 		if (type == null && (!kind.contains(name) || !mId2Type.containsKey(name))) {
 			throw new AssertionError();
@@ -325,14 +325,14 @@ public class ReqSymboltableBuilder {
 		mId2VarLHS.put(name, new VariableLHS(loc, name));
 	}
 
-	private void checkVar(final String name, final PatternType source) {
+	private void checkVar(final String name, final PatternType<?> source) {
 		if (mId2Type.containsKey(name)) {
 			return;
 		}
 		addErrorError(name, new ErrorInfo(ErrorType.MISSING_DECLARATION, source));
 	}
 
-	private ILocation getLocation(final PatternType source) {
+	private ILocation getLocation(final PatternType<?> source) {
 		// TODO: Fix locations
 		final ILocation loc = mReq2Loc.get(source);
 		if (loc != null) {
@@ -385,7 +385,7 @@ public class ReqSymboltableBuilder {
 		private final Map<String, IdentifierExpression> mId2IdExpr;
 		private final Map<String, VariableLHS> mId2VarLHS;
 		private final Map<String, Expression> mConst2Value;
-		private final Map<PatternType, BoogieLocation> mReq2Loc;
+		private final Map<PatternType<?>, BoogieLocation> mReq2Loc;
 		private final Set<String> mStateVars;
 		private final Set<String> mConstVars;
 		private final Set<String> mPrimedVars;
@@ -402,7 +402,7 @@ public class ReqSymboltableBuilder {
 				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs,
 				final Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars,
 				final Set<String> constVars, final Set<String> eventVars, final Set<String> pcVars,
-				final Set<String> clockVars, final Map<PatternType, BoogieLocation> req2loc,
+				final Set<String> clockVars, final Map<PatternType<?>, BoogieLocation> req2loc,
 				final Map<String, Expression> const2Value, final Set<String> inputVars, final Set<String> outputVars,
 				final Map<String, FunctionDeclaration> buildinFunctions) {
 			mId2Type = Collections.unmodifiableMap(id2Type);
@@ -435,7 +435,7 @@ public class ReqSymboltableBuilder {
 		}
 
 		@Override
-		public Map<PatternType, BoogieLocation> getLocations() {
+		public Map<PatternType<?>, BoogieLocation> getLocations() {
 			return Collections.unmodifiableMap(mReq2Loc);
 		}
 
@@ -598,22 +598,22 @@ public class ReqSymboltableBuilder {
 	public static final class ErrorInfo {
 
 		private final ErrorType mType;
-		private final PatternType mSource;
+		private final PatternType<?> mSource;
 		private final String mMessage;
 
-		public ErrorInfo(final ErrorType type, final PatternType req) {
+		public ErrorInfo(final ErrorType type, final PatternType<?> req) {
 			mType = type;
 			mSource = req;
 			mMessage = null;
 		}
 
-		public ErrorInfo(final ErrorType type, final PatternType req, final String message) {
+		public ErrorInfo(final ErrorType type, final PatternType<?> req, final String message) {
 			mType = type;
 			mSource = req;
 			mMessage = message;
 		}
 
-		public PatternType getSource() {
+		public PatternType<?> getSource() {
 			return mSource;
 		}
 
