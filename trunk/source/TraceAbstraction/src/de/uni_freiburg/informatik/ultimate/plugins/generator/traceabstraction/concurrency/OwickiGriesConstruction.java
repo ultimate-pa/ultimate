@@ -80,7 +80,8 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	
 	//Variables for Annotation construction
 	private final Map<PLACE, IProgramVar> mGhostVariables;
-	private final Map<PLACE, IPredicate> mFormulaMapping;
+	private final Map<PLACE, IPredicate> mFormulaMappingD;
+	private final Map<PLACE, IPredicate> mFormulaMappingI;
 	private final Set<UnmodifiableTransFormula> mGhostInitAssignment;
 	private final Map<ITransition<IIcfgTransition<LOC>, PLACE>,UnmodifiableTransFormula> mAssignmentMapping;
 	
@@ -94,58 +95,88 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 			mSymbolTable = csToolkit.getSymbolTable();
 			mServices = services;
 			mFactory = new BasicPredicateFactory(mServices, mManagedScript,
-				csToolkit.getSymbolTable());
-			
+				csToolkit.getSymbolTable());			
 			
 			mGhostVariables = getGhostVariables();
-			mFormulaMapping = getFormulaMapping();
+			mFormulaMappingD = getFormulaMappingD();	
+			mFormulaMappingI = getFormulaMappingI();
 			mGhostInitAssignment = getGhostInitAssignment();
-			mAssignmentMapping = getAssignmentMapping();
+			mAssignmentMapping = getAssignmentMapping();			
 			
+			//TODO: call other constructor.
 			mAnnotation = new OwickiGriesAnnotation<>();
-			
-			//TODO: Cambiar esto a mandarlo a Annotation constructor, notas en Annotation class	 
+		
 	}	 
 
 	/**
 	 * Predicate: disjunction of Markings predicate.
-	 * Markings predicate: Conjunction of GhostVariable and FH predicate.
+	 * Markings predicate: Conjunction of All GhostVariable and FH predicate.
 	 * @return a Map with a predicate for each place in Net.
 	 */	
-	public Map<PLACE, IPredicate> getFormulaMapping () {
+	public Map<PLACE, IPredicate> getFormulaMappingD() {
 		Map<PLACE, IPredicate> Mapping = new HashMap<PLACE, IPredicate>();	     
 	    for (PLACE place: mNet.getPlaces()) {
 	    	Set<IPredicate> Clauses = new HashSet<>();	    	  	
 	    	mFloydHoareAnnotation.forEach((key,value)-> {
 	    	if(mFloydHoareAnnotation.containsKey(place)) {
-	    			Clauses.add(getMarkingPredicate(place, key));}});
+	    			Clauses.add(getMarkingPredicateD(place, key));}});
 	    	Mapping.put(place, mFactory.or(Clauses)); }	    	
 		return Mapping;	
 	}
 	
 	/**
+	 * Predicate: Implication of Markings predicate.
+	 * Markings predicate: Conjunction of All GhostVariable and FH predicate.
+	 * @return a Map with a predicate for each place in Net.
+	 */	
+	public Map<PLACE, IPredicate> getFormulaMappingI () {
+		Map<PLACE, IPredicate> Mapping = new HashMap<PLACE, IPredicate>();	     
+	    for (PLACE place: mNet.getPlaces()) {
+	    	Set<IPredicate> Clauses = new HashSet<>();	
+	    	Clauses.add(getGhostPredicate(place)); //place's GhostVariable
+	    	mFloydHoareAnnotation.forEach((key,value)-> { //get implication
+	    	if(mFloydHoareAnnotation.containsKey(place)) {
+	    			Clauses.add(getMarkingPredicateI(place, key));}});	    	
+	    	Mapping.put(place, mFactory.and(Clauses)); }	    	
+		return Mapping;	
+	}		
+
+	/**
 	 * @param place
 	 * @param marking
 	 * @return Predicate with conjunction of Ghost variables and predicate of marking
 	 */
-	private  IPredicate getMarkingPredicate(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
-		//TODO: Conjunction of variables not in Marking 
-		//OptionA: Just Marking shared variables, Which variables?: Find if marking is subset of another.
-			//If marking if subset of another marking in FHAnn, get variables and set to false from SuperMarking\marking.
-		//OptionB: Negation of all other Ghost variables not in Marking.
-			//Complement set: GhostVariables(Only for places/ only construction??)\marking places
-		
-		//TODO:Formula Type: Conjunction and Implication		
-		
+	private  IPredicate getMarkingPredicateD(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
+		//TODO:Formula Type: Conjunction and Implication				
 		Set<IPredicate> terms =  new HashSet<>(); 
 		marking.forEach(element -> terms.add(getGhostPredicate(element))); //GhostVariables of places in marking		
-		terms.addAll(getAllNotMarking(marking)); //OptionB
+		terms.addAll(getAllNotMarking(marking)); //OptionB: getAllNotMarking; OptionA: getSubsetMarking;
 		terms.add(mFloydHoareAnnotation.get(place)); //Predicate of marking	
 		return  mFactory.and(terms);		
 	}
 	
+	/**
+	 * @param place
+	 * @param marking
+	 * @return Predicate with implication of Ghost variables and predicate of marking
+	 */
+	private  IPredicate getMarkingPredicateI(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
+		//TODO://Change return to Implication of other places and marking predicate.	
+		Set<IPredicate> terms = new HashSet<>(), clauses =  new HashSet<>(); //other places in in Marking with place
+		marking.forEach(element -> {			
+		if(element != place) { //Conjunction of other places' GhostVariables
+			terms.add(getGhostPredicate(element));}});		
+		clauses.add(mFactory.and(terms)); 
+		clauses.add(mFloydHoareAnnotation.get(place)); //marking predicate
+		return mFactory.and(terms); 	
+	}	
+	
+	/**
+	 * 
+	 * @param marking
+	 * @return Formula MethodB:Predicate with GhostVariables of all other places not in marking
+	 */
 	private Set<IPredicate> getAllNotMarking(Marking<IIcfgTransition<LOC>, PLACE> marking){
-	//Formula MethodB: GhostVariables of all other places not in marking
 		Set<IPredicate> predicates = new HashSet<>();
 	    Collection<PLACE> notMarking = mNet.getPlaces();
 		notMarking.removeAll(marking.stream().collect(Collectors.toSet()));		
@@ -153,26 +184,37 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	    return predicates;		
 	}
 	
+	/**
+	 * 
+	 * @param marking
+	 * @return Formula MethodA: GhostVariables if marking is subset of other marking
+	 */
 	private Set<IPredicate> getSubsetMarking(Marking<IIcfgTransition<LOC>, PLACE> marking){
-	//Formula MethodB: GhostVariables of all other places not in marking
-		
-		Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
-		//Get all Supersets of Marking
-		mFloydHoareAnnotation.keySet().forEach(marking -> );
-		Set<IPredicate> predicates = new HashSet<>();
-	    Collection<PLACE> notMarking = mNet.getPlaces();
-		notMarking.removeAll(markPlaces);		
+		Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet()); 
+		Set<Marking<IIcfgTransition<LOC>, PLACE>> Markings = mFloydHoareAnnotation.keySet();	
+		Collection<PLACE> notMarking = new HashSet<>();
+		Markings.forEach(otherMarking -> notMarking.addAll(getSupPlaces(otherMarking, markPlaces)));
+		Set<IPredicate> predicates = new HashSet<>();	    
 	    notMarking.forEach(element -> predicates.add(mFactory.not(getGhostPredicate(element))));
 	    return predicates;		
 	}
 	
+	private Collection<PLACE> getSupPlaces(Marking<IIcfgTransition<LOC>, PLACE> otherMarking, Set<PLACE> markPlaces){
+		Collection<PLACE> SubPlaces = new HashSet<>();
+		Set<PLACE> otherPlaces = otherMarking.stream().collect(Collectors.toSet()); 
+		if (otherPlaces.containsAll(markPlaces)) {
+			otherPlaces.removeAll(markPlaces);
+			SubPlaces.addAll(otherPlaces);}		
+		return SubPlaces;
+	}
+
 	
 	/** 
 	 * @param place
 	 * @return Predicate place's GhostVariable
 	 */
 	private IPredicate getGhostPredicate(PLACE place) {
-	  return mFactory.newPredicate(mAnnotation.mGhostVariables.get(place).getTerm());
+	  return mFactory.newPredicate(mGhostVariables.get(place).getTerm());
 	 }
 	
 	/**
@@ -223,8 +265,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * 
 	 * @return Map of Places' Ghost Variables assignments to Transitions
 	 * 
-	 */
-	
+	 */	
 	private Map<ITransition<IIcfgTransition<LOC>, PLACE>,UnmodifiableTransFormula> getAssignmentMapping(){
 		Map<ITransition<IIcfgTransition<LOC>,PLACE>,UnmodifiableTransFormula> AssignmentMapping = 
 				new HashMap <ITransition<IIcfgTransition<LOC>,PLACE>, UnmodifiableTransFormula>();

@@ -28,9 +28,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -45,43 +47,82 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public class OwickiGriesAnnotation<LETTER, PLACE> {
 
-	// Petri net //TODO: Still is this PetriNet needed here?
-	//protected IPetriNet<LETTER, PLACE> mPetriNet;
+	 //Petri net 
+	private final IPetriNet<LETTER, PLACE> mPetriNet;
 
 	/**
 	 * Omega: maps Predicate -> Place
 	 */
-	// TODO These fields should be private final; and set in the constructor; and there should be getter methods
-	protected Map<PLACE, IPredicate> mFormulaMapping;
+	private final Map<PLACE, IPredicate> mFormulaMapping;
 	
 	/**
 	 * Gamma: maps GhostAssignment -> transition
 	 */
-	protected Map<ITransition<LETTER,PLACE>, LETTER> mAssignmentMapping;
+	private final Map<ITransition<LETTER,PLACE>, LETTER> mAssignmentMapping;
 	
 	/**
 	 * VGhost: maps Ghost Variables to set
 	 */	
-	protected Map<PLACE, IProgramVar> mGhostVariables;
+	//TODO: Map or Set? Map might be only needed for Construction
+	private final Set<IProgramVar> mGhostVariables;
 	
 	/**
 	 * rho(VGhost):  set of predicate value -> GhostVariables
 	 */
 	//protected Map<ITransition<LETTER,PLACE>,LETTER> mGhostAssignment;
-	protected Set<IIcfgTransition<IcfgLocation>> mGhostAssignment;
+	private final Map<ITransition<LETTER, PLACE>,UnmodifiableTransFormula> mGhostInitAssignment;
 
 	public OwickiGriesAnnotation() {
-		//mPetriNet = null;
+		mPetriNet = null;
 		mFormulaMapping = null;
 		mAssignmentMapping = null;
 		mGhostVariables = null;
-		mGhostAssignment = null;	
+		mGhostInitAssignment = null;	
 		
 	}
-
+	
+	/**
+	 * Constructor
+	 * @param FormulaMapping
+	 * @param AssignmentMapping
+	 * @param GhostVariables
+	 * @param GhostInitAssignment
+	 * @param net
+	 */
+	public  OwickiGriesAnnotation
+	(Map<PLACE, IPredicate> FormulaMapping, Map<ITransition<LETTER,PLACE>, LETTER> AssignmentMapping,
+			Set<IProgramVar> GhostVariables, Map<ITransition<LETTER, PLACE>,UnmodifiableTransFormula> GhostInitAssignment, IPetriNet<LETTER, PLACE> net) {
+		mFormulaMapping = FormulaMapping;
+		mAssignmentMapping = AssignmentMapping;
+		mGhostVariables = GhostVariables;
+		mGhostInitAssignment = GhostInitAssignment;
+		mPetriNet = net;
+	}
+	
+	public Map<PLACE, IPredicate> getFormulaMapping() {
+		return mFormulaMapping;
+	}
+	
+	public Map<ITransition<LETTER,PLACE>, LETTER> getAssignmentMapping(){
+		return mAssignmentMapping;
+	}
+	
+	public Set<IProgramVar> GhostVariables(){
+		return mGhostVariables;
+	}
+	
+	public  Map<ITransition<LETTER, PLACE>,UnmodifiableTransFormula> getGhostAssignment(){
+		return mGhostInitAssignment;
+	}
+	
+	public IPetriNet<LETTER, PLACE> getPetriNet(){
+		return mPetriNet;
+	}
+	
 	//TODO: define OGAnnotation Size
 	public int getSize() {
 		// ...
 		return 0;
 	}
+	
 }

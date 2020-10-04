@@ -25,12 +25,25 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST;
 
 /**
  * TODO
@@ -42,24 +55,80 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <PLACE>
  */
 public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mManagedScript;
+	
 	private final boolean mIsInductive;
 	private final boolean mIsInterferenceFree;
+	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
+	private final Collection<ITransition<LETTER, PLACE>> mTransitions;
 	private final IHoareTripleChecker mHoareTripleChecker;
 	private final BasicPredicateFactory mPredicateFactory;
+	
 
 	public OwickiGriesValidityCheck(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
 			OwickiGriesAnnotation<LETTER, PLACE> annotation) {
 		
-		mPredicateFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
+		mServices = services;
+		mManagedScript = csToolkit.getManagedScript();
+		mAnnotation = annotation;
+		mPredicateFactory = new BasicPredicateFactory(services, mManagedScript,
 				csToolkit.getSymbolTable());
+		
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
-
+		mTransitions =  mAnnotation.getPetriNet().getTransitions();
+		
 		// TODO Use mPredicateFactory.and(preds)
+		//!!!!! Check a Hoare Triple per transition with the conjunction of each place pred?
+		//-> Yes, enabled transition if all places with marking and all its formulas should hold. X/
 		// TODO Use BasicInternalAction to create an IInternalAction ("act" below) from ghost assignments
 		// TODO Use mHoareTripleChecker.checkInternal(pre, act, succ)
 
-		mIsInductive = false; // TODO
-		mIsInterferenceFree = false; // TODO
+		mIsInductive = checkInductivity(); // TODO: finish predicates of Pred and Succ
+		mIsInterferenceFree = checkInterference(); // TODO
+	}
+	
+	private boolean checkInductivity() {		
+		//TODO: check this line code
+		if(mTransitions.stream().filter(transition -> 
+			!getTransitionInd(transition)).count() >= 1)
+			{return false;}
+		return true;
+	}
+	
+	private boolean getTransitionInd(ITransition<LETTER, PLACE> Transition) {
+			Set<PLACE> Predecessors = mAnnotation.getPetriNet().getPredecessors(Transition);		
+		if (Predecessors.stream().filter(pred -> 
+			!checkTripleInd(Transition, pred)).count() >= 1) return false;		
+		return true;
+	}
+	 private boolean checkTripleInd(ITransition<LETTER, PLACE> Transition, PLACE Predecessor) {
+		 Set<PLACE> Succesors = mAnnotation.getPetriNet().getSuccessors(Transition);
+		 if (Succesors.stream().filter(succ -> !getHoareTripleVal(Transition, Predecessor, succ)).count() >= 1) return false;
+		 return true;
+	 }
+	
+	private boolean getHoareTripleVal(ITransition<LETTER, PLACE> Transition, PLACE Predecessor, PLACE Successor) {			
+		//TODO: replace nulls with terms from PLACE Predecessor and Successor ->
+		//Find where is the the formula "assigned" to Place in PetriNet?
+		IPredicate Pred = mPredicateFactory.newPredicate(null);
+		IPredicate Succ = mPredicateFactory.newPredicate(null);
+		List<UnmodifiableTransFormula> actions = new ArrayList<>();
+		actions.add((UnmodifiableTransFormula) Transition.getSymbol());
+		actions.add((UnmodifiableTransFormula) mAnnotation.getAssignmentMapping().get(Transition));		
+		IInternalAction Act = new BasicInternalAction
+				(null, null, TransFormulaUtils.sequentialComposition
+						(null, mServices, mManagedScript,false, false, false, null, null, actions));		
+		mHoareTripleChecker.checkInternal(Pred, Act, Succ);
+		return false;
+	}
+	
+	
+	private boolean checkInterference() {
+		//Check Interference Freedom of each transition
+			//For each transition -> find the coenabled transition
+			//Check definition for pred-tran-succ to check (triples)
+		return false;
 	}
 
 	public boolean isValid() {
