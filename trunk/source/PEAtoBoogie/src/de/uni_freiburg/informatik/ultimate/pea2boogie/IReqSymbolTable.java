@@ -65,8 +65,14 @@ public interface IReqSymbolTable {
 
 	Collection<String> getStateVars();
 
-	String getPrimedVarId(String stateVar);
+	/**
+	 * Given a variable name, return the name of the primed version of this variable.
+	 */
+	String getPrimedVarId(String name);
 
+	/**
+	 * Given a variable name, return the name of the history version of this variable.
+	 */
 	String getHistoryVarId(String name);
 
 	Collection<String> getPcVars();
