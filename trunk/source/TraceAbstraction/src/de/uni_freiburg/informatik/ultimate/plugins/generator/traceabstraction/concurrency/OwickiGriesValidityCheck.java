@@ -150,11 +150,31 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	
 	private boolean checkInterference() {
 		//Check Interference Freedom of each transition
-			//For each transition -> find the coenabled transition
-			//Check definition for pred-tran-succ to check (triples)
+			//For each transition ->
+				//Get co-marked places of transition (steps in notes)
+				//getConjuntion of all transition predecessors' predicate
+				//getAction: PetriNet Action; GhostAssignments
+				//For each co-marked place -> getInterferenceFreeHoareTriple
+					//getPlacesPred
+					//checkHoareTriple(Conjunction of pred and Pred(comarkplace), Action, ) 
+		
 		return false;
 	}
+	
+	/**
+	 * 
+	 * @param Pred
+	 * @param Action
+	 * @param place
+	 * @return Validity of Interference Freedom of Transition wrt co-marked place
+	 */
+	private boolean getInterferenceFreeTriple(IPredicate Pred, IInternalAction Action, PLACE place) {
+		
+		IPredicate placePred = getPlacePredicate(place);
+		return true;
+	}
 
+	
 	public boolean isValid() {
 		return mIsInductive && mIsInterferenceFree;
 	}
