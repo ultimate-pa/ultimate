@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Mon
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 
 /**
  * TODO
@@ -76,13 +77,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 				csToolkit.getSymbolTable());
 		
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
-		mTransitions =  mAnnotation.getPetriNet().getTransitions();
-		
-		// TODO Use mPredicateFactory.and(preds)
-		//!!!!! Check a Hoare Triple per transition with the conjunction of each place pred?
-		//-> Yes, enabled transition if all places with marking and all its formulas should hold. X/
-		// TODO Use BasicInternalAction to create an IInternalAction ("act" below) from ghost assignments
-		// TODO Use mHoareTripleChecker.checkInternal(pre, act, succ)
+		mTransitions =  mAnnotation.getPetriNet().getTransitions();		
 
 		mIsInductive = checkInductivity(); // TODO: finish predicates of Pred and Succ
 		mIsInterferenceFree = checkInterference(); // TODO
@@ -91,37 +86,66 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	private boolean checkInductivity() {		
 		//TODO: check this line code
 		if(mTransitions.stream().filter(transition -> 
-			!getTransitionInd(transition)).count() >= 1)
+			!getTransitionInductivity(transition)).count() >= 1)
 			{return false;}
 		return true;
 	}
 	
-	private boolean getTransitionInd(ITransition<LETTER, PLACE> Transition) {
-			Set<PLACE> Predecessors = mAnnotation.getPetriNet().getPredecessors(Transition);		
-		if (Predecessors.stream().filter(pred -> 
-			!checkTripleInd(Transition, pred)).count() >= 1) return false;		
-		return true;
-	}
-	 private boolean checkTripleInd(ITransition<LETTER, PLACE> Transition, PLACE Predecessor) {
-		 Set<PLACE> Succesors = mAnnotation.getPetriNet().getSuccessors(Transition);
-		 if (Succesors.stream().filter(succ -> !getHoareTripleVal(Transition, Predecessor, succ)).count() >= 1) return false;
-		 return true;
-	 }
-	
-	private boolean getHoareTripleVal(ITransition<LETTER, PLACE> Transition, PLACE Predecessor, PLACE Successor) {			
-		//TODO: replace nulls with terms from PLACE Predecessor and Successor ->
-		//Find where is the the formula "assigned" to Place in PetriNet?
-		IPredicate Pred = mPredicateFactory.newPredicate(null);
-		IPredicate Succ = mPredicateFactory.newPredicate(null);
+	private boolean getTransitionInductivity(ITransition<LETTER, PLACE> Transition) {
+		Set<PLACE> Predecessors = mAnnotation.getPetriNet().getPredecessors(Transition),
+				Successors = mAnnotation.getPetriNet().getSuccessors(Transition);
+		Collection<IPredicate> preds = new HashSet<>(), succs = new HashSet<>();
+		Predecessors.stream().forEach(pred -> preds.add(getPlacePredicate(pred)));
+		Successors.stream().forEach(succ -> succs.add(getPlacePredicate(succ)));
+		IPredicate Pred = mPredicateFactory.and(preds),
+				  Succ = mPredicateFactory.and(succs);
 		List<UnmodifiableTransFormula> actions = new ArrayList<>();
 		actions.add((UnmodifiableTransFormula) Transition.getSymbol());
 		actions.add((UnmodifiableTransFormula) mAnnotation.getAssignmentMapping().get(Transition));		
 		IInternalAction Act = new BasicInternalAction
 				(null, null, TransFormulaUtils.sequentialComposition
 						(null, mServices, mManagedScript,false, false, false, null, null, actions));		
-		mHoareTripleChecker.checkInternal(Pred, Act, Succ);
-		return false;
+		return getValidityResult(mHoareTripleChecker.checkInternal(Pred, Act, Succ));	
 	}
+	
+	private IPredicate getPlacePredicate(PLACE Place) {
+		//TODO: Get Term from Place and replace null
+		return  mPredicateFactory.newPredicate(null);
+	}
+	
+	private boolean getValidityResult(Validity validity) {
+		final boolean result;
+		if (validity == Validity.VALID) {
+			result = true;
+		} else {
+			result = false;
+		}
+		return result;
+	}
+	/*
+	 * private boolean getTransitionInd(ITransition<LETTER, PLACE> Transition) {
+	 * Set<PLACE> Predecessors =
+	 * mAnnotation.getPetriNet().getPredecessors(Transition); if
+	 * (Predecessors.stream().filter(pred -> !checkTripleInd(Transition,
+	 * pred)).count() >= 1) return false; return true; } private boolean
+	 * checkTripleInd(ITransition<LETTER, PLACE> Transition, PLACE Predecessor) {
+	 * Set<PLACE> Succesors = mAnnotation.getPetriNet().getSuccessors(Transition);
+	 * if (Succesors.stream().filter(succ -> !getHoareTripleVal(Transition,
+	 * Predecessor, succ)).count() >= 1) return false; return true; }
+	 * 
+	 * private boolean getHoareTripleVal(ITransition<LETTER, PLACE> Transition,
+	 * PLACE Predecessor, PLACE Successor) { //TODO: replace nulls with terms from
+	 * PLACE Predecessor and Successor -> //Find where is the the formula "assigned"
+	 * to Place in PetriNet? IPredicate Pred = mPredicateFactory.newPredicate(null);
+	 * IPredicate Succ = mPredicateFactory.newPredicate(null);
+	 * List<UnmodifiableTransFormula> actions = new ArrayList<>();
+	 * actions.add((UnmodifiableTransFormula) Transition.getSymbol());
+	 * actions.add((UnmodifiableTransFormula)
+	 * mAnnotation.getAssignmentMapping().get(Transition)); IInternalAction Act =
+	 * new BasicInternalAction (null, null, TransFormulaUtils.sequentialComposition
+	 * (null, mServices, mManagedScript,false, false, false, null, null, actions));
+	 * mHoareTripleChecker.checkInternal(Pred, Act, Succ); return false; }
+	 */
 	
 	
 	private boolean checkInterference() {
