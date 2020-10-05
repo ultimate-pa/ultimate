@@ -482,12 +482,12 @@ public class SolveForSubjectUtils {
 		// construct as SupportingTerm either
 		// (= (div divident[subject] divisor) aux_div) or
 		// (= (mod divident[subject] divisor) mod_div)
-		final Set<TermVariable> setAuxVars = new HashSet<>();
+		final Set<TermVariable> setAuxVars = new LinkedHashSet<>();
+		setAuxVars.add(auxMod);
 		// substitute allowedSubterm with corresponding aux variable in input
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		if (SmtUtils.isIntMod(divModSubterm)) {
 			substitutionMapping.put(divModSubterm, auxMod);
-			setAuxVars.add(auxMod);
 			mcsb.reportAdditionalAuxiliaryVariable(auxDiv);
 		} else if (SmtUtils.isIntDiv(divModSubterm)) {
 			setAuxVars.add(auxDiv);
@@ -527,8 +527,6 @@ public class SolveForSubjectUtils {
 		for (final IntricateOperation add : solvedComparison.getIntricateOperations()) {
 			mcsb.reportAdditionalIntricateOperation(add);
 		}
-
-		setAuxVars.add(auxMod);
 
 		// construct SupportingTerm (0 <= aux_mod)
 		final Term auxModGreaterZeroTerm = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.LEQ, xnf),
