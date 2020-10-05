@@ -374,8 +374,8 @@ public class ReqSymboltableBuilder {
 		return "'" + name;
 	}
 
-	private static String getPcName(final PhaseEventAutomata aut) {
-		return aut.getName() + "_pc";
+	public static String getPcName(final PhaseEventAutomata pea) {
+		return pea.getName() + "_pc";
 	}
 
 	private static final class ReqSymbolTable implements IReqSymbolTable {

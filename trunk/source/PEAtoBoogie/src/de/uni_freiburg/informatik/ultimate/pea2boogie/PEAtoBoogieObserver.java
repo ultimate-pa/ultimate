@@ -64,7 +64,8 @@ public class PEAtoBoogieObserver extends BaseObserver {
 	private IElement generateReqCheckBoogie(final List<PatternType<?>> patterns) {
 		final Req2BoogieTranslator translator =
 				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList());
-		final VerificationResultTransformer reporter = new VerificationResultTransformer(mLogger, mServices);
+		final VerificationResultTransformer reporter =
+				new VerificationResultTransformer(mLogger, mServices, translator.getReqPeas());
 		// register CEX transformer that removes program executions from CEX.
 		final Function<IResult, IResult> resultTransformer = reporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);

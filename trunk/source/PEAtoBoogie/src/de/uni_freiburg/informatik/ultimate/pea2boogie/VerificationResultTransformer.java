@@ -27,8 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -56,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
@@ -66,11 +71,13 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
  * Utility class that helps with reporting results.
@@ -87,7 +94,26 @@ public class VerificationResultTransformer {
 			final List<ReqPeas> reqPeas) {
 		mLogger = logger;
 		mServices = services;
+		final UnionFind<String> uf = new UnionFind<>();
+		for (final ReqPeas reqpea : reqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
+				final PhaseEventAutomata somePea = ct2pea.getValue();
 
+				final Set<String> peaVars = new HashSet<>();
+				// add all variable names
+				peaVars.addAll(somePea.getVariables().keySet());
+				// add all clock names
+				peaVars.addAll(somePea.getClocks());
+				// add pc name
+				peaVars.add(ReqSymboltableBuilder.getPcName(somePea));
+
+				peaVars.forEach(uf::findAndConstructEquivalenceClassIfNeeded);
+				uf.union(peaVars);
+			}
+		}
+		final Collection<Set<String>> varEqClasses = uf.getAllEquivalenceClasses();
+
+		mLogger.info("Found %s equivalence classes", varEqClasses.size());
 	}
 
 	public IResult convertTraceAbstractionResult(final IResult result) {
