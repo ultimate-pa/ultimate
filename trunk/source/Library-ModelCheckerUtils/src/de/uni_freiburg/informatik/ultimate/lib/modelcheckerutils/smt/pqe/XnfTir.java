@@ -48,9 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Binary
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.ExplicitLhsPolynomialRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
@@ -204,30 +202,38 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					// eliminatee occurs probably only in select
 					return null;
 				}
+
 				SolvedBinaryRelation sbr = polyRel.solveForSubject(script, eliminatee);
 				final boolean divByIntegerConstant;
 				if (sbr == null) {
-					final MultiCaseSolvedBinaryRelation mcsbr = polyRel.solveForSubject(script, eliminatee,
-							Xnf.fromQuantifier(quantifier));
-					if (mcsbr == null) {
+					final ExplicitLhsPolynomialRelation elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
+							eliminatee, polyRel);
+					if (elpr == null) {
 						return null;
 					}
-					if (mcsbr.getCases().size() > 2) {
+					final Pair<ExplicitLhsPolynomialRelation, Term> pair = elpr.divideByIntegerCoefficient(script,
+							bannedForDivCapture);
+					if (pair == null) {
 						return null;
+					} else {
+						final ExplicitLhsPolynomialRelation tmp = pair.getFirst();
+						if (!tmp.getLhsMonomial().isLinear()) {
+							return null;
+						}
+						sbr = new SolvedBinaryRelation(tmp.getLhsMonomial().getSingleVariable(),
+								tmp.getRhs().toTerm(script), tmp.getRelationSymbol(),
+								IntricateOperation.DIV_BY_INTEGER_CONSTANT);
+						divByIntegerConstant = true;
 					}
-					if (mcsbr.getIntricateOperations().size() > 1) {
-						return null;
-					}
-					sbr = mcsbr.getCases().get(0).getSolvedBinaryRelation();
-					divByIntegerConstant = mcsbr.getIntricateOperations()
-							.contains(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 				} else {
 					divByIntegerConstant = false;
 				}
+				// TODO: This check is done above and hence obsolete (check this before you
+				// delete code)
 				if (SolveForSubjectUtils.isVariableDivCaptured(sbr, bannedForDivCapture)) {
 					return null;
 				}
-//				if (!sbr.getAssumptionsMap().isEmpty()
+				//				if (!sbr.getAssumptionsMap().isEmpty()
 //						&& !sbr.getRelationSymbol().equals(RelationSymbol.DISTINCT)
 //						&& !sbr.getRelationSymbol().equals(RelationSymbol.EQ)) {
 //					return null;

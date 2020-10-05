@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 
+import java.util.Arrays;
+import java.util.EnumSet;
+
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -54,15 +57,22 @@ public class SolvedBinaryRelation implements ITermProviderOnDemand {
 	private final Term mLeftHandSide;
 	private final Term mRightHandSide;
 	private final RelationSymbol mRelationSymbol;
-	private final IntricateOperation mIntricateOperation;
+	private final EnumSet<IntricateOperation> mIntricateOperations;
 
 	public SolvedBinaryRelation(final Term leftHandSide, final Term rightHandSide, final RelationSymbol relationSymbol,
-			final IntricateOperation intricateOperation) {
+			final IntricateOperation... intricateOperation) {
 		super();
 		mLeftHandSide = leftHandSide;
 		mRightHandSide = rightHandSide;
 		mRelationSymbol = relationSymbol;
-		mIntricateOperation = intricateOperation;
+		if (intricateOperation.length == 0) {
+			mIntricateOperations = EnumSet.noneOf(IntricateOperation.class);
+		} else {
+			if (intricateOperation[0] == null) {
+				throw new NullPointerException();
+			}
+			mIntricateOperations = EnumSet.copyOf(Arrays.asList(intricateOperation));
+		}
 	}
 
 	/**
@@ -83,8 +93,9 @@ public class SolvedBinaryRelation implements ITermProviderOnDemand {
 		return mRelationSymbol;
 	}
 
-	public IntricateOperation getIntricateOperation() {
-		return mIntricateOperation;
+	public EnumSet<IntricateOperation> getIntricateOperation() {
+		assert mIntricateOperations != null;
+		return mIntricateOperations;
 	}
 
 	/**

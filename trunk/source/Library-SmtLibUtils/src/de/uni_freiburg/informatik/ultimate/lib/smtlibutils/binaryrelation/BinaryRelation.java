@@ -178,14 +178,13 @@ public abstract class BinaryRelation implements IBinaryRelation {
 			if (SmtUtils.isSubterm(getRhs(), subject)) {
 				return null;
 			} else {
-				return new SolvedBinaryRelation(subject, getRhs(), getRelationSymbol(), null);
+				return new SolvedBinaryRelation(subject, getRhs(), getRelationSymbol());
 			}
 		} else if (getRhs().equals(subject)) {
 			if (SmtUtils.isSubterm(getLhs(), subject)) {
 				return null;
 			} else {
-				return new SolvedBinaryRelation(subject, getLhs(), getRelationSymbol().swapParameters(),
-						null);
+				return new SolvedBinaryRelation(subject, getLhs(), getRelationSymbol().swapParameters());
 			}
 		} else {
 			return null;
