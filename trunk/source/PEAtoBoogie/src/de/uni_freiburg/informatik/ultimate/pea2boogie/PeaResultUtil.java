@@ -53,11 +53,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
@@ -179,8 +180,10 @@ public class PeaResultUtil {
 			}
 
 			if (spec == Spec.RTINCONSISTENT) {
-				final IcfgProgramExecution newPe = generateRtInconsistencyResult(
-						((CounterExampleResult<?, ?, ?>) oldRes).getProgramExecution(), reqCheck);
+				@SuppressWarnings("unchecked")
+				final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> newPe = generateRtInconsistencyResult(
+						((CounterExampleResult<?, IIcfgTransition<IcfgLocation>, Term>) oldRes).getProgramExecution(),
+						reqCheck);
 				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, newPe);
 
 			}
@@ -202,8 +205,8 @@ public class PeaResultUtil {
 		}
 	}
 
-	private IcfgProgramExecution generateRtInconsistencyResult(final IProgramExecution<?, ?> pe,
-			final ReqCheck reqCheck) {
+	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> generateRtInconsistencyResult(
+			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe, final ReqCheck reqCheck) {
 		final List<CodeBlock> trace = new ArrayList<>(pe.getLength());
 		pe.stream().map(a -> (CodeBlock) a.getTraceElement())
 				.filter(a -> !"true".equals(a.getTransformula().getClosedFormula().toString())).forEach(trace::add);
@@ -225,16 +228,26 @@ public class PeaResultUtil {
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
 		final List<List<IAction>> flattenedTraces = flattenTrace(trace);
 		mLogger.info("Checking %s flattened traces", flattenedTraces.size());
+		// TODO: Makes no sense to construct that many traces -- either check them incrementally or do something else
+		// differently.
+		final int limit = 1024;
+		if (flattenedTraces.size() > limit) {
+			mLogger.warn("Too many flattened traces, just looking at the first %s", limit);
+		}
 		for (final List<IAction> flatTrace : flattenedTraces) {
-			final TraceCheck<IAction> tc = new TraceCheck<>(truePred, falsePred, new TreeMap<Integer, IPredicate>(),
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				mLogger.warn("Took too long looking at flattened traces, bailing...");
+				break;
+			}
+			final TraceCheck<IAction> tc = new TraceCheck<>(truePred, falsePred, new TreeMap<>(),
 					NestedWord.nestedWord(new Word<>(flatTrace.toArray(new IAction[flatTrace.size()]))), mServices,
 					toolkit, assertionOrder, true, false);
 			if (tc.isCorrect() == LBool.SAT) {
 				return tc.getRcfgProgramExecution();
 			}
 		}
-		throw new AssertionError("At least one of the flattened traces must be SAT");
-
+		// give up if we took too long
+		return pe;
 	}
 
 	/**
