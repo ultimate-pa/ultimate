@@ -64,6 +64,7 @@ modifies x;
 {
   while (*) {
     x := x + $i;
+    x := x * $i;
   }
 }
 " >> "$FILE"
