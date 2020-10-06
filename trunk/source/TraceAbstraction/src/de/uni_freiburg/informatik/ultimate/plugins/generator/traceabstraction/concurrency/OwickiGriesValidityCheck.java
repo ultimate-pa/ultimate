@@ -26,16 +26,22 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -62,16 +68,18 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	private final boolean mIsInductive;
 	private final boolean mIsInterferenceFree;
 	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
+	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
 	private final Collection<ITransition<LETTER, PLACE>> mTransitions;
 	private final IHoareTripleChecker mHoareTripleChecker;
 	private final BasicPredicateFactory mPredicateFactory;
 	
 
 	public OwickiGriesValidityCheck(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
-			OwickiGriesAnnotation<LETTER, PLACE> annotation) {
+			OwickiGriesAnnotation<LETTER, PLACE> annotation, Map<Marking<LETTER, PLACE>, IPredicate> FloydHoareAnnotation) {
 		
 		mServices = services;
 		mManagedScript = csToolkit.getManagedScript();
+		mFloydHoareAnnotation = FloydHoareAnnotation;
 		mAnnotation = annotation;
 		mPredicateFactory = new BasicPredicateFactory(services, mManagedScript,
 				csToolkit.getSymbolTable());
@@ -79,7 +87,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
 		mTransitions =  mAnnotation.getPetriNet().getTransitions();		
 
-		mIsInductive = checkInductivity(); // TODO: finish predicates of Pred and Succ
+		mIsInductive = checkInductivity(); 
 		mIsInterferenceFree = checkInterference(); // TODO
 	}
 	
@@ -91,26 +99,30 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		return true;
 	}
 	
-	private boolean getTransitionInductivity(ITransition<LETTER, PLACE> Transition) {
-		Set<PLACE> Predecessors = mAnnotation.getPetriNet().getPredecessors(Transition),
-				Successors = mAnnotation.getPetriNet().getSuccessors(Transition);
-		Collection<IPredicate> preds = new HashSet<>(), succs = new HashSet<>();
-		Predecessors.stream().forEach(pred -> preds.add(getPlacePredicate(pred)));
-		Successors.stream().forEach(succ -> succs.add(getPlacePredicate(succ)));
-		IPredicate Pred = mPredicateFactory.and(preds),
-				  Succ = mPredicateFactory.and(succs);
-		List<UnmodifiableTransFormula> actions = new ArrayList<>();
-		actions.add((UnmodifiableTransFormula) Transition.getSymbol());
-		actions.add((UnmodifiableTransFormula) mAnnotation.getAssignmentMapping().get(Transition));		
-		IInternalAction Act = new BasicInternalAction
+	private boolean getTransitionInductivity(ITransition<LETTER, PLACE> Transition) {			
+		return getValidityResult(mHoareTripleChecker.checkInternal
+				(getConjunctionPredicate(mAnnotation.getPetriNet().getPredecessors(Transition)),
+						getTransitionSeqAction(Transition), 
+				getConjunctionPredicate(mAnnotation.getPetriNet().getSuccessors(Transition))));	
+	}
+	
+	private IPredicate getConjunctionPredicate(Set<PLACE> set) {
+		Collection<IPredicate> predicates = new HashSet<>();
+		set.stream().forEach(element -> predicates.add(getPlacePredicate(element)));
+		return mPredicateFactory.and(predicates);
+	}
+	
+	private IInternalAction getTransitionSeqAction(ITransition<LETTER, PLACE> Transition) {
+		List<UnmodifiableTransFormula> actions = Arrays.asList(
+				(UnmodifiableTransFormula)Transition.getSymbol(),
+				(UnmodifiableTransFormula) mAnnotation.getAssignmentMapping().get(Transition) );
+		return new BasicInternalAction
 				(null, null, TransFormulaUtils.sequentialComposition
-						(null, mServices, mManagedScript,false, false, false, null, null, actions));		
-		return getValidityResult(mHoareTripleChecker.checkInternal(Pred, Act, Succ));	
+						(null, mServices, mManagedScript,false, false, false, null, null, actions));
 	}
 	
 	private IPredicate getPlacePredicate(PLACE Place) {
-		//TODO: Get Term from Place and replace null
-		return  mPredicateFactory.newPredicate(null);
+		return  mAnnotation.getFormulaMapping().get(Place);
 	}
 	
 	private boolean getValidityResult(Validity validity) {
@@ -122,43 +134,36 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		}
 		return result;
 	}
-	/*
-	 * private boolean getTransitionInd(ITransition<LETTER, PLACE> Transition) {
-	 * Set<PLACE> Predecessors =
-	 * mAnnotation.getPetriNet().getPredecessors(Transition); if
-	 * (Predecessors.stream().filter(pred -> !checkTripleInd(Transition,
-	 * pred)).count() >= 1) return false; return true; } private boolean
-	 * checkTripleInd(ITransition<LETTER, PLACE> Transition, PLACE Predecessor) {
-	 * Set<PLACE> Succesors = mAnnotation.getPetriNet().getSuccessors(Transition);
-	 * if (Succesors.stream().filter(succ -> !getHoareTripleVal(Transition,
-	 * Predecessor, succ)).count() >= 1) return false; return true; }
-	 * 
-	 * private boolean getHoareTripleVal(ITransition<LETTER, PLACE> Transition,
-	 * PLACE Predecessor, PLACE Successor) { //TODO: replace nulls with terms from
-	 * PLACE Predecessor and Successor -> //Find where is the the formula "assigned"
-	 * to Place in PetriNet? IPredicate Pred = mPredicateFactory.newPredicate(null);
-	 * IPredicate Succ = mPredicateFactory.newPredicate(null);
-	 * List<UnmodifiableTransFormula> actions = new ArrayList<>();
-	 * actions.add((UnmodifiableTransFormula) Transition.getSymbol());
-	 * actions.add((UnmodifiableTransFormula)
-	 * mAnnotation.getAssignmentMapping().get(Transition)); IInternalAction Act =
-	 * new BasicInternalAction (null, null, TransFormulaUtils.sequentialComposition
-	 * (null, mServices, mManagedScript,false, false, false, null, null, actions));
-	 * mHoareTripleChecker.checkInternal(Pred, Act, Succ); return false; }
-	 */
-	
-	
-	private boolean checkInterference() {
-		//Check Interference Freedom of each transition
-			//For each transition ->
-				//Get co-marked places of transition (steps in notes)
-				//getConjuntion of all transition predecessors' predicate
-				//getAction: PetriNet Action; GhostAssignments
-				//For each co-marked place -> getInterferenceFreeHoareTriple
-					//getPlacesPred
-					//checkHoareTriple(Conjunction of pred and Pred(comarkplace), Action, ) 
 		
-		return false;
+	private boolean checkInterference() {		
+		if(mTransitions.stream().filter(transition -> 
+		!getTransitionInterFree(transition)).count() >= 1)
+			return false;
+		return true;	
+	}
+
+	private boolean getTransitionInterFree(ITransition<LETTER, PLACE> Transition) {
+		 IPredicate PredecessorsPred = getConjunctionPredicate(mAnnotation.getPetriNet().getPredecessors(Transition));
+		 IInternalAction Action = getTransitionSeqAction(Transition);
+		 Set<PLACE> Comarked = getComarkedPlaces(Transition);
+		 if (Comarked.stream().filter(place -> !getInterferenceFreeTriple(PredecessorsPred, Action, place )).count() >= 1)
+			 return false;
+		return true;
+	}
+	
+	private Set<PLACE> getComarkedPlaces(ITransition<LETTER,PLACE> Transition){
+		Set<PLACE> Predecessors = mAnnotation.getPetriNet().getPredecessors(Transition),
+				  comarked = new HashSet<>(); 
+		//Reachable Markings in which transition is enabled: All predecessors of transition is in Marking		
+		Set<Marking<LETTER,PLACE>> enabledMarkings = 
+				 mFloydHoareAnnotation.keySet().stream().filter(marking ->
+				marking.containsAll(Predecessors)).collect(Collectors.toSet());
+		//places in markings
+		enabledMarkings.stream().forEach(marking -> 
+			   comarked.addAll(marking.stream().collect(Collectors.toSet())));
+		//places that are not predecessors of transition
+		comarked.removeAll(Predecessors);
+		return comarked;
 	}
 	
 	/**
@@ -169,9 +174,10 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	 * @return Validity of Interference Freedom of Transition wrt co-marked place
 	 */
 	private boolean getInterferenceFreeTriple(IPredicate Pred, IInternalAction Action, PLACE place) {
-		
 		IPredicate placePred = getPlacePredicate(place);
-		return true;
+		List<IPredicate> predicate = Arrays.asList(Pred,placePred);		/
+		return getValidityResult(mHoareTripleChecker.checkInternal
+				(mPredicateFactory.and(predicate), Action, placePred));	
 	}
 
 	
