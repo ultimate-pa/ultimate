@@ -5,14 +5,19 @@ MAX_THREADS=${1:-20}
 
 mkdir -p "$DIR"
 echo "Cleaning folder $DIR ..."
+
+# Delete files following old naming schema, if any left
 rm -rf $DIR/example2_N=*.bpl
 rm -rf $DIR/example2_N=*.yml
+# Delete files following new naming schema
+rm -rf $DIR/example_*.bpl
+rm -rf $DIR/example_*.yml
 
 echo "Generating $MAX_THREADS benchmarks ..."
 for k in $(seq 1 $MAX_THREADS)
 do
   printf -v k_pad "%02d" $k
-  NAME="example2_N=$k_pad"
+  NAME="example_$k_pad"
 
   FILE="$DIR/$NAME.bpl"
 
