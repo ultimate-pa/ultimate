@@ -28,39 +28,50 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SemanticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
-public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGeneratorWithStopwatches
-		implements IStatisticsDataProvider {
+public class PetriNetLargeBlockEncodingStatisticsGenerator implements IStatisticsDataProvider {
 
-	private long mVarBasedMoverChecksPositive = 0;
-	private long mVarBasedMoverChecksNegative = 0;
-	private long mSemBasedMoverChecksPositive = 0;
-	private long mSemBasedMoverChecksNegative = 0;
-	private long mSemBasedMoverChecksUnknown = 0;
-	private long mSemBasedMoverCheckTime = 0;
-	private int mMoverChecksTotal = 0;
-	// mCheckedPairsTotal != mMoverChecksTotal, because if something had been checked, it won't be checked again.
-	private int mCheckedPairsTotal = 0;
-	private int mTotalNumberOfCompositions = 0;
-	private int mProgramPointsBefore = -1;
-	private int mProgramPointsAfterwards = -1;
-	private int mTransitionsBefore = -1;
-	private int mTransitionsAfterwards = -1;
-	private int mCoEnabledTransitionPairs = -1;
-	private int mNumberOfFixpointIterations = -1;
-	private int mTrivialSequentialCompositions = 0;
-	private int mConcurrentSequentialCompositions = 0;
-	private int mTrivialYvCompositions = 0;
-	private int mConcurrentYvCompositions = 0;
-	private int mChoiceCompositions = 0;
+	private long mVarBasedMoverChecksPositive;
+	private long mVarBasedMoverChecksNegative;
+	private long mSemBasedMoverChecksPositive;
+	private long mSemBasedMoverChecksNegative;
+	private long mSemBasedMoverChecksUnknown;
+	private long mSemBasedMoverCheckTime;
+	private long mCheckedPairsTotal;
+	private final StatisticsData mLiptonStatistics = new StatisticsData();
 
+	public void reportCheckedPairsTotal(final int i) {
+		mCheckedPairsTotal += i;
+	}
 
-	public PetriNetLargeBlockEncodingStatisticsGenerator() {
+	public void extractStatistics(final SemanticIndependenceRelation semanticBasedCheck) {
+		if (semanticBasedCheck != null) {
+			mSemBasedMoverChecksPositive = semanticBasedCheck.getPositiveQueries();
+			mSemBasedMoverChecksNegative = semanticBasedCheck.getNegativeQueries();
+			mSemBasedMoverChecksUnknown = semanticBasedCheck.getUnknownQueries();
+			mSemBasedMoverCheckTime = semanticBasedCheck.getComputationTimeNano();
+		}
+	}
+
+	public void extractStatistics(final SyntacticIndependenceRelation<?> variableBasedCheck) {
+		mVarBasedMoverChecksPositive = variableBasedCheck.getPositiveQueries();
+		mVarBasedMoverChecksNegative = variableBasedCheck.getNegativeQueries();
+	}
+
+	public void extractStatistics(final CachedIndependenceRelation<?, ?> cachedCheck) {
+		mCheckedPairsTotal += cachedCheck.getPositiveCacheSize();
+		mCheckedPairsTotal += cachedCheck.getNegativeCacheSize();
+	}
+
+	public void addLiptonStatistics(final LiptonReductionStatisticsGenerator stat) {
+		mLiptonStatistics.aggregateBenchmarkData(stat);
 	}
 
 	@Override
@@ -68,47 +79,11 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 		return PetriNetLargeBlockEncodingStatisticsType.getInstance();
 	}
 
-	public void reportMoverChecksTotal(final int i) {
-		mMoverChecksTotal += i;
-	}
-
-	public void reportCheckedPairsTotal(final int i) {
-		mCheckedPairsTotal += i;
-	}
-
-	public void reportTotalNumberOfCompositions(final int i) {
-		mTotalNumberOfCompositions += i;
-	}
-
-	public void setProgramPointsBefore(final int programPointsBefore) {
-		mProgramPointsBefore = programPointsBefore;
-	}
-
-	public void setProgramPointsAfterwards(final int programPointsAfterwards) {
-		mProgramPointsAfterwards = programPointsAfterwards;
-	}
-
-	public void setTransitionsBefore(final int transitionsBefore) {
-		mTransitionsBefore = transitionsBefore;
-	}
-
-	public void setTransitionsAfterwards(final int transitionsAfterwards) {
-		mTransitionsAfterwards = transitionsAfterwards;
-	}
-
-
-
 	@Override
 	public Object getValue(final String key) {
-		final PetriNetLargeBlockEncodingStatisticsDefinitions keyEnum = Enum
-				.valueOf(PetriNetLargeBlockEncodingStatisticsDefinitions.class, key);
+		final PetriNetLargeBlockEncodingStatisticsDefinitions keyEnum =
+				Enum.valueOf(PetriNetLargeBlockEncodingStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case LbeTime:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
-			}
 		case VarBasedMoverChecksPositive:
 			return mVarBasedMoverChecksPositive;
 		case VarBasedMoverChecksNegative:
@@ -121,93 +96,18 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			return mSemBasedMoverChecksUnknown;
 		case SemBasedMoverCheckTime:
 			return mSemBasedMoverCheckTime;
-		case MoverChecksTotal:
-			return mMoverChecksTotal;
 		case CheckedPairsTotal:
 			return mCheckedPairsTotal;
-		case TotalNumberOfCompositions:
-			return mTotalNumberOfCompositions;
-		case ProgramPointsAfterwards:
-			return mProgramPointsAfterwards;
-		case ProgramPointsBefore:
-			return mProgramPointsBefore;
-		case TransitionsAfterwards:
-			return mTransitionsAfterwards;
-		case TransitionsBefore:
-			return mTransitionsBefore;
-		case CoEnabledTransitionPairs:
-			return mCoEnabledTransitionPairs;
-		case FixpointIterations:
-			return mNumberOfFixpointIterations;
-		case TrivialSequentialCompositions:
-			return mTrivialSequentialCompositions;
-		case ConcurrentSequentialCompositions:
-			return mConcurrentSequentialCompositions;
-		case TrivialYvCompositions:
-			return mTrivialYvCompositions;
-		case ConcurrentYvCompositions:
-			return mConcurrentYvCompositions;
-		case ChoiceCompositions:
-			return mChoiceCompositions;
+		case LiptonReductionStatistics:
+			return mLiptonStatistics;
 		default:
 			throw new AssertionError("unknown data");
 		}
 	}
 
 	@Override
-	public String[] getStopwatches() {
-		return new String[] { PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime.toString() };
-	}
-
-	@Override
 	public Collection<String> getKeys() {
 		return PetriNetLargeBlockEncodingStatisticsType.getInstance().getKeys();
-	}
-
-	public void extractStatistics(final SemanticIndependenceRelation semanticBasedCheck) {
-		if (semanticBasedCheck != null) {
-			mSemBasedMoverChecksPositive = semanticBasedCheck.getPositiveQueries();
-			mSemBasedMoverChecksNegative = semanticBasedCheck.getNegativeQueries();
-			mSemBasedMoverChecksUnknown = semanticBasedCheck.getUnknownQueries();
-			mSemBasedMoverCheckTime = semanticBasedCheck.getComputationTimeNano();
-		}
-
-	}
-
-	public void extractStatistics(final SyntacticIndependenceRelation<?> variableBasedCheck) {
-		mVarBasedMoverChecksPositive = variableBasedCheck.getPositiveQueries();
-		mVarBasedMoverChecksNegative = variableBasedCheck.getNegativeQueries();
-
-	}
-
-	public void setCoEnabledTransitionPairs(final int coEnabledTransitionPairs) {
-		mCoEnabledTransitionPairs = coEnabledTransitionPairs;
-	}
-
-	public void setNumberOfFixpointIterations(final int numberOfFixpointIterations) {
-		mNumberOfFixpointIterations = numberOfFixpointIterations;
-	}
-
-	public void reportComposition(final PetriNetLargeBlockEncodingStatisticsDefinitions pnlbesd) {
-		switch (pnlbesd) {
-		case TrivialSequentialCompositions:
-			mTrivialSequentialCompositions++;
-			break;
-		case ConcurrentSequentialCompositions:
-			mConcurrentSequentialCompositions++;
-			break;
-		case TrivialYvCompositions:
-			mTrivialYvCompositions++;
-			break;
-		case ConcurrentYvCompositions:
-			mConcurrentYvCompositions++;
-			break;
-		case ChoiceCompositions:
-			mChoiceCompositions++;
-			break;
-		default:
-			throw new UnsupportedOperationException("not an enum for a composition " + pnlbesd);
-		}
 	}
 
 }

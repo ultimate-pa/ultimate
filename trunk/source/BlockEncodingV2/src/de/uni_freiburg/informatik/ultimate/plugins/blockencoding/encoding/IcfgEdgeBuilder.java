@@ -164,6 +164,10 @@ public class IcfgEdgeBuilder {
 				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray =
 				transFormulas.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
+
+		// TODO Matthias 2019-11-13: Serial number should be unique!!!?!
+		// Maybe we should move these constructions to the edge factory
+		// which can construct unique serial numbers
 		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				serialNumber, mManagedScript, null, false, mXnfConversionTechnique, tfArray);
