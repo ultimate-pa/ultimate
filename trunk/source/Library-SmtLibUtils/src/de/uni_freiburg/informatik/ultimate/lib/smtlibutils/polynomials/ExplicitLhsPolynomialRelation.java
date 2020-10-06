@@ -44,10 +44,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Polynomial relation in which we explicitly state which {@link Monomial}
- * (together with its coefficient) is on the left-hand side. This class is used
- * as an intermediate data structure by algorithms that try to solve a
- * polynomial relation for a given subject.
+ * Polynomial relation in which we explicitly state which {@link Monomial} (together with its coefficient) is on the
+ * left-hand side. This class is used as an intermediate data structure by algorithms that try to solve a polynomial
+ * relation for a given subject.
  *
  * <pre>
  * Work in progress.
@@ -136,21 +135,20 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		if (newRhs == null) {
 			return null;
 		}
-		final Rational newLhsCoefficient = PolynomialTermUtils.divInvertible(mLhsMonomial.getSort(), mLhsCoefficient,
-				divisor);
+		final Rational newLhsCoefficient =
+				PolynomialTermUtils.divInvertible(mLhsMonomial.getSort(), mLhsCoefficient, divisor);
 		if (newLhsCoefficient == null) {
 			return null;
 		}
-		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
-				mRelationSymbol, divisor);
+		final RelationSymbol resultRelationSymbol =
+				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, divisor);
 		return new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
 	}
 
 	private RelationSymbol determineResultRelationSymbol(final Sort sort, final RelationSymbol relationSymbol,
 			final Rational divisor) {
-		final RelationSymbol resultRelationSymbol = swapOfRelationSymbolRequired(divisor, sort)
-				? relationSymbol.swapParameters()
-				: relationSymbol;
+		final RelationSymbol resultRelationSymbol =
+				swapOfRelationSymbolRequired(divisor, sort) ? relationSymbol.swapParameters() : relationSymbol;
 		return resultRelationSymbol;
 	}
 
@@ -164,7 +162,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 			throw new AssertionError("div by zero");
 		}
 		if (!SmtSortUtils.isIntSort(mLhsMonomial.getSort())) {
-			throw new AssertionError("no int");
+			throw new AssertionError("no int: " + mLhsMonomial.getSort());
 		}
 		// TODO optimized check for polynomial: can divide if each coefficient can be
 		// divided, divisibility of constant not required
@@ -176,12 +174,12 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		final Term divisibilityConstraint;
 		switch (mRelationSymbol) {
 		case DISTINCT:
-			divisibilityConstraint = SolveForSubjectUtils.constructDivisibilityConstraint(script, true, rhsAsTerm,
-					divisor);
+			divisibilityConstraint =
+					SolveForSubjectUtils.constructDivisibilityConstraint(script, true, rhsAsTerm, divisor);
 			break;
 		case EQ:
-			divisibilityConstraint = SolveForSubjectUtils.constructDivisibilityConstraint(script, false, rhsAsTerm,
-					divisor);
+			divisibilityConstraint =
+					SolveForSubjectUtils.constructDivisibilityConstraint(script, false, rhsAsTerm, divisor);
 			break;
 		case GEQ:
 		case GREATER:
@@ -195,11 +193,11 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		final Term rhs = SolveForSubjectUtils.constructRhsIntegerQuotient(script, mRelationSymbol, mRhs.toTerm(script),
 				!mLhsCoefficient.isNegative(), divisor);
 		final IPolynomialTerm resultRhs = (IPolynomialTerm) new PolynomialTermTransformer(script).transform(rhs);
-		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
-				mRelationSymbol, mLhsCoefficient);
-		final ExplicitLhsPolynomialRelation resultElpr = new ExplicitLhsPolynomialRelation(resultRelationSymbol,
-				Rational.ONE, getLhsMonomial(), resultRhs);
-		return new Pair<ExplicitLhsPolynomialRelation, Term>(resultElpr, divisibilityConstraint);
+		final RelationSymbol resultRelationSymbol =
+				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, mLhsCoefficient);
+		final ExplicitLhsPolynomialRelation resultElpr =
+				new ExplicitLhsPolynomialRelation(resultRelationSymbol, Rational.ONE, getLhsMonomial(), resultRhs);
+		return new Pair<>(resultElpr, divisibilityConstraint);
 	}
 
 	public SolvedBinaryRelation divideByIntegerCoefficientForInequalities(final Script script,
