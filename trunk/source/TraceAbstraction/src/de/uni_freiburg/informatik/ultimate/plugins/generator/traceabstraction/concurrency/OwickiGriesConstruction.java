@@ -103,9 +103,8 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 			mGhostInitAssignment = getGhostInitAssignment();
 			mAssignmentMapping = getAssignmentMapping();			
 			
-			//TODO: call other constructor.
-			mAnnotation = new OwickiGriesAnnotation<>();
-		
+			mAnnotation = new OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> (mFormulaMappingD, mAssignmentMapping, 
+					mGhostVariables, mGhostInitAssignment, mNet);		
 	}	 
 
 	/**
@@ -150,7 +149,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 		//TODO:Formula Type: Conjunction and Implication				
 		Set<IPredicate> terms =  new HashSet<>(); 
 		marking.forEach(element -> terms.add(getGhostPredicate(element))); //GhostVariables of places in marking		
-		terms.addAll(getAllNotMarking(marking)); //OptionB: getAllNotMarking; OptionA: getSubsetMarking;
+		terms.addAll(getSubsetMarking(marking)); //OptionB: getAllNotMarking; OptionA: getSubsetMarking;
 		terms.add(mFloydHoareAnnotation.get(place)); //Predicate of marking	
 		return  mFactory.and(terms);		
 	}
@@ -161,14 +160,14 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @return Predicate with implication of Ghost variables and predicate of marking
 	 */
 	private  IPredicate getMarkingPredicateI(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
-		//TODO://Change return to Implication of other places and marking predicate.	
 		Set<IPredicate> terms = new HashSet<>(), clauses =  new HashSet<>(); //other places in in Marking with place
 		marking.forEach(element -> {			
 		if(element != place) { //Conjunction of other places' GhostVariables
-			terms.add(getGhostPredicate(element));}});		
-		clauses.add(mFactory.and(terms)); 
+			terms.add(getGhostPredicate(element));}});
+		terms.addAll(getSubsetMarking(marking));
+		clauses.add(mFactory.not(mFactory.and(terms))); //(not Conjunction) or markingPred
 		clauses.add(mFloydHoareAnnotation.get(place)); //marking predicate
-		return mFactory.and(terms); 	
+		return mFactory.or(terms); 	
 	}	
 	
 	/**
