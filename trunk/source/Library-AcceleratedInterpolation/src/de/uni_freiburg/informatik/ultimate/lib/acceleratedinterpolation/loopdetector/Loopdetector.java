@@ -264,6 +264,9 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 			final int firstOccurence = cycle.getValue().get(0);
 			final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
 
+			/*
+			 * TODO take a look at only 2 locations.
+			 */
 			for (final Iterator<Map.Entry<IcfgLocation, List<Integer>>> otherCycles =
 					cyclesWithNested.entrySet().iterator(); otherCycles.hasNext();) {
 				final Map.Entry<IcfgLocation, List<Integer>> otherCycle = otherCycles.next();

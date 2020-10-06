@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -252,13 +254,17 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	 * Main function of accelInterpol
 	 */
 	private LBool acceleratedInterpolationCore() {
-		// After finding loops in the trace, start calculating loop accelerations.
+		/*
+		 * After finding loops in the trace, start calculating loop accelerations.
+		 */
 		final ILoopPreprocessor<IcfgLocation, UnmodifiableTransFormula> loopPreprocessor =
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
 			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoopsAsTf);
-
+			for (final Entry<IcfgLocation, IcfgLocation> nesting : mNestingRelation.entrySet()) {
+				accelerateNestedLoops(nesting.getKey(), nesting.getValue());
+			}
 		}
 
 		mLoopsTf = loopPreprocessor.preProcessLoop(mLoopsAsTf);
@@ -306,12 +312,16 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPrefs);
 
 		if (mLoops.isEmpty() || mAccelerations.isEmpty()) {
-			// No loops or no acceleration
+			/*
+			 * No loops or no acceleration
+			 */
 			mLogger.info("No loops in this trace, falling back to nested interpolation");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
 			mInterpolants = interpolator.getInterpolants();
 		} else {
-			// translate the given trace into a meta trace which makes use of the loop acceleration.
+			/*
+			 * translate the given trace into a meta trace which makes use of the loop acceleration.
+			 */
 			final NestedRun<L, IPredicate> metaTrace = generateMetaTrace();
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
 			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
@@ -499,10 +509,63 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
 	}
 
-	private void accelerateNestedLoops() {
-		for (final Entry<IcfgLocation, IcfgLocation> nesting : mNestingRelation.entrySet()) {
-
+	private void accelerateNestedLoops(final IcfgLocation nestingLoophead, final IcfgLocation nestedLoophead) {
+		/*
+		 * In case of multiple nested loops, accelerate the inner one first (maybe check for delay for that)
+		 */
+		if (mNestingRelation.containsKey(nestedLoophead)) {
+			accelerateNestedLoops(nestedLoophead, mNestingRelation.get(nestedLoophead));
 		}
+		final List<UnmodifiableTransFormula> nestedLoopTfs = mNestedLoopsTf.get(nestedLoophead);
+		boolean accelerationFinishedCorrectly = false;
+		final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
+		for (final UnmodifiableTransFormula loopPath : nestedLoopTfs) {
+			mLogger.debug("Starting acceleration of nested loop");
+			final UnmodifiableTransFormula acceleratedLoopRelation =
+					mAccelerator.accelerateLoop(loopPath, nestedLoophead, AccelerationMethod.FAST_UPR);
+			if (!mAccelerator.accelerationFinishedCorrectly()) {
+				mLogger.debug("No acceleration found");
+				accelerationFinishedCorrectly = false;
+				break;
+			}
+			accelerationFinishedCorrectly = true;
+			Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
+			t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t, mSimplificationTechnique,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
+			mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
+			accelerations.add(tf);
+		}
+		if (!accelerationFinishedCorrectly) {
+			return;
+		}
+		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices, 0,
+				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+				accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
+		Set<List<LETTER>> nestingLoop;
+		if (mLoops.containsKey(nestingLoophead)) {
+			nestingLoop = mLoops.get(nestingLoophead);
+		} else {
+			nestingLoop = mNestedLoops.get(nestingLoophead);
+		}
+
+		final Set<List<UnmodifiableTransFormula>> nestingLoopAccelerated = new HashSet<>();
+
+		for (final List<LETTER> nestingLoopPath : nestingLoop) {
+			final List<UnmodifiableTransFormula> nestingLoopPathAccelerated = new ArrayList<>();
+			for (int i = 0; i < nestingLoopPath.size(); i++) {
+				if (nestingLoopPath.get(i).getSource() == nestedLoophead) {
+					mLogger.debug("found nested loophead");
+					nestingLoopPathAccelerated.add(nestedAcceleration);
+					i = mLoopSize.get(nestedLoophead).getSecond();
+				} else {
+					nestingLoopPathAccelerated.add(nestingLoopPath.get(i).getTransformula());
+				}
+			}
+			nestingLoopAccelerated.add(nestingLoopPathAccelerated);
+		}
+		mLoopsAsTf.put(nestingLoophead, nestingLoopAccelerated);
+		mLogger.debug("Nested loops accelerated");
 	}
 
 	@Override
