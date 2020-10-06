@@ -100,7 +100,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
+public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
@@ -121,7 +121,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
 	 */
-	protected final NestedWord<LETTER> mTrace;
+	protected final NestedWord<L> mTrace;
 	protected final IPredicate mPrecondition;
 	protected final IPredicate mPostcondition;
 	/**
@@ -132,11 +132,11 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	 * (given as Integer) to the predicate.
 	 */
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
-	protected AnnotateAndAsserter mAAA;
+	protected AnnotateAndAsserter<L> mAAA;
 	protected final boolean mProvidesIcfgProgramExecution;
-	protected final IcfgProgramExecution mRcfgProgramExecution;
-	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
-	protected NestedSsaBuilder mNsb;
+	protected final IcfgProgramExecution<L> mRcfgProgramExecution;
+	protected final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> mNestedFormulas;
+	protected NestedSsaBuilder<L> mNsb;
 	protected final TraceCheckStatisticsGenerator mTraceCheckBenchmarkGenerator;
 	protected final AssertCodeBlockOrder mAssertCodeBlockOrder;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
@@ -148,20 +148,20 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	 * the context to which the return leads the trace.
 	 */
 	public TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
 			final boolean collectInterpolatSequenceStatistics) {
 		this(precondition, postcondition, pendingContexts, trace,
-				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
+				new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
 						csToolkit.getOldVarsAssignmentCache(), false),
 				services, csToolkit, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, true);
 	}
 
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
 			final boolean unlockSmtSolverAlsoIfUnsat) {
@@ -176,8 +176,8 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	 * @param services
 	 */
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript managedScriptTc,
 			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
 			final boolean collectInterpolatSequenceStatistics, final boolean unlockSmtSolverAlsoIfUnsat) {
@@ -200,7 +200,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 		mTraceCheckBenchmarkGenerator = new TraceCheckStatisticsGenerator(collectInterpolatSequenceStatistics);
 
 		boolean providesIcfgProgramExecution = false;
-		IcfgProgramExecution icfgProgramExecution = null;
+		IcfgProgramExecution<L> icfgProgramExecution = null;
 		FeasibilityCheckResult feasibilityResult = null;
 		try {
 			feasibilityResult = checkTrace();
@@ -275,17 +275,17 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	protected FeasibilityCheckResult checkTrace() {
 		lockAndPrepareSolverForTraceCheck();
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
-		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mCsToolkit, mNestedFormulas, mLogger);
-		final NestedFormulas<Term, Term> ssa = mNsb.getSsa();
+		mNsb = new NestedSsaBuilder<>(mTrace, mTcSmtManager, mCsToolkit, mNestedFormulas, mLogger);
+		final NestedFormulas<L, Term, Term> ssa = mNsb.getSsa();
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		if (mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
-			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization(mTcSmtManager, ssa,
+			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization<>(mTcSmtManager, ssa,
 					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder,
 					mServices);
 		} else {
-			mAAA = new AnnotateAndAsserter(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
+			mAAA = new AnnotateAndAsserter<>(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
 					mTraceCheckBenchmarkGenerator, mServices);
 			// Report the asserted code blocks
 			// mTraceCheckBenchmarkGenerator.reportnewAssertedCodeBlocks(mTrace.length());
@@ -324,19 +324,21 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	 *
 	 * @return
 	 */
-	private IcfgProgramExecution computeRcfgProgramExecutionAndDecodeBranches() {
+	private IcfgProgramExecution<L> computeRcfgProgramExecutionAndDecodeBranches() {
 		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
 			throw new AssertionError(
 					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
 		}
-		if (!((DefaultTransFormulas) mNestedFormulas).hasBranchEncoders()) {
+		if (!((DefaultTransFormulas<L>) mNestedFormulas).hasBranchEncoders()) {
 			cleanupAndUnlockSolver();
-			final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
+			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getTrace(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
-			final TraceCheck<? extends IAction> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
+			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
 					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
+			assert tc.isCorrect() != LBool.UNKNOWN : "result of second trace check is UNKNOWN, Reasons: "
+					+ tc.getTraceCheckReasonUnknown();
 			assert tc.isCorrect() == LBool.SAT : "result of second trace check is not SAT, but " + tc.isCorrect();
 			return tc.getRcfgProgramExecution();
 		}
@@ -346,11 +348,11 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	/**
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
-	private IcfgProgramExecution computeRcfgProgramExecution(final NestedSsaBuilder nsb) {
-		final RelevantVariables relVars =
-				new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
-		final IcfgProgramExecutionBuilder rpeb = new IcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
-				mTrace, relVars, mBoogie2SmtSymbolTable);
+	private IcfgProgramExecution<L> computeRcfgProgramExecution(final NestedSsaBuilder<L> nsb) {
+		final RelevantVariables<L> relVars =
+				new RelevantVariables<>(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
+		final IcfgProgramExecutionBuilder<L> rpeb =
+				new IcfgProgramExecutionBuilder<>(mCsToolkit.getModifiableGlobalsTable(), mTrace, relVars);
 		for (int i = 0; i < mTrace.length(); i++) {
 			if (mTrace.getSymbol(i) instanceof IActionWithBranchEncoders) {
 				final IActionWithBranchEncoders cb = (IActionWithBranchEncoders) mTrace.getSymbol(i);
@@ -390,11 +392,8 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 		return rpeb.getIcfgProgramExecution();
 	}
 
-	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
-		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, mTraceCheckLock, ssa, mLogger);
-
-		// AnnotateAndAssertCodeBlocks aaacb =
-		// return new AnnotateAndAsserter(mCsToolkit, ssa, aaacb);
+	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {
+		return new AnnotateAndAssertCodeBlocks<>(mTcSmtManager, mTraceCheckLock, ssa, mLogger);
 	}
 
 	private Term getValue(final Term term) {
@@ -415,7 +414,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 		return result;
 	}
 
-	public List<LETTER> getTrace() {
+	public List<L> getTrace() {
 		return mTrace.asList();
 	}
 
@@ -440,7 +439,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	}
 
 	@Override
-	public IcfgProgramExecution getRcfgProgramExecution() {
+	public IcfgProgramExecution<L> getRcfgProgramExecution() {
 		if (mRcfgProgramExecution == null) {
 			throw new AssertionError("program execution has not yet been computed");
 		}

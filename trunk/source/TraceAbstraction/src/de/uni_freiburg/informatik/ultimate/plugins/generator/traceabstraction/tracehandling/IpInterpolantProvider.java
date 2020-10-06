@@ -50,21 +50,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.Topological
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements IInterpolantProvider<LETTER> {
-	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
+public class IpInterpolantProvider<L extends IIcfgTransition<?>> implements IInterpolantProvider<L> {
+	private final TaCheckAndRefinementPreferences<L> mPrefs;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateFactory mPredicateFactory;
-	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
+	private final AssertionOrderModulation<L> mAssertionOrderModulation;
 	private final TaskIdentifier mTaskIdentifier;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final DefaultIcfgSymbolTable mSymbolTable;
 	private final IcfgEdgeFactory mEdgeFactory;
 	private final IUltimateServiceProvider mServices;
+	private final Class<L> mTransitionClazz;
 
-	public IpInterpolantProvider(final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IPredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final TaskIdentifier taskIdentifier, final ILogger logger) {
+	public IpInterpolantProvider(final TaCheckAndRefinementPreferences<L> prefs,
+			final IPredicateUnifier predicateUnifier, final AssertionOrderModulation<L> assertionOrderModulation,
+			final TaskIdentifier taskIdentifier, final ILogger logger, final Class<L> transitionClazz) {
 		mPrefs = prefs;
 		mServices = prefs.getUltimateServices();
 		mPredicateUnifier = predicateUnifier;
@@ -76,10 +77,11 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		mSymbolTable = new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
 		mPredicateFactory = new PredicateFactory(mServices, mManagedScript, mSymbolTable);
 		mEdgeFactory = cfgSmtToolkit.getIcfgEdgeFactory();
+		mTransitionClazz = transitionClazz;
 	}
 
 	@Override
-	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
+	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<L, STATE> automaton,
 			final Map<STATE, IPredicate> stateMap) {
 		// Sort the DAG topologically and create aux vars for each state
 		final List<STATE> topOrder = topSort(automaton, stateMap);
@@ -99,14 +101,15 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		}
 		mSymbolTable.finishConstruction();
 		// Encode the DAG in a trace and get interpolants for it
-		final List<LETTER> trace = encodeDag(automaton, stateMap, topOrder, variables);
+		final List<L> trace = encodeDag(automaton, stateMap, topOrder, variables);
 		mLogger.info("Encoded the DAG in a trace of size " + trace.size());
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices, mManagedScript,
 				mPredicateFactory, mSymbolTable, SimplificationTechnique.NONE, mPrefs.getXnfConversionTechnique());
-		final IInterpolatingTraceCheck<LETTER> traceCheck =
+		final IInterpolatingTraceCheck<L> traceCheck =
 				new IpTcStrategyModulePreferences<>(mTaskIdentifier, mServices, mPrefs, new StatelessRun<>(trace),
 						predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(),
-						mAssertionOrderModulation, predicateUnifier, mPredicateFactory).getOrConstruct();
+						mAssertionOrderModulation, predicateUnifier, mPredicateFactory, mTransitionClazz)
+								.getOrConstruct();
 		assert traceCheck.isCorrect() == LBool.UNSAT : "The trace is feasible";
 		final IPredicate[] interpolants = traceCheck.getInterpolants();
 		assert interpolants.length == topOrder.size();
@@ -129,7 +132,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		return result;
 	}
 
-	private <STATE> List<STATE> topSort(final INestedWordAutomaton<LETTER, STATE> automaton,
+	private <STATE> List<STATE> topSort(final INestedWordAutomaton<L, STATE> automaton,
 			final Map<STATE, IPredicate> stateMap) {
 		final Map<STATE, Set<STATE>> successors = new HashMap<>();
 		for (final STATE state : automaton.getStates()) {
@@ -137,7 +140,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 				continue;
 			}
 			final Set<STATE> succs = new HashSet<>();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<L, STATE> edge : automaton.internalSuccessors(state)) {
 				final STATE succ = edge.getSucc();
 				if (!stateMap.containsKey(succ)) {
 					succs.add(succ);
@@ -148,17 +151,17 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		return new TopologicalSorter<>(successors::get).topologicalOrdering(successors.keySet()).get();
 	}
 
-	private <STATE> List<LETTER> encodeDag(final INestedWordAutomaton<LETTER, STATE> automaton,
+	private <STATE> List<L> encodeDag(final INestedWordAutomaton<L, STATE> automaton,
 			final Map<STATE, IPredicate> stateMap, final List<STATE> topOrder,
 			final Map<STATE, IProgramVar> variables) {
-		final List<LETTER> result = new ArrayList<>();
+		final List<L> result = new ArrayList<>();
 		final List<UnmodifiableTransFormula> initialTfs = new ArrayList<>();
 		final Script script = mManagedScript.getScript();
-		LETTER initialTransition = null;
+		L initialTransition = null;
 		for (final STATE state : topOrder) {
 			final List<UnmodifiableTransFormula> succTfs = new ArrayList<>();
-			LETTER transition = null;
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
+			L transition = null;
+			for (final OutgoingInternalTransition<L, STATE> edge : automaton.internalSuccessors(state)) {
 				final STATE succ = edge.getSucc();
 				final IPredicate succPredicate = stateMap.get(succ);
 				transition = edge.getLetter();
@@ -179,7 +182,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 					Collections.singleton(var), mManagedScript));
 			result.add(createTransition(transition, parallelComposition(succTfs)));
 			// Check if any predecessor has an interpolant. If so, add [pre]; tf; var:=true to the initial edges
-			for (final IncomingInternalTransition<LETTER, STATE> edge : automaton.internalPredecessors(state)) {
+			for (final IncomingInternalTransition<L, STATE> edge : automaton.internalPredecessors(state)) {
 				final IPredicate predicate = stateMap.get(edge.getPred());
 				if (predicate == null) {
 					continue;
@@ -202,8 +205,8 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	@SuppressWarnings("unchecked")
-	private LETTER createTransition(final LETTER transition, final UnmodifiableTransFormula transformula) {
-		return (LETTER) mEdgeFactory.createInternalTransition(transition.getSource(), transition.getTarget(),
+	private L createTransition(final L transition, final UnmodifiableTransFormula transformula) {
+		return (L) mEdgeFactory.createInternalTransition(transition.getSource(), transition.getTarget(),
 				transition.getPayload(), transformula);
 	}
 

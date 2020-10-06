@@ -42,21 +42,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class McrRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class McrRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public McrRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public McrRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist,
-			final StrategyFactory<LETTER> strategyFactory) {
+			final StrategyFactory<L> strategyFactory) {
 		super(factory, createModules(factory, strategyFactory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static final <LETTER extends IIcfgTransition<?>> StrategyModules<LETTER>
-			createModules(final StrategyModuleFactory<LETTER> factory, final StrategyFactory<LETTER> strategyFactory) {
-		final StrategyModuleMcr<LETTER> mcrModule = factory.createStrategyModuleMcr(strategyFactory);
-		final ITraceCheckStrategyModule<?>[] traceChecks = { mcrModule };
-		final IIpgStrategyModule<?, LETTER>[] interpolantGenerators = new IIpgStrategyModule[] { mcrModule };
-		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder = mcrModule;
+	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
+			createModules(final StrategyModuleFactory<L> factory, final StrategyFactory<L> strategyFactory) {
+		final StrategyModuleMcr<L> mcrModule = factory.createStrategyModuleMcr(strategyFactory);
+		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { mcrModule };
+		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { mcrModule };
+		final IIpAbStrategyModule<L> interpolantAutomatonBuilder = mcrModule;
 		return new StrategyModules<>(traceChecks, interpolantGenerators, interpolantAutomatonBuilder);
 	}
 

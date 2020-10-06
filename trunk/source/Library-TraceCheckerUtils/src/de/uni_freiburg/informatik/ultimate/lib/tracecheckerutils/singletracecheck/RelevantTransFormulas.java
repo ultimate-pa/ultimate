@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  * @author musab@informatik.uni-freiburg.de
  *
  */
-public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormula, IPredicate> {
+public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, UnmodifiableTransFormula, IPredicate> {
 
 	private static final boolean COMPUTE_SUM_SIZE_FORMULAS_IN_UNSAT_CORE = false;
 
@@ -89,9 +89,9 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 	 */
 	private int mSumSizeFormulasInUnsatCore = 0;
 
-	public RelevantTransFormulas(final NestedWord<? extends IAction> nestedTrace, final IPredicate precondition,
+	public RelevantTransFormulas(final NestedWord<L> nestedTrace, final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
-			final Set<IAction> unsatCore, final OldVarsAssignmentCache oldVarsAssignmentCache,
+			final Set<L> unsatCore, final OldVarsAssignmentCache oldVarsAssignmentCache,
 			final boolean[] localVarAssignmentsAtCallInUnsatCore, final boolean[] oldVarAssignmentAtCallInUnsatCore,
 			final ManagedScript script) {
 		super(nestedTrace, pendingContexts);
@@ -106,10 +106,10 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 
 	}
 
-	public RelevantTransFormulas(final NestedWord<? extends IAction> nestedTrace, final IPredicate precondition,
+	public RelevantTransFormulas(final NestedWord<L> nestedTrace, final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final Set<Term> unsatCore, final OldVarsAssignmentCache modGlobalVarManager, final ManagedScript script,
-			final AnnotateAndAsserter aaa, final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
+			final AnnotateAndAsserter<L> aaa, final AnnotateAndAssertConjunctsOfCodeBlocks<L> aac) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
@@ -120,7 +120,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 		generateRelevantTransFormulas(unsatCore, modGlobalVarManager, aaa, aac);
 	}
 
-	private void generateRelevantTransFormulas(final Set<IAction> unsatCore,
+	private void generateRelevantTransFormulas(final Set<L> unsatCore,
 			final boolean[] localVarAssignmentsAtCallInUnsatCore, final boolean[] oldVarAssignmentAtCallInUnsatCore,
 			final OldVarsAssignmentCache oldVarsAssignmentCache) {
 		for (int i = 0; i < super.getTrace().length(); i++) {
@@ -169,8 +169,8 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 	}
 
 	private void generateRelevantTransFormulas(final Set<Term> unsatCore,
-			final OldVarsAssignmentCache modGlobalVarManager, final AnnotateAndAsserter aaa,
-			final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
+			final OldVarsAssignmentCache modGlobalVarManager, final AnnotateAndAsserter<L> aaa,
+			final AnnotateAndAssertConjunctsOfCodeBlocks<L> aac) {
 		final Map<Term, Term> annot2Original = aac.getAnnotated2Original();
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (super.getTrace().getSymbol(i) instanceof ICallAction) {

@@ -42,9 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelati
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Relates letters labeling transitions in a Petri net. Two letters are
- * coenabled if there exists a reachable marking where transitions labelled with
- * these letters can fire independently (i.e., without one disabling the other).
+ * Relates letters labeling transitions in a Petri net. Two letters are coenabled if there exists a reachable marking
+ * where transitions labelled with these letters can fire independently (i.e., without one disabling the other).
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -63,13 +62,14 @@ public class CoenabledRelation<LETTER> {
 	 * Creates a new instance by computing the relation from the given Petri net.
 	 */
 	public static <PLACE, LETTER> CoenabledRelation<LETTER> fromPetriNet(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, PLACE> petriNet) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final IPetriNet<LETTER, PLACE> petriNet)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final BranchingProcess<LETTER, PLACE> bp = new FinitePrefix<>(services, petriNet).getResult();
-		return new CoenabledRelation<LETTER>(computeFromBranchingProcess(bp));
+		return new CoenabledRelation<>(computeFromBranchingProcess(bp));
 	}
 
-	private static <PLACE, LETTER> HashRelation<LETTER, LETTER> computeFromBranchingProcess(
-			final BranchingProcess<LETTER, PLACE> bp) {
+	private static <PLACE, LETTER> HashRelation<LETTER, LETTER>
+			computeFromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
 		final HashRelation<LETTER, LETTER> hashRelation = new HashRelation<>();
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 		final Collection<Event<LETTER, PLACE>> events = bp.getEvents();
@@ -94,9 +94,8 @@ public class CoenabledRelation<LETTER> {
 	}
 
 	/**
-	 * For each pair in the relation involving a given letter, creates a new
-	 * corresponding pair involving the other letter. The original pairs are not
-	 * removed, they remain in the relation.
+	 * For each pair in the relation involving a given letter, creates a new corresponding pair involving the other
+	 * letter. The original pairs are not removed, they remain in the relation.
 	 */
 	public void copyRelationships(final LETTER from, final LETTER to) {
 		for (final LETTER t3 : mRelation.getImage(from)) {

@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @author Betim Musa, Matthias Heizmann
  */
-public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCheck<LETTER> {
+public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L> {
 	// Forward relevant predicates
 	protected List<IPredicate> mInterpolantsFp;
 	// Backward relevant predicates
@@ -108,7 +108,7 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 
 	private final ConstructBackwardSequence mConstructBackwardInterpolantSequence;
 
-	private AnnotateAndAssertConjunctsOfCodeBlocks mAnnotateAndAsserterConjuncts;
+	private AnnotateAndAssertConjunctsOfCodeBlocks<L> mAnnotateAndAsserterConjuncts;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
 	private int mNonLiveVariablesFp = 0;
@@ -118,7 +118,7 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 	private boolean mAlternatingQuantifierBailout;
 
 	public TraceCheckSpWp(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder, final UnsatCores unsatCores,
 			final boolean useLiveVariables, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
@@ -266,19 +266,19 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 			mTraceCheckBenchmarkGenerator.setConjunctsInSSA(numberOfConjunctsInTrace, numberOfConjunctsInUnsatCore);
 		}
 
-		final NestedFormulas<UnmodifiableTransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
+		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
 		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core! trace length " + mTrace.length()
 				+ " unsat-core size " + unsatCore.size();
 
 		final Set<IProgramVar>[] liveVariables;
 		if (USE_LIVE_VARIABLES_INSTEAD_OF_RELEVANT_VARIABLES) {
 			// computation of live variables whose input is the original trace
-			final LiveVariables lvar = new LiveVariables(mNsb.getVariable2Constant(), mNsb.getConstants2BoogieVar(),
-					mNsb.getIndexedVarRepresentative());
+			final LiveVariables<L> lvar = new LiveVariables<>(mNsb.getVariable2Constant(),
+					mNsb.getConstants2BoogieVar(), mNsb.getIndexedVarRepresentative());
 			liveVariables = lvar.getLiveVariables();
 		} else {
 			// computation of live variables whose input takes the unsat core into a account (if applicable)
-			final RelevantVariables rvar = new RelevantVariables(rtf, mCsToolkit.getModifiableGlobalsTable());
+			final RelevantVariables<L> rvar = new RelevantVariables<>(rtf, mCsToolkit.getModifiableGlobalsTable());
 			liveVariables = rvar.getRelevantVariables();
 		}
 
@@ -292,7 +292,7 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mLogger,
 						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
-				final IterativePredicateTransformer spt = new IterativePredicateTransformer(mPredicateFactory,
+				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
 						mBoogie2SmtSymbolTable);
@@ -334,7 +334,7 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mLogger,
 						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
-				final IterativePredicateTransformer spt = new IterativePredicateTransformer(mPredicateFactory,
+				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
 						mBoogie2SmtSymbolTable);
@@ -405,23 +405,23 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 	/**
 	 * Construct representation of the trace formula that contains only the conjuncts that occur in the unsat core.
 	 */
-	private NestedFormulas<UnmodifiableTransFormula, IPredicate>
+	private NestedFormulas<L, UnmodifiableTransFormula, IPredicate>
 			constructRelevantTransFormulas(final Set<Term> unsatCore) {
-		final NestedFormulas<UnmodifiableTransFormula, IPredicate> rtf;
+		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf;
 		if (mUnsatCores == UnsatCores.IGNORE) {
-			rtf = new DefaultTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
+			rtf = new DefaultTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), false);
 		} else if (mUnsatCores == UnsatCores.STATEMENT_LEVEL) {
 			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
-			final Set<IAction> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
+			final Set<L> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
-			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
+			rtf = new RelevantTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts,
 					codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(), localVarAssignmentAtCallInUnsatCore,
 					oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
+			rtf = new RelevantTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
 					mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);
@@ -475,10 +475,9 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 	 *
 	 * @return true iff result of infeasiblity check is unsat or unknown
 	 */
-	private boolean stillInfeasible(final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv) {
-		final TraceCheck<? extends IAction> tc = new TraceCheck<>(rv.getPrecondition(), rv.getPostcondition(),
-				new TreeMap<Integer, IPredicate>(), rv.getTrace(), rv, mServices, mCsToolkit,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, true);
+	private boolean stillInfeasible(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv) {
+		final TraceCheck<L> tc = new TraceCheck<>(rv.getPrecondition(), rv.getPostcondition(), new TreeMap<>(),
+				rv.getTrace(), rv, mServices, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, true);
 		final boolean result = tc.isCorrect() != LBool.SAT;
 		return result;
 	}
@@ -488,10 +487,9 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 	 * contribute to the unsatisfiability of the trace, and therefore only these are important for the computations done
 	 * afterwards.
 	 */
-	private Set<IAction> filterOutIrrelevantStatements(final NestedWord<? extends IAction> trace,
-			final Set<Term> unsatCoresAsSet, final boolean[] localVarAssignmentAtCallInUnsatCore,
-			final boolean[] oldVarAssignmentAtCallInUnsatCore) {
-		final Set<IAction> codeBlocksInUnsatCore = new HashSet<>();
+	private Set<L> filterOutIrrelevantStatements(final NestedWord<L> trace, final Set<Term> unsatCoresAsSet,
+			final boolean[] localVarAssignmentAtCallInUnsatCore, final boolean[] oldVarAssignmentAtCallInUnsatCore) {
+		final Set<L> codeBlocksInUnsatCore = new HashSet<>();
 		for (int i = 0; i < trace.length(); i++) {
 			if (!trace.isCallPosition(i)
 					&& unsatCoresAsSet.contains(mAAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {
@@ -620,9 +618,9 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 	}
 
 	@Override
-	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
+	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {
 		if (mAnnotateAndAsserterConjuncts == null) {
-			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(mTcSmtManager, mTraceCheckLock,
+			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks<>(mTcSmtManager, mTraceCheckLock,
 					ssa, mNestedFormulas, mLogger, mCfgManagedScript);
 		}
 		return mAnnotateAndAsserterConjuncts;

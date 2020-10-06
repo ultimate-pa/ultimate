@@ -69,7 +69,7 @@ public final class IcfgEdgeFactory {
 	public IcfgInternalTransition createInternalTransitionWithBranchEncoders(final IcfgLocation source,
 			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
 			final UnmodifiableTransFormula transFormulaWithBranchIndicators,
-			final LinkedHashMap<TermVariable, IIcfgTransition<?>> branchIndicator2edge) {
+			final LinkedHashMap<TermVariable, ? extends IIcfgTransition<?>> branchIndicator2edge) {
 		// TODO return new IcfgInternalTransitionWithBranchEncoder(source, target, payload, transFormula,
 		// transFormulaWithBranchIndicators, branchIndicator2edge, getNextFreeId());
 		return new IcfgInternalTransition(source, target, payload, transFormula, getNextFreeId());
@@ -91,14 +91,14 @@ public final class IcfgEdgeFactory {
 
 	public IcfgForkThreadOtherTransition createForkThreadOtherTransition(final IcfgLocation source,
 			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
-			final IIcfgForkTransitionThreadCurrent icfgForkThreadCurrentTransition) {
+			final IIcfgForkTransitionThreadCurrent<?> icfgForkThreadCurrentTransition) {
 		return new IcfgForkThreadOtherTransition(source, target, payload, transFormula, icfgForkThreadCurrentTransition,
 				getNextFreeId());
 	}
 
 	public IcfgJoinThreadOtherTransition createJoinThreadOtherTransition(final IcfgLocation source,
 			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
-			final IIcfgJoinTransitionThreadCurrent icfgJoinThreadCurrentTransition) {
+			final IIcfgJoinTransitionThreadCurrent<?> icfgJoinThreadCurrentTransition) {
 		return new IcfgJoinThreadOtherTransition(source, target, payload, transFormula, icfgJoinThreadCurrentTransition,
 				getNextFreeId());
 	}
@@ -106,7 +106,5 @@ public final class IcfgEdgeFactory {
 	private int getNextFreeId() {
 		return mSerial.getFreshSerial();
 	}
-
-
 
 }

@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
@@ -43,22 +42,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
-public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTransition<?>>
-		implements ITraceCheckStrategyModule<TraceCheck<LETTER>> {
+public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition<?>>
+		implements ITraceCheckStrategyModule<L, TraceCheck<L>> {
 
 	private final IUltimateServiceProvider mServices;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
-	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
-	private final IRun<LETTER, ?> mCounterexample;
+	private final AssertionOrderModulation<L> mAssertionOrderModulation;
+	private final IRun<L, ?> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mPrecondition;
 
-	private TraceCheck<LETTER> mTraceCheck;
+	private TraceCheck<L> mTraceCheck;
 
 	protected TraceCheckStrategyModuleDefaultTraceCheck(final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IRun<LETTER, ?> counterexample,
-			final IPredicateUnifier predicateUnifier, final IPredicate precondition) {
+			final TaCheckAndRefinementPreferences<L> prefs, final AssertionOrderModulation<L> assertionOrderModulation,
+			final IRun<L, ?> counterexample, final IPredicateUnifier predicateUnifier, final IPredicate precondition) {
 		mServices = services;
 		mPrefs = prefs;
 		mAssertionOrderModulation = assertionOrderModulation;
@@ -78,7 +76,7 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTrans
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		return getOrConstruct().getRcfgProgramExecution();
 	}
 
@@ -93,7 +91,7 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTrans
 	}
 
 	@Override
-	public TraceCheck<LETTER> getOrConstruct() {
+	public TraceCheck<L> getOrConstruct() {
 		if (mTraceCheck == null) {
 			final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.get(mCounterexample, null);
 			final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();

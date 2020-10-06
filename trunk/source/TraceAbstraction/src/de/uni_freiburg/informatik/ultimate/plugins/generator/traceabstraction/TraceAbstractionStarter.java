@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -96,7 +97,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
-public class TraceAbstractionStarter {
+public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 	public static final String ULTIMATE_INIT = "ULTIMATE.init";
 
@@ -115,14 +116,20 @@ public class TraceAbstractionStarter {
 	private Result mOverallResult;
 	private IElement mArtifact;
 
-	private final List<Pair<AbstractInterpolantAutomaton<IIcfgTransition<?>>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations =
+	private final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations =
 			new ArrayList<>();
+
+	private final Class<L> mTransitionClazz;
+	private final IPLBECompositionFactory<L> mCompositionFactory;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mTransitionClazz = transitionClazz;
+		mCompositionFactory = compositionFactory;
 		// if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 		runCegarLoops(icfg, witnessAutomaton, rawFloydHoareAutomataFromFile);
 		// } else {
@@ -329,12 +336,13 @@ public class TraceAbstractionStarter {
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
-		final CegarLoopResult<IIcfgTransition<?>> clres;
+		final CegarLoopResult<L> clres;
 		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			clres = CegarLoopResult.iterate(mServices, name, root, taPrefs, predicateFactory, errorLocs,
-					witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation, taPrefs.getConcurrency());
+					witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation, taPrefs.getConcurrency(),
+					mCompositionFactory, mTransitionClazz);
 		} else {
-			CegarLoopResult<IIcfgTransition<?>> concurClres = null;
+			CegarLoopResult<L> concurClres = null;
 			int numberOfThreadInstances = 1;
 			while (true) {
 				mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
@@ -351,7 +359,7 @@ public class TraceAbstractionStarter {
 				}
 				concurClres = CegarLoopResult.iterate(mServices, name, petrifiedIcfg, taPrefs, predicateFactory1,
 						errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation,
-						taPrefs.getConcurrency());
+						taPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
 				final boolean insufficientThreadInstances = hasInsufficientThreadInstances(concurClres);
 				if (insufficientThreadInstances) {
 					if (false) {
@@ -388,10 +396,11 @@ public class TraceAbstractionStarter {
 		return result;
 	}
 
-	private static boolean hasInsufficientThreadInstances(final CegarLoopResult<IIcfgTransition<?>> clres) {
+	private static <L extends IIcfgTransition<?>> boolean
+			hasInsufficientThreadInstances(final CegarLoopResult<L> clres) {
 		final boolean insufficientThreadInstances;
 		if (clres.getOverallResult() == Result.UNSAFE) {
-			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> te =
+			final AtomicTraceElement<L> te =
 					clres.getProgramExecution().getTraceElement(clres.getProgramExecution().getLength() - 1);
 			final IcfgLocation tar = te.getTraceElement().getTarget();
 			final Check check = Check.getAnnotation(tar);
@@ -426,12 +435,11 @@ public class TraceAbstractionStarter {
 		for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
-		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop =
-				constructCegarLoop(name, icfg, taPrefs, icfg.getCfgSmtToolkit(), predicateFactory1, errorLocs,
-						rawFloydHoareAutomataFromFile, computeHoareAnnotation);
+		final BasicCegarLoop<L> basicCegarLoop = constructCegarLoop(name, icfg, taPrefs, icfg.getCfgSmtToolkit(),
+				predicateFactory1, errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
 		final Result result = basicCegarLoop.iterate();
 		if (result == Result.UNSAFE) {
-			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> te = basicCegarLoop.getRcfgProgramExecution()
+			final AtomicTraceElement<L> te = basicCegarLoop.getRcfgProgramExecution()
 					.getTraceElement(basicCegarLoop.getRcfgProgramExecution().getLength() - 1);
 			final IcfgLocation tar = te.getTraceElement().getTarget();
 			final Check check = Check.getAnnotation(tar);
@@ -447,8 +455,8 @@ public class TraceAbstractionStarter {
 		basicCegarLoop.finish();
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 			final LinkedHashSet<?> fhs = basicCegarLoop.getFloydHoareAutomata();
-			mFloydHoareAutomataFromOtherErrorLocations.addAll(
-					(LinkedHashSet<Pair<AbstractInterpolantAutomaton<IIcfgTransition<?>>, IPredicateUnifier>>) fhs);
+			mFloydHoareAutomataFromOtherErrorLocations
+					.addAll((LinkedHashSet<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>>) fhs);
 		}
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
@@ -475,7 +483,7 @@ public class TraceAbstractionStarter {
 		return result;
 	}
 
-	private BasicCegarLoop<?> constructCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
+	private BasicCegarLoop<L> constructCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final Collection<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
@@ -483,26 +491,30 @@ public class TraceAbstractionStarter {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 
-		BasicCegarLoop<IIcfgTransition<?>> result;
+		BasicCegarLoop<L> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
+						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mCompositionFactory,
+						mTransitionClazz);
 			} else {
 				switch (taPrefs.getFloydHoareAutomataReuse()) {
 				case EAGER:
 					result = new EagerReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							taPrefs.interpolation(), computeHoareAnnotation, mServices,
-							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile);
+							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile,
+							mCompositionFactory, mTransitionClazz);
 					break;
 				case LAZY_IN_ORDER:
 					result = new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							taPrefs.interpolation(), computeHoareAnnotation, mServices,
-							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile);
+							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile,
+							mCompositionFactory, mTransitionClazz);
 					break;
 				case NONE:
 					result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), computeHoareAnnotation, mServices);
+							taPrefs.interpolation(), computeHoareAnnotation, mServices, mCompositionFactory,
+							mTransitionClazz);
 					break;
 				default:
 					throw new AssertionError();
@@ -510,12 +522,13 @@ public class TraceAbstractionStarter {
 			}
 		} else {
 			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-					taPrefs.interpolation(), computeHoareAnnotation, mServices, languageOperation);
+					taPrefs.interpolation(), computeHoareAnnotation, mServices, languageOperation, mCompositionFactory,
+					mTransitionClazz);
 		}
 		return result;
 	}
 
-	private Result reportResults(final Collection<IcfgLocation> errorLocs, final CegarLoopResult clres,
+	private Result reportResults(final Collection<IcfgLocation> errorLocs, final CegarLoopResult<L> clres,
 			final Result result) {
 		switch (result) {
 		case SAFE:
@@ -532,7 +545,7 @@ public class TraceAbstractionStarter {
 			reportLimitResult(result, errorLocs, clres.getRunningTaskStackProvider());
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		case UNKNOWN:
-			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe = clres.getProgramExecution();
+			final IProgramExecution<L, Term> pe = clres.getProgramExecution();
 			reportUnproveableResult(pe, clres.getUnprovabilityReasons());
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		default:
@@ -541,7 +554,7 @@ public class TraceAbstractionStarter {
 	}
 
 	private Result computeOverallResult(final Collection<IcfgLocation> errorLocs,
-			final BasicCegarLoop<?> basicCegarLoop, final Result result) {
+			final BasicCegarLoop<L> basicCegarLoop, final Result result) {
 		switch (result) {
 		case SAFE:
 			reportPositiveResults(errorLocs);
@@ -557,7 +570,7 @@ public class TraceAbstractionStarter {
 			reportLimitResult(result, errorLocs, basicCegarLoop.getRunningTaskStackProvider());
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		case UNKNOWN:
-			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe = basicCegarLoop.getRcfgProgramExecution();
+			final IProgramExecution<L, Term> pe = basicCegarLoop.getRcfgProgramExecution();
 			final List<UnprovabilityReason> unprovabilityReasons = new ArrayList<>();
 			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
 			unprovabilityReasons.addAll(UnprovabilityReason.getUnprovabilityReasons(pe));
@@ -614,7 +627,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void reportCounterexampleResult(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
+	private void reportCounterexampleResult(final IProgramExecution<L, Term> pe) {
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(pe, upreasons);
@@ -627,9 +640,9 @@ public class TraceAbstractionStarter {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private static boolean isAngelicallySafe(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
+	private static <L extends IIcfgTransition<?>> boolean isAngelicallySafe(final IProgramExecution<L, Term> pe) {
 		if (pe instanceof IcfgAngelicProgramExecution) {
-			return !((IcfgAngelicProgramExecution) pe).getAngelicStatus();
+			return !((IcfgAngelicProgramExecution<L>) pe).getAngelicStatus();
 		}
 		return false;
 	}
@@ -666,7 +679,7 @@ public class TraceAbstractionStarter {
 		return res;
 	}
 
-	private void reportUnproveableResult(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe,
+	private void reportUnproveableResult(final IProgramExecution<L, Term> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
@@ -701,7 +714,7 @@ public class TraceAbstractionStarter {
 		return mRootOfNewModel;
 	}
 
-	public static IcfgLocation getErrorPP(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
+	public static <L extends IIcfgTransition<?>> IcfgLocation getErrorPP(final IProgramExecution<L, Term> pe) {
 		final int lastPosition = pe.getLength() - 1;
 		final IIcfgTransition<?> last = pe.getTraceElement(lastPosition).getTraceElement();
 		return last.getTarget();

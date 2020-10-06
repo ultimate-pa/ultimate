@@ -83,9 +83,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -113,7 +113,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
-public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
+public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<L> {
 
 	/**
 	 * To indicate whether a frame has been changed. It is possible to add "true" to frames, but that was ignored in the
@@ -151,7 +151,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final IPredicateUnifier mLocalPredicateUnifier;
 	private final IPredicate mTruePred;
 	private final IPredicate mFalsePred;
-	private final List<LETTER> mTrace;
+	private final List<L> mTrace;
 	private final PdrBenchmark mPdrBenchmark;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IPredicate mAxioms;
@@ -164,7 +164,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final Deque<Pair<ProofObligation, ProofObligation>> mSatProofObligations;
 
 	private boolean mTraceCheckFinishedNormally;
-	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
+	private IProgramExecution<L, Term> mFeasibleProgramExecution;
 	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private TraceCheckReasonUnknown mReasonUnknown;
@@ -172,13 +172,17 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final int mLevel;
 	private final IPredicateUnifier mExternalPredicateUnifier;
 
+	private final Class<L> mTransitionClazz;
+
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final IPredicate precondition, final IPredicate postcondition, final List<LETTER> counterexample) {
+			final IPredicate precondition, final IPredicate postcondition, final List<L> counterexample,
+			final Class<L> transitionClazz) {
 		// from params
 		mLogger = logger;
 		mTrace = counterexample;
 		mLocalAssignmentCall = new HashMap<>();
 		mLocalAssignmentRet = new HashMap<>();
+		mTransitionClazz = transitionClazz;
 
 		if (!SmtUtils.isTrueLiteral(precondition.getFormula())) {
 			throw new UnsupportedOperationException("Currently, only precondition true is supported");
@@ -298,7 +302,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				mLogger.debug("Interpolants are");
 				int i = 0;
 				mLogger.debug("{true}");
-				for (final LETTER letter : mTrace) {
+				for (final L letter : mTrace) {
 					mLogger.debug(letter);
 
 					if (i != mTrace.size() - 1) {
@@ -568,7 +572,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					/**
 					 * Get the procedure in form of a trace.
 					 */
-					final List<LETTER> procTrace = getProcedureTrace(returnTrans);
+					final List<L> procTrace = getProcedureTrace(returnTrans);
 					final PathProgramConstructionResult pp =
 							PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(procTrace));
 					final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
@@ -649,7 +653,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 									new ProofObligation(newProofObligation.getToBeBlocked(), newLocation, 0);
 						}
 
-						final List<LETTER> subTrace = getSubTrace(newLocation);
+						final List<L> subTrace = getSubTrace(newLocation);
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("Beginning recursive PDR");
 						}
@@ -1009,7 +1013,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * @param modifiableGlobals
 	 * @return The trace as a pair of List of edges and a summarizing {@link UnmodifiableTransFormula}
 	 */
-	private List<LETTER> getProcedureTrace(final IIcfgReturnTransition<?, ?> returnTrans) {
+	private List<L> getProcedureTrace(final IIcfgReturnTransition<?, ?> returnTrans) {
 		final IcfgLocation returnLoc = returnTrans.getSource();
 		final IIcfgCallTransition<?> callEdge = returnTrans.getCorrespondingCall();
 		final IcfgLocation callLoc = callEdge.getTarget();
@@ -1019,7 +1023,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		int start = -1;
 		int end = -1;
 
-		for (final LETTER l : mTrace) {
+		for (final L l : mTrace) {
 			if (l.getSource().equals(callLoc.getLabel())) {
 				start = i;
 			} else if (l.getSource().equals(returnLoc.getLabel())) {
@@ -1030,7 +1034,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 		assert start != -1;
 		assert end != -1;
-		final List<LETTER> procedureTrace = new ArrayList<>(mTrace.subList(start, end));
+		final List<L> procedureTrace = new ArrayList<>(mTrace.subList(start, end));
 		return procedureTrace;
 
 	}
@@ -1045,17 +1049,17 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * @param modifiableGlobals
 	 * @return The trace as a pair of List of edges and a summarizing {@link UnmodifiableTransFormula}
 	 */
-	private List<LETTER> getSubTrace(final IcfgLocation target) {
+	private List<L> getSubTrace(final IcfgLocation target) {
 		int end = -1;
 		int i = 0;
-		for (final LETTER l : mTrace) {
+		for (final L l : mTrace) {
 			if (l.getSource().equals(target.getLabel())) {
 				end = i;
 			}
 			i++;
 		}
 		assert end != -1;
-		final List<LETTER> subTrace = new ArrayList<>(mTrace.subList(0, end));
+		final List<L> subTrace = new ArrayList<>(mTrace.subList(0, end));
 		return subTrace;
 
 	}
@@ -1186,11 +1190,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 		}
 
-		final Iterator<LETTER> traceIt = mTrace.iterator();
+		final Iterator<L> traceIt = mTrace.iterator();
 		final IPredicate[] interpolants = new IPredicate[mTrace.size() - 1];
 		int i = 0;
 		while (traceIt.hasNext()) {
-			final LETTER l = traceIt.next();
+			final L l = traceIt.next();
 			if (!traceIt.hasNext()) {
 				// the last target is always false
 				break;
@@ -1207,16 +1211,16 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		// TODO: Use fresh solver here that supports quantifiers; NPE in clausifier is due to SMTInterpol choking on
 		// quantifier
 
-		final NestedWord<LETTER> nestedWord = TraceCheckUtils.toNestedWord(mTrace);
+		final NestedWord<L> nestedWord = TraceCheckUtils.toNestedWord(mTrace);
 
-		final IterativePredicateTransformer spt =
-				new IterativePredicateTransformer(mLocalPredicateUnifier.getPredicateFactory(), mScript,
+		final IterativePredicateTransformer<L> spt =
+				new IterativePredicateTransformer<>(mLocalPredicateUnifier.getPredicateFactory(), mScript,
 						mCsToolkit.getModifiableGlobalsTable(), mServices, nestedWord, mTruePred, mFalsePred,
 						Collections.emptySortedMap(), mTruePred, SimplificationTechnique.SIMPLIFY_DDA,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mSymbolTable);
 
 		final OldVarsAssignmentCache oldVarsAssignmentCache = mCsToolkit.getOldVarsAssignmentCache();
-		final DefaultTransFormulas rtf = new DefaultTransFormulas(nestedWord, mTruePred, mFalsePred,
+		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWord, mTruePred, mFalsePred,
 				Collections.emptySortedMap(), oldVarsAssignmentCache, false);
 
 		final IPredicatePostprocessor pdrPostProcessor = new IPredicatePostprocessor() {
@@ -1354,12 +1358,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		}
 	}
 
-	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> computeProgramExecution() {
+	private IProgramExecution<L, Term> computeProgramExecution() {
 		// TODO: construct a real IProgramExecution using
 		// IcfgProgramExecutionBuilder (DD needs to refactor s.t. the
 		// class becomes available here).
 		if (mIsTraceCorrect == LBool.SAT) {
-			return IProgramExecution.emptyExecution(Term.class, IcfgEdge.class);
+			return IProgramExecution.emptyExecution(Term.class, mTransitionClazz);
 		}
 		return null;
 	}
@@ -1407,7 +1411,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		if (mFeasibleProgramExecution == null) {
 			mFeasibleProgramExecution = computeProgramExecution();
 		}
@@ -1434,7 +1438,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	/** IInterpolantGenerator interface **/
 
 	@Override
-	public List<LETTER> getTrace() {
+	public List<L> getTrace() {
 		return mTrace;
 	}
 

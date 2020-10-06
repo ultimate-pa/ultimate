@@ -30,9 +30,8 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -47,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface ITraceCheck {
+public interface ITraceCheck<L extends IAction> {
 
 	/**
 	 * Returns
@@ -70,7 +69,7 @@ public interface ITraceCheck {
 	/**
 	 * Return the RcfgProgramExecution that has been computed by computeRcfgProgramExecution().
 	 */
-	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution();
+	IProgramExecution<L, Term> getRcfgProgramExecution();
 
 	IStatisticsDataProvider getStatistics();
 

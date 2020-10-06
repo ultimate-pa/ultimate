@@ -27,19 +27,20 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * A simple and efficient syntax-based independence relation.
- * Two actions are independent if all variable accessed by both of them are only read, not written to.
+ * A simple and efficient syntax-based independence relation. Two actions are independent if all variable accessed by
+ * both of them are only read, not written to.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
- * @param <STATE> This relation is non-conditional, so this parameter is not used.
+ * @param <STATE>
+ *            This relation is non-conditional, so this parameter is not used.
  */
-public class SyntacticIndependenceRelation<STATE> implements IIndependenceRelation<STATE, IIcfgTransition<?>> {
+public class SyntacticIndependenceRelation<STATE, L extends IAction> implements IIndependenceRelation<STATE, L> {
 
 	private long mPositiveQueries;
 	private long mNegativeQueries;
@@ -55,16 +56,16 @@ public class SyntacticIndependenceRelation<STATE> implements IIndependenceRelati
 	}
 
 	@Override
-	public boolean contains(final STATE state, final IIcfgTransition<?> a, final IIcfgTransition<?> b) {
+	public boolean contains(final STATE state, final L a, final L b) {
 		final TransFormula tf1 = a.getTransformula();
 		final TransFormula tf2 = b.getTransformula();
 
-		final boolean noWWConflict = DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(),
-				tf2.getAssignedVars());
-		final boolean noWRConflict = DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(),
-				tf2.getInVars().keySet());
-		final boolean noRWConflict = DataStructureUtils.haveEmptyIntersection(tf1.getInVars().keySet(),
-				tf2.getAssignedVars());
+		final boolean noWWConflict =
+				DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
+		final boolean noWRConflict =
+				DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getInVars().keySet());
+		final boolean noRWConflict =
+				DataStructureUtils.haveEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars());
 
 		final boolean result = noWWConflict && noWRConflict && noRWConflict;
 		if (result) {
@@ -82,7 +83,5 @@ public class SyntacticIndependenceRelation<STATE> implements IIndependenceRelati
 	public long getNegativeQueries() {
 		return mNegativeQueries;
 	}
-
-
 
 }

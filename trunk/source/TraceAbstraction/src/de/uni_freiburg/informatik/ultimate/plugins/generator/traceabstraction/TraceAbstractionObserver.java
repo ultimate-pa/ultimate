@@ -39,8 +39,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.IcfgCompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
@@ -117,8 +119,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 		final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile =
 				constructRawNestedWordAutomata(mAutomataTestFileAsts);
-		final TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, rcfgRootNode, witnessAutomaton,
-				rawFloydHoareAutomataFromFile);
+		final IcfgCompositionFactory compositionFactory =
+				new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit());
+		final TraceAbstractionStarter<IcfgEdge> tas = new TraceAbstractionStarter<>(mServices, rcfgRootNode,
+				witnessAutomaton, rawFloydHoareAutomataFromFile, compositionFactory, IcfgEdge.class);
 		mRootOfNewModel = tas.getRootOfNewModel();
 	}
 

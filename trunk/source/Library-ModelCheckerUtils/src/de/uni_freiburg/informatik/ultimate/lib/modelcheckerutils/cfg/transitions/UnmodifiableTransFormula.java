@@ -95,7 +95,8 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 				computeClosedFormula(formula, super.getInVars(), super.getOutVars(), super.getAuxVars(), script);
 		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
-		assert !branchEncoders.isEmpty() || mClosedFormula.getFreeVars().length == 0 : "free variables";
+		assert !branchEncoders.isEmpty() || mClosedFormula.getFreeVars().length == 0 : String
+				.format("free variables %s", Arrays.asList(mClosedFormula.getFreeVars()));
 		// mVars = new
 		// HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";

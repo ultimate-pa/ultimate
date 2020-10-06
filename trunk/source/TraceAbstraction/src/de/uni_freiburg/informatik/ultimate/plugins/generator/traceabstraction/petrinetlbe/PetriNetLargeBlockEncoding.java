@@ -40,6 +40,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
@@ -57,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -79,15 +79,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class PetriNetLargeBlockEncoding {
+public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
 	private final ILogger mLogger;
-	private final BoundedPetriNet<IIcfgTransition<?>, IPredicate> mResult;
+	private final BoundedPetriNet<L, IPredicate> mResult;
 	private final ManagedScript mManagedScript;
 
-	private final Map<IIcfgTransition<?>, List<IIcfgTransition<?>>> mSequentialCompositions;
-	private final Map<IIcfgTransition<?>, Set<IIcfgTransition<?>>> mChoiceCompositions;
-	private final Map<IIcfgTransition<?>, TermVariable> mBranchEncoderMap;
+	private final Map<L, List<L>> mSequentialCompositions;
+	private final Map<L, Set<L>> mChoiceCompositions;
+	private final Map<L, TermVariable> mBranchEncoderMap;
 
 	private final IUltimateServiceProvider mServices;
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics =
@@ -112,23 +112,23 @@ public class PetriNetLargeBlockEncoding {
 	 *             if Petri net is not 1-safe.
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings)
+			final BoundedPetriNet<L, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings,
+			final IPLBECompositionFactory<L> compositionFactory)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
 
-		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> variableCheck =
-				new SyntacticIndependenceRelation<>();
-		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck;
-		final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> moverCheck;
+		final IIndependenceRelation<IPredicate, L> variableCheck = new SyntacticIndependenceRelation<>();
+		final IIndependenceRelation<IPredicate, L> semanticCheck;
+		final CachedIndependenceRelation<IPredicate, L> moverCheck;
 		switch (petriNetLbeSettings) {
 		case OFF:
 			throw new IllegalArgumentException("do not call LBE if you don't want to use it");
 		case SEMANTIC_BASED_MOVER_CHECK:
 			mLogger.info("Petri net LBE is using semantic-based independence relation.");
-			semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
-			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> unionCheck =
+			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, false, false);
+			final IIndependenceRelation<IPredicate, L> unionCheck =
 					new UnionIndependenceRelation<>(Arrays.asList(variableCheck, semanticCheck));
 			moverCheck = new CachedIndependenceRelation<>(unionCheck);
 			break;
@@ -143,16 +143,15 @@ public class PetriNetLargeBlockEncoding {
 
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 		try {
-			final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(services, cfgSmtToolkit);
-			final LiptonReduction<IIcfgTransition<?>, IPredicate> lipton = new LiptonReduction<>(
-					new AutomataLibraryServices(services), petriNet, compositionFactory, moverCheck);
+			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(new AutomataLibraryServices(services),
+					petriNet, compositionFactory, moverCheck);
 			mResult = lipton.getResult();
 			mSequentialCompositions = lipton.getSequentialCompositions();
 			mChoiceCompositions = lipton.getChoiceCompositions();
 			mBranchEncoderMap = compositionFactory.getBranchEncoders();
 
-			mStatistics.extractStatistics((SemanticIndependenceRelation) semanticCheck);
-			mStatistics.extractStatistics((SyntacticIndependenceRelation<?>) variableCheck);
+			mStatistics.extractStatistics((SemanticIndependenceRelation<L>) semanticCheck);
+			mStatistics.extractStatistics((SyntacticIndependenceRelation<?, L>) variableCheck);
 			mStatistics.extractStatistics(moverCheck);
 			mStatistics.addLiptonStatistics(lipton.getStatistics());
 
@@ -168,7 +167,7 @@ public class PetriNetLargeBlockEncoding {
 
 	}
 
-	private String generateTimeoutMessage(final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
+	private String generateTimeoutMessage(final BoundedPetriNet<L, IPredicate> petriNet) {
 		return "applying " + getClass().getSimpleName() + " to Petri net that " + petriNet.sizeInformation();
 	}
 
@@ -180,8 +179,7 @@ public class PetriNetLargeBlockEncoding {
 	 *            The execution of the new Petri Net.
 	 * @return The corresponding execution of the old Petri Net.
 	 */
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term>
-			translateExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
+	public IProgramExecution<L, Term> translateExecution(final IProgramExecution<L, Term> execution) {
 		if (execution == null) {
 			throw new IllegalArgumentException("execution is null");
 		}
@@ -190,23 +188,22 @@ public class PetriNetLargeBlockEncoding {
 			throw new IllegalArgumentException("argument is not IcfgProgramExecution but " + execution.getClass());
 
 		}
-		final IcfgProgramExecution oldIcfgPe = ((IcfgProgramExecution) execution);
+		final IcfgProgramExecution<L> oldIcfgPe = ((IcfgProgramExecution<L>) execution);
 		final Map<TermVariable, Boolean>[] oldBranchEncoders = oldIcfgPe.getBranchEncoders();
 		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "wrong branchencoders";
 
-		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> newTrace = new ArrayList<>();
+		final List<AtomicTraceElement<L>> newTrace = new ArrayList<>();
 		final List<ProgramState<Term>> newValues = new ArrayList<>();
 		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		for (int i = 0; i < oldIcfgPe.getLength(); ++i) {
-			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = oldIcfgPe.getTraceElement(i);
-			final IIcfgTransition<IcfgLocation> transition = currentATE.getTraceElement();
+			final AtomicTraceElement<L> currentATE = oldIcfgPe.getTraceElement(i);
+			final L transition = currentATE.getTraceElement();
 
-			final Collection<IIcfgTransition<?>> newTransitions = translateBack(transition, oldBranchEncoders[i]);
+			final Collection<L> newTransitions = translateBack(transition, oldBranchEncoders[i]);
 			int j = 0;
-			for (final IIcfgTransition<?> newTransition : newTransitions) {
-				newTrace.add((AtomicTraceElement) AtomicTraceElementBuilder
-						.fromReplaceElementAndStep(currentATE, newTransition).build());
+			for (final L newTransition : newTransitions) {
+				newTrace.add(AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, newTransition).build());
 				j++;
 
 				// If more transitions to come, set the intermediate state to null
@@ -227,8 +224,9 @@ public class PetriNetLargeBlockEncoding {
 			newValuesMap.put(i, newValues.get(i));
 		}
 
-		return new IcfgProgramExecution(newTrace, newValuesMap,
-				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent());
+		return new IcfgProgramExecution<L>(newTrace, newValuesMap,
+				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent(),
+				IcfgProgramExecution.getClassFromAtomicTraceElements(newTrace));
 	}
 
 	/**
@@ -240,27 +238,26 @@ public class PetriNetLargeBlockEncoding {
 	 * @param branchEncoders
 	 *            Branch encoders indicating which branch of a choice composition was taken.
 	 */
-	private Collection<IIcfgTransition<?>> translateBack(final IIcfgTransition<?> transition,
-			final Map<TermVariable, Boolean> branchEncoders) {
-		final ArrayDeque<IIcfgTransition<?>> result = new ArrayDeque<>();
+	private Collection<L> translateBack(final L transition, final Map<TermVariable, Boolean> branchEncoders) {
+		final ArrayDeque<L> result = new ArrayDeque<>();
 
-		final ArrayDeque<IIcfgTransition<?>> stack = new ArrayDeque<>();
+		final ArrayDeque<L> stack = new ArrayDeque<>();
 		stack.push(transition);
 
 		while (!stack.isEmpty()) {
-			final IIcfgTransition<?> current = stack.pop();
+			final L current = stack.pop();
 
 			if (mSequentialCompositions.containsKey(current)) {
-				final List<IIcfgTransition<?>> sequence = mSequentialCompositions.get(current);
+				final List<L> sequence = mSequentialCompositions.get(current);
 				assert sequence != null;
 
 				// Put the transitions making up this composition on the stack.
 				// Last transition in the sequence is on top.
-				for (final IIcfgTransition<?> component : sequence) {
+				for (final L component : sequence) {
 					stack.push(component);
 				}
 			} else if (mChoiceCompositions.containsKey(current)) {
-				final Set<IIcfgTransition<?>> choices = mChoiceCompositions.get(current);
+				final Set<L> choices = mChoiceCompositions.get(current);
 				assert choices != null;
 
 				if (branchEncoders == null) {
@@ -270,7 +267,7 @@ public class PetriNetLargeBlockEncoding {
 				}
 
 				boolean choiceFound = false;
-				for (final IIcfgTransition<?> choice : choices) {
+				for (final L choice : choices) {
 					assert mBranchEncoderMap.get(choice) != null : "Choice composition is missing branch encoder";
 					final TermVariable indicator = mBranchEncoderMap.get(choice);
 					assert branchEncoders.get(indicator) != null : "Branch indicator value was unknown";
@@ -291,11 +288,20 @@ public class PetriNetLargeBlockEncoding {
 		return result;
 	}
 
-	public BoundedPetriNet<IIcfgTransition<?>, IPredicate> getResult() {
+	public BoundedPetriNet<L, IPredicate> getResult() {
 		return mResult;
 	}
 
 	public PetriNetLargeBlockEncodingBenchmarks getPetriNetLargeBlockEncodingStatistics() {
 		return new PetriNetLargeBlockEncodingBenchmarks(mStatistics);
+	}
+
+	/**
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	public interface IPLBECompositionFactory<L> extends ICompositionFactory<L> {
+
+		Map<L, TermVariable> getBranchEncoders();
+
 	}
 }

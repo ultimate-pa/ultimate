@@ -244,4 +244,13 @@ public class TraceCheckReasonUnknown {
 		return new TraceCheckReasonUnknown(reason, e, exceptionCategory);
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder().append(getReason());
+		if (getException() != null) {
+			sb.append(": ").append(getException().getMessage());
+		}
+		return sb.toString();
+	}
+
 }

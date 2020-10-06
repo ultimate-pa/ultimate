@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface IRefinementStrategy<LETTER extends IAction> {
+public interface IRefinementStrategy<L extends IAction> {
 
 	/**
 	 * @return the name of this strategy, usually the corresponding {@link RefinementStrategy} as String.
@@ -100,7 +100,7 @@ public interface IRefinementStrategy<LETTER extends IAction> {
 	 * @return the next {@link ITraceCheckStrategyModule}.
 	 * @throws NoSuchElementException
 	 */
-	ITraceCheckStrategyModule<?> nextFeasibilityCheck();
+	ITraceCheckStrategyModule<L, ?> nextFeasibilityCheck();
 
 	/**
 	 * @param perfectIpps
@@ -116,13 +116,13 @@ public interface IRefinementStrategy<LETTER extends IAction> {
 	 * @return the next {@link IIpgStrategyModule}.
 	 * @throws NoSuchElementException
 	 */
-	IIpgStrategyModule<?, LETTER> nextInterpolantGenerator();
+	IIpgStrategyModule<?, L> nextInterpolantGenerator();
 
 	/**
 	 * @return the {@link IIpAbStrategyModule} that should be used to build an interpolant automaton from the collected
 	 *         interpolant sequences.
 	 */
-	IIpAbStrategyModule<LETTER> getInterpolantAutomatonBuilder();
+	IIpAbStrategyModule<L> getInterpolantAutomatonBuilder();
 
 	/**
 	 * @return A {@link RefinementStrategyExceptionBlacklist} that defines how exceptions during trace checks or
@@ -136,23 +136,23 @@ public interface IRefinementStrategy<LETTER extends IAction> {
 	 * loop.
 	 *
 	 * If your strategy does not require a specific {@link IHoareTripleChecker}, return null.
-	 * 
+	 *
 	 * @param engine
 	 *            the {@link IRefinementEngine} instance after the strategy has been completely processed.
 	 * @return An {@link IHoareTripleChecker} instance particular to this strategy or null
 	 */
-	IHoareTripleChecker getHoareTripleChecker(IRefinementEngine<?> engine);
+	IHoareTripleChecker getHoareTripleChecker(IRefinementEngine<L, ?> engine);
 
 	/**
 	 * Some strategies might need a specific {@link IPredicateUnifier} (e.g., AbsInt, ...) and can provide it here. The
 	 * refinement engine will pick it up after completing a strategy and provide it to this iteration of the CEGAR loop.
 	 *
 	 * If your strategy does not require a specific {@link IPredicateUnifier}, return null.
-	 * 
+	 *
 	 * @param engine
 	 *            the {@link IRefinementEngine} instance after the strategy has been completely processed.
 	 * @return An {@link IPredicateUnifier} instance particular to this strategy or null
 	 */
-	IPredicateUnifier getPredicateUnifier(IRefinementEngine<?> engine);
+	IPredicateUnifier getPredicateUnifier(IRefinementEngine<L, ?> engine);
 
 }

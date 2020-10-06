@@ -51,7 +51,7 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator implements IStatistic
 		mCheckedPairsTotal += i;
 	}
 
-	public void extractStatistics(final SemanticIndependenceRelation semanticBasedCheck) {
+	public void extractStatistics(final SemanticIndependenceRelation<?> semanticBasedCheck) {
 		if (semanticBasedCheck != null) {
 			mSemBasedMoverChecksPositive = semanticBasedCheck.getPositiveQueries();
 			mSemBasedMoverChecksNegative = semanticBasedCheck.getNegativeQueries();
@@ -60,7 +60,7 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator implements IStatistic
 		}
 	}
 
-	public void extractStatistics(final SyntacticIndependenceRelation<?> variableBasedCheck) {
+	public void extractStatistics(final SyntacticIndependenceRelation<?, ?> variableBasedCheck) {
 		mVarBasedMoverChecksPositive = variableBasedCheck.getPositiveQueries();
 		mVarBasedMoverChecksNegative = variableBasedCheck.getNegativeQueries();
 	}

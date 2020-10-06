@@ -41,24 +41,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class ToothlessTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		extends BasicRefinementStrategy<LETTER> {
+public class ToothlessTaipanRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public ToothlessTaipanRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public ToothlessTaipanRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static final <LETTER extends IIcfgTransition<?>> StrategyModules<LETTER>
-			createModules(final StrategyModuleFactory<LETTER> factory) {
+	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
+			createModules(final StrategyModuleFactory<L> factory) {
 
-		final IIpTcStrategyModule<?, LETTER> absint = factory.createIpTcStrategyModuleAbstractInterpretation();
+		final IIpTcStrategyModule<?, L> absint = factory.createIpTcStrategyModuleAbstractInterpretation();
 
-		final ITraceCheckStrategyModule<?>[] traceChecks = { absint };
-		final IIpgStrategyModule<?, LETTER>[] interpolantGenerators = new IIpgStrategyModule[] { absint };
-		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder =
-				factory.createIpAbStrategyModuleStraightlineAll();
+		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { absint };
+		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { absint };
+		final IIpAbStrategyModule<L> interpolantAutomatonBuilder = factory.createIpAbStrategyModuleStraightlineAll();
 		return new StrategyModules<>(traceChecks, interpolantGenerators, interpolantAutomatonBuilder);
 	}
 

@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
@@ -90,11 +91,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 
 	public static boolean USE_AUTOMATA_WITH_UNMATCHED_PREDICATES = false;
 
-	protected final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations;
+	protected final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations;
 	protected final List<INestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 	protected List<ReuseAutomaton> mFloydHoareAutomataFromFile;
 
@@ -105,10 +106,11 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services);
+				services, compositionFactory, transitionClazz);
 		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mFloydHoareAutomataFromFile = new ArrayList<>();
@@ -139,16 +141,15 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	private void buildFloydHoareAutomaton(final PredicateParsingWrapperScript ppws,
 			final INestedWordAutomaton<String, String> rawAutomatonFromFile) {
 		// Create map from strings to all equivalent "new" letters (abstraction letters)
-		final Map<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
-		final VpAlphabet<LETTER> abstractionAlphabet =
-				((INestedWordAutomaton<LETTER, IPredicate>) mAbstraction).getVpAlphabet();
+		final Map<String, Set<L>> mapStringToLetter = new HashMap<>();
+		final VpAlphabet<L> abstractionAlphabet = ((INestedWordAutomaton<L, IPredicate>) mAbstraction).getVpAlphabet();
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getInternalAlphabet());
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getReturnAlphabet());
 		// compute stats for letters
 		countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter);
 		// Create empty automaton with same alphabet
-		final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
+		final NestedWordAutomaton<L, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
 				mCsToolkit.getManagedScript(), mPredicateFactory, mCsToolkit.getSymbolTable(),
@@ -235,9 +236,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	}
 
 	private void addState(final INestedWordAutomaton<String, String> rawAutomatonFromFile,
-			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton,
-			final HashMap<String, IPredicate> mapStringToState, final HashMap<IPredicate, String> mapStateToString,
-			final IPredicate predicate, final String string) {
+			final NestedWordAutomaton<L, IPredicate> resAutomaton, final HashMap<String, IPredicate> mapStringToState,
+			final HashMap<IPredicate, String> mapStateToString, final IPredicate predicate, final String string) {
 		mapStringToState.put(string, predicate);
 		mapStateToString.put(predicate, string);
 		final boolean isInitial = rawAutomatonFromFile.isInitial(string);
@@ -245,7 +245,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		resAutomaton.addState(isInitial, isFinal, predicate);
 	}
 
-	private Pair<HashMap<IPredicate, Validity>, HashMap<IPredicate, Validity>> constructImpliesExpliesRelations(
+	private static Pair<HashMap<IPredicate, Validity>, HashMap<IPredicate, Validity>> constructImpliesExpliesRelations(
 			final Set<IPredicate> states, final String newStateString,
 			final HashMap<IPredicate, String> mapStateToString,
 			final Pair<HashRelation<String, String>, HashRelation<String, String>> result) {
@@ -269,7 +269,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		return new Pair<>(impliedPredicates, expliedPredicates);
 	}
 
-	private Pair<HashRelation<String, String>, HashRelation<String, String>>
+	private static Pair<HashRelation<String, String>, HashRelation<String, String>>
 			constructImpliesExpliesStrings(final IEpsilonNestedWordAutomaton<String, String> rawEpsilon) {
 		final HashRelation<String, String> implies = new HashRelation<>();
 		final HashRelation<String, String> explies = new HashRelation<>();
@@ -320,7 +320,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	 * These two numbers are printed to the provided log. This function should only be used for debugging purposes.
 	 */
 	private final void countReusedAndRemovedLetters(final VpAlphabet<String> orgAlphabet,
-			final Map<String, Set<LETTER>> map) {
+			final Map<String, Set<L>> map) {
 		int removedLetters = 0;
 		int reusedLetters = 0;
 		final Set<String> letters = new HashSet<>();
@@ -339,9 +339,9 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		mReuseStats.addTotalLetters(totalLetters);
 	}
 
-	private final void addTransitionsFromRawAutomaton(final NestedWordAutomaton<LETTER, IPredicate> resAutomaton,
+	private final void addTransitionsFromRawAutomaton(final NestedWordAutomaton<L, IPredicate> resAutomaton,
 			final INestedWordAutomaton<String, String> rawAutomatonFromFile,
-			final Map<String, Set<LETTER>> mapStringToLetter, final Map<String, IPredicate> mapStringToState,
+			final Map<String, Set<L>> mapStringToLetter, final Map<String, IPredicate> mapStringToState,
 			final Map<IPredicate, String> mapStateToString) {
 
 		int removedTransitions = 0;
@@ -353,14 +353,14 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 			for (final OutgoingCallTransition<String, String> succ : rawAutomatonFromFile.callSuccessors(stringState)) {
 
-				final Pair<Set<LETTER>, IPredicate> outTrans =
+				final Pair<Set<L>, IPredicate> outTrans =
 						filterTransitions(succ, mapStringToLetter, mapStringToState, availableStates);
 				if (outTrans == null) {
 					removedTransitions++;
 					continue;
 				}
 
-				for (final LETTER letter : outTrans.getFirst()) {
+				for (final L letter : outTrans.getFirst()) {
 					resAutomaton.addCallTransition(predicateState, letter, outTrans.getSecond());
 					reusedTransitions++;
 				}
@@ -369,14 +369,14 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			for (final OutgoingInternalTransition<String, String> succ : rawAutomatonFromFile
 					.internalSuccessors(stringState)) {
 
-				final Pair<Set<LETTER>, IPredicate> outTrans =
+				final Pair<Set<L>, IPredicate> outTrans =
 						filterTransitions(succ, mapStringToLetter, mapStringToState, availableStates);
 				if (outTrans == null) {
 					removedTransitions++;
 					continue;
 				}
 
-				for (final LETTER letter : outTrans.getFirst()) {
+				for (final L letter : outTrans.getFirst()) {
 					resAutomaton.addInternalTransition(predicateState, letter, outTrans.getSecond());
 					reusedTransitions++;
 				}
@@ -385,7 +385,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			for (final OutgoingReturnTransition<String, String> succ : rawAutomatonFromFile
 					.returnSuccessors(stringState)) {
 
-				final Pair<Set<LETTER>, IPredicate> outTrans =
+				final Pair<Set<L>, IPredicate> outTrans =
 						filterTransitions(succ, mapStringToLetter, mapStringToState, availableStates);
 				if (outTrans == null) {
 					removedTransitions++;
@@ -398,7 +398,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 					continue;
 				}
 
-				for (final LETTER letter : outTrans.getFirst()) {
+				for (final L letter : outTrans.getFirst()) {
 					resAutomaton.addReturnTransition(predicateState, heirPredState, letter, outTrans.getSecond());
 					reusedTransitions++;
 				}
@@ -410,10 +410,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		mReuseStats.addTotalTransitions(totalTransitions);
 	}
 
-	private Pair<Set<LETTER>, IPredicate> filterTransitions(final IOutgoingTransitionlet<String, String> transition,
-			final Map<String, Set<LETTER>> mapStringToLetter, final Map<String, IPredicate> mapStringToState,
+	private Pair<Set<L>, IPredicate> filterTransitions(final IOutgoingTransitionlet<String, String> transition,
+			final Map<String, Set<L>> mapStringToLetter, final Map<String, IPredicate> mapStringToState,
 			final Set<IPredicate> availableStates) {
-		final Set<LETTER> letters = mapStringToLetter.get(transition.getLetter());
+		final Set<L> letters = mapStringToLetter.get(transition.getLetter());
 		if (letters == null) {
 			// could not match the letter
 			return null;
@@ -464,14 +464,14 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		private final boolean mUseEnhancement;
 
 		private final IPredicateUnifier mPredicateUnifier;
-		private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
-		private final VpAlphabet<LETTER> mAbstractionAlphabet;
+		private final NestedWordAutomaton<L, IPredicate> mAutomaton;
+		private final VpAlphabet<L> mAbstractionAlphabet;
 
-		private AbstractInterpolantAutomaton<LETTER> mEnhancedAutomaton;
+		private AbstractInterpolantAutomaton<L> mEnhancedAutomaton;
 		private IHoareTripleChecker mHtc;
 
-		private ReuseAutomaton(final NestedWordAutomaton<LETTER, IPredicate> automaton,
-				final VpAlphabet<LETTER> abstractionAlphabet, final IPredicateUnifier predicateUnifier) {
+		private ReuseAutomaton(final NestedWordAutomaton<L, IPredicate> automaton,
+				final VpAlphabet<L> abstractionAlphabet, final IPredicateUnifier predicateUnifier) {
 
 			mPredicateUnifier = predicateUnifier;
 			mAutomaton = automaton;
@@ -479,7 +479,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			mUseEnhancement = mPref.getFloydHoareAutomataReuseEnhancement() != FloydHoareAutomataReuseEnhancement.NONE;
 		}
 
-		public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getAutomaton() {
+		public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getAutomaton() {
 			if (mUseEnhancement) {
 				return getEnhancedInterpolantAutomaton();
 			}
@@ -524,7 +524,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			return new CachingHoareTripleCheckerMap(mServices, eiHtc, getPredicateUnifier());
 		}
 
-		private Set<LETTER> constructOldAlphabet() {
+		private Set<L> constructOldAlphabet() {
 			return DataStructureUtils.union(
 					DataStructureUtils.intersection(mAbstractionAlphabet.getInternalAlphabet(),
 							mAutomaton.getVpAlphabet().getInternalAlphabet()),
@@ -545,7 +545,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			return mPredicateUnifier;
 		}
 
-		private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getEnhancedInterpolantAutomaton() {
+		private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getEnhancedInterpolantAutomaton() {
 			if (mEnhancedAutomaton == null) {
 				mEnhancedAutomaton = constructInterpolantAutomatonForOnDemandEnhancement(mAutomaton,
 						getPredicateUnifier(), getHtc(), InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);

@@ -89,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCount
  * @author Matthias Heizmann
  *
  */
-public class NestedSsaBuilder {
+public class NestedSsaBuilder<L extends IAction> {
 
 	private final ILogger mLogger;
 
@@ -116,10 +116,10 @@ public class NestedSsaBuilder {
 
 	protected final Map<Term, IProgramVar> mConstants2BoogieVar = new HashMap<>();
 
-	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mFormulas;
+	protected final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> mFormulas;
 
-	protected final ModifiableNestedFormulas<Term, Term> mSsa;
-	protected final ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> mVariable2Constant;
+	protected final ModifiableNestedFormulas<L, Term, Term> mSsa;
+	protected final ModifiableNestedFormulas<L, Map<Term, Term>, Map<Term, Term>> mVariable2Constant;
 
 	private final ModifiableGlobalsTable mModGlobVarManager;
 
@@ -144,9 +144,9 @@ public class NestedSsaBuilder {
 	 */
 	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<>();
 
-	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript managedTcScript,
+	public NestedSsaBuilder(final NestedWord<L> trace, final ManagedScript managedTcScript,
 			final CfgSmtToolkit cfgSmtToolkit,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
 		mLogger = logger;
 		mTcScript = managedTcScript.getScript();
 		mFormulas = nestedTransFormulas;
@@ -364,11 +364,11 @@ public class NestedSsaBuilder {
 		return mIndexedVarRepresentative;
 	}
 
-	public NestedFormulas<Term, Term> getSsa() {
+	public NestedFormulas<L, Term, Term> getSsa() {
 		return mSsa;
 	}
 
-	public ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> getVariable2Constant() {
+	public ModifiableNestedFormulas<L, Map<Term, Term>, Map<Term, Term>> getVariable2Constant() {
 		return mVariable2Constant;
 	}
 

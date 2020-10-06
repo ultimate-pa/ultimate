@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class InterpolatingTraceCheck<LETTER extends IAction> extends TraceCheck<LETTER>
-		implements IInterpolatingTraceCheck<LETTER> {
+public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCheck<L>
+		implements IInterpolatingTraceCheck<L> {
 
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
@@ -76,7 +76,7 @@ public abstract class InterpolatingTraceCheck<LETTER extends IAction> extends Tr
 	 * the context to which the return leads the trace.
 	 */
 	public InterpolatingTraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
 			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
@@ -84,7 +84,7 @@ public abstract class InterpolatingTraceCheck<LETTER extends IAction> extends Tr
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(precondition, postcondition, pendingContexts, trace,
-				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
+				new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
 						csToolkit.getOldVarsAssignmentCache(), false),
 				services, csToolkit, tcSmtManager, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, false);

@@ -7,26 +7,24 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
-	private final List<LETTER> mTrace;
+public class McrTraceCheckResult<L extends IIcfgTransition<?>> {
+	private final List<L> mTrace;
 	private final LBool mIsCorrect;
 	private final Collection<QualifiedTracePredicates> mQualifiedTracePredicates;
 	private final IStatisticsDataProvider mStatistics;
-	private final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mExecution;
+	private final IProgramExecution<L, Term> mExecution;
 
-	private NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
+	private NestedWordAutomaton<L, IPredicate> mAutomaton;
 
-	private McrTraceCheckResult(final List<LETTER> trace, final LBool isCorrect,
+	private McrTraceCheckResult(final List<L> trace, final LBool isCorrect,
 			final Collection<QualifiedTracePredicates> qualifiedTracePredicates,
-			final IStatisticsDataProvider statistics,
-			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
+			final IStatisticsDataProvider statistics, final IProgramExecution<L, Term> execution) {
 		mTrace = trace;
 		mIsCorrect = isCorrect;
 		mQualifiedTracePredicates = qualifiedTracePredicates;
@@ -34,19 +32,19 @@ public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
 		mExecution = execution;
 	}
 
-	public static <LETTER extends IIcfgTransition<?>> McrTraceCheckResult<LETTER> constructFeasibleResult(
-			final List<LETTER> trace, final LBool isCorrect, final IStatisticsDataProvider statistics,
-			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
+	public static <L extends IIcfgTransition<?>> McrTraceCheckResult<L> constructFeasibleResult(final List<L> trace,
+			final LBool isCorrect, final IStatisticsDataProvider statistics,
+			final IProgramExecution<L, Term> execution) {
 		return new McrTraceCheckResult<>(trace, isCorrect, Collections.emptyList(), statistics, execution);
 	}
 
-	public static <LETTER extends IIcfgTransition<?>> McrTraceCheckResult<LETTER> constructInfeasibleResult(
-			final List<LETTER> trace, final Collection<QualifiedTracePredicates> qualifiedTracePredicates,
+	public static <L extends IIcfgTransition<?>> McrTraceCheckResult<L> constructInfeasibleResult(final List<L> trace,
+			final Collection<QualifiedTracePredicates> qualifiedTracePredicates,
 			final IStatisticsDataProvider statistics) {
 		return new McrTraceCheckResult<>(trace, LBool.UNSAT, qualifiedTracePredicates, statistics, null);
 	}
 
-	public List<LETTER> getTrace() {
+	public List<L> getTrace() {
 		return mTrace;
 	}
 
@@ -54,11 +52,11 @@ public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
 		return mIsCorrect;
 	}
 
-	public void setAutomaton(final NestedWordAutomaton<LETTER, IPredicate> automaton) {
+	public void setAutomaton(final NestedWordAutomaton<L, IPredicate> automaton) {
 		mAutomaton = automaton;
 	}
 
-	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
+	public NestedWordAutomaton<L, IPredicate> getAutomaton() {
 		return mAutomaton;
 	}
 
@@ -79,7 +77,7 @@ public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
 		return mStatistics;
 	}
 
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getExecution() {
+	public IProgramExecution<L, Term> getExecution() {
 		return mExecution;
 	}
 

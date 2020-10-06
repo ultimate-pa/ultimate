@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2019-2020 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2019-2020 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -26,39 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
- * An independence relation that represents the union of several independence
- * relations. This can in particular be used to combine an efficient but
- * incomplete check with a more computation-intensive check.
- * 
+ * An interface that supports sequential and parallel composition of letters.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters to compose
  */
-public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelation<STATE, L> {
+public interface ICompositionFactory<L> {
+	/**
+	 * Determines if the composition of a given letter with others is supported.
+	 */
+	boolean isComposable(L letter);
 
-	private final Collection<IIndependenceRelation<STATE, L>> mRelations;
-	private final boolean mSymmetric;
-	private final boolean mConditional;
+	/**
+	 * Performs the sequential composition of the given letters.
+	 */
+	L composeSequential(L first, L second);
 
-	public UnionIndependenceRelation(final Collection<IIndependenceRelation<STATE, L>> relations) {
-		mRelations = relations;
-		mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
-		mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
-	}
-
-	@Override
-	public boolean isSymmetric() {
-		return mSymmetric;
-	}
-
-	@Override
-	public boolean isConditional() {
-		return mConditional;
-	}
-
-	@Override
-	public boolean contains(final STATE state, final L a, final L b) {
-		return mRelations.stream().anyMatch(r -> r.contains(state, a, b));
-	}
+	/**
+	 * Performs the parallel (choice) composition of the given letters.
+	 *
+	 * @param letters
+	 *            A non-empty list of letters
+	 */
+	L composeParallel(List<L> letters);
 }

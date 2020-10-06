@@ -31,7 +31,6 @@ import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -43,12 +42,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Base class for all {@link IIpTcStrategyModule}s that create <i>some</i> {@link IInterpolatingTraceCheck}.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class IpTcStrategyModuleBase<T extends IInterpolatingTraceCheck<LETTER>, LETTER extends IIcfgTransition<?>>
-		implements IIpTcStrategyModule<T, LETTER> {
+public abstract class IpTcStrategyModuleBase<T extends IInterpolatingTraceCheck<L>, L extends IIcfgTransition<?>>
+		implements IIpTcStrategyModule<T, L> {
 
 	private T mTrack;
 
@@ -63,7 +62,7 @@ public abstract class IpTcStrategyModuleBase<T extends IInterpolatingTraceCheck<
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		return getOrConstruct().getRcfgProgramExecution();
 	}
 

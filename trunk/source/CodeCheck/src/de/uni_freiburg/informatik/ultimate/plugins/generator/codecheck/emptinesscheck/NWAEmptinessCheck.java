@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
@@ -68,8 +69,9 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 	}
 
 	@Override
-	public NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> checkForEmptiness(final AnnotatedProgramPoint root) {
-		final INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<?>, AnnotatedProgramPoint> converted =
+	public NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>
+			checkForEmptiness(final AnnotatedProgramPoint root) {
+		final INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> converted =
 				new MyNWA(root);
 		try {
 			return new IsEmpty<>(new AutomataLibraryServices(mServices),
@@ -82,26 +84,29 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 	}
 
 	private static final class MyNWA
-			implements INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<?>, AnnotatedProgramPoint> {
+			implements INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> {
 
-		private final Set<IIcfgTransition<?>> mAlphabet = new HashSet<>();
-		private final Set<IIcfgTransition<?>> mInternalAlphabet = new HashSet<>();
-		private final Set<IIcfgTransition<?>> mCallAlphabet = new HashSet<>();
-		private final Set<IIcfgTransition<?>> mReturnAlphabet = new HashSet<>();
-		private final VpAlphabet<IIcfgTransition<?>> mVpAlphabet =
+		private final Set<IIcfgTransition<IcfgLocation>> mAlphabet = new HashSet<>();
+		private final Set<IIcfgTransition<IcfgLocation>> mInternalAlphabet = new HashSet<>();
+		private final Set<IIcfgTransition<IcfgLocation>> mCallAlphabet = new HashSet<>();
+		private final Set<IIcfgTransition<IcfgLocation>> mReturnAlphabet = new HashSet<>();
+		private final VpAlphabet<IIcfgTransition<IcfgLocation>> mVpAlphabet =
 				new VpAlphabet<>(mInternalAlphabet, mCallAlphabet, mReturnAlphabet);
 
 		private final IStateFactory<AnnotatedProgramPoint> mStateFactory = new DummyStateFactory<>();
 
-		private final Map<AnnotatedProgramPoint, Set<IIcfgTransition<?>>> mStateToLettersInternal = new HashMap<>();
-		private final Map<AnnotatedProgramPoint, Set<IIcfgTransition<?>>> mStateToLettersCall = new HashMap<>();
-		private final Map<AnnotatedProgramPoint, Set<IIcfgTransition<?>>> mStateToLettersReturn = new HashMap<>();
+		private final Map<AnnotatedProgramPoint, Set<IIcfgTransition<IcfgLocation>>> mStateToLettersInternal =
+				new HashMap<>();
+		private final Map<AnnotatedProgramPoint, Set<IIcfgTransition<IcfgLocation>>> mStateToLettersCall =
+				new HashMap<>();
+		private final Map<AnnotatedProgramPoint, Set<IIcfgTransition<IcfgLocation>>> mStateToLettersReturn =
+				new HashMap<>();
 
-		private final Map<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>> mStateToLetterToOutgoingInternalTransitions =
+		private final Map<AnnotatedProgramPoint, Map<IIcfgTransition<IcfgLocation>, List<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>> mStateToLetterToOutgoingInternalTransitions =
 				new HashMap<>();
-		private final Map<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>> mStateToLetterToOutgoingCallTransitions =
+		private final Map<AnnotatedProgramPoint, Map<IIcfgTransition<IcfgLocation>, List<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>> mStateToLetterToOutgoingCallTransitions =
 				new HashMap<>();
-		private final Map<AnnotatedProgramPoint, Map<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>>> mStateToHierToLetterToOutgoingReturnTransitions =
+		private final Map<AnnotatedProgramPoint, Map<AnnotatedProgramPoint, Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>>> mStateToHierToLetterToOutgoingReturnTransitions =
 				new HashMap<>();
 
 		private final AnnotatedProgramPoint mEmptyStackSymbol = new EmptyStackSymbol();
@@ -130,7 +135,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 				for (final AppEdge outEdge : currentNode.getOutgoingEdges()) {
 					final AnnotatedProgramPoint targetNode = outEdge.getTarget();
-					final IIcfgTransition<?> statement = outEdge.getStatement();
+					final IIcfgTransition<IcfgLocation> statement = outEdge.getStatement();
 
 					if (!visitedNodes.contains(targetNode) && !openNodes.contains(targetNode)) {
 						// TODO: openNodes.contains: not nice (linear)-->do it different
@@ -143,17 +148,17 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 						mCallAlphabet.add(statement);
 
 						if (mStateToLettersCall.get(currentNode) == null) {
-							mStateToLettersCall.put(currentNode, new HashSet<IIcfgTransition<?>>());
+							mStateToLettersCall.put(currentNode, new HashSet<IIcfgTransition<IcfgLocation>>());
 						}
 						mStateToLettersCall.get(currentNode).add(statement);
 
 						if (mStateToLetterToOutgoingCallTransitions.get(currentNode) == null) {
 							mStateToLetterToOutgoingCallTransitions.put(currentNode,
-									new HashMap<IIcfgTransition<?>, List<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>());
+									new HashMap<IIcfgTransition<IcfgLocation>, List<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>());
 						}
 						if (mStateToLetterToOutgoingCallTransitions.get(currentNode).get(statement) == null) {
 							mStateToLetterToOutgoingCallTransitions.get(currentNode).put(statement,
-									new ArrayList<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>());
+									new ArrayList<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>());
 						}
 						mStateToLetterToOutgoingCallTransitions.get(currentNode).get(statement)
 								.add(new OutgoingCallTransition<>(statement, targetNode));
@@ -162,7 +167,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 						mReturnAlphabet.add(statement);
 
 						if (mStateToLettersReturn.get(currentNode) == null) {
-							mStateToLettersReturn.put(currentNode, new HashSet<IIcfgTransition<?>>());
+							mStateToLettersReturn.put(currentNode, new HashSet<IIcfgTransition<IcfgLocation>>());
 						}
 						mStateToLettersReturn.get(currentNode).add(statement);
 
@@ -173,16 +178,16 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 						if (mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode) == null) {
 							mStateToHierToLetterToOutgoingReturnTransitions.put(currentNode,
-									new HashMap<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>>());
+									new HashMap<AnnotatedProgramPoint, Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>>());
 						}
 						if (mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier) == null) {
 							mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).put(hier,
-									new HashMap<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>());
+									new HashMap<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>());
 						}
 						if (mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier)
 								.get(statement) == null) {
 							mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).put(statement,
-									new ArrayList<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>());
+									new ArrayList<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>());
 						}
 						assert isOutReturnTransitionNotContained(currentNode, hier, statement, targetNode);
 						mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(statement)
@@ -191,17 +196,17 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 						mInternalAlphabet.add(statement);
 
 						if (mStateToLettersInternal.get(currentNode) == null) {
-							mStateToLettersInternal.put(currentNode, new HashSet<IIcfgTransition<?>>());
+							mStateToLettersInternal.put(currentNode, new HashSet<IIcfgTransition<IcfgLocation>>());
 						}
 						mStateToLettersInternal.get(currentNode).add(statement);
 
 						if (mStateToLetterToOutgoingInternalTransitions.get(currentNode) == null) {
 							mStateToLetterToOutgoingInternalTransitions.put(currentNode,
-									new HashMap<IIcfgTransition<?>, List<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>());
+									new HashMap<IIcfgTransition<IcfgLocation>, List<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>());
 						}
 						if (mStateToLetterToOutgoingInternalTransitions.get(currentNode).get(statement) == null) {
 							mStateToLetterToOutgoingInternalTransitions.get(currentNode).put(statement,
-									new ArrayList<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>());
+									new ArrayList<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>());
 						}
 						mStateToLetterToOutgoingInternalTransitions.get(currentNode).get(statement)
 								.add(new OutgoingInternalTransition<>(statement, targetNode));
@@ -216,10 +221,10 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		private boolean isOutReturnTransitionNotContained(final AnnotatedProgramPoint currentNode,
-				final AnnotatedProgramPoint hier, final IIcfgTransition<?> edge,
+				final AnnotatedProgramPoint hier, final IIcfgTransition<IcfgLocation> edge,
 				final AnnotatedProgramPoint targetNode) {
 			boolean result = true;
-			for (final OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint> ort : mStateToHierToLetterToOutgoingReturnTransitions
+			for (final OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> ort : mStateToHierToLetterToOutgoingReturnTransitions
 					.get(currentNode).get(hier).get(edge)) {
 				result &= ort.getHierPred() != hier || ort.getLetter() != edge || ort.getSucc() != targetNode;
 			}
@@ -232,7 +237,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Set<IIcfgTransition<?>> getAlphabet() {
+		public Set<IIcfgTransition<IcfgLocation>> getAlphabet() {
 			return mAlphabet;
 		}
 
@@ -242,7 +247,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public VpAlphabet<IIcfgTransition<?>> getVpAlphabet() {
+		public VpAlphabet<IIcfgTransition<IcfgLocation>> getVpAlphabet() {
 			return mVpAlphabet;
 		}
 
@@ -272,8 +277,8 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Set<IIcfgTransition<?>> lettersInternal(final AnnotatedProgramPoint state) {
-			final Map<IIcfgTransition<?>, List<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2 =
+		public Set<IIcfgTransition<IcfgLocation>> lettersInternal(final AnnotatedProgramPoint state) {
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2 =
 					mStateToLetterToOutgoingInternalTransitions.get(state);
 			if (letter2 == null) {
 				return Collections.emptySet();
@@ -283,8 +288,8 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Set<IIcfgTransition<?>> lettersCall(final AnnotatedProgramPoint state) {
-			final Map<IIcfgTransition<?>, List<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2 =
+		public Set<IIcfgTransition<IcfgLocation>> lettersCall(final AnnotatedProgramPoint state) {
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2 =
 					mStateToLetterToOutgoingCallTransitions.get(state);
 			if (letter2 == null) {
 				return Collections.emptySet();
@@ -294,22 +299,22 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Set<IIcfgTransition<?>> lettersReturn(final AnnotatedProgramPoint state,
+		public Set<IIcfgTransition<IcfgLocation>> lettersReturn(final AnnotatedProgramPoint state,
 				final AnnotatedProgramPoint hier) {
-			final Map<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>> hier2 =
+			final Map<AnnotatedProgramPoint, Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>> hier2 =
 					mStateToHierToLetterToOutgoingReturnTransitions.get(state);
 			if (hier2 == null) {
 				return Collections.emptySet();
 			}
-			final Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2succ =
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2succ =
 					hier2.get(hier2);
 			return letter2succ.keySet();
 		}
 
 		@Override
-		public Iterable<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>
-				internalSuccessors(final AnnotatedProgramPoint state, final IIcfgTransition<?> letter) {
-			final Map<IIcfgTransition<?>, List<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2 =
+		public Iterable<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>
+				internalSuccessors(final AnnotatedProgramPoint state, final IIcfgTransition<IcfgLocation> letter) {
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2 =
 					mStateToLetterToOutgoingInternalTransitions.get(state);
 			if (letter2 == null) {
 				return Collections.emptyList();
@@ -319,17 +324,17 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Iterable<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>
+		public Iterable<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>
 				internalSuccessors(final AnnotatedProgramPoint state) {
-			final Map<IIcfgTransition<?>, List<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2 =
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2 =
 					mStateToLetterToOutgoingInternalTransitions.get(state);
 			if (letter2 == null) {
 				return Collections.emptyList();
 			}
 
-			final ArrayList<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>> a =
+			final ArrayList<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>> a =
 					new ArrayList<>();
-			for (final List<OutgoingInternalTransition<IIcfgTransition<?>, AnnotatedProgramPoint>> vs : letter2
+			for (final List<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>> vs : letter2
 					.values()) {
 				a.addAll(vs);
 			}
@@ -337,9 +342,9 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Iterable<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>
-				callSuccessors(final AnnotatedProgramPoint state, final IIcfgTransition<?> letter) {
-			final Map<IIcfgTransition<?>, List<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2 =
+		public Iterable<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>
+				callSuccessors(final AnnotatedProgramPoint state, final IIcfgTransition<IcfgLocation> letter) {
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2 =
 					mStateToLetterToOutgoingCallTransitions.get(state);
 			if (letter2 == null) {
 				return Collections.emptyList();
@@ -349,16 +354,17 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Iterable<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>
+		public Iterable<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>
 				callSuccessors(final AnnotatedProgramPoint state) {
-			final Map<IIcfgTransition<?>, List<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2 =
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2 =
 					mStateToLetterToOutgoingCallTransitions.get(state);
 			if (letter2 == null) {
 				return Collections.emptyList();
 			}
 
-			final ArrayList<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>> a = new ArrayList<>();
-			for (final List<OutgoingCallTransition<IIcfgTransition<?>, AnnotatedProgramPoint>> vs : mStateToLetterToOutgoingCallTransitions
+			final ArrayList<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>> a =
+					new ArrayList<>();
+			for (final List<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>> vs : mStateToLetterToOutgoingCallTransitions
 					.get(state).values()) {
 				a.addAll(vs);
 			}
@@ -366,14 +372,15 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Iterable<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>> returnSuccessors(
-				final AnnotatedProgramPoint state, final AnnotatedProgramPoint hier, final IIcfgTransition<?> letter) {
-			final Map<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>> hier2letter2 =
+		public Iterable<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>
+				returnSuccessors(final AnnotatedProgramPoint state, final AnnotatedProgramPoint hier,
+						final IIcfgTransition<IcfgLocation> letter) {
+			final Map<AnnotatedProgramPoint, Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>> hier2letter2 =
 					mStateToHierToLetterToOutgoingReturnTransitions.get(state);
 			if (hier2letter2 == null) {
 				return Collections.emptyList();
 			}
-			final Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2 =
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2 =
 					mStateToHierToLetterToOutgoingReturnTransitions.get(state).get(hier);
 			if (letter2 == null) {
 				return Collections.emptyList();
@@ -383,21 +390,22 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Iterable<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>
+		public Iterable<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>
 				returnSuccessorsGivenHier(final AnnotatedProgramPoint state, final AnnotatedProgramPoint hier) {
-			final Map<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>> hier2letter2 =
+			final Map<AnnotatedProgramPoint, Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>> hier2letter2 =
 					mStateToHierToLetterToOutgoingReturnTransitions.get(state);
 			if (hier2letter2 == null) {
 				return Collections.emptyList();
 			}
-			final Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2 =
+			final Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>> letter2 =
 					mStateToHierToLetterToOutgoingReturnTransitions.get(state).get(hier);
 			if (letter2 == null) {
 				return Collections.emptyList();
 			}
 
-			final ArrayList<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>> a = new ArrayList<>();
-			for (final List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>> vs : mStateToHierToLetterToOutgoingReturnTransitions
+			final ArrayList<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>> a =
+					new ArrayList<>();
+			for (final List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>> vs : mStateToHierToLetterToOutgoingReturnTransitions
 					.get(state).get(hier).values()) {
 				a.addAll(vs);
 			}

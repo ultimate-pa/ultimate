@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
- * 
+ *
  * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
@@ -47,13 +48,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
  * by procedure proc, the the variables g and old(g) are used in each call to proc and in each return from proc.
  * Furthermore each global variable (even if not modified) that occur in a procedure (along this trace) is used at the
  * return of this procedure.
- * 
+ *
  * @author musab@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  *
  */
-public class LiveVariables {
+public class LiveVariables<L extends IAction> {
 	private final Map<Term, IProgramVar> mConstants2BoogieVar;
-	private final ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> mTraceWithConstants;
+	private final ModifiableNestedFormulas<L, Map<Term, Term>, Map<Term, Term>> mTraceWithConstants;
 	private final Map<IProgramVar, TreeMap<Integer, Term>> mIndexedVarRepresentative;
 
 	private final Collection<Term>[] mConstantsForEachPosition;
@@ -61,7 +62,7 @@ public class LiveVariables {
 	// mLiveVariables[i] are the live variables _before_ statement i
 	private final Set<IProgramVar>[] mLiveVariables;
 
-	public LiveVariables(final ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> traceWithConstants,
+	public LiveVariables(final ModifiableNestedFormulas<L, Map<Term, Term>, Map<Term, Term>> traceWithConstants,
 			final Map<Term, IProgramVar> constants2BoogieVar,
 			final Map<IProgramVar, TreeMap<Integer, Term>> indexedVarRepresentative) {
 		mConstants2BoogieVar = constants2BoogieVar;
@@ -92,7 +93,7 @@ public class LiveVariables {
 	 * <li>if i is a return position, we use the formula of the return position, the localVarAssignment and the
 	 * oldVarAssignment
 	 * </ul>
-	 * 
+	 *
 	 */
 	private Collection<Term>[] fetchConstantsForEachPosition() {
 		@SuppressWarnings("unchecked")

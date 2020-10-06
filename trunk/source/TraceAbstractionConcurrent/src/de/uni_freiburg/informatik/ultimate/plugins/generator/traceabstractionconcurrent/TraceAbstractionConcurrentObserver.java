@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifi
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.IcfgCompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -90,7 +92,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		final IIcfg<? extends IcfgLocation> inputIcfg = (IIcfg) root;
+		final IIcfg<? extends IcfgLocation> inputIcfg = (IIcfg<?>) root;
 		final int numberOfThreadInstances = 3;
 		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, inputIcfg,
 				IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
@@ -99,8 +101,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		final CfgSmtToolkit csToolkit = petrifiedIcfg.getCfgSmtToolkit();
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable());
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Set<IcfgLocation> threadErrorLocations;
 		if (csToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
@@ -120,14 +122,15 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			}
 		}
 
-		BasicCegarLoop<?> abstractCegarLoop;
+		BasicCegarLoop<IcfgEdge> abstractCegarLoop;
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
+		final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(mServices, csToolkit);
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
-			abstractCegarLoop = new CegarLoopForPetriNet<>(name, petrifiedIcfg, csToolkit, predicateFactory,
-					taPrefs, errNodesOfAllProc, mServices);
+			abstractCegarLoop = new CegarLoopForPetriNet<>(name, petrifiedIcfg, csToolkit, predicateFactory, taPrefs,
+					errNodesOfAllProc, mServices, compositionFactory, IcfgEdge.class);
 		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
-					timingStatistics, taPrefs, errNodesOfAllProc, mServices);
+					timingStatistics, taPrefs, errNodesOfAllProc, mServices, compositionFactory, IcfgEdge.class);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -237,7 +240,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
-	private void reportCounterexampleResult(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
+	private void reportCounterexampleResult(final IProgramExecution<IcfgEdge, Term> pe) {
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(pe, upreasons);
@@ -255,7 +258,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportUnproveableResult(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe,
+	private void reportUnproveableResult(final IProgramExecution<IcfgEdge, Term> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
@@ -294,7 +297,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	public static IcfgLocation getErrorPP(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
+	public static IcfgLocation getErrorPP(final IProgramExecution<IcfgEdge, Term> pe) {
 		final int lastPosition = pe.getLength() - 1;
 		final IIcfgTransition<?> last = pe.getTraceElement(lastPosition).getTraceElement();
 		final IcfgLocation errorPP = last.getTarget();

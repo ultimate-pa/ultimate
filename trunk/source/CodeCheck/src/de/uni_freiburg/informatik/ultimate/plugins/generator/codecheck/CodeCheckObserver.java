@@ -382,7 +382,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		boolean allSafe = true;
 		boolean verificationInterrupted = false;
-		IcfgProgramExecution realErrorProgramExecution = null;
+		IcfgProgramExecution<IIcfgTransition<IcfgLocation>> realErrorProgramExecution = null;
 
 		// benchmark data collector variables
 		final CegarLoopStatisticsGenerator benchmarkGenerator = new CegarLoopStatisticsGenerator();
@@ -390,7 +390,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		int iterationsCount = 0;
 
-		InterpolatingTraceCheck<IIcfgTransition<?>> traceCheck = null;
+		InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>> traceCheck = null;
 		final CodeChecker codechecker = createCodeChecker();
 		for (final AnnotatedProgramPoint procedureRoot : procRootsToCheck) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -414,7 +414,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("Iterations = %d%n", iterationsCount));
 				}
-				final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun =
+				final NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> errorRun =
 						emptinessCheck.checkForEmptiness(procedureRoot);
 
 				if (errorRun == null) {
@@ -465,7 +465,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					if (mGlobalSettings.isUseInterpolantconsolidation()) {
 						try {
 
-							final InterpolantGeneratorWithConsolidation<InterpolatingTraceCheck<IIcfgTransition<?>>, IIcfgTransition<?>> interpConsoli =
+							final InterpolantGeneratorWithConsolidation<InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>>, IIcfgTransition<IcfgLocation>> interpConsoli =
 									new InterpolantGeneratorWithConsolidation<>(mCsToolkit, mServices, mLogger,
 											mPredicateFactory, traceCheck);
 							interpolants = interpConsoli.getInterpolants();
@@ -582,14 +582,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private InterpolatingTraceCheck<IIcfgTransition<?>> createTraceCheck(
-			final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
+	private InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>> createTraceCheck(
+			final NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> errorRun,
 			final ManagedScript mgdScriptTracechecks) {
 		switch (mGlobalSettings.getInterpolationMode()) {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
 			try {
-				final InterpolatingTraceCheck<IIcfgTransition<?>> tc = new InterpolatingTraceCheckCraig<>(
+				final InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>> tc = new InterpolatingTraceCheckCraig<>(
 						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
 						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())),
@@ -765,7 +765,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
-	private void reportCounterexampleResult(final IcfgProgramExecution pe) {
+	private void reportCounterexampleResult(final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> pe) {
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(pe, upreasons);
@@ -775,14 +775,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportUnproveableResult(final IcfgProgramExecution pe,
+	private void reportUnproveableResult(final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
 				unproabilityReasons));
 	}
 
-	public IcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
+	public IcfgLocation getErrorPP(final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		final IcfgLocation errorPP = last.getTarget();

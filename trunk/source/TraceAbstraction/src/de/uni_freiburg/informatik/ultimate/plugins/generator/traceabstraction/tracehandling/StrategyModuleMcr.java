@@ -15,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrTraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
@@ -30,28 +29,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.Mcr.IMcrResultProvider;
 
-public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
-		implements IIpTcStrategyModule<Mcr<LETTER>, LETTER>, IIpAbStrategyModule<LETTER>, IMcrResultProvider<LETTER> {
+public class StrategyModuleMcr<L extends IIcfgTransition<?>>
+		implements IIpTcStrategyModule<Mcr<L>, L>, IIpAbStrategyModule<L>, IMcrResultProvider<L> {
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
-	private final StrategyFactory<LETTER> mStrategyFactory;
+	private final StrategyFactory<L> mStrategyFactory;
 	private final IPredicateUnifier mPredicateUnifier;
-	private Mcr<LETTER> mMcr;
+	private Mcr<L> mMcr;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
-	private AutomatonFreeRefinementEngine<LETTER> mRefinementEngine;
-	private IpAbStrategyModuleResult<LETTER> mAutomatonResult;
-	private final List<LETTER> mCounterexample;
-	private final IAutomaton<LETTER, IPredicate> mAbstraction;
+	private AutomatonFreeRefinementEngine<L> mRefinementEngine;
+	private IpAbStrategyModuleResult<L> mAutomatonResult;
+	private final List<L> mCounterexample;
+	private final IAutomaton<L, IPredicate> mAbstraction;
 	private final TaskIdentifier mTaskIdentifier;
-	private final IInterpolantProvider<LETTER> mInterpolantProvider;
+	private final IInterpolantProvider<L> mInterpolantProvider;
 
 	private final List<QualifiedTracePredicates> mUsedPredicates;
 
-	public StrategyModuleMcr(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
+	public StrategyModuleMcr(final ILogger logger, final TaCheckAndRefinementPreferences<L> prefs,
 			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final StrategyFactory<LETTER> strategyFactory, final IRun<LETTER, ?> counterexample,
-			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			final IInterpolantProvider<LETTER> interpolantProvider) {
+			final StrategyFactory<L> strategyFactory, final IRun<L, ?> counterexample,
+			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
+			final IInterpolantProvider<L> interpolantProvider) {
 		mPrefs = prefs;
 		mStrategyFactory = strategyFactory;
 		mLogger = logger;
@@ -75,7 +74,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		return getOrConstruct().getRcfgProgramExecution();
 	}
 
@@ -107,7 +106,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public Collection<QualifiedTracePredicates> getPerfectInterpolantSequences() {
-		final Mcr<LETTER> tc = getOrConstruct();
+		final Mcr<L> tc = getOrConstruct();
 		if (tc.isPerfectSequence()) {
 			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), true));
 		}
@@ -116,7 +115,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public Collection<QualifiedTracePredicates> getImperfectInterpolantSequences() {
-		final Mcr<LETTER> tc = getOrConstruct();
+		final Mcr<L> tc = getOrConstruct();
 		if (!tc.isPerfectSequence()) {
 			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), false));
 		}
@@ -124,7 +123,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public Mcr<LETTER> getOrConstruct() {
+	public Mcr<L> getOrConstruct() {
 		if (mMcr == null) {
 			try {
 				mMcr = new Mcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample,
@@ -137,7 +136,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(final List<QualifiedTracePredicates> perfectIpps,
+	public IpAbStrategyModuleResult<L> buildInterpolantAutomaton(final List<QualifiedTracePredicates> perfectIpps,
 			final List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException {
 		if (mAutomatonResult == null) {
 			mAutomatonResult = new IpAbStrategyModuleResult<>(mMcr.getAutomaton(), mUsedPredicates);
@@ -146,17 +145,17 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public McrTraceCheckResult<LETTER> getResult(final IRun<LETTER, ?> counterexample) {
+	public McrTraceCheckResult<L> getResult(final IRun<L, ?> counterexample) {
 		// Run mRefinementEngine for the given trace
 		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
-		final IRefinementStrategy<LETTER> strategy = mStrategyFactory.constructStrategy(counterexample, mAbstraction,
+		final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(counterexample, mAbstraction,
 				mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
 				IPostconditionProvider.constructDefaultPostconditionProvider(), refinementStrategy);
 		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mLogger, strategy);
-		final List<LETTER> trace = counterexample.getWord().asList();
+		final List<L> trace = counterexample.getWord().asList();
 		final RefinementEngineStatisticsGenerator statistics = mRefinementEngine.getRefinementEngineStatistics();
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
 		// We found a feasible counterexample

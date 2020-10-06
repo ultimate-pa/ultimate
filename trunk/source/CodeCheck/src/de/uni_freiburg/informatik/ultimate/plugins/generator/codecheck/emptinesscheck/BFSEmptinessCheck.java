@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CodeCheck plug-in.
- * 
+ *
  * The ULTIMATE CodeCheck plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CodeCheck plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CodeCheck plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.EmptyStackSymbol;
@@ -65,12 +66,13 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	/**
 	 * Search for a nested error path within the graph with the given root. IIcfgReturnTransition<?,?> null if there is
 	 * none.
-	 * 
+	 *
 	 * @param root
 	 * @return
 	 */
 	@Override
-	public NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> checkForEmptiness(final AnnotatedProgramPoint root) {
+	public NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>
+			checkForEmptiness(final AnnotatedProgramPoint root) {
 		mOpenNodes = new ArrayDeque<>();
 		mVisitedNodes = new HashSet<>();
 
@@ -81,15 +83,15 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 
 		mOpenNodes.add(new AppDoubleDecker(root, emptyStackSymbol, new Stack<IIcfgCallTransition<?>>(),
 				new Stack<AnnotatedProgramPoint>()));
-		Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<?>>> returnedPath = null;
+		Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<IcfgLocation>>> returnedPath = null;
 
 		while (!mOpenNodes.isEmpty() && returnedPath == null) {
 			final AppDoubleDecker currentAdd = mOpenNodes.pollFirst();
 			mVisitedNodes.add(currentAdd);
 
 			for (final AnnotatedProgramPoint app : currentAdd.mTop.getOutgoingNodes()) {
-				// IIcfgTransition<?> edge = currentAdd.top.getOutgoingEdgeLabel(app); //FIXME
-				final IIcfgTransition<?> edge = null;
+				// IIcfgTransition<IcfgLocation> edge = currentAdd.top.getOutgoingEdgeLabel(app); //FIXME
+				final IIcfgTransition<IcfgLocation> edge = null;
 
 				if (edge instanceof Summary) {
 					continue;
@@ -172,8 +174,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		mSummaryEdges.put(bot, targets);
 	}
 
-	private Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<?>>> openNewNode(final AppDoubleDecker currentAdd,
-			final AnnotatedProgramPoint app, final IIcfgTransition<?> edge, final AppDoubleDecker newAdd) {
+	private Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<IcfgLocation>>> openNewNode(
+			final AppDoubleDecker currentAdd, final AnnotatedProgramPoint app, final IIcfgTransition<IcfgLocation> edge,
+			final AppDoubleDecker newAdd) {
 		if (!mVisitedNodes.contains(newAdd)) {
 			final AddEdge newAddEdge = new AddEdge(currentAdd, newAdd, edge);
 			newAdd.mInEdge = newAddEdge;
@@ -189,10 +192,10 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		return null;
 	}
 
-	private Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<?>>>
+	private Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<IcfgLocation>>>
 			reconstructPath(final AppDoubleDecker errorAdd) {
 		ArrayDeque<AnnotatedProgramPoint> errorPath = new ArrayDeque<>();
-		ArrayDeque<IIcfgTransition<?>> errorTrace = new ArrayDeque<>();
+		ArrayDeque<IIcfgTransition<IcfgLocation>> errorTrace = new ArrayDeque<>();
 
 		AppDoubleDecker currentAdd = errorAdd;
 		AddEdge currentInEdge = errorAdd.mInEdge;
@@ -206,15 +209,16 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		}
 		errorPath.addFirst(currentAdd.mTop);
 
-		final Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<IIcfgTransition<?>>> newErrorPathAndTrace =
+		final Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<IIcfgTransition<IcfgLocation>>> newErrorPathAndTrace =
 				expandSummaries(errorTrace, errorPath);
 
 		errorPath = newErrorPathAndTrace.getFirst();
 		errorTrace = newErrorPathAndTrace.getSecond();
 
-		final IIcfgTransition<?>[] errorTraceArray = new IIcfgTransition<?>[errorTrace.size()];
+		@SuppressWarnings("unchecked")
+		final IIcfgTransition<IcfgLocation>[] errorTraceArray = new IIcfgTransition[errorTrace.size()];
 		errorTrace.toArray(errorTraceArray);
-		final NestedWord<IIcfgTransition<?>> errorNW =
+		final NestedWord<IIcfgTransition<IcfgLocation>> errorNW =
 				new NestedWord<>(errorTraceArray, computeNestingRelation(errorTraceArray));
 
 		final AnnotatedProgramPoint[] errorPathArray = new AnnotatedProgramPoint[errorPath.size()];
@@ -223,25 +227,26 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		return new Pair<>(errorPathArray, errorNW);
 	}
 
-	private Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<IIcfgTransition<?>>> expandSummaries(
-			final ArrayDeque<IIcfgTransition<?>> errorTrace, final ArrayDeque<AnnotatedProgramPoint> errorPath) {
-		ArrayDeque<IIcfgTransition<?>> oldErrorTrace = errorTrace;
+	private Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<IIcfgTransition<IcfgLocation>>> expandSummaries(
+			final ArrayDeque<IIcfgTransition<IcfgLocation>> errorTrace,
+			final ArrayDeque<AnnotatedProgramPoint> errorPath) {
+		ArrayDeque<IIcfgTransition<IcfgLocation>> oldErrorTrace = errorTrace;
 		ArrayDeque<AnnotatedProgramPoint> oldErrorPath = errorPath;
 
 		boolean repeat = true;
 
 		while (repeat) {
 			repeat = false;
-			final ArrayDeque<IIcfgTransition<?>> newErrorTrace = new ArrayDeque<>();
+			final ArrayDeque<IIcfgTransition<IcfgLocation>> newErrorTrace = new ArrayDeque<>();
 			final ArrayDeque<AnnotatedProgramPoint> newErrorPath = new ArrayDeque<>();
 
 			final Iterator<AnnotatedProgramPoint> pathIt = oldErrorPath.iterator();
-			final Iterator<IIcfgTransition<?>> traceIt = oldErrorTrace.iterator();
+			final Iterator<IIcfgTransition<IcfgLocation>> traceIt = oldErrorTrace.iterator();
 
 			AnnotatedProgramPoint nextApp = pathIt.next();
 
 			while (traceIt.hasNext()) {
-				final IIcfgTransition<?> currentCodeBlock = traceIt.next();
+				final IIcfgTransition<IcfgLocation> currentCodeBlock = traceIt.next();
 				final AnnotatedProgramPoint previousApp = nextApp;
 
 				newErrorPath.add(previousApp);
@@ -259,7 +264,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 
 					AppDoubleDecker toInsertAdd = mSummaryEdgeToReturnSucc.get(sourceAndTarget);
 
-					final LinkedList<IIcfgTransition<?>> traceToInsert = new LinkedList<>();
+					final LinkedList<IIcfgTransition<IcfgLocation>> traceToInsert = new LinkedList<>();
 					final LinkedList<AnnotatedProgramPoint> pathToInsert = new LinkedList<>();
 
 					while (!(toInsertAdd.mInEdge.mLabel instanceof IIcfgCallTransition<?>)) { // is this exit condition
@@ -299,7 +304,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	 * special array is returned. This Array is of the form {special constant, first non-matching- return-index,
 	 * non-matching-call index}
 	 */
-	private static int[] computeNestingRelation(final IIcfgTransition<?>[] errorPath) {
+	private static int[] computeNestingRelation(final IIcfgTransition<IcfgLocation>[] errorPath) {
 		final int[] nr = new int[errorPath.length];
 		final Stack<IIcfgCallTransition<?>> callStack = new Stack<>();
 		final Stack<Integer> callStackIndizes = new Stack<>();
@@ -378,9 +383,10 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	private static final class AddEdge {
 		private final AppDoubleDecker mSource;
 		private final AppDoubleDecker mTarget;
-		private final IIcfgTransition<?> mLabel;
+		private final IIcfgTransition<IcfgLocation> mLabel;
 
-		public AddEdge(final AppDoubleDecker source, final AppDoubleDecker target, final IIcfgTransition<?> label) {
+		public AddEdge(final AppDoubleDecker source, final AppDoubleDecker target,
+				final IIcfgTransition<IcfgLocation> label) {
 			super();
 			assert label != null;
 			mSource = source;

@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class IterativePredicateTransformer {
+public class IterativePredicateTransformer<L extends IAction> {
 
 	private enum BackwardSequence {
 		PRE, WP
@@ -88,7 +88,7 @@ public class IterativePredicateTransformer {
 
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 	private final BasicPredicateFactory mPredicateFactory;
-	private final NestedWord<? extends IAction> mTrace;
+	private final NestedWord<L> mTrace;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
@@ -108,7 +108,7 @@ public class IterativePredicateTransformer {
 	 */
 	public IterativePredicateTransformer(final BasicPredicateFactory predicateFactory, final ManagedScript mgdScript,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IUltimateServiceProvider services,
-			final NestedWord<? extends IAction> trace, final IPredicate precondition, final IPredicate postcondition,
+			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final IPredicate truePredicate,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable) {
@@ -151,7 +151,7 @@ public class IterativePredicateTransformer {
 	 *            {@link IAction} in the trace)
 	 */
 	public TracePredicates computeStrongestPostconditionSequence(
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs) {
 		final IPredicate[] spSequence = new IPredicate[mTrace.length() - 1];
 		final TracePredicates ipp = new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(spSequence));
@@ -285,20 +285,20 @@ public class IterativePredicateTransformer {
 	 *
 	 */
 	public TracePredicates computeWeakestPreconditionSequence(
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs, final boolean useTrueAsCallPredecessor,
 			final boolean alternatingQuantifierBailout) throws TraceInterpolationException {
 		return computeBackwardSequence(nf, postprocs, useTrueAsCallPredecessor, alternatingQuantifierBailout,
 				BackwardSequence.WP);
 	}
 
-	public TracePredicates computePreSequence(final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
+	public TracePredicates computePreSequence(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs, final boolean alternatingQuantifierBailout)
 			throws TraceInterpolationException {
 		return computeBackwardSequence(nf, postprocs, true, alternatingQuantifierBailout, BackwardSequence.PRE);
 	}
 
-	public TracePredicates computeBackwardSequence(final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
+	public TracePredicates computeBackwardSequence(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs, final boolean useTrueAsCallPredecessor,
 			final boolean alternatingQuantifierBailout, final BackwardSequence bs) throws TraceInterpolationException {
 		final IPredicate[] backwardSequence = new IPredicate[mTrace.length() - 1];
@@ -476,10 +476,10 @@ public class IterativePredicateTransformer {
 	 * @param callPos
 	 * @return
 	 */
-	private ProcedureSummary computeProcedureSummary(final NestedWord<? extends IAction> trace,
-			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula returnTf,
-			final UnmodifiableTransFormula oldVarsAssignmentTf, final UnmodifiableTransFormula globalVarsAssignment,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final int callPos, final int returnPos) {
+	private ProcedureSummary computeProcedureSummary(final NestedWord<L> trace, final UnmodifiableTransFormula callTf,
+			final UnmodifiableTransFormula returnTf, final UnmodifiableTransFormula oldVarsAssignmentTf,
+			final UnmodifiableTransFormula globalVarsAssignment,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int callPos, final int returnPos) {
 		final UnmodifiableTransFormula summaryOfInnerStatements =
 				computeSummaryForInterproceduralTrace(trace, rv, callPos + 1, returnPos);
 		final String callee = ((ICallAction) trace.getSymbol(callPos)).getSucceedingProcedure();
@@ -496,8 +496,8 @@ public class IterativePredicateTransformer {
 	 *
 	 * @return - a summary for the statements from the given trace from position "start" to position "end"
 	 */
-	private UnmodifiableTransFormula computeSummaryForInterproceduralTrace(final NestedWord<? extends IAction> trace,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final int start, final int end) {
+	private UnmodifiableTransFormula computeSummaryForInterproceduralTrace(final NestedWord<L> trace,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int start, final int end) {
 		final LinkedList<UnmodifiableTransFormula> transformulasToComputeSummaryFor = new LinkedList<>();
 		for (int i = start; i < end; i++) {
 			if (trace.getSymbol(i) instanceof ICallAction) {

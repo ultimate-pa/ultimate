@@ -27,20 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <T>
  */
-public interface ITraceCheckStrategyModule<T extends ITraceCheck> {
+public interface ITraceCheckStrategyModule<L extends IAction, T extends ITraceCheck<L>> {
 
 	/**
 	 * @see ITraceCheck#isCorrect()
@@ -55,7 +54,7 @@ public interface ITraceCheckStrategyModule<T extends ITraceCheck> {
 
 	boolean providesRcfgProgramExecution();
 
-	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution();
+	IProgramExecution<L, Term> getRcfgProgramExecution();
 
 	TraceCheckReasonUnknown getTraceCheckReasonUnknown();
 

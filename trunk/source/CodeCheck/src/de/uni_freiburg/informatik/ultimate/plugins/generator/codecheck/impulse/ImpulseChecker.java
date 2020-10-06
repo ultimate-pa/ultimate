@@ -181,7 +181,7 @@ public class ImpulseChecker extends CodeChecker {
 	}
 
 	@Override
-	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
+	public boolean codeCheck(final NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot) {
 
 		final AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
@@ -289,8 +289,8 @@ public class ImpulseChecker extends CodeChecker {
 		return result;
 	}
 
-	protected boolean connectOutgoingIfValid(final AnnotatedProgramPoint source, final IIcfgTransition<?> statement,
-			final AnnotatedProgramPoint target) {
+	protected boolean connectOutgoingIfValid(final AnnotatedProgramPoint source,
+			final IIcfgTransition<IcfgLocation> statement, final AnnotatedProgramPoint target) {
 		if (isValidEdge(source, statement, target)) {
 			source.connectOutgoing(statement, target);
 			return true;

@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -47,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class InterpolatingTraceCheckWithConsolidation<TC extends IInterpolantGenerator<LETTER> & ITraceCheck, LETTER extends IIcfgTransition<?>>
-		extends InterpolantGeneratorWithConsolidation<TC, LETTER> implements IInterpolatingTraceCheck<LETTER> {
+public class InterpolatingTraceCheckWithConsolidation<TC extends IInterpolantGenerator<L> & ITraceCheck<L>, L extends IIcfgTransition<?>>
+		extends InterpolantGeneratorWithConsolidation<TC, L> implements IInterpolatingTraceCheck<L> {
 
 	public InterpolatingTraceCheckWithConsolidation(final CfgSmtToolkit csToolkit,
 			final IUltimateServiceProvider services, final ILogger logger, final PredicateFactory predicateFactory,
@@ -67,7 +66,7 @@ public class InterpolatingTraceCheckWithConsolidation<TC extends IInterpolantGen
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		return getInterpolantGenerator().getRcfgProgramExecution();
 	}
 

@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -76,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author haettigj@informatik.uni-freiburg.de
  *
  */
-public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 	/**
 	 * Maps states from the original automaton to corresponding states in the new interpolant automaton.
 	 */
@@ -90,24 +91,24 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	/**
 	 * Holds the nodes and edges of the error path
 	 */
-	protected NestedRun<LETTER, IPredicate> mCounterExamplePath;
+	protected NestedRun<L, IPredicate> mCounterExamplePath;
 
 	/**
 	 * Used for computing the interpolants of additional paths
 	 */
-	protected TraceCheck<LETTER> mExtraTraceCheck;
+	protected TraceCheck<L> mExtraTraceCheck;
 
 	/**
 	 * Version of the abstraction, casted as NestedWordAutomaton. It is casted in every call of
 	 * constructInterpolantAutomaton.
 	 */
-	private INestedWordAutomaton<LETTER, IPredicate> mNestedAbstraction;
+	private INestedWordAutomaton<L, IPredicate> mNestedAbstraction;
 
 	/**
 	 * Version of the abstraction, castet as DoubleDeckerAutomaton. Must be castet in every call of
 	 * constructInterpolantAutomaton
 	 */
-	private IDoubleDeckerAutomaton<LETTER, IPredicate> mDoubleDeckerAbstraction;
+	private IDoubleDeckerAutomaton<L, IPredicate> mDoubleDeckerAbstraction;
 
 	/**
 	 * When adding additional sub paths to the interpolant automaton. We always start from a state which is already
@@ -168,13 +169,15 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 * @param interpolation
 	 * @param computeHoareAnnotation
 	 * @param services
+	 * @param transitionClazz
 	 */
 	public CegarLoopSWBnonRecursive(final DebugIdentifier name, final IIcfg<?> icfg, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services) {
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services);
+				services, compositionFactory, transitionClazz);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}
@@ -193,14 +196,14 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 
 		// cast the abstraction automaton as nested word and double decker
 		// automaton
-		mNestedAbstraction = (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
+		mNestedAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 
 		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
-				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction).getResult();
+				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction).getResult();
 		// (IDoubleDeckerAutomaton<LETTER, IPredicate>) mAbstraction.get;
 
 		// cast the path as nested run
-		mCounterExamplePath = (NestedRun<LETTER, IPredicate>) mCounterexample;
+		mCounterExamplePath = (NestedRun<L, IPredicate>) mCounterexample;
 
 		// create an new interpolant automaton
 		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
@@ -232,7 +235,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 
 		// counter example components
 		final ArrayList<IPredicate> ce_states = mCounterExamplePath.getStateSequence();
-		final NestedWord<LETTER> ce_edges = mCounterExamplePath.getWord();
+		final NestedWord<L> ce_edges = mCounterExamplePath.getWord();
 		final IPredicate[] ce_interp = mInterpolantGenerator.getInterpolants();
 
 		// -- initialize interpolant automaton --
@@ -287,7 +290,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 				// the path yet
 				// so we just do not
 				if (mAnnotatedStates.contains(hier)) {
-					for (final OutgoingReturnTransition<LETTER, IPredicate> e : mNestedAbstraction
+					for (final OutgoingReturnTransition<L, IPredicate> e : mNestedAbstraction
 							.returnSuccessorsGivenHier(mActualStartingState, hier)) {
 						// the next state is the target state of the edge
 						final IPredicate target = e.getSucc();
@@ -297,7 +300,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			}
 
 			// calls transitions
-			for (final OutgoingCallTransition<LETTER, IPredicate> e : mNestedAbstraction
+			for (final OutgoingCallTransition<L, IPredicate> e : mNestedAbstraction
 					.callSuccessors(mActualStartingState)) {
 				// the next state is the target state of the edge
 				final IPredicate target = e.getSucc();
@@ -310,7 +313,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			// actual starting state, ignoring if a path was find or not (i.e.
 			// the
 			// return value of exploreState)
-			for (final OutgoingInternalTransition<LETTER, IPredicate> e : mNestedAbstraction
+			for (final OutgoingInternalTransition<L, IPredicate> e : mNestedAbstraction
 					.internalSuccessors(mActualStartingState)) {
 				// the next state is the target state of the edge
 				final IPredicate target = e.getSucc();
@@ -346,8 +349,8 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 * @param initialWord
 	 *            Word consisting of the label of the edge
 	 */
-	private void exploreInitialEdge(final ITransitionlet<LETTER, IPredicate> e, final IPredicate target,
-			final NestedWord<LETTER> initialWord) {
+	private void exploreInitialEdge(final ITransitionlet<L, IPredicate> e, final IPredicate target,
+			final NestedWord<L> initialWord) {
 		mActualPath = new ArrayList<>(16);
 		// remember the path, we follow
 		mActualPath.add(mActualStartingState);
@@ -374,9 +377,9 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	// Variable stacks to emulate recursion
 	private ArrayList<IPredicate> mStackState;
 	private ArrayList<Integer> mStackEdgeType;
-	private ArrayList<Iterator<ITransitionlet<LETTER, IPredicate>>> mStackIterator;
+	private ArrayList<Iterator<ITransitionlet<L, IPredicate>>> mStackIterator;
 	private ArrayList<Iterator<IPredicate>> mStackHier;
-	private ArrayList<NestedWord<LETTER>> mStackWord;
+	private ArrayList<NestedWord<L>> mStackWord;
 
 	/**
 	 * Explores all edges of a node. If it completes a path feed out: - If the path was accepted by the interpolant
@@ -391,7 +394,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 *            List of the states of the actual path
 	 */
 	@SuppressWarnings("unchecked")
-	private void exploreState(final IPredicate state, final NestedWord<LETTER> word) {
+	private void exploreState(final IPredicate state, final NestedWord<L> word) {
 		mLogger.debug(
 				"Explore path: " + state.toString() + " wordLen: " + word.length() + " pathLen: " + mActualPath.size());
 		mStackState = new ArrayList<>();
@@ -407,7 +410,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 		@SuppressWarnings("rawtypes")
 		Iterator iter = mNestedAbstraction.internalSuccessors(s).iterator();
 		int edgeType = 0;
-		NestedWord<LETTER> actualWord = word;
+		NestedWord<L> actualWord = word;
 
 		while (true) {
 			mLogger.debug("iterate: " + s.toString() + " wordLen: " + actualWord.length() + " pathLen: "
@@ -474,23 +477,22 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			// obtain the next edge
 			// and add the letter to the path and explore edge
 			IPredicate target;
-			NestedWord<LETTER> newWord;
+			NestedWord<L> newWord;
 			switch (edgeType) {
 			case 0:
-				final OutgoingInternalTransition<LETTER, IPredicate> e_int =
-						(OutgoingInternalTransition<LETTER, IPredicate>) iter.next();
+				final OutgoingInternalTransition<L, IPredicate> e_int =
+						(OutgoingInternalTransition<L, IPredicate>) iter.next();
 				target = e_int.getSucc();
 				newWord = actualWord.concatenate(new NestedWord<>(e_int.getLetter(), NestedWord.INTERNAL_POSITION));
 				break;
 			case 1:
-				final OutgoingReturnTransition<LETTER, IPredicate> e_out =
-						(OutgoingReturnTransition<LETTER, IPredicate>) iter.next();
+				final OutgoingReturnTransition<L, IPredicate> e_out =
+						(OutgoingReturnTransition<L, IPredicate>) iter.next();
 				target = e_out.getSucc();
 				newWord = actualWord.concatenate(new NestedWord<>(e_out.getLetter(), NestedWord.MINUS_INFINITY));
 				break;
 			case 2:
-				final OutgoingCallTransition<LETTER, IPredicate> e_ret =
-						(OutgoingCallTransition<LETTER, IPredicate>) iter.next();
+				final OutgoingCallTransition<L, IPredicate> e_ret = (OutgoingCallTransition<L, IPredicate>) iter.next();
 				target = e_ret.getSucc();
 				newWord = actualWord.concatenate(new NestedWord<>(e_ret.getLetter(), NestedWord.PLUS_INFINITY));
 				break;
@@ -559,14 +561,14 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 *            the postcondition of the path
 	 * @return true if interpolants were found
 	 */
-	private boolean checkAndAddPath(final NestedWord<LETTER> word, final IPredicate pre, final IPredicate post) {
+	private boolean checkAndAddPath(final NestedWord<L> word, final IPredicate pre, final IPredicate post) {
 		mLogger.debug("Try to add trace: " + pre.toString() + " -- " + word + " --> " + post);
 
 		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		for (final int pos : word.getPendingReturns().keySet()) {
 			final IPredicate target = mActualPath.get(pos + 1);
 			final IPredicate source = mActualPath.get(pos);
-			for (final IncomingReturnTransition<LETTER, IPredicate> irt : mNestedAbstraction.returnPredecessors(target,
+			for (final IncomingReturnTransition<L, IPredicate> irt : mNestedAbstraction.returnPredecessors(target,
 					word.getSymbol(pos))) {
 				if (irt.getLinPred() == source) {
 					final IPredicate interp = mEpimorphism.getMapping(irt.getHierPred());
@@ -580,7 +582,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			}
 		}
 		// test if we found a new path which can be added
-		final InterpolatingTraceCheckCraig<LETTER> traceCheck =
+		final InterpolatingTraceCheckCraig<L> traceCheck =
 				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, mServices, mCsToolkit,
 						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
 						mPref.interpolation(), false, mXnfConversionTechnique, mSimplificationTechnique);
@@ -620,9 +622,8 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 * @param post
 	 *            the formula for the state n-1
 	 */
-	private void addPath(final NestedWord<LETTER> edges, final ArrayList<IPredicate> states,
-			final IPredicate[] interpolants, final IPredicate pre, final IPredicate post,
-			final SortedMap<Integer, IPredicate> pendingContexts) {
+	private void addPath(final NestedWord<L> edges, final ArrayList<IPredicate> states, final IPredicate[] interpolants,
+			final IPredicate pre, final IPredicate post, final SortedMap<Integer, IPredicate> pendingContexts) {
 		mLogger.debug("Add path: numEdges:" + edges.length() + " numStates:" + states.size() + " numInterpol:"
 				+ interpolants.length);
 
@@ -643,7 +644,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 
 		// Add all edges
 		for (int i = 0; i < edges.length(); i++) {
-			final LETTER e = edges.getSymbol(i);
+			final L e = edges.getSymbol(i);
 			final IPredicate targetS = states.get(i + 1);
 
 			final IPredicate sourceI = i == 0 ? pre : interpolants[i - 1];
@@ -665,8 +666,8 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			if (edges.isInternalPosition(i)) {
 				boolean exists = false;
 				// TODO Christian 2016-09-13: Does this loop contain a bug? Only the very first iteration is executed.
-				for (final OutgoingInternalTransition<LETTER, IPredicate> t : mInterpolAutomaton
-						.internalSuccessors(sourceI, e)) {
+				for (final OutgoingInternalTransition<L, IPredicate> t : mInterpolAutomaton.internalSuccessors(sourceI,
+						e)) {
 					if (t.getSucc().equals(targetI)) {
 						exists = true;
 					}
@@ -706,7 +707,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 */
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final SuperDifference<LETTER, IPredicate, PredicateFactoryRefinement> diff =
+		final SuperDifference<L, IPredicate, PredicateFactoryRefinement> diff =
 				new SuperDifference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 						mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
 

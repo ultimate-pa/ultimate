@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRe
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -43,23 +43,22 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
- * An independence relation that implements an SMT-based inclusion or equality
- * check on the semantics.
+ * An independence relation that implements an SMT-based inclusion or equality check on the semantics.
  *
- * It is recommended to wrap this relation in a
- * {@link CachedIndependenceRelation} for better performance.
+ * It is recommended to wrap this relation in a {@link CachedIndependenceRelation} for better performance.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 
-public class SemanticIndependenceRelation implements IIndependenceRelation<IPredicate, IIcfgTransition<?>> {
+public class SemanticIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final ILogger mLogger;
 
 	private final static SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final static XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private final static XnfConversionTechnique mXnfConversionTechnique =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final boolean mConditional;
 	private final boolean mSymmetric;
@@ -73,13 +72,11 @@ public class SemanticIndependenceRelation implements IIndependenceRelation<IPred
 	 * Create a new variant of the semantic independence relation.
 	 *
 	 * @param conditional
-	 *            If set to true, the relation will be conditional: It will use the
-	 *            given {@link IPredicate} as context to enable additional
-	 *            commutativity. This subsumes the non-conditional variant.
+	 *            If set to true, the relation will be conditional: It will use the given {@link IPredicate} as context
+	 *            to enable additional commutativity. This subsumes the non-conditional variant.
 	 * @param symmetric
-	 *            If set to true, the relation will check for full commutativity. If
-	 *            false, only semicommutativity is checked, which subsumes full
-	 *            commutativity.
+	 *            If set to true, the relation will check for full commutativity. If false, only semicommutativity is
+	 *            checked, which subsumes full commutativity.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric) {
@@ -102,7 +99,7 @@ public class SemanticIndependenceRelation implements IIndependenceRelation<IPred
 	}
 
 	@Override
-	public boolean contains(final IPredicate state, final IIcfgTransition<?> a, final IIcfgTransition<?> b) {
+	public boolean contains(final IPredicate state, final L a, final L b) {
 		final long startTime = System.nanoTime();
 		final IPredicate context = mConditional ? state : null;
 		final LBool subset = performInclusionCheck(context, a, b);
@@ -137,16 +134,15 @@ public class SemanticIndependenceRelation implements IIndependenceRelation<IPred
 		return result == LBool.UNSAT;
 	}
 
-	private final LBool performInclusionCheck(final IPredicate context, final IIcfgTransition<?> a,
-			final IIcfgTransition<?> b) {
+	private final LBool performInclusionCheck(final IPredicate context, final L a, final L b) {
 		UnmodifiableTransFormula transFormula1 = compose(a.getTransformula(), b.getTransformula());
 		final UnmodifiableTransFormula transFormula2 = compose(b.getTransformula(), a.getTransformula());
 
 		if (context != null) {
 			// TODO: This represents conjunction with guard (precondition) as composition
 			// with assume. Is this a good way?
-			final UnmodifiableTransFormula guard = TransFormulaBuilder.constructTransFormulaFromPredicate(context,
-					mManagedScript);
+			final UnmodifiableTransFormula guard =
+					TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
 			transFormula1 = compose(guard, transFormula1);
 		}
 

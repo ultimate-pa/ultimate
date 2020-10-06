@@ -30,8 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -48,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @param <T>
  *            The type of the infeasibility proof, e.g., an interpolant automaton or a set of Hoare triples.
  */
-public interface IRefinementEngine<T> {
+public interface IRefinementEngine<L extends IAction, T> {
 	/**
-	 * 
+	 *
 	 * @see ITraceCheck#isCorrect()
 	 * @see ITraceCheckStrategyModule#isCorrect()
 	 * @return
@@ -80,7 +79,7 @@ public interface IRefinementEngine<T> {
 	/**
 	 * @return An {@link IProgramExecution} if {@link #providesIcfgProgramExecution()} is true.
 	 */
-	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution();
+	IProgramExecution<L, Term> getIcfgProgramExecution();
 
 	/**
 	 * @return true if the refinement engine found a perfect sequence of interpolants, i.e., a sequence where each
@@ -97,7 +96,7 @@ public interface IRefinementEngine<T> {
 	/**
 	 * Provides a {@link IHoareTripleChecker} that corresponds to the generated interpolants if this is needed. May
 	 * return null.
-	 * 
+	 *
 	 * @see IRefinementStrategy#getHoareTripleChecker(IRefinementEngine)
 	 */
 	IHoareTripleChecker getHoareTripleChecker();

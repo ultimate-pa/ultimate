@@ -50,21 +50,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  * @param <TF>
  *            Type of the formulas along the trace.
  */
-public abstract class NestedFormulas<TF, SF> {
+public abstract class NestedFormulas<L extends IAction, TF, SF> {
 
-	private final NestedWord<? extends IAction> mNestedWord;
+	private final NestedWord<L> mNestedWord;
 	private SF mPrecondition;
 	private SF mPostcondition;
 	private final SortedMap<Integer, SF> mPendingContexts;
 
-	public NestedFormulas(final NestedWord<? extends IAction> nestedWord,
-			final SortedMap<Integer, SF> pendingContexts) {
+	public NestedFormulas(final NestedWord<L> nestedWord, final SortedMap<Integer, SF> pendingContexts) {
 		mNestedWord = nestedWord;
 		assert pendingContexts != null;
 		mPendingContexts = pendingContexts;
 	}
 
-	public final NestedWord<? extends IAction> getTrace() {
+	public final NestedWord<L> getTrace() {
 		return mNestedWord;
 	}
 
@@ -143,7 +142,7 @@ public abstract class NestedFormulas<TF, SF> {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		for (int i=0; i<mNestedWord.length(); i++) {
+		for (int i = 0; i < mNestedWord.length(); i++) {
 			sb.append("Position " + i + ": ");
 			sb.append(String.valueOf(mNestedWord.getSymbol(i).getTransformula()));
 			sb.append(System.lineSeparator());
