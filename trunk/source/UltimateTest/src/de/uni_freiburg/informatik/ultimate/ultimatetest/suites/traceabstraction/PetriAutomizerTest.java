@@ -44,23 +44,22 @@ import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 
-
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
 		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
 	}
 
-	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+	// private static int FILES_PER_DIRECTORY_LIMIT = Integer.MAX_VALUE;
 
 	// @formatter:off
-	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
+	private static final DirectoryFileEndingsPair[] SVCOMP = {
 //		/*** Category 1. Arrays ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, FILES_PER_DIRECTORY_LIMIT) ,
 //
 	};
 
 
-	private static final String[] mUltimateRepository = {
+	private static final String[] ULTIMATE_REPO = {
 		"examples/concurrent/bpl",
 		"examples/concurrent/pthreads",
 	};
@@ -71,9 +70,8 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 	 * Ultimate will run on each program with each setting that is defined here.
 	 * The path are defined relative to the folder "trunk/examples/settings/",
 	 * because we assume that all settings files are in this folder.
-	 *
 	 */
-	private static final String[] mSettings = {
+	private static final String[] SETTINGS = {
 			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf",
 			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf",
 			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe.epf",
@@ -93,31 +91,31 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 		return 10 * 1000;
 	}
 
-	private static final String[] mBoogieToolchains = {
+	private static final String[] BOOGIE_TOOLCHAINS = {
 		"AutomizerBplInline.xml",
 	};
 
-	private static final String[] mCToolchains = {
+	private static final String[] C_TOOLCHAINS = {
 		"AutomizerCInline.xml",
 	};
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final String setting : mSettings) {
-			for (final String toolchain : mCToolchains) {
-				addTestCase(toolchain, setting, mSVCOMP_Examples);
+		for (final String setting : SETTINGS) {
+			for (final String toolchain : C_TOOLCHAINS) {
+				addTestCase(toolchain, setting, SVCOMP);
 			}
 		}
 
-		for (final String setting : mSettings) {
-			for (final String toolchain : mBoogieToolchains) {
-				addTestCase(toolchain, setting, mUltimateRepository,
+		for (final String setting : SETTINGS) {
+			for (final String toolchain : BOOGIE_TOOLCHAINS) {
+				addTestCase(toolchain, setting, ULTIMATE_REPO,
 						new String[] {".bpl"});
 			}
 		}
-		for (final String setting : mSettings) {
-			for (final String toolchain : mCToolchains) {
-				addTestCase(toolchain, setting, mUltimateRepository,
+		for (final String setting : SETTINGS) {
+			for (final String toolchain : C_TOOLCHAINS) {
+				addTestCase(toolchain, setting, ULTIMATE_REPO,
 						new String[] {".c", ".i"});
 			}
 		}
