@@ -374,8 +374,28 @@ public class ReqSymboltableBuilder {
 		return "'" + name;
 	}
 
+	/**
+	 * Returns the variable name of the variable that encodes a PEA state. The PEA name is a combination of the
+	 * requirement id and the number of the counter trace.
+	 *
+	 * @param pea
+	 *            A {@link PhaseEventAutomata}
+	 * @return the variable name of the variable that encodes a PEA state.
+	 */
 	public static String getPcName(final PhaseEventAutomata pea) {
-		return pea.getName() + "_pc";
+		return getPcName(pea.getName());
+	}
+
+	/**
+	 * Returns the variable name of the variable that encodes a PEA state. The PEA name is a combination of the
+	 * requirement id and the number of the counter trace.
+	 *
+	 * @param pea
+	 *            A String obtained by calling {@link PhaseEventAutomata#getName()}
+	 * @return the variable name of the variable that encodes a PEA state.
+	 */
+	public static String getPcName(final String peaName) {
+		return peaName + "_pc";
 	}
 
 	private static final class ReqSymbolTable implements IReqSymbolTable {

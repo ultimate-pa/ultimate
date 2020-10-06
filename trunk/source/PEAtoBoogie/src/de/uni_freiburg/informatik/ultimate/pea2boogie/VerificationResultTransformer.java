@@ -30,10 +30,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -49,11 +52,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -62,11 +73,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
@@ -76,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -89,11 +103,16 @@ public class VerificationResultTransformer {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final UnionFind<String> mEquivalences;
 
 	public VerificationResultTransformer(final ILogger logger, final IUltimateServiceProvider services,
 			final List<ReqPeas> reqPeas) {
 		mLogger = logger;
 		mServices = services;
+		mEquivalences = findEquivalences(reqPeas);
+	}
+
+	private static UnionFind<String> findEquivalences(final List<ReqPeas> reqPeas) {
 		final UnionFind<String> uf = new UnionFind<>();
 		for (final ReqPeas reqpea : reqPeas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
@@ -111,9 +130,7 @@ public class VerificationResultTransformer {
 				uf.union(peaVars);
 			}
 		}
-		final Collection<Set<String>> varEqClasses = uf.getAllEquivalenceClasses();
-
-		mLogger.info("Found %s equivalence classes", varEqClasses.size());
+		return uf;
 	}
 
 	public IResult convertTraceAbstractionResult(final IResult result) {
@@ -157,8 +174,9 @@ public class VerificationResultTransformer {
 
 			if (spec == Spec.RTINCONSISTENT) {
 				@SuppressWarnings("unchecked")
-				final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> newPe = generateRtInconsistencyResult(
-						((CounterExampleResult<?, IIcfgTransition<IcfgLocation>, Term>) oldRes).getProgramExecution(),
+				final IProgramExecution<IAction, Term> newPe = generateRtInconsistencyResult(
+						(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
+								.getProgramExecution(),
 						reqCheck);
 				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, newPe);
 
@@ -170,15 +188,10 @@ public class VerificationResultTransformer {
 		}
 	}
 
-	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> generateRtInconsistencyResult(
-			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe, final ReqCheck reqCheck) {
+	private IProgramExecution<IAction, Term> generateRtInconsistencyResult(final IcfgProgramExecution<?> pe,
+			final ReqCheck reqCheck) {
 		final List<CodeBlock> trace = new ArrayList<>(pe.getLength());
-		pe.stream().map(a -> (CodeBlock) a.getTraceElement())
-				.filter(a -> !"true".equals(a.getTransformula().getClosedFormula().toString())).forEach(trace::add);
-		mLogger.info(reqCheck.getIds());
-
-		trace.stream().forEach(a -> mLogger.info("In: %s Out: %s", a.getTransformula().getInVars().keySet(),
-				a.getTransformula().getOutVars().keySet()));
+		pe.stream().map(a -> (CodeBlock) a.getTraceElement()).forEach(trace::add);
 
 		final CodeBlockFactory cbf = CodeBlockFactory.getFactory((IToolchainStorage) mServices);
 		final CfgSmtToolkit toolkit = cbf.getToolkit();
@@ -191,48 +204,127 @@ public class VerificationResultTransformer {
 
 		final AssertCodeBlockOrder assertionOrder =
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
-		final List<List<IAction>> flattenedTraces = flattenTrace(trace);
-		mLogger.info("Checking %s flattened traces", flattenedTraces.size());
-		// TODO: Makes no sense to construct that many traces -- use branch encoders instead
-		final int limit = 1024;
-		if (flattenedTraces.size() > limit) {
-			mLogger.warn("Too many flattened traces, just looking at the first %s", limit);
-		}
-		for (final List<IAction> flatTrace : flattenedTraces) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				mLogger.warn("Took too long looking at flattened traces, bailing...");
-				break;
-			}
-			final TraceCheck<IAction> tc = new TraceCheck<>(truePred, falsePred, new TreeMap<Integer, IPredicate>(),
-					NestedWord.nestedWord(new Word<>(flatTrace.toArray(new IAction[flatTrace.size()]))), mServices,
-					toolkit, assertionOrder, true, false);
-			if (tc.isCorrect() == LBool.SAT) {
-				return tc.getRcfgProgramExecution();
-			}
-		}
-		// give up if we took too long
-		return pe;
 
+		// first, recheck to ensure that we have branch encoders
+		final TraceCheck<IAction> tcl = new TraceCheck<>(truePred, falsePred, new TreeMap<Integer, IPredicate>(),
+				NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()]))), mServices, toolkit,
+				assertionOrder, true, false);
+
+		final List<IAction> sequentialTrace = extractSequential(tcl.getRcfgProgramExecution(), mgdScript);
+		// sequentialTrace.forEach(
+		// a -> mLogger.info("In %s Out %s", a.getTransformula().getInVars(), a.getTransformula().getOutVars()));
+
+		final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScript);
+
+		final TraceCheck<IAction> tc = new TraceCheck<>(truePred, falsePred, new TreeMap<Integer, IPredicate>(),
+				NestedWord.nestedWord(new Word<>(cleanedTrace.toArray(new IAction[cleanedTrace.size()]))), mServices,
+				toolkit, assertionOrder, true, false);
+		if (tc.isCorrect() == LBool.SAT) {
+			return tc.getRcfgProgramExecution();
+		}
+		throw new AssertionError("Expected branch is not SAT");
 	}
 
-	/**
-	 * TODO: Rather inefficient to compute all combinations and then check. Better: compute combinations iteratively and
-	 * take the first that is sat.
-	 */
-	private List<List<IAction>> flattenTrace(final List<CodeBlock> trace) {
-		List<List<IAction>> rtr = new ArrayList<>();
-		for (final CodeBlock cb : trace) {
-			if (cb instanceof SequentialComposition) {
-				rtr = DataStructureUtils.crossProduct(rtr, flattenTrace(((SequentialComposition) cb).getCodeBlocks()));
-			} else if (cb instanceof ParallelComposition) {
-				final List<CodeBlock> blocks = ((ParallelComposition) cb).getCodeBlocks();
-				final List<List<IAction>> newRtr = new ArrayList<>();
-				for (final CodeBlock block : blocks) {
-					newRtr.addAll(DataStructureUtils.crossProduct(rtr, flattenTrace(Collections.singletonList(block))));
+	private List<IAction> removeUnrelatedVariables(final List<IAction> sequentialTrace, final ReqCheck reqCheck,
+			final ManagedScript mgdScript) {
+		final String firstPeaName = ReqSymboltableBuilder.getPcName(reqCheck.getPeaNames().iterator().next());
+		final Set<String> equivClass = mEquivalences.getContainingSet(firstPeaName);
+		assert equivClass.containsAll(
+				reqCheck.getPeaNames().stream().map(ReqSymboltableBuilder::getPcName).collect(Collectors.toSet()));
+
+		final List<IAction> rtr = new ArrayList<>();
+		for (final IAction action : sequentialTrace) {
+			final UnmodifiableTransFormula oldTf = action.getTransformula();
+
+			final Set<IProgramConst> nonTheoryConsts = oldTf.getNonTheoryConsts();
+			final boolean emptyNonTheoryConsts = nonTheoryConsts.isEmpty();
+			final Collection<TermVariable> branchEncoders = oldTf.getBranchEncoders();
+			final boolean emptyBranchEncoders = branchEncoders.isEmpty();
+			final boolean emptyAuxVars = oldTf.getAuxVars().isEmpty();
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, emptyNonTheoryConsts, nonTheoryConsts,
+					emptyBranchEncoders, branchEncoders, emptyAuxVars);
+			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+
+			final Term oldFormula = oldTf.getFormula();
+			final Set<TermVariable> toRemove = new LinkedHashSet<>();
+			for (final Entry<IProgramVar, TermVariable> entry : oldTf.getInVars().entrySet()) {
+				if (!equivClass.contains(entry.getKey().toString())) {
+					toRemove.add(entry.getValue());
+					continue;
 				}
-				rtr = newRtr;
+				tfb.addInVar(entry.getKey(), entry.getValue());
+			}
+			for (final Entry<IProgramVar, TermVariable> entry : oldTf.getOutVars().entrySet()) {
+				if (!equivClass.contains(entry.getKey().toString())) {
+					toRemove.add(entry.getValue());
+					continue;
+				}
+				tfb.addOutVar(entry.getKey(), entry.getValue());
+			}
+
+			// TODO: Use values from Programexecution as patterns?
+			final Term projected = PartialQuantifierElimination.quantifier(mServices, mLogger, mgdScript,
+					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					QuantifiedFormula.EXISTS, toRemove, oldFormula);
+			tfb.setFormula(projected);
+
+			final UnmodifiableTransFormula newTf = tfb.finishConstruction(mgdScript);
+			rtr.add(new BasicInternalAction(action.getPrecedingProcedure(), action.getSucceedingProcedure(), newTf));
+
+		}
+
+		return rtr;
+	}
+
+	private List<IAction> extractSequential(final IcfgProgramExecution<?> pe, final ManagedScript mgdScript) {
+		final Map<TermVariable, Boolean>[] branchEncoders = pe.getBranchEncoders();
+		final List<IAction> rtr = new ArrayList<>();
+		for (int i = 0; i < pe.getLength(); i++) {
+			final AtomicTraceElement<? extends IAction> ate = pe.getTraceElement(i);
+
+			if ("true".equals(ate.getTraceElement().getTransformula().getClosedFormula().toString())) {
+				// ignore all true steps
+				continue;
+			}
+
+			final Map<TermVariable, Boolean> branchEncoder;
+			if (branchEncoders == null || i >= branchEncoders.length) {
+				branchEncoder = null;
 			} else {
-				rtr = DataStructureUtils.crossProduct(rtr, Collections.singletonList(Collections.singletonList(cb)));
+				branchEncoder = branchEncoders[i];
+			}
+
+			final List<IAction> sequentialActions =
+					extractSequential(Collections.singletonList((CodeBlock) ate.getTraceElement()), branchEncoder);
+
+			final List<UnmodifiableTransFormula> transFormulas =
+					sequentialActions.stream().map(a -> a.getTransformula()).collect(Collectors.toList());
+			final UnmodifiableTransFormula sc = TransFormulaUtils.sequentialComposition(mLogger, mServices, mgdScript,
+					false, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					SimplificationTechnique.NONE, transFormulas);
+			rtr.add(new BasicInternalAction(null, null, sc));
+		}
+		return rtr;
+	}
+
+	private List<IAction> extractSequential(final List<CodeBlock> cbs, final Map<TermVariable, Boolean> branchEncoder) {
+		final List<IAction> rtr = new ArrayList<>();
+		for (final CodeBlock cb : cbs) {
+			if (cb instanceof SequentialComposition) {
+				rtr.addAll(extractSequential(((SequentialComposition) cb).getCodeBlocks(), branchEncoder));
+			} else if (cb instanceof ParallelComposition) {
+				if (branchEncoder == null) {
+					throw new AssertionError("Not enough branch encoders");
+				}
+				final ParallelComposition parallelComposition = ((ParallelComposition) cb);
+				final Map<TermVariable, CodeBlock> bi2cb = parallelComposition.getBranchIndicator2CodeBlock();
+
+				final CodeBlock branch =
+						bi2cb.entrySet().stream().filter(a -> branchEncoder.get(a.getKey())).map(a -> a.getValue())
+								.findFirst().orElseThrow(() -> new AssertionError("No branch was taken!"));
+				rtr.addAll(extractSequential(Collections.singletonList(branch), branchEncoder));
+			} else {
+				rtr.add(cb);
 			}
 		}
 		return rtr;
