@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.results;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -50,26 +50,30 @@ public class ReqCheck extends Check {
 	private final int mStartline;
 	private final int mEndline;
 
-	private final PatternType[] mReqs;
+	private final String[] mReqIds;
+
+	private final String[] mPeaNames;
 
 	public ReqCheck(final Check.Spec type) {
-		this(EnumSet.of(type), 0, 0, new PatternType[0]);
+		this(EnumSet.of(type), 0, 0, new String[0], new String[0]);
 	}
 
-	public ReqCheck(final Check.Spec type, final PatternType[] reqs) {
-		this(EnumSet.of(type), reqs);
+	public ReqCheck(final Check.Spec type, final String[] reqIds, final String[] peaNames) {
+		this(EnumSet.of(type), reqIds, peaNames);
 	}
 
-	private ReqCheck(final EnumSet<Check.Spec> types, final PatternType[] reqs) {
-		this(types, -1, -1, reqs);
+	private ReqCheck(final EnumSet<Check.Spec> types, final String[] reqIds, final String[] peaNames) {
+		this(types, -1, -1, reqIds, peaNames);
 	}
 
-	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline,
-			final PatternType[] reqs) {
-		super(types, a -> ReqCheck.getCustomPositiveMessage(a, reqs), a -> ReqCheck.getCustomNegativeMessage(a, reqs));
+	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline, final String[] reqIds,
+			final String[] peaNames) {
+		super(types, a -> ReqCheck.getCustomPositiveMessage(a, reqIds, peaNames),
+				a -> ReqCheck.getCustomNegativeMessage(a, reqIds, peaNames));
 		mStartline = startline;
 		mEndline = endline;
-		mReqs = reqs;
+		mReqIds = reqIds;
+		mPeaNames = peaNames;
 	}
 
 	public int getStartLine() {
@@ -80,29 +84,29 @@ public class ReqCheck extends Check {
 		return mEndline;
 	}
 
-	private static String getCustomPositiveMessage(final Spec spec, final PatternType[] types) {
-		return getRequirementTexts(types) + " " + getPositiveMessage(spec);
+	private static String getCustomPositiveMessage(final Spec spec, final String[] reqIds, final String[] peaNames) {
+		return getRequirementTexts(reqIds, peaNames) + " " + getPositiveMessage(spec);
 	}
 
-	private static String getCustomNegativeMessage(final Spec spec, final PatternType[] types) {
-		return getRequirementTexts(types) + " " + getNegativeMessage(spec);
+	private static String getCustomNegativeMessage(final Spec spec, final String[] reqIds, final String[] peaNames) {
+		return getRequirementTexts(reqIds, peaNames) + " " + getNegativeMessage(spec);
 	}
 
-	private static String getRequirementTexts(final PatternType[] types) {
-		if (types.length == 0) {
+	private static String getRequirementTexts(final String[] reqIds, final String[] peaNames) {
+		if (reqIds.length == 0) {
 			return "All requirements are";
 		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Requirement");
-		if (types.length != 1) {
+		if (reqIds.length != 1) {
 			sb.append("s");
 		}
-		final Iterator<PatternType> iter = Arrays.stream(types).iterator();
-		sb.append(" ").append(iter.next().getId());
+		final Iterator<String> iter = Arrays.stream(reqIds).iterator();
+		sb.append(" ").append(iter.next());
 		while (iter.hasNext()) {
-			sb.append(", ").append(iter.next().getId());
+			sb.append(", ").append(iter.next());
 		}
-		if (types.length != 1) {
+		if (reqIds.length != 1) {
 			sb.append(" are");
 		} else {
 			sb.append(" is");
@@ -122,20 +126,25 @@ public class ReqCheck extends Check {
 		newSpec.addAll(other.getSpec());
 		final int startline = Math.min(mStartline, other.mStartline);
 		final int endline = Math.max(mEndline, other.mEndline);
-		final PatternType[] reqs = DataStructureUtils.concat(mReqs, other.mReqs);
-		return new ReqCheck(newSpec, startline, endline, reqs);
+		final String[] reqIds = DataStructureUtils.concat(mReqIds, other.mReqIds);
+		final String[] peaNames = DataStructureUtils.concat(mPeaNames, other.mPeaNames);
+		return new ReqCheck(newSpec, startline, endline, reqIds, peaNames);
 	}
 
-	public Set<String> getIds() {
-		return Arrays.stream(mReqs).map(a -> a.getId()).collect(Collectors.toSet());
+	public Set<String> getReqIds() {
+		return new LinkedHashSet<>(Arrays.asList(mReqIds));
+	}
+
+	public Set<String> getPeaNames() {
+		return new LinkedHashSet<>(Arrays.asList(mPeaNames));
 	}
 
 	@Override
 	public String toString() {
-		if (mReqs.length == 0) {
+		if (mReqIds.length == 0) {
 			return super.toString() + " for all requirements";
 		}
-		return super.toString() + " for " + Arrays.stream(mReqs).map(a -> a.getId()).collect(Collectors.joining(", "));
+		return super.toString() + " for " + Arrays.stream(mReqIds).collect(Collectors.joining(", "));
 	}
 
 	@Override
@@ -143,29 +152,37 @@ public class ReqCheck extends Check {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + mEndline;
-		result = prime * result + Arrays.hashCode(mReqs);
+		result = prime * result + Arrays.hashCode(mReqIds);
+		result = prime * result + Arrays.hashCode(mPeaNames);
 		result = prime * result + mStartline;
 		return result;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!super.equals(obj))
+		}
+		if (!super.equals(obj)) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final ReqCheck other = (ReqCheck) obj;
-		if (mEndline != other.mEndline)
+		if (mStartline != other.mStartline) {
 			return false;
-		if (!Arrays.equals(mReqs, other.mReqs))
+		}
+		if (mEndline != other.mEndline) {
 			return false;
-		if (mStartline != other.mStartline)
+		}
+		if (!Arrays.equals(mReqIds, other.mReqIds)) {
 			return false;
+		}
+		if (!Arrays.equals(mPeaNames, other.mPeaNames)) {
+			return false;
+		}
 		return true;
 	}
-
-
 
 }

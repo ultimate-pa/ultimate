@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePref
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
 /**
@@ -346,26 +347,30 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			return null;
 		}
 		final Expression disjunction = genDisjunction(checkReached, bl);
-		final ReqCheck check = createReqCheck(Spec.VACUOUS, req);
+		final ReqCheck check = createReqCheck(Spec.VACUOUS, req, aut);
 		final String label = "VACUOUS_" + aut.getName();
 		return createAssert(disjunction, check, label);
 	}
 
 	@SafeVarargs
 	private static ReqCheck createReqCheck(final Check.Spec reqSpec,
-			final Entry<PatternType<?>, PhaseEventAutomata>... subset) {
-		final PatternType<?>[] reqs = new PatternType<?>[subset.length];
-		for (int i = 0; i < subset.length; ++i) {
-			reqs[i] = subset[i].getKey();
+			final Entry<PatternType<?>, PhaseEventAutomata>... req2pea) {
+		if (req2pea == null || req2pea.length == 0) {
+			throw new IllegalArgumentException("subset cannot be null or empty");
 		}
-		return createReqCheck(reqSpec, reqs);
+
+		final String[] reqIds = new String[req2pea.length];
+		final String[] peaNames = new String[req2pea.length];
+		for (int i = 0; i < req2pea.length; ++i) {
+			reqIds[i] = req2pea[i].getKey().getId();
+			peaNames[i] = req2pea[i].getValue().getName();
+		}
+
+		return new ReqCheck(reqSpec, reqIds, peaNames);
 	}
 
-	private static ReqCheck createReqCheck(final Check.Spec reqSpec, final PatternType<?>... req) {
-		if (req == null || req.length == 0) {
-			throw new IllegalArgumentException("req cannot be null or empty");
-		}
-		return new ReqCheck(reqSpec, req);
+	private static ReqCheck createReqCheck(final Spec spec, final PatternType<?> req, final PhaseEventAutomata aut) {
+		return createReqCheck(spec, new Pair<>(req, aut));
 	}
 
 	/**
