@@ -70,12 +70,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
-import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -91,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
  * Utility class that helps with reporting results.
@@ -103,34 +99,13 @@ public class VerificationResultTransformer {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final UnionFind<String> mEquivalences;
+	private final IReqSymbolTable mReqSymbolTable;
 
 	public VerificationResultTransformer(final ILogger logger, final IUltimateServiceProvider services,
-			final List<ReqPeas> reqPeas) {
+			final IReqSymbolTable reqSymbolTable) {
 		mLogger = logger;
 		mServices = services;
-		mEquivalences = findEquivalences(reqPeas);
-	}
-
-	private static UnionFind<String> findEquivalences(final List<ReqPeas> reqPeas) {
-		final UnionFind<String> uf = new UnionFind<>();
-		for (final ReqPeas reqpea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
-				final PhaseEventAutomata somePea = ct2pea.getValue();
-
-				final Set<String> peaVars = new HashSet<>();
-				// add all variable names
-				peaVars.addAll(somePea.getVariables().keySet());
-				// add all clock names
-				peaVars.addAll(somePea.getClocks());
-				// add pc name
-				peaVars.add(ReqSymboltableBuilder.getPcName(somePea));
-
-				peaVars.forEach(uf::findAndConstructEquivalenceClassIfNeeded);
-				uf.union(peaVars);
-			}
-		}
-		return uf;
+		mReqSymbolTable = reqSymbolTable;
 	}
 
 	public IResult convertTraceAbstractionResult(final IResult result) {
@@ -228,7 +203,10 @@ public class VerificationResultTransformer {
 	private List<IAction> removeUnrelatedVariables(final List<IAction> sequentialTrace, final ReqCheck reqCheck,
 			final ManagedScript mgdScript) {
 		final String firstPeaName = ReqSymboltableBuilder.getPcName(reqCheck.getPeaNames().iterator().next());
-		final Set<String> equivClass = mEquivalences.getContainingSet(firstPeaName);
+		final Set<String> equivClass =
+				new HashSet<>(mReqSymbolTable.getVariableEquivalenceClasses().getContainingSet(firstPeaName));
+		equivClass.add(mReqSymbolTable.getDeltaVarName());
+
 		assert equivClass.containsAll(
 				reqCheck.getPeaNames().stream().map(ReqSymboltableBuilder::getPcName).collect(Collectors.toSet()));
 

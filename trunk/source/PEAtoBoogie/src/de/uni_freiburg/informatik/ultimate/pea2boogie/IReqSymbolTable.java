@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public interface IReqSymbolTable {
 
@@ -84,4 +85,10 @@ public interface IReqSymbolTable {
 	Map<String, Expression> getConstToValue();
 
 	IBoogieType getFunctionReturnType(String identifier);
+
+	/**
+	 * Get a {@link UnionFind} data structure that partitions all variables in the PEA product based on their usage,
+	 * i.e., all variables of all PEAs that share (also transitively) one variable are in one class.
+	 */
+	UnionFind<String> getVariableEquivalenceClasses();
 }

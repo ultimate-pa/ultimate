@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.FakeBoogieVar;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2ExpressionSymbolTable {
 
@@ -242,7 +243,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 		addVar(name, type);
 	}
 
-	private void addVar(final String name, final BoogieType type, final PatternType source, final Set<String> kind) {
+	private void addVar(final String name, final BoogieType type, final PatternType<?> source, final Set<String> kind) {
 		if (type == null && (!kind.contains(name) || !mId2Type.containsKey(name))) {
 			throw new AssertionError();
 		}
@@ -272,8 +273,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 
 	@Override
 	public BoogieConst getProgramConst(final ApplicationTerm term) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -284,8 +284,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 
 	@Override
 	public Map<String, String> getSmtFunction2BoogieFunction() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -295,86 +294,77 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 
 	@Override
 	public DeclarationInformation getDeclarationInformation(final IProgramVar pv) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String getPcName(final PhaseEventAutomata automaton) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Set<String> getPrimedVars() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Set<String> getEventVars() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String getDeltaVarName() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public VariableLHS getVariableLhs(final String clockVar) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Collection<String> getStateVars() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String getPrimedVarId(final String stateVar) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Collection<String> getPcVars() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Collection<Declaration> getDeclarations() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Map<PatternType<?>, BoogieLocation> getLocations() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Map<String, Expression> getConstToValue() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String getHistoryVarId(final String name) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public IBoogieType getFunctionReturnType(final String identifier) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public UnionFind<String> getVariableEquivalenceClasses() {
+		throw new UnsupportedOperationException();
 	}
 
 }
