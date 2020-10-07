@@ -228,8 +228,7 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 					mTransitionClazz);
 		case WP:
 			return new WpInterpolantProvider<>(mServices, mLogger, mPrefs.getCfgSmtToolkit().getManagedScript(),
-					mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(), mPredicateUnifier,
-					mCsToolkit);
+					mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
 		}

@@ -144,7 +144,6 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 			final IpAbStrategyModuleResult<L> result =
 					interpolantAutomatonBuilder.buildInterpolantAutomaton(perfectIpps, imperfectIpps);
 			mInterpolantAutomaton = result.getAutomaton();
-			mLogger.info(mInterpolantAutomaton);
 			mUsedTracePredicates = result.getUsedTracePredicates();
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(e,
