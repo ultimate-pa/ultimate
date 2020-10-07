@@ -51,7 +51,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) Interpolator used to generate interpolants from a given
+ *         meta-trace
  *
  */
 public class Interpolator<LETTER extends IIcfgTransition<?>> {
@@ -90,6 +91,13 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 
 	}
 
+	/**
+	 * Given a counterexample, like a meta-trace, generate a sequence of interpolants
+	 *
+	 * @param interpolationMethod
+	 *            which method of interpolation is used
+	 * @param counterexample
+	 */
 	public void generateInterpolants(final InterpolationMethod interpolationMethod,
 			final IRun<LETTER, IPredicate> counterexample) {
 		switch (interpolationMethod) {

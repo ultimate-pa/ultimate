@@ -137,7 +137,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	}
 
 	/*
-	 *
+	 * only allow procedures of two types: I: loop in procedure II: procedure in loop, no recursive
 	 */
 	private Map<IcfgLocation, List<Integer>> filterProcedures(final Map<IcfgLocation, List<Integer>> possibleCycles) {
 		// final Map<String, ? extends IcfgLocation> procEntries = mIcfg.getProcedureEntryNodes();
@@ -314,6 +314,9 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 								break;
 							}
 						}
+						/*
+						 * But also the whole interval
+						 */
 						final int firstOccurence = cycle.getValue().get(0);
 						final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
 

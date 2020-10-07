@@ -544,7 +544,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices, 0,
 				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 				accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
-		Set<List<LETTER>> nestingLoop;
+		Set<List<L>> nestingLoop;
 		if (mLoops.containsKey(nestingLoophead)) {
 			nestingLoop = mLoops.get(nestingLoophead);
 		} else {
@@ -553,7 +553,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 
 		final Set<List<UnmodifiableTransFormula>> nestingLoopAccelerated = new HashSet<>();
 
-		for (final List<LETTER> nestingLoopPath : nestingLoop) {
+		for (final List<L> nestingLoopPath : nestingLoop) {
 			final List<UnmodifiableTransFormula> nestingLoopPathAccelerated = new ArrayList<>();
 			for (int i = 0; i < nestingLoopPath.size(); i++) {
 				if (nestingLoopPath.get(i).getSource() == nestedLoophead) {
