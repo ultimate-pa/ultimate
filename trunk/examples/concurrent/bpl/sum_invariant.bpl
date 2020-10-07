@@ -35,12 +35,12 @@ modifies x;
   fork 1 Thread();
   fork 2 Thread();
   fork 3 Thread();
-  fork 4 Thread();
+  //fork 4 Thread();
 
   join 1;
   join 2;
   join 3;
-  join 4;
+  //join 4;
 
   assert x == 0;
 }

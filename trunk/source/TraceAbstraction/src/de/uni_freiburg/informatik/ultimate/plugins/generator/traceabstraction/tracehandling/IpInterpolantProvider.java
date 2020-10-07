@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -59,7 +59,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private final IcfgEdgeFactory mEdgeFactory;
 	private final IUltimateServiceProvider mServices;
 	private final Class<LETTER> mTransitionClazz;
-	private final IIcfgSymbolTable mSymbolTable;
+	private final DefaultIcfgSymbolTable mSymbolTable;
 
 	public IpInterpolantProvider(final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IPredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
@@ -72,7 +72,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		mLogger = logger;
 		final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
 		mManagedScript = cfgSmtToolkit.getManagedScript();
-		mSymbolTable = cfgSmtToolkit.getSymbolTable();
+		mSymbolTable = new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
 		mPredicateFactory = new PredicateFactory(mServices, mManagedScript, mSymbolTable);
 		mEdgeFactory = cfgSmtToolkit.getIcfgEdgeFactory();
 		mTransitionClazz = transitionClazz;
@@ -94,7 +94,9 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			final IProgramVar var = ProgramVarUtils.constructGlobalProgramVarPair(tv.getName(),
 					SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
 			variables.put(state, var);
+			mSymbolTable.add(var);
 		}
+		mSymbolTable.finishConstruction();
 		// Encode the DAG in a trace and get interpolants for it
 		final List<LETTER> trace = encodeDag(automaton, stateMap, topOrder, variables);
 		mLogger.info("Encoded the DAG in a trace of size " + trace.size());
@@ -118,11 +120,10 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			final STATE state = topOrder.get(i);
 			final Term var = variables.get(state).getTermVariable();
 			// Substitute the current variable by true the other ones by false
-			final Term term = interpolants[i].getFormula();
 			substitution.put(var, trueTerm);
-			final Term substituted = new Substitution(mManagedScript, substitution).transform(term);
+			final Term term = new Substitution(mManagedScript, substitution).transform(interpolants[i].getFormula());
 			substitution.put(var, falseTerm);
-			result.put(state, mPredicateUnifier.getOrConstructPredicate(substituted));
+			result.put(state, mPredicateUnifier.getOrConstructPredicate(term));
 		}
 		return result;
 	}
