@@ -320,6 +320,21 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
+	public void moduloUnsound() {
+		/*
+		 * Example generated from MCR
+		 *
+		 * Notes: Happens already in quantifier pusher
+		 */
+		final FunDecl funDecl = new FunDecl(SmtSortUtils::getBoolSort, "c");
+		final String formulaAsString =
+				"(forall ((g Int)) (or (not (or (and c (= g 1)) (and (not c) (= g 0)) )) (= 0 (mod g 256)) ) ) ";
+		final String expextedResultAsString = "(not c)";
+		runQuantifierPusherTest(new FunDecl[] { funDecl }, formulaAsString, expextedResultAsString, true, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void divByZero() {
 		mScript.declareFun("BK", new Sort[0], SmtSortUtils.getRealSort(mMgdScript));
 		final String formulaAsString =
