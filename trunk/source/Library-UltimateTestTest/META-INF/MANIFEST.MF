@@ -5,7 +5,8 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.test.test
 Bundle-Version: 0.1.25
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: org.junit
+Require-Bundle: org.junit,
+ javax.xml.bind;bundle-version="2.2.0"
 Import-Package: org.junit,
  org.junit.runner,
  org.junit.runners,

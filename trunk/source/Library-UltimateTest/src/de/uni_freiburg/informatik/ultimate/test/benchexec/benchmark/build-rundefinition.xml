@@ -6,6 +6,11 @@
         Generate JAXB model for benchexec rundefinitions from .xsd file
     </description>
 
+	<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+	    <classpath>
+	        <fileset dir="${workspacedir}/BA_SharedJARs/" includes="*.jar"/>
+	    </classpath>
+	</taskdef>
 
 	<target name="clean">
 		<delete>
@@ -26,6 +31,7 @@
 		You can generate the benchexec .xsd from the dtd file with 
 		a tool called trang (https://github.com/relaxng/jing-trang)
 		-->
+<!--
 		<exec executable="xjc" failonerror="true">
 			<arg value="-d" />
 			<arg value="${targetDir}" />
@@ -33,6 +39,11 @@
 			<arg value="de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark" />
 			<arg value="benchmark-1.9.xsd" />
 		</exec>
+-->
+		<xjc schema="benchmark-1.9.xsd" package="de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark" destdir="${targetDir}">
+			<produces dir="${targetDir}/de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark" includes="**/*.java" />
+		</xjc>
+		
 	</target>
 </project>
 

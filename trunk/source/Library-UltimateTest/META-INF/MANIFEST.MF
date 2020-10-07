@@ -22,7 +22,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  org.junit,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
- de.uni_freiburg.informatik.ultimate.smtsolver.external
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ javax.xml.bind;bundle-version="2.2.0"
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
