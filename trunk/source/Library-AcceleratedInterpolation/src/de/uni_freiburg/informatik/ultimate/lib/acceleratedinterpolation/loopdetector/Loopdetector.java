@@ -257,28 +257,89 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	 */
 	private Set<IcfgLocation> getNestedCycles(final Map<IcfgLocation, List<Integer>> cyclesWithNested) {
 		final Set<IcfgLocation> nestedCycles = new HashSet<>();
+		final Map<IcfgLocation, Set<IcfgLocation>> invalidNesting = new HashMap<>();
+
 		for (final Iterator<Map.Entry<IcfgLocation, List<Integer>>> cycles =
 				cyclesWithNested.entrySet().iterator(); cycles.hasNext();) {
 			final Map.Entry<IcfgLocation, List<Integer>> cycle = cycles.next();
-			final IcfgLocation loopHead = cycle.getKey();
-			final int firstOccurence = cycle.getValue().get(0);
-			final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
 
-			/*
-			 * TODO take a look at only 2 locations.
-			 */
-			for (final Iterator<Map.Entry<IcfgLocation, List<Integer>>> otherCycles =
-					cyclesWithNested.entrySet().iterator(); otherCycles.hasNext();) {
-				final Map.Entry<IcfgLocation, List<Integer>> otherCycle = otherCycles.next();
-				final IcfgLocation loopHeadOther = otherCycle.getKey();
-				final int firstOccurenceOther = otherCycle.getValue().get(0);
-				final int lastOccurenceOther = otherCycle.getValue().get(otherCycle.getValue().size() - 1);
-				if (loopHead != loopHeadOther
-						&& (firstOccurence < firstOccurenceOther && lastOccurence > lastOccurenceOther)
-						|| firstOccurence < firstOccurenceOther && firstOccurenceOther < lastOccurence
-								&& lastOccurenceOther > lastOccurence) {
-					nestedCycles.add(loopHeadOther);
-					mNestingRelation.put(loopHead, loopHeadOther);
+			final IcfgLocation loopHead = cycle.getKey();
+			final List<Integer> cycleEntryPoints = cycle.getValue();
+
+			// final int firstOccurence = cycle.getValue().get(0);
+			// final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
+
+			for (int i = 0; i < cycleEntryPoints.size() - 1; i++) {
+
+				final int currentIntervalFirst = cycleEntryPoints.get(i);
+				final int currentIntervalLast = cycleEntryPoints.get(i + 1);
+
+				for (final Iterator<Map.Entry<IcfgLocation, List<Integer>>> otherCycles =
+						cyclesWithNested.entrySet().iterator(); otherCycles.hasNext();) {
+
+					final Map.Entry<IcfgLocation, List<Integer>> otherCycle = otherCycles.next();
+					final IcfgLocation loopHeadOther = otherCycle.getKey();
+					final List<Integer> othercycleEntryPoints = otherCycle.getValue();
+
+					if (loopHead == loopHeadOther) {
+						continue;
+					} else {
+						for (int j = 0; j < othercycleEntryPoints.size() - 1; j++) {
+							final int otherIntervalFirst = othercycleEntryPoints.get(j);
+							final int otherIntervalLast = othercycleEntryPoints.get(j + 1);
+
+							/*
+							 * we cannot look at only the first and last location, they have to be inbetween in each.
+							 */
+							if ((currentIntervalFirst < otherIntervalFirst
+									&& currentIntervalLast > otherIntervalLast)) {
+								nestedCycles.add(loopHeadOther);
+								mNestingRelation.put(loopHead, loopHeadOther);
+								continue;
+							}
+							if ((otherIntervalFirst >= currentIntervalFirst && otherIntervalLast >= currentIntervalLast)
+									|| (otherIntervalFirst <= currentIntervalFirst
+											&& otherIntervalLast <= currentIntervalLast)) {
+								continue;
+							} else {
+								if (!invalidNesting.containsKey(loopHead)) {
+									final Set<IcfgLocation> invalidNestedHeads = new HashSet<>();
+									invalidNestedHeads.add(loopHeadOther);
+									invalidNesting.put(loopHead, invalidNestedHeads);
+								} else {
+									final Set<IcfgLocation> otherInvalids = new HashSet<>(invalidNesting.get(loopHead));
+									otherInvalids.add(loopHeadOther);
+									invalidNesting.put(loopHead, otherInvalids);
+								}
+								break;
+							}
+						}
+						final int firstOccurence = cycle.getValue().get(0);
+						final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
+
+						final int firstOccurenceOther = otherCycle.getValue().get(0);
+						final int lastOccurenceOther = otherCycle.getValue().get(otherCycle.getValue().size() - 1);
+						if (!(firstOccurence < firstOccurenceOther && lastOccurenceOther < lastOccurence)) {
+							if (!invalidNesting.containsKey(loopHead)) {
+								final Set<IcfgLocation> invalidNestedHeads = new HashSet<>();
+								invalidNestedHeads.add(loopHeadOther);
+								invalidNesting.put(loopHead, invalidNestedHeads);
+							} else {
+								final Set<IcfgLocation> otherInvalids = new HashSet<>(invalidNesting.get(loopHead));
+								otherInvalids.add(loopHeadOther);
+								invalidNesting.put(loopHead, otherInvalids);
+							}
+						}
+					}
+				}
+			}
+		}
+		for (final Entry<IcfgLocation, Set<IcfgLocation>> invalidNestingRelation : invalidNesting.entrySet()) {
+			final IcfgLocation invalidNestor = invalidNestingRelation.getKey();
+			for (final IcfgLocation invalidNested : invalidNestingRelation.getValue()) {
+				if (mNestingRelation.containsKey(invalidNestor)
+						&& mNestingRelation.get(invalidNestor) == invalidNested) {
+					mNestingRelation.remove(invalidNestor);
 				}
 			}
 		}

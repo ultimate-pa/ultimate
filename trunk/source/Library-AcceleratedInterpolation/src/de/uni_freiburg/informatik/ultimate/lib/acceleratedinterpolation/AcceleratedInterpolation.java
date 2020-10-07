@@ -466,7 +466,6 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 					acceleratedTraceSchemeStates.add(epsilonSPred);
 				}
 			}
-
 			final UnmodifiableTransFormula lastLoopAcceleration = accelerations.get(accelerations.size() - 1);
 			/**
 			 * TODO: Deal with unsafe cast!
@@ -474,13 +473,10 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			final L lastAcceleratedTransition = (L) mIcfgEdgeFactory.createInternalTransition(target, newExitLocation,
 					l.getTarget().getPayload(), lastLoopAcceleration);
 			final Term lastAcceleratedTransitionDefaultVars = mPredHelper.normalizeTerm(lastLoopAcceleration);
-
 			counterExampleAcceleratedLetter.add(lastAcceleratedTransition);
 			counterExampleAcceleratedLetter.add(newLoopExitTransition);
-
 			final SPredicate lastAcceleratedSPred =
 					predFactory.newSPredicate(newExitLocation, lastAcceleratedTransitionDefaultVars);
-
 			acceleratedTraceSchemeStates.add(lastAcceleratedSPred);
 			acceleratedTraceSchemeStates.add(newExitSPred);
 			final Pair<Integer, Integer> loopSize = mLoopSize.get(l.getTarget());
@@ -509,6 +505,12 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
 	}
 
+	/**
+	 * Accelerate nested loops first to increase reliability of interpolants.
+	 *
+	 * @param nestingLoophead
+	 * @param nestedLoophead
+	 */
 	private void accelerateNestedLoops(final IcfgLocation nestingLoophead, final IcfgLocation nestedLoophead) {
 		/*
 		 * In case of multiple nested loops, accelerate the inner one first (maybe check for delay for that)
