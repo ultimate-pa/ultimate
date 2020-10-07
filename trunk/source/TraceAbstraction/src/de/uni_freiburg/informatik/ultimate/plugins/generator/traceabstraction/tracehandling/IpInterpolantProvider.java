@@ -87,6 +87,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			return Collections.emptyMap();
 		}
 		final Map<STATE, IProgramVar> variables = new HashMap<>();
+		mManagedScript.lock(this);
 		for (final STATE state : topOrder) {
 			// TODO: This is only a workaround for a fresh variable name...
 			final TermVariable tv =
@@ -96,6 +97,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 			variables.put(state, var);
 			mSymbolTable.add(var);
 		}
+		mManagedScript.unlock(this);
 		mSymbolTable.finishConstruction();
 		// Encode the DAG in a trace and get interpolants for it
 		final List<LETTER> trace = encodeDag(automaton, stateMap, topOrder, variables);
