@@ -74,15 +74,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -498,8 +501,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			final DeterministicInterpolantAutomaton<L> raw = new DeterministicInterpolantAutomaton<>(mServices,
 					mCsToolkit, htc, interpolAutomaton, mRefinementEngine.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
-				final Set<L> universalSubtrahendLoopers =
-						determineUniversalSubtrahendLoopers(mAbstraction.getAlphabet(), interpolAutomaton.getStates());
+				final Set<L> universalSubtrahendLoopers = determineUniversalSubtrahendLoopers(
+						mAbstraction.getAlphabet(), interpolAutomaton.getStates(), htc);
 				mLogger.info("Number of universal loopers: " + universalSubtrahendLoopers.size() + " out of "
 						+ mAbstraction.getAlphabet().size());
 				final NestedWordAutomaton<L, IPredicate> ia = (NestedWordAutomaton<L, IPredicate>) interpolAutomaton;
@@ -579,10 +582,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 				+ iteration;
 	}
 
-	private Set<L> determineUniversalSubtrahendLoopers(final Set<L> alphabet, final Set<IPredicate> states) {
+	private Set<L> determineUniversalSubtrahendLoopers(final Set<L> alphabet, final Set<IPredicate> states,
+			final IHoareTripleChecker htc) {
 		final Set<L> result = new HashSet<>();
 		for (final L letter : alphabet) {
-			final boolean isUniversalLooper = isUniversalLooper(letter, states);
+			final boolean isUniversalLooper = isUniversalLooper(letter, states, htc);
 			if (isUniversalLooper) {
 				result.add(letter);
 			}
@@ -590,10 +594,41 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		return result;
 	}
 
-	private boolean isUniversalLooper(final L letter, final Set<IPredicate> states) {
+	private boolean isUniversalLooper(final L letter, final Set<IPredicate> states, final IHoareTripleChecker check) {
 		if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
 			return false;
 		}
+		if (isIndependentLooper(letter, states)) {
+			return true;
+		}
+
+		for (final IPredicate predicate : states) {
+			final boolean isInvariant = isInvariant(letter, predicate, check);
+			if (!isInvariant) {
+				return false;
+			}
+
+			// TODO 2020-10-08 Dominik: Maybe an incremental version would be better.
+			// But IncrementalImplicationChecker needs a fixed succedent (not a fixed antecedent, like here).
+			// And IncrementalPlicationChecker does not manage the variables correctly.
+			final MonolithicImplicationChecker impl =
+					new MonolithicImplicationChecker(mServices, mCsToolkit.getManagedScript());
+
+			for (final IPredicate post : states) {
+				if (predicate == post || impl.checkImplication(predicate, false, post, false) == Validity.VALID) {
+					continue;
+				}
+				final boolean mayIntroduce =
+						check.checkInternal(predicate, (IInternalAction) letter, post) != Validity.INVALID;
+				if (mayIntroduce) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean isIndependentLooper(final L letter, final Set<IPredicate> states) {
 		for (final IPredicate predicate : states) {
 			final boolean isIndependent = isIndependent(letter, predicate);
 			if (!isIndependent) {
@@ -608,6 +643,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		final Set<IProgramVar> out = letter.getTransformula().getOutVars().keySet();
 		return !DataStructureUtils.haveNonEmptyIntersection(in, predicate.getVars())
 				&& !DataStructureUtils.haveNonEmptyIntersection(out, predicate.getVars());
+	}
+
+	private boolean isInvariant(final L letter, final IPredicate predicate, final IHoareTripleChecker check) {
+		return check.checkInternal(predicate, (IInternalAction) letter, predicate) == Validity.VALID;
 	}
 
 	@Override
