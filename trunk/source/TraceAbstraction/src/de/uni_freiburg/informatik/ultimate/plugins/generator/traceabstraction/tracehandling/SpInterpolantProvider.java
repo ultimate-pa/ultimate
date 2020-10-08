@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -20,13 +20,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * IInterpolantProvider using weakest precondition. For every state we use the conjunction of wp for all outgoing
+ * IInterpolantProvider using strongest postcondition. For every state we use the disjunction of sp for all incoming
  * transitions.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> extends SpWpInterpolantProvider<LETTER> {
-	public WpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
+public class SpInterpolantProvider<LETTER extends IIcfgTransition<?>> extends SpWpInterpolantProvider<LETTER> {
+	public SpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IPredicateUnifier predicateUnifier) {
 		super(services, logger, managedScript, simplificationTechnique, xnfConversionTechnique, predicateUnifier);
@@ -35,23 +35,23 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> extends Sp
 	@Override
 	protected <STATE> Term calculateTerm(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE state,
 			final Map<STATE, IPredicate> stateMap) {
-		final List<Term> conjuncts = new ArrayList<>();
-		for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
-			final IPredicate succ = stateMap.get(edge.getSucc());
-			if (succ != null) {
-				conjuncts.add(mPredicateTransformer.weakestPrecondition(succ, edge.getLetter().getTransformula()));
+		final List<Term> disjuncts = new ArrayList<>();
+		for (final IncomingInternalTransition<LETTER, STATE> edge : automaton.internalPredecessors(state)) {
+			final IPredicate pred = stateMap.get(edge.getPred());
+			if (pred != null) {
+				disjuncts.add(mPredicateTransformer.strongestPostcondition(pred, edge.getLetter().getTransformula()));
 			}
 		}
-		return conjuncts.isEmpty() ? null : SmtUtils.and(mScript, conjuncts);
+		return disjuncts.isEmpty() ? null : SmtUtils.or(mScript, disjuncts);
 	}
 
 	@Override
 	protected Term getAbstraction(final Term term, final List<TermVariable> variables) {
-		return SmtUtils.quantifier(mScript, QuantifiedFormula.FORALL, variables, term);
+		return SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, variables, term);
 	}
 
 	@Override
 	protected boolean useReversedOrder() {
-		return true;
+		return false;
 	}
 }
