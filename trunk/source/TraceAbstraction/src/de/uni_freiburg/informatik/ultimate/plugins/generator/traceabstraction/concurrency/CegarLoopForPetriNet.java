@@ -81,8 +81,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
@@ -286,7 +286,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			// Determinize the interpolant automaton
 			final INestedWordAutomaton<L, IPredicate> dia;
 			final Pair<INestedWordAutomaton<L, IPredicate>, DifferencePairwiseOnDemand<L, IPredicate, ?>> enhancementResult =
-					enhanceAnddeterminizeInterpolantAutomaton(mInterpolAutomaton, htc);
+					enhanceAnddeterminizeInterpolantAutomaton(mInterpolAutomaton, htc,
+							mRefinementEngine.getPredicateUnifier().getCoverageRelation());
 			dia = enhancementResult.getFirst();
 			if (USE_COUNTEREXAMPLE_CACHE) {
 				final PetriNetRun<L, IPredicate> run =
@@ -483,7 +484,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 	protected Pair<INestedWordAutomaton<L, IPredicate>, DifferencePairwiseOnDemand<L, IPredicate, ?>>
 			enhanceAnddeterminizeInterpolantAutomaton(final INestedWordAutomaton<L, IPredicate> interpolAutomaton,
-					final IHoareTripleChecker htc)
+					final IHoareTripleChecker htc, final IPredicateCoverageChecker coverage)
 					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger.debug("Start determinization");
 		final INestedWordAutomaton<L, IPredicate> dia;
@@ -502,7 +503,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 					mCsToolkit, htc, interpolAutomaton, mRefinementEngine.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
 				final Set<L> universalSubtrahendLoopers = determineUniversalSubtrahendLoopers(
-						mAbstraction.getAlphabet(), interpolAutomaton.getStates(), htc);
+						mAbstraction.getAlphabet(), interpolAutomaton.getStates(), htc, coverage);
 				mLogger.info("Number of universal loopers: " + universalSubtrahendLoopers.size() + " out of "
 						+ mAbstraction.getAlphabet().size());
 				final NestedWordAutomaton<L, IPredicate> ia = (NestedWordAutomaton<L, IPredicate>) interpolAutomaton;
@@ -583,10 +584,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	}
 
 	private Set<L> determineUniversalSubtrahendLoopers(final Set<L> alphabet, final Set<IPredicate> states,
-			final IHoareTripleChecker htc) {
+			final IHoareTripleChecker htc, final IPredicateCoverageChecker coverage) {
 		final Set<L> result = new HashSet<>();
 		for (final L letter : alphabet) {
-			final boolean isUniversalLooper = isUniversalLooper(letter, states, htc);
+			final boolean isUniversalLooper = isUniversalLooper(letter, states, htc, coverage);
 			if (isUniversalLooper) {
 				result.add(letter);
 			}
@@ -594,7 +595,22 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		return result;
 	}
 
-	private boolean isUniversalLooper(final L letter, final Set<IPredicate> states, final IHoareTripleChecker check) {
+	/**
+	 * Conservatively checks if the given letter is a universal looper. A looper has to be invariant under all
+	 * predicates, and it may never introduce a new predicate (i.e., have a postcondition which is not implied by the
+	 * precondition).
+	 *
+	 * @param letter
+	 *            The letter to check
+	 * @param states
+	 *            The set of predicates to consider
+	 * @param htc
+	 * @param coverage
+	 *
+	 * @return true if the letter can be guaranteed to be a looper.
+	 */
+	private boolean isUniversalLooper(final L letter, final Set<IPredicate> states, final IHoareTripleChecker htc,
+			final IPredicateCoverageChecker coverage) {
 		if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
 			return false;
 		}
@@ -603,23 +619,18 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		for (final IPredicate predicate : states) {
-			final boolean isInvariant = isInvariant(letter, predicate, check);
+			final boolean isInvariant =
+					htc.checkInternal(predicate, (IInternalAction) letter, predicate) == Validity.VALID;
 			if (!isInvariant) {
 				return false;
 			}
 
-			// TODO 2020-10-08 Dominik: Maybe an incremental version would be better.
-			// But IncrementalImplicationChecker needs a fixed succedent (not a fixed antecedent, like here).
-			// And IncrementalPlicationChecker does not manage the variables correctly.
-			final MonolithicImplicationChecker impl =
-					new MonolithicImplicationChecker(mServices, mCsToolkit.getManagedScript());
-
 			for (final IPredicate post : states) {
-				if (predicate == post || impl.checkImplication(predicate, false, post, false) == Validity.VALID) {
+				if (coverage.isCovered(predicate, post) == Validity.VALID) {
 					continue;
 				}
 				final boolean mayIntroduce =
-						check.checkInternal(predicate, (IInternalAction) letter, post) != Validity.INVALID;
+						htc.checkInternal(predicate, (IInternalAction) letter, post) != Validity.INVALID;
 				if (mayIntroduce) {
 					return false;
 				}
@@ -628,6 +639,17 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		return true;
 	}
 
+	/**
+	 * An efficient sound but (very) incomplete check for loopers: A letter is considered a looper, if it does not share
+	 * any variables with any predicate.
+	 *
+	 * @param letter
+	 *            The letter to check
+	 * @param states
+	 *            The set of predicates to consider
+	 *
+	 * @return true if the letter does not read nor write any variables used in the given predicates
+	 */
 	private boolean isIndependentLooper(final L letter, final Set<IPredicate> states) {
 		for (final IPredicate predicate : states) {
 			final boolean isIndependent = isIndependent(letter, predicate);
@@ -643,10 +665,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		final Set<IProgramVar> out = letter.getTransformula().getOutVars().keySet();
 		return !DataStructureUtils.haveNonEmptyIntersection(in, predicate.getVars())
 				&& !DataStructureUtils.haveNonEmptyIntersection(out, predicate.getVars());
-	}
-
-	private boolean isInvariant(final L letter, final IPredicate predicate, final IHoareTripleChecker check) {
-		return check.checkInternal(predicate, (IInternalAction) letter, predicate) == Validity.VALID;
 	}
 
 	@Override
