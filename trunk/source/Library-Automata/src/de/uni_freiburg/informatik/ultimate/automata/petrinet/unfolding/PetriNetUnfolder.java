@@ -361,6 +361,7 @@ public final class PetriNetUnfolder<L, P> {
 		private int mNonCutOffEvents;
 
 		public void add(final Event<L, P> event) {
+			// TODO: The hash operations here take A LOT of time (~20% on the VMCAI2021) benchmarks
 			final Marking<L, P> marking = event.getMark();
 			final ITransition<L, P> transition = event.getTransition();
 			Map<Marking<L, P>, Set<Event<L, P>>> mark2Events = mTrans2Mark2Events.get(transition);
