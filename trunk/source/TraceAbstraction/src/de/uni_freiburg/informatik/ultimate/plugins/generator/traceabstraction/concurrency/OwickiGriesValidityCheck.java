@@ -175,7 +175,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	 */
 	private boolean getInterferenceFreeTriple(IPredicate Pred, IInternalAction Action, PLACE place) {
 		IPredicate placePred = getPlacePredicate(place);
-		List<IPredicate> predicate = Arrays.asList(Pred,placePred);		/
+		List<IPredicate> predicate = Arrays.asList(Pred,placePred);		
 		return getValidityResult(mHoareTripleChecker.checkInternal
 				(mPredicateFactory.and(predicate), Action, placePred));	
 	}

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -66,12 +67,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @param <PLACE>
  */
-public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {	
+public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER > {	
 	
-	private final IPetriNet<IIcfgTransition<LOC>, PLACE> mNet; 	
-	private final Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> mFloydHoareAnnotation;
+	private final IPetriNet<LETTER, PLACE> mNet; 	
+	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
 	
-	private final OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> mAnnotation;
+	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
@@ -83,11 +84,12 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	private final Map<PLACE, IPredicate> mFormulaMappingD;
 	private final Map<PLACE, IPredicate> mFormulaMappingI;
 	private final Set<UnmodifiableTransFormula> mGhostInitAssignment;
-	private final Map<ITransition<IIcfgTransition<LOC>, PLACE>,UnmodifiableTransFormula> mAssignmentMapping;
+	private final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
+	
 	
 	public OwickiGriesConstruction(IUltimateServiceProvider services, CfgSmtToolkit csToolkit,
-			IPetriNet<IIcfgTransition<LOC>, PLACE> net,
-			Map<Marking<IIcfgTransition<LOC>, PLACE>, IPredicate> floydHoare) {			
+			IPetriNet<LETTER, PLACE> net,
+			Map<Marking<LETTER, PLACE>, IPredicate> floydHoare) {			
 			mNet = net;				
 			mFloydHoareAnnotation = floydHoare;			
 			mScript = null; 
@@ -103,7 +105,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 			mGhostInitAssignment = getGhostInitAssignment();
 			mAssignmentMapping = getAssignmentMapping();			
 			
-			mAnnotation = new OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> (mFormulaMappingD, mAssignmentMapping, 
+			mAnnotation = new OwickiGriesAnnotation<LETTER, PLACE> (mFormulaMappingD, mAssignmentMapping, 
 					mGhostVariables, mGhostInitAssignment, mNet);		
 	}	 
 
@@ -145,7 +147,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @param marking
 	 * @return Predicate with conjunction of Ghost variables and predicate of marking
 	 */
-	private  IPredicate getMarkingPredicateD(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
+	private  IPredicate getMarkingPredicateD(PLACE place, Marking<LETTER, PLACE> marking) {
 		//TODO:Formula Type: Conjunction and Implication				
 		Set<IPredicate> terms =  new HashSet<>(); 
 		marking.forEach(element -> terms.add(getGhostPredicate(element))); //GhostVariables of places in marking		
@@ -159,7 +161,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @param marking
 	 * @return Predicate with implication of Ghost variables and predicate of marking
 	 */
-	private  IPredicate getMarkingPredicateI(PLACE place, Marking<IIcfgTransition<LOC>, PLACE> marking) {
+	private  IPredicate getMarkingPredicateI(PLACE place, Marking<LETTER, PLACE> marking) {
 		Set<IPredicate> terms = new HashSet<>(), clauses =  new HashSet<>(); //other places in in Marking with place
 		marking.forEach(element -> {			
 		if(element != place) { //Conjunction of other places' GhostVariables
@@ -175,7 +177,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @param marking
 	 * @return Formula MethodB:Predicate with GhostVariables of all other places not in marking
 	 */
-	private Set<IPredicate> getAllNotMarking(Marking<IIcfgTransition<LOC>, PLACE> marking){
+	private Set<IPredicate> getAllNotMarking(Marking<LETTER, PLACE> marking){
 		Set<IPredicate> predicates = new HashSet<>();
 	    Collection<PLACE> notMarking = mNet.getPlaces();
 		notMarking.removeAll(marking.stream().collect(Collectors.toSet()));		
@@ -188,9 +190,9 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @param marking
 	 * @return Formula MethodA: GhostVariables if marking is subset of other marking
 	 */
-	private Set<IPredicate> getSubsetMarking(Marking<IIcfgTransition<LOC>, PLACE> marking){
+	private Set<IPredicate> getSubsetMarking(Marking<LETTER, PLACE> marking){
 		Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet()); 
-		Set<Marking<IIcfgTransition<LOC>, PLACE>> Markings = mFloydHoareAnnotation.keySet();	
+		Set<Marking<LETTER, PLACE>> Markings = mFloydHoareAnnotation.keySet();	
 		Collection<PLACE> notMarking = new HashSet<>();
 		Markings.forEach(otherMarking -> notMarking.addAll(getSupPlaces(otherMarking, markPlaces)));
 		Set<IPredicate> predicates = new HashSet<>();	    
@@ -198,7 +200,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	    return predicates;		
 	}
 	
-	private Collection<PLACE> getSupPlaces(Marking<IIcfgTransition<LOC>, PLACE> otherMarking, Set<PLACE> markPlaces){
+	private Collection<PLACE> getSupPlaces(Marking<LETTER, PLACE> otherMarking, Set<PLACE> markPlaces){
 		Collection<PLACE> SubPlaces = new HashSet<>();
 		Set<PLACE> otherPlaces = otherMarking.stream().collect(Collectors.toSet()); 
 		if (otherPlaces.containsAll(markPlaces)) {
@@ -265,10 +267,10 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * @return Map of Places' Ghost Variables assignments to Transitions
 	 * 
 	 */	
-	private Map<ITransition<IIcfgTransition<LOC>, PLACE>,UnmodifiableTransFormula> getAssignmentMapping(){
-		Map<ITransition<IIcfgTransition<LOC>,PLACE>,UnmodifiableTransFormula> AssignmentMapping = 
-				new HashMap <ITransition<IIcfgTransition<LOC>,PLACE>, UnmodifiableTransFormula>();
-		Collection<ITransition<IIcfgTransition<LOC>,PLACE>> Transitions = mNet.getTransitions();
+	private Map<ITransition<LETTER, PLACE>,UnmodifiableTransFormula> getAssignmentMapping(){
+		Map<ITransition<LETTER,PLACE>,UnmodifiableTransFormula> AssignmentMapping = 
+				new HashMap <ITransition<LETTER,PLACE>, UnmodifiableTransFormula>();
+		Collection<ITransition<LETTER,PLACE>> Transitions = mNet.getTransitions();
 		Transitions.forEach(transition -> AssignmentMapping.put(transition, getTransitionAssignment(transition)));				
 		return AssignmentMapping;
 	}
@@ -280,7 +282,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 	 * GhostVariables of Predecessors Places are assign to false,
 	 * GhostVariables of Successors Places are assign to true.
 	 */
-	private UnmodifiableTransFormula getTransitionAssignment(ITransition<IIcfgTransition<LOC>,PLACE> transition) {			
+	private UnmodifiableTransFormula getTransitionAssignment(ITransition<LETTER,PLACE> transition) {			
 		List<UnmodifiableTransFormula> assignments = new ArrayList<>();
 		Set<PLACE> Places = mNet.getPredecessors(transition);
 		Places.forEach(place -> assignments.add
@@ -292,7 +294,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE> {
 				false, false, false, null, null, assignments);			
 	}
 	
-	public OwickiGriesAnnotation<IIcfgTransition<LOC>, PLACE> getResult() {
+	public OwickiGriesAnnotation<LETTER, PLACE> getResult() {
 		return mAnnotation;
 	}
 	

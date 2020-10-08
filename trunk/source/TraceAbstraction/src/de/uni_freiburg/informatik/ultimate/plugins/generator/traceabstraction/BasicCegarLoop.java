@@ -119,6 +119,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -1132,7 +1133,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	 * method called at the end of the cegar loop
 	 */
 	public void finish() {
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString()); 
 	}
 
 	public void computeOwickiGries() {
@@ -1152,8 +1153,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		assert !petriFloydHoare.isEmpty();
-
-		//OwickiGriesAnnotation<LETTER, IPredicate> annotation = OwickiGriesAnnotation.fromFloydHoare(mServices, mCsToolkit, mPetriNet, petriFloydHoare);
+		
+		OwickiGriesConstruction<IcfgLocation, IPredicate, LETTER> construction =  new OwickiGriesConstruction<IcfgLocation, IPredicate,LETTER> 
+		(mServices, mCsToolkit, mPetriNet, petriFloydHoare);
+		//OwickiGriesAnnotation<LET ER, IPredicate> annotation = OwickiGriesAnnotation.fromFloydHoare(mServices, mCsToolkit, mPetriNet, petriFloydHoare);
 		// TODO: simplify
 		//assert new OwickiGriesValidityCheck<LETTER, IPredicate>(mServices, mCsToolkit, annotation).isValid() : "Invalid Owicki-Gries annotation";
 	}
