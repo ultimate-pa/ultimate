@@ -120,6 +120,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesConstruction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -1155,10 +1156,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		assert !petriFloydHoare.isEmpty();
 		
 		OwickiGriesConstruction<IcfgLocation, IPredicate, LETTER> construction =  new OwickiGriesConstruction<IcfgLocation, IPredicate,LETTER> 
-		(mServices, mCsToolkit, mPetriNet, petriFloydHoare);
-		//OwickiGriesAnnotation<LET ER, IPredicate> annotation = OwickiGriesAnnotation.fromFloydHoare(mServices, mCsToolkit, mPetriNet, petriFloydHoare);
+		(mServices, mCsToolkit, mPetriNet, petriFloydHoare);		
 		// TODO: simplify
-		//assert new OwickiGriesValidityCheck<LETTER, IPredicate>(mServices, mCsToolkit, annotation).isValid() : "Invalid Owicki-Gries annotation";
+		assert new OwickiGriesValidityCheck<LETTER, IPredicate>(mServices, mCsToolkit, construction.getResult(), petriFloydHoare).isValid() : "Invalid Owicki-Gries annotation";
 	}
 
 	@Override
