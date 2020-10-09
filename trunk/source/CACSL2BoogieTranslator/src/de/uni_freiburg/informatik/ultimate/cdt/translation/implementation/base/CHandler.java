@@ -1819,7 +1819,7 @@ public class CHandler {
 			final String val = new String(node.getValue());
 			final RValue rVal = mExpressionTranslation.translateFloatingLiteral(loc, val);
 			assert rVal != null : "result must not be null";
-			return new ExpressionResult(rVal);
+			return mExpressionTranslation.convertToBvFloatIfNecessary(rVal, loc);
 		}
 		case IASTLiteralExpression.lk_char_constant: {
 
