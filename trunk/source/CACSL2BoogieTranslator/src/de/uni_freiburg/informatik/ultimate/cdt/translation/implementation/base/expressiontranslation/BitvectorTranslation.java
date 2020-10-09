@@ -1291,6 +1291,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public RValue constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue first, final RValue second) {
 
+		// Should only handle functions that are directly mapped to a smt function.
+		
 		// Note: arguments are already converted to the correct float variant based on FloatFunction#isBvFloat
 		// If they are not, do not try to convert in BitvectorTranslation, but fix it further up in the call hierarchy
 
@@ -1376,9 +1378,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			 *
 			 */
 
-			// TODO: Handle negative NaN
-
-			// base case looks like, e.g., ~fp~DOUBLE(y[64:63],x[63:52],x[52:0])
 			final FloatingPointSize argSize =
 					mTypeSizes.getFloatingPointSize(((CPrimitive) first.getCType()).getType());
 			assert argSize.getBitSize() == mTypeSizes.getFloatingPointSize(((CPrimitive) second.getCType()).getType())
