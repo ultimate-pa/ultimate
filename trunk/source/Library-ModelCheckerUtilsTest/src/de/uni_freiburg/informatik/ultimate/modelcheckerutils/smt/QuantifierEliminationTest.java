@@ -335,6 +335,16 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
+	public void moduloUnsoundExists() {
+		final FunDecl funDecl = new FunDecl(SmtSortUtils::getBoolSort, "c");
+		final String formulaAsString =
+				"(exists ((g Int)) (and (or (and c (= g 1)) (and (not c) (= g 0)) ) (not (= 0 (mod g 256))) ) ) ";
+		final String expextedResultAsString = "c";
+		runQuantifierPusherTest(new FunDecl[] { funDecl }, formulaAsString, expextedResultAsString, true, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void divByZero() {
 		mScript.declareFun("BK", new Sort[0], SmtSortUtils.getRealSort(mMgdScript));
 		final String formulaAsString =
@@ -1039,10 +1049,17 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void mod01() {
+	public void mod01Exists() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "c") };
 		final String formulaAsString = "(exists ((x Int) ) (and (<= c x) (<= x 100) (= 7 (mod x 256) )))";
 		runQuantifierPusherTest(funDecls, formulaAsString, "(<= c 7)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void mod01Forall() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "c") };
+		final String formulaAsString = "(forall ((x Int) ) (or (> c x) (> x 100) (not (= 7 (mod x 256) ))))";
+		runQuantifierPusherTest(funDecls, formulaAsString, "(> c 7)", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
