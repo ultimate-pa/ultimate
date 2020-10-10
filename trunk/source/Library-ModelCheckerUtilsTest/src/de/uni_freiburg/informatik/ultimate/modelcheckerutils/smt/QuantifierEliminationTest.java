@@ -968,6 +968,17 @@ public class QuantifierEliminationTest {
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+
+	@Test
+	public void bugTirAntiDer02() {
+		final FunDecl funDecl = new FunDecl(SmtSortUtils::getIntSort, "a");
+		final String formulaAsString =
+				"(exists ((x Int)) (and (not (= (* x (- 256)) 0)) (>= x a) (<= x a) (= a 0)))";
+		final String expextedResultAsString = "(= a 0)";
+		runQuantifierPusherTest(new FunDecl[] { funDecl }, formulaAsString, expextedResultAsString, true, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
 	@Test
 	public void ironModulo() {
 		final FunDecl[] funDecls = new FunDecl[] {
