@@ -973,7 +973,7 @@ public class QuantifierEliminationTest {
 	public void bugTirAntiDer02() {
 		final FunDecl funDecl = new FunDecl(SmtSortUtils::getIntSort, "a");
 		final String formulaAsString =
-				"(exists ((x Int)) (and (not (= (* x (- 256)) 0)) (>= x a) (<= x a) (= a 0)))";
+				"(exists ((x Int)) (and (not (= (+ (* x (- 256)) 1) 0)) (>= x a) (<= x a) (= a 0)))";
 		final String expextedResultAsString = "(= a 0)";
 		runQuantifierPusherTest(new FunDecl[] { funDecl }, formulaAsString, expextedResultAsString, true, mServices,
 				mLogger, mMgdScript, mCsvWriter);
