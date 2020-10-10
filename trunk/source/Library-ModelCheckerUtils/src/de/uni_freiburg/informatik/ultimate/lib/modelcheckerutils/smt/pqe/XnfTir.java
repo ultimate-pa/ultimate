@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -313,16 +314,37 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	 */
 	private static Pair<Term, Term> antiDerWithAssumption(final Script script, final int quantifier,
 			final Term originalTerm, final Term eliminatee) {
+
+		final Rational coeff;
+		{
+			final PolynomialRelation origPolyRel = PolynomialRelation.convert(script, originalTerm);
+			final ExplicitLhsPolynomialRelation elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
+					eliminatee, origPolyRel);
+			coeff = elpr.getLhsCoefficient();
+		}
+
 		// Strict to NONStrict transformation is done in the method "computeBound"
 		final TransformInequality transform = TransformInequality.NO_TRANFORMATION;
 		RelationSymbol lowerRelationSymbol;
 		RelationSymbol upperRelationSymbol;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			lowerRelationSymbol = RelationSymbol.GREATER;
-			upperRelationSymbol = RelationSymbol.LESS;
+			if (coeff.isNegative()) {
+				// relation symbol will be swapped by division
+				lowerRelationSymbol = RelationSymbol.LESS;
+				upperRelationSymbol = RelationSymbol.GREATER;
+			} else {
+				lowerRelationSymbol = RelationSymbol.GREATER;
+				upperRelationSymbol = RelationSymbol.LESS;
+			}
 		} else {
-			lowerRelationSymbol = RelationSymbol.GEQ;
-			upperRelationSymbol = RelationSymbol.LEQ;
+			if (coeff.isNegative()) {
+				// relation symbol will be swapped by division
+				lowerRelationSymbol = RelationSymbol.LEQ;
+				upperRelationSymbol = RelationSymbol.GEQ;
+			} else {
+				lowerRelationSymbol = RelationSymbol.GEQ;
+				upperRelationSymbol = RelationSymbol.LEQ;
+			}
 		}
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(originalTerm);
 
@@ -330,6 +352,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final PolynomialRelation relLower = PolynomialRelation.convert(script, lowerBoundBnr.toTerm(script), transform);
 		final ExplicitLhsPolynomialRelation elprLower = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
 				eliminatee, relLower);
+		assert(coeff.equals(elprLower.getLhsCoefficient()));
 		// TODO use bannedforDivCapture
 		final SolvedBinaryRelation sbrLower = elprLower.divideByIntegerCoefficientForInequalities(script,
 				Collections.emptySet());
@@ -338,6 +361,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final PolynomialRelation relUpper = PolynomialRelation.convert(script, upperBoundBnr.toTerm(script), transform);
 		final ExplicitLhsPolynomialRelation elprUpper = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
 				eliminatee, relUpper);
+		assert(coeff.equals(elprUpper.getLhsCoefficient()));
 		// TODO use bannedforDivCapture
 		final SolvedBinaryRelation sbrUpper = elprUpper.divideByIntegerCoefficientForInequalities(script,
 				Collections.emptySet());
