@@ -84,17 +84,17 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	/**
 	 * Constructor
 	 * @param FormulaMapping
-	 * @param AssignmentMapping
+	 * @param mAssignmentMapping2
 	 * @param GhostVariables
 	 * @param GhostInitAssignment
 	 * @param net
 	 */
 	public  OwickiGriesAnnotation
-	(Map<PLACE, IPredicate> FormulaMapping, Map<ITransition<LETTER,PLACE>, UnmodifiableTransFormula> AssignmentMapping,
+	(Map<PLACE, IPredicate> FormulaMapping, Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping2,
 			Map<PLACE, IProgramVar> GhostVariables, Set<UnmodifiableTransFormula> GhostInitAssignment,
 			IPetriNet<LETTER, PLACE> net) {
 		mFormulaMapping = FormulaMapping;
-		mAssignmentMapping = AssignmentMapping;
+		mAssignmentMapping = mAssignmentMapping2;
 		mGhostVariables = GhostVariables;
 		mGhostInitAssignment = GhostInitAssignment;
 		mPetriNet = net;
