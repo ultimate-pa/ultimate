@@ -385,7 +385,27 @@ public class PolynomialRelation implements IBinaryRelation {
 	 */
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
-		return SolveForSubjectUtils.solveForSubject(script, subject, this);
+		final ExplicitLhsPolynomialRelation elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, subject,
+				this);
+		if (elpr == null) {
+			return null;
+		} else {
+			if (!elpr.getLhsMonomial().isLinear()) {
+				return null;
+			}
+			final ExplicitLhsPolynomialRelation solvedElpr = elpr.divInvertible(elpr.getLhsCoefficient());
+			if (solvedElpr == null) {
+				return null;
+			} else {
+				assert subject.equals(solvedElpr.getLhsMonomial().getSingleVariable());
+				final SolvedBinaryRelation result = new SolvedBinaryRelation(subject,
+						solvedElpr.getRhs().toTerm(script), solvedElpr.getRelationSymbol());
+				final Term relationToTerm = result.asTerm(script);
+				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(this.positiveNormalForm(script),
+						relationToTerm, script) != LBool.SAT : "solveForSubject unsound";
+				return result;
+			}
+		}
 	}
 
 	/**
