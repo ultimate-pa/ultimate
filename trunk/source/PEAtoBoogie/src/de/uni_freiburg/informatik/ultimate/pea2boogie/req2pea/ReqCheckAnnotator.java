@@ -186,9 +186,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final int count = consideredAutomata.size();
 
 		if (mSeparateInvariantHandling) {
-			final int total = mReqPeas.size();
-			final int invariant = total - count;
-			mLogger.info(String.format("%s of %s requirements are invariant", invariant, total));
+			final long total = mReqPeas.stream().flatMap(a -> a.getCounterTrace2Pea().stream()).count();
+			final long invariant = total - count;
+			mLogger.info(String.format("%s of %s PEAs are invariant", invariant, total));
 		}
 
 		final int actualCombinationNum = mCombinationNum <= count ? mCombinationNum : count;
