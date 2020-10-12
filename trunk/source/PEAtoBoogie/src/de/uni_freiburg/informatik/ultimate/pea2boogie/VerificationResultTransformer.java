@@ -310,8 +310,6 @@ public class VerificationResultTransformer {
 				assertionOrder, true, false);
 
 		final List<IAction> sequentialTrace = extractSequential(tcl.getRcfgProgramExecution(), mgdScript);
-		// sequentialTrace.forEach(
-		// a -> mLogger.info("In %s Out %s", a.getTransformula().getInVars(), a.getTransformula().getOutVars()));
 
 		final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScript);
 
