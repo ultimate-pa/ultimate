@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * TODO
@@ -70,7 +71,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	 * rho(VGhost):  set of predicate value -> GhostVariables
 	 */
 	//protected Map<ITransition<LETTER,PLACE>,LETTER> mGhostAssignment;
-	private final Set<UnmodifiableTransFormula> mGhostInitAssignment;
+	private final Map<IProgramVar, Term> mGhostInitAssignment;
 
 	public OwickiGriesAnnotation() {
 		mPetriNet = null;
@@ -91,7 +92,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	 */
 	public  OwickiGriesAnnotation
 	(Map<PLACE, IPredicate> FormulaMapping, Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping2,
-			Map<PLACE, IProgramVar> GhostVariables, Set<UnmodifiableTransFormula> GhostInitAssignment,
+			Map<PLACE, IProgramVar> GhostVariables, Map<IProgramVar, Term> GhostInitAssignment,
 			IPetriNet<LETTER, PLACE> net) {
 		mFormulaMapping = FormulaMapping;
 		mAssignmentMapping = mAssignmentMapping2;
@@ -112,7 +113,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		return mGhostVariables;
 	}
 	
-	public  Set<UnmodifiableTransFormula> getGhostAssignment(){
+	public  Map<IProgramVar, Term> getGhostAssignment(){
 		return mGhostInitAssignment;
 	}
 	
