@@ -173,6 +173,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<Statement> genChecksRTInconsistency(final BoogieLocation bl) {
 		if (mRtInconcistencyConditionGenerator == null) {
 			return Collections.emptyList();
@@ -192,7 +193,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final int actualCombinationNum = mCombinationNum <= count ? mCombinationNum : count;
-		if (actualCombinationNum < 2) {
+		if (actualCombinationNum <= 0) {
 			mLogger.info("No rt-inconsistencies possible");
 			return Collections.emptyList();
 		}
@@ -202,7 +203,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		@SuppressWarnings("unchecked")
 		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
 				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
 		int subsetsSize = subsets.size();
