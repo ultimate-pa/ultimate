@@ -1483,7 +1483,6 @@ public final class SmtUtils {
 		}
 	}
 
-
 	/**
 	 * Division for reals with the following simplifications.
 	 * <ul>
@@ -1607,8 +1606,8 @@ public final class SmtUtils {
 								throw new AssertionError("no integers");
 							}
 							// Euclidean division. E.g. (div -5 2) is -3
-							final BigInteger div = AritmeticUtils.euclideanDiv(numerator.numerator(),
-									nextAsRational.numerator());
+							final BigInteger div =
+									AritmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
 							final Term resultTerm = SmtUtils.rational2Term(script,
 									Rational.valueOf(div, BigInteger.ONE), resultParams.get(0).getSort());
 							resultParams.set(0, resultTerm);
@@ -1644,7 +1643,8 @@ public final class SmtUtils {
 		} else if (SmtSortUtils.isIntSort(sort)) {
 			return SmtUtils.divInt(script, params);
 		} else if (SmtSortUtils.isBitvecSort(sort)) {
-			throw new UnsupportedOperationException("Division with simplifications for bitvectors is not yet supported");
+			throw new UnsupportedOperationException(
+					"Division with simplifications for bitvectors is not yet supported");
 		} else if (SmtSortUtils.isFloatingpointSort(sort)) {
 			throw new UnsupportedOperationException("Division with simplifications for floats is not yet supported");
 		} else {
@@ -1719,6 +1719,13 @@ public final class SmtUtils {
 			}
 		}
 		return null;
+	}
+
+	public static BigDecimal toDecimal(final Rational rational) {
+		if (!rational.isRational()) {
+			throw new IllegalArgumentException("rational has to be finite");
+		}
+		return new BigDecimal(rational.numerator()).divide(new BigDecimal(rational.denominator()));
 	}
 
 	public static BigInteger toInt(final Rational integralRational) {
@@ -1880,13 +1887,12 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns quantified formula. Drops quantifiers for variables that do not occur
-	 * in formula. If subformula is quantified formula with same quantifier both are
-	 * merged.
+	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula. If subformula is
+	 * quantified formula with same quantifier both are merged.
 	 */
 	public static Term quantifier(final Script script, final int quantifier, final Set<TermVariable> vars,
 			final Term body) {
-		return quantifier(script, quantifier, new ArrayList<TermVariable>(vars), body);
+		return quantifier(script, quantifier, new ArrayList<>(vars), body);
 	}
 
 	/**
@@ -1895,16 +1901,15 @@ public final class SmtUtils {
 	 * <li>Nested quantified formulas that have the same quantifier are merged.
 	 * <li>Quantified variables that do not occur in the subformula are dropped.
 	 * </ul>
-	 * The order of the quantified variables is preserved. If quantified formulas
-	 * are merged, the variables of the outer formula come before the variables of
-	 * the inner formula.
+	 * The order of the quantified variables is preserved. If quantified formulas are merged, the variables of the outer
+	 * formula come before the variables of the inner formula.
 	 */
 	public static Term quantifier(final Script script, final int quantifier, final List<TermVariable> vars,
 			final Term subformula) {
 		final LinkedHashMap<String, TermVariable> varMap = new LinkedHashMap<>();
 		Term currentSubformula = subformula;
-		Set<TermVariable> freeVarsOfCurrentSubformula = Arrays.stream(currentSubformula.getFreeVars())
-				.collect(Collectors.toSet());
+		Set<TermVariable> freeVarsOfCurrentSubformula =
+				Arrays.stream(currentSubformula.getFreeVars()).collect(Collectors.toSet());
 		vars.stream().filter(freeVarsOfCurrentSubformula::contains).forEach(x -> varMap.put(x.getName(), x));
 		while (currentSubformula instanceof QuantifiedFormula
 				&& ((QuantifiedFormula) currentSubformula).getQuantifier() == quantifier) {
@@ -1918,22 +1923,20 @@ public final class SmtUtils {
 		if (varMap.isEmpty()) {
 			return subformula;
 		} else {
-			final TermVariable[] resultVars = varMap.entrySet().stream().map(x -> x.getValue())
-					.toArray(TermVariable[]::new);
+			final TermVariable[] resultVars =
+					varMap.entrySet().stream().map(x -> x.getValue()).toArray(TermVariable[]::new);
 			return script.quantifier(quantifier, resultVars, currentSubformula);
 		}
 	}
 
 	/**
-	 * Returns a new {@link Set} that contains all variables that are contained in
-	 * vars and occur freely in term.
+	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
 	 */
 	public static List<TermVariable> projectToFreeVars(final List<TermVariable> vars, final Term term) {
 		final Set<TermVariable> freeVars = Arrays.stream(term.getFreeVars()).collect(Collectors.toSet());
 		final List<TermVariable> result = vars.stream().filter(freeVars::contains).collect(Collectors.toList());
 		return result;
 	}
-
 
 	/**
 	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
@@ -2046,7 +2049,6 @@ public final class SmtUtils {
 			return false;
 		}
 	}
-
 
 	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
@@ -2218,9 +2220,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return LBool.UNSAT if SMT solver was able to prove that both formulas
-	 *         are equivalent, LBool.SAT if SMT solver was able to prove that
-	 *         both formulas are not equivalent, and LBool.UNKNOWN otherwise.
+	 * @return LBool.UNSAT if SMT solver was able to prove that both formulas are equivalent, LBool.SAT if SMT solver
+	 *         was able to prove that both formulas are not equivalent, and LBool.UNKNOWN otherwise.
 	 */
 	public static LBool checkEquivalence(final Term formula1, final Term formula2, final Script script) {
 		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
@@ -2312,7 +2313,6 @@ public final class SmtUtils {
 	public static boolean isSubterm(final Term term, final Term subterm) {
 		return new SubtermPropertyChecker(x -> x.equals(subterm)).isPropertySatisfied(term);
 	}
-
 
 	public static Rational toRational(final BigInteger bigInt) {
 		return Rational.valueOf(bigInt, BigInteger.ONE);
@@ -2446,8 +2446,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return true iff this number is the binary representation of a bitvector
-	 *         whose two's complement representation is -1 (i.e., minus one).
+	 * @return true iff this number is the binary representation of a bitvector whose two's complement representation is
+	 *         -1 (i.e., minus one).
 	 */
 	public static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
 		final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
