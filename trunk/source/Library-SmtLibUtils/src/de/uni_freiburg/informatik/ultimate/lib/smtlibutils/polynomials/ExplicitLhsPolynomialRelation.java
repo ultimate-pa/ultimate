@@ -240,6 +240,9 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		if (mLhsMonomial.isLinear()) {
 			throw new AssertionError("division not necessary");
 		}
+		if (Arrays.stream(rhs.getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
+			return null;
+		}
 		final EnumSet<IntricateOperation> intricateOperations;
 		if (additionalIo == null) {
 			intricateOperations = EnumSet.of(IntricateOperation.DIV_BY_NONCONSTANT);
