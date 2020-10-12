@@ -206,10 +206,8 @@ public class SolveForSubjectUtils {
 			if (var2exp.getKey() == subject) {
 				// do nothing
 			} else {
-				RelationSymbol resultRelationSymbol;
-					resultRelationSymbol = relSymb;
-				cases.add(constructDivByVarEqualZeroCase(script, var2exp.getKey(), rhs, resultRelationSymbol,
-						xnf, intLiteralDivConstraint));
+				cases.add(constructDivByVarEqualZeroCase(script, var2exp.getKey(), rhs, relSymb, xnf,
+						intLiteralDivConstraint));
 				final int exp = var2exp.getValue().numerator().intValueExact();
 				for (int i = 0; i < exp; i++) {
 					factorsOfDivisor.add(var2exp.getKey());
@@ -230,10 +228,11 @@ public class SolveForSubjectUtils {
 				}
 			}
 		}
-		final Term divisor = SmtUtils.mul(script, factorsOfDivisor.get(0).getSort(), factorsOfDivisor.toArray(new Term[factorsOfDivisor.size()]));
+		final Term divisor = SmtUtils.mul(script, factorsOfDivisor.get(0).getSort(),
+				factorsOfDivisor.toArray(new Term[factorsOfDivisor.size()]));
 		if (threeCaseVariables.isEmpty()) {
-			final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, rhs, relSymb,
-					true, divisor, intricateOperations);
+			final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, rhs, relSymb, true, divisor,
+					intricateOperations);
 			final Set<SupportingTerm> thisCaseSupportingTerms = new HashSet<>(distinctZeroSupportingTerms);
 			if (isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(), relSymb)) {
 				final SupportingTerm divisibilityConstraintMonomial = constructDerIntegerDivisionSupportingTerm(script,
@@ -254,8 +253,7 @@ public class SolveForSubjectUtils {
 			final int numberOfCases = BigInteger.valueOf(2).pow(threeCaseVariables.size()).intValueExact();
 			for (int i = 0; i < numberOfCases; i++) {
 				// if bit is set this means that we assume that variable is negative
-				final boolean isDivisorPositive = ((BigInteger.valueOf(i).bitCount()
-						% 2 == 0));
+				final boolean isDivisorPositive = ((BigInteger.valueOf(i).bitCount() % 2 == 0));
 				final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, rhs, relSymb,
 						isDivisorPositive, divisor, intricateOperations);
 				final Set<SupportingTerm> thisCaseSupportingTerms = new HashSet<>(distinctZeroSupportingTerms);
@@ -269,8 +267,8 @@ public class SolveForSubjectUtils {
 					thisCaseSupportingTerms.add(posOrNegSupportingTerm);
 				}
 				if (isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(), relSymb)) {
-					final SupportingTerm divisibilityConstraint = constructDerIntegerDivisionSupportingTerm(script,
-							rhs, relSymb, divisor);
+					final SupportingTerm divisibilityConstraint = constructDerIntegerDivisionSupportingTerm(script, rhs,
+							relSymb, divisor);
 					thisCaseSupportingTerms.add(divisibilityConstraint);
 					assert intLiteralDivConstraint != null;
 					final SupportingTerm divisibilityConstraintLiteral = constructDerIntegerDivisionSupportingTerm(
@@ -282,18 +280,14 @@ public class SolveForSubjectUtils {
 			}
 		}
 		if (isAntiDerIntegerDivisionCaseRequired(xnf, subject.getSort(), relSymb)) {
-			final Case result = constructAntiDerIntegerDivisibilityCase(script, xnf, rhs, relSymb,
-					divisor);
+			final Case result = constructAntiDerIntegerDivisibilityCase(script, xnf, rhs, relSymb, divisor);
 			cases.add(result);
-		}
-		if (isAntiDerIntegerDivisionCaseRequired(xnf, subject.getSort(), relSymb) && intLiteralDivConstraint != null) {
-			final Set<SupportingTerm> suppTerms = new HashSet<>();
-			final Term divisibilityConstraintTerm = intLiteralDivConstraint;
-			final SupportingTerm divisibilityConstraint = new SupportingTerm(divisibilityConstraintTerm,
-					IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
-			suppTerms.add(divisibilityConstraint);
-			final Case result = new Case(null, suppTerms, xnf);
-			cases.add(result);
+			if (intLiteralDivConstraint != null) {
+				final SupportingTerm intLiteralDivConstraintSuppTerm = new SupportingTerm(intLiteralDivConstraint,
+						IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
+				final Case caseForLiteral = new Case(null, Collections.singleton(intLiteralDivConstraintSuppTerm), xnf);
+				cases.add(caseForLiteral);
+			}
 		}
 		mcsb.splitCases(cases);
 
@@ -427,7 +421,7 @@ public class SolveForSubjectUtils {
 	 * </ul>
 	 */
 	public static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb, final Term rhs,
-			final boolean divisorIsPositive, final Term... divisor) {
+			final boolean divisorIsPositive, final Term divisor) {
 		final Term result;
 		switch (relSymb) {
 		case LESS:
@@ -485,7 +479,7 @@ public class SolveForSubjectUtils {
 	 *            the relation symbol and the sign of the divisor's values.
 	 */
 	private static Term constructRhsIntegerQuotientHelper(final Script script, final Term divident,
-			final Rational postDivisionOffset, final Term... divisor) {
+			final Rational postDivisionOffset, final Term divisor) {
 		// The preDivisionOffset is always minus one.
 		final Term preDivisionOffset = SmtUtils.rational2Term(script, Rational.MONE, divident.getSort());
 		final Term divArgument = SmtUtils.sum(script, divident.getSort(), divident, preDivisionOffset);
@@ -545,10 +539,10 @@ public class SolveForSubjectUtils {
 	}
 
 	private static SupportingTerm constructDerIntegerDivisionSupportingTerm(final Script script,
-			final Term divisibilityConstraintTerm) {
-		final SupportingTerm divisibilityConstraint = new SupportingTerm(divisibilityConstraintTerm,
+			final Term intLiteralDivConstraint) {
+		final SupportingTerm result = new SupportingTerm(intLiteralDivConstraint,
 				IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
-		return divisibilityConstraint;
+		return result;
 	}
 
 	private static boolean isAntiDerIntegerDivisionCaseRequired(final Xnf xnf, final Sort sort,
