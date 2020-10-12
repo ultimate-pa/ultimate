@@ -243,7 +243,7 @@ def check_dir(arg):
     if not os.path.exists(arg):
         msg = f"Directory {arg} does not exist"
         print(msg)
-        raise argparse.ArgumentError(arg, msg)
+        raise argparse.ArgumentError(message=msg)
     return arg
 
 
@@ -251,7 +251,7 @@ def check_file(arg):
     if not os.path.isfile(arg):
         msg = f"{arg} does not exist or is not a file"
         print(msg)
-        raise argparse.ArgumentError(arg, msg)
+        raise argparse.ArgumentError(message=msg)
     return arg
 
 
@@ -649,6 +649,7 @@ def handle_analyze_requirements(args):
     relevant_results = [
         'ReqCheckSuccessResult',
         'ReqCheckFailResult',
+        'ReqCheckRtInconsistentResult',
         'RequirementInconsistentErrorResult',
     ]
 
@@ -661,14 +662,23 @@ def handle_analyze_requirements(args):
     logger.info(f'Started ReqChecker with PID {ultimate_process.pid}')
     with open(args.reqcheck_log, 'w', buffering=1) as logfile:
         line = ""
+        current_result = []
+        collect = False
         while True:
-            last_line = line
             line, end_reached = update_line(ultimate_process, logfile)
             if end_reached:
                 break
 
-            if any([keyword in last_line for keyword in relevant_results]):
-                relevant_log += [last_line.rstrip() + '\n' + line.rstrip() + '\n']
+            if not line or line.startswith('  - '):
+                collect = False
+
+            if not collect and current_result:
+                relevant_log += current_result
+                current_result = []
+
+            if collect or any([keyword in line for keyword in relevant_results]):
+                collect = True
+                current_result += [line.rstrip() + '\n']
 
             # show and update progress bars
             phase1_counter, phase1_total, progress_bar = create_and_update_progress_bar_phase1(
