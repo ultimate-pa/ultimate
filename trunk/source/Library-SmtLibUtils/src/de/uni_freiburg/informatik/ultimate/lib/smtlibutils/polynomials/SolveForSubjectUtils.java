@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -70,11 +69,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class SolveForSubjectUtils {
-
-	private static final boolean THROW_EXCEPTION_IF_NOT_SOLVABLE = false;
-
-
-
 
 	static MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final PolynomialRelation polyRel) throws AssertionError {
@@ -416,79 +410,6 @@ public class SolveForSubjectUtils {
 	}
 
 	/**
-	 * Try to bring everything but monomialOfSubject to the right-hand side. Try to
-	 * divide the coefficient of every other variable and the constant by the
-	 * coeffOfMonomial. If the sort is not real and for some coefficient the
-	 * quotient is not integral return null. Otherwise return the {@link Term}
-	 * representation of the right-hand side.
-	 *
-	 * @param polynomialTerm
-	 */
-	private static Term constructRhsForMonomial(final Script script, final Monomial monomialOfSubject,
-			final Rational coeffOfMonomial, final AbstractGeneralizedAffineTerm<Term> polynomialTerm) {
-		final Term abstractVarOfSubject;
-		if (polynomialTerm.isAffine()) {
-			abstractVarOfSubject = monomialOfSubject.getVariable2Exponent().keySet().iterator().next();
-		} else {
-			abstractVarOfSubject = monomialOfSubject;
-		}
-		final List<Term> rhsSummands = new ArrayList<>(polynomialTerm.getAbstractVariable2Coefficient().size());
-		for (final Entry<Term, Rational> entry : polynomialTerm.getAbstractVariable2Coefficient().entrySet()) {
-			if (abstractVarOfSubject == entry.getKey()) {
-				// do nothing
-			} else {
-				final Rational newCoeff;
-				if (SmtSortUtils.isBitvecSort(polynomialTerm.getSort())) {
-					// This only works because we know that in our cases coeffOfAbstractVar is
-					// always
-					// its own multiplicative inverse.
-					newCoeff = entry.getValue().mul(coeffOfMonomial);
-				} else {
-					newCoeff = entry.getValue().div(coeffOfMonomial);
-				}
-				if (newCoeff.isIntegral() || SmtSortUtils.isRealSort(polynomialTerm.getSort())) {
-					if (entry.getKey() instanceof Monomial) {
-						rhsSummands.add(
-								SmtUtils.mul(script, newCoeff.negate(), ((Monomial) entry.getKey()).toTerm(script)));
-					} else {
-						rhsSummands.add(SmtUtils.mul(script, newCoeff.negate(), entry.getKey()));
-					}
-				} else {
-					if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
-						throw new UnsupportedOperationException(
-								"some coefficient not divisible by coefficient of subject");
-					} else {
-						return null;
-					}
-				}
-			}
-		}
-		if (!polynomialTerm.getConstant().equals(Rational.ZERO)) {
-			final Rational newConstant;
-			if (SmtSortUtils.isBitvecSort(polynomialTerm.getSort())) {
-				// This only works because we know that in our cases coeffOfAbstractVar is
-				// always
-				// its own multiplicative inverse.
-				newConstant = polynomialTerm.getConstant().mul(coeffOfMonomial);
-			} else {
-				newConstant = polynomialTerm.getConstant().div(coeffOfMonomial);
-			}
-			if (newConstant.isIntegral() || SmtSortUtils.isRealSort(polynomialTerm.getSort())) {
-				rhsSummands.add(SmtUtils.rational2Term(script, newConstant.negate(), polynomialTerm.getSort()));
-			} else {
-				if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
-					throw new UnsupportedOperationException("some constant not divisible by coefficient of subject");
-				} else {
-					return null;
-				}
-			}
-		}
-		final Term rhsTerm = SmtUtils.sum(script, polynomialTerm.getSort(),
-				rhsSummands.toArray(new Term[rhsSummands.size()]));
-		return rhsTerm;
-	}
-
-	/**
 	 * If we divide an integer RHS, the result is nontrivial. If we just apply
 	 * division some information related to divisibility is lost.
 	 * <ul>
@@ -790,24 +711,6 @@ public class SolveForSubjectUtils {
 
 	private static boolean isEqOrDistinct(final RelationSymbol relSym) {
 		return (relSym.equals(RelationSymbol.EQ)) || (relSym.equals(RelationSymbol.DISTINCT));
-	}
-
-	private static boolean isBvAndCantBeSolved(final Rational coeffOfSubject, final Monomial monomialOfSubject) {
-		return SmtSortUtils.isBitvecSort(monomialOfSubject.getSort()) && (!monomialOfSubject.isLinear()
-				|| !(coeffOfSubject.equals(Rational.ONE) || SmtUtils.isBvMinusOne(coeffOfSubject, monomialOfSubject.getSort())));
-	}
-
-	@Deprecated
-	private static boolean isNegative(final Rational coeffOfSubject, final Sort sort) {
-		return coeffOfSubject.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOne(coeffOfSubject, sort));
-	}
-
-	private static LBool assumptionImpliesEquivalence(final Script script, final Term originalTerm,
-			final Term relationToTerm, final Map<AssumptionForSolvability, Term> additionalAssumptions) {
-		final Term konJ = SmtUtils.and(script, additionalAssumptions.values());
-		final Term impli1 = SmtUtils.implies(script, konJ, relationToTerm);
-		final Term impli2 = SmtUtils.implies(script, konJ, originalTerm);
-		return SmtUtils.checkEquivalence(impli1, impli2, script);
 	}
 
 	public static boolean isVariableDivCaptured(final SolvedBinaryRelation sbr, final Set<TermVariable> termVariables) {
