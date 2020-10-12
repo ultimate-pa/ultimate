@@ -96,6 +96,10 @@ public final class TAPreferences {
 		FINITE_AUTOMATA, PETRI_NET
 	}
 
+	public enum LooperCheck {
+		SYNTACTIC, SEMANTIC
+	}
+
 	public TAPreferences(final IUltimateServiceProvider services) {
 
 		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -334,6 +338,10 @@ public final class TAPreferences {
 
 	public EventOrderEnum eventOrder() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONFIGURATION_ORDER, EventOrderEnum.class);
+	}
+
+	public LooperCheck looperCheck() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LOOPER_CHECK_PETRI, LooperCheck.class);
 	}
 
 	public PetriNetLbe useLbeInConcurrentAnalysis() {

@@ -587,7 +587,17 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			final IHoareTripleChecker htc, final IPredicateCoverageChecker coverage) {
 		final Set<L> result = new HashSet<>();
 		for (final L letter : alphabet) {
-			final boolean isUniversalLooper = isUniversalLooper(letter, states, htc, coverage);
+			final boolean isUniversalLooper;
+			switch (mPref.looperCheck()) {
+			case SEMANTIC:
+				isUniversalLooper = isUniversalLooper(letter, states, htc, coverage);
+				break;
+			case SYNTACTIC:
+				isUniversalLooper = isIndependentLooper(letter, states);
+				break;
+			default:
+				throw new AssertionError("Unsupported looper check");
+			}
 			if (isUniversalLooper) {
 				result.add(letter);
 			}
@@ -651,6 +661,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	 * @return true if the letter does not read nor write any variables used in the given predicates
 	 */
 	private boolean isIndependentLooper(final L letter, final Set<IPredicate> states) {
+		if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
+			return false;
+		}
 		for (final IPredicate predicate : states) {
 			final boolean isIndependent = isIndependent(letter, predicate);
 			if (!isIndependent) {
