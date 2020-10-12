@@ -139,7 +139,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		RtInconcistencyConditionGenerator rticGenerator;
 		try {
-			if (mCombinationNum > 1) {
+			if (mCombinationNum >= 1) {
 				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
 				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymbolTable,
 						mReqPeas, boogieDeclarations, mSeparateInvariantHandling);
