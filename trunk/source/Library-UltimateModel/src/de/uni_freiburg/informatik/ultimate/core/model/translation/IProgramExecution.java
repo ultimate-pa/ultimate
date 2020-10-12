@@ -104,6 +104,20 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	 */
 	boolean isConcurrent();
 
+	/**
+	 * @return A {@link List} of {@link ProgramState}s saved in this {@link IProgramExecution}. The list is always of
+	 *         length {@link #getLength()} + 1 and may contain null elements (if the {@link IProgramExecution} does not
+	 *         provide a program state for index <code>i</code>, the list at <code>i+1</code> is null).
+	 */
+	default List<ProgramState<E>> getProgramStates() {
+		final List<ProgramState<E>> rtr = new ArrayList<>(getLength() + 1);
+		rtr.add(getInitialProgramState());
+		for (int i = 0; i < getLength(); ++i) {
+			rtr.add(getProgramState(i));
+		}
+		return rtr;
+	}
+
 	@Override
 	default Spliterator<AtomicTraceElement<TE>> spliterator() {
 		return Spliterators.spliterator(iterator(), getLength(),
