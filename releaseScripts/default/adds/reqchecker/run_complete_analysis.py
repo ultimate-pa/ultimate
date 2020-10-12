@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import atexit
-import sys
-
 import argparse
+import atexit
 import logging
 import os
 import pathlib
@@ -12,10 +10,12 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import traceback
-from tqdm import tqdm
 from typing import Optional, List
+
+from tqdm import tqdm
 
 
 class _ExitCode:
@@ -243,7 +243,7 @@ def check_dir(arg):
     if not os.path.exists(arg):
         msg = f"Directory {arg} does not exist"
         print(msg)
-        raise argparse.ArgumentError(msg)
+        raise argparse.ArgumentError(arg, msg)
     return arg
 
 
@@ -251,7 +251,7 @@ def check_file(arg):
     if not os.path.isfile(arg):
         msg = f"{arg} does not exist or is not a file"
         print(msg)
-        raise argparse.ArgumentError(msg)
+        raise argparse.ArgumentError(arg, msg)
     return arg
 
 
@@ -382,8 +382,9 @@ def update_line(subp, logfile=None):
         else:
             logger.error(
                 f'Execution of {" ".join(subp.args)} (PID {subp.pid}) finished with exit code {str(subp.returncode)}')
-            global running_processes
-        running_processes.remove(subp)
+        global running_processes
+        if running_processes:
+            running_processes.remove(subp)
         return None, True
     if logfile:
         logfile.write(line.rstrip() + '\n')
@@ -500,7 +501,7 @@ def extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, target_req_fil
     irrelevant_req_ids = req_ids.difference(relevant_req_ids)
     with open(args.input, 'r') as source, open(target_req_file, 'w') as target:
         for line in source:
-            if any(id in line for id in irrelevant_req_ids):
+            if any(req_id in line for req_id in irrelevant_req_ids):
                 continue
             target.write(line)
 
@@ -557,7 +558,7 @@ def extract_vacuity_reason(args, dump_folder, req_ids, vac_req_id):
         with open(tmp_smt_filename, 'r') as tmp_smt_file:
             for assertion in [line for line in tmp_smt_file.readlines() if
                               any(ssa in line for ssa in ssas)]:
-                relevant_req_ids.update([id for id in req_ids if id in assertion])
+                relevant_req_ids.update([req_id for req_id in req_ids if req_id in assertion])
 
     logger.debug(f'Found {len(relevant_req_ids)} requirements relevant for vacuity of {vac_req_id}')
     logger.debug(f'Relevant requirements for {vac_req_id} are {relevant_req_ids}')
@@ -586,7 +587,7 @@ def extract_vacuity_run_z3(args, tmp_smt_filename):
     return relevant_lines
 
 
-def create_common_ultimate_cli_args(args, toolchain, settings, input):
+def create_common_ultimate_cli_args(args, toolchain, settings, input_file):
     return [
         'java',
         '-Dosgi.configuration.area=config/',
@@ -595,7 +596,7 @@ def create_common_ultimate_cli_args(args, toolchain, settings, input):
         '-jar', 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar',
         '-tc', toolchain,
         '-s', settings,
-        '-i', input,
+        '-i', input_file,
         '--core.print.statistic.results', 'false',
         '--traceabstraction.limit.analysis.time', str(args.timeout_per_assertion),
     ]
@@ -709,7 +710,7 @@ def handle_generate_tests(args):
     progress_bar = None
     logger.info(f'Started ReqChecker with PID {ultimate_process.pid}')
     with open(args.testgen_log, 'w') as logfile, open(args.testgen_relevant_log, 'w') as relevant_logfile:
-        while (True):
+        while True:
             line, end_reached = update_line(ultimate_process, logfile)
             if end_reached:
                 break
