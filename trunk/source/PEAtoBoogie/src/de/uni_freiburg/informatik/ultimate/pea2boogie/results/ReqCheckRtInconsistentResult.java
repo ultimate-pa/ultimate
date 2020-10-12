@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.results;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -41,13 +40,12 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public final class ReqCheckRtInconsistentResult<LOC extends IElement, TE extends IAction, E>
 		extends ReqCheckFailResult<LOC> {
 
-	private final IProgramExecution<TE, E> mProgramExecution;
-	private String mProgramExecutionAsString;
+	private final String mFailurePath;
 
 	public ReqCheckRtInconsistentResult(final LOC element, final String plugin,
-			final IBacktranslationService translatorSequence, final IProgramExecution<TE, E> pe) {
+			final IBacktranslationService translatorSequence, final String failurePath) {
 		super(element, plugin, translatorSequence);
-		mProgramExecution = pe;
+		mFailurePath = failurePath;
 	}
 
 	@Override
@@ -57,14 +55,7 @@ public final class ReqCheckRtInconsistentResult<LOC extends IElement, TE extends
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("We found a FailurePath: ");
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append(getProgramExecutionAsString());
+		sb.append(mFailurePath);
 		return sb.toString();
-	}
-
-	public String getProgramExecutionAsString() {
-		if (mProgramExecutionAsString == null) {
-			mProgramExecutionAsString = mProgramExecution.toString();
-		}
-		return mProgramExecutionAsString;
 	}
 }

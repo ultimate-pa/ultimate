@@ -30,12 +30,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -54,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
@@ -71,10 +75,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -88,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Utility class that helps with reporting results.
@@ -153,7 +161,11 @@ public class VerificationResultTransformer {
 						(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
 								.getProgramExecution(),
 						reqCheck);
-				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, newPe);
+
+				final Map<Rational, Map<Term, Term>> delta2var2value =
+						generateTimeSequenceMap(newPe.getProgramStates());
+				final String failurePath = formatTimeSequenceMap(delta2var2value);
+				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
 
 			}
 			return new ReqCheckFailResult<>(element, plugin, translatorSequence);
@@ -161,6 +173,118 @@ public class VerificationResultTransformer {
 		} else {
 			throw new UnsupportedOperationException("Multi-checks of " + specs + " are not yet supported");
 		}
+	}
+
+	private String formatTimeSequenceMap(final Map<Rational, Map<Term, Term>> delta2var2value) {
+
+		final int maxLength =
+				delta2var2value.keySet().stream().map(a -> a.toString().length()).max(Integer::compare).get() + 2;
+		final StringBuilder sb = new StringBuilder();
+		for (final Entry<Rational, Map<Term, Term>> entry : delta2var2value.entrySet()) {
+			final String deltaValue;
+			if (entry.getKey().isRational()) {
+				deltaValue = SmtUtils.toDecimal(entry.getKey()).toPlainString();
+			} else {
+				deltaValue = entry.getKey().toString();
+			}
+
+			sb.append(deltaValue);
+			appendRepeatedly(sb, " ", maxLength - deltaValue.length());
+			final String values =
+					entry.getValue().entrySet().stream().map(this::formatVarValue).collect(Collectors.joining(" "));
+			sb.append(values);
+			sb.append(CoreUtil.getPlatformLineSeparator());
+		}
+
+		return sb.toString();
+	}
+
+	private String formatVarValue(final Entry<Term, Term> entry) {
+		return String.format("%s=%s", entry.getKey(), entry.getValue() == null ? "*" : entry.getValue());
+	}
+
+	/**
+	 * @return A map from delta value to variable values that are interesting at this point of time
+	 */
+	private Map<Rational, Map<Term, Term>> generateTimeSequenceMap(final List<ProgramState<Term>> programStates) {
+		final List<ProgramState<Term>> stateSequence =
+				programStates.stream().filter(Objects::nonNull).collect(Collectors.toList());
+
+		final Map<String, Term> vars =
+				new LinkedHashMap<>(stateSequence.stream().flatMap(a -> a.getVariables().stream()).distinct()
+						.collect(Collectors.toMap(a -> a.toString(), a -> a)));
+
+		final Term deltaVar = vars.get(mReqSymbolTable.getDeltaVarName());
+		vars.remove(mReqSymbolTable.getDeltaVarName());
+		mReqSymbolTable.getClockVars().stream().forEach(vars::remove);
+		mReqSymbolTable.getPcVars().stream().forEach(vars::remove);
+
+		final Map<Rational, Map<Term, Term>> delta2term2values = new LinkedHashMap<>();
+
+		Map<Term, Term> last = Collections.emptyMap();
+		int i = 0;
+		for (final ProgramState<Term> state : stateSequence) {
+
+			final Rational deltaValue;
+			if (state.getVariables().contains(deltaVar)) {
+				final Term deltaValueTerm = firstOrWarn(state.getValues(deltaVar), () -> {
+					throw new AssertionError("Program state broken: Var in vars but no value");
+				});
+				deltaValue = (Rational) ((ConstantTerm) deltaValueTerm).getValue();
+			} else {
+				deltaValue = Rational.ZERO;
+			}
+
+			final Map<Term, Term> current = new LinkedHashMap<>();
+			delta2term2values.put(deltaValue, current);
+
+			for (final Entry<String, Term> entry : vars.entrySet()) {
+				// keep last signal if we dont have a current value
+				final Map<Term, Term> lastF = Collections.unmodifiableMap(last);
+				final Term value = firstOrWarn(state.getValues(entry.getValue()), () -> lastF.get(entry.getValue()));
+				current.put(entry.getValue(), value);
+			}
+
+			last = current;
+
+			i++;
+			if (i >= stateSequence.size()) {
+				// skip last state
+				break;
+			}
+		}
+
+		return delta2term2values;
+	}
+
+	private <T> T firstOrWarn(final Collection<T> t, final Supplier<T> funDefault) {
+		if (t == null || t.isEmpty()) {
+			return funDefault.get();
+		}
+		if (t.size() > 1) {
+			mLogger.warn("More than one value");
+		}
+		return t.iterator().next();
+	}
+
+	/**
+	 * Append str reapeat times to sb.
+	 *
+	 * If sb is null, creates a new {@link StringBuilder} and uses this.
+	 *
+	 * @return sb
+	 */
+	private static StringBuilder appendRepeatedly(final StringBuilder sb, final String str, final int repeat) {
+		if (sb == null) {
+			return appendRepeatedly(new StringBuilder(repeat * str.length()), str, repeat);
+		}
+		if (repeat <= 0) {
+			return sb;
+		}
+		for (int i = 0; i < repeat; i++) {
+			sb.append(str);
+		}
+		return sb;
 	}
 
 	private IProgramExecution<IAction, Term> generateRtInconsistencyResult(final IcfgProgramExecution<?> pe,
