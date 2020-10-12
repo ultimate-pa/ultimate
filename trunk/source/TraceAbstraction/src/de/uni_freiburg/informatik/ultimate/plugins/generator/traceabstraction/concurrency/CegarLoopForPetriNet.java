@@ -86,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -150,14 +149,15 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 	private final CounterexampleCache<L> mCounterexampleCache;
 
+
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				InterpolationTechnique.Craig_TreeInterpolation, false, services, compositionFactory, transitionClazz);
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
+				compositionFactory, transitionClazz);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
-		mCounterexampleCache = new CounterexampleCache<>();
+		mCounterexampleCache = new CounterexampleCache<L>();
 	}
 
 	@Override

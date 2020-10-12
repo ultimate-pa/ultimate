@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -27,9 +26,8 @@ public class CegarLoopPartialOrderReduction<L extends IIcfgTransition<?>> extend
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				InterpolationTechnique.Craig_TreeInterpolation, false, services, compositionFactory, transitionClazz);
-
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
+				compositionFactory, transitionClazz);
 		mRelations = null; // TODO
 	}
 

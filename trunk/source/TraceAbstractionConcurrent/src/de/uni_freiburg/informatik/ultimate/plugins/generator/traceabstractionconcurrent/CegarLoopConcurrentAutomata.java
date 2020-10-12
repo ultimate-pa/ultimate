@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -83,8 +82,8 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				InterpolationTechnique.Craig_TreeInterpolation, false, services, compositionFactory, transitionClazz);
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
+				compositionFactory, transitionClazz);
 	}
 
 	@Override
