@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -605,7 +606,7 @@ public class PolynomialRelationTest {
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
 		final MultiCaseSolvedBinaryRelation sbr =
 				PolynomialRelation.convert(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
-						.solveForSubject(mScript, subject, Xnf.DNF);
+						.solveForSubject(mScript, subject, Xnf.DNF, Collections.emptySet());
 		Assert.assertNull(sbr);
 	}
 
@@ -648,8 +649,8 @@ public class PolynomialRelationTest {
 	}
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
-		final MultiCaseSolvedBinaryRelation mcsbr =
-				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x, xnf);
+		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(mScript, inputAsTerm)
+				.solveForSubject(mScript, x, xnf, Collections.emptySet());
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
 		final Term tmp;

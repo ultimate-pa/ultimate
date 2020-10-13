@@ -261,7 +261,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	}
 
 
-	public static SolvedBinaryRelation tryPlr(final Script script, final int quantifier, final TermVariable eliminatee, final Term atom) {
+	public static SolvedBinaryRelation tryPlr(final Script script, final int quantifier, final TermVariable eliminatee,
+			final Term atom) {
 		final Term rightHandSide;
 		if (occursPositive(eliminatee, atom)) {
 			rightHandSide = QuantifierUtils.negateIfUniversal(script, quantifier, script.term("true"));
@@ -359,7 +360,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				return null;
 			}
 			if (SolveForSubjectUtils.isVariableDivCaptured(sfs, bannedForDivCapture)) {
-				return null;
+				throw new AssertionError("cannot divCaputure with simple solveForSubject");
 			}
 			if (QuantifierUtils.isDerRelationSymbol(quantifier, sfs.getRelationSymbol())) {
 				return sfs;
@@ -397,7 +398,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			if (pr == null) {
 				return null;
 			}
-			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee, Xnf.fromQuantifier(quantifier));
+			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee,
+					Xnf.fromQuantifier(quantifier), bannedForDivCapture);
 			if (mcsbr == null) {
 				return null;
 			}

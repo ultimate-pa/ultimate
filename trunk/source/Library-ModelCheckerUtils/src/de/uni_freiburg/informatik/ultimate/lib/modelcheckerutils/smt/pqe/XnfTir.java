@@ -232,7 +232,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				// TODO: This check is done above and hence obsolete (check this before you
 				// delete code)
 				if (SolveForSubjectUtils.isVariableDivCaptured(sbr, bannedForDivCapture)) {
-					return null;
+					throw new AssertionError("should not be possible to divCapture here");
 				}
 				//				if (!sbr.getAssumptionsMap().isEmpty()
 //						&& !sbr.getRelationSymbol().equals(RelationSymbol.DISTINCT)

@@ -68,16 +68,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class SolveForSubjectUtils {
 
 	static MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
-			final MultiCaseSolvedBinaryRelation.Xnf xnf, final PolynomialRelation polyRel) throws AssertionError {
+			final MultiCaseSolvedBinaryRelation.Xnf xnf, final PolynomialRelation polyRel,
+			final Set<TermVariable> bannedForDivCapture) throws AssertionError {
 		MultiCaseSolvedBinaryRelation res;
 		if (SmtSortUtils.isNumericSort(subject.getSort())) {
 			res = findTreatableDivModSubterm(script, subject, polyRel.getPolynomialTerm(), null, xnf,
-					polyRel.positiveNormalForm(script));
+					polyRel.positiveNormalForm(script), bannedForDivCapture);
 		} else {
 			res = null;
 		}
 		if (res == null) {
-			res = solveForSubjectWithoutTreatableDivMod(script, subject, polyRel, xnf);
+			res = solveForSubjectWithoutTreatableDivMod(script, subject, polyRel, xnf, bannedForDivCapture);
 		}
 		if (res == null) {
 			return null;
@@ -91,7 +92,8 @@ public class SolveForSubjectUtils {
 
 
 	private static MultiCaseSolvedBinaryRelation solveForSubjectWithoutTreatableDivMod(final Script script,
-			final Term subject, final PolynomialRelation polyRel, final MultiCaseSolvedBinaryRelation.Xnf xnf)
+			final Term subject, final PolynomialRelation polyRel, final MultiCaseSolvedBinaryRelation.Xnf xnf,
+			final Set<TermVariable> bannedForDivCapture)
 			throws AssertionError {
 
 		final ExplicitLhsPolynomialRelation elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, subject, polyRel);
@@ -105,8 +107,11 @@ public class SolveForSubjectUtils {
 			if (SmtSortUtils.isRealSort(elpr.getLhsMonomial().getSort())) {
 				throw new AssertionError();
 			} else if (SmtSortUtils.isIntSort(elpr.getLhsMonomial().getSort())) {
-				// TODO use banned
-				final Pair<ExplicitLhsPolynomialRelation, Term> tmp = elpr.divideByIntegerCoefficient(script, Collections.emptySet());
+				final Pair<ExplicitLhsPolynomialRelation, Term> tmp = elpr.divideByIntegerCoefficient(script,
+						bannedForDivCapture);
+				if (tmp == null) {
+					return null;
+				}
 				solvedElpr = tmp.getFirst();
 				additionalIo = IntricateOperation.DIV_BY_INTEGER_CONSTANT;
 				intLiteralDivConstraint = tmp.getSecond();
@@ -167,12 +172,12 @@ public class SolveForSubjectUtils {
 				return null;
 			}
 		}
-		// TODO use banned
-		return solvedElpr.divByMonomial(script, subject, xnf, Collections.emptySet(), intLiteralDivConstraint, additionalIo);
+		return solvedElpr.divByMonomial(script, subject, xnf, bannedForDivCapture, intLiteralDivConstraint, additionalIo);
 	}
 
 	private static MultiCaseSolvedBinaryRelation tryToHandleDivModSubterm(final Script script, final Term subject,
-			final MultiCaseSolvedBinaryRelation.Xnf xnf, final ApplicationTerm divModSubterm, final Term pnf) {
+			final MultiCaseSolvedBinaryRelation.Xnf xnf, final ApplicationTerm divModSubterm, final Term pnf,
+			final Set<TermVariable> bannedForDivCapture) {
 		final Term divisor = SmtUtils.mul(script, "*",
 				Arrays.copyOfRange(divModSubterm.getParameters(), 1, divModSubterm.getParameters().length));
 		assert (divisor instanceof ConstantTerm) : "not constant";
@@ -203,7 +208,7 @@ public class SolveForSubjectUtils {
 					divModSubterm.getParameters()[0], sum);
 			// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
 			solvedComparison = PolynomialRelation.convert(script, subtermSumComparison).solveForSubject(script, subject,
-					xnf);
+					xnf, bannedForDivCapture);
 			if (solvedComparison == null) {
 				return null;
 			}
@@ -426,12 +431,13 @@ public class SolveForSubjectUtils {
 	 * similar divisor, maybe we should simplify such terms in advance or here
 	 *
 	 * @param xnf
+	 * @param bannedForDivCapture
 	 * @param term
 	 *
 	 */
 	private static MultiCaseSolvedBinaryRelation findTreatableDivModSubterm(final Script script, final Term subject,
 			final IPolynomialTerm divident, final ApplicationTerm parentDivModTerm, final Xnf xnf,
-			final Term relationInPnf) {
+			final Term relationInPnf, final Set<TermVariable> bannedForDivCapture) {
 		for (final Monomial m : divident.getMonomial2Coefficient().keySet()) {
 			for (final Term abstractVariable : m.getVariable2Exponent().keySet()) {
 				if (SmtUtils.isIntDiv(abstractVariable) || SmtUtils.isIntMod(abstractVariable)) {
@@ -448,7 +454,7 @@ public class SolveForSubjectUtils {
 							suiteableDivModParent = null;
 						}
 						final MultiCaseSolvedBinaryRelation rec = findTreatableDivModSubterm(script, subject,
-								innerDivident, suiteableDivModParent, xnf, relationInPnf);
+								innerDivident, suiteableDivModParent, xnf, relationInPnf, bannedForDivCapture);
 						if (rec != null) {
 							return rec;
 						}
@@ -459,7 +465,7 @@ public class SolveForSubjectUtils {
 		if (parentDivModTerm == null) {
 			return null;
 		}
-		return tryToHandleDivModSubterm(script, subject, xnf, parentDivModTerm, relationInPnf);
+		return tryToHandleDivModSubterm(script, subject, xnf, parentDivModTerm, relationInPnf, bannedForDivCapture);
 	}
 
 
