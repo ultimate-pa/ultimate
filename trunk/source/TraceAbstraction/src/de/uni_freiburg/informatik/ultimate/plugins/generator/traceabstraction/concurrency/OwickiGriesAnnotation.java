@@ -26,12 +26,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -39,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * TODO
- * 
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
@@ -48,85 +46,82 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class OwickiGriesAnnotation<LETTER, PLACE> {
 
-	 //Petri net 
+	// Petri net
 	private final IPetriNet<LETTER, PLACE> mPetriNet;
 
 	/**
 	 * Omega: maps Predicate -> Place
 	 */
 	private final Map<PLACE, IPredicate> mFormulaMapping;
-	
+
 	/**
 	 * Gamma: maps GhostAssignment -> transition
 	 */
-	private final Map<ITransition<LETTER,PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
-	
+	private final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
+
+	private final IIcfgSymbolTable mSymbolTable;
+
 	/**
 	 * VGhost: maps Ghost Variables to set
-	 */	
-	//TODO: Map or Set? Map might be only needed for Construction
-	private final Map<PLACE, IProgramVar>  mGhostVariables;
-	
-	/**
-	 * rho(VGhost):  set of predicate value -> GhostVariables
 	 */
-	//protected Map<ITransition<LETTER,PLACE>,LETTER> mGhostAssignment;
+	// TODO: Map or Set? Map might be only needed for Construction
+	private final Map<PLACE, IProgramVar> mGhostVariables;
+
+	/**
+	 * rho(VGhost): set of predicate value -> GhostVariables
+	 */
+	// protected Map<ITransition<LETTER,PLACE>,LETTER> mGhostAssignment;
 	private final Map<IProgramVar, Term> mGhostInitAssignment;
 
-	public OwickiGriesAnnotation() {
-		mPetriNet = null;
-		mFormulaMapping = null;
-		mAssignmentMapping = null;
-		mGhostVariables = null;
-		mGhostInitAssignment = null;	
-		
-	}
-	
 	/**
 	 * Constructor
+	 *
 	 * @param FormulaMapping
 	 * @param mAssignmentMapping2
 	 * @param GhostVariables
 	 * @param GhostInitAssignment
 	 * @param net
 	 */
-	public  OwickiGriesAnnotation
-	(Map<PLACE, IPredicate> FormulaMapping, Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping2,
-			Map<PLACE, IProgramVar> GhostVariables, Map<IProgramVar, Term> GhostInitAssignment,
-			IPetriNet<LETTER, PLACE> net) {
+	public OwickiGriesAnnotation(final Map<PLACE, IPredicate> FormulaMapping,
+			final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping2,
+			final Map<PLACE, IProgramVar> GhostVariables, final Map<IProgramVar, Term> GhostInitAssignment,
+			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable) {
 		mFormulaMapping = FormulaMapping;
 		mAssignmentMapping = mAssignmentMapping2;
 		mGhostVariables = GhostVariables;
 		mGhostInitAssignment = GhostInitAssignment;
 		mPetriNet = net;
+		mSymbolTable = symbolTable;
 	}
-	
+
 	public Map<PLACE, IPredicate> getFormulaMapping() {
 		return mFormulaMapping;
 	}
-	
-	public Map<ITransition<LETTER,PLACE>, UnmodifiableTransFormula> getAssignmentMapping(){
+
+	public Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
 		return mAssignmentMapping;
 	}
-	
-	public Map<PLACE, IProgramVar> GhostVariables(){
+
+	public Map<PLACE, IProgramVar> GhostVariables() {
 		return mGhostVariables;
 	}
-	
-	public  Map<IProgramVar, Term> getGhostAssignment(){
+
+	public Map<IProgramVar, Term> getGhostAssignment() {
 		return mGhostInitAssignment;
 	}
-	
-	public IPetriNet<LETTER, PLACE> getPetriNet(){
+
+	public IPetriNet<LETTER, PLACE> getPetriNet() {
 		return mPetriNet;
 	}
-	
-	
-	
-	//TODO: define OGAnnotation Size
+
+	public IIcfgSymbolTable getSymbolTable() {
+		return mSymbolTable;
+	}
+
+	// TODO: define OGAnnotation Size
 	public int getSize() {
 		// ...
 		return 0;
 	}
-	
+
 }

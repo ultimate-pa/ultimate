@@ -1143,7 +1143,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}
 
-		Map<IPredicate, IPredicate> floydHoare = computeHoareAnnotationComposer().getLoc2hoare();
+		final Map<IPredicate, IPredicate> floydHoare = computeHoareAnnotationComposer().getLoc2hoare();
 
 		final Map<Marking<LETTER, IPredicate>, IPredicate> petriFloydHoare = new HashMap<>();
 		for (final Map.Entry<Marking<LETTER, IPredicate>, IPredicate> entry : mMarking2State.entrySet()) {
@@ -1154,11 +1154,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		assert !petriFloydHoare.isEmpty();
-		
-		OwickiGriesConstruction<IcfgLocation, IPredicate, LETTER> construction =  new OwickiGriesConstruction<IcfgLocation, IPredicate,LETTER> 
-		(mServices, mCsToolkit, mPetriNet, petriFloydHoare);		
+
+		final OwickiGriesConstruction<IcfgLocation, IPredicate, LETTER> construction =
+				new OwickiGriesConstruction<>(mServices, mCsToolkit, mPetriNet, petriFloydHoare);
 		// TODO: simplify
-		assert new OwickiGriesValidityCheck<LETTER, IPredicate>(mServices, mCsToolkit, construction.getResult(), petriFloydHoare).isValid() : "Invalid Owicki-Gries annotation";
+		final OwickiGriesValidityCheck<LETTER, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
+				construction.getResult(), construction.getCoMarkedPlaces());
+		assert check.isValid() : "Invalid Owicki-Gries annotation";
 	}
 
 	@Override
