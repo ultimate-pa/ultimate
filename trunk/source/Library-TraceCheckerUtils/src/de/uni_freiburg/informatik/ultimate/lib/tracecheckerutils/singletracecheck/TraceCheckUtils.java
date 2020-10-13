@@ -62,10 +62,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -137,12 +137,13 @@ public final class TraceCheckUtils {
 	/**
 	 * Convert a list of letters to a {@link NestedWord}.
 	 */
-	public static <LETTER extends IAction> NestedWord<LETTER> toNestedWord(final List<LETTER> trace) {
+	public static <L extends IAction> NestedWord<L> toNestedWord(final List<L> trace) {
 		final Deque<Integer> callIndices = new ArrayDeque<>();
 		final int[] nestingRelation = new int[trace.size()];
-		final LETTER[] word = (LETTER[]) trace.toArray(new IAction[trace.size()]);
+		@SuppressWarnings("unchecked")
+		final L[] word = (L[]) trace.toArray(new IAction[trace.size()]);
 		int i = 0;
-		for (final LETTER letter : trace) {
+		for (final L letter : trace) {
 			word[i] = letter;
 			if (letter instanceof ICallAction) {
 				callIndices.push(i);
@@ -290,8 +291,8 @@ public final class TraceCheckUtils {
 	 * program execution does not provide any values. This is needed e.g., in case the solver said UNKNOWN while
 	 * analyzing a trace.
 	 */
-	public static IcfgProgramExecution
-			computeSomeIcfgProgramExecutionWithoutValues(final Word<? extends IIcfgTransition<?>> trace) {
+	public static <L extends IAction> IcfgProgramExecution<L>
+			computeSomeIcfgProgramExecutionWithoutValues(final Word<L> trace) {
 		@SuppressWarnings("unchecked")
 		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		return IcfgProgramExecution.create(trace.asList(), Collections.emptyMap(), branchEncoders);

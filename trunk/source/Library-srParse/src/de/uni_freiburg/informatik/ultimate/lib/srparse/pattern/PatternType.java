@@ -45,25 +45,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * All Hanfor patterns have this type as base type.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class PatternType {
+public abstract class PatternType<T extends PatternType<?>> {
 
 	private final List<CDD> mCdds;
 	private final List<String> mDurations;
-	private final SrParseScope mScope;
+	private final SrParseScope<?> mScope;
 	private final String mId;
 
 	private ReqPeas mPEAs;
 
-	public PatternType(final SrParseScope scope, final String id, final List<CDD> cdds, final List<String> durations) {
+	public PatternType(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
 		mScope = scope;
 		mId = id;
 		mCdds = cdds;
 		mDurations = durations;
 	}
+
+	public abstract T create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations);
 
 	public List<String> getDuration() {
 		return Collections.unmodifiableList(mDurations);
@@ -94,21 +98,23 @@ public abstract class PatternType {
 		return mId;
 	}
 
-	public SrParseScope getScope() {
+	public SrParseScope<?> getScope() {
 		return mScope;
 	}
 
-	public abstract PatternType rename(String newName);
+	public abstract PatternType<T> rename(String newName);
 
 	public ReqPeas transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
 		if (mPEAs == null) {
 			final List<CounterTrace> cts = constructCounterTrace(id2bounds);
-			final String name = getId() + "_" + createPeaSuffix();
+			final String name = getId();
 
 			final List<Entry<CounterTrace, PhaseEventAutomata>> peas = new ArrayList<>(cts.size());
+			int i = 0;
 			for (final CounterTrace ct : cts) {
 				final Trace2PeaCompilerStateless compiler =
-						new Trace2PeaCompilerStateless(logger, name, ct, id2bounds.keySet());
+						new Trace2PeaCompilerStateless(logger, name + "_ct" + i, ct, id2bounds.keySet());
+				++i;
 				peas.add(new Pair<>(ct, compiler.getResult()));
 			}
 			mPEAs = new ReqPeas(this, peas);
@@ -183,7 +189,7 @@ public abstract class PatternType {
 	 * @return A phase with bound that can be empty
 	 */
 	protected static DCPhase phaseE(final CDD x, final BoundTypes boundType, final int duration) {
-		return new CounterTrace.DCPhase(CDD.TRUE, x, boundType.asValue(), duration, Collections.emptySet(), true);
+		return new CounterTrace.DCPhase(cddT(), x, boundType.asValue(), duration, Collections.emptySet(), true);
 	}
 
 	/**
@@ -202,7 +208,7 @@ public abstract class PatternType {
 		if (mScope == null) {
 			suffix = "NoScope";
 		} else {
-			// remove SrParseScope from scope class name
+			// remove SrParseScope<?>from scope class name
 			suffix = mScope.getClass().getSimpleName().substring(12);
 		}
 		final String className = getClass().getSimpleName();
@@ -243,7 +249,7 @@ public abstract class PatternType {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final PatternType other = (PatternType) obj;
+		final PatternType<?> other = (PatternType<?>) obj;
 		if (mDurations == null) {
 			if (other.mDurations != null) {
 				return false;
@@ -269,15 +275,15 @@ public abstract class PatternType {
 	}
 
 	/**
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
 	public static final class ReqPeas {
-		private final PatternType mReq;
+		private final PatternType<?> mReq;
 		private final List<Entry<CounterTrace, PhaseEventAutomata>> mPeas;
 
-		public ReqPeas(final PatternType req, final List<Entry<CounterTrace, PhaseEventAutomata>> peas) {
+		public ReqPeas(final PatternType<?> req, final List<Entry<CounterTrace, PhaseEventAutomata>> peas) {
 			mReq = Objects.requireNonNull(req);
 			mPeas = Collections.unmodifiableList(Objects.requireNonNull(peas));
 			if (mPeas.isEmpty()) {
@@ -285,7 +291,7 @@ public abstract class PatternType {
 			}
 		}
 
-		public PatternType getPattern() {
+		public PatternType<?> getPattern() {
 			return mReq;
 		}
 
@@ -293,5 +299,4 @@ public abstract class PatternType {
 			return mPeas;
 		}
 	}
-
 }

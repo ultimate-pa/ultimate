@@ -40,46 +40,56 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that "S" holds.
+ * {scope}, it is always the case that "R" holds
  *
  * @author Amalinda Post
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class UniversalityPattern extends PatternType {
+public class UniversalityPattern extends PatternType<UniversalityPattern> {
 
-	public UniversalityPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public UniversalityPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
+	public UniversalityPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new UniversalityPattern(scope, id, cdds, durations);
+	}
+
+	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		final SrParseScope scope = getScope();
-		final CDD S = cdds[0];
+		assert cdds.length == 1 && durations.length == 0;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope<?> scope = getScope();
+		final CDD R = cdds[0];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(S.negate()), phaseT());
+			ct = counterTrace(phaseT(), phase(R.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(S.negate().and(P.negate())), phaseT());
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(S.negate().and(Q.negate())),
-					phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.negate().and(Q.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(S.negate()), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(S.negate().and(Q.negate())),
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(R.negate().and(Q.negate())),
 					phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
+
 		return Collections.singletonList(ct);
 	}
 
@@ -100,7 +110,7 @@ public class UniversalityPattern extends PatternType {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public UniversalityPattern rename(final String newName) {
 		return new UniversalityPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

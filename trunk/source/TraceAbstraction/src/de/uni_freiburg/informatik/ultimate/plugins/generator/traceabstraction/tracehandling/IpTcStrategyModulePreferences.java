@@ -67,33 +67,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<?>>
-		extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<LETTER>, LETTER> {
+public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
+		extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<L>, L> {
 
 	private final InterpolationTechnique mInterpolationTechnique;
+	private final Class<L> mTransitionClazz;
 
 	public IpTcStrategyModulePreferences(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
+			final TaCheckAndRefinementPreferences<L> prefs, final IRun<L, ?> counterExample,
 			final IPredicate precondition, final IPredicate postcondition,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
-			final PredicateFactory predicateFactory) {
+			final AssertionOrderModulation<L> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory, final Class<L> transitionClazz) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
 				predicateUnifier, predicateFactory);
 		mInterpolationTechnique = mPrefs.getInterpolationTechnique();
 		if (mInterpolationTechnique == null) {
 			throw new UnsupportedOperationException("Cannot interpolate without a technique");
 		}
+		mTransitionClazz = transitionClazz;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected IInterpolatingTraceCheck<LETTER> construct() {
+	protected IInterpolatingTraceCheck<L> construct() {
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.get(mCounterexample, mInterpolationTechnique);
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
-		final NestedWord<LETTER> nestedWord = NestedWord.nestedWord(mCounterexample.getWord());
+		final NestedWord<L> nestedWord = NestedWord.nestedWord(mCounterexample.getWord());
 		final List<IcfgLocation> sequenceOfProgramPoints = TraceCheckUtils.getSequenceOfProgramPoints(nestedWord);
 
 		final ManagedScript managedScript = constructManagedScript();
@@ -132,17 +134,17 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 					useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWpPredicates, true);
 
 			return new InterpolatingTraceCheckPathInvariantsWithFallback<>(mPrecondition, mPostcondition,
-					pendingContexts, (NestedRun<LETTER, IPredicate>) mCounterexample, mPrefs.getCfgSmtToolkit(),
+					pendingContexts, (NestedRun<L, IPredicate>) mCounterexample, mPrefs.getCfgSmtToolkit(),
 					assertionOrder, mServices, mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier,
 					invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
 					mPrefs.collectInterpolantStatistics());
 		case PDR:
 			return new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
-					mPrecondition, mPostcondition, mCounterexample.getWord().asList());
+					mPrecondition, mPostcondition, mCounterexample.getWord().asList(), mTransitionClazz);
 
 		case AcceleratedInterpolation:
 			return new AcceleratedInterpolation<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
-					managedScript, mPredicateUnifier, (IRun<LETTER, IPredicate>) mCounterexample);
+					managedScript, mPredicateUnifier, (IRun<L, IPredicate>) mCounterexample, mTransitionClazz);
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);
 		}
@@ -168,7 +170,7 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 
 	@Override
 	public Collection<QualifiedTracePredicates> getPerfectInterpolantSequences() {
-		final IInterpolatingTraceCheck<LETTER> tc = getOrConstruct();
+		final IInterpolatingTraceCheck<L> tc = getOrConstruct();
 		if (tc instanceof TraceCheckSpWp<?>) {
 			final TraceCheckSpWp<?> spwpTc = (TraceCheckSpWp<?>) tc;
 			final Collection<QualifiedTracePredicates> rtr = new ArrayList<>();
@@ -186,7 +188,7 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 
 	@Override
 	public Collection<QualifiedTracePredicates> getImperfectInterpolantSequences() {
-		final IInterpolatingTraceCheck<LETTER> tc = getOrConstruct();
+		final IInterpolatingTraceCheck<L> tc = getOrConstruct();
 		if (tc instanceof TraceCheckSpWp<?>) {
 			final TraceCheckSpWp<?> spwpTc = (TraceCheckSpWp<?>) tc;
 			final Collection<QualifiedTracePredicates> rtr = new ArrayList<>();

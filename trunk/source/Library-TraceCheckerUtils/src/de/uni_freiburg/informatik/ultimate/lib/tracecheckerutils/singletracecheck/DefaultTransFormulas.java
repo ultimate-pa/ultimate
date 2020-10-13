@@ -38,12 +38,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
-public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormula, IPredicate> {
+public class DefaultTransFormulas<L extends IAction> extends NestedFormulas<L, UnmodifiableTransFormula, IPredicate> {
 
 	private final OldVarsAssignmentCache mModifiableGlobalVariableManager;
 	private final boolean mWithBranchEncoders;
 
-	public DefaultTransFormulas(final NestedWord<? extends IAction> nestedWord, final IPredicate precondition,
+	public DefaultTransFormulas(final NestedWord<L> nestedWord, final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final OldVarsAssignmentCache oldVarsAssignmentCache, final boolean withBranchEncoders) {
 		super(nestedWord, pendingContexts);

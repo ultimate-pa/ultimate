@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  * @param <SF>
  *            formula for states
  */
-public class ModifiableNestedFormulas<TF, SF> extends NestedFormulas<TF, SF> {
+public class ModifiableNestedFormulas<L extends IAction, TF, SF> extends NestedFormulas<L, TF, SF> {
 
 	/**
 	 * If index i is an internal position or a return transition in the nested trace Term[i] represents the i-th
@@ -65,8 +65,8 @@ public class ModifiableNestedFormulas<TF, SF> extends NestedFormulas<TF, SF> {
 	 */
 	private final Map<Integer, TF> mGlobalOldVarAssignmentAtCall = new HashMap<>();
 
-	public ModifiableNestedFormulas(final NestedWord<? extends IAction> nestedWord,
-			final SortedMap<Integer, SF> pendingContexts) {
+	@SuppressWarnings("unchecked")
+	public ModifiableNestedFormulas(final NestedWord<L> nestedWord, final SortedMap<Integer, SF> pendingContexts) {
 		super(nestedWord, pendingContexts);
 		mTerms = (TF[]) new Object[nestedWord.length()];
 	}

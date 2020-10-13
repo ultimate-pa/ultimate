@@ -41,19 +41,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IpTcStrategyModulePdr<LETTER extends IIcfgTransition<?>>
-		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<LETTER>, LETTER> {
+public class IpTcStrategyModulePdr<L extends IIcfgTransition<?>>
+		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<L>, L> {
 
-	private final IRun<LETTER, ?> mCounterExample;
+	private final IRun<L, ?> mCounterExample;
 	private final IPredicateUnifier mPredicateUnifier;
-	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
+	private final TaCheckAndRefinementPreferences<L> mPrefs;
 	private final ILogger mLogger;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
+	private final Class<L> mTransitionClazz;
 
 	public IpTcStrategyModulePdr(final ILogger logger, final IPredicate precondition, final IPredicate postcondition,
-			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier,
-			final TaCheckAndRefinementPreferences<LETTER> prefs) {
+			final IRun<L, ?> counterexample, final IPredicateUnifier predicateUnifier,
+			final TaCheckAndRefinementPreferences<L> prefs, final Class<L> transitionClazz) {
 		super();
 		mCounterExample = counterexample;
 		mPredicateUnifier = predicateUnifier;
@@ -61,12 +62,13 @@ public class IpTcStrategyModulePdr<LETTER extends IIcfgTransition<?>>
 		mPrefs = prefs;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
+		mTransitionClazz = transitionClazz;
 	}
 
 	@Override
-	protected IInterpolatingTraceCheck<LETTER> construct() {
+	protected IInterpolatingTraceCheck<L> construct() {
 		return new Pdr<>(mLogger, mPrefs, mPredicateUnifier, mPrecondition, mPostcondition,
-				mCounterExample.getWord().asList());
+				mCounterExample.getWord().asList(), mTransitionClazz);
 	}
 
 	@Override

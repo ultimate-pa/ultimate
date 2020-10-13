@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 
-import java.util.Collections;
-
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -180,14 +178,13 @@ public abstract class BinaryRelation implements IBinaryRelation {
 			if (SmtUtils.isSubterm(getRhs(), subject)) {
 				return null;
 			} else {
-				return new SolvedBinaryRelation(subject, getRhs(), getRelationSymbol(), Collections.emptyMap(), null);
+				return new SolvedBinaryRelation(subject, getRhs(), getRelationSymbol());
 			}
 		} else if (getRhs().equals(subject)) {
 			if (SmtUtils.isSubterm(getLhs(), subject)) {
 				return null;
 			} else {
-				return new SolvedBinaryRelation(subject, getLhs(), getRelationSymbol().swapParameters(),
-						Collections.emptyMap(), null);
+				return new SolvedBinaryRelation(subject, getLhs(), getRelationSymbol().swapParameters());
 			}
 		} else {
 			return null;

@@ -48,13 +48,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implements IRefinementStrategy<LETTER> {
+public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IRefinementStrategy<L> {
 
 	private static final int DEFAULT_INTERPOLANT_THRESHOLD = 2;
 
-	private final ITraceCheckStrategyModule<?>[] mTraceChecks;
-	private final IIpgStrategyModule<?, LETTER>[] mInterpolantGenerators;
-	private final IIpAbStrategyModule<LETTER> mInterpolantAutomatonBuilder;
+	private final ITraceCheckStrategyModule<L, ?>[] mTraceChecks;
+	private final IIpgStrategyModule<?, L>[] mInterpolantGenerators;
+	private final IIpAbStrategyModule<L> mInterpolantAutomatonBuilder;
 	private int mCurrentIndexTraceCheck;
 	private int mCurrentIndexInterpolantGenerator;
 
@@ -62,10 +62,9 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 
 	private final IPredicateUnifier mDefaultPredicateUnifier;
 
-	public BasicRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
-			final ITraceCheckStrategyModule<?>[] traceChecks,
-			final IIpgStrategyModule<?, LETTER>[] interpolantGenerators,
-			final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder,
+	public BasicRefinementStrategy(final StrategyModuleFactory<L> factory,
+			final ITraceCheckStrategyModule<L, ?>[] traceChecks, final IIpgStrategyModule<?, L>[] interpolantGenerators,
+			final IIpAbStrategyModule<L> interpolantAutomatonBuilder,
 			final RefinementStrategyExceptionBlacklist blacklist) {
 		mTraceChecks = Objects.requireNonNull(traceChecks);
 		mInterpolantGenerators = Objects.requireNonNull(interpolantGenerators);
@@ -76,15 +75,14 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 		mDefaultPredicateUnifier = factory.getDefaultPredicateUnifier();
 	}
 
-	public BasicRefinementStrategy(final StrategyModuleFactory<LETTER> factory, final StrategyModules<LETTER> modules,
+	public BasicRefinementStrategy(final StrategyModuleFactory<L> factory, final StrategyModules<L> modules,
 			final RefinementStrategyExceptionBlacklist blacklist) {
 		this(factory, modules.mTraceChecks, modules.mInterpolantGenerators, modules.mInterpolantAutomatonBuilder,
 				blacklist);
 	}
 
-	public BasicRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
-			final IIpTcStrategyModule<?, LETTER>[] traceChecks,
-			final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder,
+	public BasicRefinementStrategy(final StrategyModuleFactory<L> factory,
+			final IIpTcStrategyModule<?, L>[] traceChecks, final IIpAbStrategyModule<L> interpolantAutomatonBuilder,
 			final RefinementStrategyExceptionBlacklist blacklist) {
 		this(factory, traceChecks, traceChecks, interpolantAutomatonBuilder, blacklist);
 	}
@@ -100,7 +98,7 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 	}
 
 	@Override
-	public ITraceCheckStrategyModule<?> nextFeasibilityCheck() {
+	public ITraceCheckStrategyModule<L, ?> nextFeasibilityCheck() {
 		if (mCurrentIndexTraceCheck < mTraceChecks.length) {
 			return mTraceChecks[mCurrentIndexTraceCheck++];
 		}
@@ -118,7 +116,7 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 	}
 
 	@Override
-	public IIpgStrategyModule<?, LETTER> nextInterpolantGenerator() {
+	public IIpgStrategyModule<?, L> nextInterpolantGenerator() {
 		if (mCurrentIndexInterpolantGenerator < mInterpolantGenerators.length) {
 			return mInterpolantGenerators[mCurrentIndexInterpolantGenerator++];
 		}
@@ -126,7 +124,7 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 	}
 
 	@Override
-	public IIpAbStrategyModule<LETTER> getInterpolantAutomatonBuilder() {
+	public IIpAbStrategyModule<L> getInterpolantAutomatonBuilder() {
 		return mInterpolantAutomatonBuilder;
 	}
 
@@ -136,12 +134,12 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 	}
 
 	@Override
-	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<?> engine) {
+	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<L, ?> engine) {
 		return null;
 	}
 
 	@Override
-	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<?> engine) {
+	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<L, ?> engine) {
 		return mDefaultPredicateUnifier;
 	}
 
@@ -164,32 +162,32 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 		return imperfectIpps.size() < DEFAULT_INTERPOLANT_THRESHOLD;
 	}
 
-	protected ITraceCheckStrategyModule<?>[] getTraceCheckModules() {
+	protected ITraceCheckStrategyModule<L, ?>[] getTraceCheckModules() {
 		return mTraceChecks;
 	}
 
-	protected IIpgStrategyModule<?, LETTER>[] getInterpolantGeneratorModules() {
+	protected IIpgStrategyModule<?, L>[] getInterpolantGeneratorModules() {
 		return mInterpolantGenerators;
 	}
 
-	protected IIpAbStrategyModule<LETTER> getInterpolantAutomatonBuilderModule() {
+	protected IIpAbStrategyModule<L> getInterpolantAutomatonBuilderModule() {
 		return mInterpolantAutomatonBuilder;
 	}
 
 	/**
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
-	 * @param <LETTER>
+	 * @param <L>
 	 */
-	public static final class StrategyModules<LETTER extends IAction> {
-		private final ITraceCheckStrategyModule<?>[] mTraceChecks;
-		private final IIpgStrategyModule<?, LETTER>[] mInterpolantGenerators;
-		private final IIpAbStrategyModule<LETTER> mInterpolantAutomatonBuilder;
+	public static final class StrategyModules<L extends IAction> {
+		private final ITraceCheckStrategyModule<L, ?>[] mTraceChecks;
+		private final IIpgStrategyModule<?, L>[] mInterpolantGenerators;
+		private final IIpAbStrategyModule<L> mInterpolantAutomatonBuilder;
 
-		public StrategyModules(final ITraceCheckStrategyModule<?>[] traceChecks,
-				final IIpgStrategyModule<?, LETTER>[] interpolantGenerators,
-				final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder) {
+		public StrategyModules(final ITraceCheckStrategyModule<L, ?>[] traceChecks,
+				final IIpgStrategyModule<?, L>[] interpolantGenerators,
+				final IIpAbStrategyModule<L> interpolantAutomatonBuilder) {
 			mTraceChecks = traceChecks;
 			mInterpolantAutomatonBuilder = interpolantAutomatonBuilder;
 			mInterpolantGenerators = interpolantGenerators;

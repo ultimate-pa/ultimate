@@ -1,6 +1,5 @@
 (set-option :print-success false)
 (set-option :produce-interpolants true)
-(set-option :proof-check-mode true)
 (set-logic UFLIA)
 (set-info :source |Simple example for quantifiers.|)
 (set-info :smt-lib-version 2.0)

@@ -34,11 +34,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -57,8 +60,14 @@ public final class PatternUtil {
 	/**
 	 * Create for all subclasses of {@link PatternType} and {@link SrParseScope} an instantiated requirements pattern
 	 * that can be used to create a PEA.
+	 *
+	 * @param withoutNotImplemented
+	 *            If true, do not generate patterns for which no countertrace is implemented (i.e., the ones that throw
+	 *            {@link PatternScopeNotImplemented} when their {@link PatternType#transformToPea(ILogger, Map)} method
+	 *            is called.
 	 */
-	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns() {
+	public static Pair<List<? extends PatternType<?>>, Map<String, Integer>>
+			createAllPatterns(final boolean withoutNotImplemented) {
 		// first, create some observables and durartions
 		final int count = 10;
 		int duration = 5;
@@ -73,7 +82,7 @@ public final class PatternUtil {
 		}
 
 		// instantiate scopes
-		final List<? extends SrParseScope> scopes = ReflectionUtil
+		final List<? extends SrParseScope<?>> scopes = ReflectionUtil
 				.getClassesFromFolder(SrParseScope.class, RcpUtils.getBundleProtocolResolver()).stream()
 				.filter(c -> !ReflectionUtil.isAbstractClass(c))
 				.filter(c -> ReflectionUtil.isSubclassOfClass(c, SrParseScope.class))
@@ -81,16 +90,19 @@ public final class PatternUtil {
 		Collections.sort(scopes, new ClassNameComparator());
 
 		// instantiate patterns
-		final List<Class<? extends PatternType>> patternTypeClazzes =
+		@SuppressWarnings("unchecked")
+		final List<Class<? extends PatternType<?>>> patternTypeClazzes =
 				ReflectionUtil.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
 						.filter(c -> !ReflectionUtil.isAbstractClass(c))
 						.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
-						.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
+						.filter(c -> !c.equals(InitializationPattern.class)).map(a -> (Class<PatternType<?>>) a)
+						.collect(Collectors.toList());
 		Collections.sort(patternTypeClazzes, new ClassNameComparator());
 
-		final List<PatternType> patterns = new ArrayList<>();
+		final List<PatternType<?>> patterns = new ArrayList<>();
 		int id = 0;
-		for (final Class<? extends PatternType> patternTypeClazz : patternTypeClazzes) {
+		final ILogger dummyLogger = ILogger.getDummyLogger();
+		for (final Class<? extends PatternType<?>> patternTypeClazz : patternTypeClazzes) {
 			// all patterns except the initializationpattern have a constructor of the form
 			// (final SrParseScope scope,
 			// final String id, final List<CDD> cdds,
@@ -99,17 +111,28 @@ public final class PatternUtil {
 			// actually need, and then we
 			// instantiate it again for real for every scope
 
-			final PatternType dummyInstance = ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null);
+			final PatternType<?> dummyInstance =
+					ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null);
 			final int cddCount = dummyInstance.getExpectedCddSize();
 			final int durationCount = dummyInstance.getExpectedDurationSize();
 
-			for (final SrParseScope scope : scopes) {
+			for (final SrParseScope<?> scope : scopes) {
 				final List<CDD> currentCdds =
 						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
 				final List<String> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
-				patterns.add(ReflectionUtil.instantiateClass(patternTypeClazz, scope, "ID_" + String.valueOf(id),
-						currentCdds, currentDurations));
+				final PatternType<?> pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
+						"ID_" + String.valueOf(id), currentCdds, currentDurations);
+
+				if (withoutNotImplemented) {
+					try {
+						final ReqPeas pea = pattern.transformToPea(dummyLogger, duration2bounds);
+						dummyLogger.info(pea);
+					} catch (final PatternScopeNotImplemented ex) {
+						continue;
+					}
+				}
+				patterns.add(pattern);
 				id++;
 			}
 		}

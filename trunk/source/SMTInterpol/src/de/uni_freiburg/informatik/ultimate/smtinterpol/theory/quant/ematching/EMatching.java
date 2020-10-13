@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantBoundCo
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantClause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantLiteral;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifiedTermInfo;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantUtil;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.dawg.Dawg;
 
@@ -83,17 +83,17 @@ public class EMatching {
 	/**
 	 * Add the patterns for E-Matching.
 	 *
-	 * Currently, we support only literals that contain arithmetic only at "top level" and where all variables that
-	 * appear at top level (i.e., not under an uninterpreted function symbol) must also appear under an uninterpreted
-	 * function symbol.
+	 * Currently, we support only literals that contain arithmetic on quantified terms only at "top level" and where all
+	 * variables that appear at top level (i.e., not under an uninterpreted function symbol) must also appear under an
+	 * uninterpreted function symbol.
 	 */
 	public void addClause(final QuantClause qClause) {
 		assert !mClauseCodes.containsKey(qClause);
 		final ArrayList<Triple<ICode, CCTerm[], Integer>> clauseCodes = new ArrayList<>();
 		for (final QuantLiteral qLit : qClause.getQuantLits()) {
 			final QuantLiteral qAtom = qLit.getAtom();
-			if (QuantifiedTermInfo.containsArithmeticOnlyAtTopLevel(qAtom)
-					&& QuantifiedTermInfo.containsAppTermsForEachVar(qAtom)) {
+			if (QuantUtil.containsArithmeticOnQuantOnlyAtTopLevel(qAtom)
+					&& QuantUtil.containsAppTermsForEachVar(qAtom)) {
 				mEmatchingLiterals.add(qLit);
 				final Collection<Term> patterns = new LinkedHashSet<>();
 				if (qAtom instanceof QuantEquality) {
@@ -165,7 +165,7 @@ public class EMatching {
 	}
 
 	private Collection<Term> getSubPatterns(final SMTAffineTerm at) {
-		assert QuantifiedTermInfo.containsArithmeticOnlyAtTopLevel(at);
+		assert QuantUtil.containsArithmeticOnQuantOnlyAtTopLevel(at);
 		final Collection<Term> patterns = new LinkedHashSet<>();
 		for (final Term smd : at.getSummands().keySet()) {
 			if (!(smd instanceof TermVariable) && smd.getFreeVars().length != 0) {

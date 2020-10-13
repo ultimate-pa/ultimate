@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.sifa;
 
-import java.util.Collections;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -41,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
@@ -119,8 +119,7 @@ public class SifaObserver extends BaseObserver {
 				msg += "\nFinal emptiness check over-approximated again to " + predEqBottom.getLhs();
 			}
 			result = new UnprovableResult<>(Activator.PLUGIN_ID, loiPred.getKey(),
-					mServices.getBacktranslationService(),
-					IcfgProgramExecution.create(Collections.emptyList(), Collections.emptyMap()), msg);
+					mServices.getBacktranslationService(), IcfgProgramExecution.create(IcfgEdge.class), msg);
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		return predEqBottom.isTrueForAbstraction();

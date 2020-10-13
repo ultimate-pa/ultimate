@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -59,17 +58,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransition<?>>
-		implements IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> {
+public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>>
+		implements IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> {
 
 	private final ILogger mLogger;
-	private final IRefinementStrategy<LETTER> mStrategy;
-	private final AutomatonFreeRefinementEngine<LETTER> mAutomatonFreeEngine;
+	private final IRefinementStrategy<L> mStrategy;
+	private final AutomatonFreeRefinementEngine<L> mAutomatonFreeEngine;
 
-	private NestedWordAutomaton<LETTER, IPredicate> mInterpolantAutomaton;
+	private NestedWordAutomaton<L, IPredicate> mInterpolantAutomaton;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
 
-	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy) {
+	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<L> strategy) {
 		mLogger = logger;
 		mStrategy = strategy;
 		mAutomatonFreeEngine = new AutomatonFreeRefinementEngine<>(logger, strategy);
@@ -82,7 +81,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, IPredicate> getInfeasibilityProof() {
+	public NestedWordAutomaton<L, IPredicate> getInfeasibilityProof() {
 		if (mInterpolantAutomaton == null) {
 			throw new IllegalStateException(
 					"There is no proof because counterexample was " + getCounterexampleFeasibility());
@@ -101,7 +100,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution() {
+	public IProgramExecution<L, Term> getIcfgProgramExecution() {
 		return mAutomatonFreeEngine.getIcfgProgramExecution();
 	}
 
@@ -133,7 +132,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 			return;
 		}
 		final Collection<QualifiedTracePredicates> ipps = mAutomatonFreeEngine.getInfeasibilityProof();
-		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder = mStrategy.getInterpolantAutomatonBuilder();
+		final IIpAbStrategyModule<L> interpolantAutomatonBuilder = mStrategy.getInterpolantAutomatonBuilder();
 		logModule("Using interpolant automaton builder", interpolantAutomatonBuilder);
 		try {
 
@@ -142,7 +141,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 			final List<QualifiedTracePredicates> imperfectIpps =
 					ipps.stream().filter(a -> !a.isPerfect()).collect(Collectors.toList());
 
-			final IpAbStrategyModuleResult<LETTER> result =
+			final IpAbStrategyModuleResult<L> result =
 					interpolantAutomatonBuilder.buildInterpolantAutomaton(perfectIpps, imperfectIpps);
 			mInterpolantAutomaton = result.getAutomaton();
 			mUsedTracePredicates = result.getUsedTracePredicates();

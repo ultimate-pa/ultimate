@@ -37,35 +37,43 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that if "P" holds for at least "c1" time units and "Q" holds, then "R" holds."
+ * {scope}, it is always the case that after "R" holds for at least "c1" time units and "S" holds, then "T" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  */
-public class BndTriggeredEntryConditionPattern extends PatternType {
+public class BndTriggeredEntryConditionPattern extends PatternType<BndTriggeredEntryConditionPattern> {
 
-	public BndTriggeredEntryConditionPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndTriggeredEntryConditionPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
+	}
+
+	@Override
+	public BndTriggeredEntryConditionPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new BndTriggeredEntryConditionPattern(scope, id, cdds, durations);
 	}
 
 	@Override
 	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 3 && durations.length == 1;
 
-		final SrParseScope scope = getScope();
-		final CDD S = cdds[2];
-		final CDD R = cdds[1];
-		final CDD Q = cdds[0];
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope<?> scope = getScope();
+		final CDD T = cdds[2];
+		final CDD S = cdds[1];
+		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
 		if (scope instanceof SrParseScopeGlobally) {
-			final CounterTrace ct = counterTrace(phaseT(), phase(Q, BoundTypes.GREATEREQUAL, c1),
-					phase(S.negate().and(R).and(Q)), phaseT());
+			final CounterTrace ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1),
+					phase(T.negate().and(S).and(R)), phaseT());
 			return Collections.singletonList(ct);
 		}
-		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
 	@Override
@@ -79,19 +87,19 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 			sb.append(getScope());
 		}
 		sb.append("it is always the case that after \"");
-		sb.append(getCdds().get(0).toBoogieString());
+		sb.append(getCdds().get(2).toBoogieString());
 		sb.append("\" holds for at least \"");
 		sb.append(getDuration().get(0));
 		sb.append("\" time units and \"");
 		sb.append(getCdds().get(1).toBoogieString());
 		sb.append("\" holds, then \"");
-		sb.append(getCdds().get(2).toBoogieString());
+		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds");
 		return sb.toString();
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndTriggeredEntryConditionPattern rename(final String newName) {
 		return new BndTriggeredEntryConditionPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

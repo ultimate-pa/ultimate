@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
  * TODO: explain pattern
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class InitializationPattern extends PatternType {
+public class InitializationPattern extends PatternType<InitializationPattern> {
 
 	public enum VariableCategory {
 		IN("Input"), OUT("Output"), HIDDEN("???"), CONST("CONST");
@@ -71,6 +72,12 @@ public class InitializationPattern extends PatternType {
 		mType = type;
 		mVisibility = visibility;
 		mExpression = expr;
+	}
+
+	@Override
+	public InitializationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		throw new UnsupportedOperationException();
 	}
 
 	public VariableCategory getCategory() {
@@ -154,7 +161,7 @@ public class InitializationPattern extends PatternType {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public InitializationPattern rename(final String newName) {
 		return new InitializationPattern(newName, getType(), getCategory(), getExpression());
 	}
 

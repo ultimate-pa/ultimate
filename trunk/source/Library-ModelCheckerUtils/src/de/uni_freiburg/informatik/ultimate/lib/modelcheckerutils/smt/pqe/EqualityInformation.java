@@ -157,7 +157,7 @@ public class EqualityInformation {
 		if (polyRel.isVariable(givenTerm)) {
 			Term equalTerm;
 			final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, givenTerm);
-			if (sbr == null || !sbr.getAssumptionsMap().isEmpty()) {
+			if (sbr == null) {
 				return null;
 			} else {
 				equalTerm = sbr.getRightHandSide();

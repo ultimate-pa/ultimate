@@ -99,6 +99,10 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_SIMPLE_PARTIAL_SKOLEMIZATION = true;
 	public static final String LABEL_ADDITIONAL_SMT_OPTIONS = "Additional SMT options";
 	public static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS = Collections.emptyMap();
+	public static final String LABEL_REMOVE_ASSUME_TRUE = "Remove assume true statements";
+	private static final boolean DEF_REMOVE_ASSUME_TRUE = true;
+	private static final String DESC_REMOVE_ASSUME_TRUE =
+			"Removes all assume true statements while building the RCFG graph. This is in particular useful for concurrent programs.";
 
 	public RcfgPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -121,6 +125,8 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CNF, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REMOVE_ASSUME_TRUE, DEF_REMOVE_ASSUME_TRUE, DESC_REMOVE_ASSUME_TRUE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DUMP_TO_FILE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DUMP_UNSAT_CORE_BENCHMARK, false, PreferenceType.Boolean),

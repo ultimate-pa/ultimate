@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -194,20 +193,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				AssumptionForSolvability.INTEGER_DIVISOR_NOT_ZERO,
 				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_VARIABLE }) : "A new value was added to enum and has to be considered here";
 		final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, tv);
-		if (sbr == null) {
-			return false;
-		} else {
-			if (sbr.getAssumptionsMap().isEmpty()) {
-				return true;
-			} else {
-				if (sbr.getAssumptionsMap().keySet()
-						.equals(Collections.singleton(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT))) {
-					return true;
-				} else {
-					return false;
-				}
-			}
-		}
+		return (sbr != null);
 	}
 
 	private static float underapproximateNumberOfDomainElements(final Sort sort) {

@@ -824,6 +824,11 @@ public class ArrayTheory implements ITheory {
 	}
 
 	@Override
+	public void backtrackAll() {
+		mPropClauses.clear();
+	}
+
+	@Override
 	public Clause backtrackComplete() {
 		mPropClauses.clear();
 		return null;

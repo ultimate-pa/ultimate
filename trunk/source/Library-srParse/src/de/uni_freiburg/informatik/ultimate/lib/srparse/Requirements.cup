@@ -49,12 +49,9 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain12
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain21Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain12Pattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain21Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponsePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TogglePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TogglePatternDelayed;
-
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPatternDelayed;
 
 parser ReqParser;
 option symbols = ReqSymbols;
@@ -209,48 +206,46 @@ scope ::=
       {: RESULT = new SrParseScopeAfterUntil(p,q); :}
   ;
   
-pattern ::=	IT IS NEVER THE CASE THAT expression:p HOLDS
-			{: RESULT = new PatternBuilder(); RESULT.setType(InstAbsPattern.class); RESULT.addCdd(p); :}
-  		| IT IS ALWAYS THE CASE THAT expression:p HOLDS
-			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(p); :}
-  		| IT IS ALWAYS THE CASE THAT IF expression:p HOLDS COMMA? THEN expression:q HOLDS AS WELL
-      		{: RESULT = new PatternBuilder(); RESULT.setType(InvariantPattern.class); RESULT.addCdd(q,p); :}
-	  	| expression:p EVENTUALLY HOLDS
-	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),p); :}
-		| TRANSITIONS TO STATES IN WHICH expression:p HOLDS OCCUR AT MOST TWICE
-	      	{: RESULT = new PatternBuilder(); RESULT.setType(BndExistencePattern.class); RESULT.addCdd(p); :}
-		| IT IS ALWAYS THE CASE THAT opattern:p 
-			{: RESULT = p; :}
-	  	| IT IS ALWAYS THE CASE THAT rtpattern:p 
-	  		{: RESULT = p; :}
+pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
+			{: RESULT = new PatternBuilder(); RESULT.setType(InstAbsPattern.class); RESULT.addCdd(r); :}
+  		| IT IS ALWAYS THE CASE THAT expression:r HOLDS
+			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(r); :}
+  		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
+      		{: RESULT = new PatternBuilder(); RESULT.setType(InvariantPattern.class); RESULT.addCdd(s,r); :}
+	  	| expression:r EVENTUALLY HOLDS
+	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),r); :}
+		| TRANSITIONS TO STATES IN WHICH expression:r HOLDS OCCUR AT MOST TWICE
+	      	{: RESULT = new PatternBuilder(); RESULT.setType(BndExistencePattern.class); RESULT.addCdd(r); :}
+		| IT IS ALWAYS THE CASE THAT opattern:r 
+			{: RESULT = r; :}
+	  	| IT IS ALWAYS THE CASE THAT rtpattern:r
+	  		{: RESULT = r; :}
 	  	;
   
-opattern ::= IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD
-      			{: RESULT = new PatternBuilder(); RESULT.setType(PrecedencePattern.class); RESULT.addCdd(q,p); :}
-  			| IF expression:p HOLDS AND IS SUCCEEDED BY expression:q COMMA? THEN expression:r PREVIOUSLY HELD
-				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain12Pattern.class); RESULT.addCdd(r,q,p); :}
-  			| IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD AND WAS PRECEDED BY expression:r
-				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain21Pattern.class); RESULT.addCdd(r,q,p); :}
-  			| IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS
-				{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(q,p); :}
-  			| IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:r
-				{: RESULT = new PatternBuilder(); RESULT.setType(ResponseChain12Pattern.class); RESULT.addCdd(r,q,p); :}
-  			| IF expression:p HOLDS AND IS SUCCEEDED BY expression:q COMMA? THEN expression:r EVENTUALLY HOLDS AFTER expression:s
-				{: RESULT = new PatternBuilder(); RESULT.setType(ResponseChain21Pattern.class); RESULT.addCdd(s,r,q,p); :}
-  			| IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:r WHERE expression:s DOES NOT HOLD BETWEEN expression:t AND expression:u
-				{: RESULT = new PatternBuilder(); RESULT.setType(ConstrainedChainPattern.class); RESULT.addCdd(u,t,s,r,q,p); :}
-			| IF expression:p HOLDS COMMA? THEN expression:s TOGGLES expression:t
-      			{: RESULT = new PatternBuilder(); RESULT.setType(TogglePattern.class); RESULT.addCdd(p,s,t); :}
-			| IF expression:p HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:q EVENTUALLY HOLDS
-				{: RESULT = new PatternBuilder().setType(PossibilityPattern.class).addCdd(p,q); :}
+opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD
+      			{: RESULT = new PatternBuilder(); RESULT.setType(PrecedencePattern.class); RESULT.addCdd(s,r); :}
+  			| IF expression:r HOLDS AND IS SUCCEEDED BY expression:s COMMA? THEN expression:t PREVIOUSLY HELD
+				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain12Pattern.class); RESULT.addCdd(t,s,r); :}
+  			| IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD AND WAS PRECEDED BY expression:t
+				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain21Pattern.class); RESULT.addCdd(t,s,r); :}
+  			| IF expression:r HOLDS COMMA? THEN expression:s EVENTUALLY HOLDS
+				{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(s,r); :}
+  			| IF expression:r HOLDS COMMA? THEN expression:s EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:t
+				{: RESULT = new PatternBuilder(); RESULT.setType(ResponseChain12Pattern.class); RESULT.addCdd(t,s,r); :}
+  			| IF expression:r HOLDS COMMA? THEN expression:s EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:t WHERE expression:u DOES NOT HOLD BETWEEN expression:v AND expression:w
+				{: RESULT = new PatternBuilder(); RESULT.setType(ConstrainedChainPattern.class); RESULT.addCdd(w,v,u,t,s,r); :}
+			| IF expression:r HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:s EVENTUALLY HOLDS
+				{: RESULT = new PatternBuilder().setType(PossibilityPattern.class).addCdd(s,r); :}
   			;
   
-rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST duration:d
-				{: RESULT = new PatternBuilder().setType(MinDurationPattern.class).addCdd(p).addDuration(d); :}
-  			| ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR LESS THAN duration:d
-				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(p).addDuration(d); :}
-			| expression:p HOLDS AT LEAST EVERY duration:d
-				{: RESULT = new PatternBuilder().setType(BndRecurrencePattern.class).addCdd(p).addDuration(d); :}
+rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST duration:c1
+				{: RESULT = new PatternBuilder().setType(MinDurationPattern.class).addCdd(r).addDuration(c1); :}
+  			| ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR LESS THAN duration:c1
+				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(r).addDuration(c1); :}
+			| expression:r HOLDS AT LEAST EVERY duration:c1
+				{: RESULT = new PatternBuilder().setType(BndRecurrencePattern.class).addCdd(r).addDuration(c1); :}
+			| expression:r HOLDS AFTER AT MOST duration:c1
+				{: RESULT = new PatternBuilder().setType(UniversalityPatternDelayed.class).addCdd(r).addDuration(c1); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c1
 				{: RESULT = new PatternBuilder().setType(BndResponsePatternUT.class).addCdd(s,r).addDuration(c1); :}
   			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS FOR AT LEAST duration:c2
@@ -259,16 +254,14 @@ rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 				{: RESULT = new PatternBuilder().setType(BndResponsePatternTU.class).addCdd(s,r).addDuration(c1); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c1 FOR AT LEAST duration:c2
 				{: RESULT = new PatternBuilder().setType(BndDelayedResponsePatternUT.class).addCdd(s,r).addDuration(c1,c2); :}					
-  			| IF expression:p HOLDS COMMA? THEN expression:s HOLDS FOR AT LEAST duration:d
-				{: RESULT = new PatternBuilder().setType(BndInvariancePattern.class).addCdd(s,p).addDuration(d); :}
-			| IF expression:p HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:q HOLDS AFTER AT MOST duration:d
-				{: RESULT = new PatternBuilder().setType(BndPossResponsePattern.class).addCdd(q,p).addDuration(d); :}
-  			| AFTER expression:p HOLDS FOR AT LEAST duration:d COMMA? THEN expression:q HOLDS
-				{: RESULT = new PatternBuilder().setType(BndEntryConditionPattern.class).addCdd(q,p).addDuration(d); :}
-			| AFTER expression:p HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:q HOLDS COMMA? THEN expression:r HOLDS
-				{: RESULT = new PatternBuilder().setType(BndTriggeredEntryConditionPattern.class).addCdd(p,q,r).addDuration(c1); :}
-			| IF expression:p HOLDS COMMA? THEN expression:s TOGGLES expression:t AT MOST duration:d LATER
-      			{: RESULT = new PatternBuilder(); RESULT.setType(TogglePatternDelayed.class); RESULT.addCdd(p,s,t).addDuration(d); :}
+  			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS FOR AT LEAST duration:c1
+				{: RESULT = new PatternBuilder().setType(BndInvariancePattern.class).addCdd(s,r).addDuration(c1); :}
+			| IF expression:r HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:s HOLDS AFTER AT MOST duration:c1
+				{: RESULT = new PatternBuilder().setType(BndPossResponsePattern.class).addCdd(s,r).addDuration(c1); :}
+  			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS
+				{: RESULT = new PatternBuilder().setType(BndEntryConditionPattern.class).addCdd(s,r).addDuration(c1); :}
+			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:s HOLDS COMMA? THEN expression:t HOLDS
+				{: RESULT = new PatternBuilder().setType(BndTriggeredEntryConditionPattern.class).addCdd(t,s,r).addDuration(c1); :}
   			;
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}

@@ -142,8 +142,23 @@ public class CClosure implements ITheory {
 	 */
 	int mNumFunctionPositions;
 
-	int mMergeDepth;
-	final ArrayDeque<CCTerm> mMerges = new ArrayDeque<>();
+	/**
+	 * A stack containing the merges and seps that were performed on the union-find
+	 * data structure. This contains the CCTerms that were the previous
+	 * representative before the merge of the smaller group. Its {@code mRep} field
+	 * points to the representative of the other class and should be equal to
+	 * {@code mRepStar}.
+	 */
+	final ArrayDeque<UndoInfo> mUndoStack = new ArrayDeque<>();
+	/**
+	 * A list giving for each decide level the number of merges that happened before
+	 * the corresponding decision.
+	 */
+	final ArrayDeque<Integer> mDecideLevelToUndoStackSize = new ArrayDeque<>();
+	/**
+	 * A list of congruences that were detected but not yet merged. These must be
+	 * merged in checkpoint.
+	 */
 	final ArrayDeque<SymmetricPair<CCAppTerm>> mPendingCongruences = new ArrayDeque<>();
 
 	private long mInvertEdgeTime, mEqTime, mCcTime, mSetRepTime;
@@ -785,21 +800,6 @@ public class CClosure implements ITheory {
 	}
 
 	@Override
-	public void backtrackLiteral(final Literal literal) {
-		if (!(literal.getAtom() instanceof CCEquality)) {
-			return;
-		}
-		final CCEquality eq = (CCEquality) literal.getAtom();
-		if (eq.mStackDepth != -1) {
-			backtrackStack(eq.mStackDepth);
-			eq.mStackDepth = -1;
-			if (literal != eq) {
-				undoSep(eq);
-			}
-		}
-	}
-
-	@Override
 	public Clause computeConflictClause() {
 		Clause res = checkpoint();
 		if (res == null) {
@@ -843,6 +843,26 @@ public class CClosure implements ITheory {
 		return DPLLEngine.COMPLETE;
 	}
 
+	/**
+	 * Record a merge step on the undo stack. This should only be called by
+	 * CCTerm.mergeInternal.
+	 *
+	 * @param oldRep the old representative (of the smaller class) that was merged.
+	 */
+	void recordMerge(final CCTerm oldRep) {
+		mUndoStack.push(new MergeUndoInfo(oldRep));
+	}
+
+	/**
+	 * Get the merge depth, i.e., the number of merges that already happened. We use
+	 * the undo stack, so we also count separations, but that shouldn't matter.
+	 *
+	 * @return the merge depth (non-negative integer).
+	 */
+	int getMergeDepth() {
+		return mUndoStack.size();
+	}
+
 	@Override
 	public Clause setLiteral(final Literal literal) {
 		if (!(literal.getAtom() instanceof CCEquality)) {
@@ -851,7 +871,6 @@ public class CClosure implements ITheory {
 		final CCEquality eq = (CCEquality) literal.getAtom();
 		if (literal == eq) {
 			if (eq.getLhs().mRepStar != eq.getRhs().mRepStar) {
-				eq.mStackDepth = mMerges.size();
 				final Clause conflict = eq.getLhs().merge(this, eq.getRhs(), eq);
 				if (conflict != null) {
 					return conflict;
@@ -869,7 +888,6 @@ public class CClosure implements ITheory {
 				}
 			}
 			separate(left, right, eq);
-			eq.mStackDepth = mMerges.size();
 		}
 		final LAEquality laeq = eq.getLASharedData();
 		if (laeq != null) {
@@ -883,34 +901,49 @@ public class CClosure implements ITheory {
 		return null;
 	}
 
-	private CCTermPairHash.Info mLastInfo;
+	@Override
+	public void backtrackLiteral(final Literal literal) {
+	}
 
-	private void separate(final CCTerm lhs, final CCTerm rhs, final CCEquality atom) {
-		if (mLastInfo == null || !mLastInfo.equals(lhs, rhs)) {
-			mLastInfo = mPairHash.getInfo(lhs, rhs);
-			assert mLastInfo != null;
-		}
-		if (mLastInfo.mDiseq != null) {
-			return;
-		}
+	void removePairHash(final CCTermPairHash.Info info) {
+		mPairHash.remove(info);
+	}
 
-		mLastInfo.mDiseq = atom;
+	private void separate(final CCTerm lhs, final CCTerm rhs, final CCEquality diseq) {
+		final CCEquality reason = diseq.mDiseqReason;
+		/*
+		 * Check if this is a propagated equality. We need to check if the diseq reason
+		 * is asserted and that it is still the same equivalence class. This is because
+		 * the diseq reason is not reset on backtrack.
+		 */
+		if (reason != null && reason.getDecideStatus() == reason.negate()) {
+			if (reason.getLhs().getRepresentative() == lhs && reason.getRhs().getRepresentative() == rhs) {
+				return;
+			}
+			if (reason.getLhs().getRepresentative() == rhs && reason.getRhs().getRepresentative() == lhs) {
+				return;
+			}
+		}
+		final CCTermPairHash.Info info = mPairHash.getInfo(lhs, rhs);
+		assert info.mDiseq == null;
+
+		mUndoStack.push(new SepUndoInfo(diseq));
+		info.mDiseq = diseq;
 		/* Propagate inequalities */
-		for (final CCEquality.Entry eqentry : mLastInfo.mEqlits) {
+		for (final CCEquality.Entry eqentry : info.mEqlits) {
 			final CCEquality eq = eqentry.getCCEquality();
+			assert eq.getDecideStatus() == null || eq == diseq;
 			if (eq.getDecideStatus() == null) {
-				eq.mDiseqReason = atom;
+				eq.mDiseqReason = diseq;
 				addPending(eq.negate());
 			}
 		}
 	}
 
 	private void undoSep(final CCEquality atom) {
-		atom.mDiseqReason = null;
 		final CCTermPairHash.Info destInfo = mPairHash.getInfo(atom.getLhs().mRepStar, atom.getRhs().mRepStar);
-		if (destInfo != null && destInfo.mDiseq == atom) {
-			destInfo.mDiseq = null;
-		}
+		assert destInfo != null && destInfo.mDiseq == atom;
+		destInfo.mDiseq = null;
 	}
 
 	public Clause computeCycle(final CCEquality eq) {
@@ -1077,12 +1110,15 @@ public class CClosure implements ITheory {
 
 	@Override
 	public void decreasedDecideLevel(final int currentDecideLevel) {
-		// Nothing to do
+		final int mergeStackLevel = mDecideLevelToUndoStackSize.pop();
+		assert mDecideLevelToUndoStackSize.size() == currentDecideLevel;
+		backtrackStack(mergeStackLevel);
 	}
 
 	@Override
 	public void increasedDecideLevel(final int currentDecideLevel) {
-		// Nothing to do
+		mDecideLevelToUndoStackSize.push(mUndoStack.size());
+		assert mDecideLevelToUndoStackSize.size() == currentDecideLevel;
 	}
 
 	@Override
@@ -1202,15 +1238,21 @@ public class CClosure implements ITheory {
 	}
 
 	private void backtrackStack(final int todepth) {
-		while (mMerges.size() > todepth) {
-			final CCTerm top = mMerges.pop();
-			top.mRepStar.invertEqualEdges(this);
-			top.undoMerge(this, top.mEqualEdge);
+		while (mUndoStack.size() > todepth) {
+			final UndoInfo top = mUndoStack.pop();
+			if (top instanceof MergeUndoInfo) {
+				final CCTerm oldRep = ((MergeUndoInfo) top).getOldRep();
+				oldRep.mRepStar.invertEqualEdges(this);
+				oldRep.undoMerge(this, oldRep.mEqualEdge);
+			} else {
+				final CCEquality diseq = ((SepUndoInfo) top).getDiseq();
+				undoSep(diseq);
+			}
 		}
 	}
 
 	public int getStackDepth() {
-		return mMerges.size();
+		return mUndoStack.size();
 	}
 
 	@Override
@@ -1267,7 +1309,8 @@ public class CClosure implements ITheory {
 		assert t.mRepStar == t;
 		assert mPendingCongruences.isEmpty();
 		while (!t.mPairInfos.isEmpty()) {
-			mPairHash.removePairInfo(t.mPairInfos.iterator().next().getInfo());
+			final CCTermPairHash.Info info = t.mPairInfos.iterator().next().getInfo();
+			mPairHash.removePairInfo(info);
 		}
 		if (t.mSharedTerm != null) {
 			t.mSharedTerm = null;
@@ -1279,7 +1322,19 @@ public class CClosure implements ITheory {
 	}
 
 	@Override
+	public void backtrackAll() {
+		assert mDecideLevelToUndoStackSize.isEmpty();
+		backtrackStack(0);
+		mPendingLits.clear();
+		mRecheckOnBacktrackCongs.clear();
+		mRecheckOnBacktrackLits.clear();
+		mPendingCongruences.clear();
+	}
+
+	@Override
 	public void pop() {
+		assert mDecideLevelToUndoStackSize.isEmpty();
+		assert mUndoStack.isEmpty();
 		assert mRecheckOnBacktrackCongs.isEmpty();
 		assert mRecheckOnBacktrackLits.isEmpty();
 		assert mPendingCongruences.isEmpty();
@@ -1334,5 +1389,32 @@ public class CClosure implements ITheory {
 
 	void incMergeCount() {
 		++mMergeCount;
+	}
+
+	private static class UndoInfo {
+	}
+
+	private static class MergeUndoInfo extends UndoInfo {
+		final CCTerm mOldRep;
+
+		public MergeUndoInfo(final CCTerm oldRep) {
+			mOldRep = oldRep;
+		}
+
+		public CCTerm getOldRep() {
+			return mOldRep;
+		}
+	}
+
+	private static class SepUndoInfo extends UndoInfo {
+		CCEquality mDiseq;
+
+		public SepUndoInfo(final CCEquality diseq) {
+			mDiseq = diseq;
+		}
+
+		public CCEquality getDiseq() {
+			return mDiseq;
+		}
 	}
 }

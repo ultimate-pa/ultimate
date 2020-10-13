@@ -38,6 +38,7 @@ public class PatternScopeNotImplemented extends UnsupportedOperationException {
 
 	private static final long serialVersionUID = -8685511892002682076L;
 
+	@SuppressWarnings("rawtypes")
 	public PatternScopeNotImplemented(final Class<? extends SrParseScope> scopeClazz,
 			final Class<? extends PatternType> patternClazz) {
 		super(String.format("Scope %s not yet implemented for pattern %s", scopeClazz.getSimpleName(),

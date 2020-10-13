@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.IcfgCompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -89,8 +90,8 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		final BoogieIcfgContainer rootAnnot = (BoogieIcfgContainer) root;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		final CfgSmtToolkit csToolkit = rootAnnot.getCfgSmtToolkit();
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable());
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 
 		final Map<String, Set<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getProcedureErrorNodes();
@@ -99,10 +100,11 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
+		final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(mServices, csToolkit);
 		final TAwAFAsCegarLoop<IcfgEdge> cegarLoop =
 				new TAwAFAsCegarLoop<>(TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE, rootAnnot,
 						csToolkit, predicateFactory, taBenchmarks, taPrefs, errNodesOfAllProc, taPrefs.interpolation(),
-						taPrefs.computeHoareAnnotation(), mServices);
+						taPrefs.computeHoareAnnotation(), mServices, compositionFactory, IcfgEdge.class);
 
 		final Result result = cegarLoop.iterate();
 
@@ -149,7 +151,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
-	private void reportCounterexampleResult(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
+	private void reportCounterexampleResult(final IProgramExecution<IcfgEdge, Term> pe) {
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(pe, upreasons);
@@ -159,15 +161,15 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportUnproveableResult(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe,
+	private void reportUnproveableResult(final IProgramExecution<IcfgEdge, Term> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final BoogieIcfgLocation errorPP = getErrorPP(pe);
-		final UnprovableResult<IIcfgElement, IIcfgTransition<IcfgLocation>, Term> uknRes = new UnprovableResult<>(
-				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
+		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
+				errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
-	public BoogieIcfgLocation getErrorPP(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe) {
+	public BoogieIcfgLocation getErrorPP(final IProgramExecution<IcfgEdge, Term> pe) {
 		final int lastPosition = pe.getLength() - 1;
 		final IIcfgTransition<IcfgLocation> last = pe.getTraceElement(lastPosition).getTraceElement();
 		final BoogieIcfgLocation errorPP = (BoogieIcfgLocation) last.getTarget();

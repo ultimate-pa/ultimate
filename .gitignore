@@ -12,6 +12,8 @@
 /trunk/examples/svcomp/*
 /trunk/examples/ultbench
 /trunk/examples/ultbench/*
+trunk/examples/concurrent/bpl/VMCAI2021/generated/*.bpl
+trunk/examples/concurrent/bpl/VMCAI2021/generated/*.yml
 **/.metadata/*
 **/.settings/*
 **/target/*
@@ -281,4 +283,4 @@ hs_err_pid*
 releaseScripts/default/UReqCheck-linux/
 
 releaseScripts/default/UReqCheck-win32/
-/trunk/examples/Requirements/regression/failure-paths/*
+/trunk/examples/Requirements/failure-paths/*

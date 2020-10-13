@@ -98,7 +98,8 @@ public class BlockEncodingBacktranslator extends
 			throw new IllegalArgumentException("argument is not IcfgProgramExecution but " + oldPe.getClass());
 
 		}
-		final IcfgProgramExecution oldIcfgPe = ((IcfgProgramExecution) oldPe);
+		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> oldIcfgPe =
+				((IcfgProgramExecution<IIcfgTransition<IcfgLocation>>) oldPe);
 		final Map<TermVariable, Boolean>[] oldBranchEncoders = oldIcfgPe.getBranchEncoders();
 		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "wrong branchencoders";
 		assert checkCallStackSourceProgramExecution(mLogger,
@@ -145,8 +146,9 @@ public class BlockEncodingBacktranslator extends
 			newValuesMap.put(i, newValues.get(i));
 		}
 
-		final IcfgProgramExecution newPe = new IcfgProgramExecution(newTrace, newValuesMap,
-				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent());
+		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> newPe = new IcfgProgramExecution<>(newTrace,
+				newValuesMap, newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent(),
+				IcfgProgramExecution.getClassFromAtomicTraceElements(newTrace));
 		assert checkCallStackTargetProgramExecution(mLogger, newPe) : "callstack broke during translation";
 		return newPe;
 	}
@@ -250,8 +252,9 @@ public class BlockEncodingBacktranslator extends
 			final int breakpointIndex) {
 		final List<IIcfgTransition<IcfgLocation>> teList =
 				trace.stream().limit(breakpointIndex).map(a -> a.getTraceElement()).collect(Collectors.toList());
-		mLogger.fatal(new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider())
-				.formatProgramExecution(IcfgProgramExecution.create(teList, Collections.emptyMap())));
+		mLogger.fatal(
+				new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider<IIcfgTransition<IcfgLocation>>())
+						.formatProgramExecution(IcfgProgramExecution.create(teList, Collections.emptyMap())));
 	}
 
 	@Override

@@ -107,8 +107,9 @@ public class ParsedParameter {
 							opName, item.getType(), PreferenceType.KeyValue);
 					throw new AlreadySelectedException(msg);
 				}
+				// KeyValue types are retrieved with the first occurrence
+				continue;
 			}
-
 			applyCliSetting(opName, services, id, label, item);
 		}
 	}

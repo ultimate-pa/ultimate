@@ -41,24 +41,33 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndResponsePatternTU extends PatternType {
+public class BndResponsePatternTU extends PatternType<BndResponsePatternTU> {
 
-	public BndResponsePatternTU(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndResponsePatternTU(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
+	public BndResponsePatternTU create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new BndResponsePatternTU(scope, id, cdds, durations);
+	}
+
+	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		final SrParseScope scope = getScope();
-		// note: P and Q are reserved for scope, cdds are parsed in reverse order
+		assert cdds.length == 2 && durations.length == 1;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
 
 		if (scope instanceof SrParseScopeGlobally) {
 			final CounterTrace ct =
-					counterTrace(phaseT(), phase(R, BoundTypes.GREATER, c1), phase(S.negate()), phaseT());
+					counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phase(S.negate()), phaseT());
 			return Collections.singletonList(ct);
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
@@ -85,7 +94,7 @@ public class BndResponsePatternTU extends PatternType {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndResponsePatternTU rename(final String newName) {
 		return new BndResponsePatternTU(getScope(), newName, getCdds(), getDuration());
 	}
 

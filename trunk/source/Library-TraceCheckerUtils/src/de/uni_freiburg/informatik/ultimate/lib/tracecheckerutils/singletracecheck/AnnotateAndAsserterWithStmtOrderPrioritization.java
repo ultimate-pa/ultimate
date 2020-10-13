@@ -91,13 +91,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author musab@informatik.uni-freiburg.de
  */
 
-public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserter {
+public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> extends AnnotateAndAsserter<L> {
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
-			final NestedFormulas<Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks aaacb,
+			final NestedFormulas<L, Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks<L> aaacb,
 			final TraceCheckStatisticsGenerator tcbg, final AssertCodeBlockOrder assertCodeBlocksOrder,
 			final IUltimateServiceProvider services) {
 		super(mgdScriptTc, nestedSSA, aaacb, tcbg, services);

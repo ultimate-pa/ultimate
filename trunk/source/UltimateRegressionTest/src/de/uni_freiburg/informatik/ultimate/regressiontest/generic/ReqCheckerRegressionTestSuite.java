@@ -122,7 +122,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 					results++;
 				} else if (result instanceof ReqCheckFailResult) {
 					final ReqCheck check = ((ReqCheckFailResult<?>) result).getCheck();
-					final Set<String> ids = check.getIds();
+					final Set<String> ids = check.getReqIds();
 					assert check.getSpec().size() == 1;
 					final Spec spec = check.getSpec().iterator().next();
 					switch (spec) {

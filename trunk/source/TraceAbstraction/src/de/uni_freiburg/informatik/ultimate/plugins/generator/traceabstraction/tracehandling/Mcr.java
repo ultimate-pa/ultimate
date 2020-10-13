@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -12,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -22,11 +24,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrTraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -39,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -52,67 +52,65 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
+public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<L> {
 	private final ILogger mLogger;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataServices;
 	private final CfgSmtToolkit mToolkit;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
-	private final VpAlphabet<LETTER> mAlphabet;
-	private final IMcrResultProvider<LETTER> mResultProvider;
-	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final SimplificationTechnique mSimplificationTechnique;
+	private final VpAlphabet<L> mAlphabet;
+	private final IMcrResultProvider<L> mResultProvider;
 	private final IHoareTripleChecker mHoareTripleChecker;
+	private final IInterpolantProvider<L> mInterpolantProvider;
 
-	private final McrTraceCheckResult<LETTER> mResult;
+	private final McrTraceCheckResult<L> mResult;
 
 	public Mcr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
-			final Set<LETTER> alphabet, final IMcrResultProvider<LETTER> resultProvider)
-			throws AutomataLibraryException {
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<L> trace,
+			final Set<L> alphabet, final IMcrResultProvider<L> resultProvider,
+			final IInterpolantProvider<L> interpolantProvider) throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mServices = prefs.getUltimateServices();
 		mAutomataServices = new AutomataLibraryServices(mServices);
 		mAlphabet = new VpAlphabet<>(alphabet);
 		mToolkit = prefs.getCfgSmtToolkit();
-		mXnfConversionTechnique = prefs.getXnfConversionTechnique();
-		mSimplificationTechnique = prefs.getSimplificationTechnique();
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mResultProvider = resultProvider;
 		mHoareTripleChecker = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
 				TraceAbstractionPreferenceInitializer.HoareTripleChecks.MONOLITHIC, mToolkit, mPredicateUnifier);
+		mInterpolantProvider = interpolantProvider;
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);
 	}
 
-	private McrTraceCheckResult<LETTER> exploreInterleavings(final List<LETTER> initialTrace)
+	private McrTraceCheckResult<L> exploreInterleavings(final List<L> initialTrace)
 			throws AutomataLibraryException {
 		final ManagedScript managedScript = mToolkit.getManagedScript();
-		final McrAutomatonBuilder<LETTER> automatonBuilder =
-				new McrAutomatonBuilder<>(initialTrace, mPredicateUnifier, mEmptyStackStateFactory, mLogger, mAlphabet,
-						mServices, managedScript, mXnfConversionTechnique, mSimplificationTechnique);
+		final McrAutomatonBuilder<L> automatonBuilder = new McrAutomatonBuilder<>(initialTrace, mPredicateUnifier,
+				mEmptyStackStateFactory, mLogger, mAlphabet, mServices);
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, managedScript, mToolkit.getSymbolTable());
 		final PredicateFactoryRefinement factory = new PredicateFactoryRefinement(mServices, managedScript,
 				predicateFactory, false, Collections.emptySet());
-		final List<INestedWordAutomaton<LETTER, IPredicate>> automata = new ArrayList<>();
-		INestedWordAutomaton<LETTER, IPredicate> mhbAutomaton = automatonBuilder.buildMhbAutomaton(predicateFactory);
-		NestedRun<LETTER, ?> counterexample = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
+		final List<INestedWordAutomaton<L, IPredicate>> automata = new ArrayList<>();
+		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mhbAutomaton =
+				automatonBuilder.buildMhbAutomaton(predicateFactory);
+		NestedRun<L, ?> counterexample = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		int iteration = 0;
-		McrTraceCheckResult<LETTER> result = null;
+		McrTraceCheckResult<L> result = null;
 		while (counterexample != null) {
 			mLogger.info("---- MCR iteration " + iteration++ + " ----");
 			result = mResultProvider.getResult(counterexample);
-			final List<LETTER> trace = counterexample.getWord().asList();
+			final List<L> trace = counterexample.getWord().asList();
 			if (result.isCorrect() != LBool.UNSAT) {
 				// We found a feasible error trace
 				return result;
 			}
-			final INestedWordAutomaton<LETTER, IPredicate> automaton =
-					automatonBuilder.buildInterpolantAutomaton(trace, result.getQualifiedTracePredicates());
-			final DeterministicInterpolantAutomaton<LETTER> ipAutomaton = new DeterministicInterpolantAutomaton<>(
+			final INestedWordAutomaton<L, IPredicate> automaton = automatonBuilder.buildInterpolantAutomaton(trace,
+					Arrays.asList(result.getInterpolants()), mInterpolantProvider);
+			final DeterministicInterpolantAutomaton<L> ipAutomaton = new DeterministicInterpolantAutomaton<>(
 					mServices, mToolkit, mHoareTripleChecker, automaton, mPredicateUnifier, false, false);
 			// TODO: Add ipAutomaton instead?
 			automata.add(automaton);
@@ -124,14 +122,14 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return result;
 	}
 
-	private NestedWordAutomaton<LETTER, IPredicate>
-			unionAutomata(final List<INestedWordAutomaton<LETTER, IPredicate>> automata) {
-		final NestedWordAutomaton<LETTER, IPredicate> result =
+	private NestedWordAutomaton<L, IPredicate>
+			unionAutomata(final List<INestedWordAutomaton<L, IPredicate>> automata) {
+		final NestedWordAutomaton<L, IPredicate> result =
 				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackStateFactory);
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		result.addState(true, false, truePredicate);
 		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		for (final INestedWordAutomaton<LETTER, IPredicate> a : automata) {
+		for (final INestedWordAutomaton<L, IPredicate> a : automata) {
 			final LinkedList<IPredicate> queue = new LinkedList<>();
 			final Set<IPredicate> visited = new HashSet<>();
 			queue.add(truePredicate);
@@ -140,7 +138,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				if (!visited.add(state)) {
 					continue;
 				}
-				for (final OutgoingInternalTransition<LETTER, IPredicate> edge : a.internalSuccessors(state)) {
+				for (final OutgoingInternalTransition<L, IPredicate> edge : a.internalSuccessors(state)) {
 					final IPredicate succ = edge.getSucc();
 					if (!result.contains(succ)) {
 						result.addState(false, false, succ);
@@ -153,12 +151,12 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return result;
 	}
 
-	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
+	public NestedWordAutomaton<L, IPredicate> getAutomaton() {
 		return mResult.getAutomaton();
 	}
 
 	@Override
-	public List<LETTER> getTrace() {
+	public List<L> getTrace() {
 		return mResult.getTrace();
 	}
 
@@ -216,7 +214,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		return mResult.getExecution();
 	}
 

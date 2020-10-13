@@ -122,7 +122,8 @@ public class MetaTraceTransformer<LETTER extends IIcfgTransition<?>> {
 				 */
 				switch (mtam) {
 				case ONLY_AT_FIRST_LOOP_ENTRY:
-					actualInterpolants = getInductiveFirstEntryOnly(actualInterpolants, i, loopSize.getSecond());
+					actualInterpolants = getInductiveFirstEntryOnly(actualInterpolants, i,
+							i + loopSize.getSecond() - loopSize.getFirst());
 					break;
 				case INVARIANT:
 					actualInterpolants = getInductiveInvariant(actualInterpolants, i, loopSize.getSecond());
@@ -130,7 +131,7 @@ public class MetaTraceTransformer<LETTER extends IIcfgTransition<?>> {
 				default:
 					throw new UnsupportedOperationException();
 				}
-				i = loopSize.getSecond() - 1;
+				i = loopSize.getSecond() - loopSize.getFirst() + i;
 			} else {
 				final IPredicate prevInterpol;
 				/*

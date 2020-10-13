@@ -37,12 +37,10 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -51,28 +49,28 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class IcfgProgramExecutionBuilder {
+public class IcfgProgramExecutionBuilder<L extends IAction> {
 
 	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
-	private final NestedWord<? extends IAction> mTrace;
-	private final Map<IProgramVar, Map<Integer, Term>> mvar2pos2value;
-	private final RelevantVariables mRelevantVariables;
-	private IcfgProgramExecution mIcfgProgramExecution;
+	private final NestedWord<L> mTrace;
+	private final Map<IProgramVar, Map<Integer, Term>> mVar2Pos2Value;
+	private final RelevantVariables<L> mRelevantVariables;
+	private IcfgProgramExecution<L> mIcfgProgramExecution;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
 
-	public IcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable,
-			final NestedWord<? extends IAction> trace, final RelevantVariables relevantVariables,
-			final IIcfgSymbolTable symbolTable) {
+	@SuppressWarnings("unchecked")
+	public IcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable, final NestedWord<L> trace,
+			final RelevantVariables<L> relevantVariables) {
 		super();
 		mModifiableGlobalVariableManager = modifiableGlobalsTable;
 		mTrace = trace;
-		mvar2pos2value = new HashMap<>();
+		mVar2Pos2Value = new HashMap<>();
 		mRelevantVariables = relevantVariables;
 		mBranchEncoders = new Map[mTrace.length()];
 		mIcfgProgramExecution = null;
 	}
 
-	public IcfgProgramExecution getIcfgProgramExecution() {
+	public IcfgProgramExecution<L> getIcfgProgramExecution() {
 		if (mIcfgProgramExecution == null) {
 			mIcfgProgramExecution = computeIcfgProgramExecution();
 		}
@@ -98,9 +96,6 @@ public class IcfgProgramExecutionBuilder {
 					throw new AssertionError("unknown var");
 				}
 			} else {
-				// TransFormula locVarAssign =
-				// mTrace.getSymbolAt(position).getTransitionFormula();
-				// result = locVarAssign.getAssignedVars().contains(bv);
 				result = callee.equals(bv.getProcedure());
 			}
 		} else {
@@ -112,11 +107,7 @@ public class IcfgProgramExecutionBuilder {
 	void addValueAtVarAssignmentPosition(final IProgramVar bv, final int index, final Term value) {
 		assert index >= -1;
 		assert index == -1 || isReAssigned(bv, index) : "oldVar in procedure where it is not modified?";
-		Map<Integer, Term> pos2value = mvar2pos2value.get(bv);
-		if (pos2value == null) {
-			pos2value = new HashMap<>();
-			mvar2pos2value.put(bv, pos2value);
-		}
+		final Map<Integer, Term> pos2value = mVar2Pos2Value.computeIfAbsent(bv, a -> new HashMap<>());
 		assert !pos2value.containsKey(index);
 		pos2value.put(index, value);
 	}
@@ -153,7 +144,7 @@ public class IcfgProgramExecutionBuilder {
 		for (final IProgramVar bv : vars) {
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				final int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
-				final Term value = mvar2pos2value.get(bv).get(assignPos);
+				final Term value = mVar2Pos2Value.get(bv).get(assignPos);
 				if (value != null) {
 					result.put(bv, value);
 				}
@@ -162,7 +153,7 @@ public class IcfgProgramExecutionBuilder {
 		return result;
 	}
 
-	private IcfgProgramExecution computeIcfgProgramExecution() {
+	private IcfgProgramExecution<L> computeIcfgProgramExecution() {
 		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = new HashMap<>();
 		for (int i = 0; i < mTrace.length(); i++) {
 			final Map<IProgramVar, Term> varValAtPos = varValAtPos(i);
@@ -174,7 +165,7 @@ public class IcfgProgramExecutionBuilder {
 			final ProgramState<Term> pps = new ProgramState<>(variable2Values, Term.class);
 			partialProgramStateMapping.put(i, pps);
 		}
-		return IcfgProgramExecution.create(mTrace.asList().stream().map(a -> (IcfgEdge) a).collect(Collectors.toList()),
+		return IcfgProgramExecution.create(mTrace.asList().stream().collect(Collectors.toList()),
 				partialProgramStateMapping, mBranchEncoders);
 	}
 

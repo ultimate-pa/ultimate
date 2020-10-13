@@ -23,12 +23,12 @@ public class ReqInOutGuesser {
 	private final Map<String, InitializationPattern> mVar2InitPattern;
 	private final List<InitializationPattern> mNewInitPatterns;
 	private final Map<String, Integer> mId2Bounds;
-	private final List<PatternType> mNewRequirements;
-	private final Set<PatternType> mRequirementsWithTransformationErrors;
+	private final List<PatternType<?>> mNewRequirements;
+	private final Set<PatternType<?>> mRequirementsWithTransformationErrors;
 	private final PeaResultUtil mResultUtil;
 
 	public ReqInOutGuesser(final ILogger logger, final IUltimateServiceProvider services,
-			final List<InitializationPattern> oldInitPatterns, final List<PatternType> reqPatterns) {
+			final List<InitializationPattern> oldInitPatterns, final List<PatternType<?>> reqPatterns) {
 		mLogger = logger;
 		mVar2InitPattern = new HashMap<>();
 		mId2Bounds = new HashMap<>();
@@ -58,7 +58,7 @@ public class ReqInOutGuesser {
 			mNewRequirements = reqPatterns;
 		} else {
 			mNewRequirements = new ArrayList<>(reqPatterns.size());
-			for (final PatternType pattern : reqPatterns) {
+			for (final PatternType<?> pattern : reqPatterns) {
 				if (mRequirementsWithTransformationErrors.contains(pattern)) {
 					continue;
 				}
@@ -68,7 +68,7 @@ public class ReqInOutGuesser {
 	}
 
 	private List<InitializationPattern> generateNewInitializationPattern(
-			final Collection<InitializationPattern> oldInitPatterns, final List<PatternType> reqPatterns) {
+			final Collection<InitializationPattern> oldInitPatterns, final List<PatternType<?>> reqPatterns) {
 		final Set<String> allVars = getAllVariables(oldInitPatterns);
 		final Set<String> effectVars = getEffectVariables(reqPatterns);
 		final Set<String> precondVars = getPreconditionVars(reqPatterns);
@@ -101,18 +101,18 @@ public class ReqInOutGuesser {
 		return newInitPattern;
 	}
 
-	private Set<String> getEffectVariables(final List<PatternType> oldPatterns) {
+	private Set<String> getEffectVariables(final List<PatternType<?>> oldPatterns) {
 		final Set<String> effectVars = new HashSet<>();
-		for (final PatternType pattern : oldPatterns) {
+		for (final PatternType<?> pattern : oldPatterns) {
 			effectVars.addAll(
 					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern, mId2Bounds));
 		}
 		return effectVars;
 	}
 
-	private Set<String> getPreconditionVars(final List<PatternType> oldPatterns) {
+	private Set<String> getPreconditionVars(final List<PatternType<?>> oldPatterns) {
 		final Set<String> precondVars = new HashSet<>();
-		for (final PatternType pattern : oldPatterns) {
+		for (final PatternType<?> pattern : oldPatterns) {
 			final Set<String> vars =
 					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getAllVariables, pattern, mId2Bounds);
 			vars.removeAll(
@@ -123,7 +123,7 @@ public class ReqInOutGuesser {
 	}
 
 	private Set<String> reportTransformationErrorWrapper(
-			final BiFunction<PatternType, Map<String, Integer>, Set<String>> fun, final PatternType pattern,
+			final BiFunction<PatternType<?>, Map<String, Integer>, Set<String>> fun, final PatternType<?> pattern,
 			final Map<String, Integer> id2Bounds) {
 		if (mRequirementsWithTransformationErrors.contains(pattern)) {
 			// already broken
@@ -141,7 +141,7 @@ public class ReqInOutGuesser {
 
 	private static Set<String> getAllVariables(final Collection<InitializationPattern> oldPatterns) {
 		final Set<String> effectVars = new HashSet<>();
-		for (final PatternType pattern : oldPatterns) {
+		for (final PatternType<?> pattern : oldPatterns) {
 			effectVars.add(((InitializationPattern) pattern).getId());
 		}
 		return effectVars;
@@ -163,7 +163,7 @@ public class ReqInOutGuesser {
 	/**
 	 * @return valid non-initialization patterns (aka "real" requirements)
 	 */
-	public List<PatternType> getRequirements() {
+	public List<PatternType<?>> getRequirements() {
 		return mNewRequirements;
 	}
 

@@ -30,8 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -53,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUti
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -160,12 +157,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		boolean someVariableWasEliminated = true;
 		// an elimination may allow further eliminations
 		// repeat the following until no variable was eliminated
-		boolean allowIntegerDivisibilityAssumptions = false;
 		Set<TermVariable> freeVarsInResultAtoms = SmtUtils.getFreeVars(term2relation.keySet());
 		do {
-			if (!someVariableWasEliminated) {
-				allowIntegerDivisibilityAssumptions = true;
-			}
 			someVariableWasEliminated = false;
 			final Iterator<TermVariable> it = eliminatees.iterator();
 			while (it.hasNext()) {
@@ -181,20 +174,15 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				}
 				final LinkedHashMap<Term, PolynomialRelation> withoutTv;
 
-				if (allowIntegerDivisibilityAssumptions) {
-					withoutTv = tryToEliminateOneVarAllowAssumptions(mScript, quantifier, term2relation, tv);
-				} else {
-					withoutTv = tryToEliminateOneVar(mScript, quantifier, term2relation, tv);
-				}
+				withoutTv = tryToEliminateOneVar(mScript, quantifier, term2relation, tv);
 				if (withoutTv != null) {
 					term2relation = withoutTv;
 					freeVarsInResultAtoms = SmtUtils.getFreeVars(term2relation.keySet());
 					it.remove();
 					someVariableWasEliminated = true;
-					allowIntegerDivisibilityAssumptions = false;
 				}
 			}
-		} while (someVariableWasEliminated || !allowIntegerDivisibilityAssumptions);
+		} while (someVariableWasEliminated);
 		return term2relation.keySet().toArray(new Term[term2relation.keySet().size()]);
 	}
 
@@ -210,67 +198,18 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		}
 	}
 
-	private LinkedHashMap<Term, PolynomialRelation> tryToEliminateOneVarAllowAssumptions(final Script script,
-			final int quantifier, final LinkedHashMap<Term, PolynomialRelation> term2relation, final TermVariable tv) {
-		final Map<EnumSet<AssumptionForSolvability>, Pair<SolvedBinaryRelation, Term>> map = tryToSolveAllowAssumptions(
-				mScript, quantifier, term2relation, tv);
-		if (map.isEmpty()) {
-			return null;
-		} else {
-			final Pair<SolvedBinaryRelation, Term> solution = map
-					.get(EnumSet.of(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT));
-			if (solution == null) {
-				throw new UnsupportedOperationException("Not yet implemented: DER support for " + map.keySet());
-			} else {
-				final LinkedHashMap<Term, PolynomialRelation> result = replace(script, term2relation, solution.getFirst(),
-						solution.getSecond());
-				final Term moduloConstraint = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier,
-						solution.getFirst().getAssumptionsMap()
-								.get(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT));
-				result.put(moduloConstraint, null);
-				return result;
-				// throw new AssertionError("Integer divisibility " + sbr.getAssumptionsMap());
-			}
-		}
-	}
-
-
 	private Pair<Term, SolvedBinaryRelation> tryToSolveWithoutAssumptionsAndUpdateEntries(final Script script,
 			final int quantifier, final LinkedHashMap<Term, PolynomialRelation> term2relation, final TermVariable tv) {
 		for (final Entry<Term, PolynomialRelation> entry : term2relation.entrySet()) {
 			if (Arrays.asList(entry.getKey().getFreeVars()).contains(tv)) {
 				SolvedBinaryRelation sbr;
 				sbr = tryToSolveAndUpdateEntry(script, quantifier, tv, entry);
-				if (sbr != null && sbr.getAssumptionsMap().isEmpty()) {
+				if (sbr != null) {
 					return new Pair<Term, SolvedBinaryRelation>(entry.getKey(), sbr);
 				}
 			}
 		}
 		return null;
-	}
-
-	private Map<EnumSet<AssumptionForSolvability>, Pair<SolvedBinaryRelation, Term>> tryToSolveAllowAssumptions(
-			final Script script, final int quantifier, final LinkedHashMap<Term, PolynomialRelation> term2relation,
-			final TermVariable tv) {
-		final Map<EnumSet<AssumptionForSolvability>, Pair<SolvedBinaryRelation, Term>> result = new HashMap<>();
-		for (final Entry<Term, PolynomialRelation> entry : term2relation.entrySet()) {
-			if (entry.getValue() != null) {
-				// we must use this method only in a second round, all
-				// AffineRelations have been cached
-				if (Arrays.asList(entry.getKey().getFreeVars()).contains(tv)) {
-					final SolvedBinaryRelation sbr = entry.getValue().solveForSubject(mScript, tv);
-					if (sbr != null) {
-						final Map<AssumptionForSolvability, Term> assumptions = sbr.getAssumptionsMap();
-						if (assumptions.isEmpty()) {
-							throw new AssertionError("Assumption-free cases should have been handled before");
-						}
-						// we overwrite existing sbr with same assumptions
-						result.put(EnumSet.copyOf(assumptions.keySet()), new Pair<>(sbr, entry.getKey()));
-					}
-				}
-			}
-		}
-		return result;
 	}
 
 

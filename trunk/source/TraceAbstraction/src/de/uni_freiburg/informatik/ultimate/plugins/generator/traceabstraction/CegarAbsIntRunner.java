@@ -82,9 +82,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -732,13 +732,12 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	public static final class AbsIntInterpolantGenerator<LETTER extends IAction>
-			extends AbsIntBaseInterpolantGenerator<LETTER> {
+	public static final class AbsIntInterpolantGenerator<L extends IAction> extends AbsIntBaseInterpolantGenerator<L> {
 
 		private final IPredicate[] mInterpolants;
 		private final CachingHoareTripleChecker mHtc;
 
-		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<LETTER> cex,
+		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<L> cex,
 				final IPredicate[] sequence, final CachingHoareTripleChecker htc, final AbsIntPredicate<?> preCond,
 				final AbsIntPredicate<?> postCond) {
 			super(predicateUnifier, cex, preCond, postCond, new InterpolantComputationStatus());
@@ -778,7 +777,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		@Override
-		public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+		public IProgramExecution<L, Term> getRcfgProgramExecution() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -799,12 +798,12 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	}
 
-	private static final class AbsIntFailedInterpolantGenerator<LETTER extends IAction>
-			extends AbsIntBaseInterpolantGenerator<LETTER> {
+	private static final class AbsIntFailedInterpolantGenerator<L extends IAction>
+			extends AbsIntBaseInterpolantGenerator<L> {
 
 		private final TraceCheckReasonUnknown mReason;
 
-		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<LETTER> cex,
+		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<L> cex,
 				final ItpErrorStatus status, final Exception ex) {
 			super(predicateUnifier, cex, null, null, new InterpolantComputationStatus(status, ex));
 			mReason = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, ex,
@@ -843,7 +842,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		@Override
-		public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+		public IProgramExecution<L, Term> getRcfgProgramExecution() {
 			throw new UnsupportedOperationException();
 		}
 

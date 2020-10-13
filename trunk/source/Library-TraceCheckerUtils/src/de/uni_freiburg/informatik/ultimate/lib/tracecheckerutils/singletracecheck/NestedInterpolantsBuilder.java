@@ -28,13 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
 import java.io.PrintWriter;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -76,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ConstantTermNormali
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
-public class NestedInterpolantsBuilder {
+public class NestedInterpolantsBuilder<L extends IAction> {
 
 	// TODO 2017-10-13 Matthias: When Jochen implement support for "@diff" this
 	// probably has to become a parameter for this class.
@@ -102,7 +103,7 @@ public class NestedInterpolantsBuilder {
 
 	// private TAPreferences mPref = null;
 
-	private final NestedFormulas<Term, Term> mAnnotSSA;
+	private final NestedFormulas<L, Term, Term> mAnnotSSA;
 
 	private final IPredicateUnifier mPredicateUnifier;
 	private final BasicPredicateFactory mPredicateFactory;
@@ -117,11 +118,11 @@ public class NestedInterpolantsBuilder {
 
 	private int mStartOfCurrentSubtree;
 
-	private final NestedWord<? extends IAction> mTrace;
+	private final NestedWord<L> mTrace;
 
 	private int mStackHeightAtLastInterpolatedPosition;
 
-	private Stack<Integer> mStartOfSubtreeStack;
+	private Deque<Integer> mStartOfSubtreeStack;
 
 	private final boolean mTreeInterpolation;
 
@@ -130,12 +131,11 @@ public class NestedInterpolantsBuilder {
 	private final boolean mInstantiateArrayExt;
 
 	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckLock scriptLockOwner,
-			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> constants2BoogieVar,
+			final NestedFormulas<L, Term, Term> annotatdSsa, final Map<Term, IProgramVar> constants2BoogieVar,
 			final IPredicateUnifier predicateBuilder, final BasicPredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
-			final IUltimateServiceProvider services, final TraceCheck<? extends IAction> traceCheck,
-			final ManagedScript mgdScriptCfg, final boolean instantiateArrayExt,
-			final SimplificationTechnique simplificationTechnique,
+			final IUltimateServiceProvider services, final TraceCheck<L> traceCheck, final ManagedScript mgdScriptCfg,
+			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
@@ -179,7 +179,7 @@ public class NestedInterpolantsBuilder {
 		mTreeStructure = new ArrayList<>();
 		mCraigInt2interpolantIndex = new ArrayList<>();
 		mStartOfCurrentSubtree = 0;
-		mStartOfSubtreeStack = new Stack<>();
+		mStartOfSubtreeStack = new ArrayDeque<>();
 		mStackHeightAtLastInterpolatedPosition = 0;
 		boolean startNewFormula = true;
 

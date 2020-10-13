@@ -74,7 +74,7 @@ public class UltimateChecker extends CodeChecker {
 	 * Given an error trace with the corresponding interpolants, then it modifies the graph accordingly.
 	 */
 	@Override
-	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
+	public boolean codeCheck(final NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot) {
 
 		// Debug The Error Trace and the corresponding list of interpolants.
@@ -111,7 +111,7 @@ public class UltimateChecker extends CodeChecker {
 		final AppEdge[] oldInEdges = oldNode.getIncomingEdges().toArray(new AppEdge[] {});
 		for (final AppEdge oldInEdge : oldInEdges) {
 			final AnnotatedProgramPoint source = oldInEdge.getSource();
-			final IIcfgTransition<?> statement = oldInEdge.getStatement();
+			final IIcfgTransition<IcfgLocation> statement = oldInEdge.getStatement();
 
 			// deal with self loops elsewhere
 			if (source.equals(oldNode)) {
@@ -135,7 +135,7 @@ public class UltimateChecker extends CodeChecker {
 		final AppEdge[] oldOutEdges = oldNode.getOutgoingEdges().toArray(new AppEdge[] {});
 		for (final AppEdge oldOutEdge : oldOutEdges) {
 			final AnnotatedProgramPoint target = oldOutEdge.getTarget();
-			final IIcfgTransition<?> statement = oldOutEdge.getStatement();
+			final IIcfgTransition<IcfgLocation> statement = oldOutEdge.getStatement();
 
 			// deal with self loops elsewhere
 			if (target.equals(oldNode)) {
@@ -157,7 +157,7 @@ public class UltimateChecker extends CodeChecker {
 		// deal with self loops
 		for (final AppEdge oldOutEdge : oldOutEdges) {
 			final AnnotatedProgramPoint target = oldOutEdge.getTarget();
-			final IIcfgTransition<?> statement = oldOutEdge.getStatement();
+			final IIcfgTransition<IcfgLocation> statement = oldOutEdge.getStatement();
 
 			// already dealt with non self loops and disconnected those edges
 			if (target == null) {
@@ -194,8 +194,8 @@ public class UltimateChecker extends CodeChecker {
 		}
 	}
 
-	protected boolean connectOutgoingIfSat(final AnnotatedProgramPoint source, final IIcfgTransition<?> statement,
-			final AnnotatedProgramPoint target) {
+	protected boolean connectOutgoingIfSat(final AnnotatedProgramPoint source,
+			final IIcfgTransition<IcfgLocation> statement, final AnnotatedProgramPoint target) {
 		if (isSatEdge(source.getPredicate(), statement, target.getPredicate())) {
 			source.connectOutgoing(statement, target);
 			return true;

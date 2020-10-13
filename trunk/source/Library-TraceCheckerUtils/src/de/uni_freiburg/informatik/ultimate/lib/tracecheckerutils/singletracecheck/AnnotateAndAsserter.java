@@ -44,24 +44,24 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AnnotateAndAsserter {
+public class AnnotateAndAsserter<L extends IAction> {
 
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 
 	protected final ManagedScript mMgdScriptTc;
-	protected final NestedWord<? extends IAction> mTrace;
+	protected final NestedWord<L> mTrace;
 
 	protected LBool mSatisfiable;
-	protected final NestedFormulas<Term, Term> mSSA;
-	protected ModifiableNestedFormulas<Term, Term> mAnnotSSA;
+	protected final NestedFormulas<L, Term, Term> mSSA;
+	protected ModifiableNestedFormulas<L, Term, Term> mAnnotSSA;
 
-	protected final AnnotateAndAssertCodeBlocks mAnnotateAndAssertCodeBlocks;
+	protected final AnnotateAndAssertCodeBlocks<L> mAnnotateAndAssertCodeBlocks;
 
 	protected final TraceCheckStatisticsGenerator mTcbg;
 
-	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<Term, Term> nestedSSA,
-			final AnnotateAndAssertCodeBlocks aaacb, final TraceCheckStatisticsGenerator tcbg,
+	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
+			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
 			final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
@@ -140,7 +140,7 @@ public class AnnotateAndAsserter {
 		return mSatisfiable;
 	}
 
-	public NestedFormulas<Term, Term> getAnnotatedSsa() {
+	public NestedFormulas<L, Term, Term> getAnnotatedSsa() {
 		return mAnnotSSA;
 	}
 

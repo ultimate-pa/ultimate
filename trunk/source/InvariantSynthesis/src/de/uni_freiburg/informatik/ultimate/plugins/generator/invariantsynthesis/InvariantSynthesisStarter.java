@@ -68,8 +68,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -95,7 +95,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
-public class InvariantSynthesisStarter {
+public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -419,7 +419,7 @@ public class InvariantSynthesisStarter {
 		}
 	}
 
-	private void reportUnproveableResult(final IcfgProgramExecution pe,
+	private void reportUnproveableResult(final IcfgProgramExecution<L> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
@@ -441,7 +441,8 @@ public class InvariantSynthesisStarter {
 		return mRootOfNewModel;
 	}
 
-	public static IcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
+	public static <L extends IIcfgTransition<?>> IcfgLocation
+			getErrorPP(final IcfgProgramExecution<L> rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		return last.getTarget();

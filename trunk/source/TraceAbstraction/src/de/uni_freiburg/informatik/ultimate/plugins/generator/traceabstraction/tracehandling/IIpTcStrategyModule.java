@@ -32,22 +32,22 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 /**
  * An {@link IIpTcStrategyModule} acts as a constructor for an {@link IInterpolatingTraceCheck} (<b>I</b>nter<b>p</b>
  * olating<b>T</b>race<b>c</b>heck) used in {@link IRefinementStrategy}s.
- * 
+ *
  * Usually, {@link IInterpolatingTraceCheck} implementations do all their work directly in the constructor to avoid
  * creating mutable state. Hence, these wrapper classes are necessary to allow an {@link IRefinementStrategy} to create
  * an {@link IInterpolatingTraceCheck}s on demand.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <T>
  *            The actual {@link IInterpolatingTraceCheck} that is constructed by this module.
- * @param <LETTER>
+ * @param <L>
  *            The type of Icfg transition for which this strategy is used.
- * 
+ *
  * @see IIpgStrategyModule
  * @see ITraceCheckStrategyModule
  */
-public interface IIpTcStrategyModule<T extends IInterpolatingTraceCheck<LETTER>, LETTER extends IAction>
-		extends IIpgStrategyModule<T, LETTER>, ITraceCheckStrategyModule<T> {
+public interface IIpTcStrategyModule<T extends IInterpolatingTraceCheck<L>, L extends IAction>
+		extends IIpgStrategyModule<T, L>, ITraceCheckStrategyModule<L, T> {
 	// only for grouping, do not extend!
 }

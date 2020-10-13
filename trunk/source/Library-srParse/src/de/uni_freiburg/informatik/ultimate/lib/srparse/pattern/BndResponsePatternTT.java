@@ -36,23 +36,32 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at
- * least "c2" time units
+ * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at least
+ * "c2" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndResponsePatternTT extends PatternType {
+public class BndResponsePatternTT extends PatternType<BndResponsePatternTT> {
 
-	public BndResponsePatternTT(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndResponsePatternTT(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
+	public BndResponsePatternTT create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new BndResponsePatternTT(scope, id, cdds, durations);
+	}
+
+	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		final SrParseScope scope = getScope();
-		// note: P and Q are reserved for scope, cdds are parsed in reverse order
+		assert cdds.length == 2 && durations.length == 2;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
@@ -89,7 +98,7 @@ public class BndResponsePatternTT extends PatternType {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public BndResponsePatternTT rename(final String newName) {
 		return new BndResponsePatternTT(getScope(), newName, getCdds(), getDuration());
 	}
 

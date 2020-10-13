@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends InterpolatingTraceCheck<LETTER> {
+public class InterpolatingTraceCheckCraig<L extends IAction> extends InterpolatingTraceCheck<L> {
 
 	private final boolean mInstantiateArrayExt;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
@@ -76,7 +76,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 	 * the context to which the return leads the trace.
 	 */
 	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
 			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript mgdScriptTc, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
@@ -130,7 +130,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 	}
 
 	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
 			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
@@ -292,7 +292,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 		if (mInterpolants != null) {
 			throw new AssertionError("You already computed interpolants");
 		}
-		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckLock,
+		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique, mXnfConversionTechnique);
@@ -323,7 +323,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 		final Set<Integer> newInterpolatedPositions =
 				interpolatedPositionsForSubtraces(interpolatedPositions, nonPendingCallPositions);
 
-		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckLock,
+		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				newInterpolatedPositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique, mXnfConversionTechnique);
@@ -334,7 +334,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 		for (final Integer nonPendingCall : nonPendingCallPositions) {
 			// compute subtrace from to call to corresponding return
 			final int returnPosition = mTrace.getReturnPosition(nonPendingCall);
-			final NestedWord<LETTER> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition);
+			final NestedWord<L> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition);
 
 			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getSucceedingProcedure();
@@ -375,7 +375,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 			mLogger.info("Compute interpolants for subsequence at non-pending call position " + nonPendingCall);
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this traceCheck
-			final InterpolatingTraceCheckCraig<LETTER> tc = new InterpolatingTraceCheckCraig<>(precondition,
+			final InterpolatingTraceCheckCraig<L> tc = new InterpolatingTraceCheckCraig<>(precondition,
 					interpolantAtReturnPosition, pendingContexts, subtrace, null, mServices, mCsToolkit, mTcSmtManager,
 					mPredicateFactory, mPredicateUnifier, mAssertCodeBlockOrder, false,
 					mTraceCheckBenchmarkGenerator.isCollectingInterpolantSequenceStatistics(),
@@ -456,11 +456,13 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 
 	/**
 	 * A {@link RuntimeException} that can be thrown when a nested trace check fails.
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
 	private static final class NestedTraceCheckException extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+
 		public NestedTraceCheckException(final String message, final Throwable cause) {
 			super(message, cause);
 		}

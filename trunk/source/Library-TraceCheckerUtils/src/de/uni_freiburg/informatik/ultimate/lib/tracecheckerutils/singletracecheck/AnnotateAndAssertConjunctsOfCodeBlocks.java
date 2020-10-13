@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -52,14 +53,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Matthias Heizmann
  *
  */
-public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCodeBlocks {
+public class AnnotateAndAssertConjunctsOfCodeBlocks<L extends IAction> extends AnnotateAndAssertCodeBlocks<L> {
 
-	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
+	protected final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	private final Map<Term, Term> mAnnotated2Original = new HashMap<>();
 	private final SplitEqualityMapping mSplitEqualityMapping = new SplitEqualityMapping();
 	private final ManagedScript mCsToolkitPredicates;
 
-	private final boolean mSplitEqualities = true;
+	private static final boolean SPLIT_EQUALITIES = true;
 
 	/**
 	 * @param mgdScriptTc
@@ -70,8 +71,8 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 *            Script that was used for building the CFG
 	 */
 	public AnnotateAndAssertConjunctsOfCodeBlocks(final ManagedScript mgdScriptTc, final TraceCheckLock scriptLockOwner,
-			final NestedFormulas<Term, Term> nestedSSA,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedFormulas, final ILogger logger,
+			final NestedFormulas<L, Term, Term> nestedSSA,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedFormulas, final ILogger logger,
 			final ManagedScript mgdScriptCfg) {
 		super(mgdScriptTc, scriptLockOwner, nestedSSA, logger);
 		mNestedFormulas = nestedFormulas;
@@ -103,7 +104,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 		for (int i = 0; i < originalConjuncts.length; i++) {
 			final Term originalConjunct = originalConjuncts[i];
 			final Term indexedConjunct = indexedConjuncts[i];
-			if (mSplitEqualities) {
+			if (SPLIT_EQUALITIES) {
 				final BinaryNumericRelation originalConjunctBnr = convertToBinaryNumericEquality(originalConjunct);
 				if (originalConjunctBnr != null) {
 					final BinaryNumericRelation indexedConjunctBnr = convertToBinaryNumericEquality(indexedConjunct);

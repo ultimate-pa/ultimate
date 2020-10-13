@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -46,14 +45,12 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUti
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Case;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SupportingTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -263,18 +260,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		return true;
 	}
 
-	private static Xnf getXnf(final int quantifier) {
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			return Xnf.DNF;
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			return Xnf.CNF;
-		} else {
-			throw new AssertionError();
-		}
-	}
 
-
-	public static SolvedBinaryRelation tryPlr(final Script script, final int quantifier, final TermVariable eliminatee, final Term atom) {
+	public static SolvedBinaryRelation tryPlr(final Script script, final int quantifier, final TermVariable eliminatee,
+			final Term atom) {
 		final Term rightHandSide;
 		if (occursPositive(eliminatee, atom)) {
 			rightHandSide = QuantifierUtils.negateIfUniversal(script, quantifier, script.term("true"));
@@ -284,7 +272,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			return null;
 		}
 		final RelationSymbol relationSymbol = QuantifierUtils.getDerOperator(quantifier);
-		return new SolvedBinaryRelation(eliminatee, rightHandSide, relationSymbol, Collections.emptyMap(), null);
+		return new SolvedBinaryRelation(eliminatee, rightHandSide, relationSymbol);
 	}
 
 	private static boolean occursPositive(final TermVariable eliminatee, final Term atom) {
@@ -371,11 +359,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			if (sfs == null) {
 				return null;
 			}
-			if (!sfs.getAssumptionsMap().isEmpty()) {
-				return null;
-			}
 			if (SolveForSubjectUtils.isVariableDivCaptured(sfs, bannedForDivCapture)) {
-				return null;
+				throw new AssertionError("cannot divCaputure with simple solveForSubject");
 			}
 			if (QuantifierUtils.isDerRelationSymbol(quantifier, sfs.getRelationSymbol())) {
 				return sfs;
@@ -389,12 +374,6 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				final Term[] dualJuncts, final Pair<Integer, SolvedBinaryRelation> pair) {
 			final List<Term> dualJunctsResult = new ArrayList<>();
 			final SolvedBinaryRelation sbr = pair.getSecond();
-			if (!sbr.getAssumptionsMap().isEmpty()) {
-				for (final Entry<AssumptionForSolvability, Term> entry : sbr.getAssumptionsMap().entrySet()) {
-					dualJunctsResult.add(QuantifierUtils.negateIfUniversal(mgdScript.getScript(), et.getQuantifier(),
-							entry.getValue()));
-				}
-			}
 			final Term dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), dualJuncts, pair,
 					dualJunctsResult);
 			return new EliminationResult(
@@ -419,7 +398,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			if (pr == null) {
 				return null;
 			}
-			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee, getXnf(quantifier));
+			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee,
+					Xnf.fromQuantifier(quantifier), bannedForDivCapture);
 			if (mcsbr == null) {
 				return null;
 			}

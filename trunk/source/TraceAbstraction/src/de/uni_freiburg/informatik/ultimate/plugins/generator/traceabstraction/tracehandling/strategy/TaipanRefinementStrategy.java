@@ -48,32 +48,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public TaipanRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public TaipanRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static final <LETTER extends IIcfgTransition<?>> StrategyModules<LETTER>
-			createModules(final StrategyModuleFactory<LETTER> factory) {
+	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
+			createModules(final StrategyModuleFactory<L> factory) {
 
 		final AssertCodeBlockOrder[] order = { AssertCodeBlockOrder.NOT_INCREMENTALLY,
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2),
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST) };
 
-		final IIpTcStrategyModule<?, LETTER> smtinterpol = factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+		final IIpTcStrategyModule<?, L> smtinterpol = factory.createIpTcStrategyModuleSmtInterpolCraig(false,
 				InterpolationTechnique.Craig_TreeInterpolation, order);
-		final IIpTcStrategyModule<?, LETTER> z3 =
+		final IIpTcStrategyModule<?, L> z3 =
 				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP, order);
-		final IIpTcStrategyModule<?, LETTER> absint = factory.createIpTcStrategyModuleAbstractInterpretation();
+		final IIpTcStrategyModule<?, L> absint = factory.createIpTcStrategyModuleAbstractInterpretation();
 
-		final ITraceCheckStrategyModule<?>[] traceChecks = { smtinterpol, z3 };
-		final IIpgStrategyModule<?, LETTER>[] interpolantGenerators =
-				new IIpgStrategyModule[] { smtinterpol, z3, absint };
-		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder =
-				factory.createIpAbStrategyModuleStraightlineAll();
+		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { smtinterpol, z3 };
+		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { smtinterpol, z3, absint };
+		final IIpAbStrategyModule<L> interpolantAutomatonBuilder = factory.createIpAbStrategyModuleStraightlineAll();
 		return new StrategyModules<>(traceChecks, interpolantGenerators, interpolantAutomatonBuilder);
 	}
 
@@ -90,7 +88,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 	}
 
 	@Override
-	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<?> engine) {
+	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<L, ?> engine) {
 		if (engine.getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
 				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
 			// rather hacky: we now that the absint module is in position 2
@@ -100,7 +98,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 	}
 
 	@Override
-	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<?> engine) {
+	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<L, ?> engine) {
 		if (engine.getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
 				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
 			// rather hacky: we now that the absint module is in position 2

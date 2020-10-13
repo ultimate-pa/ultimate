@@ -103,7 +103,7 @@ public interface ITheory {
 
 	/**
 	 * Check if the theory has a complete model that satisfies all theory axioms.
-	 * 
+	 *
 	 * @return DPLLEngine.COMPLETE, if a model exists, DPLLEngine.INCOMPLETE_* if unsure.
 	 */
 	public int checkCompleteness();
@@ -116,14 +116,20 @@ public interface ITheory {
 	 * Dump current model.  Currently only used for debugging purposes.
 	 */
 	public void dumpModel(LogProxy logger);
+
 	/**
 	 * Notification that the DPLLEngine is about to make a new decision.
-	 * @param currentDecideLevel Number of decisions of the engine.
+	 *
+	 * @param currentDecideLevel Number of decisions of the engine (including the
+	 *                           new one).
 	 */
 	public void increasedDecideLevel(int currentDecideLevel);
+
 	/**
 	 * Notification that the DPLLEngine just backtracked a decision.
-	 * @param currentDecideLevel Number of decisions of the engine.
+	 *
+	 * @param currentDecideLevel Number of decisions of the engine (excluding the
+	 *                           new one).
 	 */
 	public void decreasedDecideLevel(int currentDecideLevel);
 
@@ -133,6 +139,12 @@ public interface ITheory {
 	 * @return a conflict clause or null if no more obvious conflicts.
 	 */
 	public Clause backtrackComplete();
+
+	/**
+	 * Notification that every literal is backtracked. Called on pop.
+	 */
+	public void backtrackAll();
+
 	/**
 	 * Notification of a restart of the DPLL Engine.
 	 * @param iteration Number of the iteration.
@@ -143,17 +155,17 @@ public interface ITheory {
 	 * @param atom Atom to remove.
 	 */
 	public void removeAtom(DPLLAtom atom);
-	
+
 	/**
 	 * This is called when the SMT script issues a push.
-	 * 
+	 *
 	 * @see #pop()
 	 */
 	public void push();
-	
+
 	/**
 	 * This is called when the SMT script issues a pop.
-	 * 
+	 *
 	 * @see #push()
 	 */
 	public void pop();

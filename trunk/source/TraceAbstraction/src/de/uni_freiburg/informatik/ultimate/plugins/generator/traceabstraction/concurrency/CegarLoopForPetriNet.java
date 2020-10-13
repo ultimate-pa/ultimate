@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonWithImplicitSelfloops;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -75,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -82,9 +82,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -97,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -106,23 +108,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 
-	public enum SizeReduction { REMOVE_DEAD, REMOVE_REDUNDANT_FLOW };
+	public enum SizeReduction {
+		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
+	}
 
 	private static final boolean USE_ON_DEMAND_RESULT = false;
 
 	private static final boolean DEBUG_WRITE_NET_HASH_CODES = false;
 
 	/**
-	 * Write result of RemoveUnreachable to file if runtime of this operation in
-	 * seconds is greater than this number.
+	 * Write result of RemoveUnreachable to file if runtime of this operation in seconds is greater than this number.
 	 */
 	private static final int DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD = 24 * 60 * 60;
 
 	/**
-	 * Write result of RemoveUnreachable to file if runtime of this operation in
-	 * seconds is greater than this number.
+	 * Write result of RemoveUnreachable to file if runtime of this operation in seconds is greater than this number.
 	 */
 	private static final int DEBUG_DUMP_DRYRUNRESULT_THRESHOLD = 24 * 60 * 60;
 
@@ -141,20 +143,21 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	private final boolean mRemoveDead = false;
 	private final boolean mRemoveRedundantFlow = false;
 
-	private PetriNetLargeBlockEncoding mLBE;
-
 	private final PetriCegarLoopStatisticsGenerator mPetriClStatisticsGenerator;
 
 	private Set<IPredicate> mProgramPointPlaces;
-	
-	private final CounterexampleCache mCounterexampleCache = new CounterexampleCache();
+
+	private final CounterexampleCache<L> mCounterexampleCache;
+
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				InterpolationTechnique.Craig_TreeInterpolation, false, services);
+			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
+				compositionFactory, transitionClazz);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
+		mCounterexampleCache = new CounterexampleCache<L>();
 	}
 
 	@Override
@@ -164,15 +167,15 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			throw new UnsupportedOperationException("Program must have " + TraceAbstractionStarter.ULTIMATE_START
 					+ " procedure (this is the procedure where all executions start)");
 		}
-		final BoundedPetriNet<LETTER, IPredicate> cfg = constructPetriNetWithoutDeadTransitions();
+		final BoundedPetriNet<L, IPredicate> cfg = constructPetriNetWithoutDeadTransitions();
 		if (DEBUG_WRITE_NET_HASH_CODES) {
 			mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(cfg));
 		}
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			final long start_time = System.currentTimeMillis();
-			mLBE = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
-					(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg, mPref.useLbeInConcurrentAnalysis());
-			final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
+			mLBE = new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(), cfg,
+					mPref.useLbeInConcurrentAnalysis(), mCompositionFactory);
+			final BoundedPetriNet<L, IPredicate> lbecfg = mLBE.getResult();
 			mAbstraction = lbecfg;
 			final long end_time = System.currentTimeMillis();
 			final long difference = end_time - start_time;
@@ -183,7 +186,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		} else {
 			mAbstraction = cfg;
 		}
-		mProgramPointPlaces = ((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces();
+		mProgramPointPlaces = ((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces();
 
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
@@ -191,15 +194,14 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		}
 	}
 
-	private BoundedPetriNet<LETTER, IPredicate> constructPetriNetWithoutDeadTransitions()
+	private BoundedPetriNet<L, IPredicate> constructPetriNetWithoutDeadTransitions()
 			throws AutomataOperationCanceledException {
 		final boolean addThreadUsageMonitors = true;
-		final BoundedPetriNet<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(
-				mServices, mIcfg, mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory,
-				addThreadUsageMonitors);
+		final BoundedPetriNet<L, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices,
+				mIcfg, mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 		try {
-			final BoundedPetriNet<LETTER, IPredicate> vitalCfg = new RemoveDead<>(
-					new AutomataLibraryServices(mServices), cfg, null, true).getResult();
+			final BoundedPetriNet<L, IPredicate> vitalCfg =
+					new RemoveDead<>(new AutomataLibraryServices(mServices), cfg, null, true).getResult();
 			return vitalCfg;
 		} catch (final AutomataOperationCanceledException aoce) {
 			final String taskDescription = "removing dead transitions from Petri net that has " + cfg.sizeInformation();
@@ -215,12 +217,12 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		if (USE_COUNTEREXAMPLE_CACHE && mIteration != 0) {
 			mCounterexample = mCounterexampleCache.getCounterexample();
 		} else {
-			final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
+			final BoundedPetriNet<L, IPredicate> abstraction = (BoundedPetriNet<L, IPredicate>) mAbstraction;
 			final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 			final EventOrderEnum eventOrder = mPref.eventOrder();
 
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
-			PetriNetUnfolder<LETTER, IPredicate> unf;
+			PetriNetUnfolder<L, IPredicate> unf;
 			try {
 				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, eventOrder,
 						cutOffSameTrans, true);
@@ -229,9 +231,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			} finally {
 				mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
 			}
-			final BranchingProcess<LETTER, IPredicate> finPrefix = unf.getFinitePrefix();
-			mCoRelationQueries += (finPrefix.getCoRelation().getQueryCounterYes()
-					+ finPrefix.getCoRelation().getQueryCounterNo());
+			final BranchingProcess<L, IPredicate> finPrefix = unf.getFinitePrefix();
+			mCoRelationQueries +=
+					(finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo());
 			mCounterexample = unf.getAcceptingRun();
 		}
 		if (mCounterexample == null) {
@@ -247,7 +249,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(mCounterexample.getWord());
 		}
-		final HistogramOfIterable<LETTER> traceHistogram = new HistogramOfIterable<>(mCounterexample.getWord());
+		final HistogramOfIterable<L> traceHistogram = new HistogramOfIterable<>(mCounterexample.getWord());
 		mCegarLoopBenchmark.reportTraceHistogramMaximum(traceHistogram.getMax());
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("trace histogram " + traceHistogram.toString());
@@ -262,7 +264,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			return mLBE.translateExecution(mRcfgProgramExecution);
 		}
@@ -271,7 +273,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
+		final BoundedPetriNet<L, IPredicate> abstraction = (BoundedPetriNet<L, IPredicate>) mAbstraction;
 		final IHoareTripleChecker htc;
 		if (mRefinementEngine.getHoareTripleChecker() != null) {
 			htc = mRefinementEngine.getHoareTripleChecker();
@@ -282,12 +284,14 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		try {
 			// Determinize the interpolant automaton
-			final INestedWordAutomaton<LETTER, IPredicate> dia;
-			final Pair<INestedWordAutomaton<LETTER, IPredicate>, DifferencePairwiseOnDemand<LETTER, IPredicate, ?>> enhancementResult = enhanceAnddeterminizeInterpolantAutomaton(
-					mInterpolAutomaton, htc);
+			final INestedWordAutomaton<L, IPredicate> dia;
+			final Pair<INestedWordAutomaton<L, IPredicate>, DifferencePairwiseOnDemand<L, IPredicate, ?>> enhancementResult =
+					enhanceAnddeterminizeInterpolantAutomaton(mInterpolAutomaton, htc,
+							mRefinementEngine.getPredicateUnifier().getCoverageRelation());
 			dia = enhancementResult.getFirst();
 			if (USE_COUNTEREXAMPLE_CACHE) {
-				final PetriNetRun<LETTER, ?> run = enhancementResult.getSecond().getFinitePrefixOfDifference().getAcceptingRun();
+				final PetriNetRun<L, IPredicate> run =
+						enhancementResult.getSecond().getFinitePrefixOfDifference().getAcceptingRun();
 				mCounterexampleCache.setCounterexample(run);
 			}
 
@@ -298,8 +302,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			}
 
 			// Complement the interpolant automaton
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia = new ComplementDD<>(
-					new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, dia).getResult();
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> nia =
+					new ComplementDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
+							dia).getResult();
 			// TODO 2018-08-11 Matthias: Complement not needed since we compute difference.
 			// Furthermore there is a problem because we would have to concatenate operand
 			// with some ∑^* automaton first and we do not yet have an implementation for
@@ -315,9 +320,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			if (USE_ON_DEMAND_RESULT) {
 				mAbstraction = enhancementResult.getSecond().getResult();
 			} else {
-				final Difference<LETTER, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(mServices),
-						mPredicateFactoryInterpolantAutomata, abstraction, dia, LoopSyncMethod.HEURISTIC,
-						enhancementResult.getSecond(), true);
+				final Difference<L, IPredicate, ?> diff =
+						new Difference<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
+								abstraction, dia, LoopSyncMethod.HEURISTIC, enhancementResult.getSecond(), true);
 				mLogger.info(diff.getAutomataOperationStatistics());
 				mAbstraction = diff.getResult();
 			}
@@ -335,12 +340,12 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		}
 
 		mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
-				+ (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
+				+ (((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
 				+ " predicate places.");
 
 		if (mRemoveDead) {
-			final Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult = doSizeReduction(
-					(BoundedPetriNet<LETTER, IPredicate>) mAbstraction, SizeReduction.REMOVE_DEAD);
+			final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
+					doSizeReduction((BoundedPetriNet<L, IPredicate>) mAbstraction, SizeReduction.REMOVE_DEAD);
 			mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
 			if (mPref.dumpAutomata()
 					|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
@@ -351,8 +356,8 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			mAbstraction = minimizationResult.getFirst();
 		}
 		if (mRemoveRedundantFlow) {
-			final Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult = doSizeReduction(
-					(BoundedPetriNet<LETTER, IPredicate>) mAbstraction, SizeReduction.REMOVE_REDUNDANT_FLOW);
+			final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
+					doSizeReduction((BoundedPetriNet<L, IPredicate>) mAbstraction, SizeReduction.REMOVE_REDUNDANT_FLOW);
 			mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
 			if (mPref.dumpAutomata()
 					|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
@@ -366,15 +371,15 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		if (mPref.unfoldingToNet()) {
 			final int flowBefore = mAbstraction.size();
 			mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
-					+ (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
+					+ (((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
 					+ " predicate places.");
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString());
-			PetriNetUnfolder<LETTER, IPredicate> unf;
+			PetriNetUnfolder<L, IPredicate> unf;
 			try {
 				final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 				final EventOrderEnum eventOrder = mPref.eventOrder();
 				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices),
-						((BoundedPetriNet<LETTER, IPredicate>) mAbstraction), eventOrder, cutOffSameTrans, false);
+						((BoundedPetriNet<L, IPredicate>) mAbstraction), eventOrder, cutOffSameTrans, false);
 			} catch (final PetriNetNot1SafeException e) {
 				throw new UnsupportedOperationException(e.getMessage());
 			} catch (final AutomataOperationCanceledException aoce) {
@@ -384,7 +389,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 						.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString());
 			}
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
-			final FinitePrefix2PetriNet<LETTER, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
+			final FinitePrefix2PetriNet<L, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, unf.getFinitePrefix(), true);
 			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName() + " failed";
 			mAbstraction = fp2pn.getResult();
@@ -393,10 +398,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			mPetriClStatisticsGenerator.reportFlowIncreaseByBackfolding(flowAfterwards - flowBefore);
 			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
 			mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
-					+ (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
+					+ (((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
 					+ " predicate places.");
 		}
-
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
@@ -425,10 +429,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		return true;
 	}
 
-
-	private Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> doSizeReduction(
-			final BoundedPetriNet<LETTER, IPredicate> input, final SizeReduction method)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException, AssertionError {
+	private Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long>
+			doSizeReduction(final BoundedPetriNet<L, IPredicate> input, final SizeReduction method)
+					throws AutomataOperationCanceledException, PetriNetNot1SafeException, AssertionError {
 		final long automataMinimizationTime;
 		final long start = System.nanoTime();
 		long statesRemovedByMinimization = 0;
@@ -437,7 +440,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		boolean nontrivialMinimizaton = false;
 		mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString());
 		final AutomataMinimizationStatisticsGenerator amsg;
-		final BoundedPetriNet<LETTER, IPredicate> reducedNet;
+		final BoundedPetriNet<L, IPredicate> reducedNet;
 		try {
 			final int placesBefore = input.getPlaces().size();
 			final int transitionsBefore = input.getTransitions().size();
@@ -450,8 +453,8 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			case REMOVE_REDUNDANT_FLOW:
 				final Set<IPredicate> redundancyCandidates = input.getPlaces().stream()
 						.filter(x -> !mProgramPointPlaces.contains(x)).collect(Collectors.toSet());
-				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input, null, null,
-						null).getResult();
+				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input, null, null, null)
+						.getResult();
 				break;
 			default:
 				throw new AssertionError("unknown value " + method);
@@ -474,45 +477,45 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 					flowRemovedByMinimization);
 			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString());
 		}
-		final Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult = new Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long>(
-				reducedNet, amsg, automataMinimizationTime);
+		final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
+				new Triple<>(reducedNet, amsg, automataMinimizationTime);
 		return minimizationResult;
 	}
 
-	protected Pair<INestedWordAutomaton<LETTER, IPredicate>, DifferencePairwiseOnDemand<LETTER, IPredicate, ?>> enhanceAnddeterminizeInterpolantAutomaton(
-			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final IHoareTripleChecker htc)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+	protected Pair<INestedWordAutomaton<L, IPredicate>, DifferencePairwiseOnDemand<L, IPredicate, ?>>
+			enhanceAnddeterminizeInterpolantAutomaton(final INestedWordAutomaton<L, IPredicate> interpolAutomaton,
+					final IHoareTripleChecker htc, final IPredicateCoverageChecker coverage)
+					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger.debug("Start determinization");
-		final INestedWordAutomaton<LETTER, IPredicate> dia;
-		final DifferencePairwiseOnDemand<LETTER, IPredicate, ?> dpod;
+		final INestedWordAutomaton<L, IPredicate> dia;
+		final DifferencePairwiseOnDemand<L, IPredicate, ?> dpod;
 		switch (mPref.interpolantAutomatonEnhancement()) {
 		case NONE:
-			final PowersetDeterminizer<LETTER, IPredicate> psd =
+			final PowersetDeterminizer<L, IPredicate> psd =
 					new PowersetDeterminizer<>(interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<LETTER, IPredicate> dabps = new DeterminizeDD<>(new AutomataLibraryServices(mServices),
+			final DeterminizeDD<L, IPredicate> dabps = new DeterminizeDD<>(new AutomataLibraryServices(mServices),
 					mPredicateFactoryInterpolantAutomata, interpolAutomaton, psd);
 			dia = dabps.getResult();
 			dpod = null;
 			break;
 		case PREDICATE_ABSTRACTION:
-			final DeterministicInterpolantAutomaton<LETTER> raw = new DeterministicInterpolantAutomaton<>(mServices,
+			final DeterministicInterpolantAutomaton<L> raw = new DeterministicInterpolantAutomaton<>(mServices,
 					mCsToolkit, htc, interpolAutomaton, mRefinementEngine.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
-				final Set<LETTER> universalSubtrahendLoopers =
-						determineUniversalSubtrahendLoopers(mAbstraction.getAlphabet(), interpolAutomaton.getStates());
+				final Set<L> universalSubtrahendLoopers = determineUniversalSubtrahendLoopers(
+						mAbstraction.getAlphabet(), interpolAutomaton.getStates(), htc, coverage);
 				mLogger.info("Number of universal loopers: " + universalSubtrahendLoopers.size() + " out of "
 						+ mAbstraction.getAlphabet().size());
-				final NestedWordAutomaton<LETTER, IPredicate> ia =
-						(NestedWordAutomaton<LETTER, IPredicate>) interpolAutomaton;
+				final NestedWordAutomaton<L, IPredicate> ia = (NestedWordAutomaton<L, IPredicate>) interpolAutomaton;
 				for (final IPredicate state : ia.getStates()) {
-					for (final LETTER letter : universalSubtrahendLoopers) {
+					for (final L letter : universalSubtrahendLoopers) {
 						ia.addInternalTransition(state, letter, state);
 					}
 				}
 				final long start = System.nanoTime();
 				try {
 					dpod = new DifferencePairwiseOnDemand<>(new AutomataLibraryServices(mServices),
-							(IPetriNet<LETTER, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
+							(IPetriNet<L, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
 							universalSubtrahendLoopers, mAbstraction.getAlphabet(), mIteration);
@@ -521,7 +524,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				} finally {
 					raw.switchToReadonlyMode();
 				}
-				final AutomatonWithImplicitSelfloops<LETTER, IPredicate> awis = new AutomatonWithImplicitSelfloops<LETTER, IPredicate>(
+				final AutomatonWithImplicitSelfloops<L, IPredicate> awis = new AutomatonWithImplicitSelfloops<>(
 						new AutomataLibraryServices(mServices), raw, universalSubtrahendLoopers);
 				dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), awis).getResult();
 				final long end = System.nanoTime();
@@ -531,8 +534,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 					final String atsHeaderMessage = "inputs of difference operation in iteration " + mIteration;
 					final String atsCode = "PetriNet diff = differencePairwiseOnDemand(net, nwa);";
 					super.writeAutomataToFile(filename, atsHeaderMessage, atsCode,
-							new NamedAutomaton<LETTER, IPredicate>("net", mAbstraction),
-							new NamedAutomaton<LETTER, IPredicate>("nwa", dia));
+							new NamedAutomaton<>("net", mAbstraction), new NamedAutomaton<>("nwa", dia));
 				}
 			} else {
 				dpod = null;
@@ -574,17 +576,28 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	}
 
 	private String generateOnDemandEnhancementCanceledMessage(
-			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton,
-			final Set<LETTER> universalSubtrahendLoopers, final Set<LETTER> alphabet, final int iteration) {
+			final INestedWordAutomaton<L, IPredicate> interpolAutomaton, final Set<L> universalSubtrahendLoopers,
+			final Set<L> alphabet, final int iteration) {
 		return "enhancing Floyd-Hoare automaton (" + interpolAutomaton.getStates().size() + "states, "
 				+ universalSubtrahendLoopers.size() + "/" + alphabet.size() + " universal loopers) in iteration "
 				+ iteration;
 	}
 
-	private Set<LETTER> determineUniversalSubtrahendLoopers(final Set<LETTER> alphabet, final Set<IPredicate> states) {
-		final Set<LETTER> result = new HashSet<>();
-		for (final LETTER letter : alphabet) {
-			final boolean isUniversalLooper = isUniversalLooper(letter, states);
+	private Set<L> determineUniversalSubtrahendLoopers(final Set<L> alphabet, final Set<IPredicate> states,
+			final IHoareTripleChecker htc, final IPredicateCoverageChecker coverage) {
+		final Set<L> result = new HashSet<>();
+		for (final L letter : alphabet) {
+			final boolean isUniversalLooper;
+			switch (mPref.looperCheck()) {
+			case SEMANTIC:
+				isUniversalLooper = isUniversalLooper(letter, states, htc, coverage);
+				break;
+			case SYNTACTIC:
+				isUniversalLooper = isIndependentLooper(letter, states);
+				break;
+			default:
+				throw new AssertionError("Unsupported looper check");
+			}
 			if (isUniversalLooper) {
 				result.add(letter);
 			}
@@ -592,7 +605,62 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		return result;
 	}
 
-	private boolean isUniversalLooper(final LETTER letter, final Set<IPredicate> states) {
+	/**
+	 * Conservatively checks if the given letter is a universal looper. A looper has to be invariant under all
+	 * predicates, and it may never introduce a new predicate (i.e., have a postcondition which is not implied by the
+	 * precondition).
+	 *
+	 * @param letter
+	 *            The letter to check
+	 * @param states
+	 *            The set of predicates to consider
+	 * @param htc
+	 * @param coverage
+	 *
+	 * @return true if the letter can be guaranteed to be a looper.
+	 */
+	private boolean isUniversalLooper(final L letter, final Set<IPredicate> states, final IHoareTripleChecker htc,
+			final IPredicateCoverageChecker coverage) {
+		if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
+			return false;
+		}
+		if (isIndependentLooper(letter, states)) {
+			return true;
+		}
+
+		for (final IPredicate predicate : states) {
+			final boolean isInvariant =
+					htc.checkInternal(predicate, (IInternalAction) letter, predicate) == Validity.VALID;
+			if (!isInvariant) {
+				return false;
+			}
+
+			for (final IPredicate post : states) {
+				if (coverage.isCovered(predicate, post) == Validity.VALID) {
+					continue;
+				}
+				final boolean mayIntroduce =
+						htc.checkInternal(predicate, (IInternalAction) letter, post) != Validity.INVALID;
+				if (mayIntroduce) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * An efficient sound but (very) incomplete check for loopers: A letter is considered a looper, if it does not share
+	 * any variables with any predicate.
+	 *
+	 * @param letter
+	 *            The letter to check
+	 * @param states
+	 *            The set of predicates to consider
+	 *
+	 * @return true if the letter does not read nor write any variables used in the given predicates
+	 */
+	private boolean isIndependentLooper(final L letter, final Set<IPredicate> states) {
 		if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
 			return false;
 		}
@@ -605,7 +673,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		return true;
 	}
 
-	private boolean isIndependent(final LETTER letter, final IPredicate predicate) {
+	private boolean isIndependent(final L letter, final IPredicate predicate) {
 		final Set<IProgramVar> in = letter.getTransformula().getInVars().keySet();
 		final Set<IProgramVar> out = letter.getTransformula().getOutVars().keySet();
 		return !DataStructureUtils.haveNonEmptyIntersection(in, predicate.getVars())
@@ -618,12 +686,12 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	}
 
 	private boolean acceptsPetriViaFA(final IUltimateServiceProvider services,
-			final IAutomaton<LETTER, IPredicate> automaton, final Word<LETTER> word)
+			final IAutomaton<L, IPredicate> automaton, final Word<L> word)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		final NestedWord<LETTER> nw = NestedWord.nestedWord(word);
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> petriNetAsFA =
+		final NestedWord<L> nw = NestedWord.nestedWord(word);
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> petriNetAsFA =
 				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services), mPredicateFactoryResultChecking,
-						(IPetriNet<LETTER, IPredicate>) automaton).getResult();
+						(IPetriNet<L, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw, false);
 	}
 
@@ -631,19 +699,17 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	public IStatisticsDataProvider getCegarLoopBenchmark() {
 		return mPetriClStatisticsGenerator;
 	}
-	
-	private class CounterexampleCache {
-		private IRun<LETTER, ?> mCounterexample;
 
-		public IRun<LETTER, ?> getCounterexample() {
+	private static final class CounterexampleCache<L extends IIcfgTransition<?>> {
+		private PetriNetRun<L, IPredicate> mCounterexample;
+
+		public PetriNetRun<L, IPredicate> getCounterexample() {
 			return mCounterexample;
 		}
 
-		public void setCounterexample(final IRun<LETTER, ?> counterexample) {
+		public void setCounterexample(final PetriNetRun<L, IPredicate> counterexample) {
 			mCounterexample = counterexample;
 		}
 	}
-
-
 
 }

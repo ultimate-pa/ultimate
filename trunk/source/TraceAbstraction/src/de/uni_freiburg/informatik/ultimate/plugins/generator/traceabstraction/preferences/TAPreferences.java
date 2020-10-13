@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.McrInterpolantMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
@@ -80,6 +81,7 @@ public final class TAPreferences {
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
+	private final McrInterpolantMethod mMcrInterpolantMethod;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -92,6 +94,10 @@ public final class TAPreferences {
 
 	public enum Concurrency {
 		FINITE_AUTOMATA, PETRI_NET
+	}
+
+	public enum LooperCheck {
+		SYNTACTIC, SEMANTIC
 	}
 
 	public TAPreferences(final IUltimateServiceProvider services) {
@@ -170,6 +176,9 @@ public final class TAPreferences {
 				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
 		mOverrideInterpolantAutomaton =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
+		mMcrInterpolantMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_INTERPOLANT_METHOD,
+				McrInterpolantMethod.class);
+
 	}
 
 	/**
@@ -331,6 +340,10 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONFIGURATION_ORDER, EventOrderEnum.class);
 	}
 
+	public LooperCheck looperCheck() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LOOPER_CHECK_PETRI, LooperCheck.class);
+	}
+
 	public PetriNetLbe useLbeInConcurrentAnalysis() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY, PetriNetLbe.class);
 	}
@@ -424,4 +437,7 @@ public final class TAPreferences {
 		return mOverrideInterpolantAutomaton;
 	}
 
+	public McrInterpolantMethod getMcrInterpolantMethod() {
+		return mMcrInterpolantMethod;
+	}
 }

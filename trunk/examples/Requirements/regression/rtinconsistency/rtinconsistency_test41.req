@@ -1,4 +1,4 @@
-// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results:-1
+// #TestSpec: rt-inconsistent:req1+req2; vacuous:; inconsistent:; results:-1
 // 2020-01-13: Spec checked by Elli
 Input var3 is bool
 Input var4 is bool

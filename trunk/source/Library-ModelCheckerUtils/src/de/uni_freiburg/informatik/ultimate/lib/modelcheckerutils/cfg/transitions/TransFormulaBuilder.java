@@ -293,28 +293,26 @@ public class TransFormulaBuilder {
 	 */
 	public static UnmodifiableTransFormula constructTransFormulaFromPredicate(final IPredicate pred,
 			final ManagedScript script) {
-		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(pred.getFormula(), false);
+		return constructTransFormulaFromTerm(pred.getFormula(), pred.getVars(), script);
+	}
+
+	public static UnmodifiableTransFormula constructTransFormulaFromTerm(final Term term, final Set<IProgramVar> vars,
+			final ManagedScript script) {
+		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(term, false);
 		if (!consts.isEmpty()) {
 			throw new UnsupportedOperationException("constants not yet supported");
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar bv : pred.getVars()) {
+		for (final IProgramVar bv : vars) {
 			final TermVariable freshTv =
 					script.constructFreshTermVariable(bv.getGloballyUniqueId(), bv.getTermVariable().getSort());
 			substitutionMapping.put(bv.getTermVariable(), freshTv);
 			tfb.addInVar(bv, freshTv);
 			tfb.addOutVar(bv, freshTv);
 		}
-		final Term formula = new Substitution(script.getScript(), substitutionMapping).transform(pred.getFormula());
-		final Infeasibility infeasibility;
-		if (SmtUtils.isFalseLiteral(pred.getFormula())) {
-			infeasibility = Infeasibility.INFEASIBLE;
-		} else {
-			infeasibility = Infeasibility.NOT_DETERMINED;
-		}
-		tfb.setFormula(formula);
-		tfb.setInfeasibility(infeasibility);
+		tfb.setFormula(new Substitution(script.getScript(), substitutionMapping).transform(term));
+		tfb.setInfeasibility(SmtUtils.isFalseLiteral(term) ? Infeasibility.INFEASIBLE : Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(script);
 	}
 
@@ -328,9 +326,8 @@ public class TransFormulaBuilder {
 	}
 
 	/**
-	 * Given a list of variables lhs_1,...,lhs_n and a list of terms
-	 * rhs_1,...,rhs_n, construct a {@link TransFormula} that represents the
-	 * assumption lhs_1==rhs_1,...,lhs_n==rhs_n
+	 * Given a list of variables lhs_1,...,lhs_n and a list of terms rhs_1,...,rhs_n, construct a {@link TransFormula}
+	 * that represents the assumption lhs_1==rhs_1,...,lhs_n==rhs_n
 	 */
 	public static UnmodifiableTransFormula constructEqualityAssumption(final List<? extends IProgramVar> lhs,
 			final List<Term> rhs, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
@@ -358,8 +355,8 @@ public class TransFormulaBuilder {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
 		for (final IProgramVar pv : rhsPvs) {
-			final TermVariable freshTv = mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(),
-					pv.getTermVariable().getSort());
+			final TermVariable freshTv =
+					mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
 			substitutionMapping.put(pv.getTermVariable(), freshTv);
 			tfb.addInVar(pv, freshTv);
 			tfb.addOutVar(pv, freshTv);
@@ -369,8 +366,8 @@ public class TransFormulaBuilder {
 		final Substitution subst = new Substitution(mgdScript.getScript(), substitutionMapping);
 		for (int i = 0; i < lhs.size(); i++) {
 			final IProgramVar pv = lhs.get(i);
-			final TermVariable freshTv = mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(),
-					pv.getTermVariable().getSort());
+			final TermVariable freshTv =
+					mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
 			substitutionMapping.put(pv.getTermVariable(), freshTv);
 			tfb.addOutVar(pv, freshTv);
 			if (lhsAreAlsoInVars) {
@@ -387,10 +384,9 @@ public class TransFormulaBuilder {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-
 	/**
-	 * Given two list of variables lhs_1,...,lhs_n and rhs_1,...,rhs_n, construct a {@link TransFormula}
-	 * that represents the assignment lhs_1,...,lhs_n := rhs_1,...,rhs_n
+	 * Given two list of variables lhs_1,...,lhs_n and rhs_1,...,rhs_n, construct a {@link TransFormula} that represents
+	 * the assignment lhs_1,...,lhs_n := rhs_1,...,rhs_n
 	 */
 	public static UnmodifiableTransFormula constructAssignment(final List<? extends IProgramVar> lhs,
 			final List<? extends IProgramVar> rhs, final ManagedScript mgdScript) {
@@ -404,10 +400,10 @@ public class TransFormulaBuilder {
 		for (int i = 0; i < lhs.size(); i++) {
 			final IProgramVar l = lhs.get(i);
 			final IProgramVar r = rhs.get(i);
-			final TermVariable lFreshTv = mgdScript.constructFreshTermVariable(l.getGloballyUniqueId(),
-					l.getTermVariable().getSort());
-			final TermVariable rFreshTv = mgdScript.constructFreshTermVariable(r.getGloballyUniqueId(),
-					r.getTermVariable().getSort());
+			final TermVariable lFreshTv =
+					mgdScript.constructFreshTermVariable(l.getGloballyUniqueId(), l.getTermVariable().getSort());
+			final TermVariable rFreshTv =
+					mgdScript.constructFreshTermVariable(r.getGloballyUniqueId(), r.getTermVariable().getSort());
 			tfb.addInVar(r, rFreshTv);
 			if (tfb.getOutVar(r) == null) {
 				tfb.addOutVar(r, rFreshTv);
@@ -504,8 +500,7 @@ public class TransFormulaBuilder {
 	}
 
 	/**
-	 * Construct copy of a given {@link Transformula} where {@link IProgramVar}s are
-	 * replaced according to a given map.
+	 * Construct copy of a given {@link Transformula} where {@link IProgramVar}s are replaced according to a given map.
 	 */
 	public static <E extends IProgramVar> UnmodifiableTransFormula constructCopy(final ManagedScript script,
 			final TransFormula tf, final Map<E, E> variableReplacement) {

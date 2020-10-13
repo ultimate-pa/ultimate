@@ -60,7 +60,8 @@ public class ReqToTestObserver extends BaseObserver {
 			return false;
 		}
 
-		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
+		@SuppressWarnings("unchecked")
+		final List<PatternType<?>> rawPatterns = ((ObjectContainer<List<PatternType<?>>>) root).getValue();
 		final Req2TestReqSymbolTable reqSymbolTable =
 				new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
 		final BoogieDeclarations boogieDeclarations =
@@ -69,7 +70,7 @@ public class ReqToTestObserver extends BaseObserver {
 		final PeaResultUtil resultUtil = new PeaResultUtil(mLogger, mServices);
 		final CddToSmt cddToSmt =
 				new CddToSmt(mServices, resultUtil, mScript, boogie2Smt, boogieDeclarations, reqSymbolTable);
-		if (reqSymbolTable.getOutputVars().size() <= 0) {
+		if (reqSymbolTable.getOutputVars().isEmpty()) {
 			final ReqToInOut reqToInOut = new ReqToInOut(mLogger, reqSymbolTable, cddToSmt);
 			reqToInOut.requirementToInOut(rawPatterns);
 		}

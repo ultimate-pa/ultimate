@@ -41,24 +41,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class ToothlessSifaTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		extends BasicRefinementStrategy<LETTER> {
+public class ToothlessSifaTaipanRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public ToothlessSifaTaipanRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public ToothlessSifaTaipanRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static final <LETTER extends IIcfgTransition<?>> StrategyModules<LETTER>
-			createModules(final StrategyModuleFactory<LETTER> factory) {
+	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
+			createModules(final StrategyModuleFactory<L> factory) {
 
-		final IIpTcStrategyModule<?, LETTER> sifa = factory.createIpTcStrategyModuleSifa();
+		final IIpTcStrategyModule<?, L> sifa = factory.createIpTcStrategyModuleSifa();
 
-		final ITraceCheckStrategyModule<?>[] traceChecks = { sifa };
-		final IIpgStrategyModule<?, LETTER>[] interpolantGenerators = new IIpgStrategyModule[] { sifa };
-		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder =
-				factory.createIpAbStrategyModuleStraightlineAll();
+		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { sifa };
+		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { sifa };
+		final IIpAbStrategyModule<L> interpolantAutomatonBuilder = factory.createIpAbStrategyModuleStraightlineAll();
 		return new StrategyModules<>(traceChecks, interpolantGenerators, interpolantAutomatonBuilder);
 	}
 

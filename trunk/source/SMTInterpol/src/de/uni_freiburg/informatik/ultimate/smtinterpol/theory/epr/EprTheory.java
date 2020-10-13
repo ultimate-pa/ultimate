@@ -279,7 +279,7 @@ public class EprTheory implements ITheory {
 		return lit;
 	}
 
-	public void addGroundLiteralToPropagate(final Literal l, GroundPropagationInfo reason) {
+	public void addGroundLiteralToPropagate(final Literal l, final GroundPropagationInfo reason) {
 		if (mGroundLiteralsToPropagateToReason.keySet().contains(l)) {
 			mLogger.debug("EPRDEBUG: EprTheory.addGroundLiteralToPropagate: already added: " + l);
 			return;
@@ -352,8 +352,16 @@ public class EprTheory implements ITheory {
 	}
 
 	@Override
+	public void backtrackAll() {
+		for (final Literal lit : mLiteralsWaitingToBePropagated) {
+			mGroundLiteralsToPropagateToReason.remove(lit);
+		}
+		mLiteralsWaitingToBePropagated.clear();
+	}
+
+	@Override
 	public Clause backtrackComplete() {
-		for (Literal lit : mLiteralsWaitingToBePropagated) {
+		for (final Literal lit : mLiteralsWaitingToBePropagated) {
 			mGroundLiteralsToPropagateToReason.remove(lit);
 		}
 		mLiteralsWaitingToBePropagated.clear();
@@ -430,7 +438,7 @@ public class EprTheory implements ITheory {
 
 		// we need to track all constants for grounding mode (and other
 		// applications??)
-		this.addConstants(EprHelpers.collectAppearingConstants(lits, mTheory));
+		addConstants(EprHelpers.collectAppearingConstants(lits, mTheory));
 
 		/*
 		 * we remove disequalities occurring in the clause through destructive equality reasoning if the clause is

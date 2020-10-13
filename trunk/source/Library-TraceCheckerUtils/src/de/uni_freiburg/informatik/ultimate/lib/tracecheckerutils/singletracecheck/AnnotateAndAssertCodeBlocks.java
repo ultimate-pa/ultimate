@@ -43,18 +43,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class AnnotateAndAssertCodeBlocks {
+public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 
 	protected final ILogger mLogger;
 
 	protected final Script mScript;
 	protected final ManagedScript mMgdScript;
 	protected final Object mScriptLockOwner;
-	protected final NestedWord<? extends IAction> mTrace;
+	protected final NestedWord<L> mTrace;
 
 	protected LBool mSatisfiable;
-	protected final NestedFormulas<Term, Term> mSSA;
-	protected ModifiableNestedFormulas<Term, Term> mAnnotSSA;
+	protected final NestedFormulas<L, Term, Term> mSSA;
+	protected ModifiableNestedFormulas<L, Term, Term> mAnnotSSA;
 
 	protected static final String SSA = "ssa_";
 	protected static final String PRECOND = "precond";
@@ -68,7 +68,7 @@ public class AnnotateAndAssertCodeBlocks {
 	protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
 
 	public AnnotateAndAssertCodeBlocks(final ManagedScript csToolkit, final TraceCheckLock scriptLockOwner,
-			final NestedFormulas<Term, Term> nestedSSA, final ILogger logger) {
+			final NestedFormulas<L, Term, Term> nestedSSA, final ILogger logger) {
 		mLogger = logger;
 		mMgdScript = csToolkit;
 		mScriptLockOwner = scriptLockOwner;

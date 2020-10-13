@@ -43,20 +43,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class FixedRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public FixedRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public FixedRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static final <LETTER extends IIcfgTransition<?>> StrategyModules<LETTER>
-			createModules(final StrategyModuleFactory<LETTER> factory) {
-		final IIpTcStrategyModule<?, LETTER> preferenceIpTc = factory.createIpTcStrategyModulePreferences();
-		final ITraceCheckStrategyModule<?>[] traceChecks = new ITraceCheckStrategyModule[] { preferenceIpTc };
-		final IIpgStrategyModule<?, LETTER>[] interpolantGenerators = new IIpgStrategyModule[] { preferenceIpTc };
-		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder =
+	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
+			createModules(final StrategyModuleFactory<L> factory) {
+		final IIpTcStrategyModule<?, L> preferenceIpTc = factory.createIpTcStrategyModulePreferences();
+		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { preferenceIpTc };
+		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { preferenceIpTc };
+		final IIpAbStrategyModule<L> interpolantAutomatonBuilder =
 				factory.createInterpolantAutomatonBuilderStrategyModulePreferences(preferenceIpTc);
 		return new StrategyModules<>(traceChecks, interpolantGenerators, interpolantAutomatonBuilder);
 	}

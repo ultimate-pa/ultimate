@@ -45,10 +45,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Data structure that can be used to partition a set of elements {@code <E>}.
- * http://en.wikipedia.org/wiki/Disjoint-set_data_structure Each equivalence
- * class has a unique representative. This implementation uses HashMaps - to
- * store for each element its equivalence class and - to store for each
- * equivalence class the representative
+ * http://en.wikipedia.org/wiki/Disjoint-set_data_structure Each equivalence class has a unique representative. This
+ * implementation uses HashMaps - to store for each element its equivalence class and - to store for each equivalence
+ * class the representative
  *
  * @author Matthias Heizmann
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
@@ -58,33 +57,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class UnionFind<E> implements IPartition<E>, Cloneable {
 	/**
-	 * Comparator for elements. Our convention is that the representative of an
-	 * equivalence class must always be a minimal element within the class in terms
-	 * of this comparator.
+	 * Comparator for elements. Our convention is that the representative of an equivalence class must always be a
+	 * minimal element within the class in terms of this comparator.
 	 * <p>
-	 * Use of the comparator is optional, if no element comparator is present, this
-	 * class may choose any representative for each equivalence class.
+	 * Use of the comparator is optional, if no element comparator is present, this class may choose any representative
+	 * for each equivalence class.
 	 */
 	private final Comparator<E> mElementComparator;
 
 	/**
 	 * Maps an element to its equivalence class.<br/>
 	 * <br/>
-	 * Note that whenever updating values in this map other corresponding
-	 * data-structures as {@link #mRepresentative} also need to be updated with the
-	 * same new identity.
+	 * Note that whenever updating values in this map other corresponding data-structures as {@link #mRepresentative}
+	 * also need to be updated with the same new identity.
 	 */
 	private final Map<E, CachedHashSet<E>> mEquivalenceClass = new HashMap<>();
 
 	/**
 	 * Maps an equivalence class to its representative.<br/>
 	 * <br/>
-	 * The current implementation uses {@link CachedHashSet} to provide a fast
-	 * key-based access.<br/>
+	 * The current implementation uses {@link CachedHashSet} to provide a fast key-based access.<br/>
 	 * <br/>
-	 * Therefore whenever changing keys in this set other corresponding
-	 * data-structures like {@link #mEquivalenceClass} also need to be updated with
-	 * the same new identity.
+	 * Therefore whenever changing keys in this set other corresponding data-structures like {@link #mEquivalenceClass}
+	 * also need to be updated with the same new identity.
 	 */
 	private final Map<CachedHashSet<E>, E> mRepresentative = new HashMap<>();
 
@@ -96,9 +91,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Constructor for an empty union find data structure. Additionally takes a
-	 * function that is used as a comparator between elements. (See the field's
-	 * documentation for more details.)
+	 * Constructor for an empty union find data structure. Additionally takes a function that is used as a comparator
+	 * between elements. (See the field's documentation for more details.)
 	 */
 	public UnionFind(final Comparator<E> elementComparator) {
 		assert elementComparator != null : "use other constructor in this case!";
@@ -128,8 +122,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	/**
 	 * Add a whole equivalence class at once to this UnionFind.
 	 *
-	 * Assumes none of the given elements is part of an existing equivalence class
-	 * in this UnionFind instance.
+	 * Assumes none of the given elements is part of an existing equivalence class in this UnionFind instance.
 	 *
 	 * @param newBlock
 	 */
@@ -143,15 +136,13 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * A variant of {@link #addEquivalenceClass(Set)} where the caller specifies the
-	 * representative that the newly added equivalence class must have.
+	 * A variant of {@link #addEquivalenceClass(Set)} where the caller specifies the representative that the newly added
+	 * equivalence class must have.
 	 *
 	 * @param newBlock
-	 *            new equivalence class that is to be added to the equivalence
-	 *            relation
+	 *            new equivalence class that is to be added to the equivalence relation
 	 * @param newBlockRep
-	 *            the element that should be the representative of newBlock in this
-	 *            UnionFind, null for don't care
+	 *            the element that should be the representative of newBlock in this UnionFind, null for don't care
 	 */
 	public void addEquivalenceClass(final Set<E> newBlock, final E newBlockRep) {
 		assert DataStructureUtils.intersection(newBlock, getAllElements()).isEmpty();
@@ -160,8 +151,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		assert mElementComparator == null || newBlockRep != null : "if we don't give a representative for the new block"
 				+ "here, this method might violate the invariant that the representative is always the minimal "
 				+ "element.";
-		assert mElementComparator == null
-				|| mElementComparator.compare(newBlockRep, findMinimalElement(newBlock)) <= 0;
+		assert mElementComparator == null || mElementComparator.compare(newBlockRep, findMinimalElement(newBlock)) <= 0;
 
 		final CachedHashSet<E> block = new CachedHashSet<>(newBlock);
 
@@ -188,20 +178,21 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	/**
 	 * @param elem
 	 *            element
-	 * @return the representative of the equivalence class of element elem. null if
-	 *         the given element is not in any equivalence class
+	 * @return the representative of the equivalence class of element elem. null if the given element is not in any
+	 *         equivalence class
 	 */
 	public E find(final E elem) {
 		final Set<E> set = mEquivalenceClass.get(elem);
 		return mRepresentative.get(set);
 	}
-	
-	public Set<E> find(final Set<E> elemSet)
-	{
-		Set<E> result = new HashSet<>();
-		for (E elem: elemSet)
-		{
-			result.add(find(elem));
+
+	public Set<E> find(final Set<E> elemSet) {
+		final Set<E> result = new HashSet<>();
+		for (final E elem : elemSet) {
+			final E rep = find(elem);
+			if (rep != null) {
+				result.add(rep);
+			}
 		}
 		return result;
 	}
@@ -209,8 +200,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	/**
 	 * @param elem
 	 *            element
-	 * @return the representative of the equivalence class of element e. If there is
-	 *         no equivalence class for e this equivalence class is constructed.
+	 * @return the representative of the equivalence class of element e. If there is no equivalence class for e this
+	 *         equivalence class is constructed.
 	 */
 	public E findAndConstructEquivalenceClassIfNeeded(final E elem) {
 		final E findResult = find(elem);
@@ -226,12 +217,10 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Returns a collection of all equivalence classes. A equivalence class is an
-	 * unmodifiable set that contains elements. Each contained element is only in
-	 * one equivalence class.
+	 * Returns a collection of all equivalence classes. A equivalence class is an unmodifiable set that contains
+	 * elements. Each contained element is only in one equivalence class.
 	 *
-	 * @return A collection of all equivalence classes. If there are no, the
-	 *         collection is empty.
+	 * @return A collection of all equivalence classes. If there are no, the collection is empty.
 	 */
 	public Collection<Set<E>> getAllEquivalenceClasses() {
 		final Collection<Set<E>> allEquivalenceClasses = new LinkedList<>();
@@ -242,8 +231,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * @return collection of all elements e such that e is representative of an
-	 *         equivalence class.
+	 * @return collection of all elements e such that e is representative of an equivalence class.
 	 */
 	public Collection<E> getAllRepresentatives() {
 		return Collections.unmodifiableCollection(mRepresentative.values());
@@ -261,8 +249,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	/**
 	 * @param elem
 	 *            element
-	 * @return set of all elements that are in the same equivalence class than e.
-	 *         (Returned set also contains e).
+	 * @return set of all elements that are in the same equivalence class than e. (Returned set also contains e).
 	 */
 	public Set<E> getEquivalenceClassMembers(final E elem) {
 		return Collections.unmodifiableSet(mEquivalenceClass.get(elem));
@@ -274,8 +261,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Construct a new equivalence class that is a singleton and contains only
-	 * element e.
+	 * Construct a new equivalence class that is a singleton and contains only element e.
 	 *
 	 * @param elem
 	 *            element
@@ -291,9 +277,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Removes the given element from all the equivalence classes. If the element
-	 * was a representative and was not the only element of its equivalence class,
-	 * another representative for it is chosen for the new equivalence class.
+	 * Removes the given element from all the equivalence classes. If the element was a representative and was not the
+	 * only element of its equivalence class, another representative for it is chosen for the new equivalence class.
 	 *
 	 * @param element
 	 *            element to be removed
@@ -307,12 +292,12 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 * of the equivalence class, if the removed element was the representative before.
 	 *
 	 * @param element
-	 * 			the element to be removed
+	 *            the element to be removed
 	 * @param newRepChoice
-	 * 			must be in the same equivalence class as element; if the representative of element's equivalence class
-	 *          is changed by this method, newRepChoice will be the new representative. If newRepChoice is given as
-	 *          null, an arbitrary new representative will be chosen from the remaining members of element's equivalence
-	 *          class.
+	 *            must be in the same equivalence class as element; if the representative of element's equivalence class
+	 *            is changed by this method, newRepChoice will be the new representative. If newRepChoice is given as
+	 *            null, an arbitrary new representative will be chosen from the remaining members of element's
+	 *            equivalence class.
 	 */
 	public void remove(final E element, final E newRepChoice) {
 		assert newRepChoice == null || find(newRepChoice) == find(element);
@@ -322,8 +307,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		newEqc.remove(element);
 
 		/*
-		 *  if eqc is non-empty after the remove, make sure it gets another representative
-		 *  (keeps the old eqc, for now, will replace it with newEqc in next step)
+		 * if eqc is non-empty after the remove, make sure it gets another representative (keeps the old eqc, for now,
+		 * will replace it with newEqc in next step)
 		 */
 		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
 			// element is the representative of its equivalence class
@@ -336,7 +321,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 				return;
 			}
 
-			// pick another element from the equivalence class, and make it the  representative
+			// pick another element from the equivalence class, and make it the representative
 			E newRep;
 			if (mElementComparator == null) {
 				if (newRepChoice == null) {
@@ -351,8 +336,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 					newRep = minimum;
 				} else {
 					if (mElementComparator.compare(newRepChoice, minimum) != 0) {
-						throw new IllegalArgumentException("newRepChoice must be compatible with the element "
-								+ "comparator!");
+						throw new IllegalArgumentException(
+								"newRepChoice must be compatible with the element " + "comparator!");
 					}
 					newRep = newRepChoice;
 				}
@@ -378,9 +363,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Removes all given elements from all the equivalence classes. If an element
-	 * was a representative and was not the only element of its equivalence class,
-	 * another representative for it is chosen for the new equivalence class.
+	 * Removes all given elements from all the equivalence classes. If an element was a representative and was not the
+	 * only element of its equivalence class, another representative for it is chosen for the new equivalence class.
 	 *
 	 * @param elements
 	 *            The elements to remove
@@ -412,8 +396,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 			final E newRep = elemTransformer.apply(entry.getValue());
 
-			final CachedHashSet<E> newEqClass = entry.getKey().stream().map(elemTransformer)
-					.collect(Collectors.toCollection(CachedHashSet::new));
+			final CachedHashSet<E> newEqClass =
+					entry.getKey().stream().map(elemTransformer).collect(Collectors.toCollection(CachedHashSet::new));
 			for (final E newElem : newEqClass) {
 				mEquivalenceClass.put(newElem, newEqClass);
 			}
@@ -440,8 +424,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not
-	 * have to be the representatives of this equivalence classes).
+	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not have to be the representatives of this
+	 * equivalence classes).
 	 *
 	 * @param elem1
 	 *            first element
@@ -477,12 +461,11 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Computes a new UnionFind instance whose partitions are the intersections of
-	 * the given UnionFind instance's equivalence classes. Only non-empty
-	 * intersections are added to the new equivalence relation.
+	 * Computes a new UnionFind instance whose partitions are the intersections of the given UnionFind instance's
+	 * equivalence classes. Only non-empty intersections are added to the new equivalence relation.
 	 * <p>
 	 * If the input UnionFind instances are viewed as elements of an abstract domain, the result corresponds to their
-	 *  abstract join.
+	 * abstract join.
 	 * <p>
 	 * Also returns a split info for each input UnionFind. A split info maps each representative in the original
 	 * UnionFind to the (possibly many) corresponding representatives in the new UnionFind.
@@ -495,8 +478,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *            instance to be intersected with uf1
 	 * @return UnionFind with intersected equivalence classes
 	 */
-	public static <E> Triple<UnionFind<E>, HashRelation<E, E>, HashRelation<E, E>> intersectPartitionBlocks(
-			final UnionFind<E> uf1, final UnionFind<E> uf2) {
+	public static <E> Triple<UnionFind<E>, HashRelation<E, E>, HashRelation<E, E>>
+			intersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
 		assert uf1.mElementComparator == uf2.mElementComparator;
 
 		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
@@ -516,7 +499,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			for (final E uf2Rep : uf2RepToIntersection.getDomain()) {
 				final Set<E> intersection = uf2RepToIntersection.getImage(uf2Rep);
 
-//				assert intersection.contains(uf2Rep) : "right?.."; // EDIT: not the case
+				// assert intersection.contains(uf2Rep) : "right?.."; // EDIT: not the case
 
 				result.addEquivalenceClass(intersection);
 
@@ -532,8 +515,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Computes a new UnionFind instance whose partitions are the unions of the
-	 * given UnionFind instance's equivalence classes.
+	 * Computes a new UnionFind instance whose partitions are the unions of the given UnionFind instance's equivalence
+	 * classes.
 	 *
 	 * @param <E>
 	 *            element type
@@ -623,8 +606,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	private static <E> boolean sanityCheckIntersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2,
 			final UnionFind<E> result, final HashRelation<E, E> uf1SplitInfo, final HashRelation<E, E> uf2SplitInfo) {
 		/*
-		 * check the split infos: each pair's lhs must be a representative in the corresponding input UnionFind, and
-		 *  the rhs must be a representative in the output UnionFind
+		 * check the split infos: each pair's lhs must be a representative in the corresponding input UnionFind, and the
+		 * rhs must be a representative in the output UnionFind
 		 */
 		for (final E l : uf1SplitInfo.getDomain()) {
 			if (uf1.find(l) != l) {
@@ -654,8 +637,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Asserts a class invariant:
-	 *  mRepresentatives must be injective, i.e., a representative cannot represent two equivalence classes
+	 * Asserts a class invariant: mRepresentatives must be injective, i.e., a representative cannot represent two
+	 * equivalence classes
 	 *
 	 * @return
 	 */

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends ReuseCegarLoop<LETTER> {
+public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegarLoop<L> {
 
 	private enum MinimizeInitially {
 		NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END
@@ -80,10 +81,12 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFile);
+				services, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFile, compositionFactory,
+				transitionClazz);
 	}
 
 	@Override
@@ -113,7 +116,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 	}
 
 	private void computeDifferenceForReuseAutomaton(final int iteration,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> reuseAut,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> reuseAut,
 			final IPredicateUnifier predicateUnifier)
 			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
 		final int oneBasedi = iteration + 1;
@@ -123,20 +126,20 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 		}
 
 		if (reuseAut instanceof AbstractInterpolantAutomaton) {
-			final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
+			final AbstractInterpolantAutomaton<L> aiReuseAut = (AbstractInterpolantAutomaton<L>) reuseAut;
 			mReuseStats.addBeforeDiffTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 		}
 
-		final PowersetDeterminizer<LETTER, IPredicate> psd =
+		final PowersetDeterminizer<L, IPredicate> psd =
 				new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
 		final boolean explointSigmaStarConcatOfIA = true;
-		final IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff =
+		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
 				new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, reuseAut, psd,
+						(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, reuseAut, psd,
 						explointSigmaStarConcatOfIA);
 
 		if (reuseAut instanceof AbstractInterpolantAutomaton) {
-			final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
+			final AbstractInterpolantAutomaton<L> aiReuseAut = (AbstractInterpolantAutomaton<L>) reuseAut;
 			aiReuseAut.switchToReadonlyMode();
 			mReuseStats.addAfterDiffTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 		}
@@ -155,7 +158,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 
 		if (REMOVE_DEAD_ENDS) {
 			if (mComputeHoareAnnotation) {
-				final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
+				final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
 				mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 			}
 			diff.removeDeadEnds();
@@ -167,7 +170,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 		if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
 			final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
 			final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
-					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, diff.getResult())
+					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, diff.getResult())
 							.getResult();
 			if (noTraceExcluded) {
 				mLogger.warn("Floyd-Hoare automaton" + iteration

@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -272,11 +271,6 @@ public class IntervalDomain implements IDomain {
 	 */
 	private Optional<Interval> updatedLhsInterval(
 			final Map<TermVariable, Interval> scope, final SolvedBinaryRelation relation) {
-		final Map<AssumptionForSolvability, Term> assumptions = relation.getAssumptionsMap();
-		if (assumptions.entrySet().stream().anyMatch(assumption -> !isAssumptionValid(assumption, scope))) {
-			// cannot use solved relation because of invalid assumption
-			return Optional.empty();
-		}
 		assert relation.getLeftHandSide() instanceof TermVariable;
 		final TermVariable subject = (TermVariable) relation.getLeftHandSide();
 		final Interval oldValue = scope.getOrDefault(subject, Interval.TOP);
@@ -304,34 +298,6 @@ public class IntervalDomain implements IDomain {
 		default:
 			throw new AssertionError("Missing case for " + relSym);
 		}
-	}
-
-	private boolean isAssumptionValid(final Entry<AssumptionForSolvability, Term> assumption,
-			final Map<TermVariable, Interval> scope) {
-		switch (assumption.getKey()) {
-		case INTEGER_DIVISIBLE_BY_CONSTANT:
-			return isIntDivisibleByConst(assumption.getValue(), scope);
-		case REAL_DIVISOR_NOT_ZERO:
-			return isRealDivisorNotZero(assumption.getValue(), scope);
-		default:
-			throw new AssertionError("Missing case for " + assumption.getKey());
-		}
-	}
-
-	private boolean isIntDivisibleByConst(final Term assumption, final Map<TermVariable, Interval> scope) {
-		// TODO assumptions are a work in progress in for SolvedBinaryRelation.
-		// In the future we have to check for things like (= (% x 7) 0).
-		// For now we use the safe over-approximation:
-		return false;
-	}
-
-	private boolean isRealDivisorNotZero(final Term assumption, final Map<TermVariable, Interval> scope) {
-		// TODO assumptions are a work in progress in for SolvedBinaryRelation.
-		// In the future we have to check for things like (distinct x 0).
-		// For now we use the safe over-approximation:
-		return false;
-		// Correct check would be something like:
-		// return !scope.getOrDefault((TermVariable) divisor, Interval.TOP).containsZero();
 	}
 
 	private Term intervalsToTerm(final Map<TermVariable, Interval> mapVarsToVals) {

@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils.GeneralizedConstructor;
@@ -331,6 +333,41 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		// TODO implement for analogously to method in AffineTerm,
 		// helps only if all variables in all all monomials are variables
 		return null;
+	}
+
+	@Override
+	public AbstractGeneralizedAffineTerm<?> removeAndNegate(final Monomial monomialOfSubject) {
+		boolean allMonomialsAreLinear = true;
+		final HashMap<Monomial, Rational> newAbstractVariable2Coefficient = new HashMap<>();
+		for (final Entry<Monomial, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			if (!entry.getKey().equals(monomialOfSubject)) {
+				newAbstractVariable2Coefficient.put(entry.getKey(), entry.getValue().negate());
+				if (!entry.getKey().isLinear()) {
+					allMonomialsAreLinear = false;
+				}
+			}
+		}
+		if (allMonomialsAreLinear) {
+			final Map<Term, Rational> map = newAbstractVariable2Coefficient.entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSingleVariable(), x -> x.getValue()));
+			return new AffineTerm(getSort(), getConstant().negate(), map);
+		} else {
+			return new PolynomialTerm(getSort(), getConstant().negate(), newAbstractVariable2Coefficient);
+		}
+	}
+
+	@Override
+	public PolynomialTerm divInvertible(final Rational divisor) {
+		final HashMap<Monomial, Rational> newAbstractVariable2Coefficient = new HashMap<>();
+		for (final Entry<Monomial, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			final Rational newCoefficient = PolynomialTermUtils.divInvertible(getSort(), entry.getValue(), divisor);
+			if (newCoefficient == null) {
+				return null;
+			} else {
+				newAbstractVariable2Coefficient.put(entry.getKey(), newCoefficient);
+			}
+		}
+		final Rational newConstant = PolynomialTermUtils.divInvertible(getSort(), getConstant(), divisor);
+		return new PolynomialTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
 	}
 
 }

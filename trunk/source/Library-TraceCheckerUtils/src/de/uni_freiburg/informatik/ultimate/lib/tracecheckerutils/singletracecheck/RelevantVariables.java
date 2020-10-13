@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTree
  *
  * @author Matthias Heizmann
  */
-public class RelevantVariables {
-	private final NestedFormulas<UnmodifiableTransFormula, IPredicate> mTraceWithFormulas;
+public class RelevantVariables<L extends IAction> {
+	private final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> mTraceWithFormulas;
 	private final Set<IProgramVar>[] mForwardRelevantVariables;
 	private final Set<IProgramVar>[] mBackwardRelevantVariables;
 	private final Set<IProgramVar>[] mRelevantVariables;
@@ -62,7 +62,7 @@ public class RelevantVariables {
 	private final VariableOccurrence mOccurrence;
 
 	@SuppressWarnings("unchecked")
-	public RelevantVariables(final NestedFormulas<UnmodifiableTransFormula, IPredicate> traceWithFormulas,
+	public RelevantVariables(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> traceWithFormulas,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
 		super();
 		mModifiableGlobals = modifiableGlobalsTable;
@@ -831,10 +831,10 @@ public class RelevantVariables {
 
 	}
 
-	private static class NestedConstraintAnalysis extends ModifiableNestedFormulas<ConstraintAnalysis, IPredicate> {
-		public NestedConstraintAnalysis(final NestedWord<? extends IAction> nestedWord,
+	private class NestedConstraintAnalysis extends ModifiableNestedFormulas<L, ConstraintAnalysis, IPredicate> {
+		public NestedConstraintAnalysis(final NestedWord<L> nestedWord,
 				final SortedMap<Integer, IPredicate> pendingContexts,
-				final NestedFormulas<UnmodifiableTransFormula, IPredicate> traceWithFormulas) {
+				final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> traceWithFormulas) {
 			super(nestedWord, pendingContexts);
 			for (int i = 0; i < nestedWord.length(); i++) {
 				if (getTrace().isCallPosition(i)) {

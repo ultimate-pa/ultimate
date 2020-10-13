@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -56,20 +55,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolatingTraceCheck<LETTER>, LETTER extends IIcfgTransition<?>>
-		implements IIpTcStrategyModule<InterpolatingTraceCheckWithConsolidation<T, LETTER>, LETTER> {
+public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolatingTraceCheck<L>, L extends IIcfgTransition<?>>
+		implements IIpTcStrategyModule<InterpolatingTraceCheckWithConsolidation<T, L>, L> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final PredicateFactory mPredicateFactory;
-	private final IIpTcStrategyModule<T, LETTER> mIpTcModule;
+	private final IIpTcStrategyModule<T, L> mIpTcModule;
 
-	private InterpolatingTraceCheckWithConsolidation<T, LETTER> mInterpolantConsolidation;
+	private InterpolatingTraceCheckWithConsolidation<T, L> mInterpolantConsolidation;
 
 	public IpTcStrategyModuleInterpolantConsolidation(final IUltimateServiceProvider services, final ILogger logger,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final PredicateFactory predicateFactory,
-			final IIpTcStrategyModule<T, LETTER> nestedModule) {
+			final TaCheckAndRefinementPreferences<L> prefs, final PredicateFactory predicateFactory,
+			final IIpTcStrategyModule<T, L> nestedModule) {
 		mServices = services;
 		mPrefs = prefs;
 		mPredicateFactory = predicateFactory;
@@ -88,7 +87,7 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		return mIpTcModule.getRcfgProgramExecution();
 	}
 
@@ -121,7 +120,7 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 
 	@Override
 	public Collection<QualifiedTracePredicates> getPerfectInterpolantSequences() {
-		final InterpolatingTraceCheckWithConsolidation<T, LETTER> tc = getOrConstruct();
+		final InterpolatingTraceCheckWithConsolidation<T, L> tc = getOrConstruct();
 		if (tc.isPerfectSequence()) {
 			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), true));
 		}
@@ -130,7 +129,7 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 
 	@Override
 	public Collection<QualifiedTracePredicates> getImperfectInterpolantSequences() {
-		final InterpolatingTraceCheckWithConsolidation<T, LETTER> tc = getOrConstruct();
+		final InterpolatingTraceCheckWithConsolidation<T, L> tc = getOrConstruct();
 		if (!tc.isPerfectSequence()) {
 			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), false));
 		}
@@ -138,7 +137,7 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 	}
 
 	@Override
-	public InterpolatingTraceCheckWithConsolidation<T, LETTER> getOrConstruct() {
+	public InterpolatingTraceCheckWithConsolidation<T, L> getOrConstruct() {
 		if (mInterpolantConsolidation == null) {
 			final CfgSmtToolkit cfgSmtToolkit = mPrefs.getCfgSmtToolkit();
 			try {

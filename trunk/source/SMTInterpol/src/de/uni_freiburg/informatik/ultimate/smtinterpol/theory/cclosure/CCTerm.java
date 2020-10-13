@@ -54,9 +54,11 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 public abstract class CCTerm extends SimpleListable<CCTerm> {
 
 	/**
-	 * The destination of the outgoing equality edge.  Every term has at
-	 * most one equality edge, which was introduced by some merge operation.
-	 * The edges may be inverted to allow introducing new equality edges.
+	 * The destination of the outgoing equality edge. Every term has at most one
+	 * equality edge, which was introduced by some merge operation. The edges may be
+	 * inverted to allow introducing new equality edges. The equality edges always
+	 * form a spanning tree for the members of the current equivalence class. They
+	 * correspond either to congruences or equality literals.
 	 */
 	CCTerm mEqualEdge;
 	/**
@@ -351,7 +353,6 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 	public Clause merge(final CClosure engine, final CCTerm lhs, final CCEquality reason) {
 		assert reason != null
 				|| (this instanceof CCAppTerm && lhs instanceof CCAppTerm);
-		assert engine.mMergeDepth == engine.mMerges.size();
 
 		/* Check the representatives of this */
 		final CCTerm src = lhs.mRepStar;
@@ -379,7 +380,6 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 				((CCAppTerm)lhs).markParentInfos();
 			}
 		}
-		assert engine.mMergeDepth == engine.mMerges.size();
 		assert invariant();
 		assert lhs.invariant();
 		assert mRepStar.pairHashValid(engine);
@@ -432,11 +432,9 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 
 		long time;
 
-		assert(engine.mMergeDepth == engine.mMerges.size());
-		src.mMergeTime = ++engine.mMergeDepth;
-		engine.mMerges.push(lhs);
+		src.mMergeTime = engine.getMergeDepth();
+		engine.recordMerge(lhs);
 		engine.getLogger().debug("M %s %s", this, lhs);
-		assert(engine.mMerges.size() == engine.mMergeDepth);
 
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();
@@ -501,7 +499,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 			}
 			pentry.getOtherEntry().unlink();
 			assert other.mPairInfos.wellformed();
-			engine.mPairHash.remove(info);
+			engine.removePairHash(info);
 		}
 		if (Config.PROFILE_TIME) {
 			engine.addEqTime(System.nanoTime() - time);
@@ -667,7 +665,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 				if (destInfo.mDiseq == null && destInfo.mEqlits.isEmpty() && destInfo.mCompareTriggers.isEmpty()) {
 					destInfo.mLhsEntry.unlink();
 					destInfo.mRhsEntry.unlink();
-					engine.mPairHash.remove(destInfo);
+					engine.removePairHash(destInfo);
 				}
 			}
 		}
@@ -682,9 +680,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		}
 		src.mRep = src;
 
-		assert src.mMergeTime == engine.mMergeDepth;
-		engine.mMergeDepth--;
-		assert(engine.mMergeDepth == engine.mMerges.size());
+		assert src.mMergeTime == engine.getMergeDepth();
 		src.mMergeTime = Integer.MAX_VALUE;
 		if (Config.PROFILE_TIME) {
 			engine.addSetRepTime(System.nanoTime() - time);

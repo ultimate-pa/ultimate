@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -69,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 
 /**
@@ -94,11 +96,13 @@ public class ReqSymboltableBuilder {
 	private final Set<String> mClockVars;
 	private final Map<String, Expression> mConst2Value;
 	private final Map<String, Integer> mId2Bounds;
-	private final Map<PatternType, BoogieLocation> mReq2Loc;
+	private final Map<PatternType<?>, BoogieLocation> mReq2Loc;
 	private final Set<String> mInputVars;
 	private final Set<String> mOutputVars;
 
 	private final Map<String, FunctionDeclaration> mBuiltinFunctions;
+
+	private final UnionFind<String> mEquivalences;
 
 	public ReqSymboltableBuilder(final ILogger logger) {
 		mLogger = logger;
@@ -121,6 +125,7 @@ public class ReqSymboltableBuilder {
 
 		mInputVars = new LinkedHashSet<>();
 		mOutputVars = new LinkedHashSet<>();
+		mEquivalences = new UnionFind<>();
 		mBuiltinFunctions = generateBuildinFuntions();
 
 	}
@@ -159,9 +164,11 @@ public class ReqSymboltableBuilder {
 	 * Add the variables and clocks of a PEA generated from a pattern to the symbol table.
 	 *
 	 */
-	public void addPea(final PatternType pattern, final PhaseEventAutomata pea) {
+	public void addPea(final PatternType<?> pattern, final PhaseEventAutomata pea) {
 		addVar(getPcName(pea), BoogieType.TYPE_INT, pattern, mPcVars);
 		pea.getClocks().forEach(a -> addVar(a, BoogieType.TYPE_REAL, pattern, mClockVars));
+
+		updateEquivalences(pea);
 
 		for (final Entry<String, String> entry : pea.getVariables().entrySet()) {
 			final String name = entry.getKey();
@@ -188,7 +195,20 @@ public class ReqSymboltableBuilder {
 		}
 	}
 
-	public void addAuxvar(final String name, final String typeString, final PatternType source) {
+	private void updateEquivalences(final PhaseEventAutomata pea) {
+		final Set<String> peaVars = new HashSet<>();
+		// add all variable names
+		peaVars.addAll(pea.getVariables().keySet());
+		// add all clock names
+		peaVars.addAll(pea.getClocks());
+		// add pc name
+		peaVars.add(getPcName(pea));
+
+		peaVars.forEach(mEquivalences::findAndConstructEquivalenceClassIfNeeded);
+		mEquivalences.union(peaVars);
+	}
+
+	public void addAuxvar(final String name, final String typeString, final PatternType<?> source) {
 		addVar(name, toPrimitiveType(typeString), source, mStateVars);
 	}
 
@@ -196,7 +216,7 @@ public class ReqSymboltableBuilder {
 		final String deltaVar = declareDeltaVar();
 		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mHistoryVars,
 				mConstVars, mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value, mInputVars, mOutputVars,
-				mBuiltinFunctions);
+				mBuiltinFunctions, mEquivalences);
 	}
 
 	public Set<String> getConstIds() {
@@ -277,7 +297,7 @@ public class ReqSymboltableBuilder {
 		return val;
 	}
 
-	private Integer tryParseInt(final PatternType pattern, final String val) {
+	private Integer tryParseInt(final PatternType<?> pattern, final String val) {
 		try {
 			return new BigDecimal(val).toBigIntegerExact().intValueExact();
 		} catch (final NumberFormatException ex) {
@@ -290,7 +310,7 @@ public class ReqSymboltableBuilder {
 		}
 	}
 
-	private void addVar(final String name, final BoogieType type, final PatternType source, final Set<String> kind) {
+	private void addVar(final String name, final BoogieType type, final PatternType<?> source, final Set<String> kind) {
 		addVarOneKind(name, type, source, kind);
 		if (source instanceof InitializationPattern
 				&& ((InitializationPattern) source).getCategory() == VariableCategory.CONST) {
@@ -301,7 +321,7 @@ public class ReqSymboltableBuilder {
 		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
 	}
 
-	private void addVarOneKind(final String name, final BoogieType type, final PatternType source,
+	private void addVarOneKind(final String name, final BoogieType type, final PatternType<?> source,
 			final Set<String> kind) {
 		if (type == null && (!kind.contains(name) || !mId2Type.containsKey(name))) {
 			throw new AssertionError();
@@ -325,14 +345,14 @@ public class ReqSymboltableBuilder {
 		mId2VarLHS.put(name, new VariableLHS(loc, name));
 	}
 
-	private void checkVar(final String name, final PatternType source) {
+	private void checkVar(final String name, final PatternType<?> source) {
 		if (mId2Type.containsKey(name)) {
 			return;
 		}
 		addErrorError(name, new ErrorInfo(ErrorType.MISSING_DECLARATION, source));
 	}
 
-	private ILocation getLocation(final PatternType source) {
+	private ILocation getLocation(final PatternType<?> source) {
 		// TODO: Fix locations
 		final ILocation loc = mReq2Loc.get(source);
 		if (loc != null) {
@@ -374,8 +394,28 @@ public class ReqSymboltableBuilder {
 		return "'" + name;
 	}
 
-	private static String getPcName(final PhaseEventAutomata aut) {
-		return aut.getName() + "_pc";
+	/**
+	 * Returns the variable name of the variable that encodes a PEA state. The PEA name is a combination of the
+	 * requirement id and the number of the counter trace.
+	 *
+	 * @param pea
+	 *            A {@link PhaseEventAutomata}
+	 * @return the variable name of the variable that encodes a PEA state.
+	 */
+	private static String getPcName(final PhaseEventAutomata pea) {
+		return getPcName(pea.getName());
+	}
+
+	/**
+	 * Returns the variable name of the variable that encodes a PEA state. The PEA name is a combination of the
+	 * requirement id and the number of the counter trace.
+	 *
+	 * @param pea
+	 *            A String obtained by calling {@link PhaseEventAutomata#getName()}
+	 * @return the variable name of the variable that encodes a PEA state.
+	 */
+	public static String getPcName(final String peaName) {
+		return peaName + "_pc";
 	}
 
 	private static final class ReqSymbolTable implements IReqSymbolTable {
@@ -385,7 +425,7 @@ public class ReqSymboltableBuilder {
 		private final Map<String, IdentifierExpression> mId2IdExpr;
 		private final Map<String, VariableLHS> mId2VarLHS;
 		private final Map<String, Expression> mConst2Value;
-		private final Map<PatternType, BoogieLocation> mReq2Loc;
+		private final Map<PatternType<?>, BoogieLocation> mReq2Loc;
 		private final Set<String> mStateVars;
 		private final Set<String> mConstVars;
 		private final Set<String> mPrimedVars;
@@ -397,14 +437,15 @@ public class ReqSymboltableBuilder {
 		private final Set<String> mInputVars;
 		private final Set<String> mOutputVars;
 		private final Map<String, FunctionDeclaration> mBuildinFunctions;
+		private final UnionFind<String> mEquivalences;
 
 		private ReqSymbolTable(final String deltaVar, final Map<String, BoogieType> id2Type,
 				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs,
 				final Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars,
 				final Set<String> constVars, final Set<String> eventVars, final Set<String> pcVars,
-				final Set<String> clockVars, final Map<PatternType, BoogieLocation> req2loc,
+				final Set<String> clockVars, final Map<PatternType<?>, BoogieLocation> req2loc,
 				final Map<String, Expression> const2Value, final Set<String> inputVars, final Set<String> outputVars,
-				final Map<String, FunctionDeclaration> buildinFunctions) {
+				final Map<String, FunctionDeclaration> buildinFunctions, final UnionFind<String> equivalences) {
 			mId2Type = Collections.unmodifiableMap(id2Type);
 			mId2IdExpr = Collections.unmodifiableMap(id2idExp);
 			mId2VarLHS = Collections.unmodifiableMap(id2VarLhs);
@@ -422,6 +463,7 @@ public class ReqSymboltableBuilder {
 			mOutputVars = Collections.unmodifiableSet(outputVars);
 			mBuildinFunctions = Collections.unmodifiableMap(buildinFunctions);
 			mDeltaVar = deltaVar;
+			mEquivalences = equivalences;
 		}
 
 		@Override
@@ -435,7 +477,7 @@ public class ReqSymboltableBuilder {
 		}
 
 		@Override
-		public Map<PatternType, BoogieLocation> getLocations() {
+		public Map<PatternType<?>, BoogieLocation> getLocations() {
 			return Collections.unmodifiableMap(mReq2Loc);
 		}
 
@@ -588,6 +630,11 @@ public class ReqSymboltableBuilder {
 			return identifiers.stream().map(this::constructVarlist).filter(a -> a != null).collect(Collectors.toList());
 		}
 
+		@Override
+		public UnionFind<String> getVariableEquivalenceClasses() {
+			return mEquivalences;
+		}
+
 	}
 
 	public enum ErrorType {
@@ -598,22 +645,22 @@ public class ReqSymboltableBuilder {
 	public static final class ErrorInfo {
 
 		private final ErrorType mType;
-		private final PatternType mSource;
+		private final PatternType<?> mSource;
 		private final String mMessage;
 
-		public ErrorInfo(final ErrorType type, final PatternType req) {
+		public ErrorInfo(final ErrorType type, final PatternType<?> req) {
 			mType = type;
 			mSource = req;
 			mMessage = null;
 		}
 
-		public ErrorInfo(final ErrorType type, final PatternType req, final String message) {
+		public ErrorInfo(final ErrorType type, final PatternType<?> req, final String message) {
 			mType = type;
 			mSource = req;
 			mMessage = message;
 		}
 
-		public PatternType getSource() {
+		public PatternType<?> getSource() {
 			return mSource;
 		}
 

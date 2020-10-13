@@ -35,22 +35,12 @@ public class PEAtoBoogieObserver extends BaseObserver {
 			return false;
 		}
 		@SuppressWarnings("unchecked")
-		final List<PatternType> rawPatterns = (List<PatternType>) ((ObjectContainer<?>) root).getValue();
+		final List<PatternType<?>> rawPatterns = (List<PatternType<?>>) ((ObjectContainer<?>) root).getValue();
 
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return false;
 		}
-
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		if (prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
-				PEATransformerMode.class) == PEATransformerMode.REQ_CHECK) {
-			final PeaResultUtil mReporter = new PeaResultUtil(mLogger, mServices);
-			// register CEX transformer that removes program executions from CEX.
-			final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
-			mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
-		}
 		mBoogieAST = generateBoogie(rawPatterns);
-
 		return false;
 	}
 
@@ -58,7 +48,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		return mBoogieAST;
 	}
 
-	private IElement generateBoogie(final List<PatternType> patterns) {
+	private IElement generateBoogie(final List<PatternType<?>> patterns) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final PEATransformerMode mode =
 				prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE, PEATransformerMode.class);
@@ -71,15 +61,22 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		}
 	}
 
-	private IElement generateReqCheckBoogie(final List<PatternType> patterns) {
-		return new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList()).getUnit();
+	private IElement generateReqCheckBoogie(final List<PatternType<?>> patterns) {
+		final Req2BoogieTranslator translator =
+				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList());
+		final VerificationResultTransformer reporter =
+				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
+		// register CEX transformer that removes program executions from CEX.
+		final Function<IResult, IResult> resultTransformer = reporter::convertTraceAbstractionResult;
+		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
+		return translator.getUnit();
 	}
 
-	private IElement generateReqTestBoogie(final List<PatternType> patterns) {
+	private IElement generateReqTestBoogie(final List<PatternType<?>> patterns) {
 		// TODO: would it be nicer to get the symbol table via annotations?
 		final Req2CauseTrackingPeaTransformer transformer = new Req2CauseTrackingPeaTransformer(mServices, mLogger);
-		final Req2BoogieTranslator translator = new Req2BoogieTranslator(mServices, mLogger, patterns,
-				Collections.singletonList(transformer));
+		final Req2BoogieTranslator translator =
+				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
 		final ReqTestResultUtil mReporter =
 				new ReqTestResultUtil(mLogger, mServices, translator.getReqSymbolTable(), transformer.getEffectStore());
 		// register CEX transformer that removes program executions from CEX.
@@ -87,6 +84,5 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		return translator.getUnit();
 	}
-
 
 }

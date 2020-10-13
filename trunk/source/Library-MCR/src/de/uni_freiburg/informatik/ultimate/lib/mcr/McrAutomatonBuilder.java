@@ -1,15 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -33,28 +34,22 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
+/**
+ * Class to construct automata based on the MCR relation.
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final List<LETTER> mOriginalTrace;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
-	private final AutomataLibraryServices mAutomataServices;
-	private final ManagedScript mManagedScript;
-	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final AutomataLibraryServices mServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final VpAlphabet<LETTER> mAlphabet;
 	private final VpAlphabet<Integer> mIntAlphabet;
@@ -67,17 +62,11 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	public McrAutomatonBuilder(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final ILogger logger,
-			final VpAlphabet<LETTER> alphabet, final IUltimateServiceProvider services,
-			final ManagedScript managedScript, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) {
+			final VpAlphabet<LETTER> alphabet, final IUltimateServiceProvider services) {
 		mOriginalTrace = trace;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
-		mServices = services;
-		mAutomataServices = new AutomataLibraryServices(mServices);
-		mManagedScript = managedScript;
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
+		mServices = new AutomataLibraryServices(services);
 		mEmptyStackFactory = emptyStackFactory;
 		mAlphabet = alphabet;
 		mIntAlphabet = new VpAlphabet<>(IntStream.range(0, trace.size()).boxed().collect(Collectors.toSet()));
@@ -129,7 +118,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			// Construct automata for the MHB relation
 			for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, mIntAlphabet, factory);
+						new NestedWordAutomaton<>(mServices, mIntAlphabet, factory);
 				final Set<Integer> threadActionSet = new HashSet<>(threadActions);
 				for (int i = 0; i <= threadActions.size(); i++) {
 					nwa.addState(i == 0, i == threadActions.size(), getState(i));
@@ -150,39 +139,49 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	public NestedWordAutomaton<LETTER, IPredicate> buildMhbAutomaton(final PredicateFactory predicateFactory)
 			throws AutomataLibraryException {
-		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
-		final INestedWordAutomaton<Integer, String> intAutomaton = intersectNwa(getThreadAutomata());
-		final Set<String> initialStates = intAutomaton.getInitialStates();
-		final Set<String> finalStates = new HashSet<>(intAutomaton.getFinalStates());
-		final LinkedList<String> queue = new LinkedList<>(finalStates);
-		final Map<String, IPredicate> states2Predicates = new HashMap<>();
-		final Term trueTerm = mManagedScript.getScript().term("true");
-		for (final String state : intAutomaton.getStates()) {
-			final IPredicate predicate = predicateFactory.newSPredicate(null, trueTerm);
-			states2Predicates.put(state, predicate);
-			result.addState(initialStates.contains(state), finalStates.contains(state), predicate);
+		final INestedWordAutomaton<Integer, String> automaton = intersectNwa(getThreadAutomata());
+		final Term trueTerm = mPredicateUnifier.getTruePredicate().getFormula();
+		final Map<String, IPredicate> stateMap = automaton.getStates().stream()
+				.collect(Collectors.toMap(x -> x, x -> predicateFactory.newSPredicate(null, trueTerm)));
+		return transformAutomaton(automaton, stateMap::get, mEmptyStackFactory);
+	}
+
+	private <STATE> NestedWordAutomaton<LETTER, STATE> transformAutomaton(
+			final INestedWordAutomaton<Integer, String> automaton, final Function<String, STATE> stateFunction,
+			final IEmptyStackStateFactory<STATE> emptyStateFactory) {
+		final NestedWordAutomaton<LETTER, STATE> result =
+				new NestedWordAutomaton<>(mServices, mAlphabet, emptyStateFactory);
+		final Set<STATE> initialStates =
+				automaton.getInitialStates().stream().map(stateFunction).collect(Collectors.toSet());
+		for (final String state : automaton.getFinalStates()) {
+			final STATE stateT = stateFunction.apply(state);
+			if (stateT != null) {
+				result.addState(initialStates.contains(stateT), true, stateT);
+			}
 		}
+		final ArrayDeque<String> dequeue = new ArrayDeque<>(automaton.getFinalStates());
 		final Set<String> visited = new HashSet<>();
-		while (!queue.isEmpty()) {
-			final String state = queue.remove();
-			if (!visited.add(state)) {
+		while (!dequeue.isEmpty()) {
+			final String state = dequeue.pop();
+			final STATE stateT = stateFunction.apply(state);
+			if (!visited.add(state) || stateT == null) {
 				continue;
 			}
-			for (final IncomingInternalTransition<Integer, String> edge : intAutomaton.internalPredecessors(state)) {
-				final LETTER letter = mOriginalTrace.get(edge.getLetter());
-				result.addInternalTransition(states2Predicates.get(edge.getPred()), letter,
-						states2Predicates.get(state));
-				queue.add(edge.getPred());
+			for (final IncomingInternalTransition<Integer, String> edge : automaton.internalPredecessors(state)) {
+				final String pred = edge.getPred();
+				final STATE predT = stateFunction.apply(pred);
+				if (predT == null) {
+					continue;
+				}
+				if (!result.contains(predT)) {
+					result.addState(initialStates.contains(predT), false, predT);
+				}
+				result.addInternalTransition(predT, mOriginalTrace.get(edge.getLetter()), stateT);
+				dequeue.add(pred);
 			}
 		}
 		return result;
-	}
 
-	private boolean isInterleaving(final List<Integer> intTrace) throws AutomataLibraryException {
-		final INwaOutgoingLetterAndTransitionProvider<Integer, String> mhbAutomaton = intersect(getThreadAutomata());
-		final Word<Integer> word = new Word<>(intTrace.toArray(new Integer[intTrace.size()]));
-		return new Accepts<>(mAutomataServices, mhbAutomaton, NestedWord.nestedWord(word)).getResult();
 	}
 
 	private List<Integer> getIntTrace(final List<LETTER> trace) {
@@ -224,7 +223,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				final Integer write = entry.getValue();
 				final IProgramVar var = entry.getKey();
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, mIntAlphabet, factory);
+						new NestedWordAutomaton<>(mServices, mIntAlphabet, factory);
 				final Set<Integer> writesOnVar = mVariables2Writes.getImage(var);
 				nwa.addState(write == null, false, getState(1));
 				nwa.addState(false, true, getState(2));
@@ -255,7 +254,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final Collection<INestedWordAutomaton<Integer, String>> automata) throws AutomataLibraryException {
 		mLogger.info("Started intersection.");
 		final INestedWordAutomaton<Integer, String> result =
-				new NestedWordAutomatonReachableStates<>(mAutomataServices, intersect(automata));
+				new NestedWordAutomatonReachableStates<>(mServices, intersect(automata));
 		mLogger.info("Finished intersection with " + result.sizeInformation());
 		return result;
 	}
@@ -275,85 +274,48 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<LETTER> trace,
-			final Collection<QualifiedTracePredicates> tracePredicates) throws AutomataLibraryException {
+			final List<IPredicate> interpolants, final IInterpolantProvider<LETTER> interpolantProvider)
+			throws AutomataLibraryException {
 		final List<Integer> intTrace = getIntTrace(trace);
 		assert isInterleaving(intTrace) : "Can only create an automaton for interleavings";
 		final INestedWordAutomaton<Integer, String> automaton = buildMcrAutomaton(intTrace);
-		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
-		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
-		final PredicateTransformer<Term, IPredicate, TransFormula> predicateTransformer =
-				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
-		int wpCalls = 0;
-		result.addState(true, false, mPredicateUnifier.getTruePredicate());
-		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		for (final QualifiedTracePredicates tp : tracePredicates) {
-			final List<IPredicate> interpolants = tp.getPredicates();
-			final Map<String, IPredicate> stateMap = new HashMap<>();
-			// Fill stateMap and automaton with the given interpolants
-			final LinkedList<String> queue = new LinkedList<>();
-			String currentState = automaton.getInitialStates().iterator().next();
-			IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
+		mLogger.info("Constructing interpolant automaton by labelling MCR automaton with interpolants from "
+				+ interpolantProvider.getClass().getSimpleName());
+		final IPredicate truePred = mPredicateUnifier.getTruePredicate();
+		final IPredicate falsePred = mPredicateUnifier.getFalsePredicate();
+		final Map<String, IPredicate> stateMap = new HashMap<>();
+		// Fill stateMap and automaton with the given interpolants
+		String currentState = automaton.getInitialStates().iterator().next();
+		IPredicate currentPredicate = truePred;
+		stateMap.put(currentState, currentPredicate);
+		for (int i = 0; i < trace.size(); i++) {
+			final int index = intTrace.get(i);
+			final Iterator<OutgoingInternalTransition<Integer, String>> succStates =
+					automaton.internalSuccessors(currentState, index).iterator();
+			if (!succStates.hasNext()) {
+				throw new IllegalStateException("Trace is not present in the MCR automaton");
+			}
+			currentState = succStates.next().getSucc();
+			final IPredicate nextPredicate = i == interpolants.size() ? falsePred
+					: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
+			currentPredicate = nextPredicate;
 			stateMap.put(currentState, currentPredicate);
-			queue.add(currentState);
-			for (int i = 0; i < trace.size(); i++) {
-				final int index = intTrace.get(i);
-				final Iterator<OutgoingInternalTransition<Integer, String>> succStates =
-						automaton.internalSuccessors(currentState, index).iterator();
-				if (!succStates.hasNext()) {
-					throw new IllegalStateException("Trace is not present in the MCR automaton");
-				}
-				currentState = succStates.next().getSucc();
-				// TODO: Check interpolants.get(i) for "useless" (not future-live) variables and quantifiy them away
-				// (using exists) and show a warning
-				final IPredicate nextPredicate = i == interpolants.size() ? mPredicateUnifier.getFalsePredicate()
-						: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
-				if (!result.contains(nextPredicate)) {
-					result.addState(false, false, nextPredicate);
-				}
-				result.addInternalTransition(currentPredicate, mOriginalTrace.get(index), nextPredicate);
-				queue.add(currentState);
-				currentPredicate = nextPredicate;
-				stateMap.put(currentState, currentPredicate);
-			}
-			while (!queue.isEmpty()) {
-				final String state = queue.remove();
-				final IPredicate predicate = stateMap.get(state);
-				if (predicate == null) {
-					throw new IllegalStateException("Trying to visit an uncovered state.");
-				}
-				for (final IncomingInternalTransition<Integer, String> edge : automaton.internalPredecessors(state)) {
-					final String predecessor = edge.getPred();
-					IPredicate predPredicate = stateMap.get(predecessor);
-					final LETTER action = mOriginalTrace.get(edge.getLetter());
-					// If the predecessor is already labeled, we can continue
-					if (predPredicate == null) {
-						queue.add(predecessor);
-						final Iterator<IncomingInternalTransition<LETTER, IPredicate>> predicateEdges =
-								result.internalPredecessors(predicate, action).iterator();
-						// If there is a predecessor present in the result automaton, we can just use it
-						if (predicateEdges.hasNext()) {
-							predPredicate = predicateEdges.next().getPred();
-						} else {
-							// Otherwise calculate wp and add it as a state if necessary
-							wpCalls++;
-							final Term wp =
-									predicateTransformer.weakestPrecondition(predicate, action.getTransformula());
-							final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
-									mManagedScript, wp, mSimplificationTechnique, mXnfConversionTechnique);
-							predPredicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
-							if (!result.contains(predPredicate)) {
-								result.addState(false, false, predPredicate);
-							}
-						}
-						stateMap.put(predecessor, predPredicate);
-					}
-					// Add the corresponding transition
-					result.addInternalTransition(predPredicate, action, predicate);
-				}
-			}
 		}
-		mLogger.info("Construction finished. Needed to calculate wp " + wpCalls + " times.");
+		// Get interpolants for the whole automaton and use them in the resulting automaton
+		stateMap.putAll(interpolantProvider.getInterpolants(transformAutomaton(automaton, x -> x, new StringFactory()),
+				stateMap));
+		final NestedWordAutomaton<LETTER, IPredicate> result =
+				transformAutomaton(automaton, stateMap::get, mEmptyStackFactory);
+		final Set<IPredicate> mcrIps = new HashSet<>(result.getStates());
+		mcrIps.remove(truePred);
+		mcrIps.remove(falsePred);
+		mcrIps.removeAll(interpolants);
+		mLogger.info("Construction finished. MCR generated " + mcrIps.size() + " new interpolants: " + mcrIps);
 		return result;
+	}
+
+	private boolean isInterleaving(final List<Integer> intTrace) throws AutomataLibraryException {
+		final Word<Integer> word = new Word<>(intTrace.toArray(new Integer[intTrace.size()]));
+		return new Accepts<>(mServices, intersect(getThreadAutomata()), NestedWord.nestedWord(word)).getResult();
 	}
 }

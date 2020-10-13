@@ -67,12 +67,12 @@ public class BoogieBooleanExpressionDecisionTest {
 
 		CDD cdd = BoogieBooleanExpressionDecision.create(e); // (crew == 47)
 		cdd = cdd.negate(); // !(crew == 47)
-		cdd = cdd.and(BoogieBooleanExpressionDecision.create(e2)); // !(crew == 47)∧(test <= 5.0)
-		cdd = cdd.or(BoogieBooleanExpressionDecision.create(e3)); // (answer != true)∨(!(crew == 47)∧(test <= 5.0))
-		Assert.assertEquals("(answer != true ∨ (!(crew == 47) ∧ test < 5.0))", cdd.toString(true));
+		cdd = cdd.and(BoogieBooleanExpressionDecision.create(e2)); // !(crew == 47)&&(test <= 5.0)
+		cdd = cdd.or(BoogieBooleanExpressionDecision.create(e3)); // (answer != true)||(!(crew == 47)&&(test <= 5.0))
+		Assert.assertEquals("(answer != true || (!(crew == 47) && test < 5.0))", cdd.toString(true));
 
 		cdd = cdd.negate();
-		Assert.assertEquals("(!(answer != true) ∧ (crew == 47 ∨ !(test < 5.0)))", cdd.toString());
+		Assert.assertEquals("(!(answer != true) && (crew == 47 || !(test < 5.0)))", cdd.toString());
 	}
 
 	@Test
@@ -87,20 +87,20 @@ public class BoogieBooleanExpressionDecisionTest {
 		// conjunction of two boolean expressions
 		final Expression e2 = new IdentifierExpression(dummyLocation, "f");
 		cdd = cdd.and(BoogieBooleanExpressionDecision.create(e2));
-		Assert.assertEquals("(!e ∧ f)", cdd.toString(true));
+		Assert.assertEquals("(!e && f)", cdd.toString(true));
 		cdd = cdd.negate();
-		Assert.assertEquals("(e ∨ !f)", cdd.toString(true));
+		Assert.assertEquals("(e || !f)", cdd.toString(true));
 		cdd = cdd.negate();
-		Assert.assertEquals("(!e ∧ f)", cdd.toString(true));
+		Assert.assertEquals("(!e && f)", cdd.toString(true));
 		final Expression f = new IdentifierExpression(dummyLocation, "f");
 		cdd = cdd.and(BoogieBooleanExpressionDecision.create(f));
-		Assert.assertEquals("(!e ∧ f)", cdd.toString(true));
+		Assert.assertEquals("(!e && f)", cdd.toString(true));
 		// conjuction disjunction
 		final Expression e3 = new IdentifierExpression(dummyLocation, "g");
 		cdd = cdd.or(BoogieBooleanExpressionDecision.create(e3));
-		Assert.assertEquals("(g ∨ (!e ∧ (f ∨ g)))", cdd.toString(true));
+		Assert.assertEquals("(g || (!e && (f || g)))", cdd.toString(true));
 		cdd = cdd.negate();
-		Assert.assertEquals("((e ∧ !g) ∨ (!f ∧ !g))", cdd.toString(true));
+		Assert.assertEquals("((e && !g) || (!f && !g))", cdd.toString(true));
 	}
 
 }

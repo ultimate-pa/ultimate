@@ -124,7 +124,8 @@ public class LassoRankerStarter {
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private final RankVarConstructor mRankVarConstructor;
 
-	public LassoRankerStarter(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services) throws IOException {
+	public LassoRankerStarter(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services)
+			throws IOException {
 		mIcfg = Objects.requireNonNull(icfg);
 		mServices = Objects.requireNonNull(services);
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -445,8 +446,10 @@ public class LassoRankerStarter {
 	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta,
 			final NestedWord<IIcfgTransition<IcfgLocation>> stem,
 			final NestedWord<IIcfgTransition<IcfgLocation>> loop) {
-		final IcfgProgramExecution stemExecution = IcfgProgramExecution.create(stem.asList(), Collections.emptyMap());
-		final IcfgProgramExecution loopExecution = IcfgProgramExecution.create(loop.asList(), Collections.emptyMap());
+		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> stemExecution =
+				IcfgProgramExecution.create(stem.asList(), Collections.emptyMap());
+		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> loopExecution =
+				IcfgProgramExecution.create(loop.asList(), Collections.emptyMap());
 		final IcfgEdge hondaEdge = (IcfgEdge) loop.getSymbol(0);
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)

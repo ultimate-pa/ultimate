@@ -52,12 +52,32 @@ public class Clause extends SimpleListable<Clause> {
 	 * on the second list is the second watcher of the clause nextSecondWatch.
 	 */
 	int     mNextIsSecond;
+
 	/**
-	 * A WatchList is a list of watchers.
-	 * Each clause has two watchers.  The first watching lit 0, the next lit1.
-	 * Their watchers form a linked list.  For memory efficiency reasons there
-	 * is no real data structure for watchers, but a clause and a bit is used
-	 * to represent a watcher.
+	 * A WatchList is a list of watchers. Each clause with more than one literal has
+	 * two watchers. The first watching lit 0, the next lit1. Their watchers form a
+	 * linked list. A unit clause has only one watcher and the empty clause is
+	 * immediately assigned to mUnsatClause to indicate a proof of unsatisfiable was
+	 * found. For memory efficiency reasons there is no real data structure for
+	 * watchers, but a clause and a bit is used to represent a watcher.
+	 *
+	 * A watcher is always on exactly one of the following four lists:
+	 * <ul>
+	 * <li>dpllEngine.mPendingWatcherList</li>
+	 * <li>literal.mWatcher</li>
+	 * <li>atom.mBacktrackWatcher</li>
+	 * </ul>
+	 *
+	 * A watcher can only be on literal.mWatcher of its corresponding literal and
+	 * only if it is not set to false. The watcher of a unit literal must not be on
+	 * literal.mWatcher, because it needs to be propagated immediately. A watcher
+	 * can only be on atom.mBacktrackWatcher of a literal in the same clause that is
+	 * currently true. This can either be the watched literal or a different one
+	 * (usually the other watched literal). A watcher can only be on
+	 * mWatcherSetList, if its corresponding literal is currently false. In all
+	 * other cases it is on the mPendingWatcherList where it is reassigned to a
+	 * different list in dpllEngine.propagateClauses() when a literal is propagated
+	 * or a better list is found for this watcher.
 	 */
 	final static class WatchList {
 		Clause mHead;
@@ -78,7 +98,7 @@ public class Clause extends SimpleListable<Clause> {
 			return mSize;
 		}
 
-		public void prepend(Clause c, int index) {
+		public void prepend(final Clause c, final int index) {
 			if (mHead == null) {
 				mTail = c;
 				mTailIndex = index;
@@ -98,7 +118,7 @@ public class Clause extends SimpleListable<Clause> {
 			mSize++;
 		}
 
-		public void append(Clause c, int index) {
+		public void append(final Clause c, final int index) {
 			if (mHead == null) {
 				mHead = c;
 				mHeadIndex = index;
@@ -144,7 +164,7 @@ public class Clause extends SimpleListable<Clause> {
 			return c;
 		}
 
-		public void moveAll(WatchList src) {
+		public void moveAll(final WatchList src) {
 			if (src.mHead == null) {
 				return;
 			}
@@ -182,27 +202,27 @@ public class Clause extends SimpleListable<Clause> {
 		return mLiterals.length;
 	}
 
-	public Literal getLiteral(int i) {
+	public Literal getLiteral(final int i) {
 		return mLiterals[i];
 	}
 
-	public Clause(Literal[] literals) {
+	public Clause(final Literal[] literals) {
 		mLiterals = literals;
 		mStacklevel = computeStackLevel();
 	}
 
-	public Clause(Literal[] literals, ProofNode proof) {
+	public Clause(final Literal[] literals, final ProofNode proof) {
 		mLiterals = literals;
 		mProof = proof;
 		mStacklevel = computeStackLevel();
 	}
 
-	public Clause(Literal[] literals, int stacklevel) {
+	public Clause(final Literal[] literals, final int stacklevel) {
 		mLiterals = literals;
 		mStacklevel = Math.max(stacklevel, computeStackLevel());
 	}
 
-	public Clause(Literal[] literals, ResolutionNode proof, int stacklevel) {
+	public Clause(final Literal[] literals, final ResolutionNode proof, final int stacklevel) {
 		mLiterals = literals;
 		mProof = proof;
 		mStacklevel = Math.max(stacklevel, computeStackLevel());
@@ -227,7 +247,7 @@ public class Clause extends SimpleListable<Clause> {
 		mActivity = Double.POSITIVE_INFINITY;
 	}
 
-	public void setProof(ProofNode proof) {
+	public void setProof(final ProofNode proof) {
 		mProof = proof;
 	}
 
@@ -235,11 +255,11 @@ public class Clause extends SimpleListable<Clause> {
 		return mProof;
 	}
 
-	public void setDeletionHook(ClauseDeletionHook hook) {
+	public void setDeletionHook(final ClauseDeletionHook hook) {
 		mCleanupHook = hook;
 	}
 
-	public boolean doCleanup(DPLLEngine engine) {
+	public boolean doCleanup(final DPLLEngine engine) {
 		return mCleanupHook == null
 		        ? true : mCleanupHook.clauseDeleted(this, engine);
 	}
@@ -249,7 +269,7 @@ public class Clause extends SimpleListable<Clause> {
 	 * @param lit the literal it should contain.
 	 * @return true, if the clause contains the literal with the same polarity.
 	 */
-	public boolean contains(Literal lit) {
+	public boolean contains(final Literal lit) {
 		for (final Literal l : mLiterals) {
 			if (l == lit) {
 				return true;
@@ -258,7 +278,7 @@ public class Clause extends SimpleListable<Clause> {
 		return false;
 	}
 
-	public Term toTerm(Theory theory) {
+	public Term toTerm(final Theory theory) {
 		if (mLiterals.length == 0) {
 			return theory.mFalse;
 		}

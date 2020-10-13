@@ -50,7 +50,8 @@ public class ReqToTestPowersetObserver extends BaseObserver {
 			return false;
 		}
 
-		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
+		@SuppressWarnings("unchecked")
+		final List<PatternType<?>> rawPatterns = ((ObjectContainer<List<PatternType<?>>>) root).getValue();
 		final Req2TestReqSymbolTable symbolTable = new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
 		final BoogieDeclarations boogieDeclarations =
 				new BoogieDeclarations(symbolTable.constructVariableDeclarations(), mLogger);

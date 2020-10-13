@@ -27,7 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 /**
- * {scope}, it is always the case that if "P" holds, then "Q" eventually holds and is succeeded by "R", where "S" does not hold between "T" and "U"
+ * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T", where "U" does
+ * not hold between "V" and "W"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -38,16 +39,27 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
-public class ConstrainedChainPattern extends PatternType {
+public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern> {
 
-	public ConstrainedChainPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public ConstrainedChainPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
+	public ConstrainedChainPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new ConstrainedChainPattern(scope, id, cdds, durations);
+	}
+
+	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		final SrParseScope scope = getScope();
+		assert cdds.length == 6 && durations.length == 0;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope<?> scope = getScope();
+
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
@@ -78,7 +90,7 @@ public class ConstrainedChainPattern extends PatternType {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public ConstrainedChainPattern rename(final String newName) {
 		return new ConstrainedChainPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

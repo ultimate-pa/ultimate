@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 /**
@@ -67,12 +68,6 @@ public class ProofTracker implements IProofTracker{
 		return buildRewrite(term, intern, ProofConstants.RW_INTERN);
 	}
 
-	/**
-	 * Apply disjunction flattening.
-	 * @param orig   The term to flatten.
-	 * @param flattenedOrs The sub terms (ApplicationTerms with function "or") that were flattened.
-	 * @return the rewrite proof to flatten the orig term.
-	 */
 	@Override
 	public Term flatten(final Term orig, final Set<Term> flattenedOrs) {
 		final ArrayList<Term> flat = new ArrayList<Term>();
@@ -138,20 +133,20 @@ public class ProofTracker implements IProofTracker{
 	}
 
 	@Override
-	public Term transitivity(final Term eq1, final Term eq2) {
-		final Term proofEq1 = getProof(eq1);
-		final Term proofEq2 = getProof(eq2);
-		if (isReflexivity(proofEq1)) {
-			return eq2;
+	public Term transitivity(final Term imp1, final Term imp2) {
+		final Term proofImp1 = getProof(imp1);
+		final Term proofImp2 = getProof(imp2);
+		if (isReflexivity(proofImp1)) {
+			return imp2;
 		}
-		if (isReflexivity(proofEq2)) {
+		if (isReflexivity(proofImp2)) {
 			// reflexivity rule is used for internal rewrites that are not visible to the outside.
 			// still we need to change the term
-			return buildProof(proofEq1, getProvedTerm(eq2));
+			return buildProof(proofImp1, getProvedTerm(imp2));
 		}
-		final Theory theory = eq1.getTheory();
-		final Term proof = theory.term(ProofConstants.FN_TRANS, proofEq1, proofEq2);
-		return buildProof(proof, getProvedTerm(eq2));
+		final Theory theory = imp1.getTheory();
+		final Term proof = theory.term(ProofConstants.FN_TRANS, proofImp1, proofImp2);
+		return buildProof(proof, getProvedTerm(imp2));
 	}
 
 	@Override
@@ -177,20 +172,37 @@ public class ProofTracker implements IProofTracker{
 		return buildProof(proof, theory.term(aTerm.getFunction(), params));
 	}
 
-	/**
-	 * Create a proof of g from the proof of f and the rewrite proof of (= f g) for g.
-	 * @param asserted the asserted formula with its proof.
-	 * @param simpFormula the simplified formula with a proof of (= asserted simpFormula).
-	 * @return the resulting simpFormula annotated with the complete proof
-	 */
 	@Override
-	public Term getRewriteProof(final Term asserted, final Term simpFormula) {
+	public Term orMonotony(final Term a, final Term[] b) {
+		assert b.length > 1;
+		final List<Term> impProofs = new ArrayList<Term>();
+		impProofs.add(getProof(a));
+		final Term[] params = new Term[b.length];
+		for (int i = 0; i < b.length; i++) {
+			final Term proofB = getProof(b[i]);
+			if (!isReflexivity(proofB)) {
+				impProofs.add(proofB);
+			}
+			params[i] = getProvedTerm(b[i]);
+		}
+		final Theory theory = a.getTheory();
+		final Term proof;
+		if (impProofs.size() == 1) {
+			proof = impProofs.get(0);
+		} else {
+			proof = theory.term(ProofConstants.FN_ORMONOTONY, impProofs.toArray(new Term[impProofs.size()]));
+		}
+		return buildProof(proof, theory.term("or", params));
+	}
+
+	@Override
+	public Term modusPonens(final Term asserted, final Term simpFormula) {
 		final Term simpProof = getProof(simpFormula);
 		if (isReflexivity(simpProof)) {
 			return buildProof(getProof(asserted), getProvedTerm(simpFormula));
 		}
 		final Theory t = asserted.getTheory();
-		final Term proof = t.term(ProofConstants.FN_EQ, getProof(asserted), simpProof);
+		final Term proof = t.term(ProofConstants.FN_MP, getProof(asserted), simpProof);
 		return buildProof(proof, getProvedTerm(simpFormula));
 	}
 
@@ -225,7 +237,7 @@ public class ProofTracker implements IProofTracker{
 		if (orig == res) {
 			return reflexivity(res);
 		}
-		final Term statement = theory.term("=", orig, res);
+		final Term statement = theory.term(rule.getKey() == ":removeForall" ? "=>" : "=", orig, res);
 		final Annotation[] annot = new Annotation[] { rule };
 		final Term proof = theory.term(ProofConstants.FN_REWRITE, theory.annotatedTerm(annot, statement));
 		return buildProof(proof, res);
@@ -259,5 +271,17 @@ public class ProofTracker implements IProofTracker{
 		Term rewrite = buildRewrite(quant, negQuant, ProofConstants.RW_FORALL_EXISTS);
 		rewrite = congruence(rewrite, new Term[] { exists(quant, negNewBody) });
 		return rewrite;
+	}
+
+	@Override
+	public Term allIntro(Term formula, TermVariable[] vars) {
+		final Theory theory = formula.getTheory();
+		final Term subProof = getProof(formula);
+		final Term body = getProvedTerm(formula);
+		final Term quantified = theory.annotatedTerm(new Annotation[] { new Annotation(":quoted", null) },
+				theory.forall(vars, body));
+		final Annotation[] annot = new Annotation[] { new Annotation(":vars", vars) };
+		final Term proof = theory.term(ProofConstants.FN_ALLINTRO, theory.annotatedTerm(annot, subProof));
+		return buildProof(proof, quantified);
 	}
 }

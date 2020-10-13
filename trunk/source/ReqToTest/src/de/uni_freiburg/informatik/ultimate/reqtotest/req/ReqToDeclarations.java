@@ -10,18 +10,18 @@ public class ReqToDeclarations {
 
 	private final ILogger mLogger;
 	private final Req2TestReqSymbolTable mReqSymbolExpressionTable;
-	
-	public ReqToDeclarations(final ILogger logger){
+
+	public ReqToDeclarations(final ILogger logger) {
 		mLogger = logger;
 		mReqSymbolExpressionTable = new Req2TestReqSymbolTable(logger);
 	}
-	
-	public Req2TestReqSymbolTable initPatternToSymbolTable(List<PatternType> patternList){
-		for (PatternType pattern: patternList) {
+
+	public Req2TestReqSymbolTable initPatternToSymbolTable(final List<PatternType<?>> patternList) {
+		for (final PatternType<?> pattern : patternList) {
 			if (pattern instanceof InitializationPattern) {
-				mReqSymbolExpressionTable.extractVariablesFromInit((InitializationPattern)pattern);
-			} 
+				mReqSymbolExpressionTable.extractVariablesFromInit((InitializationPattern) pattern);
+			}
 		}
 		return mReqSymbolExpressionTable;
-	}	
+	}
 }

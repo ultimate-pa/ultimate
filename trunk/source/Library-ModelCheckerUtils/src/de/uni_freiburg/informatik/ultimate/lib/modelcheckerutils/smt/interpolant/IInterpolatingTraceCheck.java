@@ -30,14 +30,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 
 /**
- * 
+ *
  * Classes that implement both, {@link ITraceCheck} and {@link IInterpolantGenerator}, should instead implement this
  * interface.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- * @param <LETTER>
+ * @param <L>
  */
-public interface IInterpolatingTraceCheck<LETTER extends IAction> extends ITraceCheck, IInterpolantGenerator<LETTER> {
+public interface IInterpolatingTraceCheck<L extends IAction> extends ITraceCheck<L>, IInterpolantGenerator<L> {
 
 }

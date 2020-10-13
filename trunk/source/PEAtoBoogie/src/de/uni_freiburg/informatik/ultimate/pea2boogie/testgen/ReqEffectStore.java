@@ -35,11 +35,11 @@ public class ReqEffectStore {
 	}
 
 	public void addEffectEdgeIndex(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
-		mEffectEdges.add(new Pair<Integer, Integer>(sourcePhaseIndex, targetPhaseIndex));
+		mEffectEdges.add(new Pair<>(sourcePhaseIndex, targetPhaseIndex));
 	}
 
 	public void addOutputEffectEdgeIndex(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
-		mOutputEffectEdges.add(new Pair<Integer, Integer>(sourcePhaseIndex, targetPhaseIndex));
+		mOutputEffectEdges.add(new Pair<>(sourcePhaseIndex, targetPhaseIndex));
 	}
 
 	public Set<String> getEffectVars() {
@@ -74,13 +74,12 @@ public class ReqEffectStore {
 		return mOutputEffectEdges;
 	}
 
-
 	public boolean isEffectEdge(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
-		return mEffectEdges.contains(new Pair<Integer, Integer>(sourcePhaseIndex, targetPhaseIndex));
+		return mEffectEdges.contains(new Pair<>(sourcePhaseIndex, targetPhaseIndex));
 	}
 
 	public boolean isOutputEffectEdge(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
-		return mOutputEffectEdges.contains(new Pair<Integer, Integer>(sourcePhaseIndex, targetPhaseIndex));
+		return mOutputEffectEdges.contains(new Pair<>(sourcePhaseIndex, targetPhaseIndex));
 	}
 
 }

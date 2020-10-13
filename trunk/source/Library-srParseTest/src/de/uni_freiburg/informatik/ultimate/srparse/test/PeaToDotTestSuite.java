@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.srparse.test;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -81,26 +83,27 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final boolean CREATE_NEW_FILES = false;
+	private static final boolean CREATE_NEW_FILES = true;
 
-	private static final File ROOT_DIR = new File("/mnt/data/projects/hanfor/documentation/docs");
+	private static final File ROOT_DIR = new File("/media/Daten/Projekte/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 	private static final File POS_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/positive");
 	private static final File NEG_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/negative");
+	private static final File ULTIMATE_REVISION_FILE = new File(MARKDOWN_DIR + "/ultimate_revision.txt");
 
 	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
 
 	private final IUltimateServiceProvider mServiceProvider;
 	private final ILogger mLogger;
 
-	private final PatternType mPattern;
+	private final PatternType<?> mPattern;
 	private final String mPatternName;
 	private final String mPatternString;
 	private final String mScopeName;
 	private final Map<String, Integer> mDurationToBounds;
 
-	public PeaToDotTestSuite(final PatternType pattern, final Map<String, Integer> durationToBounds) {
+	public PeaToDotTestSuite(final PatternType<?> pattern, final Map<String, Integer> durationToBounds) {
 		mServiceProvider = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = mServiceProvider.getLoggingService().getLogger("");
 
@@ -187,30 +190,28 @@ public class PeaToDotTestSuite {
 			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
 			fmt.format("## %s%s", mPatternName, LINE_SEP);
 		}
-
 		fmt.format(LINE_SEP);
+
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
-		fmt.format("%s```%sCountertraces: ", LINE_SEP, LINE_SEP);
+		fmt.format(LINE_SEP);
 
-		for (int i = 0; i < cts.size(); i++) {
-			fmt.format("(%s)", cts.get(i));
-			if (i != (cts.size() - 1)) {
-				fmt.format(", ");
-			}
-		}
-
+		fmt.format("#### Countertraces%s", LINE_SEP);
+		fmt.format("```%s", LINE_SEP);
+		fmt.format("%s", cts.stream().collect(Collectors.joining(LINE_SEP)));
 		fmt.format("%s```%s", LINE_SEP, LINE_SEP);
+		fmt.format(LINE_SEP);
 
+		fmt.format("#### Phase Event Automata%s", LINE_SEP);
 		assert (numPea == cts.size());
 		for (int i = numPea; i > 0; i--) {
-			fmt.format(LINE_SEP);
 			fmt.format("![](%s/%s/%s_%s_%d.svg)%s", "..", ROOT_DIR.toPath().relativize(PEA_IMAGE_DIR.toPath()),
 					mPatternName, mScopeName, (numPea - i), LINE_SEP);
 		}
+		fmt.format(LINE_SEP);
 
+		fmt.format("#### Examples%s%s", LINE_SEP, LINE_SEP);
 		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
-			fmt.format(LINE_SEP);
 			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
 			fmt.format("| Positive Example | Negative Example |%s", LINE_SEP);
 			fmt.format("| --- | --- |%s", LINE_SEP);
@@ -222,12 +223,10 @@ public class PeaToDotTestSuite {
 					lhs = "![](../" + ROOT_DIR.toPath().relativize(POS_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
 							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
 				}
-
 				if (i < negFailureImages.length) {
 					rhs = "![](../" + ROOT_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
 							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
 				}
-
 				fmt.format("| %s | %s |%s", lhs, rhs, LINE_SEP);
 			}
 		}
@@ -323,6 +322,17 @@ public class PeaToDotTestSuite {
 		final Formatter fmt = new Formatter();
 		fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
 
+		if (ULTIMATE_REVISION_FILE.canRead()) {
+			final BufferedReader reader = new BufferedReader(new FileReader(ULTIMATE_REVISION_FILE));
+			final String ultimateRevision = reader.readLine();
+			reader.close();
+
+			// fmt.format("### Ultimate revision at GitHub%s", LINE_SEP);
+			fmt.format("Ultimate revision on Github that corresponds to this documention: %s", LINE_SEP);
+			fmt.format("[%s](https://github.com/ultimate-pa/ultimate/tree/%s \"%s\")%s%s", ultimateRevision,
+					ultimateRevision, ultimateRevision, LINE_SEP, LINE_SEP);
+		}
+
 		final String markdownDir = ROOT_DIR.toPath().relativize(MARKDOWN_DIR.toPath()).toString();
 		Arrays.stream(MARKDOWN_DIR.list()).filter(e -> e.endsWith(".md"))
 				.forEach(e -> fmt.format("{!%s/%s!}%s", markdownDir, e, LINE_SEP));
@@ -336,14 +346,14 @@ public class PeaToDotTestSuite {
 
 	@Parameters()
 	public static Collection<Object[]> data() {
-		final Pair<List<PatternType>, Map<String, Integer>> pair = PatternUtil.createAllPatterns();
+		final Pair<List<? extends PatternType<?>>, Map<String, Integer>> pair = PatternUtil.createAllPatterns(false);
 
 		return pair.getFirst().stream().sorted(new PatternNameComparator())
 				.map(a -> new Object[] { a, pair.getSecond() }).collect(Collectors.toList());
 	}
 
-	private static final class PatternNameComparator implements Comparator<PatternType> {
-		private static final Map<Class<? extends SrParseScope>, Integer> SCOPE_ORDER = new HashMap<>();
+	private static final class PatternNameComparator implements Comparator<PatternType<?>> {
+		private static final Map<Class<? extends SrParseScope<?>>, Integer> SCOPE_ORDER = new HashMap<>();
 
 		static {
 			SCOPE_ORDER.put(SrParseScopeGlobally.class, 0);
@@ -354,7 +364,7 @@ public class PeaToDotTestSuite {
 		}
 
 		@Override
-		public int compare(final PatternType lhs, final PatternType rhs) {
+		public int compare(final PatternType<?> lhs, final PatternType<?> rhs) {
 			final int order = lhs.getClass().getSimpleName().compareTo(rhs.getClass().getSimpleName());
 
 			if (order != 0) {

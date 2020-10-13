@@ -38,5 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
  */
 public interface IReq2PeaTransformer {
 
-	IReq2Pea transform(IReq2Pea req2pea, final List<InitializationPattern> init, final List<PatternType> requirements);
+	IReq2Pea transform(IReq2Pea req2pea, final List<InitializationPattern> init,
+			final List<PatternType<?>> requirements);
 }

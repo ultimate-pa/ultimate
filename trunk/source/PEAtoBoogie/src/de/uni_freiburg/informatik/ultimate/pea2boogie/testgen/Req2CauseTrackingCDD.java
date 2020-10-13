@@ -31,9 +31,8 @@ public class Req2CauseTrackingCDD {
 	}
 
 	/*
-	 * Add tracking guards to the invariant.
-	 * Note that no tracking vars are added for: inputs, constants
-	 * Tracking vars are only added for the requirements effect vars if this is no effect phase.
+	 * Add tracking guards to the invariant. Note that no tracking vars are added for: inputs, constants Tracking vars
+	 * are only added for the requirements effect vars if this is no effect phase.
 	 */
 	public CDD transformInvariantTracking(final CDD cdd, final Set<String> trackedVars, final Set<String> effectVars,
 			final boolean isEffectPhase) {
@@ -42,23 +41,25 @@ public class Req2CauseTrackingCDD {
 			final Set<CDD> effectConjuncts = getEffectConjuncts(conjuncts, effectVars);
 			if (hasDeterministicEffect(conjuncts, effectVars)) {
 				// get effect part
-				final CDD result = effectConjuncts.stream().reduce(CDD.TRUE, (a,b) -> {return a.and(b);} );
+				final CDD result = effectConjuncts.stream().reduce(CDD.TRUE, (a, b) -> {
+					return a.and(b);
+				});
 				// and force trigger to be triggered
 				final Set<CDD> triggerConjuncts = getTriggerConjuncts(conjuncts, effectVars);
-				final CDD intermed = result.and(triggerConjuncts.stream().reduce(CDD.TRUE, (a,b) -> {return a.and(b.negate());} ));
+				final CDD intermed = result.and(triggerConjuncts.stream().reduce(CDD.TRUE, (a, b) -> {
+					return a.and(b.negate());
+				}));
 				return addTrackingGuards(result.and(intermed), trackedVars);
-			} else {
-				mLogger.error("Nondet. effect (will not build lower Automaton): " + effectConjuncts);
-				return CDD.FALSE;
 			}
-		} else {
-			return addTrackingGuards(cdd, trackedVars);
+			mLogger.error("Nondet. effect (will not build lower Automaton): " + effectConjuncts);
+			return CDD.FALSE;
 		}
+		return addTrackingGuards(cdd, trackedVars);
 	}
 
-	private static Set<CDD> getEffectConjuncts(CDD[] conjuncts, Set<String> effectVars) {
+	private static Set<CDD> getEffectConjuncts(final CDD[] conjuncts, final Set<String> effectVars) {
 		final Set<CDD> effectDisjuncts = new HashSet<>();
-		for(final CDD cdd: conjuncts){
+		for (final CDD cdd : conjuncts) {
 			final Set<String> effectVarsOfCDD = getCddVariables(cdd);
 			effectVarsOfCDD.retainAll(effectVars);
 			if (effectVarsOfCDD.size() > 0) {
@@ -68,17 +69,16 @@ public class Req2CauseTrackingCDD {
 		return effectDisjuncts;
 	}
 
-	private static Set<CDD> getTriggerConjuncts(CDD[] conjuncts, Set<String> effectVars) {
+	private static Set<CDD> getTriggerConjuncts(final CDD[] conjuncts, final Set<String> effectVars) {
 		final Set<CDD> triggerDisjuncts = new HashSet<>();
-		for(final CDD cdd: conjuncts){
+		for (final CDD cdd : conjuncts) {
 			final Set<String> triggerVars = getCddVariables(cdd);
-			if (!triggerVars.removeAll(effectVars)) { //only add if removing effects dones not change set of vars
+			if (!triggerVars.removeAll(effectVars)) { // only add if removing effects dones not change set of vars
 				triggerDisjuncts.add(cdd);
 			}
 		}
 		return triggerDisjuncts;
 	}
-
 
 	private CDD addTrackingGuards(final CDD cdd, final Set<String> trackedVars) {
 		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
@@ -93,7 +93,7 @@ public class Req2CauseTrackingCDD {
 		}
 		final CDD annotatedCDD = CDD.create(cdd.getDecision(), newChildren.toArray(new CDD[newChildren.size()]));
 
-		CDD trackGurad = CDD.TRUE;
+		CDD trackGuard = CDD.TRUE;
 		for (final String v : getVarsFromDecision(cdd.getDecision())) {
 			if (trackedVars.contains(v)) {
 				final String varName = ReqTestAnnotator.TRACKING_VAR_PREFIX + v;
@@ -101,20 +101,19 @@ public class Req2CauseTrackingCDD {
 				if (!v.endsWith("'")) {
 					mTrackingVars.put(varName, "bool");
 				}
-				trackGurad = trackGurad.and(BooleanDecision.create(varName));
+				trackGuard = trackGuard.and(BooleanDecision.create(varName));
 			}
 		}
-		mLogger.info("Track Gurad for ("+ cdd + ") is :"+ trackGurad);
-		return annotatedCDD.and(trackGurad);
+		mLogger.info("Track guard for (" + cdd + ") is :" + trackGuard);
+		return annotatedCDD.and(trackGuard);
 	}
-
 
 	/*
 	 * Transforms a CDD containing a range decision as follows: - t <= c to t >= c
 	 *
 	 * Note: if the CDD is no range decision, this will return CDD.True
 	 */
-	public CDD upperToLowerBoundCdd(final CDD cdd, boolean dropOther) {
+	public CDD upperToLowerBoundCdd(final CDD cdd, final boolean dropOther) {
 		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
 			return cdd;
 		}
@@ -164,7 +163,8 @@ public class Req2CauseTrackingCDD {
 		}
 	}
 
-	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars, final Set<String> constVars, final boolean isEffectEdge) {
+	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars,
+			final Set<String> constVars, final boolean isEffectEdge) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
 		vars.removeAll(constVars);
@@ -178,8 +178,7 @@ public class Req2CauseTrackingCDD {
 		return newGuard;
 	}
 
-
-	public static Set<String> getAllVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
+	public static Set<String> getAllVariables(final PatternType<?> pattern, final Map<String, Integer> id2bounds) {
 		final List<CounterTrace> cts = pattern.constructCounterTrace(id2bounds);
 		final Set<String> variables = new HashSet<>();
 
@@ -193,7 +192,7 @@ public class Req2CauseTrackingCDD {
 		return variables;
 	}
 
-	public static CDD getEffectCDD(final PatternType pattern) {
+	public static CDD getEffectCDD(final PatternType<?> pattern) {
 		final List<CDD> cdds = pattern.getCdds();
 		// lets just assume that the effect of the requirement is always mentioned at the end of the pattern (i.e. last
 		// CDD)
@@ -202,7 +201,7 @@ public class Req2CauseTrackingCDD {
 		return cdds.get(0);
 	}
 
-	public static Set<String> getEffectVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
+	public static Set<String> getEffectVariables(final PatternType<?> pattern, final Map<String, Integer> id2bounds) {
 		final List<CounterTrace> cts = pattern.constructCounterTrace(id2bounds);
 		final Set<String> variables = new HashSet<>();
 
@@ -240,12 +239,12 @@ public class Req2CauseTrackingCDD {
 		return differences;
 	}
 
-	private boolean hasDeterministicEffect(final CDD[] cdds, Set<String> effectVars) {
+	private boolean hasDeterministicEffect(final CDD[] cdds, final Set<String> effectVars) {
 		final Set<CDD> effectsPivoth = getEffectDecisions(cdds[0], effectVars);
 		mLogger.warn("reference Effect: " + effectsPivoth);
-		for(int i = 1; i < cdds.length; i++) {
+		for (int i = 1; i < cdds.length; i++) {
 			final Set<CDD> effects = getEffectDecisions(cdds[i], effectVars);
-			if(!effects.isEmpty() && !effects.equals(effectsPivoth)) {
+			if (!effects.isEmpty() && !effects.equals(effectsPivoth)) {
 				mLogger.warn("non-det with Effect: " + getEffectDecisions(cdds[i], effectVars));
 				return false;
 			}
@@ -253,15 +252,14 @@ public class Req2CauseTrackingCDD {
 		return true;
 	}
 
-
-	private static Set<CDD> getEffectDecisions(final CDD cdd, Set<String> effectVars){
+	private static Set<CDD> getEffectDecisions(final CDD cdd, final Set<String> effectVars) {
 		final Set<CDD> atomics = getCDDAtoms(cdd);
 		final Set<CDD> effectAtoms = new HashSet<>();
-		for(final CDD atom : atomics) {
+		for (final CDD atom : atomics) {
 			final Decision<?> d = atom.getDecision();
 			if (d instanceof BoogieBooleanExpressionDecision) {
-				for(final String var: effectVars) {
-					if( ((BoogieBooleanExpressionDecision) d).getVars().containsKey(var)) {
+				for (final String var : effectVars) {
+					if (((BoogieBooleanExpressionDecision) d).getVars().containsKey(var)) {
 						effectAtoms.add(atom);
 					}
 				}
@@ -294,7 +292,7 @@ public class Req2CauseTrackingCDD {
 
 	public static Set<String> getCddVariables(final CDD cdd) {
 		final Set<String> variables = new HashSet<>();
-		for(final Decision<?> dec: getDecisions(cdd)){
+		for (final Decision<?> dec : getDecisions(cdd)) {
 			variables.addAll(getVarsFromDecision(dec));
 		}
 		return variables;
@@ -302,7 +300,7 @@ public class Req2CauseTrackingCDD {
 
 	public static Set<String> getCddVariables(final Set<Decision<?>> cdds) {
 		final Set<String> variables = new HashSet<>();
-		for(final Decision<?> dec: cdds){
+		for (final Decision<?> dec : cdds) {
 			variables.addAll(getVarsFromDecision(dec));
 		}
 		return variables;
@@ -333,8 +331,6 @@ public class Req2CauseTrackingCDD {
 		return mTrackingVars;
 	}
 
-
-
 	public static Set<Decision<?>> getDecisions(final CDD cdd) {
 		final Set<Decision<?>> decisions = new HashSet<>();
 		extractDecisions(cdd, decisions);
@@ -352,27 +348,5 @@ public class Req2CauseTrackingCDD {
 			}
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

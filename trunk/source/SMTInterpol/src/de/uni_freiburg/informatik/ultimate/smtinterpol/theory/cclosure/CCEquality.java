@@ -34,7 +34,6 @@ public class CCEquality extends DPLLAtom {
 	private LAEquality mLasd;
 	private Rational mLAFactor;
 	private final Entry mEntry;
-	int mStackDepth = -1;
 
 	class Entry extends SimpleListable<Entry> {
 		public CCEquality getCCEquality() {

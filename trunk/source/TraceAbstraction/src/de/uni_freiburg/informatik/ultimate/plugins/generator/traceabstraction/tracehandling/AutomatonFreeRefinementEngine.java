@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
@@ -61,15 +60,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<?>>
-		implements IRefinementEngine<Collection<QualifiedTracePredicates>> {
+public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
+		implements IRefinementEngine<L, Collection<QualifiedTracePredicates>> {
 
 	private final ILogger mLogger;
-	private final IRefinementStrategy<LETTER> mStrategy;
+	private final IRefinementStrategy<L> mStrategy;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatistics;
 
 	private final LBool mFeasibility;
-	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mIcfgProgramExecution;
+	private IProgramExecution<L, Term> mIcfgProgramExecution;
 	private IHoareTripleChecker mHoareTripleChecker;
 	private IPredicateUnifier mPredicateUnifier;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
@@ -78,7 +77,7 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 
 	private String mUsedTraceCheckFingerprint;
 
-	public AutomatonFreeRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy) {
+	public AutomatonFreeRefinementEngine(final ILogger logger, final IRefinementStrategy<L> strategy) {
 		mLogger = logger;
 		mStrategy = strategy;
 		mRefinementEngineStatistics = new RefinementEngineStatisticsGenerator();
@@ -110,7 +109,7 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution() {
+	public IProgramExecution<L, Term> getIcfgProgramExecution() {
 		return mIcfgProgramExecution;
 	}
 
@@ -187,7 +186,7 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 		final List<QualifiedTracePredicates> imperfectIpps = new ArrayList<>();
 
 		while (mStrategy.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
-			final IIpgStrategyModule<?, LETTER> interpolantGenerator = tryExecuteInterpolantGenerator();
+			final IIpgStrategyModule<?, L> interpolantGenerator = tryExecuteInterpolantGenerator();
 			if (interpolantGenerator == null) {
 				continue;
 			}
@@ -236,7 +235,7 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 
 	private LBool checkFeasibility() {
 		while (mStrategy.hasNextFeasilibityCheck()) {
-			final ITraceCheckStrategyModule<?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
+			final ITraceCheckStrategyModule<L, ?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
 			mUsedTraceCheckFingerprint = getModuleFingerprintString(currentTraceCheck);
 			logModule("Using trace check", currentTraceCheck);
 			final LBool feasibilityResult = currentTraceCheck.isCorrect();
@@ -282,8 +281,8 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 		throwIfNecessary(tcra.getExceptionHandlingCategory(), tcra.getException());
 	}
 
-	private IIpgStrategyModule<?, LETTER> tryExecuteInterpolantGenerator() {
-		final IIpgStrategyModule<?, LETTER> interpolantGenerator = mStrategy.nextInterpolantGenerator();
+	private IIpgStrategyModule<?, L> tryExecuteInterpolantGenerator() {
+		final IIpgStrategyModule<?, L> interpolantGenerator = mStrategy.nextInterpolantGenerator();
 		final InterpolantComputationStatus status;
 		try {
 			logModule("Using interpolant generator", interpolantGenerator);

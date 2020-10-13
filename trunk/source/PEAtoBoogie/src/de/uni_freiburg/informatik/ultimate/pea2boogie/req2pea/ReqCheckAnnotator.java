@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -70,12 +69,12 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
 /**
- * 
+ *
  * @author Vincent Langenfeld <langenfv@tf.uni-freiburg.de>
  *
  */
@@ -97,14 +96,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	private final IReqSymbolTable mSymbolTable;
-	private final Map<PatternType, ReqPeas> mReq2Automata;
+	private final List<ReqPeas> mReqPeas;
 
-	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger,
-			final Map<PatternType, ReqPeas> pattern2Peas, final IReqSymbolTable symbolTable) {
+	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
+			final IReqSymbolTable symbolTable) {
 		mLogger = logger;
 		mServices = services;
 		mSymbolTable = symbolTable;
-		mReq2Automata = pattern2Peas;
+		mReqPeas = reqPeas;
 		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
@@ -119,7 +118,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckVacuity = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
 
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
-			final int length = mReq2Automata.size();
+			final int length = mReqPeas.size();
 			mCombinationNum = Math.min(length, prefs.getInt(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE));
 		} else {
 			mCombinationNum = -1;
@@ -140,10 +139,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		RtInconcistencyConditionGenerator rticGenerator;
 		try {
-			if (mCombinationNum > 1) {
+			if (mCombinationNum >= 1) {
 				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
 				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymbolTable,
-						mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
+						mReqPeas, boogieDeclarations, mSeparateInvariantHandling);
 			} else {
 				rticGenerator = null;
 			}
@@ -174,6 +173,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<Statement> genChecksRTInconsistency(final BoogieLocation bl) {
 		if (mRtInconcistencyConditionGenerator == null) {
 			return Collections.emptyList();
@@ -181,19 +181,19 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// get all automata for which conditions should be generated
 
-		final List<Entry<PatternType, PhaseEventAutomata>> consideredAutomata =
-				mRtInconcistencyConditionGenerator.getRelevantRequirements(mReq2Automata);
+		final List<Entry<PatternType<?>, PhaseEventAutomata>> consideredAutomata =
+				mRtInconcistencyConditionGenerator.getRelevantRequirements(mReqPeas);
 
 		final int count = consideredAutomata.size();
 
 		if (mSeparateInvariantHandling) {
-			final int total = mReq2Automata.size();
-			final int invariant = total - count;
-			mLogger.info(String.format("%s of %s requirements are invariant", invariant, total));
+			final long total = mReqPeas.stream().flatMap(a -> a.getCounterTrace2Pea().stream()).count();
+			final long invariant = total - count;
+			mLogger.info(String.format("%s of %s PEAs are invariant", invariant, total));
 		}
 
 		final int actualCombinationNum = mCombinationNum <= count ? mCombinationNum : count;
-		if (actualCombinationNum < 2) {
+		if (actualCombinationNum <= 0) {
 			mLogger.info("No rt-inconsistencies possible");
 			return Collections.emptyList();
 		}
@@ -203,8 +203,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		@SuppressWarnings("unchecked")
-		final List<Entry<PatternType, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
+		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
 				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
 		int subsetsSize = subsets.size();
 		if (subsetsSize > 10000) {
@@ -214,7 +213,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			mLogger.info("Computing rt-inconsistency assertions for " + subsetsSize + " subsets");
 		}
 
-		for (final Entry<PatternType, PhaseEventAutomata>[] subset : subsets) {
+		for (final Entry<PatternType<?>, PhaseEventAutomata>[] subset : subsets) {
 			if (subsetsSize % 100 == 0 && !mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(),
 						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
@@ -238,7 +237,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 	}
 
-	private Statement genAssertRTInconsistency(final Entry<PatternType, PhaseEventAutomata>[] subset) {
+	private Statement genAssertRTInconsistency(final Entry<PatternType<?>, PhaseEventAutomata>[] subset) {
 		final Set<PhaseEventAutomata> automataSet =
 				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
 		assert automataSet.size() == subset.length;
@@ -252,13 +251,21 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				final ILocation loc =
 						mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(subset[0].getValue())).getLoc();
 				final AssertStatement fakeElem = createAssert(ExpressionFactory.createBooleanLiteral(loc, true), check,
-						"RTINCONSISTENT_" + Req2BoogieTranslator.getAssertLabel(subset));
+						"RTINCONSISTENT_" + getAssertLabel(subset));
 				mPeaResultUtil.intrinsicRtConsistencySuccess(fakeElem);
 			}
 			return null;
 		}
 
-		return createAssert(expr, check, "RTINCONSISTENT_" + Req2BoogieTranslator.getAssertLabel(subset));
+		return createAssert(expr, check, "RTINCONSISTENT_" + getAssertLabel(subset));
+	}
+
+	private static String getAssertLabel(final Entry<PatternType<?>, PhaseEventAutomata>[] subset) {
+		final StringBuilder sb = new StringBuilder();
+		for (final Entry<PatternType<?>, PhaseEventAutomata> entry : subset) {
+			sb.append(entry.getValue().getName() + "_");
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -294,9 +301,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
-			final PatternType pattern = entry.getKey();
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+		for (final ReqPeas reqpea : mReqPeas) {
+			final PatternType<?> pattern = reqpea.getPattern();
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
 				final Statement assertStmt = genAssertNonVacuous(pattern, pea.getValue(), bl);
 				if (assertStmt != null) {
 					stmtList.add(assertStmt);
@@ -304,9 +311,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			}
 		}
 		return stmtList;
+
 	}
 
-	private Statement genAssertNonVacuous(final PatternType req, final PhaseEventAutomata aut,
+	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl) {
 		final Phase[] phases = aut.getPhases();
 
@@ -339,26 +347,30 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			return null;
 		}
 		final Expression disjunction = genDisjunction(checkReached, bl);
-		final ReqCheck check = createReqCheck(Spec.VACUOUS, req);
+		final ReqCheck check = createReqCheck(Spec.VACUOUS, req, aut);
 		final String label = "VACUOUS_" + aut.getName();
 		return createAssert(disjunction, check, label);
 	}
 
 	@SafeVarargs
 	private static ReqCheck createReqCheck(final Check.Spec reqSpec,
-			final Entry<PatternType, PhaseEventAutomata>... subset) {
-		final PatternType[] reqs = new PatternType[subset.length];
-		for (int i = 0; i < subset.length; ++i) {
-			reqs[i] = subset[i].getKey();
+			final Entry<PatternType<?>, PhaseEventAutomata>... req2pea) {
+		if (req2pea == null || req2pea.length == 0) {
+			throw new IllegalArgumentException("subset cannot be null or empty");
 		}
-		return createReqCheck(reqSpec, reqs);
+
+		final String[] reqIds = new String[req2pea.length];
+		final String[] peaNames = new String[req2pea.length];
+		for (int i = 0; i < req2pea.length; ++i) {
+			reqIds[i] = req2pea[i].getKey().getId();
+			peaNames[i] = req2pea[i].getValue().getName();
+		}
+
+		return new ReqCheck(reqSpec, reqIds, peaNames);
 	}
 
-	private static ReqCheck createReqCheck(final Check.Spec reqSpec, final PatternType... req) {
-		if (req == null || req.length == 0) {
-			throw new IllegalArgumentException("req cannot be null or empty");
-		}
-		return new ReqCheck(reqSpec, req);
+	private static ReqCheck createReqCheck(final Spec spec, final PatternType<?> req, final PhaseEventAutomata aut) {
+		return createReqCheck(spec, new Pair<>(req, aut));
 	}
 
 	/**

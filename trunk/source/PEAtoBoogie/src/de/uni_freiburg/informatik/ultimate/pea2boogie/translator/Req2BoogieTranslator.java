@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -96,7 +95,7 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
 public class Req2BoogieTranslator {
 
 	private final Unit mUnit;
-	private final Map<PatternType, ReqPeas> mReq2Automata;
+	private final List<ReqPeas> mReqPeas;
 	private final BoogieLocation mUnitLocation;
 
 	private final ILogger mLogger;
@@ -108,23 +107,23 @@ public class Req2BoogieTranslator {
 	private IReq2PeaAnnotator mReqCheckAnnotator;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
-			final List<PatternType> patterns) {
+			final List<PatternType<?>> patterns) {
 		this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());
 	}
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
-			final List<PatternType> patterns, final List<IReq2PeaTransformer> req2peaTransformers) {
+			final List<PatternType<?>> patterns, final List<IReq2PeaTransformer> req2peaTransformers) {
 		mLogger = logger;
 		mServices = services;
 
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		List<PatternType> requirements =
+		List<PatternType<?>> requirements =
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 
 		// check for duplicate IDs
-		final List<Entry<String, Integer>> duplicates = requirements.stream().map(PatternType::getId)
+		final List<Entry<String, Integer>> duplicates = requirements.stream().map(PatternType<?>::getId)
 				.collect(Collectors.toMap(k -> k, v -> 1, (v1, v2) -> v1 + v2)).entrySet().stream()
 				.filter(a -> a.getValue() > 1).collect(Collectors.toList());
 		if (!duplicates.isEmpty()) {
@@ -135,7 +134,7 @@ public class Req2BoogieTranslator {
 			}
 			mUnitLocation = null;
 			mUnit = null;
-			mReq2Automata = null;
+			mReqPeas = null;
 			mSymboltable = null;
 			return;
 		}
@@ -153,12 +152,12 @@ public class Req2BoogieTranslator {
 		if (req2pea.hasErrors()) {
 			mUnitLocation = null;
 			mUnit = null;
-			mReq2Automata = null;
+			mReqPeas = null;
 			mSymboltable = null;
 			return;
 		}
 
-		mReq2Automata = req2pea.getPattern2Peas();
+		mReqPeas = req2pea.getReqPeas();
 		mSymboltable = req2pea.getSymboltable();
 		mReqCheckAnnotator = req2pea.getAnnotator();
 
@@ -170,12 +169,12 @@ public class Req2BoogieTranslator {
 
 		decls.add(generateProcedures(init));
 		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
-		annotateContainedPatternSet(mUnit, mReq2Automata, init);
+		annotateContainedPatternSet(mUnit, mReqPeas, init);
 
 	}
 
 	private IReq2Pea createReq2Pea(final List<IReq2PeaTransformer> req2peaTransformers,
-			final List<InitializationPattern> init, final List<PatternType> requirements) {
+			final List<InitializationPattern> init, final List<PatternType<?>> requirements) {
 		IReq2Pea req2pea = new Req2Pea(mServices, mLogger, init, requirements);
 		for (final IReq2PeaTransformer transformer : req2peaTransformers) {
 			if (req2pea.hasErrors()) {
@@ -187,10 +186,10 @@ public class Req2BoogieTranslator {
 		return req2pea;
 	}
 
-	private static void annotateContainedPatternSet(final Unit unit, final Map<PatternType, ?> req2Automata2,
+	private static void annotateContainedPatternSet(final Unit unit, final List<ReqPeas> reqPeas,
 			final List<InitializationPattern> init) {
-		final List<PatternType> patternList = new ArrayList<>(init);
-		req2Automata2.entrySet().stream().map(Entry::getKey).forEachOrdered(patternList::add);
+		final List<PatternType<?>> patternList = new ArrayList<>(init);
+		reqPeas.stream().map(ReqPeas::getPattern).forEachOrdered(patternList::add);
 		new PatternContainer(patternList).annotate(unit);
 	}
 
@@ -372,7 +371,7 @@ public class Req2BoogieTranslator {
 	 * Check the invariants of the given automaton. This is an if statement that first checks in which phase the
 	 * automaton is and then checks the corresponding invariants.
 	 *
-	 * @param patternType
+	 * @param PatternType<?>
 	 *
 	 * @param automaton
 	 *            the automaton to check.
@@ -380,7 +379,7 @@ public class Req2BoogieTranslator {
 	 *            The location information to correspond the generated source to the property.
 	 * @return The if statement checking the p
 	 */
-	private List<Statement> genInvariantGuards(final PatternType patternType, final PhaseEventAutomata automaton,
+	private List<Statement> genInvariantGuards(final PatternType<?> patternType, final PhaseEventAutomata automaton,
 			final String pcName, final BoogieLocation bl) {
 		final Phase[] phases = automaton.getPhases();
 		assert phases.length > 0;
@@ -497,14 +496,6 @@ public class Req2BoogieTranslator {
 		return genAssignmentStmt(rhs.getLocation(), lhsVar, rhs);
 	}
 
-	public static String getAssertLabel(final Entry<PatternType, PhaseEventAutomata>[] subset) {
-		final StringBuilder sb = new StringBuilder();
-		for (final Entry<PatternType, PhaseEventAutomata> entry : subset) {
-			sb.append(entry.getValue().getName() + "_");
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Create the statements of the main loop of the pea product. The main loop looks like this
 	 *
@@ -523,11 +514,10 @@ public class Req2BoogieTranslator {
 		final List<Statement> stmtList = new ArrayList<>();
 		stmtList.addAll(genDelay(bl));
 
-		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
-			final PatternType pattern = entry.getKey();
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
-				stmtList.addAll(
-						genInvariantGuards(pattern, pea.getValue(), mSymboltable.getPcName(pea.getValue()), bl));
+		for (final ReqPeas reqpea : mReqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
+				stmtList.addAll(genInvariantGuards(reqpea.getPattern(), pea.getValue(),
+						mSymboltable.getPcName(pea.getValue()), bl));
 			}
 		}
 
@@ -535,8 +525,8 @@ public class Req2BoogieTranslator {
 		stmtList.addAll(
 				mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 
-		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+		for (final ReqPeas reqpea : mReqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
 				stmtList.add(genOuterIfTransition(pea.getValue(), mSymboltable.getPcName(pea.getValue()), bl));
 			}
 		}
@@ -596,8 +586,8 @@ public class Req2BoogieTranslator {
 
 	private List<Statement> genInitialPhasesStmts(final BoogieLocation bl) {
 		final List<Statement> stmts = new ArrayList<>();
-		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : entry.getValue().getCounterTrace2Pea()) {
+		for (final ReqPeas reqpea : mReqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
 				final PhaseEventAutomata aut = ct2pea.getValue();
 				final VariableLHS lhs = mSymboltable.getVariableLhs(mSymboltable.getPcName(aut));
 				stmts.add(new HavocStatement(lhs.getLocation(), new VariableLHS[] { lhs }));
@@ -660,6 +650,10 @@ public class Req2BoogieTranslator {
 
 	public IReqSymbolTable getReqSymbolTable() {
 		return mSymboltable;
+	}
+
+	public List<ReqPeas> getReqPeas() {
+		return Collections.unmodifiableList(mReqPeas);
 	}
 
 	/**

@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -77,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -105,9 +103,10 @@ public class RtInconcistencyConditionGenerator {
 	private static final boolean SIMPLIFY_BEFORE_QELIM = false;
 	private static final boolean TRY_SOLVER_BEFORE_QELIM = false;
 	private static final boolean PRINT_STATS = true;
-	private static final String SOLVER_LOGFILE = null;
 	private static final boolean PRINT_QUANTIFIED_FORMULAS = false;
-	// private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
+
+	private static final String SOLVER_LOG_DIR = null;
+	// private static final String SOLVER_LOG_DIR = "C:\\Users\\firefox\\Desktop\\dump\\";
 
 	private static final boolean PRINT_NON_TRIVIAL_CHECKS = false;
 
@@ -141,9 +140,9 @@ public class RtInconcistencyConditionGenerator {
 	private final ILogger mPQELogger;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
-			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable,
-			final Map<PatternType, ReqPeas> req2Automata, final BoogieDeclarations boogieDeclarations,
-			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
+			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable, final List<ReqPeas> reqPeas,
+			final BoogieDeclarations boogieDeclarations, final boolean separateInvariantHandling)
+			throws InvariantInfeasibleException {
 		mReqSymboltable = symboltable;
 		mServices = services;
 		mLogger = logger;
@@ -176,7 +175,7 @@ public class RtInconcistencyConditionGenerator {
 		mConstInliner = new Substitution(mScript, constToValue);
 
 		if (mSeparateInvariantHandling) {
-			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
+			mPrimedInvariant = constructPrimedStateInvariant(reqPeas);
 			mLogger.info("Finished generating primed state invariant of size " + new DAGSize().size(mPrimedInvariant));
 		} else {
 			mPrimedInvariant = mTrue;
@@ -220,15 +219,12 @@ public class RtInconcistencyConditionGenerator {
 	/**
 	 * Return a subset of requirements that should be used for generating rt-inconsistency checks.
 	 */
-	public List<Entry<PatternType, PhaseEventAutomata>>
-			getRelevantRequirements(final Map<PatternType, ReqPeas> req2Automata) {
+	public List<Entry<PatternType<?>, PhaseEventAutomata>> getRelevantRequirements(final List<ReqPeas> reqPeas) {
 		// we only consider automata that do not represent invariants or which have a disjunctive invariant
-		final List<Entry<PatternType, PhaseEventAutomata>> rtr = new ArrayList<>();
-		for (final Entry<PatternType, ReqPeas> entry : req2Automata.entrySet()) {
-			final PatternType pattern = entry.getKey();
-			final ReqPeas peas = entry.getValue();
-
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : peas.getCounterTrace2Pea()) {
+		final List<Entry<PatternType<?>, PhaseEventAutomata>> rtr = new ArrayList<>();
+		for (final ReqPeas reqPea : reqPeas) {
+			final PatternType<?> pattern = reqPea.getPattern();
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPea.getCounterTrace2Pea()) {
 				rtr.add(new Pair<>(pattern, pea.getValue()));
 			}
 		}
@@ -262,21 +258,19 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.getDisjuncts(stateInv).length != 1;
 	}
 
-	private Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
+	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
 
-		final SolverSettings settings =
+		SolverSettings settings =
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
 						.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
-		if (SOLVER_LOGFILE == null) {
-			return solver;
+		// SolverSettings settings =
+		// SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
+		// .setSolverLogics(Logics.ALL);
+		if (SOLVER_LOG_DIR != null) {
+			settings = settings.setDumpSmtScriptToFile(true, SOLVER_LOG_DIR,
+					RtInconcistencyConditionGenerator.class.getSimpleName(), false);
 		}
-		try {
-			return new LoggingScript(solver, SOLVER_LOGFILE, false);
-		} catch (final IOException e) {
-			mLogger.error("Could not create log file for solver, disabling logging. ");
-			return solver;
-		}
+		return SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
@@ -416,27 +410,26 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
-	private Term constructPrimedStateInvariant(final Map<PatternType, ReqPeas> req2Automata)
-			throws InvariantInfeasibleException {
+	private Term constructPrimedStateInvariant(final List<ReqPeas> reqPeas) throws InvariantInfeasibleException {
 
-		final Map<PatternType, CDD> primedStateInvariants = new HashMap<>();
-		for (final Entry<PatternType, ReqPeas> entry : req2Automata.entrySet()) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+		final Map<PatternType<?>, CDD> primedStateInvariants = new HashMap<>();
+		for (final ReqPeas reqpea : reqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
 				if (filterReqs(pea.getValue())) {
 					// this is not an invariant we want to consider
 					continue;
 				}
-				primedStateInvariants.put(entry.getKey(),
+				primedStateInvariants.put(reqpea.getPattern(),
 						pea.getValue().getPhases()[0].getStateInvariant().prime(mReqSymboltable.getConstVars()));
 			}
 		}
 
 		final Term result;
-		final Map<PatternType, Term> terms;
+		final Map<PatternType<?>, Term> terms;
 		if (primedStateInvariants.isEmpty()) {
 			return mTrue;
 		} else if (primedStateInvariants.size() == 1) {
-			final Entry<PatternType, CDD> entry = primedStateInvariants.entrySet().iterator().next();
+			final Entry<PatternType<?>, CDD> entry = primedStateInvariants.entrySet().iterator().next();
 			result = mCddToSmt.toSmt(entry.getValue());
 			terms = Collections.singletonMap(entry.getKey(), result);
 		} else {
@@ -447,7 +440,7 @@ public class RtInconcistencyConditionGenerator {
 		return handleInconsistentStateInvariant(terms, simplify(handleInconsistentStateInvariant(terms, result)));
 	}
 
-	private Term handleInconsistentStateInvariant(final Map<PatternType, Term> terms, final Term invariant)
+	private Term handleInconsistentStateInvariant(final Map<PatternType<?>, Term> terms, final Term invariant)
 			throws InvariantInfeasibleException {
 		if (mFalse != invariant) {
 			return invariant;
@@ -456,8 +449,8 @@ public class RtInconcistencyConditionGenerator {
 		final Function<TermVariable, IProgramVar> funTermVar2ProgVar = a -> mVars.get(a.getName());
 		final SimplePredicateFactory pfac = new SimplePredicateFactory(mManagedScript, funTermVar2ProgVar);
 		mScript.push(1);
-		final Map<Term, PatternType> name2Req = new HashMap<>();
-		for (final Entry<PatternType, Term> entry : terms.entrySet()) {
+		final Map<Term, PatternType<?>> name2Req = new HashMap<>();
+		for (final Entry<PatternType<?>, Term> entry : terms.entrySet()) {
 			final Term term = entry.getValue();
 			final BasicPredicate pred = pfac.newPredicate(term);
 			final Term namedTerm = SmtUtils.annotateAndAssert(mScript, pred.getClosedFormula(), entry.getKey().getId());
@@ -465,7 +458,7 @@ public class RtInconcistencyConditionGenerator {
 		}
 		final LBool result = mScript.checkSat();
 		assert result == LBool.UNSAT;
-		final Collection<PatternType> responsibleRequirements = new HashSet<>();
+		final Collection<PatternType<?>> responsibleRequirements = new HashSet<>();
 		final Term[] unsatCore = mScript.getUnsatCore();
 		Arrays.stream(unsatCore).map(a -> name2Req.get(a)).forEach(responsibleRequirements::add);
 		mScript.pop(1);
@@ -517,12 +510,12 @@ public class RtInconcistencyConditionGenerator {
 			// qelim failed to eliminate all quantifiers, perhaps the solver is better?
 			printQuantifiedFormula("Before qelim", () -> quantifiedFormula);
 			printQuantifiedFormula("After qelim", () -> (QuantifiedFormula) afterQelimFormula);
+
 			if (querySolverIsTrue(afterQelimFormula)) {
 				return mTrue;
 			}
 			printQuantifiedFormula("After solver", () -> (QuantifiedFormula) afterQelimFormula);
 		}
-
 		return afterQelimFormula;
 	}
 
@@ -578,15 +571,15 @@ public class RtInconcistencyConditionGenerator {
 	public static final class InvariantInfeasibleException extends Exception {
 
 		private static final long serialVersionUID = 1L;
-		private final Collection<PatternType> mResponsibleRequirements;
+		private final Collection<PatternType<?>> mResponsibleRequirements;
 
-		private InvariantInfeasibleException(final Collection<PatternType> responsibleRequirements) {
+		private InvariantInfeasibleException(final Collection<PatternType<?>> responsibleRequirements) {
 			super("Some invariants are already infeasible. Responsible requirements: "
 					+ responsibleRequirements.stream().map(a -> a.getId()).collect(Collectors.joining(", ")));
 			mResponsibleRequirements = responsibleRequirements;
 		}
 
-		public Collection<PatternType> getResponsibleRequirements() {
+		public Collection<PatternType<?>> getResponsibleRequirements() {
 			return mResponsibleRequirements;
 		}
 

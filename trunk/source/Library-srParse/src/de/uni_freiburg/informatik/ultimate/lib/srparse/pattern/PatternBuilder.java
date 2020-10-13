@@ -50,19 +50,20 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
+@SuppressWarnings("unchecked")
 public class PatternBuilder {
 
-	private static final Class<?>[] PATTERNS = new Class<?>[] { BndDelayedResponsePatternUT.class,
-			BndEntryConditionPattern.class, BndExistencePattern.class, BndInvariancePattern.class,
-			BndPossResponsePattern.class, BndRecurrencePattern.class, BndResponsePatternTT.class,
-			BndResponsePatternTU.class, BndResponsePatternUT.class, BndTriggeredEntryConditionPattern.class,
-			ConstrainedChainPattern.class, InitializationPattern.class, InstAbsPattern.class, InvariantPattern.class,
-			MaxDurationPattern.class, MinDurationPattern.class, PossibilityPattern.class,
-			PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class, PrecedencePattern.class,
-			ResponseChain12Pattern.class, ResponseChain21Pattern.class, ResponsePattern.class,
-			UniversalityPattern.class, TogglePattern.class, TogglePatternDelayed.class };
+	private static final Class<?>[] PATTERNS =
+			new Class<?>[] { BndDelayedResponsePatternUT.class, BndEntryConditionPattern.class,
+					BndExistencePattern.class, BndInvariancePattern.class, BndPossResponsePattern.class,
+					BndRecurrencePattern.class, BndResponsePatternTT.class, BndResponsePatternTU.class,
+					BndResponsePatternUT.class, BndTriggeredEntryConditionPattern.class, ConstrainedChainPattern.class,
+					InitializationPattern.class, InstAbsPattern.class, InvariantPattern.class, MaxDurationPattern.class,
+					MinDurationPattern.class, PossibilityPattern.class, PrecedenceChain12Pattern.class,
+					PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
+					ResponsePattern.class, UniversalityPattern.class, UniversalityPatternDelayed.class };
 
-	private static final Map<Class<? extends PatternType>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
+	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
 	static {
 		// TODO: Check if this can be made faster using LambdaMetafactory
@@ -71,14 +72,15 @@ public class PatternBuilder {
 
 			final PatternTypeConstructor ptc = (a, b, c, d) -> {
 				try {
-					return (PatternType) clazz.getConstructor(SrParseScope.class, String.class, List.class, List.class)
+					return (PatternType<?>) clazz
+							.getConstructor(SrParseScope.class, String.class, List.class, List.class)
 							.newInstance(a, b, c, d);
 				} catch (final Throwable e) {
 					e.printStackTrace();
 					throw new RuntimeException(e);
 				}
 			};
-			CONSTRUCTORS.put((Class<? extends PatternType>) clazz, ptc);
+			CONSTRUCTORS.put((Class<? extends PatternType<?>>) clazz, ptc);
 		}
 
 	}
@@ -86,8 +88,8 @@ public class PatternBuilder {
 	private final List<CDD> mCDDs;
 	private final List<String> mDurations;
 	private String mId;
-	private Class<? extends PatternType> mClazz;
-	private SrParseScope mScope;
+	private Class<? extends PatternType<?>> mClazz;
+	private SrParseScope<?> mScope;
 
 	public PatternBuilder() {
 		mCDDs = new ArrayList<>();
@@ -109,12 +111,12 @@ public class PatternBuilder {
 		return this;
 	}
 
-	public PatternBuilder setType(final Class<? extends PatternType> clazz) {
+	public PatternBuilder setType(final Class<? extends PatternType<?>> clazz) {
 		mClazz = clazz;
 		return this;
 	}
 
-	public PatternBuilder setScope(final SrParseScope scope) {
+	public PatternBuilder setScope(final SrParseScope<?> scope) {
 		mScope = scope;
 		return this;
 	}
@@ -127,7 +129,7 @@ public class PatternBuilder {
 		Arrays.stream(elems).forEachOrdered(col::add);
 	}
 
-	public PatternType build() {
+	public PatternType<?> build() {
 		if (mClazz == null) {
 			throw new IllegalStateException("Type of pattern not yet specified");
 		}
@@ -146,7 +148,7 @@ public class PatternBuilder {
 
 	@FunctionalInterface
 	private interface PatternTypeConstructor {
-		PatternType construct(final SrParseScope scope, final String id, final List<CDD> cdds,
+		PatternType<?> construct(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 				final List<String> durations);
 	}
 

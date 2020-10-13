@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -121,12 +122,12 @@ public class PolynomialRelationTest {
 		return result;
 	}
 
+
 	@Test
 	public void relationRealDefault() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(= (+ 7.0 x) y )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
-
 	}
 
 	@Test
@@ -134,7 +135,6 @@ public class PolynomialRelationTest {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(= (* 7.0 x) y )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
-
 	}
 
 	@Test
@@ -183,7 +183,7 @@ public class PolynomialRelationTest {
 	public void relationRealPolyEQ6() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
 	@Test
@@ -344,6 +344,20 @@ public class PolynomialRelationTest {
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
+	/**
+	 * The mapping {x->2, y->6} is a satisfying assignment because 2*2=4 and 2*6=4
+	 * because we have to take everything modulo 8. If we would divide both sides by
+	 * 2 this mapping is not a satisfying assignment any more.
+	 */
+	@Test
+	public void relationBvEQ06NoDiv() {
+		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x", "y") };
+		final String inputSTR = "(= (bvmul (_ bv2 8) x) (bvmul (_ bv2 8) y ))";
+		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+
+	// Result in DNF: (or (and (= y 0) (= z 0)) (and (= (mod z y) 0) (not (= y 0)) (= x (div z y))))
 	// @Test Insufficient resources to check soundness
 	public void relationIntPolyPuristEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
@@ -351,7 +365,10 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
-	@Test
+
+	// Result in DNF: (or (and (distinct x (div z y)) (not (= y 0))) (and (not (= y 0)) (not (= (mod z y) 0))) (and (not (= z 0)) (= y 0)))
+	// Result in CNF: (and (or (not (= z 0)) (not (= y 0))) (or (= y 0) (distinct x (div z y)) (not (= (mod z y) 0))))
+	// @Test Commented because mathsat does not terminate
 	public void relationIntPolyPuristDistinct() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(not (= (* y x) z))";
@@ -367,6 +384,106 @@ public class PolynomialRelationTest {
 	public void relationIntPolyPuristLeq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(< (* y x) z )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Disjuncts of the DNF result:
+	 * (and (= x (div (div t 2) a)) (not (= a 0)) (= (mod t 2) 0) (= (mod (div t 2) a) 0))
+	 * (and (= (mod t 2) 0) (= a 0) (= (div t 2) 0))
+	 *
+	 * You get the CNF result if you swap the and/or and negate all atoms of
+	 * {@link PolynomialRelationTest#relationIntPolyDistinct}
+	 */
+	@Test
+	public void relationIntPolyEq() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(= (* 2 a x) t )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
+	}
+
+	/**
+	 * Disjuncts of the DNF result:
+	 * (and (= x (distinct (div (div t 2) a)))  (not (= a 0)))
+	 * (and (= a 0)  (not (= (div t 2) 0)))
+	 * (and (not (= (mod (div t 2) a) 0))  (not (= a 0)))
+	 * (and (not (= (mod t 2) 0)))
+	 *
+	 * You get the CNF result if you swap the and/or and negate all atoms of
+	 * {@link PolynomialRelationTest#relationIntPolyEq}
+	 */
+	// @Test Insufficient resources to check soundness
+	public void relationIntPolyDistinct() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(not (= (* 2 a x) t ))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Delete after {@link PolynomialRelationTest#relationIntPolyDistinct} can be
+	 * solved.
+	 */
+	@Test
+	public void relationIntPolyDistinctSimplified() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(not (= (* 2 a x) 1337 ))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	// @Test Insufficient resources to check soundness
+	public void relationIntPolyLess() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(< (* 2 a x) t )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Delete after {@link PolynomialRelationTest#relationIntPolyDistinct} can be
+	 * solved.
+	 */
+	@Test
+	public void relationIntPolyLessSimplified() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(< (* 2 a x) 1337 )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
+	}
+
+	// @Test Insufficient resources to check soundness
+	public void relationIntPolyLeq() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(<= (* 2 a x) t )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Delete after {@link PolynomialRelationTest#relationIntPolyLeq} can be
+	 * solved.
+	 */
+	@Test
+	public void relationIntPolyLeqSimplified() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(<= (* 2 a x) 1337 )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
+	}
+
+	@Test
+	public void relationIntPolyGeq() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(>= (* 2 a x) t )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
+	}
+
+	@Test
+	public void relationIntPolyGq() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
+		final String inputSTR = "(> (* 2 a x) t )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
+	}
+
+	@Test
+	public void relationIntPolyEqRhsLiteral() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
+		final String inputSTR = "(= (* 17 y z x) 42 )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
@@ -489,9 +606,10 @@ public class PolynomialRelationTest {
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
 		final MultiCaseSolvedBinaryRelation sbr =
 				PolynomialRelation.convert(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
-						.solveForSubject(mScript, subject, Xnf.DNF);
+						.solveForSubject(mScript, subject, Xnf.DNF, Collections.emptySet());
 		Assert.assertNull(sbr);
 	}
+
 
 	private void testSolveForX(final String solverCommand, final String inputAsString, final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
@@ -517,6 +635,9 @@ public class PolynomialRelationTest {
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term subject = TermParseUtils.parseTerm(script, "x");
+		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript,
+				subject);
+		Assert.assertNull("Solvable, but unsolvable expected", sbr);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
 	}
@@ -524,12 +645,12 @@ public class PolynomialRelationTest {
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) {
 		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
 		mScript.echo(new QuotedObject("Checking if input and output of solveForSubject are equivalent"));
-		Assert.assertTrue(assumptionsImpliesEquality(inputAsTerm, sbr));
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.asTerm(mScript), inputAsTerm, mScript));
 	}
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
-		final MultiCaseSolvedBinaryRelation mcsbr =
-				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x, xnf);
+		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(mScript, inputAsTerm)
+				.solveForSubject(mScript, x, xnf, Collections.emptySet());
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
 		final Term tmp;
@@ -559,18 +680,6 @@ public class PolynomialRelationTest {
 
 	}
 
-	@Deprecated
-	private boolean assumptionsImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
-		if (sbr.getAssumptionsMap().isEmpty()) {
-			return SmtUtils.areFormulasEquivalent(sbr.asTerm(mScript), originalTerm, mScript);
-		} else {
-			final Term disJ = SmtUtils.not(mScript, SmtUtils.and(mScript, sbr.getAssumptionsMap().values()));
-			final Term impli1 = SmtUtils.or(mScript, disJ, sbr.asTerm(mScript));
-			final Term impli2 = SmtUtils.or(mScript, disJ, originalTerm);
-			return SmtUtils.areFormulasEquivalent(impli1, impli2, mScript);
-		}
-	}
-
 	@Test
 	public void relationIntDivDefault() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
@@ -583,7 +692,7 @@ public class PolynomialRelationTest {
 	public void relationIntDivEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 7 x) y )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 
 	}
 
@@ -591,56 +700,56 @@ public class PolynomialRelationTest {
 	public void relationIntDivEQ2() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 x) (* 7 y) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivEQ3() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 x) (+ (* 7 y) (* 5 z)) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivEQ4() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 6 (+ y x)) (* 7 z) )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivGEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "lo") };
 		final String inputSTR = "(>= (* 3 x) lo )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivLEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "hi") };
 		final String inputSTR = "(<= (* 3 x) hi )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivDISTINCT() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
-		final String inputSTR = "(not(= (* 3 x) y ))";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		final String inputSTR = "(not (= (* 3 x) y ))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivGREATER() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "lo") };
 		final String inputSTR = "(> (* 3 x) lo )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
 	public void relationIntDivLESS() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "hi") };
 		final String inputSTR = "(< (* 4 x) hi )";
-		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
@@ -795,7 +904,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntDefaultModEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
-		final String inputSTR = "(= (+ (mod (mod y 7) 3)  x) eq )";
+		final String inputSTR = "(= (+ (mod (mod x 7) 3) y) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
@@ -859,6 +968,39 @@ public class PolynomialRelationTest {
 	public void relationIntDivModStickyPaintSimplified() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (div x (- 8)) y)";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Example that is motivated by the problem that the terms of the following two
+	 * lines do not evaluate to the same value for Euclidean division of integers.
+	 *
+	 * <pre>
+	 * 20 / (-2 * 7)  =  20 / -14  =  -1    (the remainder is 6)
+	 * 20 / -2 / 7  =  -10 / 7  =   -2    (the remainder is 4)
+	 * </pre>
+	 *
+	 * So if we have -2 * y * x = 20 * t the intermediate transformation to y * x =
+	 * -10 * t is unsound.
+	 */
+	@Test
+	public void relationIntNonlin01MilkFactoryOutlet() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= 20 (* 2 x y))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	@Test
+	public void relationIntNonlin02Buttermilk() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(= (* (- 2) x y) 20)";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	@Test
+	public void relationIntNonlin01FactoryOutletLinear() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= 20 (* 2 x 6))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 

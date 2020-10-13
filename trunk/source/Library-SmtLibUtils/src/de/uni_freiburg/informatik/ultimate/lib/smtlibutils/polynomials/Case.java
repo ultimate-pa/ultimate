@@ -90,7 +90,7 @@ public class Case implements ITermProviderOnDemand {
 
 	public Stream<IntricateOperation> streamOfIntricateOperations() {
 		if (mSolvedBinaryRelation != null && mSolvedBinaryRelation.getIntricateOperation() != null) {
-			return Stream.concat(Stream.of(mSolvedBinaryRelation.getIntricateOperation()),
+			return Stream.concat(mSolvedBinaryRelation.getIntricateOperation().stream(),
 					getSupportingTerms().stream().map(x -> x.getIntricateOperation()));
 		} else {
 			return getSupportingTerms().stream().map(x -> x.getIntricateOperation());

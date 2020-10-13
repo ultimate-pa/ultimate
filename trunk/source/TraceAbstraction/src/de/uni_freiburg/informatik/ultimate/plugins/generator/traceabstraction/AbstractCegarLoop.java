@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -85,7 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class AbstractCegarLoop<LETTER extends IAction> {
+public abstract class AbstractCegarLoop<L extends IAction> {
 	private static final String MSG_VERIFICATION_CANCELED = "Verification canceled";
 
 	private static final boolean CONTINUE_AFTER_ERROR_TRACE_FOUND = false;
@@ -151,6 +150,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
+	protected final Class<L> mTransitionClazz;
 
 	/**
 	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification task.
@@ -187,7 +187,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
-	protected IRun<LETTER, ?> mCounterexample;
+	protected IRun<L, ?> mCounterexample;
 
 	/**
 	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is
@@ -195,26 +195,26 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * <li>a superset of the feasible program traces.
 	 * <li>a subset of the traces which respect the control flow of the program.
 	 */
-	protected IAutomaton<LETTER, IPredicate> mAbstraction;
+	protected IAutomaton<L, IPredicate> mAbstraction;
 
 	/**
 	 * IInterpolantGenerator that was used in the current iteration.
 	 */
-	protected IInterpolantGenerator<LETTER> mInterpolantGenerator;
+	protected IInterpolantGenerator<L> mInterpolantGenerator;
 
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
-	protected NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton;
+	protected NestedWordAutomaton<L, IPredicate> mInterpolAutomaton;
 
 	/**
 	 * Program execution that leads to error. Only computed in the last iteration of the CEGAR loop if the program is
 	 * incorrect.
 	 */
-	protected IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mRcfgProgramExecution;
+	protected IProgramExecution<L, Term> mRcfgProgramExecution;
 
 	// used for debugging only
-	protected IAutomaton<LETTER, IPredicate> mArtifactAutomaton;
+	protected IAutomaton<L, IPredicate> mArtifactAutomaton;
 
 	protected final Format mPrintAutomataLabeling;
 
@@ -234,7 +234,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs, final ILogger logger) {
+			final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs, final ILogger logger,
+			final Class<L> transitionClazz) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -246,6 +247,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
+		mTransitionClazz = transitionClazz;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mLogger.info("Starting to check reachability of " + errorLocs.size() + " error locations.");
@@ -358,7 +360,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		return mIteration;
 	}
 
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		return mRcfgProgramExecution;
 	}
 
@@ -393,13 +395,13 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			try {
 				getInitialAbstraction();
 			} catch (final AutomataOperationCanceledException aoce) {
-				final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(this.getClass(),
-						"constructing initial abstraction");
+				final RunningTaskInfo runningTaskInfo =
+						new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
 				aoce.addRunningTaskInfo(runningTaskInfo);
 				throw aoce;
 			} catch (final ToolchainCanceledException tce) {
-				final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(this.getClass(),
-						"constructing initial abstraction");
+				final RunningTaskInfo runningTaskInfo =
+						new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
 				tce.addRunningTaskInfo(runningTaskInfo);
 				throw tce;
 			} finally {
@@ -482,9 +484,9 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 					if (mPref.computeHoareAnnotation()
 							&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-						assert new InductivityCheck<>(mServices,
-								(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, false, true,
-								new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
+						assert new InductivityCheck<>(mServices, (INestedWordAutomaton<L, IPredicate>) mAbstraction,
+								false, true, new IncrementalHoareTripleChecker(mCsToolkit, false))
+										.getResult() : "Not inductive";
 					}
 
 					if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
@@ -557,7 +559,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		return reportResult(res);
 	}
 
-	protected void writeAutomatonToFile(final IAutomaton<LETTER, IPredicate> automaton, final String filename) {
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final String filename) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
 				determineAutomatonName(automaton), mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling,
@@ -566,7 +568,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	}
 
 	protected void writeAutomataToFile(final String filename, final String atsHeaderMessage, final String atsCommands,
-			final NamedAutomaton<LETTER, IPredicate>... automata) {
+			final NamedAutomaton<L, IPredicate>... automata) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(mServices),
 				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, atsHeaderMessage, atsCommands,
@@ -574,8 +576,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 	}
 
-
-	private String determineAutomatonName(final IAutomaton<LETTER, IPredicate> automaton) {
+	private String determineAutomatonName(final IAutomaton<L, IPredicate> automaton) {
 		String result;
 		if (automaton instanceof INwaBasis) {
 			result = "nwa";

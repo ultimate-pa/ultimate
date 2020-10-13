@@ -27,8 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -36,36 +35,36 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgBacktranslationValueProvider
-		implements IBacktranslationValueProvider<IIcfgTransition<IcfgLocation>, Term> {
+public class IcfgBacktranslationValueProvider<L extends IAction>
+		implements IBacktranslationValueProvider<L, Term> {
 
 	@Override
-	public int getStartLineNumberFromStep(final IIcfgTransition<IcfgLocation> step) {
+	public int getStartLineNumberFromStep(final L step) {
 		return -1;
 	}
 
 	@Override
-	public int getEndLineNumberFromStep(final IIcfgTransition<IcfgLocation> step) {
+	public int getEndLineNumberFromStep(final L step) {
 		return -1;
 	}
 
 	@Override
-	public String getOriginFileNameFromStep(final IIcfgTransition<IcfgLocation> step) {
+	public String getOriginFileNameFromStep(final L step) {
 		return null;
 	}
 
 	@Override
-	public String getFileNameFromStep(final IIcfgTransition<IcfgLocation> step) {
+	public String getFileNameFromStep(final L step) {
 		return null;
 	}
 
 	@Override
-	public String getStringFromStep(final IIcfgTransition<IcfgLocation> step) {
+	public String getStringFromStep(final L step) {
 		return step.toString();
 	}
 
 	@Override
-	public String getStringFromTraceElement(final IIcfgTransition<IcfgLocation> traceelement) {
+	public String getStringFromTraceElement(final L traceelement) {
 		return traceelement.toString();
 	}
 

@@ -136,8 +136,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
 						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 
-		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(icfg, rankVarConstructor, predicateFactory,
-				taPrefs, mServices, witnessAutomaton);
+		final BuchiCegarLoop<IcfgEdge> bcl = new BuchiCegarLoop<>(icfg, rankVarConstructor, predicateFactory, taPrefs,
+				mServices, witnessAutomaton, IcfgEdge.class);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
@@ -168,13 +168,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	 * @param nestedLassoWord
 	 */
 	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta,
-			final NestedLassoWord<? extends IIcfgTransition<?>> nestedLassoWord) {
-		final IcfgProgramExecution stemExecution =
+			final NestedLassoWord<IcfgEdge> nestedLassoWord) {
+		final IcfgProgramExecution<IcfgEdge> stemExecution =
 				IcfgProgramExecution.create(nestedLassoWord.getStem().asList(), Collections.emptyMap());
-		final IcfgProgramExecution loopExecution =
+		final IcfgProgramExecution<IcfgEdge> loopExecution =
 				IcfgProgramExecution.create(nestedLassoWord.getLoop().asList(), Collections.emptyMap());
-		final NonTerminationArgumentResult<IIcfgTransition<IcfgLocation>, Term> result;
-		final IcfgEdge honda1 = (IcfgEdge) nestedLassoWord.getLoop().getSymbol(0);
+		final NonTerminationArgumentResult<IcfgEdge, Term> result;
+		final IcfgEdge honda1 = nestedLassoWord.getLoop().getSymbol(0);
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 			// TODO: translate also the rational coefficients to Expressions?
@@ -201,7 +201,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(result);
 	}
 
-	private void interpretAndReportResult(final BuchiCegarLoop<?> bcl, final Result result, final IIcfg<?> icfg)
+	private void interpretAndReportResult(final BuchiCegarLoop<IcfgEdge> bcl, final Result result, final IIcfg<?> icfg)
 			throws AssertionError {
 		String whatToProve = "termination";
 
@@ -257,7 +257,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.NONTERMINATING, longDescr);
 			reportResult(reportRes);
 
-			final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
+			final NestedLassoRun<IcfgEdge, IPredicate> counterexample = bcl.getCounterexample();
 			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			final IcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
@@ -267,11 +267,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution stemPE = IcfgProgramExecution.create(counterexample.getStem().getWord().asList(),
-					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
+			final IcfgProgramExecution<IcfgEdge> stemPE =
+					IcfgProgramExecution.create(counterexample.getStem().getWord().asList(), partialProgramStateMapping,
+							new Map[counterexample.getStem().getLength()]);
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution loopPE = IcfgProgramExecution.create(counterexample.getLoop().getWord().asList(),
-					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
+			final IcfgProgramExecution<IcfgEdge> loopPE =
+					IcfgProgramExecution.create(counterexample.getLoop().getWord().asList(), partialProgramStateMapping,
+							new Map[counterexample.getLoop().getLength()]);
 			final IResult ntreportRes = new NonterminatingLassoResult<>(honda, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(honda));
 			reportResult(ntreportRes);
@@ -286,7 +288,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(result);
 	}
 
-	private void reportLTLPropertyIsViolated(final BuchiCegarLoop<?> bcl, final LTLPropertyCheck ltlAnnot) {
+	private void reportLTLPropertyIsViolated(final BuchiCegarLoop<IcfgEdge> bcl, final LTLPropertyCheck ltlAnnot) {
 		final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
 		final IcfgLocation position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
@@ -308,7 +310,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			// combined.addAll(loop);
 
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution cex =
+			final IcfgProgramExecution<IcfgEdge> cex =
 					IcfgProgramExecution.create(combined, partialProgramStateMapping, new Map[combined.size()]);
 			reportResult(new LTLFiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), cex, ltlAnnot));
@@ -317,10 +319,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution stemPE =
+			final IcfgProgramExecution<IcfgEdge> stemPE =
 					IcfgProgramExecution.create(stem, partialProgramStateMapping, new Map[stem.size()]);
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution loopPE =
+			final IcfgProgramExecution<IcfgEdge> loopPE =
 					IcfgProgramExecution.create(loop, partialProgramStateMapping, new Map[loop.size()]);
 			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(position),

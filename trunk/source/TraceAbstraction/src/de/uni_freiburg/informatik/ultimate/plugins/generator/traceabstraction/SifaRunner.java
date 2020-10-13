@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
+public final class SifaRunner<L extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<L> {
 
 	private final SifaStats mStats;
 	private final IPredicate[] mInterpolants;
@@ -77,16 +77,16 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 	private final IPredicate mPostcondition;
 	private final boolean mTracecheckFinishedNormally;
 	private final TraceCheckReasonUnknown mTraceCheckReasonUnknown;
-	private final List<LETTER> mTrace;
+	private final List<L> mTrace;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
 	public SifaRunner(final IUltimateServiceProvider services, final ILogger logger, final IIcfg<?> icfg,
-			final IRun<LETTER, ?> currentCex, final IPredicateUnifier unifier) {
+			final IRun<L, ?> currentCex, final IPredicateUnifier unifier) {
 		mTrace = currentCex.getWord().asList();
 		mPredicateUnifier = unifier;
 		mPrecondition = mPredicateUnifier.getTruePredicate();
-		final Set<LETTER> pathProgramSet = currentCex.getWord().asSet();
+		final Set<L> pathProgramSet = currentCex.getWord().asSet();
 		final PathProgramConstructionResult ppConstructionResult =
 				PathProgram.constructPathProgram("sifa-path-program", icfg, pathProgramSet);
 		final PathProgram pp = ppConstructionResult.getPathProgram();
@@ -179,7 +179,7 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 	}
 
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+	public IProgramExecution<L, Term> getRcfgProgramExecution() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -199,7 +199,7 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 	}
 
 	@Override
-	public List<LETTER> getTrace() {
+	public List<L> getTrace() {
 		return mTrace;
 	}
 

@@ -33,7 +33,7 @@ public class EquivalenceFinder {
 		for (final PolynomialRelation relation : mRelations) {
 			for (final Term var : neededEquivalenceClasses) {
 				final SolvedBinaryRelation sbr = relation.solveForSubject(mScript, var);
-				if (sbr == null || !sbr.getAssumptionsMap().isEmpty()) {
+				if (sbr == null) {
 					continue;
 				}
 				assert "=".equals(relation.getRelationSymbol().toString());

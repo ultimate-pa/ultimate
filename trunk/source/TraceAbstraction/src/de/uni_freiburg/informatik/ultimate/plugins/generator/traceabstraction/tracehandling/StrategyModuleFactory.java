@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -52,35 +53,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- * @param <LETTER>
+ * @param <L>
  */
-public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
+public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 
 	private final TaskIdentifier mTaskIdentifier;
 	private final IUltimateServiceProvider mServices;
-	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
+	private final TaCheckAndRefinementPreferences<L> mPrefs;
 	private final TAPreferences mTaPrefs;
-	private final IRun<LETTER, ?> mCounterexample;
+	private final IRun<L, ?> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final PredicateFactory mPredicateFactory;
-	private final IAutomaton<LETTER, IPredicate> mAbstraction;
+	private final IAutomaton<L, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final ILogger mLogger;
 
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactoryForInterpolantAutomata mPredFacInterpolAut;
-	private final PathProgramCache<LETTER> mPathProgramCache;
+	private final PathProgramCache<L> mPathProgramCache;
+	private final Class<L> mTransitionClazz;
 
 	public StrategyModuleFactory(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefs,
-			final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
+			final ILogger logger, final TaCheckAndRefinementPreferences<L> prefs, final TAPreferences taPrefs,
+			final IRun<L, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
-			final IAutomaton<LETTER, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final CfgSmtToolkit csToolkit,
-			final PredicateFactoryForInterpolantAutomata predFacInterpolAut,
-			final PathProgramCache<LETTER> pathProgramCache) {
+			final IAutomaton<L, IPredicate> abstraction, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final CfgSmtToolkit csToolkit, final PredicateFactoryForInterpolantAutomata predFacInterpolAut,
+			final PathProgramCache<L> pathProgramCache, final Class<L> transitionClazz) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -96,19 +97,20 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		mCsToolkit = csToolkit;
 		mPredFacInterpolAut = predFacInterpolAut;
 		mPathProgramCache = pathProgramCache;
+		mTransitionClazz = transitionClazz;
 	}
 
-	public StrategyModuleMcr<LETTER> createStrategyModuleMcr(final StrategyFactory<LETTER> strategyFactory) {
+	public StrategyModuleMcr<L> createStrategyModuleMcr(final StrategyFactory<L> strategyFactory) {
 		isOnlyDefaultPrePostConditions();
 		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
 		if (useInterpolantConsolidation) {
 			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
 		}
 		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory,
-				mCounterexample, mAbstraction, mTaskIdentifier);
+				mCounterexample, mAbstraction, mTaskIdentifier, createMcrInterpolantProvider());
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
 			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolCraig<>(mTaskIdentifier, mServices,
 				mPrefs, mCounterexample, mPrecondition, mPostcondition,
@@ -116,7 +118,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 				useTimeout, technique));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolSpWp(final boolean useTimeout,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolSpWp(final boolean useTimeout,
 			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolSpWp<>(mTaskIdentifier, mServices,
 				mPrefs, mCounterexample, mPrecondition, mPostcondition,
@@ -124,7 +126,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 				useTimeout, technique));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleZ3(final boolean useTimeout,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleZ3(final boolean useTimeout,
 			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(
 				new IpTcStrategyModuleZ3<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
@@ -132,7 +134,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 						mPredicateUnifier, mPredicateFactory, useTimeout, technique));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleMathsat(final InterpolationTechnique technique,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleMathsat(final InterpolationTechnique technique,
 			final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(
 				new IpTcStrategyModuleMathsat<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
@@ -140,7 +142,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 						mPredicateUnifier, mPredicateFactory, technique));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleCVC4(final boolean useTimeout,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC4(final boolean useTimeout,
 			final InterpolationTechnique technique, final Logics logic, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(
 				new IpTcStrategyModuleCvc4<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
@@ -148,32 +150,32 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 						mPredicateUnifier, mPredicateFactory, useTimeout, technique, logic));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleAbstractInterpretation() {
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAbstractInterpretation() {
 		isOnlyDefaultPrePostConditions();
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample,
 				mPredicateUnifier, mServices, mPrefs.getIcfgContainer(), mPathProgramCache, mTaPrefs));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSifa() {
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSifa() {
 		isOnlyDefaultPrePostConditions();
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSifa<>(mServices, mLogger,
 				mPrefs.getIcfgContainer(), mCounterexample, mPredicateUnifier));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePdr() {
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModulePdr() {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModulePdr<>(mLogger, mPrecondition, mPostcondition,
-				mCounterexample, mPredicateUnifier, mPrefs));
+				mCounterexample, mPredicateUnifier, mPrefs, mTransitionClazz));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModulePreferences() {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModulePreferences<>(mTaskIdentifier, mServices, mPrefs,
 				mCounterexample, mPrecondition, mPostcondition,
 				new AssertionOrderModulation<>(mPathProgramCache, mLogger, mPrefs.getAssertCodeBlockOrder()),
-				mPredicateUnifier, mPredicateFactory));
+				mPredicateUnifier, mPredicateFactory, mTransitionClazz));
 	}
 
-	private IIpTcStrategyModule<?, LETTER>
-			createModuleWrapperIfNecessary(final IIpTcStrategyModule<?, LETTER> trackStrategyModule) {
+	private IIpTcStrategyModule<?, L>
+			createModuleWrapperIfNecessary(final IIpTcStrategyModule<?, L> trackStrategyModule) {
 		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
 		if (useInterpolantConsolidation) {
 			isOnlyDefaultPrePostConditions();
@@ -183,15 +185,15 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		return trackStrategyModule;
 	}
 
-	public IIpAbStrategyModule<LETTER> createInterpolantAutomatonBuilderStrategyModulePreferences(
-			final IIpTcStrategyModule<?, LETTER> preferenceIpTc) {
+	public IIpAbStrategyModule<L>
+			createInterpolantAutomatonBuilderStrategyModulePreferences(final IIpTcStrategyModule<?, L> preferenceIpTc) {
 		return createInterpolantAutomatonBuilderStrategyModulePreferences(mTaPrefs.interpolantAutomaton(),
 				preferenceIpTc);
 	}
 
 	@SuppressWarnings("unchecked")
-	private IIpAbStrategyModule<LETTER> createInterpolantAutomatonBuilderStrategyModulePreferences(
-			final InterpolantAutomaton setting, final IIpTcStrategyModule<?, LETTER> preferenceIpTc) {
+	private IIpAbStrategyModule<L> createInterpolantAutomatonBuilderStrategyModulePreferences(
+			final InterpolantAutomaton setting, final IIpTcStrategyModule<?, L> preferenceIpTc) {
 		final InterpolantAutomaton realSetting =
 				mTaPrefs.overrideInterpolantAutomaton() ? mTaPrefs.interpolantAutomaton() : setting;
 		switch (realSetting) {
@@ -205,39 +207,56 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 			return new IpAbStrategyModuleTotalInterpolation<>(mServices, mAbstraction, mCounterexample,
 					mPredicateUnifier, mPrefs, mCsToolkit, mPredFacInterpolAut);
 		case ABSTRACT_INTERPRETATION:
-			final IIpTcStrategyModule<?, LETTER> strategy =
+			final IIpTcStrategyModule<?, L> strategy =
 					preferenceIpTc == null ? createIpTcStrategyModulePreferences() : preferenceIpTc;
 			return new IpAbStrategyModuleAbstractInterpretation<>(mAbstraction, mCounterexample, mPredicateUnifier,
-					(IpTcStrategyModuleAbstractInterpretation<LETTER>) strategy, mEmptyStackFactory);
+					(IpTcStrategyModuleAbstractInterpretation<L>) strategy, mEmptyStackFactory);
 		case MCR:
 			return new IpAbStrategyModuleMcr<>(mCounterexample.getWord().asList(), mPredicateUnifier,
-					mEmptyStackFactory, mLogger, mPrefs, mAbstraction.getAlphabet());
+					mEmptyStackFactory, mServices, mLogger, mAbstraction.getAlphabet(), createMcrInterpolantProvider());
 		case TOTALINTERPOLATION:
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.interpolantAutomaton() + " is unsupported");
 		}
 	}
 
-	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleStraightlineAll() {
+	private IInterpolantProvider<L> createMcrInterpolantProvider() {
+		switch (mTaPrefs.getMcrInterpolantMethod()) {
+		case INTERPOLATION:
+			return new IpInterpolantProvider<>(mPrefs, mPredicateUnifier,
+					new AssertionOrderModulation<>(mPathProgramCache, mLogger), mTaskIdentifier, mLogger,
+					mTransitionClazz);
+		case WP:
+			return new WpInterpolantProvider<>(mServices, mLogger, mPrefs.getCfgSmtToolkit().getManagedScript(),
+					mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+		case SP:
+			return new SpInterpolantProvider<>(mServices, mLogger, mPrefs.getCfgSmtToolkit().getManagedScript(),
+					mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+		default:
+			throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
+		}
+	}
+
+	public IIpAbStrategyModule<L> createIpAbStrategyModuleStraightlineAll() {
 		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.STRAIGHT_LINE, null);
 	}
 
-	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleAbstractInterpretation(
-			final IpTcStrategyModuleAbstractInterpretation<LETTER> ipTcStrategyModuleAbsInt) {
+	public IIpAbStrategyModule<L> createIpAbStrategyModuleAbstractInterpretation(
+			final IpTcStrategyModuleAbstractInterpretation<L> ipTcStrategyModuleAbsInt) {
 		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.ABSTRACT_INTERPRETATION,
 				null);
 	}
 
-	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleTotalInterpolation() {
+	public IIpAbStrategyModule<L> createIpAbStrategyModuleTotalInterpolation() {
 		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.TOTALINTERPOLATION,
 				null);
 	}
 
-	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleCanonical() {
+	public IIpAbStrategyModule<L> createIpAbStrategyModuleCanonical() {
 		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.CANONICAL, null);
 	}
 
-	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleMcr() {
+	public IIpAbStrategyModule<L> createIpAbStrategyModuleMcr() {
 		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.MCR, null);
 	}
 

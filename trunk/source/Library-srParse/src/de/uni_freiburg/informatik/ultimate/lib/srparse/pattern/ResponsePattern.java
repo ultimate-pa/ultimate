@@ -37,42 +37,52 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 
 /**
- * "{scope}, it is always the case that if "P" holds, then "S" eventually holds"
+ * {scope}, it is always the case that if "R" holds, then "S" eventually holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ResponsePattern extends PatternType {
-	public ResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+public class ResponsePattern extends PatternType<ResponsePattern> {
+	public ResponsePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
+	public ResponsePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new ResponsePattern(scope, id, cdds, durations);
+	}
+
+	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		final SrParseScope scope = getScope();
-		// note: Q and R are reserved for scope, cdds are parsed in reverse order
+		assert cdds.length == 2 && durations.length == 0;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope<?> scope = getScope();
+		final CDD R = cdds[1];
 		final CDD S = cdds[0];
-		final CDD P = cdds[1];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeBefore) {
-			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phase(Q.negate()), phase(Q.negate().and(P).and(S.negate())),
-					phase(Q.negate().and(S.negate())), phase(Q), phaseT());
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R).and(S.negate())),
+					phase(P.negate().and(S.negate())), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
-			final CDD Q = scope.getCdd1();
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(Q), phase(R.negate()), phase(R.negate().and(P).and(S.negate())),
-					phase(R.negate().and(S.negate())), phaseT());
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R).and(S.negate())),
+					phase(Q.negate().and(S.negate())), phase(Q), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
-			final CDD Q = scope.getCdd1();
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
-					phase(R.negate().and(P).and(S.negate())), phase(R.negate().and(S.negate())), phase(R), phaseT());
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(Q.negate().and(R).and(S.negate())), phase(Q.negate().and(S.negate())), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
+
 		return Collections.singletonList(ct);
 	}
 
@@ -95,7 +105,7 @@ public class ResponsePattern extends PatternType {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public ResponsePattern rename(final String newName) {
 		return new ResponsePattern(getScope(), newName, getCdds(), getDuration());
 	}
 

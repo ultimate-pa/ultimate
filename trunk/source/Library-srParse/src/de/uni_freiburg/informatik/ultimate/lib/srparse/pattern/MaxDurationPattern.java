@@ -40,48 +40,52 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that once "P" becomes satisfied, it holds for less than "c1" time units
+ * {scope}, it is always the case that once "R" becomes satisfied, it holds for less than "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class MaxDurationPattern extends PatternType {
-	public MaxDurationPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+public class MaxDurationPattern extends PatternType<MaxDurationPattern> {
+	public MaxDurationPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
+	public MaxDurationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+			final List<String> durations) {
+		return new MaxDurationPattern(scope, id, cdds, durations);
+	}
+
+	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		final SrParseScope scope = getScope();
-		// note: Q and R are reserved for scope, cdds are parsed in reverse order
-		final CDD P = cdds[0];
+		assert cdds.length == 1 && durations.length == 1;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope<?> scope = getScope();
+		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(),
-					// phase(P.negate()),
-					phase(P, BoundTypes.GREATEREQUAL, c1), phaseT());
+			ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
-			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phase(Q.negate()), phase(Q.negate().and(P.negate())),
-					phase(P.and(Q.negate()), BoundTypes.GREATEREQUAL, c1), phaseT());
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
-			final CDD Q = scope.getCdd1();
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
-					// phase(P.negate().and(R.negate())),
-					phase(P.and(R.negate()), BoundTypes.GREATEREQUAL, c1), phaseT());
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
-			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(Q), phaseT(), phase(P.negate()), phase(P, BoundTypes.GREATEREQUAL, c1),
-					phaseT());
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
-			final CDD Q = scope.getCdd1();
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
-					phase(P.and(R.negate()), BoundTypes.GREATEREQUAL, c1), phase(R.negate()), phase(R), phaseT());
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
@@ -108,7 +112,7 @@ public class MaxDurationPattern extends PatternType {
 	}
 
 	@Override
-	public PatternType rename(final String newName) {
+	public MaxDurationPattern rename(final String newName) {
 		return new MaxDurationPattern(getScope(), newName, getCdds(), getDuration());
 	}
 

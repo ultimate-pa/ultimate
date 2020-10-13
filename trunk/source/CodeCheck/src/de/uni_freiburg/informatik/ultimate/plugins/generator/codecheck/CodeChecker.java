@@ -71,7 +71,7 @@ public abstract class CodeChecker {
 		mGlobalSettings = globalSettings;
 	}
 
-	public abstract boolean codeCheck(NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
+	public abstract boolean codeCheck(NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> errorRun,
 			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
 
 	/**

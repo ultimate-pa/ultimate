@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -70,27 +69,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
-public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 
 	public CegarLoopConcurrentAutomata(final DebugIdentifier name, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				InterpolationTechnique.Craig_TreeInterpolation, false, services);
+			final Collection<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
+				compositionFactory, transitionClazz);
 	}
 
 	@Override
 	protected void getInitialAbstraction() {
 		final IEmptyStackStateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, mPref.computeHoareAnnotation());
-		final Cfg2Nwa<LETTER> cFG2NestedWordAutomaton = new Cfg2Nwa<>(mIcfg, predicateFactory, mCsToolkit,
-				mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
+		final Cfg2Nwa<L> cFG2NestedWordAutomaton = new Cfg2Nwa<>(mIcfg, predicateFactory, mCsToolkit, mPredicateFactory,
+				mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2NestedWordAutomaton.getResult();
 
 		if (mIteration <= mPref.watchIteration()
@@ -108,12 +109,12 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 		final Function<IMLPredicate, Set<IcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());
-		AutomataMinimization<Set<IcfgLocation>, IMLPredicate, LETTER> am;
+		AutomataMinimization<Set<IcfgLocation>, IMLPredicate, L> am;
 		try {
-			am = new AutomataMinimization<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
-					minimization, mComputeHoareAnnotation, mIteration, predicateFactoryRefinement,
-					MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata, mInterpolAutomaton,
-					MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, false);
+			am = new AutomataMinimization<>(mServices, (INestedWordAutomaton<L, IPredicate>) mAbstraction, minimization,
+					mComputeHoareAnnotation, mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION,
+					mStoredRawInterpolantAutomata, mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac,
+					lcsProvider, false);
 		} catch (final AutomataMinimizationTimeout e) {
 			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
 			throw e.getAutomataOperationCanceledException();
@@ -124,7 +125,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 
 		if (newAutomatonWasBuilt) {
 			// postprocessing after minimization
-			final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction = am.getMinimizedAutomaton();
+			final IDoubleDeckerAutomaton<L, IPredicate> newAbstraction = am.getMinimizedAutomaton();
 
 			// extract Hoare annotation
 			if (mComputeHoareAnnotation) {
@@ -154,8 +155,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
-		final INestedWordAutomaton<LETTER, IPredicate> oldAbstraction =
-				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
+		final INestedWordAutomaton<L, IPredicate> oldAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
 		final IHoareTripleChecker htc;
 		if (mRefinementEngine.getHoareTripleChecker() != null) {
@@ -167,13 +167,13 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 		mLogger.debug("Start constructing difference");
 		// assert (oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory());
 
-		IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
+		IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 
-		final DeterministicInterpolantAutomaton<LETTER> determinized = new DeterministicInterpolantAutomaton<>(
-				mServices, mCsToolkit, htc, mInterpolAutomaton, predicateUnifier, false, false);
+		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(mServices,
+				mCsToolkit, htc, mInterpolAutomaton, predicateUnifier, false, false);
 		// ComplementDeterministicNwa<LETTER, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
-		final PowersetDeterminizer<LETTER, IPredicate> psd2 =
+		final PowersetDeterminizer<L, IPredicate> psd2 =
 				new PowersetDeterminizer<>(determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
@@ -192,7 +192,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 
 		if (REMOVE_DEAD_ENDS) {
 			if (mComputeHoareAnnotation) {
-				final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
+				final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
 				mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 			}
 			diff.removeDeadEnds();
@@ -224,8 +224,8 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 		}
 
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
-				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
-				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
+				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
+				(NestedWord<L>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
 	}
 }

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public interface IReqSymbolTable {
 
@@ -65,17 +66,29 @@ public interface IReqSymbolTable {
 
 	Collection<String> getStateVars();
 
-	String getPrimedVarId(String stateVar);
+	/**
+	 * Given a variable name, return the name of the primed version of this variable.
+	 */
+	String getPrimedVarId(String name);
 
+	/**
+	 * Given a variable name, return the name of the history version of this variable.
+	 */
 	String getHistoryVarId(String name);
 
 	Collection<String> getPcVars();
 
 	Collection<Declaration> getDeclarations();
 
-	Map<PatternType, BoogieLocation> getLocations();
+	Map<PatternType<?>, BoogieLocation> getLocations();
 
 	Map<String, Expression> getConstToValue();
 
 	IBoogieType getFunctionReturnType(String identifier);
+
+	/**
+	 * Get a {@link UnionFind} data structure that partitions all variables in the PEA product based on their usage,
+	 * i.e., all variables of all PEAs that share (also transitively) one variable are in one class.
+	 */
+	UnionFind<String> getVariableEquivalenceClasses();
 }

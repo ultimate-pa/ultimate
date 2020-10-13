@@ -326,4 +326,30 @@ public class DataStructureUtils {
 		return true;
 	}
 
+	/**
+	 * Adds all suffixes from <code>suffix</code> to the prefixes from <code>prefix</code>, i.e.
+	 *
+	 * <code>
+	 * crossProduct([[A1,B1], [A2,B2]], [[C1,D1], [C2,D2]])
+	 * </code> returns <code>
+	 * [[A1,B1,C1,D1],[A1,B1,C2,D2] [A2,B2,C1,D1],[A2,B2,C2,D2]]
+	 * </code>
+	 *
+	 */
+	public static <T> List<List<T>> crossProduct(final List<List<T>> prefix, final List<List<T>> suffix) {
+		if (prefix.isEmpty()) {
+			return suffix;
+		}
+		if (suffix.isEmpty()) {
+			return prefix;
+		}
+		final List<List<T>> rtr = new ArrayList<>(prefix.size() * suffix.size());
+		for (final List<T> p : prefix) {
+			for (final List<T> s : suffix) {
+				rtr.add(concat(p, s));
+			}
+		}
+		return rtr;
+	}
+
 }

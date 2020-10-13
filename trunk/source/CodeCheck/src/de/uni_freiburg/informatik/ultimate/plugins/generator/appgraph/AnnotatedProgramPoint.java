@@ -4,22 +4,22 @@
  * Copyright (C) 2015 Mohamed Sherif
  * Copyright (C) 2014-2015 Mostafa Mahmoud Amin
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CodeCheck plug-in.
- * 
+ *
  * The ULTIMATE CodeCheck plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CodeCheck plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CodeCheck plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 /**
  * A node in the abstract reachability graph that Kojak maintains. Contains an IcfgLocation (earlier called
  * ProgramPoint) that is annotated with a Predicate.
- * 
+ *
  * (Note that it is correct that this should not inherit from IcfgLocation because we may have many instances of this
  * class for a single program location -- which are annotated with different predicates -- writing this down here
  * because of several attempts to go into that wrong direction)
@@ -82,7 +82,7 @@ public class AnnotatedProgramPoint
 
 	/**
 	 * Constructor of a new AnnotatedProgramPoint.
-	 * 
+	 *
 	 * @param predicate
 	 *            the annotation of the Node
 	 * @param programPoint
@@ -97,7 +97,7 @@ public class AnnotatedProgramPoint
 
 	/**
 	 * Constructor that copies an old APP to a new one with the same programPoint, predicate, and id.
-	 * 
+	 *
 	 * @param oldApp
 	 *            the old APP that will be copied
 	 */
@@ -107,7 +107,7 @@ public class AnnotatedProgramPoint
 
 	/**
 	 * Constructor that copies an old APP and gives the copy a new predicate.
-	 * 
+	 *
 	 * @param oldApp
 	 *            the old APP that will be copied
 	 * @param newPred
@@ -120,7 +120,7 @@ public class AnnotatedProgramPoint
 	/**
 	 * Constructor that copies an old APP, copies its outgoing edges if specified to do so, and gives the copy a new
 	 * predicate.
-	 * 
+	 *
 	 * @param oldApp
 	 *            the old APP that will be copied
 	 * @param newPred
@@ -181,7 +181,7 @@ public class AnnotatedProgramPoint
 				+ mPredicate.getFormula().toString();
 	}
 
-	public void connectOutgoing(final IIcfgTransition<?> transition, final AnnotatedProgramPoint target) {
+	public void connectOutgoing(final IIcfgTransition<IcfgLocation> transition, final AnnotatedProgramPoint target) {
 		assert !(transition instanceof IIcfgReturnTransition<?, ?>);
 		final AppEdge edge = new AppEdge(this, transition, target);
 		mOutgoingEdges.add(edge);
@@ -217,7 +217,7 @@ public class AnnotatedProgramPoint
 
 	/**
 	 * Adds an APP to the list of new copies of this APP.
-	 * 
+	 *
 	 * @param copy
 	 *            the APP that will be added as a copy to this APP
 	 */
@@ -235,7 +235,7 @@ public class AnnotatedProgramPoint
 
 	/**
 	 * Sets the clone source of this APP. The clone source is the APP copies to form this APP.
-	 * 
+	 *
 	 * @param source
 	 *            the APP that should be declared to be the clone source
 	 */
@@ -245,7 +245,7 @@ public class AnnotatedProgramPoint
 
 	/**
 	 * Gets a list of all the copies of this APP.
-	 * 
+	 *
 	 * @return returns a list of copies of this APP
 	 */
 	public List<AnnotatedProgramPoint> getCopies() {
@@ -257,7 +257,7 @@ public class AnnotatedProgramPoint
 
 	/**
 	 * Gets a clone of the list of new copies of this APP.
-	 * 
+	 *
 	 * @return returns a list of new copies of this APP
 	 */
 	public List<AnnotatedProgramPoint> getNewCopies() {

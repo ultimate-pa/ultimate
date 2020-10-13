@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2018 University of Freiburg
+ * Copyright (C) 2018-2020 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018-2020 University of Freiburg
  *
  * This file is part of the ULTIMATE PEAtoBoogie plug-in.
  *
@@ -31,12 +31,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -46,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.RequirementInconsistentErrorResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.RequirementTransformationErrorResult;
@@ -77,7 +69,7 @@ public class PeaResultUtil {
 		return mIsAborted;
 	}
 
-	public void transformationError(final PatternType req, final String reason) {
+	public void transformationError(final PatternType<?> req, final String reason) {
 		assert req != null;
 		final IResult result = new RequirementTransformationErrorResult(req.getId(), reason);
 		mLogger.warn(result.getLongDescription());
@@ -88,7 +80,7 @@ public class PeaResultUtil {
 		errorAndAbort(location, description, new SyntaxErrorResult(Activator.PLUGIN_ID, location, description));
 	}
 
-	public void typeError(final PatternType req, final String description) {
+	public void typeError(final PatternType<?> req, final String description) {
 		typeError(req.getId(), description);
 	}
 
@@ -111,52 +103,6 @@ public class PeaResultUtil {
 
 	public void infeasibleInvariant(final InvariantInfeasibleException ex) {
 		errorAndAbort(new RequirementInconsistentErrorResult(ex));
-	}
-
-	public IResult convertTraceAbstractionResult(final IResult result) {
-		final AbstractResultAtElement<?> oldRes;
-		final ReqCheck reqCheck;
-		boolean isPositive;
-		if (result instanceof CounterExampleResult<?, ?, ?>) {
-			oldRes = (AbstractResultAtElement<?>) result;
-			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
-			isPositive = false;
-		} else if (result instanceof PositiveResult<?>) {
-			oldRes = (AbstractResultAtElement<?>) result;
-			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
-			isPositive = true;
-		} else if (result instanceof AllSpecificationsHoldResult) {
-			// makes no sense in our context, suppress it
-			return null;
-		} else {
-			return result;
-		}
-
-		if (reqCheck.getSpec() == null || reqCheck.getSpec().isEmpty()) {
-			mLogger.error("Ignoring illegal empty check");
-			return result;
-		} else if (reqCheck.getSpec().size() == 1) {
-			final Spec spec = reqCheck.getSpec().iterator().next();
-			// a counterexample for consistency and vacuity means that the requirements are consistent or non-vacuous
-			switch (spec) {
-			case CONSISTENCY:
-			case VACUOUS:
-				// fall-through is deliberately
-				isPositive = !isPositive;
-			case RTINCONSISTENT:
-				final IElement element = oldRes.getElement();
-				final String plugin = oldRes.getPlugin();
-				final IBacktranslationService translatorSequence = oldRes.getCurrentBacktranslation();
-				return isPositive ? new ReqCheckSuccessResult<>(element, plugin, translatorSequence)
-						: new ReqCheckFailResult<>(element, plugin, translatorSequence);
-			default:
-				mLogger.error("Ignoring illegal check type " + spec);
-				return result;
-			}
-		} else {
-			mLogger.error("Ignoring multi-check");
-			return result;
-		}
 	}
 
 	private void errorAndAbort(final IResult result) {

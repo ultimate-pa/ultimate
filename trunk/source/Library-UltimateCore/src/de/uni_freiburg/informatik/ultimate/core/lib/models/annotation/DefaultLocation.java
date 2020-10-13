@@ -95,11 +95,6 @@ public class DefaultLocation extends ModernAnnotations implements ILocation {
 	}
 
 	@Override
-	public Check getCheck() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("DFL: ");
