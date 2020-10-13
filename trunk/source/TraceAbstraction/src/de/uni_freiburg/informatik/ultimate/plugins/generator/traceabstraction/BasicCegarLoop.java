@@ -1082,7 +1082,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 
 		final INestedWordAutomaton<L, IPredicate> abstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		new HoareAnnotationExtractor<>(mServices, abstraction, mHaf);
 		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
