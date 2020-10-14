@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -129,6 +130,9 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 		final Deque<Backbone> backbones = new ArrayDeque<>();
 		backbones.add(backbone);
 		loop.setBackbones(backbones);
+
+		final UnmodifiableTransFormula guard = TransFormulaUtils.computeGuard(loopTf, mScript, mServices, mLogger);
+		loop.setCondition(guard.getFormula());
 
 		final LoopAcceleratorLite lite = new LoopAcceleratorLite(mScript, mServices, mLogger, mSymbolTable);
 		UnmodifiableTransFormula wernerAcceleration = lite.summarizeLoop(loop);

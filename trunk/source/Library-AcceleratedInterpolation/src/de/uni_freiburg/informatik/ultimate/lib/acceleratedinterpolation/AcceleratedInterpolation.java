@@ -154,6 +154,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
 
+	private final AccelerationMethod mAccelerationMethod;
+
 	private final AcceleratedInterpolationBenchmark mAccelInterpolBench;
 	private final Class<L> mTransitionClazz;
 
@@ -169,7 +171,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	 */
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier,
-			final IRun<L, IPredicate> counterexample, final Class<L> transitionClazz) {
+			final IRun<L, IPredicate> counterexample, final Class<L> transitionClazz,
+			final AccelerationMethod accelerationMethod) {
 		mLogger = logger;
 		mScript = script;
 		mTransitionClazz = transitionClazz;
@@ -190,6 +193,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		mInterpolants[0] = mPredUnifier.getTruePredicate();
 		mInterpolants[mCounterexample.size() - 1] = mPredUnifier.getFalsePredicate();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
+
+		mAccelerationMethod = accelerationMethod;
 
 		mAccelerator = new Accelerator<>(mLogger, mScript, mServices, mSymbolTable);
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
@@ -279,8 +284,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final UnmodifiableTransFormula loop : loopTf) {
 				mLogger.debug("Starting acceleration");
-				final UnmodifiableTransFormula acceleratedLoopRelation = mAccelerator.accelerateLoop(loop,
-						loophead.getKey(), AccelerationMethod.OVERAPPROXIMATION_WERNER);
+				final UnmodifiableTransFormula acceleratedLoopRelation =
+						mAccelerator.accelerateLoop(loop, loophead.getKey(), mAccelerationMethod);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
 					mLogger.debug("No acceleration found");
 					accelerationFinishedCorrectly = false;
