@@ -3,7 +3,7 @@
 <target name="Ultimate">
 	<locations>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-			<repository location="https://download.eclipse.org/releases/latest/"/>
+			<repository location="http://download.eclipse.org/eclipse/updates/4.17/"/>
 			<unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
 			<unit id="org.eclipse.jdt.feature.group" version="0.0.0"/>
 			<unit id="org.eclipse.platform.sdk" version="0.0.0"/>
