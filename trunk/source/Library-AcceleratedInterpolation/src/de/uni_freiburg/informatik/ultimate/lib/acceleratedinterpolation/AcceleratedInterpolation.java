@@ -63,8 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -91,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -363,17 +360,17 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	 * @param tf
 	 * @return
 	 */
-	private UnmodifiableTransFormula constructEpsilon(final UnmodifiableTransFormula tf) {
-		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
-		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
-		final ArrayList<Term> lhs = new ArrayList<>(inVars.values());
-		final ArrayList<Term> rhs = new ArrayList<>(outVars.values());
-
-		final Term equality = SmtUtils.pairwiseEquality(mScript.getScript(), lhs, rhs);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, false, null, true);
-		tfb.setFormula(equality);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(mScript);
+	private UnmodifiableTransFormula constructEpsilon() {
+		// final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
+		// final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
+		// final ArrayList<Term> lhs = new ArrayList<>(inVars.values());
+		// final ArrayList<Term> rhs = new ArrayList<>(outVars.values());
+		//
+		// final Term equality = SmtUtils.pairwiseEquality(mScript.getScript(), lhs, rhs);
+		// final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, false, null, true);
+		// tfb.setFormula(equality);
+		// tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return TransFormulaBuilder.getTrivialTransFormula(mScript);
 	}
 
 	/**
@@ -455,7 +452,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 					final L acceleratedTransition = (L) mIcfgEdgeFactory.createInternalTransition(target,
 							newExitLocation, target.getPayload(), loopAcceleration);
 
-					final UnmodifiableTransFormula epsilon = constructEpsilon(loopAcceleration);
+					final UnmodifiableTransFormula epsilon = constructEpsilon();
 					final L epsilonTransition = (L) mIcfgEdgeFactory.createInternalTransition(newExitLocation, target,
 							target.getPayload(), epsilon);
 
