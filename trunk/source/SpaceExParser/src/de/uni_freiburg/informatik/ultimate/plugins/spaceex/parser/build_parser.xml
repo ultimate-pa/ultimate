@@ -22,7 +22,7 @@
 		<echo>targetDir is ${targetDir}</echo>
 		<echo>packageDir is ${packageDir}</echo>
 		
-		<delete>
+		<delete quiet="true">
 			<fileset dir="${packageDir}"/>
 		</delete>
 <!--
