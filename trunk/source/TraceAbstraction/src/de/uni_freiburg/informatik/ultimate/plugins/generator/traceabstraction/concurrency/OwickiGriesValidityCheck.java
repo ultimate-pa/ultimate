@@ -64,6 +64,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 
 	private final boolean mIsInductive;
 	private final boolean mIsInterferenceFree;
+	private final boolean mIsProgramSafe;
 	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
 	private final Collection<ITransition<LETTER, PLACE>> mTransitions;
 	private final IHoareTripleChecker mHoareTripleChecker;
@@ -85,11 +86,11 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		mTransitions = mAnnotation.getPetriNet().getTransitions();
 
 		mIsInductive = checkInductivity();
-		mIsInterferenceFree = checkInterference(); // TODO
+		mIsInterferenceFree = checkInterference(); 
+		mIsProgramSafe = true; //TODO getProgramSafety(); and chose other name, and replace all
 	}
 
-	private boolean checkInductivity() {
-		// TODO: check this line code
+	private boolean checkInductivity() {		
 		for (final ITransition<LETTER, PLACE> transition : mTransitions) {
 			if (!getTransitionInductivity(transition)) {
 				return false;
@@ -105,8 +106,8 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		}
 		final IPredicate precondition = getConjunctionPredicate(predecessors);
 		final IPredicate postcondition = getConjunctionPredicate(mAnnotation.getPetriNet().getSuccessors(Transition));
-		return getValidityResult(
-				mHoareTripleChecker.checkInternal(precondition, getTransitionSeqAction(Transition), postcondition));
+		return mHoareTripleChecker.checkInternal(precondition, getTransitionSeqAction(Transition), postcondition) 
+			   == Validity.VALID;
 	}
 
 	private IPredicate getConjunctionPredicate(final Set<PLACE> set) {
@@ -126,16 +127,6 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		return mAnnotation.getFormulaMapping().get(Place);
 	}
 
-	private boolean getValidityResult(final Validity validity) {
-		final boolean result;
-		if (validity == Validity.VALID) {
-			result = true;
-		} else {
-			result = false;
-		}
-		return result;
-	}
-
 	private boolean checkInterference() {
 		if (mTransitions.stream().filter(transition -> !getTransitionInterFree(transition)).count() >= 1) {
 			return false;
@@ -144,11 +135,11 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	}
 
 	private boolean getTransitionInterFree(final ITransition<LETTER, PLACE> Transition) {
-		final IPredicate PredecessorsPred =
+		final IPredicate predecessorsPred =
 				getConjunctionPredicate(mAnnotation.getPetriNet().getPredecessors(Transition));
-		final IInternalAction Action = getTransitionSeqAction(Transition);
-		final Set<PLACE> Comarked = getComarkedPlaces(Transition);
-		if (Comarked.stream().filter(place -> !getInterferenceFreeTriple(PredecessorsPred, Action, place))
+		final IInternalAction action = getTransitionSeqAction(Transition);
+		final Set<PLACE> coMarked = getComarkedPlaces(Transition);
+		if (coMarked.stream().filter(place -> !getInterferenceFreeTriple(predecessorsPred, action, place))
 				.count() >= 1) {
 			return false;
 		}
@@ -169,11 +160,18 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	private boolean getInterferenceFreeTriple(final IPredicate Pred, final IInternalAction Action, final PLACE place) {
 		final IPredicate placePred = getPlacePredicate(place);
 		final List<IPredicate> predicate = Arrays.asList(Pred, placePred);
-		return getValidityResult(
-				mHoareTripleChecker.checkInternal(mPredicateFactory.and(predicate), Action, placePred));
+		return mHoareTripleChecker.checkInternal(mPredicateFactory.and(predicate), Action, placePred) == Validity.VALID;
 	}
-
+	
+	//TODO:find better name
+	private boolean getProgramSafety() {
+		//Check InitAssignment and formula implication
+		//Check all accepting places are map to false or "eq" formula.
+			//Elegir si la formula es falsa por construccion or si se permite y checar equivalencia.
+		//Other point.
+		return true;
+	}
 	public boolean isValid() {
-		return mIsInductive && mIsInterferenceFree;
+		return mIsInductive && mIsInterferenceFree && mIsProgramSafe;
 	}
 }
