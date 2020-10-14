@@ -30,7 +30,7 @@
 		<!-- https://mvnrepository.com/artifact/org.eluder.coveralls/coveralls-maven-plugin -->
 		<coveralls-version>4.3.0</coveralls-version>
 		<!-- https://mvnrepository.com/artifact/pl.project13.maven/git-commit-id-plugin -->
-		<git-commit-id-version>4.0.2</git-commit-id-version>
+		<git-commit-id-version>2.2.3</git-commit-id-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
 		<maven-clean-version>3.1.0</maven-clean-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
