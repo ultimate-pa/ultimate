@@ -5,7 +5,6 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pea
 Bundle-Version: 0.89.0
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  org.jdom,
- org.apache.xerces,
  net.sourceforge.czt,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
@@ -21,3 +20,5 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.pea.util.z
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.pea
+Import-Package: org.apache.xerces.dom,
+ org.apache.xerces.parsers

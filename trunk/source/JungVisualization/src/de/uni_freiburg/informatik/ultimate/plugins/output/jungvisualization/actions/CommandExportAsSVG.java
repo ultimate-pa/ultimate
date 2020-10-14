@@ -32,8 +32,7 @@ import java.io.IOException;
 
 import javax.swing.JFileChooser;
 
-import org.apache.batik.dom.GenericDOMImplementation;
-import org.apache.batik.dom.svg.SVGDOMImplementation;
+import org.apache.batik.anim.dom.SVGDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -75,7 +74,7 @@ public class CommandExportAsSVG extends AbstractHandler {
 
 		final String filename = chooser.getSelectedFile().getPath();
 
-		final DOMImplementation impl = GenericDOMImplementation.getDOMImplementation();
+		final DOMImplementation impl = SVGDOMImplementation.getDOMImplementation();
 		final String svgNS = SVGDOMImplementation.SVG_NAMESPACE_URI;
 		final Document doc = impl.createDocument(svgNS, "svg", null);
 
