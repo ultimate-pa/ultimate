@@ -17,6 +17,12 @@
 			<repository location="https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-R20200529191137"/>
 			<unit id="org.jdom" version="0.0.0"/>
 			<unit id="org.apache.xerces" version="0.0.0"/>
+			<unit id="org.apache.batik.anim" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.dom" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.dom.svg" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.svggen" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.parser" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.xml" version="1.9.1.v20190730-1743"/>
 		</location>
 	</locations>
 	<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
