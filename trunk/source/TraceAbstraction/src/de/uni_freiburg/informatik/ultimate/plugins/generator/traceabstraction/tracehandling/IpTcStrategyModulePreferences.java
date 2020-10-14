@@ -146,7 +146,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 		case AcceleratedInterpolation:
 			return new AcceleratedInterpolation<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
 					managedScript, mPredicateUnifier, (IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
-					AccelerationMethod.OVERAPPROXIMATION_WERNER);
+					AccelerationMethod.FAST_UPR);
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);
 		}
