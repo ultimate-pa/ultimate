@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
@@ -63,18 +62,18 @@ public class Backbone {
 	 *            The path of the backbone in the {@link IIcfg}.
 	 * @param tf
 	 *            The paths {@link TransFormula}.
-	 * 
+	 *
 	 * @param isNested
 	 *            does the backbone contain other loopheads
-	 * 
+	 *
 	 * @param nestedLoops
 	 *            Nested loops in the backbone
-	 * 
+	 *
 	 */
 
 	/**
 	 * Construct a new backbone
-	 * 
+	 *
 	 * @param trans
 	 *            entry transition
 	 */
@@ -95,9 +94,22 @@ public class Backbone {
 		mAbstractPathCondition = null;
 	}
 
+	public Backbone(final UnmodifiableTransFormula trans) {
+		mPath = null;
+		mNodes = null;
+
+		mFormula = trans;
+		mPathCounter = null;
+		mCondition = null;
+		mSymbolicMemory = null;
+		mNestedLoops = new ArrayList<>();
+		mIsNested = false;
+		mAbstractPathCondition = null;
+	}
+
 	/**
 	 * Copy a backbone
-	 * 
+	 *
 	 * @param source
 	 *            the original backbone.s
 	 */
@@ -119,7 +131,7 @@ public class Backbone {
 
 	/**
 	 * attach a pathcounter to backbone.
-	 * 
+	 *
 	 * @param pathCounter
 	 */
 	public void setPathCounter(final TermVariable pathCounter) {
@@ -138,7 +150,7 @@ public class Backbone {
 
 	/**
 	 * set the backbones transformula.
-	 * 
+	 *
 	 * @param formula
 	 */
 	public void setFormula(final TransFormula formula) {
@@ -154,7 +166,7 @@ public class Backbone {
 
 	/**
 	 * set the backbones abstract path condition (accelerated backbone)
-	 * 
+	 *
 	 * @param condition
 	 */
 	public void setAbstractPathCondition(final Term condition) {
@@ -163,7 +175,7 @@ public class Backbone {
 
 	/**
 	 * Assign a new nested {@link Loop} tot the backbone
-	 * 
+	 *
 	 * @param loopHead
 	 *            the loophead {@link IcfgLocation} of the nested loop
 	 */
@@ -174,7 +186,7 @@ public class Backbone {
 
 	/**
 	 * add a new Transition in form of an {@link IcfgEdge} to the backbone.
-	 * 
+	 *
 	 * @param transition
 	 *            the new transition.
 	 */
@@ -194,7 +206,7 @@ public class Backbone {
 
 	/**
 	 * Returns the nodes in the backbone.
-	 * 
+	 *
 	 * @return nodes in the backbone.
 	 */
 	public Deque<IcfgLocation> getNodes() {

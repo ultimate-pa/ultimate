@@ -191,7 +191,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		mInterpolants[mCounterexample.size() - 1] = mPredUnifier.getFalsePredicate();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
-		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
+		mAccelerator = new Accelerator<>(mLogger, mScript, mServices, mSymbolTable);
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
 		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, 1, mIcfg);
 		mAccelInterpolBench.stop(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
@@ -279,8 +279,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final UnmodifiableTransFormula loop : loopTf) {
 				mLogger.debug("Starting acceleration");
-				final UnmodifiableTransFormula acceleratedLoopRelation =
-						mAccelerator.accelerateLoop(loop, loophead.getKey(), AccelerationMethod.FAST_UPR);
+				final UnmodifiableTransFormula acceleratedLoopRelation = mAccelerator.accelerateLoop(loop,
+						loophead.getKey(), AccelerationMethod.OVERAPPROXIMATION_WERNER);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
 					mLogger.debug("No acceleration found");
 					accelerationFinishedCorrectly = false;
@@ -291,6 +291,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
 						mSimplificationTechnique, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
+
 				mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
 				accelerations.add(tf);
 			}

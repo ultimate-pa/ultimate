@@ -61,22 +61,22 @@ public class Loop {
 	private final Set<IcfgLocation> mNodes;
 	private Deque<Backbone> mBackbones;
 	private IteratedSymbolicMemory mIteratedMemory;
-	private List<TermVariable> mAuxVars;
-	private Map<IcfgLocation, Backbone> mErrorPaths;
-	private Deque<Loop> mNestedLoops;
+	private final List<TermVariable> mAuxVars;
+	private final Map<IcfgLocation, Backbone> mErrorPaths;
+	private final Deque<Loop> mNestedLoops;
 	private Map<IProgramVar, TermVariable> mInVars;
 	private Map<IProgramVar, TermVariable> mOutVars;
 	private IcfgLocation mLoopExit;
-	private List<IcfgEdge> mExitTransitions;
-	private List<UnmodifiableTransFormula> mExitConditions;
+	private final List<IcfgEdge> mExitTransitions;
+	private final List<UnmodifiableTransFormula> mExitConditions;
 	private UnmodifiableTransFormula mFormula;
 
 	/**
 	 * Construct a new loop.
-	 * 
+	 *
 	 * @param loopHead
 	 *            The loop entry node.
-	 * 
+	 *
 	 * @param script
 	 *            a {@link ManagedScript}
 	 */
@@ -101,7 +101,7 @@ public class Loop {
 
 	/**
 	 * Rename the vars in a term to fit the given in and out vars.
-	 * 
+	 *
 	 * @param t
 	 *            a {@link Term}
 	 * @param inVars
@@ -169,7 +169,7 @@ public class Loop {
 
 	/**
 	 * Add a new backbone to the loop.
-	 * 
+	 *
 	 * @param backbone
 	 *            The backbone to be assigned to the loop.
 	 */
@@ -263,7 +263,7 @@ public class Loop {
 
 	/**
 	 * Add a new loop exit condition
-	 * 
+	 *
 	 * @param exitCondition
 	 *            the exit condition
 	 */
@@ -273,10 +273,10 @@ public class Loop {
 
 	/**
 	 * If there is an Assertion in the Loop, add it here
-	 * 
+	 *
 	 * @param errorLocation
 	 *            The Error {@link IcfgLocation}
-	 * 
+	 *
 	 * @param errorPath
 	 *            The Errorpath in form of a {@link Backbone}
 	 */
@@ -286,7 +286,7 @@ public class Loop {
 
 	/**
 	 * Replace an error path in the loop
-	 * 
+	 *
 	 * @param errorLocation
 	 *            the corresponding errorlocation
 	 * @param newErrorPath
@@ -298,7 +298,7 @@ public class Loop {
 
 	/**
 	 * attach a nested loop
-	 * 
+	 *
 	 * @param loop
 	 *            the nested loop
 	 */
@@ -330,7 +330,7 @@ public class Loop {
 
 	/**
 	 * add a var
-	 * 
+	 *
 	 * @param vars
 	 *            aux vars
 	 */
@@ -345,12 +345,12 @@ public class Loop {
 
 	/**
 	 * Get the {@link Backbone}s as human readable Text.
-	 * 
+	 *
 	 * @return String representation of the backbone path
 	 */
 	public String backbonesToString() {
-		StringBuilder str = new StringBuilder();
-		for (Backbone backbone : mBackbones) {
+		final StringBuilder str = new StringBuilder();
+		for (final Backbone backbone : mBackbones) {
 			str.append(backbone.toString());
 		}
 		return str.toString();
