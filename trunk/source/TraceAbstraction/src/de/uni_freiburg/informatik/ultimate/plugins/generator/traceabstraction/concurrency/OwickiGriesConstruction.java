@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <PLACE>
  */
 public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
-	//TODO: replace all foreach for for when there is an effect.
     
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
@@ -155,9 +154,11 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 */
 	private Set<IPredicate> getAllNotMarking(final Marking<LETTER, PLACE> marking) {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
-		final Collection<PLACE> notMarking = DataStructureUtils.difference(new HashSet<>(mNet.getPlaces()), markPlaces);
+		final Set<PLACE> notMarking = DataStructureUtils.difference(new HashSet<>(mNet.getPlaces()), markPlaces);
 		final Set<IPredicate> predicates = new HashSet<>();
-		notMarking.forEach(element -> predicates.add(mFactory.not(getGhostPredicate(element))));
+		for(PLACE place: notMarking) {
+			 predicates.add(mFactory.not(getGhostPredicate(place)));
+		}		
 		return predicates;
 	}
 
@@ -165,7 +166,6 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 *
 	 * @param marking
 	 * @return Formula MethodA: GhostVariables if marking is subset of other marking
-	 * TODO: Restructure and use difference() instead of removeAll. (when brain is back) in getSubPlaces
 	 */
 	private Set<IPredicate> getSubsetMarking(final Marking<LETTER, PLACE> marking) {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
@@ -228,13 +228,15 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 */
 	private Map<IProgramVar, Term> getGhostInitAssignment() {
 		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
-		final Set<IProgramVar> initGhostVariables = new HashSet<>();
-		final Set<PLACE> places = mNet.getInitialPlaces();
-		places.forEach(place -> initGhostVariables.add(mGhostVariables.get(place)));
-		initGhostVariables.stream().forEach(variable -> initAssignments.put(variable, mScript.term("true")));
-		final Collection<IProgramVar> notInitGhostVariables = new HashSet<>(mGhostVariables.values());
-		notInitGhostVariables.removeAll(initGhostVariables);
-		notInitGhostVariables.forEach(variable -> initAssignments.put(variable, mScript.term("false")));
+		//final Set<IProgramVar> initGhostVariables = new HashSet<>();
+		for(PLACE place: mNet.getInitialPlaces()) {
+			initAssignments.put(mGhostVariables.get(place), mScript.term("true"));
+		}
+		final Set<IProgramVar> notInitGhostVariables = DataStructureUtils.difference
+				(new HashSet<>(mGhostVariables.values()), initAssignments.keySet());
+		for(IProgramVar variable: notInitGhostVariables) {
+			initAssignments.put(variable, mScript.term("false"));
+		}
 		return initAssignments;
 	}
 
@@ -255,8 +257,9 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 */
 	private Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
 		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
-		final Collection<ITransition<LETTER, PLACE>> transitions = mNet.getTransitions();
-		transitions.forEach(transition -> assignmentMapping.put(transition, getTransitionAssignment(transition)));
+		for(ITransition<LETTER,PLACE> transition: mNet.getTransitions()) {
+			assignmentMapping.put(transition, getTransitionAssignment(transition));
+		}
 		return assignmentMapping;
 	}
 
@@ -268,14 +271,12 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 */
 	private UnmodifiableTransFormula getTransitionAssignment(final ITransition<LETTER, PLACE> transition) {
 		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		Set<PLACE> places = mNet.getPredecessors(transition);
-		places.forEach(place -> {
-			final IProgramVar var = mGhostVariables.get(place);
-			assignments.add(getGhostAssignment(Collections.nCopies(1, var), "false"));
-		});
-		places = mNet.getSuccessors(transition);
-		places.forEach(place -> assignments.add(getGhostAssignment(
-				Collections.nCopies(1, mGhostVariables.get(place)), "true")));
+		for(PLACE place: mNet.getPredecessors(transition)) {
+			assignments.add(getGhostAssignment(Collections.nCopies(1,  mGhostVariables.get(place)), "false"));
+		}
+		for(PLACE place: mNet.getSuccessors(transition)) {
+			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "true"));
+		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false, false,
 				mXnfConversionTechnique, mSimplificationTechnique, assignments);
 	}

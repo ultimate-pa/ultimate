@@ -118,9 +118,11 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 			   == Validity.VALID;
 	}
 
-	private IPredicate getConjunctionPredicate(final Set<PLACE> set) {
+	private IPredicate getConjunctionPredicate(final Set<PLACE> places) {
 		final Collection<IPredicate> predicates = new HashSet<>();
-		set.stream().forEach(element -> predicates.add(getPlacePredicate(element)));
+		for (PLACE place : places) {
+			predicates.add(getPlacePredicate(place));
+		}
 		return mPredicateFactory.and(predicates);
 	}
 
@@ -204,7 +206,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	
 	private boolean getAcceptFormula() {
 		for (final PLACE place: mAnnotation.getPetriNet().getAcceptingPlaces()) {	
-			//Ask about this or checkSatEquivalence
+			//TODO: Ask about this or checkSatEquivalence
 			if(LBool.UNSAT != SmtUtils.checkSatTerm(mScript,getPlacePredicate(place).getFormula())) {
 				return false;
 			};
