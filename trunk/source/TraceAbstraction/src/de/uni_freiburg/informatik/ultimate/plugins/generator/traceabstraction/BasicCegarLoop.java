@@ -469,7 +469,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		return false;
 	}
 
-	private void checkForDangerInvariantAndReport() {
+	private boolean checkForDangerInvariantAndReport() {
 		final Set<? extends IcfgEdge> allowedTransitions = PathInvariantsGenerator.extractTransitionsFromRun(
 				(NestedRun<? extends IAction, IPredicate>) mCounterexample,
 				mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory());
@@ -493,6 +493,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 					errorLocations, mServices.getBacktranslationService());
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 		}
+		return hasDangerInvariant;
 	}
 
 	@Override
