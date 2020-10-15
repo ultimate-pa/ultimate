@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -99,10 +100,13 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 	@Override
 	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Map<STATE, IPredicate> stateMap) {
-		final Set<TermVariable> ipVars = stateMap.values().stream().flatMap(x -> getTermVariables(x.getVars()).stream())
-				.collect(Collectors.toSet());
-		final Map<STATE, Set<TermVariable>> liveIpVariables = stateMap.keySet().stream()
-				.collect(Collectors.toMap(x -> x, x -> getTermVariables(stateMap.get(x).getVars())));
+		final Set<TermVariable> ipVars = new HashSet<>();
+		final Map<STATE, Set<TermVariable>> liveIpVariables = new HashMap<>();
+		for (final Entry<STATE, IPredicate> entry : stateMap.entrySet()) {
+			final Set<TermVariable> vars = getTermVariables(entry.getValue().getVars());
+			ipVars.addAll(vars);
+			liveIpVariables.put(entry.getKey(), vars);
+		}
 		final List<STATE> revTopOrder = revTopSort(automaton, stateMap);
 		for (final STATE state : revTopOrder) {
 			final Set<TermVariable> vars = new HashSet<>();
@@ -119,8 +123,9 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 				continue;
 			}
 			// Abstract all variables away that are not read afterwards and do not occur in the original interpolants
+			final Set<TermVariable> importantVars = liveIpVariables.get(state);
 			final Set<TermVariable> abstractedVars = Arrays.stream(term.getFreeVars())
-					.filter(x -> !liveIpVariables.get(state).contains(x)).collect(Collectors.toSet());
+					.filter(x -> !importantVars.contains(x)).collect(Collectors.toSet());
 			Term result = getAbstraction(term, abstractedVars);
 			// Ignore the interpolant, if it still contains quantifiers
 			if (!QuantifierUtils.isQuantifierFree(result)) {
