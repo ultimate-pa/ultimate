@@ -12,8 +12,7 @@ Require-Bundle: org.eclipse.core.runtime;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.util,
  org.apache.log4j,
  org.apache.logging.log4j,
- org.apache.commons.lang,
- javax.xml.bind;bundle-version="2.2.0"
+ org.apache.commons.lang
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin,
  de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions,
