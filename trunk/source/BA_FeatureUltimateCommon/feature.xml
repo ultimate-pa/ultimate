@@ -4,7 +4,7 @@
       label="BA_FeatureUltimateCommon"
       version="0.1.25"
       os="linux,win32,macosx"
-      arch="x86,x86_64">
+      arch="x86_64">
 
    <description url="">
       [Enter Feature Description here.]
@@ -17,6 +17,10 @@
    <license url="">
       [Enter License Description here.]
    </license>
+
+   <requires>
+      <import feature="BA_FeatureDependenciesCommon" version="0.1.25"/>
+   </requires>
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"

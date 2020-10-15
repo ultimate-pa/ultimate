@@ -2,7 +2,8 @@
 <feature
       id="BA_FeatureDependenciesCommandlineE4"
       label="BA_FeatureDependenciesCommandlineE4"
-      version="0.1.25">
+      version="0.1.25"
+      arch="x86_64">
 
    <description url="http://www.example.com/description">
       [Enter Feature Description here.]
@@ -17,7 +18,7 @@
    </license>
 
    <requires>
-      <import feature="BA_FeatureUltimateCommon" version="0.1.25"/>
+      <import feature="BA_FeatureDependenciesCommon" version="0.1.25"/>
    </requires>
 
 </feature>
