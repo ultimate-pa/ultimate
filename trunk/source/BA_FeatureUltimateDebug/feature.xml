@@ -3,8 +3,8 @@
       id="BA_FeatureUltimateDebug"
       label="BA_FeatureUltimateDebug"
       version="0.1.25"
-      os="linux,win32,macosx"
-      arch="x86,x86_64">
+      os="linux,win32"
+      arch="x86_64">
 
    <description url="http://www.example.com/description">
       [Enter Feature Description here.]
@@ -19,13 +19,9 @@
    </license>
 
    <requires>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.ultimatemodel"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.smtlib"/>
-      <import plugin="org.eclipse.ui"/>
-      <import plugin="org.eclipse.ui.workbench"/>
-      <import plugin="org.eclipse.jface"/>
+      <import feature="BA_FeatureDependenciesDebugE4" version="0.1.25"/>
+      <import feature="BA_FeatureDependenciesCommon" version="0.1.25"/>
+      <import feature="BA_FeatureUltimateCommon" version="0.1.25"/>
    </requires>
 
    <plugin
@@ -58,13 +54,6 @@
 
    <plugin
          id="edu.uci.ics.jung"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -5,9 +5,9 @@
       version="0.1.25">
 
    <requires>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.util"/>
+      <import feature="BA_FeatureDependenciesCommon" version="0.1.25"/>
+      <import feature="BA_FeatureDependenciesCommandlineE4" version="0.1.25"/>
+      <import feature="BA_FeatureUltimateCommon" version="0.1.25"/>
    </requires>
 
    <plugin

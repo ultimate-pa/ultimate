@@ -28,7 +28,6 @@
    <splash
       location="UltimateCore" />
    <launcher name="Ultimate">
-      <solaris/>
       <win useIco="false">
          <bmp/>
       </win>
@@ -63,7 +62,6 @@
       <plugin id="org.eclipse.core.contenttype"/>
       <plugin id="org.eclipse.core.jobs"/>
       <plugin id="org.eclipse.core.runtime"/>
-      <plugin id="org.eclipse.core.runtime.compatibility.registry" fragment="true"/>
       <plugin id="org.eclipse.equinox.app"/>
       <plugin id="org.eclipse.equinox.common"/>
       <plugin id="org.eclipse.equinox.preferences"/>

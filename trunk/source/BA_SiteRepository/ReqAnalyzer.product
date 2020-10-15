@@ -16,7 +16,7 @@
    <launcherArgs>
       <programArgs>--launcher.suppressErrors -nosplash -consoleLog
       </programArgs>
-       <programArgsLin>-data @user.home/.ultimate
+      <programArgsLin>-data @user.home/.ultimate
       </programArgsLin>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
@@ -28,14 +28,11 @@
 
    <windowImages/>
 
-
    <launcher name="ReqAnalyzer">
-      <solaris/>
       <win useIco="false">
          <bmp/>
       </win>
    </launcher>
-
 
    <vm>
       <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</linux>
@@ -51,6 +48,7 @@
       <feature id="BA_FeatureUltimateCommandLine" version="0.1.25"/>
       <feature id="BA_FeatureDependenciesCommandlineE4" version="0.1.25"/>
       <feature id="BA_FeatureUltimateCommon" version="0.1.25"/>
+      <feature id="BA_FeatureDependenciesCommon" installMode="root"/>
    </features>
 
    <configurations>
