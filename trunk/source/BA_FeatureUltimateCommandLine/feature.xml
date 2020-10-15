@@ -2,7 +2,8 @@
 <feature
       id="BA_FeatureUltimateCommandLine"
       label="BA_FeatureUltimateCommandLine"
-      version="0.1.25">
+      version="0.1.25"
+      arch="x86_64">
 
    <requires>
       <import feature="BA_FeatureDependenciesCommon" version="0.1.25"/>
