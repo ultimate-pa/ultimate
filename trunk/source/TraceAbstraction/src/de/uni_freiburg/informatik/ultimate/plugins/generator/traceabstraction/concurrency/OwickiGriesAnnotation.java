@@ -84,7 +84,8 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	 */
 	public OwickiGriesAnnotation(final Map<PLACE, IPredicate> FormulaMapping,
 			final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping2,
-			final Map<PLACE, IProgramVar> GhostVariables, final Map<IProgramVar, Term> GhostInitAssignment,
+			final Map<PLACE, IProgramVar> GhostVariables, 
+			final Map<IProgramVar, Term> GhostInitAssignment,
 			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable) {
 		mFormulaMapping = FormulaMapping;
 		mAssignmentMapping = mAssignmentMapping2;

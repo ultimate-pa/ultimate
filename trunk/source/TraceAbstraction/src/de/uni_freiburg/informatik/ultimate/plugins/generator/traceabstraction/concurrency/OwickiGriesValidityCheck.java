@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,19 +41,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * TODO
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
+ * @author Miriam Lagunes (miri am.lagunes@students.uni-freiburg.de)
  *
  * @param <LETTER>
  * @param <PLACE>
@@ -61,6 +67,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
+	private final Script mScript;
 
 	private final boolean mIsInductive;
 	private final boolean mIsInterferenceFree;
@@ -78,6 +85,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(OwickiGriesValidityCheck.class);
 		mManagedScript = csToolkit.getManagedScript();
+		mScript = csToolkit.getManagedScript().getScript();
 		mAnnotation = annotation;
 		mPredicateFactory = new BasicPredicateFactory(services, mManagedScript, annotation.getSymbolTable());
 		mCoMarkedPlaces = coMarkedPlaces;
@@ -87,7 +95,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 
 		mIsInductive = checkInductivity();
 		mIsInterferenceFree = checkInterference(); 
-		mIsProgramSafe = true; //TODO getProgramSafety(); and chose other name, and replace all
+		mIsProgramSafe = getCfgSafety(); 
 	}
 
 	private boolean checkInductivity() {		
@@ -128,8 +136,10 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	}
 
 	private boolean checkInterference() {
-		if (mTransitions.stream().filter(transition -> !getTransitionInterFree(transition)).count() >= 1) {
-			return false;
+		for (final ITransition<LETTER, PLACE> transition : mTransitions) {
+			if (!getTransitionInterFree(transition)) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -139,9 +149,10 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 				getConjunctionPredicate(mAnnotation.getPetriNet().getPredecessors(Transition));
 		final IInternalAction action = getTransitionSeqAction(Transition);
 		final Set<PLACE> coMarked = getComarkedPlaces(Transition);
-		if (coMarked.stream().filter(place -> !getInterferenceFreeTriple(predecessorsPred, action, place))
-				.count() >= 1) {
-			return false;
+		for(final PLACE place: coMarked) {
+			if(!getInterferenceFreeTriple(predecessorsPred, action, place)) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -164,11 +175,40 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	}
 	
 	//TODO:find better name
-	private boolean getProgramSafety() {
-		//Check InitAssignment and formula implication
-		//Check all accepting places are map to false or "eq" formula.
-			//Elegir si la formula es falsa por construccion or si se permite y checar equivalencia.
-		//Other point.
+	private boolean getCfgSafety() {		
+		if (!getInitImplication() || !getAcceptFormula()) {
+			return false;
+		}		
+		return true;
+	}
+	
+	private boolean getInitImplication() {
+		IPredicate initFormula = getInitFormula();
+		for(final PLACE place: mAnnotation.getPetriNet().getInitialPlaces()) {
+			final Term implication = SmtUtils.implies(mScript, initFormula.getFormula(), getPlacePredicate(place).getFormula());
+			if (!SmtUtils.areFormulasEquivalent(implication, mScript.term("true"), mScript)) { //TODO: implications must be valid?					
+				return false;
+			}			
+		}
+		return true;
+	}
+	
+	private IPredicate getInitFormula() {
+		final List<IPredicate> terms = new ArrayList<>();
+		for (final IProgramVar var: mAnnotation.getGhostAssignment().keySet()) {
+			terms.add(mPredicateFactory.newPredicate(SmtUtils.binaryEquality(mScript, var.getTerm(),
+					 mAnnotation.getGhostAssignment().get(var))));			
+		}
+		return mPredicateFactory.and(terms);
+	}
+	
+	private boolean getAcceptFormula() {
+		for (final PLACE place: mAnnotation.getPetriNet().getAcceptingPlaces()) {	
+			//Ask about this or checkSatEquivalence
+			if(LBool.UNSAT != SmtUtils.checkSatTerm(mScript,getPlacePredicate(place).getFormula())) {
+				return false;
+			};
+		}
 		return true;
 	}
 	public boolean isValid() {
