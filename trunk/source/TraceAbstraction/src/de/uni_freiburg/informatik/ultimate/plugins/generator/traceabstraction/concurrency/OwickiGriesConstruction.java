@@ -72,9 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	//TODO: replace all foreach for for when there is an effect.
-	//TODO: correct getSubplaces (it is removing places from PetriNet)
-	//TODO: Change type of GhostVaribles in OGAnnn to set. Y enviar solo las variables.
-
+    
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
 
@@ -110,7 +108,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 		mAssignmentMapping = getAssignmentMapping();
 		mGhostInitAssignment = getGhostInitAssignment();
 
-		mAnnotation = new OwickiGriesAnnotation<>(mFormulaMappingD, mAssignmentMapping, mGhostVariables,
+		mAnnotation = new OwickiGriesAnnotation<>(mFormulaMappingD, mAssignmentMapping, new HashSet<>(mGhostVariables.values()),
 				mGhostInitAssignment, mNet, mSymbolTable);
 	}
 	
@@ -172,19 +170,22 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	private Set<IPredicate> getSubsetMarking(final Marking<LETTER, PLACE> marking) {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
 		final Set<Marking<LETTER, PLACE>> markings = mFloydHoareAnnotation.keySet();
-		final Collection<PLACE> notMarking = new HashSet<>();
-		markings.forEach(otherMarking -> notMarking.addAll(getSupPlaces(otherMarking, markPlaces)));
+		final Set<PLACE> notInMarking = new HashSet<>();
+		for(final Marking<LETTER, PLACE> otherMarking : markings) {
+			notInMarking.addAll(getSupPlaces(otherMarking,markPlaces));
+		}
 		final Set<IPredicate> predicates = new HashSet<>();
-		notMarking.forEach(element -> predicates.add(mFactory.not(getGhostPredicate(element))));
+		for(final PLACE place: notInMarking) {
+			predicates.add(mFactory.not(getGhostPredicate(place)));
+		}
 		return predicates;
 	}
 
-	private Collection<PLACE> getSupPlaces(final Marking<LETTER, PLACE> otherMarking, final Set<PLACE> markPlaces) {
-		final Collection<PLACE> subPlaces = new HashSet<>();
+	private Set<PLACE> getSupPlaces(final Marking<LETTER, PLACE> otherMarking, final Set<PLACE> markPlaces) {
+		Set<PLACE> subPlaces = new HashSet<>();
 		final Set<PLACE> otherPlaces = otherMarking.stream().collect(Collectors.toSet());
 		if (otherPlaces.containsAll(markPlaces)) {
-			otherPlaces.removeAll(markPlaces);
-			subPlaces.addAll(otherPlaces);
+			subPlaces = DataStructureUtils.difference(otherPlaces, markPlaces);		
 		}
 		return subPlaces;
 	}

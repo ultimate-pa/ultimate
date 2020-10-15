@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -65,7 +66,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	 * VGhost: maps Ghost Variables to set
 	 */
 	// TODO: Map or Set? Map might be only needed for Construction
-	private final Map<PLACE, IProgramVar> mGhostVariables;
+	private final Set<IProgramVar> mGhostVariables;
 
 	/**
 	 * rho(VGhost): set of predicate value -> GhostVariables
@@ -83,12 +84,12 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	 * @param net
 	 */
 	public OwickiGriesAnnotation(final Map<PLACE, IPredicate> FormulaMapping,
-			final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping2,
-			final Map<PLACE, IProgramVar> GhostVariables, 
-			final Map<IProgramVar, Term> GhostInitAssignment,
-			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable) {
+		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> AssignmentMapping,
+		final Set<IProgramVar> GhostVariables, 
+		final Map<IProgramVar, Term> GhostInitAssignment,
+		final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable) {
 		mFormulaMapping = FormulaMapping;
-		mAssignmentMapping = mAssignmentMapping2;
+		mAssignmentMapping = AssignmentMapping;
 		mGhostVariables = GhostVariables;
 		mGhostInitAssignment = GhostInitAssignment;
 		mPetriNet = net;
@@ -103,7 +104,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		return mAssignmentMapping;
 	}
 
-	public Map<PLACE, IProgramVar> GhostVariables() {
+	public Set<IProgramVar> GhostVariables() {
 		return mGhostVariables;
 	}
 
