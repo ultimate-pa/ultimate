@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
@@ -186,9 +187,10 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	
 	private boolean getInitImplication() {
 		IPredicate initFormula = getInitFormula();
+		MonolithicImplicationChecker checker = new MonolithicImplicationChecker(mServices, mManagedScript);		
 		for(final PLACE place: mAnnotation.getPetriNet().getInitialPlaces()) {
-			final Term implication = SmtUtils.implies(mScript, initFormula.getFormula(), getPlacePredicate(place).getFormula());
-			if (!SmtUtils.areFormulasEquivalent(implication, mScript.term("true"), mScript)) { //TODO: implications must be valid?					
+			if(Validity.VALID != checker.checkImplication(initFormula, false, getPlacePredicate(place), false))
+			{
 				return false;
 			}			
 		}
