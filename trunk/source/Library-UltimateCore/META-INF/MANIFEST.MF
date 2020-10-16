@@ -15,6 +15,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
  de.uni_freiburg.informatik.ultimate.core.lib.util
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.lib.smtlib
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ javax.xml.bind;bundle-version="2.2.0";visibility:=reexport
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.core
-Import-Package: com.sun.xml.bind.v2
+Import-Package: com.sun.xml.bind.v2;version="2.2.0"
