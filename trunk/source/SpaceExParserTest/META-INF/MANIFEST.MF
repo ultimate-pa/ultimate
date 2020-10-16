@@ -5,7 +5,6 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.
 Bundle-Version: 0.1.25
 Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.test,
- javax.xml.bind;bundle-version="2.2.0"
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.test
 Import-Package: org.junit
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.spaceex.parser.test
