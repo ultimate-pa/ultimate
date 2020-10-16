@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -55,7 +55,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final MultiElementCounter<IProgramVar> mConstForTvCounter;
+	private final MultiElementCounter<IProgramVar> mConstVarCounter;
 
 	public IpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final IPredicateUnifier predicateUnifier,
@@ -68,48 +68,41 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		mManagedScript = managedScript;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mConstForTvCounter = new MultiElementCounter<>();
+		mConstVarCounter = new MultiElementCounter<>();
 	}
 
 	@Override
-	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final Map<STATE, IPredicate> stateMap) {
-		final List<STATE> topOrder = topSort(automaton, stateMap);
+	public <STATE> void addInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final Map<STATE, IPredicate> states2Predicates) {
+		final List<STATE> topOrder = topSort(automaton, states2Predicates);
 		final Map<IProgramVar, Term> initialVarMapping = new HashMap<>();
 		final Map<IProgramVar, Term> finalVarMapping = new HashMap<>();
 		final Map<STATE, Map<IProgramVar, Term>> stateVarMappings = new HashMap<>(topOrder.size());
 		final List<Term> ssa = new ArrayList<>(topOrder.size() + 1);
 		final List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> transitions =
-				extractTransitions(automaton, stateMap);
+				extractTransitions(automaton, states2Predicates);
 		final Set<IProgramVar> vars =
-				stateMap.values().stream().flatMap(x -> x.getVars().stream()).collect(Collectors.toSet());
+				states2Predicates.values().stream().flatMap(x -> x.getVars().stream()).collect(Collectors.toSet());
 		// TODO: Can we put "parallel" states together to reduce the length of the ssa?
 		for (final List<Triple<STATE, UnmodifiableTransFormula, STATE>> t : transitions) {
 			final List<Term> disjuncts = new ArrayList<>();
 			for (final Triple<STATE, UnmodifiableTransFormula, STATE> triple : t) {
 				UnmodifiableTransFormula tf = triple.getSecond();
 				final STATE pred = triple.getFirst();
-				final IPredicate prevPred = stateMap.get(pred);
+				final IPredicate prevPred = states2Predicates.get(pred);
 				final Map<IProgramVar, Term> inVarMapping;
 				if (prevPred != null) {
 					inVarMapping = initialVarMapping;
-					final UnmodifiableTransFormula assume =
-							TransFormulaBuilder.constructTransFormulaFromPredicate(prevPred, mManagedScript);
-					tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, true, false,
-							mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(assume, tf));
+					tf = addCondition(tf, prevPred, true);
 				} else {
 					inVarMapping = stateVarMappings.get(pred);
 				}
 				final STATE succ = triple.getThird();
-				final IPredicate succPred = stateMap.get(succ);
+				final IPredicate succPred = states2Predicates.get(succ);
 				Map<IProgramVar, Term> outVarMapping;
 				if (succPred != null) {
 					outVarMapping = finalVarMapping;
-					final UnmodifiableTransFormula assume = TransFormulaBuilder.constructTransFormulaFromTerm(
-							SmtUtils.not(mManagedScript.getScript(), succPred.getFormula()), succPred.getVars(),
-							mManagedScript);
-					tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, true, false,
-							mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(tf, assume));
+					tf = addCondition(tf, succPred, false);
 				} else {
 					outVarMapping = stateVarMappings.get(succ);
 					if (outVarMapping == null) {
@@ -124,19 +117,28 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		final ScopedHashMap<Term, Term> mapping = new ScopedHashMap<>();
 		stateVarMappings.values().forEach(
 				x -> x.forEach((k, v) -> mapping.put(v, mManagedScript.constructFreshCopy(k.getTermVariable()))));
-		mLogger.info("Calculating interpolants");
+		mLogger.info("Calculating interpolants for SSA");
 		final Term[] craigInterpolants = getInterpolantsForSsa(ssa);
 		mLogger.info("Finished");
-		final Map<STATE, IPredicate> result = new HashMap<>(craigInterpolants.length);
 		for (int i = 0; i < craigInterpolants.length; i++) {
 			final STATE state = topOrder.get(i);
 			mapping.beginScope();
 			stateVarMappings.get(state).forEach((x, y) -> mapping.put(y, x.getTermVariable()));
 			final Term newTerm = renameAndAbstract(craigInterpolants[i], mapping, vars);
-			result.put(state, mPredicateUnifier.getOrConstructPredicate(newTerm));
+			states2Predicates.put(state, mPredicateUnifier.getOrConstructPredicate(newTerm));
 			mapping.endScope();
 		}
-		return result;
+	}
+
+	private UnmodifiableTransFormula addCondition(final UnmodifiableTransFormula tf, final IPredicate pred,
+			final boolean precondition) {
+		final Term term =
+				precondition ? pred.getFormula() : SmtUtils.not(mManagedScript.getScript(), pred.getFormula());
+		final UnmodifiableTransFormula assume =
+				TransFormulaBuilder.constructTransFormulaFromTerm(term, pred.getVars(), mManagedScript);
+		final List<UnmodifiableTransFormula> tfs = precondition ? Arrays.asList(assume, tf) : Arrays.asList(tf, assume);
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, true, false,
+				mXnfConversionTechnique, mSimplificationTechnique, tfs);
 	}
 
 	private <STATE> List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> extractTransitions(
@@ -212,8 +214,8 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private Term getOrConstructConstant(final IProgramVar var, final Map<IProgramVar, Term> mapping) {
 		Term result = mapping.get(var);
 		if (result == null) {
-			final Integer index = mConstForTvCounter.increment(var);
-			final String name = "c_" + SmtUtils.removeSmtQuoteCharacters(var.getGloballyUniqueId()) + "_" + index;
+			final String basename = SmtUtils.removeSmtQuoteCharacters(var.getGloballyUniqueId());
+			final String name = "c_" + basename + "_" + mConstVarCounter.increment(var);
 			mManagedScript.getScript().declareFun(name, new Sort[0], var.getSort());
 			result = mManagedScript.getScript().term(name);
 			mapping.put(var, result);
@@ -222,7 +224,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<IProgramVar> varsToKeep) {
-		final Term substituted = new Substitution(mManagedScript, mapping).transform(term);
+		final Term substituted = new SubstitutionWithLocalSimplification(mManagedScript, mapping).transform(term);
 		final Set<TermVariable> nonQuantifiedVars =
 				varsToKeep.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 		final List<TermVariable> quantifiedVars = Arrays.stream(substituted.getFreeVars())

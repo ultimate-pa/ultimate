@@ -274,20 +274,20 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<LETTER> trace,
-			final List<IPredicate> interpolants, final IInterpolantProvider<LETTER> interpolantProvider)
+			final List<IPredicate> interpolants, final IInterpolantProvider<LETTER> ipProvider)
 			throws AutomataLibraryException {
 		final List<Integer> intTrace = getIntTrace(trace);
 		assert isInterleaving(intTrace) : "Can only create an automaton for interleavings";
 		final INestedWordAutomaton<Integer, String> automaton = buildMcrAutomaton(intTrace);
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton with interpolants from "
-				+ interpolantProvider.getClass().getSimpleName());
+				+ ipProvider.getClass().getSimpleName());
 		final IPredicate truePred = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePred = mPredicateUnifier.getFalsePredicate();
-		final Map<String, IPredicate> stateMap = new HashMap<>();
-		// Fill stateMap and automaton with the given interpolants
+		final Map<String, IPredicate> states2Predicates = new HashMap<>();
+		// Fill states2Predicates with the given interpolants
 		String currentState = automaton.getInitialStates().iterator().next();
 		IPredicate currentPredicate = truePred;
-		stateMap.put(currentState, currentPredicate);
+		states2Predicates.put(currentState, currentPredicate);
 		for (int i = 0; i < trace.size(); i++) {
 			final int index = intTrace.get(i);
 			final Iterator<OutgoingInternalTransition<Integer, String>> succStates =
@@ -296,16 +296,14 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				throw new IllegalStateException("Trace is not present in the MCR automaton");
 			}
 			currentState = succStates.next().getSucc();
-			final IPredicate nextPredicate = i == interpolants.size() ? falsePred
-					: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
+			final IPredicate nextPredicate = i == interpolants.size() ? falsePred : interpolants.get(i);
 			currentPredicate = nextPredicate;
-			stateMap.put(currentState, currentPredicate);
+			states2Predicates.put(currentState, currentPredicate);
 		}
 		// Get interpolants for the whole automaton and use them in the resulting automaton
-		stateMap.putAll(interpolantProvider.getInterpolants(transformAutomaton(automaton, x -> x, new StringFactory()),
-				stateMap));
+		ipProvider.addInterpolants(transformAutomaton(automaton, x -> x, new StringFactory()), states2Predicates);
 		final NestedWordAutomaton<LETTER, IPredicate> result =
-				transformAutomaton(automaton, stateMap::get, mEmptyStackFactory);
+				transformAutomaton(automaton, states2Predicates::get, mEmptyStackFactory);
 		final Set<IPredicate> mcrIps = new HashSet<>(result.getStates());
 		mcrIps.remove(truePred);
 		mcrIps.remove(falsePred);
