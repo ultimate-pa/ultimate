@@ -24,7 +24,6 @@
 			<unit id="org.apache.batik.svggen" version="1.9.1.v20190730-1743"/>
 			<unit id="org.apache.batik.parser" version="1.9.1.v20190730-1743"/>
 			<unit id="org.apache.batik.xml" version="1.9.1.v20190730-1743"/>
-			<unit id="javax.xml.bind" version="2.2.0.v201105210648"/>
 		</location>
 	</locations>
 	<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
