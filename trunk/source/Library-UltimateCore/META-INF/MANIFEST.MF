@@ -1,5 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
+Multi-Release: true
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.core
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.core
 Bundle-Version: 0.1.25
@@ -15,7 +16,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
  de.uni_freiburg.informatik.ultimate.core.lib.util
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.lib.smtlib,
- javax.xml.bind;bundle-version="2.2.0";visibility:=reexport
+ de.uni_freiburg.informatik.ultimate.lib.smtlib
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.core
 Import-Package: com.sun.xml.bind.v2;version="2.2.0"
