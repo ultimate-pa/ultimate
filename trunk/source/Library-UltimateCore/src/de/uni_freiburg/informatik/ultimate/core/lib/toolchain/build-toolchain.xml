@@ -29,6 +29,7 @@
 				<exclude name="**/ToolchainFileValidator.java"/>
 				<exclude name="**/ToolchainData.java"/>
 				<exclude name="**/*.xsd"/>
+				<exclude name="**/jaxb.properties"/>
 			</fileset>
 		</delete>
 <!--
