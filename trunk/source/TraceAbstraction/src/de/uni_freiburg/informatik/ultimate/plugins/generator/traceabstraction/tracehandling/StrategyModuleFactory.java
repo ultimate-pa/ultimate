@@ -32,6 +32,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.IpInterpolantProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.SpInterpolantProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.WpInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;

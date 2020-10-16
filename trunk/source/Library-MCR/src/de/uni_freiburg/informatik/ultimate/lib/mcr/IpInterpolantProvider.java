@@ -1,9 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
+package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,14 +14,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -39,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -74,13 +70,13 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	@Override
 	public <STATE> void addInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Map<STATE, IPredicate> states2Predicates) {
-		final List<STATE> topOrder = topSort(automaton, states2Predicates);
+		final List<STATE> topOrder = McrUtils.topSort(automaton, states2Predicates);
 		final Map<IProgramVar, Term> initialVarMapping = new HashMap<>();
 		final Map<IProgramVar, Term> finalVarMapping = new HashMap<>();
 		final Map<STATE, Map<IProgramVar, Term>> stateVarMappings = new HashMap<>(topOrder.size());
 		final List<Term> ssa = new ArrayList<>(topOrder.size() + 1);
 		final List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> transitions =
-				extractTransitions(automaton, states2Predicates);
+				extractTransitions(automaton, states2Predicates, topOrder);
 		final Set<IProgramVar> vars =
 				states2Predicates.values().stream().flatMap(x -> x.getVars().stream()).collect(Collectors.toSet());
 		// TODO: Can we put "parallel" states together to reduce the length of the ssa?
@@ -142,8 +138,8 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	private <STATE> List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> extractTransitions(
-			final INestedWordAutomaton<LETTER, STATE> automaton, final Map<STATE, IPredicate> stateMap) {
-		final List<STATE> topOrder = topSort(automaton, stateMap);
+			final INestedWordAutomaton<LETTER, STATE> automaton, final Map<STATE, IPredicate> stateMap,
+			final List<STATE> topOrder) {
 		final List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> result = new ArrayList<>(topOrder.size() + 1);
 		final List<Triple<STATE, UnmodifiableTransFormula, STATE>> finalTransitions = new ArrayList<>();
 		for (final STATE state : topOrder) {
@@ -161,25 +157,6 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		}
 		result.add(finalTransitions);
 		return result;
-	}
-
-	private <STATE> List<STATE> topSort(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final Map<STATE, IPredicate> stateMap) {
-		final Map<STATE, Set<STATE>> successors = new HashMap<>();
-		for (final STATE state : automaton.getStates()) {
-			if (stateMap.containsKey(state)) {
-				continue;
-			}
-			final Set<STATE> succs = new HashSet<>();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
-				final STATE succ = edge.getSucc();
-				if (!stateMap.containsKey(succ)) {
-					succs.add(succ);
-				}
-			}
-			successors.put(state, succs);
-		}
-		return new TopologicalSorter<>(successors::get).topologicalOrdering(successors.keySet()).get();
 	}
 
 	private Term substituteTransformula(final TransFormula tf, final Map<IProgramVar, Term> inVarMapping,
@@ -225,14 +202,8 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 
 	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<IProgramVar> varsToKeep) {
 		final Term substituted = new SubstitutionWithLocalSimplification(mManagedScript, mapping).transform(term);
-		final Set<TermVariable> nonQuantifiedVars =
-				varsToKeep.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-		final List<TermVariable> quantifiedVars = Arrays.stream(substituted.getFreeVars())
-				.filter(x -> !nonQuantifiedVars.contains(x)).collect(Collectors.toList());
-		final Term quantified =
-				SmtUtils.quantifier(mManagedScript.getScript(), QuantifiedFormula.EXISTS, quantifiedVars, substituted);
-		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantified,
-				mSimplificationTechnique, mXnfConversionTechnique);
+		return McrUtils.abstractVariables(substituted, McrUtils.getTermVariables(varsToKeep), QuantifiedFormula.EXISTS,
+				mServices, mLogger, mManagedScript, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
 	private Term[] getInterpolantsForSsa(final List<Term> ssa) {

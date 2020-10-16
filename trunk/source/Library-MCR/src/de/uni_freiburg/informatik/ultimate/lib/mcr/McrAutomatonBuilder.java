@@ -79,32 +79,26 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private void preprocess() {
 		for (int i = 0; i < mOriginalTrace.size(); i++) {
 			final LETTER action = mOriginalTrace.get(i);
-			List<Integer> currentIndices = mActions2Indices.get(action);
-			if (currentIndices == null) {
-				currentIndices = new ArrayList<>();
-				mActions2Indices.put(action, currentIndices);
-			}
-			currentIndices.add(i);
+			addValue(mActions2Indices, action, i);
 			for (final IProgramVar var : action.getTransformula().getAssignedVars()) {
 				mVariables2Writes.addPair(var, i);
 			}
 			final String currentThread = action.getPrecedingProcedure();
-			List<Integer> threadActions = mThreads2SortedActions.get(currentThread);
-			if (threadActions == null) {
-				threadActions = new ArrayList<>();
-				mThreads2SortedActions.put(currentThread, threadActions);
-			}
-			threadActions.add(i);
+			addValue(mThreads2SortedActions, currentThread, i);
 			final String nextThread = action.getSucceedingProcedure();
 			if (currentThread != nextThread) {
-				threadActions = mThreads2SortedActions.get(nextThread);
-				if (threadActions == null) {
-					threadActions = new ArrayList<>();
-					mThreads2SortedActions.put(nextThread, threadActions);
-				}
-				threadActions.add(i);
+				addValue(mThreads2SortedActions, nextThread, i);
 			}
 		}
+	}
+
+	private static <K, V> void addValue(final Map<K, List<V>> map, final K key, final V value) {
+		List<V> values = map.get(key);
+		if (values == null) {
+			values = new ArrayList<>();
+			map.put(key, values);
+		}
+		values.add(value);
 	}
 
 	private static String getState(final int i) {
@@ -286,19 +280,15 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final Map<String, IPredicate> states2Predicates = new HashMap<>();
 		// Fill states2Predicates with the given interpolants
 		String currentState = automaton.getInitialStates().iterator().next();
-		IPredicate currentPredicate = truePred;
-		states2Predicates.put(currentState, currentPredicate);
+		states2Predicates.put(currentState, truePred);
 		for (int i = 0; i < trace.size(); i++) {
-			final int index = intTrace.get(i);
 			final Iterator<OutgoingInternalTransition<Integer, String>> succStates =
-					automaton.internalSuccessors(currentState, index).iterator();
+					automaton.internalSuccessors(currentState, intTrace.get(i)).iterator();
 			if (!succStates.hasNext()) {
 				throw new IllegalStateException("Trace is not present in the MCR automaton");
 			}
 			currentState = succStates.next().getSucc();
-			final IPredicate nextPredicate = i == interpolants.size() ? falsePred : interpolants.get(i);
-			currentPredicate = nextPredicate;
-			states2Predicates.put(currentState, currentPredicate);
+			states2Predicates.put(currentState, i < interpolants.size() ? interpolants.get(i) : falsePred);
 		}
 		// Get interpolants for the whole automaton and use them in the resulting automaton
 		ipProvider.addInterpolants(transformAutomaton(automaton, x -> x, new StringFactory()), states2Predicates);
