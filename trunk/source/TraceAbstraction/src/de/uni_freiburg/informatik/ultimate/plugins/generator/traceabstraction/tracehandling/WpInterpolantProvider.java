@@ -3,14 +3,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -44,13 +42,12 @@ public class WpInterpolantProvider<LETTER extends IIcfgTransition<?>> extends Sp
 				conjuncts.add(mPredicateTransformer.weakestPrecondition(succ, edge.getLetter().getTransformula()));
 			}
 		}
-		return conjuncts.isEmpty() ? null : SmtUtils.and(mManagedScript.getScript(), conjuncts);
+		return conjuncts.isEmpty() ? null : SmtUtils.and(mScript, conjuncts);
 	}
 
 	@Override
-	protected Term getAbstraction(final Term term, final Set<TermVariable> variables) {
-		return PartialQuantifierElimination.elim(mManagedScript, QuantifiedFormula.FORALL, variables, term, mServices,
-				mLogger, mSimplificationTechnique, mXnfConversionTechnique);
+	protected Term getAbstraction(final Term term, final List<TermVariable> variables) {
+		return SmtUtils.quantifier(mScript, QuantifiedFormula.FORALL, variables, term);
 	}
 
 	@Override
