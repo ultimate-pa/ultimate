@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SVCOMP_GITLAB_DIR=/storage/repos/svcomp-archives-2019/2019
+SVCOMP_GITLAB_DIR=/storage/repos/svcomp-archives-2021/2021
 POST_FINAL=false
 
 EXPECTED_FILES=(
@@ -16,20 +16,20 @@ function git_is_clean {
     git diff-index --quiet HEAD --
 }
 
-if [ ! -d "$SVCOMP_GITLAB_DIR" ]; then 
+if [ ! -d "$SVCOMP_GITLAB_DIR" ]; then
 	echo "Directory $SVCOMP_GITLAB_DIR does not exist"
 	exit 1
 fi
 
 pushd "$SVCOMP_GITLAB_DIR" > /dev/null
-if ! git_is_clean ; then 
+if ! git_is_clean ; then
 	echo "Repo is dirty, did you do things manually?"
 	exit 1
 fi
 
-current_branch=`git rev-parse --abbrev-ref HEAD`
+current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [ "ultimate" != "$current_branch" ]; then
-	echo "Repo is in wrong branch: $current_branch"
+	echo "Repo is in branch \"$current_branch\" but should be in branch \"ultimate\""
 	exit 1
 fi
 
@@ -41,10 +41,10 @@ git push
 popd > /dev/null
 
 
-VERSION=`git describe --tags $(git rev-list --tags --max-count=1)`
-VERSION="${VERSION}-"`git rev-parse HEAD | cut -c1-8`
+VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+VERSION="${VERSION}-"$(git rev-parse HEAD | cut -c1-8)
 
-echo "Copying .zip files for version $VERSION to SVCOMP 2019 GitLab repo in $SVCOMP_GITLAB_DIR"
+echo "Copying .zip files for version $VERSION to SVCOMP GitLab repo in $SVCOMP_GITLAB_DIR"
 for z in "${EXPECTED_FILES[@]}"; do
     if [ ! -f $z ]; then
 		echo "$z does not exist"
@@ -64,7 +64,7 @@ if [ ! -L "${SVCOMP_GITLAB_DIR}/${VALIDATOR_SYMLINK}" ]; then
 	ln -s "$VALIDATOR" "$VALIDATOR_SYMLINK"
 fi
 
-echo "Pushing to remote Ultimate"
+echo "Pushing to remote "
 git add -A
 git commit -a -m"Update Ultimate tool family to version $VERSION"
 git push
