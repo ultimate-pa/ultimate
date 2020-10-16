@@ -61,7 +61,7 @@ public class Clause extends SimpleListable<Clause> {
 	 * found. For memory efficiency reasons there is no real data structure for
 	 * watchers, but a clause and a bit is used to represent a watcher.
 	 *
-	 * A watcher is always on exactly one of the following four lists:
+	 * A watcher is always on exactly one of the following three lists:
 	 * <ul>
 	 * <li>dpllEngine.mPendingWatcherList</li>
 	 * <li>literal.mWatcher</li>
