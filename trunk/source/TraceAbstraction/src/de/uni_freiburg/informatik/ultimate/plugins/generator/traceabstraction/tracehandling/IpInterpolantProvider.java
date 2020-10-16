@@ -2,131 +2,162 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCounter;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * IInterpolantProvider using DAG interpolation. To apply DAG interpolation, we encode the DAG in a (linear) trace and
- * calculate interpolants for this trace.
+ * IInterpolantProvider using DAG interpolation. To apply DAG interpolation, we create out own SSA based on the states.
+ * For every state we use the disjunction of incoming edges as SSA term.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements IInterpolantProvider<LETTER> {
-	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final IPredicateUnifier mPredicateUnifier;
-	private final PredicateFactory mPredicateFactory;
-	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
-	private final TaskIdentifier mTaskIdentifier;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
-	private final IcfgEdgeFactory mEdgeFactory;
 	private final IUltimateServiceProvider mServices;
-	private final Class<LETTER> mTransitionClazz;
-	private final DefaultIcfgSymbolTable mSymbolTable;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final MultiElementCounter<IProgramVar> mConstForTvCounter;
 
-	public IpInterpolantProvider(final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IPredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final TaskIdentifier taskIdentifier, final ILogger logger, final Class<LETTER> transitionClazz) {
-		mPrefs = prefs;
-		mServices = prefs.getUltimateServices();
+	public IpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript managedScript, final IPredicateUnifier predicateUnifier,
+			final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
+		mServices = services;
 		mPredicateUnifier = predicateUnifier;
-		mAssertionOrderModulation = assertionOrderModulation;
-		mTaskIdentifier = taskIdentifier;
 		mLogger = logger;
-		final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
-		mManagedScript = cfgSmtToolkit.getManagedScript();
-		mSymbolTable = new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
-		mPredicateFactory = new PredicateFactory(mServices, mManagedScript, mSymbolTable);
-		mEdgeFactory = cfgSmtToolkit.getIcfgEdgeFactory();
-		mTransitionClazz = transitionClazz;
+		// TODO: Use another managedScript?
+		mManagedScript = managedScript;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
+		mConstForTvCounter = new MultiElementCounter<>();
 	}
 
 	@Override
 	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Map<STATE, IPredicate> stateMap) {
-		// Sort the DAG topologically and create aux vars for each state
 		final List<STATE> topOrder = topSort(automaton, stateMap);
-		if (topOrder.isEmpty()) {
-			return Collections.emptyMap();
+		final Map<IProgramVar, Term> initialVarMapping = new HashMap<>();
+		final Map<IProgramVar, Term> finalVarMapping = new HashMap<>();
+		final Map<STATE, Map<IProgramVar, Term>> stateVarMappings = new HashMap<>(topOrder.size());
+		final List<Term> ssa = new ArrayList<>(topOrder.size() + 1);
+		final List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> transitions =
+				extractTransitions(automaton, stateMap);
+		final Set<IProgramVar> vars =
+				stateMap.values().stream().flatMap(x -> x.getVars().stream()).collect(Collectors.toSet());
+		// TODO: Can we put "parallel" states together to reduce the length of the ssa?
+		for (final List<Triple<STATE, UnmodifiableTransFormula, STATE>> t : transitions) {
+			final List<Term> disjuncts = new ArrayList<>();
+			for (final Triple<STATE, UnmodifiableTransFormula, STATE> triple : t) {
+				UnmodifiableTransFormula tf = triple.getSecond();
+				final STATE pred = triple.getFirst();
+				final IPredicate prevPred = stateMap.get(pred);
+				final Map<IProgramVar, Term> inVarMapping;
+				if (prevPred != null) {
+					inVarMapping = initialVarMapping;
+					final UnmodifiableTransFormula assume =
+							TransFormulaBuilder.constructTransFormulaFromPredicate(prevPred, mManagedScript);
+					tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, true, false,
+							mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(assume, tf));
+				} else {
+					inVarMapping = stateVarMappings.get(pred);
+				}
+				final STATE succ = triple.getThird();
+				final IPredicate succPred = stateMap.get(succ);
+				Map<IProgramVar, Term> outVarMapping;
+				if (succPred != null) {
+					outVarMapping = finalVarMapping;
+					final UnmodifiableTransFormula assume = TransFormulaBuilder.constructTransFormulaFromTerm(
+							SmtUtils.not(mManagedScript.getScript(), succPred.getFormula()), succPred.getVars(),
+							mManagedScript);
+					tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, true, false,
+							mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(tf, assume));
+				} else {
+					outVarMapping = stateVarMappings.get(succ);
+					if (outVarMapping == null) {
+						outVarMapping = new HashMap<>();
+						stateVarMappings.put(succ, outVarMapping);
+					}
+				}
+				disjuncts.add(substituteTransformula(tf, inVarMapping, outVarMapping, vars));
+			}
+			ssa.add(SmtUtils.or(mManagedScript.getScript(), disjuncts));
 		}
-		final Map<STATE, IProgramVar> variables = new HashMap<>();
-		mManagedScript.lock(this);
-		for (final STATE state : topOrder) {
-			// TODO: This is only a workaround for a fresh variable name...
-			final TermVariable tv =
-					mManagedScript.constructFreshTermVariable("loc", SmtSortUtils.getBoolSort(mManagedScript));
-			final IProgramVar var = ProgramVarUtils.constructGlobalProgramVarPair(tv.getName(),
-					SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
-			variables.put(state, var);
-			mSymbolTable.add(var);
-		}
-		mManagedScript.unlock(this);
-		mSymbolTable.finishConstruction();
-		// Encode the DAG in a trace and get interpolants for it
-		final List<LETTER> trace = encodeDag(automaton, stateMap, topOrder, variables);
-		mLogger.info("Encoded the DAG in a trace of size " + trace.size());
-		final IPredicateUnifier predicateUnifier =
-				new NoopPredicateUnifier(mPredicateFactory, mManagedScript.getScript());
-		final IInterpolatingTraceCheck<LETTER> traceCheck =
-				new IpTcStrategyModulePreferences<>(mTaskIdentifier, mServices, mPrefs, new StatelessRun<>(trace),
-						predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(),
-						mAssertionOrderModulation, predicateUnifier, mPredicateFactory, mTransitionClazz)
-								.getOrConstruct();
-		assert traceCheck.isCorrect() == LBool.UNSAT : "The trace is feasible";
-		final IPredicate[] interpolants = traceCheck.getInterpolants();
-		assert interpolants.length == topOrder.size();
-		// Map the states (sorted topologically) to the corresponding interpolants
-		final Map<STATE, IPredicate> result = new HashMap<>();
-		final Term trueTerm = mManagedScript.getScript().term("true");
-		final Term falseTerm = mManagedScript.getScript().term("false");
-		final Map<Term, Term> substitution =
-				variables.values().stream().collect(Collectors.toMap(x -> x.getTermVariable(), x -> falseTerm));
-		for (int i = 0; i < topOrder.size(); i++) {
+		final ScopedHashMap<Term, Term> mapping = new ScopedHashMap<>();
+		stateVarMappings.values().forEach(
+				x -> x.forEach((k, v) -> mapping.put(v, mManagedScript.constructFreshCopy(k.getTermVariable()))));
+		mLogger.info("Calculating interpolants");
+		final Term[] craigInterpolants = getInterpolantsForSsa(ssa);
+		mLogger.info("Finished");
+		final Map<STATE, IPredicate> result = new HashMap<>(craigInterpolants.length);
+		for (int i = 0; i < craigInterpolants.length; i++) {
 			final STATE state = topOrder.get(i);
-			final Term var = variables.get(state).getTermVariable();
-			// Substitute the current variable by true the other ones by false
-			substitution.put(var, trueTerm);
-			final Term term = new Substitution(mManagedScript, substitution).transform(interpolants[i].getFormula());
-			substitution.put(var, falseTerm);
-			result.put(state, mPredicateUnifier.getOrConstructPredicate(term));
+			mapping.beginScope();
+			stateVarMappings.get(state).forEach((x, y) -> mapping.put(y, x.getTermVariable()));
+			final Term newTerm = renameAndAbstract(craigInterpolants[i], mapping, vars);
+			result.put(state, mPredicateUnifier.getOrConstructPredicate(newTerm));
+			mapping.endScope();
 		}
+		return result;
+	}
+
+	private <STATE> List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> extractTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automaton, final Map<STATE, IPredicate> stateMap) {
+		final List<STATE> topOrder = topSort(automaton, stateMap);
+		final List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> result = new ArrayList<>(topOrder.size() + 1);
+		final List<Triple<STATE, UnmodifiableTransFormula, STATE>> finalTransitions = new ArrayList<>();
+		for (final STATE state : topOrder) {
+			final List<Triple<STATE, UnmodifiableTransFormula, STATE>> currentTransitions = new ArrayList<>();
+			for (final IncomingInternalTransition<LETTER, STATE> edge : automaton.internalPredecessors(state)) {
+				currentTransitions.add(new Triple<>(edge.getPred(), edge.getLetter().getTransformula(), state));
+			}
+			result.add(currentTransitions);
+			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
+				final STATE succ = edge.getSucc();
+				if (stateMap.containsKey(succ)) {
+					finalTransitions.add(new Triple<>(state, edge.getLetter().getTransformula(), succ));
+				}
+			}
+		}
+		result.add(finalTransitions);
 		return result;
 	}
 
@@ -149,110 +180,76 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		return new TopologicalSorter<>(successors::get).topologicalOrdering(successors.keySet()).get();
 	}
 
-	private <STATE> List<LETTER> encodeDag(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final Map<STATE, IPredicate> stateMap, final List<STATE> topOrder,
-			final Map<STATE, IProgramVar> variables) {
-		final List<LETTER> result = new ArrayList<>();
-		final List<UnmodifiableTransFormula> initialTfs = new ArrayList<>();
+	private Term substituteTransformula(final TransFormula tf, final Map<IProgramVar, Term> inVarMapping,
+			final Map<IProgramVar, Term> outVarMapping, final Set<IProgramVar> vars) {
+		final Map<Term, Term> mapping = new HashMap<>();
+		final List<Term> conjuncts = new ArrayList<>();
 		final Script script = mManagedScript.getScript();
-		LETTER initialTransition = null;
-		for (final STATE state : topOrder) {
-			final List<UnmodifiableTransFormula> succTfs = new ArrayList<>();
-			LETTER transition = null;
-			final IProgramVar var = variables.get(state);
-			final UnmodifiableTransFormula varIsTrue = TransFormulaBuilder
-					.constructTransFormulaFromTerm(var.getTermVariable(), Collections.singleton(var), mManagedScript);
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
-				final STATE succ = edge.getSucc();
-				final IPredicate succPredicate = stateMap.get(succ);
-				transition = edge.getLetter();
-				final UnmodifiableTransFormula tf = transition.getTransformula();
-				UnmodifiableTransFormula afterTf;
-				if (succPredicate == null) {
-					// Set the successor var to true afterwards
-					afterTf = assignVarToTrue(variables.get(succ));
-				} else {
-					// Add [!succPredicate] afterwards
-					afterTf = TransFormulaBuilder.constructTransFormulaFromTerm(
-							SmtUtils.not(script, succPredicate.getFormula()), succPredicate.getVars(), mManagedScript);
-				}
-				// Construct a new transformula with [var], executing the original tf and afterTf
-				succTfs.add(sequentialComposition(Arrays.asList(varIsTrue, tf, afterTf)));
-			}
-			// Add [!var] as a disjunct
-			succTfs.add(TransFormulaUtils.negate(varIsTrue, mManagedScript, mServices, mLogger, null, null));
-			result.add(createTransition(transition, parallelComposition(succTfs)));
-			// Check if any predecessor has an interpolant. If so, add [pre]; tf; var:=true to the initial edges
-			for (final IncomingInternalTransition<LETTER, STATE> edge : automaton.internalPredecessors(state)) {
-				final IPredicate predicate = stateMap.get(edge.getPred());
-				if (predicate == null) {
-					continue;
-				}
-				initialTransition = edge.getLetter();
-				final UnmodifiableTransFormula pre =
-						TransFormulaBuilder.constructTransFormulaFromPredicate(predicate, mManagedScript);
-				initialTfs.add(sequentialComposition(
-						Arrays.asList(pre, initialTransition.getTransformula(), assignVarToTrue(var))));
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+			final IProgramVar var = entry.getKey();
+			if (vars.contains(var)) {
+				mapping.put(entry.getValue(), getOrConstructConstant(var, inVarMapping));
 			}
 		}
-		// Set all cfgVariables initially to false
-		final UnmodifiableTransFormula initialFalse =
-				TransFormulaBuilder.constructAssignment(new ArrayList<>(variables.values()),
-						Collections.nCopies(variables.size(), script.term("false")), mSymbolTable, mManagedScript);
-		final UnmodifiableTransFormula initialTf =
-				sequentialComposition(Arrays.asList(initialFalse, parallelComposition(initialTfs)));
-		result.add(0, createTransition(initialTransition, initialTf));
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+			final IProgramVar var = entry.getKey();
+			if (vars.contains(var)) {
+				mapping.put(entry.getValue(), getOrConstructConstant(var, outVarMapping));
+			}
+		}
+		for (final IProgramVar var : vars) {
+			if (!tf.getAssignedVars().contains(var)) {
+				final Term inTerm = getOrConstructConstant(var, inVarMapping);
+				final Term outTerm = getOrConstructConstant(var, outVarMapping);
+				// TODO: If all predecessors have the same var, this can be avoided (and the same used again instead)
+				conjuncts.add(SmtUtils.binaryEquality(script, outTerm, inTerm));
+			}
+		}
+		conjuncts.add(renameAndAbstract(tf.getFormula(), mapping, vars));
+		return SmtUtils.and(script, conjuncts);
+	}
+
+	private Term getOrConstructConstant(final IProgramVar var, final Map<IProgramVar, Term> mapping) {
+		Term result = mapping.get(var);
+		if (result == null) {
+			final Integer index = mConstForTvCounter.increment(var);
+			final String name = "c_" + SmtUtils.removeSmtQuoteCharacters(var.getGloballyUniqueId()) + "_" + index;
+			mManagedScript.getScript().declareFun(name, new Sort[0], var.getSort());
+			result = mManagedScript.getScript().term(name);
+			mapping.put(var, result);
+		}
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
-	private LETTER createTransition(final LETTER transition, final UnmodifiableTransFormula transformula) {
-		return (LETTER) mEdgeFactory.createInternalTransition(transition.getSource(), transition.getTarget(),
-				transition.getPayload(), transformula);
+	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<IProgramVar> varsToKeep) {
+		final Term substituted = new Substitution(mManagedScript, mapping).transform(term);
+		final Set<TermVariable> nonQuantifiedVars =
+				varsToKeep.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		final List<TermVariable> quantifiedVars = Arrays.stream(substituted.getFreeVars())
+				.filter(x -> !nonQuantifiedVars.contains(x)).collect(Collectors.toList());
+		final Term quantified =
+				SmtUtils.quantifier(mManagedScript.getScript(), QuantifiedFormula.EXISTS, quantifiedVars, substituted);
+		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantified,
+				mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
-	private UnmodifiableTransFormula assignVarToTrue(final IProgramVar var) {
-		return TransFormulaBuilder.constructAssignment(Collections.singletonList(var),
-				Collections.singletonList(mManagedScript.getScript().term("true")), mSymbolTable, mManagedScript);
-	}
-
-	private UnmodifiableTransFormula sequentialComposition(final List<UnmodifiableTransFormula> transformulas) {
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, true, false, null,
-				null, transformulas);
-	}
-
-	private UnmodifiableTransFormula parallelComposition(final List<UnmodifiableTransFormula> transformulas) {
-		return TransFormulaUtils.parallelComposition(mLogger, mServices, transformulas.hashCode(), mManagedScript, null,
-				false, null, transformulas.toArray(new UnmodifiableTransFormula[transformulas.size()]));
-	}
-}
-
-class StatelessRun<LETTER, STATE> implements IRun<LETTER, STATE> {
-	private final Word<LETTER> mWord;
-
-	@SuppressWarnings("unchecked")
-	public StatelessRun(final List<LETTER> list) {
-		final LETTER[] array = (LETTER[]) list.toArray(new Object[list.size()]);
-		mWord = new Word<>(array);
-	}
-
-	@Override
-	public Word<LETTER> getWord() {
-		return mWord;
-	}
-
-	@Override
-	public LETTER getSymbol(final int position) {
-		return mWord.getSymbol(position);
-	}
-
-	@Override
-	public int getLength() {
-		return mWord.length();
-	}
-
-	@Override
-	public List<STATE> getStateSequence() {
-		throw new UnsupportedOperationException(getClass().getName() + " cannot provide a state sequence");
+	private Term[] getInterpolantsForSsa(final List<Term> ssa) {
+		int i = 0;
+		final Script script = mManagedScript.getScript();
+		final Term[] partition = new Term[ssa.size()];
+		mManagedScript.lock(this);
+		mManagedScript.push(this, 1);
+		for (final Term t : ssa) {
+			final String name = "ssa_" + i;
+			mManagedScript.assertTerm(this, script.annotate(t, new Annotation(":named", name)));
+			partition[i++] = script.term(name);
+		}
+		if (mManagedScript.checkSat(this) != LBool.UNSAT) {
+			throw new AssertionError("The SSA of the DAG is satisfiable!");
+		}
+		final Term[] result = mManagedScript.getInterpolants(this, partition);
+		mManagedScript.pop(this, 1);
+		mManagedScript.unlock(this);
+		return result;
 	}
 }

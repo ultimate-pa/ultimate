@@ -39,7 +39,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -221,17 +224,19 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 	}
 
 	private IInterpolantProvider<L> createMcrInterpolantProvider() {
+		final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
+		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
+		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		switch (mTaPrefs.getMcrInterpolantMethod()) {
 		case INTERPOLATION:
-			return new IpInterpolantProvider<>(mPrefs, mPredicateUnifier,
-					new AssertionOrderModulation<>(mPathProgramCache, mLogger), mTaskIdentifier, mLogger,
-					mTransitionClazz);
+			return new IpInterpolantProvider<>(mPrefs.getUltimateServices(), mLogger, managedScript, mPredicateUnifier,
+					simplificationTechnique, xnfConversionTechnique);
 		case WP:
-			return new WpInterpolantProvider<>(mServices, mLogger, mPrefs.getCfgSmtToolkit().getManagedScript(),
-					mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+			return new WpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
+					xnfConversionTechnique, mPredicateUnifier);
 		case SP:
-			return new SpInterpolantProvider<>(mServices, mLogger, mPrefs.getCfgSmtToolkit().getManagedScript(),
-					mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(), mPredicateUnifier);
+			return new SpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
+					xnfConversionTechnique, mPredicateUnifier);
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
 		}
