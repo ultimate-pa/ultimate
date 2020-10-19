@@ -13,7 +13,7 @@ import xml.etree.ElementTree as elementtree
 from stat import ST_MODE
 from functools import lru_cache
 
-version = '1b62244e'
+version = '906a4fb5'
 toolname = 'Automizer'
 write_ultimate_output_to_file = True
 output_file_name = 'Ultimate.log'
@@ -78,7 +78,7 @@ class _PropParser:
                                    .format(self.init, fun_match.group(1)))
             self.init = fun_match.group(1)
 
-            if formula == 'G ! call(__VERIFIER_error())':
+            if formula == 'G ! call(reach_error())' or formula == 'G ! call(__VERIFIER_error())':
                 self.reach = True
             elif formula == 'G valid-free':
                 self.mem_free = True
@@ -220,8 +220,8 @@ def create_ultimate_base_call():
     ultimate_bin = [
         get_java(),
         '-Dosgi.configuration.area=' + os.path.join(datadir, 'config'),
-        '-Xmx12G',
-        '-Xms1G',
+        '-Xmx15G',
+        '-Xms4m',
     ]
 
     if enable_assertions:
