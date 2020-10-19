@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationResultReporter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
@@ -139,8 +139,6 @@ public class StandardFunctionHandler {
 
 	private final ProcedureManager mProcedureManager;
 
-	private final CHandler mCHandler;
-
 	private final CTranslationResultReporter mReporter;
 
 	private final Map<String, IASTNode> mFunctionTable;
@@ -161,18 +159,19 @@ public class StandardFunctionHandler {
 
 	private int mPthreadCreateCounter = 0;
 
+	private final CExpressionTranslator mCEpressionTranslator;
+
 	public StandardFunctionHandler(final Map<String, IASTNode> functionTable, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final INameHandler nameHandler, final ExpressionTranslation expressionTranslation,
 			final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ProcedureManager procedureManager, final CHandler cHandler, final CTranslationResultReporter reporter,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final LocationFactory locationFactory,
-			final ITypeHandler typeHandler) {
+			final ProcedureManager procedureManager, final CTranslationResultReporter reporter, final TypeSizes typeSizes,
+			final FlatSymbolTable symboltable, final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
+			final LocationFactory locationFactory, final ITypeHandler typeHandler,
+			final CExpressionTranslator cEpressionTranslator) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeAndOffsetComputer;
 		mProcedureManager = procedureManager;
-		mCHandler = cHandler;
 		mReporter = reporter;
 		mFunctionTable = functionTable;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -183,7 +182,7 @@ public class StandardFunctionHandler {
 		mExprResultTransformer = expressionResultTransformer;
 		mLocationFactory = locationFactory;
 		mTypeHandler = typeHandler;
-
+		mCEpressionTranslator = cEpressionTranslator;
 		mFunctionModels = getFunctionModels();
 	}
 
@@ -1720,7 +1719,7 @@ public class StandardFunctionHandler {
 		// Note: this works because SMTLIB already ensures that all comparisons return false if one of the arguments is
 		// NaN
 
-		return mCHandler.handleRelationalOperators(loc, op, rl, rr);
+		return mCEpressionTranslator.handleRelationalOperators(loc, op, rl, rr);
 	}
 
 	/**
@@ -1792,9 +1791,9 @@ public class StandardFunctionHandler {
 		rightOp = newOps.getSecond();
 
 		final ExpressionResult lessThan =
-				mCHandler.handleRelationalOperators(loc, IASTBinaryExpression.op_lessThan, leftOp, rightOp);
-		final ExpressionResult greaterThan =
-				mCHandler.handleRelationalOperators(loc, IASTBinaryExpression.op_greaterThan, leftOp, rightOp);
+				mCEpressionTranslator.handleRelationalOperators(loc, IASTBinaryExpression.op_lessThan, leftOp, rightOp);
+		final ExpressionResult greaterThan = mCEpressionTranslator.handleRelationalOperators(loc,
+				IASTBinaryExpression.op_greaterThan, leftOp, rightOp);
 
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 				lessThan.getLrValue().getValue(), greaterThan.getLrValue().getValue());

@@ -1005,7 +1005,8 @@ public class ExpressionResultTransformer {
 	}
 
 	/**
-	 * Convert ResultExpression to resultType if its type is not already resultType.
+	 * Perform the necessary steps to convert {@link ExpressionResult} <code>operand</code> to a new type
+	 * <code>resultType</code> if its type is not already <code>resultType</code>.
 	 */
 	public ExpressionResult convertIfNecessary(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
