@@ -79,32 +79,26 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private void preprocess() {
 		for (int i = 0; i < mOriginalTrace.size(); i++) {
 			final LETTER action = mOriginalTrace.get(i);
-			List<Integer> currentIndices = mActions2Indices.get(action);
-			if (currentIndices == null) {
-				currentIndices = new ArrayList<>();
-				mActions2Indices.put(action, currentIndices);
-			}
-			currentIndices.add(i);
+			addValue(mActions2Indices, action, i);
 			for (final IProgramVar var : action.getTransformula().getAssignedVars()) {
 				mVariables2Writes.addPair(var, i);
 			}
 			final String currentThread = action.getPrecedingProcedure();
-			List<Integer> threadActions = mThreads2SortedActions.get(currentThread);
-			if (threadActions == null) {
-				threadActions = new ArrayList<>();
-				mThreads2SortedActions.put(currentThread, threadActions);
-			}
-			threadActions.add(i);
+			addValue(mThreads2SortedActions, currentThread, i);
 			final String nextThread = action.getSucceedingProcedure();
 			if (currentThread != nextThread) {
-				threadActions = mThreads2SortedActions.get(nextThread);
-				if (threadActions == null) {
-					threadActions = new ArrayList<>();
-					mThreads2SortedActions.put(nextThread, threadActions);
-				}
-				threadActions.add(i);
+				addValue(mThreads2SortedActions, nextThread, i);
 			}
 		}
+	}
+
+	private static <K, V> void addValue(final Map<K, List<V>> map, final K key, final V value) {
+		List<V> values = map.get(key);
+		if (values == null) {
+			values = new ArrayList<>();
+			map.put(key, values);
+		}
+		values.add(value);
 	}
 
 	private static String getState(final int i) {
@@ -274,38 +268,32 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<LETTER> trace,
-			final List<IPredicate> interpolants, final IInterpolantProvider<LETTER> interpolantProvider)
+			final List<IPredicate> interpolants, final IInterpolantProvider<LETTER> ipProvider)
 			throws AutomataLibraryException {
 		final List<Integer> intTrace = getIntTrace(trace);
 		assert isInterleaving(intTrace) : "Can only create an automaton for interleavings";
 		final INestedWordAutomaton<Integer, String> automaton = buildMcrAutomaton(intTrace);
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton with interpolants from "
-				+ interpolantProvider.getClass().getSimpleName());
+				+ ipProvider.getClass().getSimpleName());
 		final IPredicate truePred = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePred = mPredicateUnifier.getFalsePredicate();
-		final Map<String, IPredicate> stateMap = new HashMap<>();
-		// Fill stateMap and automaton with the given interpolants
+		final Map<String, IPredicate> states2Predicates = new HashMap<>();
+		// Fill states2Predicates with the given interpolants
 		String currentState = automaton.getInitialStates().iterator().next();
-		IPredicate currentPredicate = truePred;
-		stateMap.put(currentState, currentPredicate);
+		states2Predicates.put(currentState, truePred);
 		for (int i = 0; i < trace.size(); i++) {
-			final int index = intTrace.get(i);
 			final Iterator<OutgoingInternalTransition<Integer, String>> succStates =
-					automaton.internalSuccessors(currentState, index).iterator();
+					automaton.internalSuccessors(currentState, intTrace.get(i)).iterator();
 			if (!succStates.hasNext()) {
 				throw new IllegalStateException("Trace is not present in the MCR automaton");
 			}
 			currentState = succStates.next().getSucc();
-			final IPredicate nextPredicate = i == interpolants.size() ? falsePred
-					: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
-			currentPredicate = nextPredicate;
-			stateMap.put(currentState, currentPredicate);
+			states2Predicates.put(currentState, i < interpolants.size() ? interpolants.get(i) : falsePred);
 		}
 		// Get interpolants for the whole automaton and use them in the resulting automaton
-		stateMap.putAll(interpolantProvider.getInterpolants(transformAutomaton(automaton, x -> x, new StringFactory()),
-				stateMap));
+		ipProvider.addInterpolants(transformAutomaton(automaton, x -> x, new StringFactory()), states2Predicates);
 		final NestedWordAutomaton<LETTER, IPredicate> result =
-				transformAutomaton(automaton, stateMap::get, mEmptyStackFactory);
+				transformAutomaton(automaton, states2Predicates::get, mEmptyStackFactory);
 		final Set<IPredicate> mcrIps = new HashSet<>(result.getStates());
 		mcrIps.remove(truePred);
 		mcrIps.remove(falsePred);

@@ -125,6 +125,7 @@ public class ThreadInstanceAdder {
 			}
 		}
 
+		int joinOtherThreadTransitions = 0;
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
 		// location of the procedure
 		// to all target locations of each JoinCurrentThreadEdge
@@ -139,11 +140,13 @@ public class ThreadInstanceAdder {
 				if (threadIdCompatible && returnValueCompatible) {
 					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(),
 							icfg, backtranslator, addThreadInUseViolationEdges);
+					joinOtherThreadTransitions++;
 				}
 			}
 
 			// }
 		}
+		mLogger.info("Constructed " + joinOtherThreadTransitions + " joinOtherThreadTransitions.");
 		return icfg;
 	}
 

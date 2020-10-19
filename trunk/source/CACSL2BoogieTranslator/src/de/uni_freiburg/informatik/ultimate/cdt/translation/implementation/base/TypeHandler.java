@@ -493,8 +493,8 @@ public class TypeHandler implements ITypeHandler {
 		final TypesResult result = new TypesResult(type, false, false, cvar);
 
 		if (mIncompleteType.remove(identifier)) {
-			final TypesResult typeResult = mDefinedTypes.get(rslvName);
-			final CStructOrUnion incompleteStruct = (CStructOrUnion) typeResult.getCType();
+			// final TypesResult typeResult = mDefinedTypes.get(rslvName);
+			// final CStructOrUnion incompleteStruct = (CStructOrUnion) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
 			// mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, this);

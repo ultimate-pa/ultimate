@@ -6,11 +6,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Interface to construct interpolants for a given trace with precondition and postcondition.
+ * Interface to construct interpolants for a given automaton.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface IInterpolantProvider<LETTER> {
-	<STATE> Map<STATE, IPredicate> getInterpolants(INestedWordAutomaton<LETTER, STATE> automaton,
-			Map<STATE, IPredicate> stateMap);
+	/**
+	 * Add interpolants for the states of {@code automaten} to {@code states2Predicates} (which is filled with some
+	 * initial predicates).
+	 */
+	<STATE> void addInterpolants(INestedWordAutomaton<LETTER, STATE> automaton,
+			Map<STATE, IPredicate> states2Predicates);
 }

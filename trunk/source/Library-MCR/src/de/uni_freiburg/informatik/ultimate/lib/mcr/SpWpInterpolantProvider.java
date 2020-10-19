@@ -1,25 +1,20 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
+package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MultiDimensionalSelectOverStoreEliminationUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
@@ -54,14 +49,14 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ArrayIndexEqualityManager mAiem;
 
-	protected Script mScript;
 	protected final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
+	protected final Script mScript;
 
 	public SpWpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IPredicateUnifier predicateUnifier) {
 		mManagedScript = managedScript;
-		mScript = managedScript.getScript();
+		mScript = mManagedScript.getScript();
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = simplificationTechnique;
@@ -70,20 +65,20 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		mPredicateTransformer =
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 		// ArrayIndexEqualityManager to eliminate stores with true as context (i.e. without any known equalities)
-		mAiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(),
-				mManagedScript.getScript().term("true"), QuantifiedFormula.EXISTS, mLogger, mManagedScript);
+		mAiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(), mScript.term("true"),
+				QuantifiedFormula.EXISTS, mLogger, mManagedScript);
 		mAiem.unlockSolver();
 	}
 
-	private <STATE> List<STATE> revTopSort(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final Map<STATE, IPredicate> stateMap) {
+	private static <STATE> List<STATE> revTopSort(final INestedWordAutomaton<?, STATE> automaton,
+			final Map<STATE, ?> stateMap) {
 		final Map<STATE, Set<STATE>> successors = new HashMap<>();
 		for (final STATE state : automaton.getStates()) {
 			if (stateMap.containsKey(state)) {
 				continue;
 			}
 			final Set<STATE> succs = new HashSet<>();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<?, STATE> edge : automaton.internalSuccessors(state)) {
 				final STATE succ = edge.getSucc();
 				if (!stateMap.containsKey(succ)) {
 					succs.add(succ);
@@ -94,66 +89,57 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		return new TopologicalSorter<>(successors::get).reversedTopologicalOrdering(successors.keySet()).get();
 	}
 
-	private <STATE> List<STATE> getOrder(final List<STATE> revTopOrder) {
-		if (!useReversedOrder()) {
-			Collections.reverse(revTopOrder);
-		}
-		return revTopOrder;
-	}
-
 	@Override
-	public <STATE> Map<STATE, IPredicate> getInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final Map<STATE, IPredicate> stateMap) {
-		final Set<TermVariable> ipVars = stateMap.values().stream().flatMap(x -> getTermVariables(x.getVars()).stream())
-				.collect(Collectors.toSet());
-		final Map<STATE, Set<TermVariable>> liveIpVariables = stateMap.keySet().stream()
-				.collect(Collectors.toMap(x -> x, x -> getTermVariables(stateMap.get(x).getVars())));
-		final List<STATE> revTopOrder = revTopSort(automaton, stateMap);
-		for (final STATE state : revTopOrder) {
+	public <STATE> void addInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final Map<STATE, IPredicate> states2Predicates) {
+		// Collect all variable from the interpolants to be read afterwards, all others can be ignored
+		final Set<TermVariable> ipVars = new HashSet<>();
+		final Map<STATE, Set<TermVariable>> liveIpVariables = new HashMap<>();
+		for (final Entry<STATE, IPredicate> entry : states2Predicates.entrySet()) {
+			final Set<TermVariable> vars = McrUtils.getTermVariables(entry.getValue().getVars());
+			ipVars.addAll(vars);
+			liveIpVariables.put(entry.getKey(), vars);
+		}
+		final List<STATE> order = revTopSort(automaton, states2Predicates);
+		for (final STATE state : order) {
 			final Set<TermVariable> vars = new HashSet<>();
 			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
-				vars.addAll(getTermVariables(edge.getLetter().getTransformula().getInVars().keySet()));
+				vars.addAll(McrUtils.getTermVariables(edge.getLetter().getTransformula().getInVars().keySet()));
 				vars.addAll(liveIpVariables.get(edge.getSucc()));
 			}
 			vars.retainAll(ipVars);
 			liveIpVariables.put(state, vars);
 		}
-		for (final STATE state : getOrder(revTopOrder)) {
-			final Term term = calculateTerm(automaton, state, stateMap);
+		if (!useReversedOrder()) {
+			Collections.reverse(order);
+		}
+		// Caluculate sp/wp for all states in the given order
+		for (final STATE state : order) {
+			final Term term = calculateTerm(automaton, state, states2Predicates);
 			if (term == null) {
 				continue;
 			}
 			// Abstract all variables away that are not read afterwards and do not occur in the original interpolants
-			final List<TermVariable> quantifiedVars = Arrays.stream(term.getFreeVars())
-					.filter(x -> !liveIpVariables.get(state).contains(x)).collect(Collectors.toList());
-			final Term abstracted = getAbstraction(term, quantifiedVars);
-			// Try to eliminate quantifiers in the term
-			Term simplified = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
-					abstracted, mSimplificationTechnique, mXnfConversionTechnique);
+			Term result = McrUtils.abstractVariables(term, liveIpVariables.get(state), getQuantifier(), mServices,
+					mLogger, mManagedScript, mSimplificationTechnique, mXnfConversionTechnique);
 			// Ignore the interpolant, if it still contains quantifiers
-			if (!QuantifierUtils.isQuantifierFree(simplified)) {
+			if (!QuantifierUtils.isQuantifierFree(result)) {
 				continue;
 			}
 			// Eliminate all stores (using case distinction on index equalities)
 			final List<MultiDimensionalSelectOverNestedStore> stores =
-					MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(mScript, simplified);
+					MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(mScript, result);
 			for (final MultiDimensionalSelectOverNestedStore m : stores) {
-				simplified =
-						MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, simplified, m);
+				result = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, result, m);
 			}
-			stateMap.put(state, mPredicateUnifier.getOrConstructPredicate(simplified));
+			states2Predicates.put(state, mPredicateUnifier.getOrConstructPredicate(result));
 		}
-		return stateMap;
-	}
-
-	private static Set<TermVariable> getTermVariables(final Collection<IProgramVar> vars) {
-		return vars.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 	}
 
 	protected abstract <STATE> Term calculateTerm(final INestedWordAutomaton<LETTER, STATE> automaton, STATE state,
 			Map<STATE, IPredicate> stateMap);
 
-	protected abstract Term getAbstraction(Term term, List<TermVariable> variables);
+	protected abstract int getQuantifier();
 
 	protected abstract boolean useReversedOrder();
 }

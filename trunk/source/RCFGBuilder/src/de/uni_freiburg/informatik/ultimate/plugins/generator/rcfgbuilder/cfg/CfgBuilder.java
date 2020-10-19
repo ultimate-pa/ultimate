@@ -313,7 +313,7 @@ public class CfgBuilder {
 		return getAllLocations().allMatch(this::isAtomicCompositionComplete);
 	}
 
-	private boolean isAtomicCompositionComplete(BoogieIcfgLocation pp) {
+	private boolean isAtomicCompositionComplete(final BoogieIcfgLocation pp) {
 		if (isStartOfAtomicBlock(pp)) {
 			return pp.getOutgoingNodes().stream().allMatch(successor -> {
 				if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation) successor).isErrorLocation()) {
@@ -1675,11 +1675,11 @@ public class CfgBuilder {
 			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp) || allSuccessorsAtomic(pp)) : "Atomic point with unexpected non-atomic successor!";
 		}
 
-		private boolean allPredecessorsAtomic(BoogieIcfgLocation pp) {
+		private boolean allPredecessorsAtomic(final BoogieIcfgLocation pp) {
 			return pp.getIncomingEdges().stream().map(IcfgEdge::getSource).allMatch(pre -> mAtomicPoints.contains(pre) || isStartOfAtomicBlock(pre));
 		}
 
-		private boolean allSuccessorsAtomic(BoogieIcfgLocation pp) {
+		private boolean allSuccessorsAtomic(final BoogieIcfgLocation pp) {
 			return pp.getOutgoingEdges().stream().map(IcfgEdge::getTarget).allMatch(suc -> mAtomicPoints.contains(suc) || isEndOfAtomicBlock(suc));
 		}
 

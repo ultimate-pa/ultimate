@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -468,7 +469,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		return false;
 	}
 
-	private void checkForDangerInvariantAndReport() {
+	private boolean checkForDangerInvariantAndReport() {
 		final Set<? extends IcfgEdge> allowedTransitions = PathInvariantsGenerator.extractTransitionsFromRun(
 				(NestedRun<? extends IAction, IPredicate>) mCounterexample,
 				mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory());
@@ -484,12 +485,15 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				predicateFactory, predicateUnifier, mCsToolkit);
 		final boolean hasDangerInvariant = dig.isDangerInvariant();
 		if (hasDangerInvariant) {
-			final Map<IcfgLocation, IPredicate> invar = dig.getCandidateInvariant();
+			final Map<IcfgLocation, IPredicate> invarP = dig.getCandidateInvariant();
+			final Map<IcfgLocation, Term> invarT =
+					invarP.entrySet().stream().collect(Collectors.toMap(Entry::getKey, x -> x.getValue().getFormula()));
 			final Set<IcfgLocation> errorLocations = IcfgUtils.getErrorLocations(pathProgram);
-			final DangerInvariantResult<?, IPredicate> res = new DangerInvariantResult<>(Activator.PLUGIN_ID, invar,
+			final DangerInvariantResult<?, Term> res = new DangerInvariantResult<>(Activator.PLUGIN_ID, invarT,
 					errorLocations, mServices.getBacktranslationService());
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 		}
+		return hasDangerInvariant;
 	}
 
 	@Override

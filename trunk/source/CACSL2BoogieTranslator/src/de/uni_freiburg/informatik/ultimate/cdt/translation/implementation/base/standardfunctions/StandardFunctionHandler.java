@@ -27,7 +27,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -63,11 +63,18 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationResultReporter;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
@@ -134,8 +141,6 @@ public class StandardFunctionHandler {
 
 	private final ProcedureManager mProcedureManager;
 
-	private final CHandler mCHandler;
-
 	private final CTranslationResultReporter mReporter;
 
 	private final Map<String, IASTNode> mFunctionTable;
@@ -156,18 +161,19 @@ public class StandardFunctionHandler {
 
 	private int mPthreadCreateCounter = 0;
 
+	private final CExpressionTranslator mCEpressionTranslator;
+
 	public StandardFunctionHandler(final Map<String, IASTNode> functionTable, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final INameHandler nameHandler, final ExpressionTranslation expressionTranslation,
 			final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ProcedureManager procedureManager, final CHandler cHandler, final CTranslationResultReporter reporter,
+			final ProcedureManager procedureManager, final CTranslationResultReporter reporter,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings settings,
 			final ExpressionResultTransformer expressionResultTransformer, final LocationFactory locationFactory,
-			final ITypeHandler typeHandler) {
+			final ITypeHandler typeHandler, final CExpressionTranslator cEpressionTranslator) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeAndOffsetComputer;
 		mProcedureManager = procedureManager;
-		mCHandler = cHandler;
 		mReporter = reporter;
 		mFunctionTable = functionTable;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -178,7 +184,7 @@ public class StandardFunctionHandler {
 		mExprResultTransformer = expressionResultTransformer;
 		mLocationFactory = locationFactory;
 		mTypeHandler = typeHandler;
-
+		mCEpressionTranslator = cEpressionTranslator;
 		mFunctionModels = getFunctionModels();
 	}
 
@@ -499,7 +505,11 @@ public class StandardFunctionHandler {
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
 
-		// from fenv.h
+		/** from assert.h */
+		fill(map, "__assert_fail", this::handleAssertFail);
+		// fill(map, "assert", this::handleAssert);
+
+		/** from fenv.h */
 		fill(map, "fegetround", this::handleBuiltinFegetround);
 		fill(map, "fesetround", this::handleBuiltinFesetround);
 
@@ -1319,6 +1329,34 @@ public class StandardFunctionHandler {
 				null);
 	}
 
+	private Result handleAssertFail(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 4, name, arguments);
+
+		final List<ExpressionResult> argDispatchResults = new ArrayList<>();
+		for (final IASTInitializerClause argument : arguments) {
+			argDispatchResults.add((ExpressionResult) main.dispatch(argument));
+		}
+		return new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults)
+				.addStatement(createReachabilityAssert(loc)).build();
+	}
+
+	private Result handleAssert(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 4, name, arguments);
+
+		final List<ExpressionResult> argDispatchResults = new ArrayList<>();
+		for (final IASTInitializerClause argument : arguments) {
+			argDispatchResults.add((ExpressionResult) main.dispatch(argument));
+		}
+		return new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults)
+				.addStatement(createReachabilityAssert(loc)).build();
+	}
+
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 
@@ -1715,7 +1753,7 @@ public class StandardFunctionHandler {
 		// Note: this works because SMTLIB already ensures that all comparisons return false if one of the arguments is
 		// NaN
 
-		return mCHandler.handleRelationalOperators(loc, op, rl, rr);
+		return mCEpressionTranslator.handleRelationalOperators(loc, op, rl, rr);
 	}
 
 	/**
@@ -1787,9 +1825,9 @@ public class StandardFunctionHandler {
 		rightOp = newOps.getSecond();
 
 		final ExpressionResult lessThan =
-				mCHandler.handleRelationalOperators(loc, IASTBinaryExpression.op_lessThan, leftOp, rightOp);
-		final ExpressionResult greaterThan =
-				mCHandler.handleRelationalOperators(loc, IASTBinaryExpression.op_greaterThan, leftOp, rightOp);
+				mCEpressionTranslator.handleRelationalOperators(loc, IASTBinaryExpression.op_lessThan, leftOp, rightOp);
+		final ExpressionResult greaterThan = mCEpressionTranslator.handleRelationalOperators(loc,
+				IASTBinaryExpression.op_greaterThan, leftOp, rightOp);
 
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 				lessThan.getLrValue().getValue(), greaterThan.getLrValue().getValue());
@@ -1884,39 +1922,50 @@ public class StandardFunctionHandler {
 
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
+		final Statement st = createReachabilityAssert(loc);
+		return new ExpressionResult(Collections.singletonList(st), null);
+	}
+
+	/**
+	 * Create assert false or assume false statement for usage in reachability specifications, depending on the
+	 * settings. If we want to check reachability, an assert false will be generated. If not, (e.g., if we only want to
+	 * check memsafety), an assume false will be generated.
+	 */
+	private Statement createReachabilityAssert(final ILocation loc) {
 		final boolean checkSvcompErrorfunction = mSettings.checkSvcompErrorFunction();
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		Statement st;
-		if (checkSvcompErrorfunction || checkMemoryleakInMain) {
-			// TODO 2017-11-26 Matthias: Workaround for memcleanup property.
-			// Rationale: If we reach the SV-COMP error function (which has
-			// is similar to the abort function) memory was not deallocated.
-			// Proper solution: Check #valid array for all functions that
-			// do not return (e.g., also abort and exit). Depending on the
-			// discussion about the exact meaning of valid-memcleanup we
-			// need separate arrays for stack and heap.
-			// https://github.com/sosy-lab/sv-benchmarks/pull/1001
-			final Check check;
-			if (checkSvcompErrorfunction) {
-				if (checkMemoryleakInMain) {
-					check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK));
-				} else {
-					check = new Check(Spec.ERROR_FUNCTION);
-				}
+		if (!checkSvcompErrorfunction && !checkMemoryleakInMain) {
+			return new AssumeStatement(loc, falseLiteral);
+		}
+
+		// TODO 2017-11-26 Matthias: Workaround for memcleanup property.
+		// Rationale: If we reach the SV-COMP error function (which has
+		// is similar to the abort function) memory was not deallocated.
+		// Proper solution: Check #valid array for all functions that
+		// do not return (e.g., also abort and exit). Depending on the
+		// discussion about the exact meaning of valid-memcleanup we
+		// need separate arrays for stack and heap.
+		// https://github.com/sosy-lab/sv-benchmarks/pull/1001
+		final Check check;
+		if (checkSvcompErrorfunction) {
+			if (checkMemoryleakInMain) {
+				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK));
 			} else {
-				check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
-			}
-			st = new AssertStatement(loc, falseLiteral);
-			check.annotate(st);
-			if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {
-				new Overapprox("memtrack", loc).annotate(st);
+				check = new Check(Spec.ERROR_FUNCTION);
 			}
 		} else {
-			st = new AssumeStatement(loc, falseLiteral);
+			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
 		}
-		return new ExpressionResult(Collections.singletonList(st), null);
+		final Statement st = new AssertStatement(loc, new NamedAttribute[] {
+				new NamedAttribute(loc, "reach", new Expression[] { new StringLiteral(loc, check.toString()) }) },
+				falseLiteral);
+		check.annotate(st);
+		if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {
+			new Overapprox("memtrack", loc).annotate(st);
+		}
+		return st;
 	}
 
 	private static Result handleLtlStep(final IDispatcher main, final IASTFunctionCallExpression node,

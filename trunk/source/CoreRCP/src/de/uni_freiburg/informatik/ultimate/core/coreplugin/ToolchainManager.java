@@ -100,7 +100,10 @@ public class ToolchainManager {
 		if (toolchain == null) {
 			throw new IllegalArgumentException("toolchain");
 		}
-		if (!mActiveToolchains.remove(toolchain.getId(), toolchain)) {
+
+		final Toolchain removedTc = mActiveToolchains.remove(toolchain.getId());
+
+		if (removedTc != null && removedTc.getId() != toolchain.getId()) {
 			mLogger.warn("An concurrency error occured: Toolchain ID has changed during livecycle");
 		}
 		if (toolchain.getCurrentToolchainData() != null && toolchain.getCurrentToolchainData().getStorage() != null) {
