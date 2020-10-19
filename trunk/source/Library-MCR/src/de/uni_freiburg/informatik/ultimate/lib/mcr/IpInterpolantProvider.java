@@ -2,10 +2,11 @@ package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * IInterpolantProvider using DAG interpolation. To apply DAG interpolation, we create out own SSA based on the states.
@@ -70,60 +70,103 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	@Override
 	public <STATE> void addInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Map<STATE, IPredicate> states2Predicates) {
-		final List<STATE> topOrder = McrUtils.topSort(automaton, states2Predicates);
+		final List<List<STATE>> topOrder = getTopologicalHierachicalSort(automaton, states2Predicates);
 		final Map<IProgramVar, Term> initialVarMapping = new HashMap<>();
 		final Map<IProgramVar, Term> finalVarMapping = new HashMap<>();
-		final Map<STATE, Map<IProgramVar, Term>> stateVarMappings = new HashMap<>(topOrder.size());
+		final Map<STATE, Map<IProgramVar, Term>> stateVarMappings =
+				topOrder.stream().flatMap(List::stream).collect(Collectors.toMap(x -> x, x -> new HashMap<>()));
 		final List<Term> ssa = new ArrayList<>(topOrder.size() + 1);
-		final List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> transitions =
-				extractTransitions(automaton, states2Predicates, topOrder);
 		final Set<IProgramVar> vars =
 				states2Predicates.values().stream().flatMap(x -> x.getVars().stream()).collect(Collectors.toSet());
-		// TODO: Can we put "parallel" states together to reduce the length of the ssa?
-		for (final List<Triple<STATE, UnmodifiableTransFormula, STATE>> t : transitions) {
-			final List<Term> disjuncts = new ArrayList<>();
-			for (final Triple<STATE, UnmodifiableTransFormula, STATE> triple : t) {
-				UnmodifiableTransFormula tf = triple.getSecond();
-				final STATE pred = triple.getFirst();
-				final IPredicate prevPred = states2Predicates.get(pred);
-				final Map<IProgramVar, Term> inVarMapping;
-				if (prevPred != null) {
-					inVarMapping = initialVarMapping;
-					tf = addCondition(tf, prevPred, true);
-				} else {
-					inVarMapping = stateVarMappings.get(pred);
-				}
-				final STATE succ = triple.getThird();
-				final IPredicate succPred = states2Predicates.get(succ);
-				Map<IProgramVar, Term> outVarMapping;
-				if (succPred != null) {
-					outVarMapping = finalVarMapping;
-					tf = addCondition(tf, succPred, false);
-				} else {
-					outVarMapping = stateVarMappings.get(succ);
-					if (outVarMapping == null) {
-						outVarMapping = new HashMap<>();
-						stateVarMappings.put(succ, outVarMapping);
+		final Script script = mManagedScript.getScript();
+		final List<TransFormula> finalTransformulas = new ArrayList<>();
+		final List<Map<IProgramVar, Term>> finalInVarMappings = new ArrayList<>();
+		for (final List<STATE> states : topOrder) {
+			final List<Term> conjuncts = new ArrayList<>();
+			for (final STATE state : states) {
+				final List<TransFormula> transformulas = new ArrayList<>();
+				final List<Map<IProgramVar, Term>> inVarMappings = new ArrayList<>();
+				final Map<IProgramVar, Term> currentMapping = stateVarMappings.get(state);
+				for (final IncomingInternalTransition<LETTER, STATE> edge : automaton.internalPredecessors(state)) {
+					final STATE pred = edge.getPred();
+					final IPredicate predPredicate = states2Predicates.get(pred);
+					final UnmodifiableTransFormula tf = edge.getLetter().getTransformula();
+					if (predPredicate == null) {
+						transformulas.add(tf);
+						inVarMappings.add(stateVarMappings.get(pred));
+					} else {
+						transformulas.add(addCondition(tf, predPredicate, true));
+						inVarMappings.add(initialVarMapping);
 					}
 				}
-				disjuncts.add(substituteTransformula(tf, inVarMapping, outVarMapping, vars));
+				conjuncts.add(substituteTransformulas(transformulas, inVarMappings, currentMapping, vars));
+				for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
+					final IPredicate predicate = states2Predicates.get(edge.getSucc());
+					if (predicate == null) {
+						continue;
+					}
+					finalTransformulas.add(addCondition(edge.getLetter().getTransformula(), predicate, false));
+					finalInVarMappings.add(currentMapping);
+				}
 			}
-			ssa.add(SmtUtils.or(mManagedScript.getScript(), disjuncts));
+			ssa.add(SmtUtils.and(script, conjuncts));
 		}
-		final ScopedHashMap<Term, Term> mapping = new ScopedHashMap<>();
-		stateVarMappings.values().forEach(
-				x -> x.forEach((k, v) -> mapping.put(v, mManagedScript.constructFreshCopy(k.getTermVariable()))));
+		ssa.add(substituteTransformulas(finalTransformulas, finalInVarMappings, finalVarMapping, vars));
 		mLogger.info("Calculating interpolants for SSA");
 		final Term[] craigInterpolants = getInterpolantsForSsa(ssa);
 		mLogger.info("Finished");
+		final ScopedHashMap<Term, Term> mapping = new ScopedHashMap<>();
+		stateVarMappings.values().forEach(
+				x -> x.forEach((k, v) -> mapping.put(v, mManagedScript.constructFreshCopy(k.getTermVariable()))));
+		final Set<TermVariable> tvs = McrUtils.getTermVariables(vars);
 		for (int i = 0; i < craigInterpolants.length; i++) {
-			final STATE state = topOrder.get(i);
-			mapping.beginScope();
-			stateVarMappings.get(state).forEach((x, y) -> mapping.put(y, x.getTermVariable()));
-			final Term newTerm = renameAndAbstract(craigInterpolants[i], mapping, vars);
-			states2Predicates.put(state, mPredicateUnifier.getOrConstructPredicate(newTerm));
-			mapping.endScope();
+			for (final STATE state : topOrder.get(i)) {
+				mapping.beginScope();
+				stateVarMappings.get(state).forEach((k, v) -> mapping.put(v, k.getTermVariable()));
+				final Term newTerm = renameAndAbstract(craigInterpolants[i], mapping, tvs);
+				states2Predicates.put(state, mPredicateUnifier.getOrConstructPredicate(newTerm));
+				mapping.endScope();
+			}
 		}
+	}
+
+	private <STATE> List<List<STATE>> getTopologicalHierachicalSort(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final Map<STATE, IPredicate> states2Predicates) {
+		final List<List<STATE>> result = new ArrayList<>();
+		List<STATE> currentStates = new ArrayList<>();
+		final Map<STATE, Set<STATE>> predecessors = new HashMap<>();
+		for (final STATE state : automaton.getStates()) {
+			if (states2Predicates.containsKey(state)) {
+				continue;
+			}
+			final Set<STATE> preds = new HashSet<>();
+			for (final IncomingInternalTransition<LETTER, STATE> edge : automaton.internalPredecessors(state)) {
+				final STATE pred = edge.getPred();
+				if (!states2Predicates.containsKey(pred)) {
+					preds.add(pred);
+				}
+			}
+			if (preds.isEmpty()) {
+				currentStates.add(state);
+			} else {
+				predecessors.put(state, preds);
+			}
+		}
+		while (!currentStates.isEmpty()) {
+			final List<STATE> newStates = new ArrayList<>();
+			result.add(currentStates);
+			for (final STATE state : currentStates) {
+				predecessors.remove(state);
+				for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
+					final Set<STATE> succs = predecessors.get(edge.getSucc());
+					if (succs != null && succs.remove(state) && succs.isEmpty()) {
+						newStates.add(edge.getSucc());
+					}
+				}
+			}
+			currentStates = newStates;
+		}
+		return result;
 	}
 
 	private UnmodifiableTransFormula addCondition(final UnmodifiableTransFormula tf, final IPredicate pred,
@@ -137,55 +180,52 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 				mXnfConversionTechnique, mSimplificationTechnique, tfs);
 	}
 
-	private <STATE> List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> extractTransitions(
-			final INestedWordAutomaton<LETTER, STATE> automaton, final Map<STATE, IPredicate> stateMap,
-			final List<STATE> topOrder) {
-		final List<List<Triple<STATE, UnmodifiableTransFormula, STATE>>> result = new ArrayList<>(topOrder.size() + 1);
-		final List<Triple<STATE, UnmodifiableTransFormula, STATE>> finalTransitions = new ArrayList<>();
-		for (final STATE state : topOrder) {
-			final List<Triple<STATE, UnmodifiableTransFormula, STATE>> currentTransitions = new ArrayList<>();
-			for (final IncomingInternalTransition<LETTER, STATE> edge : automaton.internalPredecessors(state)) {
-				currentTransitions.add(new Triple<>(edge.getPred(), edge.getLetter().getTransformula(), state));
+	private Term substituteTransformulas(final List<TransFormula> tfs, final List<Map<IProgramVar, Term>> inVarMappings,
+			final Map<IProgramVar, Term> outVarMapping, final Set<IProgramVar> vars) {
+		// Calculate all unassigned variables, where the in vars are equal for all transformulas
+		final Set<IProgramVar> assignedVars =
+				tfs.stream().flatMap(x -> x.getAssignedVars().stream()).collect(Collectors.toSet());
+		final Set<IProgramVar> equalVars = new HashSet<>();
+		for (final IProgramVar var : vars) {
+			if (!assignedVars.contains(var)
+					&& inVarMappings.stream().map(x -> x.get(var)).distinct().limit(2).count() < 2) {
+				equalVars.add(var);
 			}
-			result.add(currentTransitions);
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
-				final STATE succ = edge.getSucc();
-				if (stateMap.containsKey(succ)) {
-					finalTransitions.add(new Triple<>(state, edge.getLetter().getTransformula(), succ));
+		}
+		final List<Term> disjuncts = new ArrayList<>(tfs.size());
+		final Script script = mManagedScript.getScript();
+		for (int i = 0; i < tfs.size(); i++) {
+			final Map<Term, Term> mapping = new HashMap<>();
+			final List<Term> conjuncts = new ArrayList<>();
+			final TransFormula tf = tfs.get(i);
+			final Map<IProgramVar, Term> inVarMapping = inVarMappings.get(i);
+			for (final IProgramVar var : vars) {
+				final Term inTerm = getOrConstructConstant(var, inVarMapping);
+				final Term outTerm;
+				if (equalVars.contains(var)) {
+					// If var is mapped to the same term for all predecessors, we can just use inTerm as outTerm
+					outTerm = inTerm;
+					outVarMapping.put(var, outTerm);
+				} else {
+					// Otherwise use a fresh constant as outTerm (and add an equality if not assigned)
+					outTerm = getOrConstructConstant(var, outVarMapping);
+					if (!tf.getAssignedVars().contains(var)) {
+						conjuncts.add(SmtUtils.binaryEquality(script, outTerm, inTerm));
+					}
+				}
+				final Term inVar = tf.getInVars().get(var);
+				if (inVar != null) {
+					mapping.put(inVar, inTerm);
+				}
+				final Term outVar = tf.getOutVars().get(var);
+				if (outVar != null) {
+					mapping.put(outVar, outTerm);
 				}
 			}
+			conjuncts.add(renameAndAbstract(tf.getFormula(), mapping, Collections.emptySet()));
+			disjuncts.add(SmtUtils.and(script, conjuncts));
 		}
-		result.add(finalTransitions);
-		return result;
-	}
-
-	private Term substituteTransformula(final TransFormula tf, final Map<IProgramVar, Term> inVarMapping,
-			final Map<IProgramVar, Term> outVarMapping, final Set<IProgramVar> vars) {
-		final Map<Term, Term> mapping = new HashMap<>();
-		final List<Term> conjuncts = new ArrayList<>();
-		final Script script = mManagedScript.getScript();
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			final IProgramVar var = entry.getKey();
-			if (vars.contains(var)) {
-				mapping.put(entry.getValue(), getOrConstructConstant(var, inVarMapping));
-			}
-		}
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			final IProgramVar var = entry.getKey();
-			if (vars.contains(var)) {
-				mapping.put(entry.getValue(), getOrConstructConstant(var, outVarMapping));
-			}
-		}
-		for (final IProgramVar var : vars) {
-			if (!tf.getAssignedVars().contains(var)) {
-				final Term inTerm = getOrConstructConstant(var, inVarMapping);
-				final Term outTerm = getOrConstructConstant(var, outVarMapping);
-				// TODO: If all predecessors have the same var, this can be avoided (and the same used again instead)
-				conjuncts.add(SmtUtils.binaryEquality(script, outTerm, inTerm));
-			}
-		}
-		conjuncts.add(renameAndAbstract(tf.getFormula(), mapping, vars));
-		return SmtUtils.and(script, conjuncts);
+		return SmtUtils.or(script, disjuncts);
 	}
 
 	private Term getOrConstructConstant(final IProgramVar var, final Map<IProgramVar, Term> mapping) {
@@ -200,10 +240,12 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		return result;
 	}
 
-	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<IProgramVar> varsToKeep) {
+	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<TermVariable> varsToKeep) {
 		final Term substituted = new SubstitutionWithLocalSimplification(mManagedScript, mapping).transform(term);
-		return McrUtils.abstractVariables(substituted, McrUtils.getTermVariables(varsToKeep), QuantifiedFormula.EXISTS,
-				mServices, mLogger, mManagedScript, mSimplificationTechnique, mXnfConversionTechnique);
+		return McrUtils.abstractVariables(
+				SmtUtils.simplify(mManagedScript, substituted, mServices, mSimplificationTechnique), varsToKeep,
+				QuantifiedFormula.EXISTS, mServices, mLogger, mManagedScript, mSimplificationTechnique,
+				mXnfConversionTechnique);
 	}
 
 	private Term[] getInterpolantsForSsa(final List<Term> ssa) {
