@@ -17,6 +17,8 @@
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 			<repository location="https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-R20200831200620"/>
 			<unit id="org.jdom" version="0.0.0"/>
+			<unit id="org.apache.log4j" version="0.0.0"/>
+			<unit id="org.apache.logging.log4j" version="0.0.0"/>
 			<unit id="org.apache.xerces" version="0.0.0"/>
 			<unit id="org.apache.batik.anim" version="1.9.1.v20190730-1743"/>
 			<unit id="org.apache.batik.dom" version="1.9.1.v20190730-1743"/>
