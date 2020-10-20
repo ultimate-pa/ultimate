@@ -2446,9 +2446,14 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return true iff this number is the binary representation of a bitvector whose two's complement representation is
-	 *         -1 (i.e., minus one).
+	 * @return true iff this number is the binary representation of a bitvector
+	 *         whose two's complement representation is -1 (i.e., minus one).
 	 */
+	// <pre>
+	// TODO #bvineq 20201017 Matthias:
+	// The name of this method might be misleading.
+	// </pre>
+
 	public static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
 		final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
 		final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
