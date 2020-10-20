@@ -857,6 +857,54 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
+	public void tirExistsStrict() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
+		final String inputSTR = "(exists ((x Int)) (and (> x lo) (< x hi)))";
+		final String expectedResult = "(< (+ lo 1) hi)";
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirExistsNonstrict() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
+		final String inputSTR = "(exists ((x Int)) (and (>= x lo) (<= x hi)))";
+		final String expectedResult = "(<= lo hi)";
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirExistsMixed() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
+		final String inputSTR = "(exists ((x Int)) (and (> x lo) (<= x hi)))";
+		final String expectedResult = "(< lo hi)";
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirForallStrict() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
+		final String inputSTR = "(forall ((x Int)) (or (> x lo) (< x hi)))";
+		final String expectedResult = "(< lo hi)";
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirForallNonstrict() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
+		final String inputSTR = "(forall ((x Int)) (or (>= x lo) (<= x hi)))";
+		final String expectedResult = "(<= lo (+ hi 1))";
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirForallMixed() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
+		final String inputSTR = "(forall ((x Int)) (or (> x lo) (<= x hi)))";
+		final String expectedResult = "(<= lo hi)";
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void greaterTIR() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
