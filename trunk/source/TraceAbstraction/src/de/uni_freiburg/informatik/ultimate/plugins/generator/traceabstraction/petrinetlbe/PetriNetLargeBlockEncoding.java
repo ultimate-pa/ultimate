@@ -209,7 +209,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 				// If more transitions to come, set the intermediate state to null
 				if (j < newTransitions.size()) {
 					newValues.add(null);
-					newBranchEncoders.add(null);
+					newBranchEncoders.add(oldBranchEncoders[i]);
 				}
 			}
 
