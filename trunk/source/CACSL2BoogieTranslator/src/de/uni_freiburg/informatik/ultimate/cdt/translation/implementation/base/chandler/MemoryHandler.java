@@ -79,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -113,7 +112,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -1910,29 +1908,9 @@ public class MemoryHandler {
 			swrite.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeWrite, inPtr, procName));
 		}
 
-		final boolean floating2bitvectorTransformationNeeded = mMemoryModel instanceof MemoryModel_SingleBitprecise
-				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE);
-
-		final Expression nonFPBVReturnValue = ExpressionFactory.constructIdentifierExpression(loc,
+		final Expression returnValue = ExpressionFactory.constructIdentifierExpression(loc,
 				mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), "#value",
 				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
-		final CPrimitives cprimitive;
-		final Expression returnValue;
-		if (floating2bitvectorTransformationNeeded) {
-			cprimitive = rda.getPrimitives().iterator().next();
-			if (mSettings.useFpToIeeeBvExtension()) {
-				returnValue = mExpressionTranslation.transformFloatToBitvector(loc, nonFPBVReturnValue, cprimitive);
-			} else {
-				returnValue = ExpressionFactory.constructIdentifierExpression(loc,
-						mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), "#valueAsBitvector",
-						new DeclarationInformation(StorageClass.QUANTIFIED, null));
-			}
-		} else {
-			cprimitive = null;
-			returnValue = ExpressionFactory.constructIdentifierExpression(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), "#value",
-					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
-		}
 
 		final boolean useSelectInsteadOfStore = writeMode == HeapWriteMode.SELECT;
 
@@ -1973,31 +1951,8 @@ public class MemoryHandler {
 		final Set<VariableLHS> modifiedGlobals = useSelectInsteadOfStore ? Collections.emptySet()
 				: heapDataArrays.stream().map(hda -> hda.getVariableLHS()).collect(Collectors.toSet());
 
-		if (floating2bitvectorTransformationNeeded && !mSettings.useFpToIeeeBvExtension()) {
-			final Expression returnValueAsBitvector = ExpressionFactory.constructIdentifierExpression(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), "#valueAsBitvector",
-					new DeclarationInformation(StorageClass.QUANTIFIED, null));
-
-			final Expression transformedToFloat =
-					mExpressionTranslation.transformBitvectorToFloat(loc, returnValueAsBitvector, cprimitive);
-			final Expression inputValue =
-					ExpressionFactory.constructIdentifierExpression(loc, (BoogieType) transformedToFloat.getType(),
-							"#value", new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
-
-			final Expression eq =
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, transformedToFloat, inputValue);
-			conjuncts.add(eq);
-			final Expression conjunction = ExpressionFactory.and(loc, conjuncts);
-			final ASTType type = ((TypeHandler) mTypeHandler).byteSize2AstType(loc, cprimitive.getPrimitiveCategory(),
-					mTypeSizes.getSize(cprimitive));
-			final VarList[] parameters = new VarList[] { new VarList(loc, new String[] { "#valueAsBitvector" }, type) };
-			final QuantifierExpression qe =
-					new QuantifierExpression(loc, false, new String[0], parameters, new Attribute[0], conjunction);
-			swrite.add(mProcedureManager.constructEnsuresSpecification(loc, false, qe, modifiedGlobals));
-		} else {
-			swrite.add(mProcedureManager.constructEnsuresSpecification(loc, false,
-					ExpressionFactory.and(loc, conjuncts), modifiedGlobals));
-		}
+		swrite.add(mProcedureManager.constructEnsuresSpecification(loc, false, ExpressionFactory.and(loc, conjuncts),
+				modifiedGlobals));
 
 		mProcedureManager.addSpecificationsToCurrentProcedure(swrite);
 		mProcedureManager.endCustomProcedure(main, procName);
@@ -2095,11 +2050,12 @@ public class MemoryHandler {
 			dataFromHeap = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks));
 		}
 
-		if (mMemoryModel instanceof MemoryModel_SingleBitprecise
-				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE)) {
-			final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
-			dataFromHeap = mExpressionTranslation.transformBitvectorToFloat(loc, dataFromHeap, cprimitive);
-		}
+		// TODO: Remove this commented block if it is clear that no SMT_FLOAT is needed here
+		// if (mMemoryModel instanceof MemoryModel_SingleBitprecise
+		// && rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE)) {
+		// final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
+		// dataFromHeap = mExpressionTranslation.transformBitvectorToFloat(loc, dataFromHeap, cprimitive);
+		// }
 
 		final Expression valueExpr = ExpressionFactory.constructIdentifierExpression(loc,
 				mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), returnValue,
