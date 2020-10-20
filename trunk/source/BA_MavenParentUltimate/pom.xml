@@ -322,9 +322,7 @@
 			on OutOfMemory exceptions -->
 		<manualtest-argline>-Xmx4g </manualtest-argline>
 		<coverage-argline>-Xmx4g -ea</coverage-argline>
-
 	</properties>
-
 
 	<build>
 		<plugins>
@@ -415,7 +413,6 @@
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>
-
 		</plugins>
 
 		<pluginManagement>
@@ -545,15 +542,12 @@
 		<module>../TreeAutomizer</module>
 		<module>../UltimateCLI</module>
 		<module>../UltimateDeltaDebugger</module>
-
 		<module>../WitnessParser</module>
 		<module>../WitnessPrinter</module>
 		<module>../UltimateEliminatorController</module>
-
 	</modules>
 
 	<profiles>
-
 		<profile>
 			<id>jdk_gt_1.8</id>
 			<!-- Java > 1.8 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
@@ -566,12 +560,10 @@
 					the build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url> 
 					The user/password is managed by DD The original URLs are <url>http://download.eclipse.org/releases/mars/</url> 
 					<url>http://download.eclipse.org/releases/neon/</url> <url>http://download.eclipse.org/releases/2018-09/</url> -->
-
 				<repository>
 					<id>eclipse-4.17</id>
 					<layout>p2</layout>
 					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-4.17/</url>
-
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -581,7 +573,6 @@
 					<id>cdt-10</id>
 					<layout>p2</layout>
 					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/cdt-10.0/</url>
-
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -598,15 +589,13 @@
 			</repositories>
 		</profile>
 
-
 		<profile>
+			<!-- NOT supported JDK version <= 1.8. -->
 			<id>jdk_leq_1.8</id>
 			<!-- Java < 1.9 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
 			<activation>
 				<jdk>[,1.9)</jdk>
 			</activation>
-
-			<!-- Unsupported JDK version <= 1.8. -->
 		</profile>
 
 		<profile>
@@ -632,6 +621,7 @@
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>true</trimStackTrace>
 							<redirectTestOutputToFile>true</redirectTestOutputToFile>
+							
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -641,7 +631,7 @@
 
 							<!-- Use this for global timeouts per class -->
 							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-
+							
 							<includes>
 								<include>**/*.java</include>
 							</includes>
@@ -677,7 +667,6 @@
 			<modules>
 				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
-
 				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../BoogiePreprocessorTest</module>
@@ -776,7 +765,6 @@
 			<modules>
 				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
-
 				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../BoogiePreprocessorTest</module>
@@ -871,7 +859,6 @@
 				<module>../SpaceExParserTest</module>
 				<module>../PEAtoBoogieTest</module>
 
-
 				<!-- UltimateRegressionTest contains system tests that are relatively 
 					fast -->
 				<module>../UltimateRegressionTest</module>
@@ -892,16 +879,12 @@
 				<module>../BA_FeatureUltimateDebug</module>
 				<module>../BA_FeatureUltimateCommandLine</module>
 				<module>../BA_FeatureUltimateDeltaDebugger</module>
-
 				<module>../BA_FeatureUltimateWebbridge</module>
-
 				<module>../WebInterface</module>
 				<module>../Website</module>
 				<module>../WebUltimateBridge</module>
-
 				<module>../BA_SiteRepository</module>
 				<module>../BA_Website</module>
-
 			</modules>
 		</profile>
 	</profiles>
