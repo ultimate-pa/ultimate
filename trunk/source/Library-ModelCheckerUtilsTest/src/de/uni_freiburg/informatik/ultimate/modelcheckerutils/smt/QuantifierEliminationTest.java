@@ -477,7 +477,7 @@ public class QuantifierEliminationTest {
 	public void derIntPoly1Exists() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(exists ((x Int)) (and (= (* x a a a 2) t) (= (* x x x) 8)))";
-		final String expectedResultAsString = "(let ((.cse0 (= 0 a))) (or (and (= 0 (mod t (* 2 a a a))) (not .cse0) (= 8 (let ((.cse1 (div t 2 a a a))) (* .cse1 .cse1 .cse1)))) (and .cse0 (= 0 t))))";
+		final String expectedResultAsString = "(let ((.cse2 (div t 2)) (.cse1 (= (mod t 2) 0)) (.cse0 (= a 0))) (or (and .cse0 .cse1 (= .cse2 0)) (let ((.cse4 (* a a a))) (and (= (let ((.cse3 (div .cse2 .cse4))) (* .cse3 .cse3 .cse3)) 8) (= (mod .cse2 .cse4) 0) .cse1 (not .cse0)))))";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
@@ -486,7 +486,7 @@ public class QuantifierEliminationTest {
 	public void derIntPoly1Forall() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(forall ((x Int)) (or (not (= (* x a a a 2) t)) (not (= (* x x x) 8))))";
-		final String expectedResultAsString = "(let ((.cse1 (= 0 a))) (and (or (not (= 0 (mod t (* 2 a a a)))) (not (= 8 (let ((.cse0 (div t 2 a a a))) (* .cse0 .cse0 .cse0)))) .cse1) (or (not .cse1) (not (= 0 t)))))";
+		final String expectedResultAsString = "(let ((.cse2 (= a 0)) (.cse0 (div t 2)) (.cse1 (not (= (mod t 2) 0)))) (and (or (not (= .cse0 0)) .cse1 (not .cse2)) (let ((.cse3 (* a a a))) (or (not (= (mod .cse0 .cse3) 0)) .cse2 (not (= (let ((.cse4 (div .cse0 .cse3))) (* .cse4 .cse4 .cse4)) 8)) .cse1))))";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
