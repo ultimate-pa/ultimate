@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubn
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -67,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @param <P>
  *            The type of places in the net.
  */
-public class LiptonReduction<L extends IIcfgTransition<?>, P> {
+public class LiptonReduction<L, P> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
