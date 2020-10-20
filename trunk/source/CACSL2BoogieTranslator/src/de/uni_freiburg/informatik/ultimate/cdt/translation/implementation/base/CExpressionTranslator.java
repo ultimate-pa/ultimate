@@ -126,6 +126,7 @@ public class CExpressionTranslator {
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		left = mExprResultTransformer.rexBoolToInt(left, loc);
 		right = mExprResultTransformer.rexBoolToInt(right, loc);
+
 		CType lType = left.getLrValue().getCType().getUnderlyingType();
 		CType rType = right.getLrValue().getCType().getUnderlyingType();
 
@@ -152,10 +153,13 @@ public class CExpressionTranslator {
 					mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 			left = newOps.getFirst();
 			right = newOps.getSecond();
+			lType = left.getLrValue().getCType().getUnderlyingType();
+			rType = right.getLrValue().getCType().getUnderlyingType();
+			assert lType.isSmtFloat() && rType.isSmtFloat() || !lType.isSmtFloat() && !rType.isSmtFloat();
+
 			result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			expr = mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left.getLrValue().getValue(),
-					(CPrimitive) left.getLrValue().getCType().getUnderlyingType(), right.getLrValue().getValue(),
-					(CPrimitive) right.getLrValue().getCType().getUnderlyingType());
+					(CPrimitive) lType, right.getLrValue().getValue(), (CPrimitive) rType);
 		} else if (lType instanceof CPointer && rType instanceof CPointer) {
 			final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals,
 					left.getLrValue().getValue(), right.getLrValue().getValue(), SFO.POINTER_BASE);
@@ -200,21 +204,23 @@ public class CExpressionTranslator {
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
 	 *
+	 * @param lhs
+	 *            is non-null iff we haven an assignment
 	 */
 	public ExpressionResult handleAdditiveOperation(final ILocation loc, final int op, ExpressionResult left,
 			ExpressionResult right, final IASTNode hook) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 
-		CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		CType lType = left.getUnderlyingCType();
+		CType rType = right.getUnderlyingCType();
 
 		if (lType instanceof CArray && rType.isArithmeticType()) {
 			// arrays decay to pointers in this case
 			assert !(((CArray) lType).getBound().getCType() instanceof CArray) : "TODO: think about this case";
 			final CType valueType = ((CArray) lType).getValueType().getUnderlyingType();
 			left = mExprResultTransformer.performImplicitConversion(left, new CPointer(valueType), loc);
-			lType = left.getLrValue().getCType().getUnderlyingType();
+			lType = left.getUnderlyingCType();
 		}
 
 		final ExpressionResultBuilder builder;
@@ -225,14 +231,20 @@ public class CExpressionTranslator {
 					mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 			left = newOps.getFirst();
 			right = newOps.getSecond();
+			lType = left.getUnderlyingCType();
+			rType = right.getUnderlyingCType();
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
-			typeOfResult = left.getLrValue().getCType();
-			assert typeOfResult.equals(right.getLrValue().getCType());
+			if (lType.isFloatingType()) {
+				typeOfResult = ((CPrimitive) left.getCType()).getSmtVariant();
+			} else {
+				typeOfResult = lType;
+			}
 
 			addIntegerBoundsCheck(loc, builder, (CPrimitive) typeOfResult, op, hook, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
+
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.getLrValue().getValue(),
-					(CPrimitive) typeOfResult, right.getLrValue().getValue(), (CPrimitive) typeOfResult);
+					(CPrimitive) lType, right.getLrValue().getValue(), (CPrimitive) rType);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.getLrValue().getCType();
 			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
@@ -285,8 +297,15 @@ public class CExpressionTranslator {
 		} else {
 			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
 		}
+
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
-		builder.setLrValue(rval);
+
+		if (lType.isArithmeticType() && rType.isArithmeticType()
+				&& (lType.isFloatingType() || rType.isFloatingType())) {
+			builder.addAllIncludingLrValue(mExpressionTranslation.convertToBvFloatIfNecessary(rval, loc));
+		} else {
+			builder.setLrValue(rval);
+		}
 
 		final ExpressionResult intermediateResult;
 		if (left instanceof StringLiteralResult) {
@@ -326,7 +345,7 @@ public class CExpressionTranslator {
 	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op, ExpressionResult operand,
 			final IASTNode hook) {
 		assert operand.getLrValue() instanceof RValue : "no RValue";
-		final CType inputType = operand.getLrValue().getCType().getUnderlyingType();
+		final CType inputType = operand.getUnderlyingCType();
 
 		switch (op) {
 		case IASTUnaryExpression.op_not: {
@@ -379,14 +398,25 @@ public class CExpressionTranslator {
 			}
 			operand = mExprResultTransformer.rexBoolToInt(operand, loc);
 			operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
-			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
+			final CPrimitive opType = (CPrimitive) operand.getLrValue().getCType();
 			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
-			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
-				addIntegerBoundsCheck(loc, result, resultType, op, hook, operand.getLrValue().getValue());
+			if (op == IASTUnaryExpression.op_minus && opType.isIntegerType()) {
+				addIntegerBoundsCheck(loc, result, opType, op, hook, operand.getLrValue().getValue());
 			}
-			final Expression bwexpr = mExpressionTranslation.constructUnaryExpression(loc, op,
-					operand.getLrValue().getValue(), resultType);
+			final Expression bwexpr =
+					mExpressionTranslation.constructUnaryExpression(loc, op, operand.getLrValue().getValue(), opType);
+			// TODO: bitvec procedure here
+			final CPrimitive resultType;
+			if (opType.isFloatingType()) {
+				resultType = opType.getSmtVariant();
+			} else {
+				resultType = opType;
+			}
 			final RValue rval = new RValue(bwexpr, resultType, false);
+			if (opType.isFloatingType()) {
+				return result.addAllIncludingLrValue(mExpressionTranslation.convertToBvFloatIfNecessary(rval, loc))
+						.build();
+			}
 			return result.setLrValue(rval).build();
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
@@ -446,6 +476,8 @@ public class CExpressionTranslator {
 	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
 	 * needed).
 	 *
+	 * @param lhs
+	 *            is non-null iff we haven an assignment
 	 */
 	public ExpressionResult handleMultiplicativeOperation(final ILocation loc, final int op, ExpressionResult left,
 			ExpressionResult right, final IASTNode hook) {
@@ -466,13 +498,13 @@ public class CExpressionTranslator {
 		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType().getUnderlyingType();
 		assert typeOfResult.equals(right.getLrValue().getCType().getUnderlyingType());
 
-		final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 		switch (op) {
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign: {
-			addIntegerBoundsCheck(loc, result, typeOfResult, op, hook, left.getLrValue().getValue(),
+			addIntegerBoundsCheck(loc, builder, typeOfResult, op, hook, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
 			break;
 		}
@@ -489,6 +521,13 @@ public class CExpressionTranslator {
 				left.getLrValue().getValue(), typeOfResult, right.getLrValue().getValue(), typeOfResult);
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
 
+		if (lType.isArithmeticType() && rType.isArithmeticType()
+				&& (lType.isFloatingType() || rType.isFloatingType())) {
+			builder.addAllIncludingLrValue(mExpressionTranslation.convertToBvFloatIfNecessary(rval, loc));
+		} else {
+			builder.setLrValue(rval);
+		}
+
 		switch (op) {
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide:
@@ -496,7 +535,7 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_moduloAssign: {
-			return result.setLrValue(rval).build();
+			return builder.build();
 		}
 		default:
 			throw new AssertionError("no multiplicative " + op);
@@ -600,23 +639,26 @@ public class CExpressionTranslator {
 	 *            {@link ExpressionResult} containing <code>LV := t~post + 1</code>. Usually, this is an invocation of
 	 *            {@link CHandler#makeAssignment(ILocation, LRValue, java.util.Collection, ExpressionResult, IASTNode)}.
 	 */
-	public Result handlePostfixIncrementAndDecrement(final ILocation loc, final int postfixOp, ExpressionResult exprRes,
-			final IASTNode hook, final Function<ExpressionResult, ExpressionResult> funMakeAssignment) {
+	public Result handlePostfixIncrementAndDecrement(final ILocation loc, final int postfixOp,
+			final ExpressionResult exprRes, final IASTNode hook,
+			final Function<ExpressionResult, ExpressionResult> funMakeAssignment) {
 		assert !exprRes.getLrValue().isBoogieBool();
-		exprRes = mExprResultTransformer.switchToRValue(exprRes, loc, hook);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllIncludingLrValue(exprRes);
+		final LRValue originalLValue = exprRes.getLrValue();
+
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(mExprResultTransformer.switchToRValue(exprRes, loc, hook));
 
 		// In this case we need a temporary variable for the old value
 		final AuxVarInfo auxvar =
-				mAuxVarInfoBuilder.constructAuxVarInfo(loc, exprRes.getLrValue().getCType(), SFO.AUXVAR.POST_MOD);
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, builder.getLrValue().getCType(), SFO.AUXVAR.POST_MOD);
 		builder.addDeclaration(auxvar.getVarDec());
 		builder.addAuxVar(auxvar);
 
 		// assign the old value to the temporary variable
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
-		final Expression[] oldValue = new Expression[] { exprRes.getLrValue().getValue() };
+		final Expression[] oldValue = new Expression[] { builder.getLrValue().getValue() };
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, oldValue));
-		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		final CType oType = builder.getLrValue().getUnderlyingType();
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
 
 		final int op;
@@ -625,16 +667,17 @@ public class CExpressionTranslator {
 		} else if (postfixOp == IASTUnaryExpression.op_postFixDecr) {
 			op = IASTBinaryExpression.op_minus;
 		} else {
-			throw new AssertionError("no postfix");
+			throw new AssertionError("no postfix operator");
 		}
 
 		// in-/decremented value
-		final Expression valueXcremented =
-				constructXcrementedValue(loc, builder, oType, op, tmpRValue.getValue(), hook);
+		final Expression valueXcremented = constructXcrementedValue(loc, builder, op, tmpRValue, hook);
 
-		builder.setOrResetLrValue(new RValue(valueXcremented, oType, false, false));
-		final ExpressionResult assign = funMakeAssignment.apply(builder.build());
+		final ExpressionResult incrementedValue = builder.setOrResetLrValue(new RValue(valueXcremented, oType)).build();
+		final ExpressionResult convertedValue = mExprResultTransformer.convertIfNecessary(loc, incrementedValue,
+				(CPrimitive) originalLValue.getUnderlyingType());
 
+		final ExpressionResult assign = funMakeAssignment.apply(convertedValue);
 		return new ExpressionResultBuilder().addAllExceptLrValue(assign).setLrValue(tmpRValue).build();
 	}
 
@@ -672,8 +715,7 @@ public class CExpressionTranslator {
 
 		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		// in-/decremented value
-		final Expression valueXcremented =
-				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue(), hook);
+		final Expression valueXcremented = constructXcrementedValue(loc, builder, op, exprRes.getLrValue(), hook);
 
 		// assign the old value to the temporary variable
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
@@ -695,18 +737,18 @@ public class CExpressionTranslator {
 	 */
 	public ExpressionResult handleConditionalOperator(final ILocation loc, final ExpressionResult opConditionRaw,
 			final ExpressionResult opPositiveRaw, final ExpressionResult opNegativeRaw, final IASTNode hook) {
-	
+
 		final ExpressionResult opCondition = mExprResultTransformer.rexIntToBool(opConditionRaw, loc);
 		ExpressionResult opPositive = mExprResultTransformer.rexBoolToInt(opPositiveRaw, loc);
 		ExpressionResult opNegative = mExprResultTransformer.rexBoolToInt(opNegativeRaw, loc);
-	
+
 		/*
 		 * C11 6.5.15.2 The first operand shall have scalar type.
 		 */
 		if (!opCondition.getLrValue().getCType().isScalarType()) {
 			throw new IncorrectSyntaxException(loc, "first operand of a conditional operator must have scalar type");
 		}
-	
+
 		/*
 		 * C11 6.5.15.3 One of the following shall hold for the second and third operands: <li> both operands have
 		 * arithmetic type; <li> both operands have the same structure or union type; <li> both operands have void type;
@@ -714,7 +756,7 @@ public class CExpressionTranslator {
 		 * a pointer and the other is a null pointer constant; or <li> one operand is a pointer to an object type and
 		 * the other is a pointer to a qualified or unqualified version of void.
 		 */
-	
+
 		/*
 		 * C11 6.5.15.4 The first operand is evaluated; there is a sequence point between its evaluation and the
 		 * evaluation of the second or third operand (whichever is evaluated). The second operand is evaluated only if
@@ -725,14 +767,14 @@ public class CExpressionTranslator {
 		 * --> we translate this by a Boogie if-statement, such that the side effects of the evaluation of each C
 		 * expression go into the respective branch of the Boogie if statement.
 		 */
-	
+
 		/*
 		 * C11 6.5.15.5 If both the second and third operands have arithmetic type, the result type that would be
 		 * determined by the usual arithmetic conversions, were they applied to those two operands, is the type of the
 		 * result. If both the operands have structure or union type, the result has that type. If both operands have
 		 * void type, the result has void type.
 		 */
-	
+
 		/*
 		 * C11 6.5.15.6 If both the second and third operands are pointers or one is a null pointer constant and the
 		 * other is a pointer, the result type is a pointer to a type qualified with all the type qualifiers of the
@@ -745,7 +787,7 @@ public class CExpressionTranslator {
 		 * TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
 		 * currently.
 		 */
-	
+
 		/*
 		 * Treatment of the cases where one or both branches have void type and the LRValue of the dispatch result of
 		 * the branch is is null: We give a dummy LRValue, whose BoogieType is a type error so it cannot be used
@@ -765,7 +807,7 @@ public class CExpressionTranslator {
 				thirdArgIsVoid = true;
 			}
 		}
-	
+
 		final CType resultCType;
 		if (opPositive.getLrValue().getCType().isArithmeticType()
 				&& opNegative.getLrValue().getCType().isArithmeticType()) {
@@ -803,7 +845,7 @@ public class CExpressionTranslator {
 			} else {
 				resultCType = opNegative.getLrValue().getCType();
 			}
-	
+
 		} else if (opNegative.getLrValue().isNullPointerConstant()
 				|| opNegative.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 			// TODO 2018-11-17 Matthias: I could not find a reference in the C standard that
@@ -837,18 +879,18 @@ public class CExpressionTranslator {
 			// default case: the types of the operands (should) match --> we choose one of them as the result CType
 			resultCType = opPositive.getLrValue().getCType();
 		}
-	
+
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-	
+
 		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary
 		// /*
 		// * the value of this aux var may never be used outside the translation of this conditional operator.
 		// * Using the aux var in the hope of detecting such errors easier. Otherwise one could just not make the
 		// * assignment.
 		// */
-	
+
 		resultBuilder.addAllExceptLrValue(opCondition);
-	
+
 		// auxvar that will hold the result of the ite expression
 		final AuxVarInfo auxvar;
 		final Boolean isBranchDead;
@@ -857,7 +899,7 @@ public class CExpressionTranslator {
 		} else {
 			isBranchDead = null;
 		}
-	
+
 		if (resultCType.isVoidType() || isBranchDead != null) {
 			/* in this case we will not make any assignment, so we do not need the aux var */
 			auxvar = null;
@@ -866,7 +908,7 @@ public class CExpressionTranslator {
 			resultBuilder.addDeclaration(auxvar.getVarDec());
 			resultBuilder.addAuxVar(auxvar);
 		}
-	
+
 		// collect side effects of "then" branch
 		// collect side effects of "else" branch
 		if (isBranchDead == null) {
@@ -882,11 +924,11 @@ public class CExpressionTranslator {
 			}
 			resultBuilder.addStatement(rtrStatement);
 		} else if (isBranchDead) {
-			assignAuxVar(loc, opPositive, resultBuilder, auxvar, null, secondArgIsVoid);
+			resultBuilder.addAllExceptLrValue(opPositive);
 		} else {
-			assignAuxVar(loc, opNegative, resultBuilder, auxvar, null, thirdArgIsVoid);
+			resultBuilder.addAllExceptLrValue(opNegative);
 		}
-	
+
 		if (isBranchDead == null) {
 			if (!resultCType.isVoidType()) {
 				/* the result has a value only if the result type is not void.. */
@@ -901,7 +943,7 @@ public class CExpressionTranslator {
 			// the then branch is dead
 			resultBuilder.setLrValue(opNegative.getLrValue());
 		}
-	
+
 		return resultBuilder.build();
 	}
 
@@ -913,38 +955,59 @@ public class CExpressionTranslator {
 	 * by the size of the pointsToType and call the method that adds (depending on the settings) an check if the pointer
 	 * arithmetic was legal.
 	 *
-	 * @param result
+	 * @param erb
 	 *            note that this method has sideeffects on this object! (add..BoundCheck(..) calls)
 	 */
-	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder result,
-			final CType ctype, final int op, final Expression value, final IASTNode hook) {
+	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder erb, final int op,
+			final LRValue value, final IASTNode hook) {
 		assert op == IASTBinaryExpression.op_plus
 				|| op == IASTBinaryExpression.op_minus : "has to be either minus or plus";
+
 		final Expression valueIncremented;
+		final CType ctype = value.getCType();
+		final Expression expr = value.getValue();
 		if (ctype instanceof CPointer) {
 			final CPointer cPointer = (CPointer) ctype;
 			final Expression oneEpr = mTypeSizes.constructLiteralForIntegerType(loc,
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
-			valueIncremented =
-					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), hook);
-			addOffsetInBoundsCheck(loc, valueIncremented, result);
+			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, expr, one, cPointer.getPointsToType(), hook);
+			addOffsetInBoundsCheck(loc, valueIncremented, erb);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
 
 			final Expression one;
-			if (ctype.isFloatingType()) {
-				one = mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ONE);
+			if (cPrimitive.isFloatingType()) {
+				final Expression smtOne = mExpressionTranslation.constructLiteralForFloatingType(loc,
+						cPrimitive.getSmtVariant(), BigDecimal.ONE);
+				if (cPrimitive.isSmtFloat()) {
+					one = smtOne;
+				} else {
+					final ExpressionResult bvOneResult = mExpressionTranslation
+							.convertToBvFloatIfNecessary(new RValue(smtOne, cPrimitive.getSmtVariant()), loc);
+					erb.addAllExceptLrValue(bvOneResult);
+					one = bvOneResult.getLrValue().getValue();
+				}
 			} else {
 				one = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 			}
-			addIntegerBoundsCheck(loc, result, cPrimitive, op, hook, value, one);
-			valueIncremented =
-					mExpressionTranslation.constructArithmeticExpression(loc, op, value, cPrimitive, one, cPrimitive);
+			addIntegerBoundsCheck(loc, erb, cPrimitive, op, hook, expr, one);
+
+			final Expression smtValueIncremented =
+					mExpressionTranslation.constructArithmeticExpression(loc, op, expr, cPrimitive, one, cPrimitive);
+			if (cPrimitive.isFloatingType() && !cPrimitive.isSmtFloat()) {
+				final ExpressionResult bvValueIncremented = mExpressionTranslation
+						.convertToBvFloatIfNecessary(new RValue(smtValueIncremented, cPrimitive.getSmtVariant()), loc);
+				erb.addAllExceptLrValue(bvValueIncremented);
+				valueIncremented = bvValueIncremented.getLrValue().getValue();
+			} else {
+				valueIncremented = smtValueIncremented;
+			}
 		} else {
 			throw new IllegalArgumentException("input has to be CPointer or CPrimitive");
 		}
+
 		return valueIncremented;
 	}
 
