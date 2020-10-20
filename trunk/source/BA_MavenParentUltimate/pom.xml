@@ -608,41 +608,7 @@
 				<jdk>[,1.9)</jdk>
 			</activation>
 
-			<repositories>
-				<!-- We proxy repositories via monteverdi to reduce load and speed up 
-					the build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url> 
-					The user/password is managed by DD The original URLs are <url>http://download.eclipse.org/releases/mars/</url> 
-					<url>http://download.eclipse.org/releases/neon/</url> <url>http://download.eclipse.org/releases/2018-09/</url> -->
-
-				<repository>
-					<id>eclipse-4.16</id>
-					<layout>p2</layout>
-					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-4.16/</url>
-
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-
-				<repository>
-					<id>cdt-9.11</id>
-					<layout>p2</layout>
-					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/cdt-9.11/</url>
-
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-
-				<repository>
-					<id>orbit-R20200529191137</id>
-					<layout>p2</layout>
-					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-R20200529191137/</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-			</repositories>
+			<!-- Unsupported JDK version <= 1.8. -->
 		</profile>
 
 		<profile>
