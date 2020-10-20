@@ -1,6 +1,5 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Multi-Release: true
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.core
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.core
 Bundle-Version: 0.1.25

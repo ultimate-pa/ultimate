@@ -1,7 +1,0 @@
-Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility:=reexport,
- de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.lib.smtlib,
- javax.xml.bind;bundle-version="2.2.0";visibility:=reexport
-Import-Package: com.sun.xml.bind.v2;version="2.2.0"
