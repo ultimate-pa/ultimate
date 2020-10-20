@@ -32,7 +32,6 @@ public class McrUtils {
 		final List<TermVariable> quantifiedVars =
 				Arrays.stream(term.getFreeVars()).filter(x -> !varsToKeep.contains(x)).collect(Collectors.toList());
 		final Term quantified = SmtUtils.quantifier(managedScript.getScript(), quantifier, quantifiedVars, term);
-		logger.info("Abstracting variables in " + quantified);
 		return PartialQuantifierElimination.tryToEliminate(services, logger, managedScript, quantified,
 				simplificationTechnique, xnfConversionTechnique);
 	}
