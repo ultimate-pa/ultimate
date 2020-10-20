@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?>
+<target includeMode="feature" name="Ultimate">
+	<environment>
+		<os>linux</os>
+	</environment>
+	<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
+	<launcherArgs>
+		<vmArgs>-ea -Xms4M -Xmx4G</vmArgs>
+	</launcherArgs>
+	<locations>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-4.17"/>
+			<unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
+			<unit id="org.eclipse.jdt.feature.group" version="0.0.0"/>
+			<unit id="org.eclipse.platform.sdk" version="0.0.0"/>
+			<unit id="eclipse-junit-tests" version="0.0.0"/>
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/cdt-10.0"/>
+			<unit id="org.eclipse.cdt.feature.group" version="0.0.0"/>
+			<unit id="org.eclipse.cdt.sdk.feature.group" version="0.0.0"/>
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-R20200831200620"/>
+			<unit id="org.jdom" version="0.0.0"/>
+			<unit id="org.apache.log4j" version="0.0.0"/>
+			<unit id="org.apache.logging.log4j" version="0.0.0"/>
+			<unit id="org.apache.xerces" version="0.0.0"/>
+			<unit id="org.apache.batik.anim" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.dom" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.dom.svg" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.svggen" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.parser" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.util.gui" version="1.9.1.v20190730-1743"/>
+			<unit id="org.apache.batik.xml" version="1.9.1.v20190730-1743"/>
+		</location>
+	</locations>
+	<includeBundles>
+		<plugin id="com.google.gson"/>
+		<plugin id="com.ibm.icu"/>
+		<plugin id="com.sun.xml.bind"/>
+		<plugin id="javax.activation"/>
+		<plugin id="javax.annotation"/>
+		<plugin id="javax.inject"/>
+		<plugin id="javax.xml"/>
+		<plugin id="javax.xml.bind"/>
+		<plugin id="javax.xml.stream"/>
+		<plugin id="org.apache.batik.anim" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.constants" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.css" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.dom" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.dom.svg" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.ext.awt" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.i18n" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.parser" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.svggen" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.util" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.util.gui" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.batik.xml" version="1.9.1.v20190730-1743"/>
+		<plugin id="org.apache.commons.io"/>
+		<plugin id="org.apache.commons.jxpath"/>
+		<plugin id="org.apache.commons.logging"/>
+		<plugin id="org.apache.felix.scr"/>
+		<plugin id="org.apache.xalan"/>
+		<plugin id="org.apache.xerces"/>
+		<plugin id="org.apache.xmlgraphics"/>
+		<plugin id="org.apache.xml.resolver"/>
+		<plugin id="org.apache.xml.serializer"/>
+		<plugin id="org.eclipse.cdt.core"/>
+		<plugin id="org.eclipse.cdt.core.linux"/>
+		<plugin id="org.eclipse.cdt.core.linux.x86_64"/>
+		<plugin id="org.eclipse.cdt.core.native"/>
+		<plugin id="org.eclipse.core.commands"/>
+		<plugin id="org.eclipse.core.contenttype"/>
+		<plugin id="org.eclipse.core.databinding"/>
+		<plugin id="org.eclipse.core.databinding.observable"/>
+		<plugin id="org.eclipse.core.databinding.property"/>
+		<plugin id="org.eclipse.core.expressions"/>
+		<plugin id="org.eclipse.core.filebuffers"/>
+		<plugin id="org.eclipse.core.filesystem"/>
+		<plugin id="org.eclipse.core.filesystem.linux.x86_64"/>
+		<plugin id="org.eclipse.core.jobs"/>
+		<plugin id="org.eclipse.core.resources"/>
+		<plugin id="org.eclipse.core.runtime"/>
+		<plugin id="org.eclipse.core.variables"/>
+		<plugin id="org.eclipse.e4.core.commands"/>
+		<plugin id="org.eclipse.e4.core.contexts"/>
+		<plugin id="org.eclipse.e4.core.di"/>
+		<plugin id="org.eclipse.e4.core.di.annotations"/>
+		<plugin id="org.eclipse.e4.core.di.extensions"/>
+		<plugin id="org.eclipse.e4.core.di.extensions.supplier"/>
+		<plugin id="org.eclipse.e4.core.services"/>
+		<plugin id="org.eclipse.e4.emf.xpath"/>
+		<plugin id="org.eclipse.e4.ui.bindings"/>
+		<plugin id="org.eclipse.e4.ui.css.core"/>
+		<plugin id="org.eclipse.e4.ui.css.swt"/>
+		<plugin id="org.eclipse.e4.ui.css.swt.theme"/>
+		<plugin id="org.eclipse.e4.ui.di"/>
+		<plugin id="org.eclipse.e4.ui.dialogs"/>
+		<plugin id="org.eclipse.e4.ui.model.workbench"/>
+		<plugin id="org.eclipse.e4.ui.services"/>
+		<plugin id="org.eclipse.e4.ui.widgets"/>
+		<plugin id="org.eclipse.e4.ui.workbench"/>
+		<plugin id="org.eclipse.e4.ui.workbench3"/>
+		<plugin id="org.eclipse.e4.ui.workbench.addons.swt"/>
+		<plugin id="org.eclipse.e4.ui.workbench.renderers.swt"/>
+		<plugin id="org.eclipse.e4.ui.workbench.swt"/>
+		<plugin id="org.eclipse.emf.common"/>
+		<plugin id="org.eclipse.emf.ecore"/>
+		<plugin id="org.eclipse.emf.ecore.change"/>
+		<plugin id="org.eclipse.emf.ecore.xmi"/>
+		<plugin id="org.eclipse.equinox.app"/>
+		<plugin id="org.eclipse.equinox.bidi"/>
+		<plugin id="org.eclipse.equinox.common"/>
+		<plugin id="org.eclipse.equinox.ds"/>
+		<plugin id="org.eclipse.equinox.event"/>
+		<plugin id="org.eclipse.equinox.preferences"/>
+		<plugin id="org.eclipse.equinox.registry"/>
+		<plugin id="org.eclipse.help"/>
+		<plugin id="org.eclipse.jface"/>
+		<plugin id="org.eclipse.jface.databinding"/>
+		<plugin id="org.eclipse.ltk.core.refactoring"/>
+		<plugin id="org.eclipse.osgi"/>
+		<plugin id="org.eclipse.osgi.services"/>
+		<plugin id="org.eclipse.osgi.util"/>
+		<plugin id="org.eclipse.swt"/>
+		<plugin id="org.eclipse.swt.gtk.linux.x86_64"/>
+		<plugin id="org.eclipse.text"/>
+		<plugin id="org.eclipse.ui"/>
+		<plugin id="org.eclipse.ui.workbench"/>
+		<plugin id="org.eclipse.urischeme"/>
+		<plugin id="org.jdom"/>
+		<plugin id="org.w3c.css.sac"/>
+		<plugin id="org.w3c.dom.events"/>
+		<plugin id="org.w3c.dom.smil"/>
+		<plugin id="org.w3c.dom.svg"/>
+		
+		<!-- Probably missing in BA_Feature... -->
+		<plugin id="org.apache.log4j"/>
+		<plugin id="org.apache.logging.log4j"/>
+		<plugin id="org.eclipse.jface.notifications"/>
+		<plugin id="org.eclipse.jface.text"/>
+		<plugin id="org.eclipse.jdt.junit.runtime"/>
+		<plugin id="org.eclipse.pde.junit.runtime"/>
+		<plugin id="org.eclipse.jdt.junit4.runtime"/>
+		<plugin id="org.hamcrest.core"/>
+		<plugin id="org.junit"/>
+		<plugin id="com.sun.jna"/>
+		<plugin id="com.sun.jna.platform"/>
+	</includeBundles>
+</target>
