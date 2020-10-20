@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -118,13 +118,32 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		final UnmodifiableTransFormula tf =
 				TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
 						tryAuxVarElimination, false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, transFormulas);
-		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
+
+		final IcfgEdge rtr;
+		if (first instanceof IActionWithBranchEncoders || second instanceof IActionWithBranchEncoders) {
+			final UnmodifiableTransFormula tf1 = getTransformulaWithBE(first);
+			final UnmodifiableTransFormula tf2 = getTransformulaWithBE(second);
+			final UnmodifiableTransFormula tfWithBE = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+					mManagedScript, simplify, tryAuxVarElimination, false, XNF_CONVERSION_TECHNIQUE,
+					SIMPLIFICATION_TECHNIQUE, Arrays.asList(tf1, tf2));
+			rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null, tf, tfWithBE);
+		} else {
+			rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
+		}
 		ModelUtils.mergeAnnotations(transitions, rtr);
 
 		return rtr;
 	}
 
+	private UnmodifiableTransFormula getTransformulaWithBE(final IcfgEdge edge) {
+		if (edge instanceof IActionWithBranchEncoders) {
+			return ((IActionWithBranchEncoders) edge).getTransitionFormulaWithBranchEncoders();
+		}
+		return edge.getTransformula();
+	}
+
 	@Override
+	// TODO This method partially duplicates code in IcfgEdgeBuilder
 	public IcfgEdge composeParallel(final List<IcfgEdge> transitions) {
 		assert !transitions.isEmpty() : "Cannot compose 0 transitions";
 		assert isComposable(transitions) : "You cannot have calls or returns in parallel compositions";
@@ -134,7 +153,6 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		assert transitions.stream().allMatch(t -> t.getSource() == source
 				&& t.getTarget() == target) : "Can only compose transitions with equal sources and targets.";
 
-		// TODO This partially duplicates code in IcfgEdgeBuilder
 		final List<UnmodifiableTransFormula> transFormulas =
 				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray =
@@ -145,15 +163,25 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				serialNumber, mManagedScript, null, false, XNF_CONVERSION_TECHNIQUE, tfArray);
+
+		final List<UnmodifiableTransFormula> transFormulasWithBE =
+				transitions.stream().map(this::getTransformulaWithBE).collect(Collectors.toList());
+		final UnmodifiableTransFormula[] tfWithBEArray =
+				transFormulasWithBE.toArray(new UnmodifiableTransFormula[transFormulasWithBE.size()]);
 		final LinkedHashMap<TermVariable, IcfgEdge> branchIndicator2edge =
 				constructBranchIndicatorToEdgeMapping(serialNumber, mManagedScript, transitions);
 		final TermVariable[] branchIndicatorArray =
 				branchIndicator2edge.keySet().toArray(new TermVariable[branchIndicator2edge.size()]);
+		// TODO Matthias 2019-11-13: Serial number should be unique!!!?!
+		// Maybe we should move these constructions to the edge factory
+		// which can construct unique serial numbers
+		final int serialNumberWithBE = HashUtils.hashHsieh(293, (Object[]) tfWithBEArray);
 		final UnmodifiableTransFormula parallelWithBranchIndicators =
 				TransFormulaUtils.parallelComposition(mLogger, mServices, serialNumber, mManagedScript,
-						branchIndicatorArray, false, XNF_CONVERSION_TECHNIQUE, tfArray);
-		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null,
-				parallelTf, parallelWithBranchIndicators, branchIndicator2edge);
+						branchIndicatorArray, false, XNF_CONVERSION_TECHNIQUE, tfWithBEArray);
+
+		final IcfgEdge rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null, parallelTf,
+				parallelWithBranchIndicators);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 
 		// Update info for back translation
