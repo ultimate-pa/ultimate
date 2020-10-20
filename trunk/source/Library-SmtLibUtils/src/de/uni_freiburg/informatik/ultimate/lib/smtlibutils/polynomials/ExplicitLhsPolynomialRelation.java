@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
@@ -45,8 +46,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
+import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -67,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
+public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProviderOnDemand {
 
 	private static final boolean THROW_EXCEPTION_IF_NOT_SOLVABLE = false;
 
@@ -99,6 +102,10 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 
 	public IPolynomialTerm getRhs() {
 		return mRhs;
+	}
+
+	public ExplicitLhsPolynomialRelation changeRelationSymbol(final RelationSymbol relationSymbol) {
+		return new ExplicitLhsPolynomialRelation(relationSymbol, mLhsCoefficient, mLhsMonomial, mRhs);
 	}
 
 	public static ExplicitLhsPolynomialRelation moveMonomialToLhs(final Script script, final Term subject,
@@ -134,6 +141,20 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 		return new ExplicitLhsPolynomialRelation(polyRel.getRelationSymbol(), coeffOfSubject, monomialOfSubject,
 				polyRel.getPolynomialTerm().removeAndNegate(monomialOfSubject));
 
+	}
+
+	public ExplicitLhsPolynomialRelation mul(final Rational factor, final Script script) {
+		if (factor.equals(Rational.ZERO)) {
+			throw new AssertionError("mul by zero not supported");
+		}
+		final IPolynomialTerm newRhs = PolynomialTermOperations.mul(mRhs, factor);
+		final Rational newLhsCoefficient = mLhsCoefficient.mul(factor);
+		final RelationSymbol resultRelationSymbol =
+				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, factor);
+		final ExplicitLhsPolynomialRelation result = new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
+		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(this.asTerm(script),
+				result.asTerm(script), script) != LBool.SAT : "mul unsound";
+		return result;
 	}
 
 	public ExplicitLhsPolynomialRelation divInvertible(final Rational divisor) {
@@ -224,6 +245,9 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 			throw new AssertionError("unknown value " + mRelationSymbol);
 		}
 		final Pair<ExplicitLhsPolynomialRelation, Term> tmp = divideByIntegerCoefficient(script, bannedForDivCapture);
+		if (tmp == null) {
+			return null;
+		}
 		assert (tmp.getSecond() == null);
 		final ExplicitLhsPolynomialRelation resultElpr = tmp.getFirst();
 		return new SolvedBinaryRelation(mLhsMonomial.getSingleVariable(), resultElpr.getRhs().toTerm(script),
@@ -487,6 +511,12 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation {
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
 		throw new UnsupportedOperationException("not yet implemented");
+	}
+
+	@Override
+	public Term asTerm(final Script script) {
+		final Term lhs = SmtUtils.mul(script, mLhsCoefficient, mLhsMonomial.toTerm(script));
+		return mRelationSymbol.constructTerm(script, lhs, mRhs.toTerm(script));
 	}
 
 }
