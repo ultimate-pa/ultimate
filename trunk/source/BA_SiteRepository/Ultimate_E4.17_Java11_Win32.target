@@ -254,5 +254,11 @@
 		<plugin id="javax.servlet.source"/>
 		<plugin id="org.eclipse.equinox.http.registry"/>
 		<plugin id="org.eclipse.equinox.http.registry.source"/>
+		<plugin id="com.sun.jna" version="4.5.1.v20190425-1842"/>
+		<plugin id="com.sun.jna.source" version="4.5.1.v20190425-1842"/>
+		<plugin id="com.sun.jna.platform" version="4.5.1.v20190425-1842"/>
+		<plugin id="com.sun.jna.platform.source" version="4.5.1.v20190425-1842"/>
+		<plugin id="org.eclipse.jface.notifications.source" version="0.2.0.v20200810-0826"/>
+		<plugin id="org.eclipse.jface.notifications" version="0.2.0.v20200810-0826"/>
 	</includeBundles>
 </target>
