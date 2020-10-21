@@ -147,8 +147,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-//			final Term resultTerm = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
-			final Term resultTerm = tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
+			final Term resultTerm = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
+//			final Term resultTerm = tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
 					inputEt.getTerm(), eliminatee, inputEt.getBannedForDivCapture());
 			if (resultTerm != null) {
 //				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, resultTerm, null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
