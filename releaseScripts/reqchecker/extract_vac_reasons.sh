@@ -90,7 +90,7 @@ function run_ultimate_ss(){
     echo "Running Ultimate"
     java -Dosgi.configuration.area=config/ \
     -Xmx10G \
-    -jar plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar \
+    -jar plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar \
     -tc "${ultimate_repo}/trunk/examples/toolchains/ReqCheck.xml" \
     -s "${bosch_repo}/reqanalyzer-nonlin.epf" \
     -i "${dump_dir}/$reduced_req_file" \
