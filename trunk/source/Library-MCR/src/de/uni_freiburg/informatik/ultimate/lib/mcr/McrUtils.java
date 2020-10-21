@@ -29,9 +29,10 @@ public class McrUtils {
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript managedScript,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		final List<TermVariable> quantifiedVars =
-				Arrays.stream(term.getFreeVars()).filter(x -> !varsToKeep.contains(x)).collect(Collectors.toList());
-		final Term quantified = SmtUtils.quantifier(managedScript.getScript(), quantifier, quantifiedVars, term);
+		final Term simplified = SmtUtils.simplify(managedScript, term, services, simplificationTechnique);
+		final List<TermVariable> quantifiedVars = Arrays.stream(simplified.getFreeVars())
+				.filter(x -> !varsToKeep.contains(x)).collect(Collectors.toList());
+		final Term quantified = SmtUtils.quantifier(managedScript.getScript(), quantifier, quantifiedVars, simplified);
 		return PartialQuantifierElimination.tryToEliminate(services, logger, managedScript, quantified,
 				simplificationTechnique, xnfConversionTechnique);
 	}
