@@ -201,8 +201,8 @@
 		<plugin id="org.eclipse.osgi.util" version="3.5.300.v20190708-1141"/>
 		<plugin id="org.eclipse.osgi.util.source" version="3.5.300.v20190708-1141"/>
 		<plugin id="org.eclipse.swt" version="3.115.0.v20200831-1002"/>
-		<plugin id="org.eclipse.swt.gtk.linux.x86_64"/>
-		<plugin id="org.eclipse.swt.gtk.linux.x86_64.source"/>
+		<plugin id="org.eclipse.swt.gtk.linux.x86_64" version="3.115.0.v20200831-1002"/>
+		<plugin id="org.eclipse.swt.gtk.linux.x86_64.source" version="3.115.0.v20200831-1002"/>
 		<plugin id="org.eclipse.text" version="3.10.300.v20200807-0831"/>
 		<plugin id="org.eclipse.text.source" version="3.10.300.v20200807-0831"/>
 		<plugin id="org.eclipse.ui" version="3.118.0.v20200807-0902"/>
@@ -302,5 +302,11 @@
 		<plugin id="org.eclipse.ui.views.properties.tabbed.source" version="3.8.1000.v20200609-0849"/>
 		<plugin id="org.eclipse.equinox.security.linux.x86_64.source"/>
 		<plugin id="org.eclipse.equinox.security.linux.x86_64"/>
+		<plugin id="org.eclipse.jdt.junit.runtime"/>
+		<plugin id="org.eclipse.jdt.junit.runtime.source"/>
+		<plugin id="org.eclipse.pde.junit.runtime"/>
+		<plugin id="org.eclipse.pde.junit.runtime.source"/>
+		<plugin id="org.eclipse.jdt.junit4.runtime"/>
+		<plugin id="org.eclipse.jdt.junit4.runtime.source"/>
 	</includeBundles>
 </target>
