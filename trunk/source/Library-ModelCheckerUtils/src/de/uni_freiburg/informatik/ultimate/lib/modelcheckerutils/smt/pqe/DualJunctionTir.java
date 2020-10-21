@@ -269,8 +269,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			switch (solved.getRelationSymbol()) {
 			case DISTINCT:
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					result.addDerBound(new Bound(RelationSymbol.GREATER, elpr.getRhs()),
-							new Bound(RelationSymbol.LESS, elpr.getRhs()));
+					result.addDerBound(new Bound(RelationSymbol.GREATER, solved.getRhs()),
+							new Bound(RelationSymbol.LESS, solved.getRhs()));
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					if (HANDLE_DER_OPERATOR) {
 						throw new AssertionError("Should have really been eliminated by DER");
@@ -289,8 +289,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 						return null;
 					}
 				} else if (quantifier == QuantifiedFormula.FORALL) {
-					result.addDerBound(new Bound(RelationSymbol.GEQ, elpr.getRhs()),
-							new Bound(RelationSymbol.LEQ, elpr.getRhs()));
+					result.addDerBound(new Bound(RelationSymbol.GEQ, solved.getRhs()),
+							new Bound(RelationSymbol.LEQ, solved.getRhs()));
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
