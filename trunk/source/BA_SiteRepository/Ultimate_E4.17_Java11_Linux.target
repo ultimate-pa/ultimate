@@ -201,8 +201,8 @@
 		<plugin id="org.eclipse.osgi.util" version="3.5.300.v20190708-1141"/>
 		<plugin id="org.eclipse.osgi.util.source" version="3.5.300.v20190708-1141"/>
 		<plugin id="org.eclipse.swt" version="3.115.0.v20200831-1002"/>
-		<plugin id="org.eclipse.swt.gtk.linux.x86_64" version="3.115.0.v20200831-1002"/>
-		<plugin id="org.eclipse.swt.gtk.linux.x86_64.source" version="3.115.0.v20200831-1002"/>
+		<plugin id="org.eclipse.swt.gtk.linux.x86_64"/>
+		<plugin id="org.eclipse.swt.gtk.linux.x86_64.source"/>
 		<plugin id="org.eclipse.text" version="3.10.300.v20200807-0831"/>
 		<plugin id="org.eclipse.text.source" version="3.10.300.v20200807-0831"/>
 		<plugin id="org.eclipse.ui" version="3.118.0.v20200807-0902"/>
@@ -257,5 +257,50 @@
 		<plugin id="com.sun.jna.platform.source" version="4.5.1.v20190425-1842"/>
 		<plugin id="org.eclipse.jface.notifications.source" version="0.2.0.v20200810-0826"/>
 		<plugin id="org.eclipse.jface.notifications" version="0.2.0.v20200810-0826"/>
+		<plugin id="org.eclipse.compare.core.source" version="3.6.900.v20200412-2017"/>
+		<plugin id="org.eclipse.compare.core" version="3.6.900.v20200412-2017"/>
+		<plugin id="org.eclipse.equinox.p2.metadata" version="2.5.0.v20200511-1530"/>
+		<plugin id="org.eclipse.equinox.p2.metadata.source" version="2.5.0.v20200511-1530"/>
+		<plugin id="org.eclipse.e4.ui.ide" version="3.15.100.v20200323-2111"/>
+		<plugin id="org.eclipse.e4.ui.ide.source" version="3.15.100.v20200323-2111"/>
+		<plugin id="org.eclipse.equinox.p2.engine" version="2.6.700.v20200511-1530"/>
+		<plugin id="org.eclipse.equinox.p2.engine.source" version="2.6.700.v20200511-1530"/>
+		<plugin id="org.eclipse.equinox.p2.core" version="2.6.300.v20200211-1504"/>
+		<plugin id="org.eclipse.equinox.p2.core.source" version="2.6.300.v20200211-1504"/>
+		<plugin id="org.eclipse.debug.core" version="3.16.0.v20200828-0817"/>
+		<plugin id="org.eclipse.debug.core.source" version="3.16.0.v20200828-0817"/>
+		<plugin id="org.eclipse.cdt.ui"/>
+		<plugin id="org.eclipse.cdt.ui.source"/>
+		<plugin id="org.eclipse.equinox.p2.metadata.repository" version="1.3.400.v20191211-1528"/>
+		<plugin id="org.eclipse.equinox.p2.metadata.repository.source" version="1.3.400.v20191211-1528"/>
+		<plugin id="org.eclipse.equinox.p2.repository" version="2.4.800.v20200813-0739"/>
+		<plugin id="org.eclipse.equinox.p2.repository.source" version="2.4.800.v20200813-0739"/>
+		<plugin id="org.eclipse.ltk.ui.refactoring" version="3.11.100.v20200817-1715"/>
+		<plugin id="org.eclipse.ltk.ui.refactoring.source" version="3.11.100.v20200817-1715"/>
+		<plugin id="org.eclipse.search" version="3.12.0.v20200727-2017"/>
+		<plugin id="org.eclipse.search.source" version="3.12.0.v20200727-2017"/>
+		<plugin id="org.eclipse.tools.templates.ui"/>
+		<plugin id="org.eclipse.tools.templates.ui.source"/>
+		<plugin id="org.eclipse.ui.forms" version="3.10.0.v20200727-0948"/>
+		<plugin id="org.eclipse.ui.forms.source" version="3.10.0.v20200727-0948"/>
+		<plugin id="org.eclipse.ui.navigator.resources" version="3.7.400.v20200722-0751"/>
+		<plugin id="org.eclipse.ui.navigator.resources.source" version="3.7.400.v20200722-0751"/>
+		<plugin id="org.eclipse.compare" version="3.7.1100.v20200611-0145"/>
+		<plugin id="org.eclipse.compare.source" version="3.7.1100.v20200611-0145"/>
+		<plugin id="org.eclipse.ui.views" version="3.10.400.v20200611-1719"/>
+		<plugin id="org.eclipse.ui.views.source" version="3.10.400.v20200611-1719"/>
+		<plugin id="org.tukaani.xz" version="1.8.0.v20180207-1613"/>
+		<plugin id="org.tukaani.xz.source" version="1.8.0.v20180207-1613"/>
+		<plugin id="org.eclipse.equinox.security" version="1.3.500.v20200114-1637"/>
+		<plugin id="org.eclipse.team.ui" version="3.8.1000.v20200806-0621"/>
+		<plugin id="org.eclipse.team.ui.source" version="3.8.1000.v20200806-0621"/>
+		<plugin id="org.eclipse.team.core" version="3.8.1100.v20200806-0621"/>
+		<plugin id="org.eclipse.team.core.source" version="3.8.1100.v20200806-0621"/>
+		<plugin id="org.eclipse.tools.templates.core"/>
+		<plugin id="org.eclipse.tools.templates.core.source"/>
+		<plugin id="org.eclipse.ui.views.properties.tabbed" version="3.8.1000.v20200609-0849"/>
+		<plugin id="org.eclipse.ui.views.properties.tabbed.source" version="3.8.1000.v20200609-0849"/>
+		<plugin id="org.eclipse.equinox.security.linux.x86_64.source"/>
+		<plugin id="org.eclipse.equinox.security.linux.x86_64"/>
 	</includeBundles>
 </target>
