@@ -38,7 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public enum RelationSymbol {
-	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">");
+	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">"), BVULE("bvule"), BVULT("bvult"),
+	BVUGE("bvuge"), BVUGT("bvugt"), BVSLE("bvsle"), BVSLT("bvslt"), BVSGE("bvsge"), BVSGT("bvsgt");
 
 	private final String mStringRepresentation;
 
@@ -52,8 +53,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * @return {@link RelationSymbol} whose string representation is relAsString and
-	 *         null if no {@link RelationSymbol} has such a string representation.
+	 * @return {@link RelationSymbol} whose string representation is relAsString and null if no {@link RelationSymbol}
+	 *         has such a string representation.
 	 */
 	public static RelationSymbol convert(final String relAsString) {
 		switch (relAsString) {
@@ -69,14 +70,30 @@ public enum RelationSymbol {
 			return RelationSymbol.LESS;
 		case ">":
 			return RelationSymbol.GREATER;
+		case "bvule":
+			return RelationSymbol.BVULE;
+		case "bvult":
+			return RelationSymbol.BVULT;
+		case "bvuge":
+			return RelationSymbol.BVUGE;
+		case "bvugt":
+			return RelationSymbol.BVUGT;
+		case "bvsle":
+			return RelationSymbol.BVSLE;
+		case "bvslt":
+			return RelationSymbol.BVSLT;
+		case "bvsge":
+			return RelationSymbol.BVSGE;
+		case "bvsgt":
+			return RelationSymbol.BVSGT;
 		default:
 			return null;
 		}
 	}
 
 	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
-	 * relation ψ ◾ φ is equivalent to the negated relation ¬(ψ ▷ φ).
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
+	 * negated relation ¬(ψ ▷ φ).
 	 */
 	public RelationSymbol negate() {
 		final RelationSymbol result;
@@ -99,6 +116,30 @@ public enum RelationSymbol {
 		case GREATER:
 			result = RelationSymbol.LEQ;
 			break;
+		case BVULE:
+			result = RelationSymbol.BVUGT;
+			break;
+		case BVULT:
+			result = RelationSymbol.BVUGE;
+			break;
+		case BVUGE:
+			result = RelationSymbol.BVULT;
+			break;
+		case BVUGT:
+			result = RelationSymbol.BVULE;
+			break;
+		case BVSLE:
+			result = RelationSymbol.BVSGT;
+			break;
+		case BVSLT:
+			result = RelationSymbol.BVSGE;
+			break;
+		case BVSGE:
+			result = RelationSymbol.BVSLT;
+			break;
+		case BVSGT:
+			result = RelationSymbol.BVSLE;
+			break;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
 		}
@@ -106,9 +147,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
-	 * relation ψ ◾ φ is equivalent to the relation φ ▷ ψ, which is the relation
-	 * where we swapped the parameters.
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
+	 * relation φ ▷ ψ, which is the relation where we swapped the parameters.
 	 */
 	public RelationSymbol swapParameters() {
 		final RelationSymbol result;
@@ -130,6 +170,30 @@ public enum RelationSymbol {
 			break;
 		case GREATER:
 			result = RelationSymbol.LESS;
+			break;
+		case BVULE:
+			result = RelationSymbol.BVUGE;
+			break;
+		case BVULT:
+			result = RelationSymbol.BVUGT;
+			break;
+		case BVUGE:
+			result = RelationSymbol.BVULE;
+			break;
+		case BVUGT:
+			result = RelationSymbol.BVULT;
+			break;
+		case BVSLE:
+			result = RelationSymbol.BVSGE;
+			break;
+		case BVSLT:
+			result = RelationSymbol.BVSGT;
+			break;
+		case BVSGE:
+			result = RelationSymbol.BVSLE;
+			break;
+		case BVSGT:
+			result = RelationSymbol.BVSLT;
 			break;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
@@ -157,6 +221,30 @@ public enum RelationSymbol {
 			break;
 		case GREATER:
 			result = SmtUtils.less(script, rhs, lhs);
+			break;
+		case BVULE:
+			result = SmtUtils.bvule(script, lhs, rhs);
+			break;
+		case BVULT:
+			result = SmtUtils.bvult(script, lhs, rhs);
+			break;
+		case BVUGE:
+			result = SmtUtils.bvule(script, lhs, rhs);
+			break;
+		case BVUGT:
+			result = SmtUtils.bvult(script, lhs, rhs);
+			break;
+		case BVSLE:
+			result = SmtUtils.bvsle(script, lhs, rhs);
+			break;
+		case BVSLT:
+			result = SmtUtils.bvslt(script, lhs, rhs);
+			break;
+		case BVSGE:
+			result = SmtUtils.bvsle(script, lhs, rhs);
+			break;
+		case BVSGT:
+			result = SmtUtils.bvslt(script, lhs, rhs);
 			break;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);

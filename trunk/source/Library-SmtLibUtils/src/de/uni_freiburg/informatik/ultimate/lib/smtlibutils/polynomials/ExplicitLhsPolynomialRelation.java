@@ -151,9 +151,10 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		final Rational newLhsCoefficient = mLhsCoefficient.mul(factor);
 		final RelationSymbol resultRelationSymbol =
 				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, factor);
-		final ExplicitLhsPolynomialRelation result = new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
-		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(this.asTerm(script),
-				result.asTerm(script), script) != LBool.SAT : "mul unsound";
+		final ExplicitLhsPolynomialRelation result =
+				new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
+		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(asTerm(script), result.asTerm(script),
+				script) != LBool.SAT : "mul unsound";
 		return result;
 	}
 
@@ -204,17 +205,23 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		final Term divisibilityConstraint;
 		switch (mRelationSymbol) {
 		case DISTINCT:
-			divisibilityConstraint =
-					constructDivisibilityConstraint(script, true, rhsAsTerm, divisor);
+			divisibilityConstraint = constructDivisibilityConstraint(script, true, rhsAsTerm, divisor);
 			break;
 		case EQ:
-			divisibilityConstraint =
-					constructDivisibilityConstraint(script, false, rhsAsTerm, divisor);
+			divisibilityConstraint = constructDivisibilityConstraint(script, false, rhsAsTerm, divisor);
 			break;
 		case GEQ:
 		case GREATER:
 		case LEQ:
 		case LESS:
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
 			divisibilityConstraint = null;
 			break;
 		default:
@@ -240,6 +247,14 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		case GREATER:
 		case LEQ:
 		case LESS:
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
 			break;
 		default:
 			throw new AssertionError("unknown value " + mRelationSymbol);
@@ -318,16 +333,17 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		final Term divisor = SmtUtils.mul(script, factorsOfDivisor.get(0).getSort(),
 				factorsOfDivisor.toArray(new Term[factorsOfDivisor.size()]));
 		if (threeCaseVariables.isEmpty()) {
-			final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, rhs, mRelationSymbol, true, divisor,
-					intricateOperations);
+			final SolvedBinaryRelation sbr = constructSolvedBinaryRelation(script, subject, rhs, mRelationSymbol, true,
+					divisor, intricateOperations);
 			final Set<SupportingTerm> thisCaseSupportingTerms = new HashSet<>(distinctZeroSupportingTerms);
-			if (SolveForSubjectUtils.isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(), mRelationSymbol)) {
-				final SupportingTerm divisibilityConstraintMonomial = constructDerIntegerDivisionSupportingTerm(script,
-						rhs, mRelationSymbol, divisor);
+			if (SolveForSubjectUtils.isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(),
+					mRelationSymbol)) {
+				final SupportingTerm divisibilityConstraintMonomial =
+						constructDerIntegerDivisionSupportingTerm(script, rhs, mRelationSymbol, divisor);
 				thisCaseSupportingTerms.add(divisibilityConstraintMonomial);
 				if (intLiteralDivConstraint != null) {
-					final SupportingTerm divisibilityConstraintLiteral = SolveForSubjectUtils.constructDerIntegerDivisionSupportingTerm(
-							script, intLiteralDivConstraint);
+					final SupportingTerm divisibilityConstraintLiteral = SolveForSubjectUtils
+							.constructDerIntegerDivisionSupportingTerm(script, intLiteralDivConstraint);
 					thisCaseSupportingTerms.add(divisibilityConstraintLiteral);
 				}
 			}
@@ -353,13 +369,14 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 					}
 					thisCaseSupportingTerms.add(posOrNegSupportingTerm);
 				}
-				if (SolveForSubjectUtils.isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(), mRelationSymbol)) {
-					final SupportingTerm divisibilityConstraint = constructDerIntegerDivisionSupportingTerm(script, rhs,
-							mRelationSymbol, divisor);
+				if (SolveForSubjectUtils.isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(),
+						mRelationSymbol)) {
+					final SupportingTerm divisibilityConstraint =
+							constructDerIntegerDivisionSupportingTerm(script, rhs, mRelationSymbol, divisor);
 					thisCaseSupportingTerms.add(divisibilityConstraint);
 					assert intLiteralDivConstraint != null;
-					final SupportingTerm divisibilityConstraintLiteral = SolveForSubjectUtils.constructDerIntegerDivisionSupportingTerm(
-							script, intLiteralDivConstraint);
+					final SupportingTerm divisibilityConstraintLiteral = SolveForSubjectUtils
+							.constructDerIntegerDivisionSupportingTerm(script, intLiteralDivConstraint);
 					thisCaseSupportingTerms.add(divisibilityConstraintLiteral);
 
 				}
@@ -392,7 +409,6 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		return divisibilityConstraint;
 	}
 
-
 	private static Case constructAntiDerIntegerDivisibilityCase(final Script script,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Term stageTwoRhs, final RelationSymbol relSymb,
 			final Term divisorAsArray) {
@@ -415,13 +431,13 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	private static SupportingTerm constructInRelationToZeroSupportingTerm(final Script script, final Term term,
 			final RelationSymbol relSym) {
 		final Term zero = SmtUtils.rational2Term(script, Rational.ZERO, term.getSort());
-		final Term termRelZero =  relSym.constructTerm(script, term, zero);
+		final Term termRelZero = relSym.constructTerm(script, term, zero);
 		return new SupportingTerm(termRelZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet());
 	}
 
 	private static SolvedBinaryRelation constructSolvedBinaryRelation(final Script script, final Term subject,
-			final Term rhs, final RelationSymbol relSymb, final boolean isDivisorPositive,
-			final Term divisor, final EnumSet<IntricateOperation> intricateOperations) {
+			final Term rhs, final RelationSymbol relSymb, final boolean isDivisorPositive, final Term divisor,
+			final EnumSet<IntricateOperation> intricateOperations) {
 		final RelationSymbol resultRelationSymbol;
 		if (isDivisorPositive) {
 			resultRelationSymbol = relSymb;
@@ -431,7 +447,8 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		}
 		final Term resultRhs;
 		if (SmtSortUtils.isIntSort(rhs.getSort())) {
-			resultRhs = SolveForSubjectUtils.constructRhsIntegerQuotient(script, relSymb, rhs, isDivisorPositive, divisor);
+			resultRhs =
+					SolveForSubjectUtils.constructRhsIntegerQuotient(script, relSymb, rhs, isDivisorPositive, divisor);
 		} else {
 			resultRhs = SmtUtils.divReal(script, SolveForSubjectUtils.prepend(rhs, divisor));
 		}
@@ -459,7 +476,8 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		final Set<SupportingTerm> suppTerms = new LinkedHashSet<>();
 		if (SolveForSubjectUtils.isDerIntegerDivisionSupportingTermRequired(xnf, divisorVar.getSort(), relSym)
 				&& intLiteralDivConstraint != null) {
-			suppTerms.add(SolveForSubjectUtils.constructDerIntegerDivisionSupportingTerm(script, intLiteralDivConstraint));
+			suppTerms.add(
+					SolveForSubjectUtils.constructDerIntegerDivisionSupportingTerm(script, intLiteralDivConstraint));
 		}
 		final Term zeroTerm = SmtUtils.rational2Term(script, Rational.ZERO, divisorVar.getSort());
 		final Term varEqualZero = SmtUtils.binaryEquality(script, zeroTerm, divisorVar);
@@ -495,6 +513,30 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 			break;
 		case GREATER:
 			rhsRelationZeroTerm = SmtUtils.greater(script, zeroTerm, rhs);
+			break;
+		case BVULE:
+			rhsRelationZeroTerm = SmtUtils.bvule(script, zeroTerm, rhs);
+			break;
+		case BVULT:
+			rhsRelationZeroTerm = SmtUtils.bvult(script, zeroTerm, rhs);
+			break;
+		case BVUGE:
+			rhsRelationZeroTerm = SmtUtils.bvuge(script, zeroTerm, rhs);
+			break;
+		case BVUGT:
+			rhsRelationZeroTerm = SmtUtils.bvugt(script, zeroTerm, rhs);
+			break;
+		case BVSLE:
+			rhsRelationZeroTerm = SmtUtils.bvsle(script, zeroTerm, rhs);
+			break;
+		case BVSLT:
+			rhsRelationZeroTerm = SmtUtils.bvslt(script, zeroTerm, rhs);
+			break;
+		case BVSGE:
+			rhsRelationZeroTerm = SmtUtils.bvsge(script, zeroTerm, rhs);
+			break;
+		case BVSGT:
+			rhsRelationZeroTerm = SmtUtils.bvsgt(script, zeroTerm, rhs);
 			break;
 		default:
 			throw new AssertionError("Unknown RelationSymbol: " + relSym);
