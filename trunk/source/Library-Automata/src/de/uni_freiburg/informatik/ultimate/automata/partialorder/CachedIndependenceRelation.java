@@ -129,7 +129,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 *            The combination (e.g. sequential composition) of the previous two letters.
 	 */
 	public void mergeIndependencies(final L a, final L b, final L ab) {
-		for (final var relation : mPositiveCache.values()) {
+		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
 			// (a, c) + (b, c) -> (ab, c)
 			for (final L c : relation.getImage(a)) {
 				if (relation.containsPair(b, c)) {
@@ -152,11 +152,11 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 *            The letter whose independencies shall be removed.
 	 */
 	public void removeFromCache(final L a) {
-		for (final var relation : mPositiveCache.values()) {
+		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
 			relation.removeDomainElement(a);
 			relation.removeRangeElement(a);
 		}
-		for (final var relation : mNegativeCache.values()) {
+		for (final HashRelation<L, L> relation : mNegativeCache.values()) {
 			relation.removeDomainElement(a);
 			relation.removeRangeElement(a);
 		}
