@@ -12,7 +12,7 @@ public class Version {
 	public static final int build = 107;
 	public static final String date = "2015-11";
 
-	public static void main(String[]_) {
+	public static void main(String[] strings) {
 		System.out.println("JDD build " + build);
 	}
 }

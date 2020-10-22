@@ -2,10 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: GuiRCP Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.gui;singleton:=true
-Bundle-Version: 0.1.25
+Bundle-Version: 0.2.0
 Require-Bundle: 
  org.eclipse.ui;visibility:=reexport,
- de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,

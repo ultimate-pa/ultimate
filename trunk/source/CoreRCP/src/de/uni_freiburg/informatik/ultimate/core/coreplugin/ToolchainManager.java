@@ -254,7 +254,7 @@ public class ToolchainManager {
 				// some files cannot be parsed
 				final Set<File> notParseable = new HashSet<>(allFiles);
 				notParseable.removeAll(selectedFiles);
-				mLogger.warn(getLogPrefix() + ": No parsers available for " + getStringFromFiles(notParseable));
+				mLogger.error(getLogPrefix() + ": No parsers available for " + getStringFromFiles(notParseable));
 				return false;
 			}
 

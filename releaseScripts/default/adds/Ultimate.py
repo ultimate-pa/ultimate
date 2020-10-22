@@ -228,7 +228,7 @@ def create_ultimate_base_call():
         ultimate_bin = ultimate_bin + ['-ea']
 
     ultimate_bin = ultimate_bin + [
-        '-jar', os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'),
+        '-jar', os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar'),
         '-data', '@noDefault',
         '-ultimatedata', datadir
     ]

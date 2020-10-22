@@ -2,18 +2,12 @@
 <feature
       id="BA_FeatureUltimateDeltaDebugger"
       label="BA_FeatureUltimateDeltaDebugger"
-      version="0.1.25">
+      version="0.2.0">
 
    <requires>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.util"/>
-      <import plugin="org.eclipse.cdt.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.acsl.parser"/>
-      <import plugin="org.eclipse.core.runtime" version="3.5.0" match="compatible"/>
-      <import plugin="org.eclipse.text" version="3.5.0" match="compatible"/>
-      <import plugin="org.eclipse.swt" version="3.103.0" match="compatible"/>
-      <import plugin="org.eclipse.jface" version="3.5.0" match="compatible"/>
+      <import feature="BA_FeatureDependenciesCommandlineE4"/>
+      <import feature="BA_FeatureDependenciesCommon"/>
+      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin
@@ -32,27 +26,6 @@
 
    <plugin
          id="org.apache.commons.cli"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.jface.text"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.jface"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.swt"
          download-size="0"
          install-size="0"
          version="0.0.0"

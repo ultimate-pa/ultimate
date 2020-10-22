@@ -2,9 +2,9 @@
 <feature
       id="BA_FeatureUltimateCommon"
       label="BA_FeatureUltimateCommon"
-      version="0.1.25"
+      version="0.2.0"
       os="linux,win32,macosx"
-      arch="x86,x86_64">
+      arch="x86_64">
 
    <description url="">
       [Enter Feature Description here.]
@@ -19,9 +19,7 @@
    </license>
 
    <requires>
-      <import plugin="org.eclipse.cdt.core" version="5.6.0" match="greaterOrEqual"/>
-      <import plugin="org.apache.commons.io"/>
-      <import plugin="org.eclipse.core.runtime"/>
+      <import feature="BA_FeatureDependenciesCommon"/>
    </requires>
 
    <plugin
@@ -255,28 +253,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.jdom"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.lib.lassoranker"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.log4j"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.logging.log4j"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -326,13 +303,6 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.lib.util"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.xerces"
          download-size="0"
          install-size="0"
          version="0.0.0"
