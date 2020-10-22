@@ -5,9 +5,9 @@
       version="0.2.0">
 
    <requires>
-      <import feature="BA_FeatureDependenciesCommandlineE4" version="0.1.25"/>
-      <import feature="BA_FeatureDependenciesCommon" version="0.1.25"/>
-      <import feature="BA_FeatureUltimateCommon" version="0.1.25"/>
+      <import feature="BA_FeatureDependenciesCommandlineE4"/>
+      <import feature="BA_FeatureDependenciesCommon"/>
+      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin

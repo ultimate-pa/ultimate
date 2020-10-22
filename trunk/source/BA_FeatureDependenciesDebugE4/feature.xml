@@ -18,7 +18,7 @@
    </license>
 
    <requires>
-      <import feature="BA_FeatureDependenciesCommon" version="0.1.25"/>
+      <import feature="BA_FeatureDependenciesCommon"/>
    </requires>
 
    <plugin
