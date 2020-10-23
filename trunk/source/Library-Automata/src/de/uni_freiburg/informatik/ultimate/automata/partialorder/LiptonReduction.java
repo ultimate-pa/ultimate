@@ -176,14 +176,8 @@ public class LiptonReduction<L, P> {
 	 * @param petriNet
 	 *            The Petri net on which the choice rule should be performed.
 	 * @return new Petri net, where the choice rule has been performed.
-	 *
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled.
-	 * @throws PetriNetNot1SafeException
-	 *             if Petri net is not 1-safe.
 	 */
-	private BoundedPetriNet<L, P> choiceRule(final BoundedPetriNet<L, P> petriNet)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+	private BoundedPetriNet<L, P> choiceRule(final BoundedPetriNet<L, P> petriNet) {
 		final Collection<ITransition<L, P>> transitions = petriNet.getTransitions();
 
 		final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions = new HashSet<>();
@@ -249,14 +243,8 @@ public class LiptonReduction<L, P> {
 	 * @param petriNet
 	 *            The Petri net on which the sequence rule should be performed.
 	 * @return new Petri net, where the sequence rule has been performed.
-	 *
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled.
-	 * @throws PetriNetNot1SafeException
-	 *             if Petri net is not 1-safe.
 	 */
-	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet) {
 		final Collection<ITransition<L, P>> transitions = petriNet.getTransitions();
 
 		final Set<ITransition<L, P>> obsoleteTransitions = new HashSet<>();
@@ -433,15 +421,10 @@ public class LiptonReduction<L, P> {
 	 *            A set that contains Triples (ab, a, b), where ab is the new letter resulting from the composition of a
 	 *            and b.
 	 * @return a new Petri Net with composed edges and without the edges that are not needed anymore.
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled.
-	 * @throws PetriNetNot1SafeException
-	 *             if the Petri Net is not 1-safe.
 	 */
 	private BoundedPetriNet<L, P> copyPetriNetWithModification(final BoundedPetriNet<L, P> petriNet,
 			final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions,
-			final Set<ITransition<L, P>> obsoleteTransitions)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final Set<ITransition<L, P>> obsoleteTransitions) {
 
 		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> triplet : pendingCompositions) {
 			petriNet.getAlphabet().add(triplet.getFirst());
@@ -472,7 +455,8 @@ public class LiptonReduction<L, P> {
 	/**
 	 * Checks if a Transition is a right mover with regard to all its co-enabled transitions.
 	 *
-	 * @params t1 A transition of the Petri Net.
+	 * @param t1
+	 *            A transition of the Petri Net.
 	 * @return true iff t1 is right mover.
 	 */
 	private boolean isRightMover(final ITransition<L, P> t1) {

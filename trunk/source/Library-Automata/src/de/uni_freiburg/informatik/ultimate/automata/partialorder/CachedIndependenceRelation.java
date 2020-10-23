@@ -38,10 +38,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
- * @param S
+ * @param <S>
  *            If the relation is conditional, the type of states serving as conditions. Use a wildcard for unconditional
  *            relations.
- * @param L
+ * @param <L>
  *            The type of letters whose independence is defined by the relation.
  */
 public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S, L> {
