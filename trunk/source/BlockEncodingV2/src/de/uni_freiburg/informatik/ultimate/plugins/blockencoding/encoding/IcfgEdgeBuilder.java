@@ -168,6 +168,8 @@ public class IcfgEdgeBuilder {
 				mManagedScript, null, false, mXnfConversionTechnique, tfArray);
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, parallelTf);
 
+		// TODO (Dominik 2020-10-23) Preserve existing branch encoders & create new ones; like IcfgCompositionFactory.
+
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(transitions, rtr);
