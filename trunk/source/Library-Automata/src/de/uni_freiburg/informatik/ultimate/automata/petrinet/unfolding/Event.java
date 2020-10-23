@@ -133,7 +133,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 			computePlaceCorelationMap(bp);
 		}
 	}
-	
+
 	@Deprecated
 	public void setSerialNumber(final int serialNumber) {
 		mSerialNumber = serialNumber;
@@ -152,7 +152,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Event(final BranchingProcess<LETTER, PLACE> bp) {
 		mTransition = null;
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>(),0);
-		mMark = new Marking<LETTER, PLACE>(bp.getNet().getInitialPlaces());
+		mMark = new Marking<>(bp.getNet().getInitialPlaces());
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();
@@ -324,8 +324,9 @@ public final class Event<LETTER, PLACE> implements Serializable {
 			return false;
 		}
 
-		if (!companionCandidate.getPlaceCorelationMap().equals(getPlaceCorelationMap()))
+		if (!companionCandidate.getPlaceCorelationMap().equals(getPlaceCorelationMap())) {
 			return false;
+		}
 
 		setCompanion(companionCandidate);
 		return true;
@@ -392,7 +393,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public ITransition<LETTER, PLACE> getTransition() {
 		return mTransition;
 	}
-	
+
 	public int getSerialNumber() {
 		return mSerialNumber;
 	}
@@ -424,5 +425,18 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	@Override
 	public int hashCode() {
 		return mHashCode;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Event<?, ?> other = (Event<?, ?>) obj;
+		return mPredecessors.equals(other.mPredecessors) && mSuccessors.equals(other.mSuccessors)
+				&& mTransition.equals(other.mTransition);
 	}
 }
