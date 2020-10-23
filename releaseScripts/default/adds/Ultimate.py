@@ -215,7 +215,7 @@ def check_string_contains(strings, words):
 
 
 @lru_cache(maxsize=1)
-def get_java_installations():
+def get_java():
     candidates = [
         "java",
         "/usr/bin/java",
@@ -241,29 +241,6 @@ def get_java_installations():
             if version and "11." in version:
                 return candidate
     print_err("Did not find Java 11 in known paths")
-    sys.exit(ExitCode.FAIL_NO_JAVA)
-
-
-@lru_cache(maxsize=1)
-def get_java():
-    candidates = [
-        "java",
-        "/usr/bin/java",
-        "/opt/oracle-jdk-bin-1.8.0.202/bin/java",
-        "/usr/lib/jvm/java-8-openjdk-amd64/bin/java",
-    ]
-    for candidate in candidates:
-        candidate = shutil.which(candidate)
-        if not candidate:
-            continue
-        process = call_desperate([candidate, "-version"])
-        while True:
-            line = process.stdout.readline().decode("utf-8", "ignore")
-            if not line:
-                break
-            if "1.8" in line:
-                return candidate
-    print_err("Did not find Java 1.8 in known paths")
     sys.exit(ExitCode.FAIL_NO_JAVA)
 
 
