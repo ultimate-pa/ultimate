@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * Implements an {@link ICompositionFactory} that is suitable for Trace Abstraction. This class is used by
@@ -157,27 +156,19 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray =
 				transFormulas.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
-		// TODO Matthias 2019-11-13: Serial number should be unique!!!?!
-		// Maybe we should move these constructions to the edge factory
-		// which can construct unique serial numbers
-		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
-				serialNumber, mManagedScript, null, false, XNF_CONVERSION_TECHNIQUE, tfArray);
+				mManagedScript, null, false, XNF_CONVERSION_TECHNIQUE, tfArray);
 
 		final List<UnmodifiableTransFormula> transFormulasWithBE =
 				transitions.stream().map(this::getTransformulaWithBE).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfWithBEArray =
 				transFormulasWithBE.toArray(new UnmodifiableTransFormula[transFormulasWithBE.size()]);
 		final LinkedHashMap<TermVariable, IcfgEdge> branchIndicator2edge =
-				constructBranchIndicatorToEdgeMapping(serialNumber, mManagedScript, transitions);
+				constructBranchIndicatorToEdgeMapping(parallelTf.hashCode(), mManagedScript, transitions);
 		final TermVariable[] branchIndicatorArray =
 				branchIndicator2edge.keySet().toArray(new TermVariable[branchIndicator2edge.size()]);
-		// TODO Matthias 2019-11-13: Serial number should be unique!!!?!
-		// Maybe we should move these constructions to the edge factory
-		// which can construct unique serial numbers
-		final int serialNumberWithBE = HashUtils.hashHsieh(293, (Object[]) tfWithBEArray);
 		final UnmodifiableTransFormula parallelWithBranchIndicators =
-				TransFormulaUtils.parallelComposition(mLogger, mServices, serialNumber, mManagedScript,
+				TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript,
 						branchIndicatorArray, false, XNF_CONVERSION_TECHNIQUE, tfWithBEArray);
 
 		final IcfgEdge rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null, parallelTf,

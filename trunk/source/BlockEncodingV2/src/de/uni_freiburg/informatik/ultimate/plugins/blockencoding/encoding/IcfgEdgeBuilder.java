@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  *
@@ -160,18 +159,15 @@ public class IcfgEdgeBuilder {
 	public IcfgEdge constructParallelComposition(final IcfgLocation source, final IcfgLocation target,
 			final List<IcfgEdge> transitions) {
 		assert onlyInternal(transitions) : "You cannot have calls or returns in normal sequential compositions";
+
 		final List<UnmodifiableTransFormula> transFormulas =
 				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray =
 				transFormulas.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
-
-		// TODO Matthias 2019-11-13: Serial number should be unique!!!?!
-		// Maybe we should move these constructions to the edge factory
-		// which can construct unique serial numbers
-		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
-				serialNumber, mManagedScript, null, false, mXnfConversionTechnique, tfArray);
+				mManagedScript, null, false, mXnfConversionTechnique, tfArray);
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, parallelTf);
+
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(transitions, rtr);

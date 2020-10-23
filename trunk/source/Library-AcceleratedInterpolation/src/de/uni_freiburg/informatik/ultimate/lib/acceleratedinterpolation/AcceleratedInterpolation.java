@@ -544,7 +544,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		if (!accelerationFinishedCorrectly) {
 			return;
 		}
-		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices, 0,
+		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 				accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
 		Set<List<L>> nestingLoop;
