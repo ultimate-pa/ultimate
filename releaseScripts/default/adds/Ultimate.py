@@ -237,8 +237,8 @@ def get_java():
             line = process.stdout.readline().decode("utf-8", "ignore")
             if not line:
                 break
-            version = re.search(pattern, line).groups()[0]
-            if version and "11." in version:
+            java_version = re.search(pattern, line).groups()[0]
+            if java_version and "11." in java_version:
                 return candidate
     print_err("Did not find Java 11 in known paths")
     sys.exit(ExitCode.FAIL_NO_JAVA)
