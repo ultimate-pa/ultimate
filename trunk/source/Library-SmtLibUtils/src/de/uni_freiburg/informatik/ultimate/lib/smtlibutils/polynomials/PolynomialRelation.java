@@ -481,6 +481,9 @@ public class PolynomialRelation implements IBinaryRelation {
 		if (polyLhs.isErrorTerm() || polyRhs.isErrorTerm()) {
 			return null;
 		}
+		if (bnr.getRelationSymbol().isConvexInequality() && SmtSortUtils.isBitvecSort(lhs.getSort())) {
+			return null;
+		}
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
 		return new PolynomialRelation(script, transformInequality, relationSymbol, polyLhs, polyRhs, term);
 	}
