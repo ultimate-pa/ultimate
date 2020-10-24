@@ -112,7 +112,7 @@ public class PartialQuantifierElimination {
 				throw tce;
 			}
 			result = SmtUtils.quantifier(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result);
-			if (THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED) {
+			if (THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED && (result instanceof QuantifiedFormula)) {
 				throw new AssertionError("Not all eliminated: " + result);
 			}
 			result = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ONLY_DER).transform(result);
