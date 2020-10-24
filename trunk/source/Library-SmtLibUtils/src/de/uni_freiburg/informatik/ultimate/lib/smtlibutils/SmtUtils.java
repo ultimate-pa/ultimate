@@ -2509,11 +2509,14 @@ public final class SmtUtils {
 	// TODO #bvineq 20201017 Matthias:
 	// The name of this method might be misleading.
 	// </pre>
-
 	public static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
-		final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
-		final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
-		final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
-		return number.equals(rationalMinusOne);
+		if (number.equals(Rational.MONE)) {
+			return true;
+		} else {
+			final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
+			final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
+			final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
+			return number.equals(rationalMinusOne);
+		}
 	}
 }

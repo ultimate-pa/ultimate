@@ -140,6 +140,10 @@ public class QuantifierEliminationTest {
 		mCsvWriter.reportTestFinished();
 	}
 
+	public static Sort getBv32(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, BigInteger.valueOf(32));
+	}
+
 	@Test
 	public void prenexQuantifiedCapture() {
 		final Term seventeen = mScript.numeral(BigInteger.valueOf(17));
@@ -854,6 +858,14 @@ public class QuantifierEliminationTest {
 		final String expectedResultAsString = "(or (not (= 0 (mod y 2))) (p (div y 2)))";
 		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
+	}
+
+	@Test
+	public void derBitvectorFail01() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBv32, "~g~0", "main_~a~0") };
+		final String inputSTR = "(forall ((v_~g~0_24 (_ BitVec 32))) (or (not (= ~g~0 (bvadd v_~g~0_24 (_ bv4294967295 32)))) (= (bvadd main_~a~0 (_ bv1 32)) v_~g~0_24)))";
+		final String expectedResult = "(= (bvadd main_~a~0 (_ bv1 32)) (bvadd ~g~0 (_ bv1 32)))";
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
