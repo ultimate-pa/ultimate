@@ -201,6 +201,38 @@ public enum RelationSymbol {
 		return result;
 	}
 
+	/**
+	 * @return true iff the relation symbol is neither EQ nor DISTINCT. We call
+	 *         these inequalities "convex inequalities" to emphasize that DISTINCT
+	 *         is not called an inequality.
+	 */
+	public boolean isConvexInequality() {
+		final boolean result;
+		switch (this) {
+		case EQ:
+		case DISTINCT:
+			result = false;
+			break;
+		case LEQ:
+		case GEQ:
+		case LESS:
+		case GREATER:
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
+			result = true;
+			break;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+		return result;
+	}
+
 	public Term constructTerm(final Script script, final Term lhs, final Term rhs) {
 		Term result;
 		switch (this) {
