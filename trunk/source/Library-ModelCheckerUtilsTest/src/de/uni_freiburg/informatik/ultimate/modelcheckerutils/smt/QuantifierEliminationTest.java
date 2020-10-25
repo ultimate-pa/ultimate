@@ -957,6 +957,16 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
+	public void bvultTIR() {
+		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("lo", new Sort[0], bvSort);
+		mScript.declareFun("hi", new Sort[0], bvSort);
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvule x hi ) (bvule lo x)))";
+		final String expectedResult = "(bvule lo hi)";
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void greaterTIRNegativeCoef() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);

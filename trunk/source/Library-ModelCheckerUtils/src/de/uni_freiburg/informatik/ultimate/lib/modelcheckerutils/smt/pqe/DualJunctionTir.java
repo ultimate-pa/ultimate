@@ -76,12 +76,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 	/**
 	 * @param expensiveEliminations
-	 *            If set to true we do expensive eliminations where auxiliary
-	 *            variables and case distinctions are allowed. If set to false we do
-	 *            only inexpensive eliminations where non of the above is allowed.
-	 *            Note that in the first case we will not do all simple
-	 *            eliminations. If you want the full elimination power you should
-	 *            two instances of this class.
+	 *            If set to true we do expensive eliminations where auxiliary variables and case distinctions are
+	 *            allowed. If set to false we do only inexpensive eliminations where non of the above is allowed. Note
+	 *            that in the first case we will not do all simple eliminations. If you want the full elimination power
+	 *            you should two instances of this class.
 	 */
 	public DualJunctionTir(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean expensiveEliminations) {
@@ -105,10 +103,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		return er;
 	}
 
-
 	/**
-	 * Try to iteratively eliminate as many eliminatees as possible using the given
-	 * "derHelper". Return null if did not make progress for any eliminatee.
+	 * Try to iteratively eliminate as many eliminatees as possible using the given "derHelper". Return null if did not
+	 * make progress for any eliminatee.
 	 */
 	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt) {
 		EliminationTask currentEt = inputEt;
@@ -139,22 +136,22 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Try to eliminate some eliminatee using the given "derHelper". Return
-	 * immediately after the first successful step (note that a step can be
-	 * successful if a case distinction was made and the variable was only
-	 * eliminated in for some cases). Return null if did not make progress
-	 * for any eliminatee.
+	 * Try to eliminate some eliminatee using the given "derHelper". Return immediately after the first successful step
+	 * (note that a step can be successful if a case distinction was made and the variable was only eliminated in for
+	 * some cases). Return null if did not make progress for any eliminatee.
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-//			final Term resultTerm = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
+			// final Term resultTerm = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
 			final Term resultTerm = tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
 					inputEt.getTerm(), eliminatee, inputEt.getBannedForDivCapture());
 			if (resultTerm != null) {
-//				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, resultTerm, null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-//				final String sizeMessage = String.format("treesize reduction %d, result has %2.1f percent of original size",
-//						esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
-//				mLogger.info(sizeMessage);
+				// final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, resultTerm,
+				// null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+				// final String sizeMessage = String.format("treesize reduction %d, result has %2.1f percent of original
+				// size",
+				// esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
+				// mLogger.info(sizeMessage);
 				return new EliminationResult(
 						new EliminationTask(inputEt.getQuantifier(), inputEt.getEliminatees(), resultTerm),
 						Collections.emptySet());
@@ -162,7 +159,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 		return null;
 	}
-
 
 	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final Term disjunct, final TermVariable eliminatee,
@@ -180,11 +176,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		if (tirBounds == null) {
 			tirBounds = computeTirBoundSolveForSubject(script, eliminatee, bannedForDivCapture, quantifier, elprs);
 			if (tirBounds == null && SmtSortUtils.isIntSort(eliminatee.getSort())) {
-				tirBounds = computeTirBoundSolveForSubjectInt(script, eliminatee, bannedForDivCapture, quantifier,
-						elprs);
+				tirBounds =
+						computeTirBoundSolveForSubjectInt(script, eliminatee, bannedForDivCapture, quantifier, elprs);
 				if (tirBounds == null && false) {
-					final List<ExplicitLhsPolynomialRelation> unifiedElprs = unifyByMultiplication(script, eliminatee,
-							bannedForDivCapture, quantifier, elprs);
+					final List<ExplicitLhsPolynomialRelation> unifiedElprs =
+							unifyByMultiplication(script, eliminatee, bannedForDivCapture, quantifier, elprs);
 					tirBounds = computeTirBoundForUnifiedLhs(eliminatee, quantifier, unifiedElprs);
 				}
 			}
@@ -245,6 +241,14 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			case GREATER:
 			case LEQ:
 			case LESS:
+			case BVULE:
+			case BVULT:
+			case BVUGE:
+			case BVUGT:
+			case BVSLE:
+			case BVSLT:
+			case BVSGE:
+			case BVSGT:
 				result.addSimpleBound(new Bound(elpr.getRelationSymbol(), elpr.getRhs()));
 				break;
 			default:
@@ -299,6 +303,14 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			case GREATER:
 			case LEQ:
 			case LESS:
+			case BVULE:
+			case BVULT:
+			case BVUGE:
+			case BVUGT:
+			case BVSLE:
+			case BVSLT:
+			case BVSGE:
+			case BVSGT:
 				result.addSimpleBound(new Bound(solved.getRelationSymbol(), solved.getRhs()));
 				break;
 			default:
@@ -327,10 +339,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					final ExplicitLhsPolynomialRelation lower = tmp.changeRelationSymbol(RelationSymbol.GREATER);
 					final ExplicitLhsPolynomialRelation upper = tmp.changeRelationSymbol(RelationSymbol.LESS);
-					final SolvedBinaryRelation solvedLower = lower.divideByIntegerCoefficientForInequalities(script,
-							bannedForDivCapture);
-					final SolvedBinaryRelation solvedUpper = upper.divideByIntegerCoefficientForInequalities(script,
-							bannedForDivCapture);
+					final SolvedBinaryRelation solvedLower =
+							lower.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
+					final SolvedBinaryRelation solvedUpper =
+							upper.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
 					if (solvedLower == null) {
 						assert solvedUpper == null;
 						return null;
@@ -362,10 +374,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					final ExplicitLhsPolynomialRelation lower = tmp.changeRelationSymbol(RelationSymbol.GEQ);
 					final ExplicitLhsPolynomialRelation upper = tmp.changeRelationSymbol(RelationSymbol.LEQ);
-					final SolvedBinaryRelation solvedLower = lower.divideByIntegerCoefficientForInequalities(script,
-							bannedForDivCapture);
-					final SolvedBinaryRelation solvedUpper = upper.divideByIntegerCoefficientForInequalities(script,
-							bannedForDivCapture);
+					final SolvedBinaryRelation solvedLower =
+							lower.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
+					final SolvedBinaryRelation solvedUpper =
+							upper.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
 					if (solvedLower == null) {
 						return null;
 					}
@@ -382,8 +394,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			case GREATER:
 			case LEQ:
 			case LESS:
-				final SolvedBinaryRelation solved = tmp.divideByIntegerCoefficientForInequalities(script,
-						bannedForDivCapture);
+				final SolvedBinaryRelation solved =
+						tmp.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
 				if (solved == null) {
 					return null;
 				}
@@ -435,8 +447,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			if (polyRel == null) {
 				return null;
 			}
-			final ExplicitLhsPolynomialRelation elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
-					eliminatee, polyRel);
+			final ExplicitLhsPolynomialRelation elpr =
+					ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, eliminatee, polyRel);
 			if (elpr == null) {
 				return null;
 			}
@@ -481,12 +493,21 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				throw new AssertionError("should have been split before");
 			case GEQ:
 			case GREATER:
+			case BVUGE:
+			case BVUGT:
+			case BVSGE:
+			case BVSGT:
 				mLowerBounds.add(bound);
 				break;
 			case LEQ:
 			case LESS:
+			case BVULE:
+			case BVULT:
+			case BVSLE:
+			case BVSLT:
 				mUpperBounds.add(bound);
 				break;
+
 			default:
 				throw new AssertionError("unknown relation symbol " + bound.getRelationSymbol());
 			}
@@ -566,50 +587,30 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				final Sort sort) {
 			final RelationSymbol resultRelationSymbol;
 			final Rational offset;
-			if (lowerBoundRelationSymbol.equals(RelationSymbol.GEQ)
-					&& upperBoundRelationSymbol.equals(RelationSymbol.LEQ)) {
-				resultRelationSymbol = RelationSymbol.LEQ;
-				if (SmtSortUtils.isRealSort(sort)) {
-					offset = Rational.ZERO;
-				} else if (SmtSortUtils.isIntSort(sort)) {
-					if (quantifier == QuantifiedFormula.EXISTS) {
-						offset = Rational.ZERO;
-					} else if (quantifier == QuantifiedFormula.FORALL) {
-						offset = Rational.MONE;
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
+			if (lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLE()) {
+				resultRelationSymbol = upperBoundRelationSymbol;
+				if ((quantifier == QuantifiedFormula.FORALL) && SmtSortUtils.isIntSort(sort)) {
+					offset = Rational.MONE;
 				} else {
-					throw new AssertionError("Unsupported sort " + sort);
+					offset = Rational.ZERO;
 				}
-
-			} else if (lowerBoundRelationSymbol.equals(RelationSymbol.GEQ)
-					&& upperBoundRelationSymbol.equals(RelationSymbol.LESS)
-					|| (lowerBoundRelationSymbol.equals(RelationSymbol.GREATER)
-							&& upperBoundRelationSymbol.equals(RelationSymbol.LEQ))) {
+			} else if ((lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLT())
+					|| (lowerBoundRelationSymbol.isRelationSymbolGT()
+							&& upperBoundRelationSymbol.isRelationSymbolLE())) {
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					resultRelationSymbol = RelationSymbol.LESS;
+					resultRelationSymbol = upperBoundRelationSymbol.GetStrictSymbol();
 				} else if (quantifier == QuantifiedFormula.FORALL) {
-					resultRelationSymbol = RelationSymbol.LEQ;
+					resultRelationSymbol = upperBoundRelationSymbol.GetNonStrictSymbol();
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
 				offset = Rational.ZERO;
-			} else if (lowerBoundRelationSymbol.equals(RelationSymbol.GREATER)
-					&& upperBoundRelationSymbol.equals(RelationSymbol.LESS)) {
-				resultRelationSymbol = RelationSymbol.LESS;
-				if (SmtSortUtils.isRealSort(sort)) {
-					offset = Rational.ZERO;
-				} else if (SmtSortUtils.isIntSort(sort)) {
-					if (quantifier == QuantifiedFormula.EXISTS) {
-						offset = Rational.ONE;
-					} else if (quantifier == QuantifiedFormula.FORALL) {
-						offset = Rational.ZERO;
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
+			} else if (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLT()) {
+				resultRelationSymbol = upperBoundRelationSymbol;
+				if ((quantifier == QuantifiedFormula.EXISTS) && SmtSortUtils.isIntSort(sort)) {
+					offset = Rational.ONE;
 				} else {
-					throw new AssertionError("Unsupported sort " + sort);
+					offset = Rational.ZERO;
 				}
 			} else {
 				// <pre>
