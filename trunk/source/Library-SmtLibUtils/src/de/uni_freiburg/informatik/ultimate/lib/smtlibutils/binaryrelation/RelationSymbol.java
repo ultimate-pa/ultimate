@@ -283,4 +283,78 @@ public enum RelationSymbol {
 		}
 		return result;
 	}
+
+	public boolean isRelationSymbolGE() {
+		return this.equals(GEQ);
+	}
+
+	public boolean isRelationSymbolLE() {
+		return this.equals(LEQ);
+	}
+
+	public boolean isRelationSymbolLT() {
+		return this.equals(LESS);
+	}
+
+	public boolean isRelationSymbolGT() {
+		return this.equals(GREATER);
+	}
+
+	public RelationSymbol GetStrictSymbol() {
+		final RelationSymbol result;
+		switch (this) {
+		case GEQ:
+		case GREATER:
+			result = GREATER;
+			break;
+		case LEQ:
+		case LESS:
+			result = LESS;
+			break;
+		case DISTINCT:
+		case EQ:
+			throw new AssertionError("not an inequality");
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("implement " + this);
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+		return result;
+	}
+
+	public RelationSymbol GetNonStrictSymbol() {
+		final RelationSymbol result;
+		switch (this) {
+		case GEQ:
+		case GREATER:
+			result = GEQ;
+			break;
+		case LEQ:
+		case LESS:
+			result = LEQ;
+			break;
+		case DISTINCT:
+		case EQ:
+			throw new AssertionError("not an inequality");
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("implement " + this);
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+		return result;
+	}
 }
