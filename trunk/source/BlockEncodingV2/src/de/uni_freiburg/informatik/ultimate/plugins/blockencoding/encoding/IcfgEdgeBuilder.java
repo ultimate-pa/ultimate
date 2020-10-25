@@ -122,7 +122,7 @@ public class IcfgEdgeBuilder {
 				simplify, elimQuants, false, mXnfConversionTechnique, mSimplificationTechnique, transFormulas);
 
 		final List<UnmodifiableTransFormula> transFormulasWithBE =
-				transitions.stream().map(this::getTransformulaWithBE).collect(Collectors.toList());
+				transitions.stream().map(IcfgEdgeBuilder::getTransformulaWithBE).collect(Collectors.toList());
 		final UnmodifiableTransFormula tfWithBE =
 				TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify, elimQuants, false,
 						mXnfConversionTechnique, mSimplificationTechnique, transFormulasWithBE);
@@ -134,7 +134,7 @@ public class IcfgEdgeBuilder {
 		return rtr;
 	}
 
-	private UnmodifiableTransFormula getTransformulaWithBE(final IcfgEdge edge) {
+	private static UnmodifiableTransFormula getTransformulaWithBE(final IcfgEdge edge) {
 		if (edge instanceof IActionWithBranchEncoders) {
 			return ((IActionWithBranchEncoders) edge).getTransitionFormulaWithBranchEncoders();
 		}
@@ -212,7 +212,7 @@ public class IcfgEdgeBuilder {
 		final IcfgInternalTransition rtr =
 				mEdgeFactory.createInternalTransition(source, target, null, parallelTf, parallelWithBranchIndicators);
 
-		// TODO (Dominik 2020-10-25) To be useful, branch indicators would have to be stored or returned
+		// TODO (Dominik 2020-10-25) To be useful, branch indicators must be stored or returned
 
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
