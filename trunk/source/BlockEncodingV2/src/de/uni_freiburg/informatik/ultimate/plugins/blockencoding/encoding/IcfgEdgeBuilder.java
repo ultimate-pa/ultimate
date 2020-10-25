@@ -168,7 +168,19 @@ public class IcfgEdgeBuilder {
 						callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, mLogger, mServices,
 						mXnfConversionTechnique, mSimplificationTechnique, symbolTable, modifiableGlobalsOfCallee);
 
-		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
+		final UnmodifiableTransFormula tfWithBE;
+		if (intermediateTrans instanceof IActionWithBranchEncoders) {
+			final UnmodifiableTransFormula procedureTfWithBE =
+					((IActionWithBranchEncoders) intermediateTrans).getTransitionFormulaWithBranchEncoders();
+			tfWithBE = TransFormulaUtils.sequentialCompositionWithCallAndReturn(mManagedScript, simplify, elimQuants,
+					false, callTf, oldVarsAssignment, globalVarsAssignment, procedureTfWithBE, returnTf, mLogger,
+					mServices, mXnfConversionTechnique, mSimplificationTechnique, symbolTable,
+					modifiableGlobalsOfCallee);
+		} else {
+			tfWithBE = tf;
+		}
+
+		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBE);
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(rtr, callTrans, intermediateTrans, returnTrans);
