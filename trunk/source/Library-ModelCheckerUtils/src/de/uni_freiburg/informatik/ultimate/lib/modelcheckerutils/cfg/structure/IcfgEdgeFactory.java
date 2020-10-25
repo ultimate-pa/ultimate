@@ -58,17 +58,20 @@ public final class IcfgEdgeFactory {
 				localVarsAssignmentOfCall, getNextFreeId());
 	}
 
+	/**
+	 * @deprecated Use overload that allows passing transformula with branch indicators.
+	 */
+	@Deprecated(since = "2020-10-25")
 	public IcfgInternalTransition createInternalTransition(final IcfgLocation source, final IcfgLocation target,
 			final IPayload payload, final UnmodifiableTransFormula transFormula) {
-		return new IcfgInternalTransition(source, target, payload, transFormula, getNextFreeId());
+		return createInternalTransition(source, target, payload, transFormula, transFormula);
 	}
 
-	public IcfgInternalTransitionWithBranchEncoders createInternalTransitionWithBranchEncoders(
-			final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula transFormula,
+	public IcfgInternalTransition createInternalTransition(final IcfgLocation source, final IcfgLocation target,
+			final IPayload payload, final UnmodifiableTransFormula transFormula,
 			final UnmodifiableTransFormula transFormulaWithBranchIndicators) {
-		return new IcfgInternalTransitionWithBranchEncoders(source, target, payload, transFormula,
-				transFormulaWithBranchIndicators, getNextFreeId());
+		return new IcfgInternalTransition(source, target, payload, transFormula, transFormulaWithBranchIndicators,
+				getNextFreeId());
 	}
 
 	public IcfgForkThreadCurrentTransition createForkThreadCurrentTransition(final IcfgLocation source,

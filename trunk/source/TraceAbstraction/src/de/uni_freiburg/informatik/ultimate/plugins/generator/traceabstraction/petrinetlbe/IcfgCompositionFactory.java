@@ -118,17 +118,17 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 				TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
 						tryAuxVarElimination, false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, transFormulas);
 
-		final IcfgEdge rtr;
+		final UnmodifiableTransFormula tfWithBE;
 		if (first instanceof IActionWithBranchEncoders || second instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula tf1 = getTransformulaWithBE(first);
 			final UnmodifiableTransFormula tf2 = getTransformulaWithBE(second);
-			final UnmodifiableTransFormula tfWithBE = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-					mManagedScript, simplify, tryAuxVarElimination, false, XNF_CONVERSION_TECHNIQUE,
-					SIMPLIFICATION_TECHNIQUE, Arrays.asList(tf1, tf2));
-			rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null, tf, tfWithBE);
+			tfWithBE = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
+					tryAuxVarElimination, false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
+					Arrays.asList(tf1, tf2));
 		} else {
-			rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
+			tfWithBE = tf;
 		}
+		final IcfgEdge rtr = mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBE);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 
 		return rtr;
@@ -167,12 +167,11 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 				constructBranchIndicatorToEdgeMapping(parallelTf.hashCode(), mManagedScript, transitions);
 		final TermVariable[] branchIndicatorArray =
 				branchIndicator2edge.keySet().toArray(new TermVariable[branchIndicator2edge.size()]);
-		final UnmodifiableTransFormula parallelWithBranchIndicators =
-				TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript,
-						branchIndicatorArray, false, XNF_CONVERSION_TECHNIQUE, tfWithBEArray);
+		final UnmodifiableTransFormula parallelWithBranchIndicators = TransFormulaUtils.parallelComposition(mLogger,
+				mServices, mManagedScript, branchIndicatorArray, false, XNF_CONVERSION_TECHNIQUE, tfWithBEArray);
 
-		final IcfgEdge rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null, parallelTf,
-				parallelWithBranchIndicators);
+		final IcfgEdge rtr =
+				mEdgeFactory.createInternalTransition(source, target, null, parallelTf, parallelWithBranchIndicators);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 
 		// Update info for back translation

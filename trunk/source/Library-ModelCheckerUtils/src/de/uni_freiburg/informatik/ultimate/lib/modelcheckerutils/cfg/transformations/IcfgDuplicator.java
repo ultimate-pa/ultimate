@@ -188,15 +188,16 @@ public class IcfgDuplicator {
 
 		final IcfgEdge rtr;
 		if (oldEdge instanceof IIcfgInternalTransition<?>) {
+			final UnmodifiableTransFormula tfWithBE;
 			if (oldEdge instanceof IActionWithBranchEncoders) {
-				final UnmodifiableTransFormula newTf = TransFormulaBuilder.constructCopy(mManagedScript,
+				tfWithBE = TransFormulaBuilder.constructCopy(mManagedScript,
 						((IActionWithBranchEncoders) oldEdge).getTransitionFormulaWithBranchEncoders(),
 						Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
-				rtr = edgeFactory.createInternalTransitionWithBranchEncoders(newSource, newTarget, null,
-						newAction.getTransformula(), newTf);
 			} else {
-				rtr = edgeFactory.createInternalTransition(newSource, newTarget, null, newAction.getTransformula());
+				tfWithBE = newAction.getTransformula();
 			}
+			rtr = edgeFactory.createInternalTransition(newSource, newTarget, null, newAction.getTransformula(),
+					tfWithBE);
 		} else if (oldEdge instanceof IIcfgCallTransition<?>) {
 			rtr = createCopyCall(newSource, newTarget, oldEdge, newAction, edgeFactory);
 		} else if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {

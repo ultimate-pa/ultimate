@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadCurrentTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransitionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadCurrentTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -197,25 +196,11 @@ public class ProcedureMultiplier {
 							final IPayload payload = null;
 							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
 									managedScript, outEdge.getTransformula(), oldVar2newVar.get(copyIdentifier));
-							final IcfgInternalTransition newInternalEdge =
-									icfgEdgeFactory.createInternalTransition(source, target, payload, transFormula);
-							backtranslator.mapEdges(newInternalEdge, oldInternalEdge);
-							ModelUtils.copyAnnotations(oldInternalEdge, newInternalEdge);
-							source.addOutgoing(newInternalEdge);
-							target.addIncoming(newInternalEdge);
-						} else if (outEdge instanceof IcfgInternalTransitionWithBranchEncoders) {
-							final IcfgInternalTransitionWithBranchEncoders oldInternalEdge =
-									(IcfgInternalTransitionWithBranchEncoders) outEdge;
-							final IcfgLocation source = procOldLoc2NewLoc.get(oldInternalEdge.getSource());
-							final IcfgLocation target = procOldLoc2NewLoc.get(oldInternalEdge.getTarget());
-							final IPayload payload = null;
-							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
-									managedScript, outEdge.getTransformula(), oldVar2newVar.get(copyIdentifier));
 							final UnmodifiableTransFormula transFormulaWithBE = TransFormulaBuilder.constructCopy(
 									managedScript, oldInternalEdge.getTransitionFormulaWithBranchEncoders(),
 									oldVar2newVar.get(copyIdentifier));
-							final IcfgInternalTransitionWithBranchEncoders newInternalEdge =
-									icfgEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, payload,
+							final IcfgInternalTransition newInternalEdge =
+									icfgEdgeFactory.createInternalTransition(source, target, payload,
 											transFormula, transFormulaWithBE);
 							backtranslator.mapEdges(newInternalEdge, oldInternalEdge);
 							ModelUtils.copyAnnotations(oldInternalEdge, newInternalEdge);
