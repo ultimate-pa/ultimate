@@ -179,6 +179,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 *            The execution of the new Petri Net.
 	 * @return The corresponding execution of the old Petri Net.
 	 */
+	// TODO (Dominik 2020-10-26) This duplicates code in BlockEncodingBacktranslator. See if we can use that instead,
+	// and get rid of this method.
 	public IProgramExecution<L, Term> translateExecution(final IProgramExecution<L, Term> execution) {
 		if (execution == null) {
 			throw new IllegalArgumentException("execution is null");

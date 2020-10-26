@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  *
@@ -90,8 +91,12 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 					final Map<TermVariable, IcfgEdge> branch2edge =
 							mEdgeBuilder.constructBranchIndicatorToEdgeMapping(edges);
 					final IcfgEdge parComp = mEdgeBuilder.constructParallelComposition(current, target, branch2edge);
+					rememberEdgeMapping(parComp, (Map) branch2edge); // TODO avoid cast
+
+					current.addOutgoing(parComp);
+					target.addIncoming(parComp);
 					edges.stream().forEach(ParallelComposer::disconnect);
-					edges.stream().forEach(a -> rememberEdgeMapping(parComp, a));
+
 					mEdgesRemoved += edgeSize;
 				}
 			}
