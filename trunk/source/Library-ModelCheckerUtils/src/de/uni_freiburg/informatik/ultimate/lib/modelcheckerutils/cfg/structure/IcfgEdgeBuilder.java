@@ -182,21 +182,6 @@ public class IcfgEdgeBuilder {
 	}
 
 	/**
-	 * @deprecated Use overload, which allows proper usage of branch encoders
-	 */
-	@Deprecated(since = "2020-10-26")
-	public IcfgEdge constructParallelComposition(final IcfgLocation source, final IcfgLocation target,
-			final List<IcfgEdge> transitions) {
-		final Map<TermVariable, IcfgEdge> branchIndicator2edge = constructBranchIndicatorToEdgeMapping(transitions);
-		// TODO (Dominik 2020-10-25) To be useful, branch indicators must be stored or returned
-
-		final IcfgInternalTransition rtr = constructParallelComposition(source, target, branchIndicator2edge);
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
-		return rtr;
-	}
-
-	/**
 	 * Constructs the parallel composition of the given edges. Note that the new edge is NOT connected to the source and
 	 * target locations.
 	 *

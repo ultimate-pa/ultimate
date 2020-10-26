@@ -87,7 +87,9 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 				final List<IcfgEdge> edges = partition.getValue();
 				final int edgeSize = edges.size();
 				if (edgeSize > 1) {
-					final IcfgEdge parComp = mEdgeBuilder.constructParallelComposition(current, target, edges);
+					final Map<TermVariable, IcfgEdge> branch2edge =
+							mEdgeBuilder.constructBranchIndicatorToEdgeMapping(edges);
+					final IcfgEdge parComp = mEdgeBuilder.constructParallelComposition(current, target, branch2edge);
 					edges.stream().forEach(ParallelComposer::disconnect);
 					edges.stream().forEach(a -> rememberEdgeMapping(parComp, a));
 					mEdgesRemoved += edgeSize;
