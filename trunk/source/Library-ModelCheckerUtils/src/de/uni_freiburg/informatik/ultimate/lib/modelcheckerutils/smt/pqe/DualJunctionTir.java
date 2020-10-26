@@ -176,11 +176,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		if (tirBounds == null) {
 			tirBounds = computeTirBoundSolveForSubject(script, eliminatee, bannedForDivCapture, quantifier, elprs);
 			if (tirBounds == null && SmtSortUtils.isIntSort(eliminatee.getSort())) {
-				tirBounds =
-						computeTirBoundSolveForSubjectInt(script, eliminatee, bannedForDivCapture, quantifier, elprs);
+				tirBounds = computeTirBoundSolveForSubjectInt(script, eliminatee, bannedForDivCapture, quantifier,
+						elprs);
 				if (tirBounds == null && false) {
-					final List<ExplicitLhsPolynomialRelation> unifiedElprs =
-							unifyByMultiplication(script, eliminatee, bannedForDivCapture, quantifier, elprs);
+					final List<ExplicitLhsPolynomialRelation> unifiedElprs = unifyByMultiplication(script, eliminatee,
+							bannedForDivCapture, quantifier, elprs);
 					tirBounds = computeTirBoundForUnifiedLhs(eliminatee, quantifier, unifiedElprs);
 				}
 			}
@@ -339,10 +339,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					final ExplicitLhsPolynomialRelation lower = tmp.changeRelationSymbol(RelationSymbol.GREATER);
 					final ExplicitLhsPolynomialRelation upper = tmp.changeRelationSymbol(RelationSymbol.LESS);
-					final SolvedBinaryRelation solvedLower =
-							lower.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
-					final SolvedBinaryRelation solvedUpper =
-							upper.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
+					final SolvedBinaryRelation solvedLower = lower.divideByIntegerCoefficientForInequalities(script,
+							bannedForDivCapture);
+					final SolvedBinaryRelation solvedUpper = upper.divideByIntegerCoefficientForInequalities(script,
+							bannedForDivCapture);
 					if (solvedLower == null) {
 						assert solvedUpper == null;
 						return null;
@@ -374,10 +374,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					final ExplicitLhsPolynomialRelation lower = tmp.changeRelationSymbol(RelationSymbol.GEQ);
 					final ExplicitLhsPolynomialRelation upper = tmp.changeRelationSymbol(RelationSymbol.LEQ);
-					final SolvedBinaryRelation solvedLower =
-							lower.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
-					final SolvedBinaryRelation solvedUpper =
-							upper.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
+					final SolvedBinaryRelation solvedLower = lower.divideByIntegerCoefficientForInequalities(script,
+							bannedForDivCapture);
+					final SolvedBinaryRelation solvedUpper = upper.divideByIntegerCoefficientForInequalities(script,
+							bannedForDivCapture);
 					if (solvedLower == null) {
 						return null;
 					}
@@ -394,8 +394,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			case GREATER:
 			case LEQ:
 			case LESS:
-				final SolvedBinaryRelation solved =
-						tmp.divideByIntegerCoefficientForInequalities(script, bannedForDivCapture);
+				final SolvedBinaryRelation solved = tmp.divideByIntegerCoefficientForInequalities(script,
+						bannedForDivCapture);
 				if (solved == null) {
 					return null;
 				}
@@ -447,8 +447,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			if (polyRel == null) {
 				return null;
 			}
-			final ExplicitLhsPolynomialRelation elpr =
-					ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, eliminatee, polyRel);
+			final ExplicitLhsPolynomialRelation elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
+					eliminatee, polyRel);
 			if (elpr == null) {
 				return null;
 			}
@@ -598,9 +598,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					|| (lowerBoundRelationSymbol.isRelationSymbolGT()
 							&& upperBoundRelationSymbol.isRelationSymbolLE())) {
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					resultRelationSymbol = upperBoundRelationSymbol.GetStrictSymbol();
+					resultRelationSymbol = upperBoundRelationSymbol.getStrictSymbol();
 				} else if (quantifier == QuantifiedFormula.FORALL) {
-					resultRelationSymbol = upperBoundRelationSymbol.GetNonStrictSymbol();
+					resultRelationSymbol = upperBoundRelationSymbol.getNonStrictSymbol();
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}

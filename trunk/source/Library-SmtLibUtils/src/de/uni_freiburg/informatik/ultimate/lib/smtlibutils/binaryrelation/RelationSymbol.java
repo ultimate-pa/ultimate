@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public enum RelationSymbol {
-	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">"), BVULE("bvule"), BVULT("bvult"),
-	BVUGE("bvuge"), BVUGT("bvugt"), BVSLE("bvsle"), BVSLT("bvslt"), BVSGE("bvsge"), BVSGT("bvsgt");
+	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">"), BVULE("bvule"), BVULT("bvult"), BVUGE(
+			"bvuge"), BVUGT("bvugt"), BVSLE("bvsle"), BVSLT("bvslt"), BVSGE("bvsge"), BVSGT("bvsgt");
 
 	private final String mStringRepresentation;
 
@@ -202,9 +202,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * @return true iff the relation symbol is neither EQ nor DISTINCT. We call
-	 *         these inequalities "convex inequalities" to emphasize that DISTINCT
-	 *         is not called an inequality.
+	 * @return true iff the relation symbol is neither EQ nor DISTINCT. We call these inequalities "convex inequalities"
+	 *         to emphasize that DISTINCT is not called an inequality.
 	 */
 	public boolean isConvexInequality() {
 		final boolean result;
@@ -285,76 +284,100 @@ public enum RelationSymbol {
 	}
 
 	public boolean isRelationSymbolGE() {
-		return this.equals(GEQ);
+		if ((this == RelationSymbol.GEQ) || (this == RelationSymbol.BVUGE) || (this == RelationSymbol.BVSGE)) {
+			return true;
+		}
+		return false;
 	}
 
 	public boolean isRelationSymbolLE() {
-		return this.equals(LEQ);
-	}
-
-	public boolean isRelationSymbolLT() {
-		return this.equals(LESS);
+		if ((this == RelationSymbol.LEQ) || (this == RelationSymbol.BVULE) || (this == RelationSymbol.BVSLE)) {
+			return true;
+		}
+		return false;
 	}
 
 	public boolean isRelationSymbolGT() {
-		return this.equals(GREATER);
+		if ((this == RelationSymbol.GREATER) || (this == RelationSymbol.BVUGT) || (this == RelationSymbol.BVSGT)) {
+			return true;
+		}
+		return false;
 	}
 
-	public RelationSymbol GetStrictSymbol() {
-		final RelationSymbol result;
+	public boolean isRelationSymbolLT() {
+		if ((this == RelationSymbol.LESS) || (this == RelationSymbol.BVULT) || (this == RelationSymbol.BVSLT)) {
+			return true;
+		}
+		return false;
+	}
+
+	public RelationSymbol getNonStrictSymbol() {
 		switch (this) {
-		case GEQ:
-		case GREATER:
-			result = GREATER;
-			break;
-		case LEQ:
-		case LESS:
-			result = LESS;
-			break;
-		case DISTINCT:
 		case EQ:
-			throw new AssertionError("not an inequality");
-		case BVSGE:
-		case BVSGT:
-		case BVSLE:
-		case BVSLT:
-		case BVUGE:
-		case BVUGT:
+			return RelationSymbol.EQ;
+		case DISTINCT:
+			return RelationSymbol.DISTINCT;
+		case LEQ:
+			return RelationSymbol.LEQ;
+		case GEQ:
+			return RelationSymbol.GEQ;
+		case LESS:
+			return RelationSymbol.LEQ;
+		case GREATER:
+			return RelationSymbol.GEQ;
 		case BVULE:
+			return RelationSymbol.BVULE;
 		case BVULT:
-			throw new AssertionError("implement " + this);
+			return RelationSymbol.BVULE;
+		case BVUGE:
+			return RelationSymbol.BVUGE;
+		case BVUGT:
+			return RelationSymbol.BVUGE;
+		case BVSLE:
+			return RelationSymbol.BVSLE;
+		case BVSLT:
+			return RelationSymbol.BVSLE;
+		case BVSGE:
+			return RelationSymbol.BVSGE;
+		case BVSGT:
+			return RelationSymbol.BVSGE;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
 		}
-		return result;
 	}
 
-	public RelationSymbol GetNonStrictSymbol() {
-		final RelationSymbol result;
+	public RelationSymbol getStrictSymbol() {
 		switch (this) {
-		case GEQ:
-		case GREATER:
-			result = GEQ;
-			break;
-		case LEQ:
-		case LESS:
-			result = LEQ;
-			break;
-		case DISTINCT:
 		case EQ:
-			throw new AssertionError("not an inequality");
-		case BVSGE:
-		case BVSGT:
-		case BVSLE:
-		case BVSLT:
-		case BVUGE:
-		case BVUGT:
+			return RelationSymbol.EQ;
+		case DISTINCT:
+			return RelationSymbol.DISTINCT;
+		case LEQ:
+			return RelationSymbol.LESS;
+		case GEQ:
+			return RelationSymbol.GREATER;
+		case LESS:
+			return RelationSymbol.LESS;
+		case GREATER:
+			return RelationSymbol.GREATER;
 		case BVULE:
+			return RelationSymbol.BVULT;
 		case BVULT:
-			throw new AssertionError("implement " + this);
+			return RelationSymbol.BVULT;
+		case BVUGE:
+			return RelationSymbol.BVUGT;
+		case BVUGT:
+			return RelationSymbol.BVUGT;
+		case BVSLE:
+			return RelationSymbol.BVSLT;
+		case BVSLT:
+			return RelationSymbol.BVSLT;
+		case BVSGE:
+			return RelationSymbol.BVSGT;
+		case BVSGT:
+			return RelationSymbol.BVSGT;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
 		}
-		return result;
 	}
 }
