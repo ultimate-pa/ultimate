@@ -23,6 +23,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
 	private final Stack<S> mStack;
 	private final ISleepSetOrder<S, L> mOrder;
+	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private final NestedRun<L, S> mAcceptingRun;
 	
 	public SleepSetDelayReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
@@ -43,6 +44,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		mStartState = startState;
 		mStack.push(startState);
 		mOrder = sleepSetOrder;
+		mIndependenceRelation = independenceRelation;
 		
 		mAcceptingRun = getAcceptingRun();
 		
@@ -52,7 +54,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		
 		// TODO Insert pseudo code here
 		S currentState = mStack.firstElement();
-		ArrayList<OutgoingInternalTransition<L, S>> successorTransitionList = new ArrayList<OutgoingInternalTransition<L, S>>();
+		ArrayList<L> successorTransitionList = new ArrayList<L>();
 		Set<L> currentSleepSet = mSleepSetMap.get(currentState);
 		Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
 		
@@ -60,7 +62,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 			mHashMap.put(currentState, mSleepSetMap.get(currentState));
 			for (OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 				if (currentSleepSet.contains(transition.getLetter()) == false) {
-					successorTransitionList.add(transition);
+					successorTransitionList.add(transition.getLetter());
 				}	
 			}
 		}
@@ -71,7 +73,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 				if (currentSleepSet.contains(letter) == false) {
 					//following for loop is always executed exactly once, but needed to avoid a type mismatch
 					for (OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState, letter)) {
-						successorTransitionList.add(transition);
+						successorTransitionList.add(transition.getLetter());
 					}
 				}
 			}
@@ -85,8 +87,33 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		}
 		//sort successorTransitionList according to the given order
 		Comparator<L> order = mOrder.getOrder(currentState);
-		for (OutgoingInternalTransition<L, S> transition : successorTransitionList) {
-			//do stuff
+		successorTransitionList.sort(order);
+		for (L letterTransition : successorTransitionList) {
+			//following for loop is always executed exactly once, but needed to avoid a type mismatch
+			for (OutgoingInternalTransition<L, S> currentTransition : mOperand.internalSuccessors(currentState, letterTransition)) {
+				S succState = currentTransition.getSucc();
+				Set<L> succSleepSet = Collections.<L>emptySet();
+				for (L letterSleepSet : currentSleepSet) {
+					if (mIndependenceRelation.contains(currentState, letterTransition, letterSleepSet)) {
+						succSleepSet.add(letterSleepSet);
+					}
+				}
+				Set<Set<L>> succDelaySet = Collections.<Set<L>>emptySet();
+				if(mStack.contains(succState)) {
+					if (mDelaySetMap.get(succState) != null) {
+						succDelaySet.addAll(mDelaySetMap.get(succState));
+					}	
+					succDelaySet.add(mSleepSetMap.get(succState));
+					mDelaySetMap.put(succState, succDelaySet);
+				}
+				else {
+					mDelaySetMap.put(succState, succDelaySet);
+					mStack.push(succState);
+					getAcceptingRun();
+				}
+				currentSleepSet.add(letterTransition);
+				mSleepSetMap.put(currentState, currentSleepSet);
+			}
 		}
 		mStack.pop();
 		if (currentDelaySet.isEmpty() == false) {
