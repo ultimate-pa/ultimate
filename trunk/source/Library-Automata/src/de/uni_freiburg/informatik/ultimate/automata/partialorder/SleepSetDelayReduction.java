@@ -13,11 +13,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IStateFactory<S>>{
 	
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
-	private final S mStartState;
+	private final Set<S> mStartStateSet;
 	private final HashMap<S, Set<L>> mHashMap;
 	private final HashMap<S, Set<L>> mSleepSetMap;
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
@@ -27,7 +28,6 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	private final NestedRun<L, S> mAcceptingRun;
 	
 	public SleepSetDelayReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final S startState,
 			final IIndependenceRelation<S, L> independenceRelation,
 			final ISleepSetOrder<S, L> sleepSetOrder,
 			final AutomataLibraryServices services) {
@@ -35,14 +35,17 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		mOperand = operand;
 		assert operand.getVpAlphabet().getCallAlphabet().isEmpty();
 		assert operand.getVpAlphabet().getReturnAlphabet().isEmpty();
+		mStartStateSet = CoreUtil.constructHashSet(operand.getInitialStates());
+		assert (mStartStateSet.size() == 1);
 		mHashMap = new HashMap<S, Set<L>>();
 		mSleepSetMap = new HashMap<S, Set<L>>();
-		mSleepSetMap.put(startState, Collections.<L>emptySet());
 		mDelaySetMap = new HashMap<S, Set<Set<L>>>();
-		mDelaySetMap.put(startState, Collections.<Set<L>>emptySet());
 		mStack = new Stack<S>();
-		mStartState = startState;
-		mStack.push(startState);
+		for (S startState : mStartStateSet) {
+			mSleepSetMap.put(startState, Collections.<L>emptySet());
+			mDelaySetMap.put(startState, Collections.<Set<L>>emptySet());
+			mStack.push(startState);
+		}
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
 		
