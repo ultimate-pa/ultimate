@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -104,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -393,13 +396,32 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, unf.getFinitePrefix(), true);
 			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName() + " failed";
 			mAbstraction = fp2pn.getResult();
-			mProgramPointPlaces = fp2pn.getOldToNewPlaces().projectToRange(mProgramPointPlaces);
+			final Set<IPredicate> oldProgramPointPlaces = mProgramPointPlaces;
+			mProgramPointPlaces = fp2pn.getOldToNewPlaces().projectToRange(oldProgramPointPlaces);
 			final int flowAfterwards = mAbstraction.size();
 			mPetriClStatisticsGenerator.reportFlowIncreaseByBackfolding(flowAfterwards - flowBefore);
 			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
 			mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
 					+ (((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
 					+ " predicate places.");
+			final boolean partialRemerge = !true;
+			final boolean remergeProgramPoints = true;
+			if (partialRemerge) {
+				final IPetriNet<L, IPredicate> abstractionAsNet = (IPetriNet<L, IPredicate>) mAbstraction;
+				final UnionFind<IPredicate> uf = new UnionFind<>();
+				for (final Entry<IPredicate, HashSet<IPredicate>> entry : fp2pn.getOldToNewPlaces().entrySet()) {
+					if (remergeProgramPoints ^ oldProgramPointPlaces.contains(entry.getKey())) {
+						uf.addEquivalenceClass(entry.getValue());
+					}
+				}
+				final Map<IPredicate, IPredicate> placeMap = PetriNetUtils.mergePlaces(new HashSet<>(abstractionAsNet.getPlaces()), uf);
+				final IPetriNet<L, IPredicate> res = PetriNetUtils.mergePlaces(new AutomataLibraryServices(mServices),abstractionAsNet, placeMap);
+				mAbstraction = res;
+				mProgramPointPlaces = mProgramPointPlaces.stream().map(placeMap::get).collect(Collectors.toSet());
+				mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
+						+ (((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
+						+ " predicate places.");
+			}
 		}
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);

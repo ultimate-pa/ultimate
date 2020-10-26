@@ -55,7 +55,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private static int mTimeout = 10 * 1000;
 	// @formatter:off
 	private static final String[] mDirectories = {
-//			"examples/Automata/regression/nwa/operations/buchiComplement",
+			"examples/Automata/regression/",
 //			"examples/Automata/atsTestFiles",
 //			"examples/Automata/website",
 			// common folders
@@ -67,11 +67,11 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 			// "examples/Automata/nwa",
 			// "examples/Automata/nwaOperations",
 			// the following two have bugs still
-			 "examples/Automata/PetriNet",
+//			 "examples/Automata/PetriNet",
 			// "examples/Automata/senwa",
 			// the following is not yet tested
 			// "examples/Automata/syntaxError",
-			 "examples/Automata/regression/pn",
+//			 "examples/Automata/regression/pn",
 //			 "examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/subTwoHourMarathon/",
 //			 "examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/esken/",
 //			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/christmas/",

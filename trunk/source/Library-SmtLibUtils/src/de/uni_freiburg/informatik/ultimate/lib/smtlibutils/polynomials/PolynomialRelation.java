@@ -79,7 +79,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	protected final RelationSymbol mRelationSymbol;
 	protected final TrivialityStatus mTrivialityStatus;
 	/**
-	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the mOriginalTerm.
+	 * {@link PolynomialTerm}s or {@link AffineTerm}s ψ such that the relation ψ ▷ 0
+	 * is equivalent to the mOriginalTerm.
 	 */
 	protected final AbstractGeneralizedAffineTerm<Term> mPolynomialTerm;
 

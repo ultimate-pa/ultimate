@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.util.Arrays;
+
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
@@ -50,8 +52,12 @@ public class PolynomialTermOperations {
 		}
 	}
 
-	public static IPolynomialTerm sum(final IPolynomialTerm mul, final AffineTerm affineTerm) {
-		throw new UnsupportedOperationException();
+	public static IPolynomialTerm sum(final IPolynomialTerm... summands) {
+		if (Arrays.stream(summands).allMatch(x -> (x instanceof AffineTerm))) {
+			return AffineTerm.sum(summands);
+		} else {
+			return PolynomialTerm.sum(summands);
+		}
 	}
 
 }

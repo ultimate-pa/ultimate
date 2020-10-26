@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 public class DifferencePetriNwaBenchmark extends UltimateTestSuite {
 
 	// @formatter:off
-	private static final int TIMEOUT_MS = 300 * 60 * 1_000;
+	private static final int TIMEOUT_MS = 120 * 1_000;
 	private static final File TOOLCHAIN_FILE =
 			new File(TestUtil.getPathFromTrunk("examples/toolchains/AutomataScriptInterpreter.xml"));
 	private static final String[] DIRECTORIES = {
@@ -62,8 +62,8 @@ public class DifferencePetriNwaBenchmark extends UltimateTestSuite {
 	private static final String[] SETTINGS = {
 //		"AutomataScript/differencePetriNwa/differenceHeuristic.epf",
 //		"AutomataScript/differencePetriNwa/differenceInverted.epf",
-//		"AutomataScript/differencePetriNwa/differencePairwise.epf",
-		"AutomataScript/differencePetriNwa/differencePairwiseOnDemand.epf",
+		"AutomataScript/differencePetriNwa/differencePairwise.epf",
+//		"AutomataScript/differencePetriNwa/differencePairwiseOnDemand.epf",
 //		"AutomataScript/differencePetriNwa/finPreDifferenceHeuristic.epf",
 //		"AutomataScript/differencePetriNwa/finPreDifferenceInverted.epf",
 //		"AutomataScript/differencePetriNwa/finPreDifferencePairwise.epf",

@@ -66,3 +66,5 @@ print(akzeptanz3);
 // Konstruiere den Äquivalenzklassenautomaten (Def. 2.6)
 FiniteAutomaton deaAquiv = minimizeSevpa(deaSchnitt);
 print(deaAquiv);
+
+print(deaEven);

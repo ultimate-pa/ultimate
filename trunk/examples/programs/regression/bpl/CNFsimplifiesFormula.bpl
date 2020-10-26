@@ -13,14 +13,15 @@ var a1, a2, a3, b1, b2, b3, c1, c2, c3: bool;
 procedure main() returns ()
 modifies a1, a2, a3, b1, b2, b3, c1, c2, c3;
 {
+	var x : int;
   if (*) {
     assume(true);
   } else {
     assume(true);
   }
-  assume((a1 && a2 && a3) || (a1 && a2 && b3) || a1 || (a1 && a2 && c3));
+  assume(x >= 23);
   while (*) {
       assume(true);
     }
-  assert(a1);
+  assert(x >= 23);
 }

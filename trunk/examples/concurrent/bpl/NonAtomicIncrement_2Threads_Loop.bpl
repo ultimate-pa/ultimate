@@ -13,13 +13,13 @@ modifies x;
 
 implementation ULTIMATE.start()
 {
-    x := 0;
+    x := x*x + 1;
 
-    fork 1 fistIncrementProcess();
+    fork 1 fooAdd();
 	fork 2 secondIncrementProcess();
-    join 1;
-	join 2;
-	assert x >= 2;
+//    join 1;
+//	join 2;
+	assert x != 0;
 }
 
 procedure fistIncrementProcess();

@@ -143,6 +143,13 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 									// was decreased before
 									return true;
 								}
+							} else if (voluntaryRankDecrease.equals(EnumSet.of(
+									VoluntaryRankDecrease.ALLOWS_O_ESCAPE))) {
+								if (!mOperand.isFinal(predecessor.getUp().getState()) && predecessor.getUp().isInO()) {
+									// some predecessor is not final but in O, there is also a copy in which this
+									// was decreased before
+									return true;
+								}
 							} else {
 								throw new UnsupportedOperationException("unclear if CFDRD optimization is sound");
 							}

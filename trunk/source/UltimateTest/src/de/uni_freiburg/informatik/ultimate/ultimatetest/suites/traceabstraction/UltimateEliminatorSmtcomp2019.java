@@ -61,7 +61,7 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 	 * of the interval that we take and FILE_OFFSET defines which interval
 	 * we take.
 	 */
-	 private static final int FILES_PER_DIRECTORY_LIMIT = 10;
+	 private static final int FILES_PER_DIRECTORY_LIMIT = 1000;
 	 private static final int FILE_OFFSET = 0;
 
 	// @formatter:off
@@ -78,26 +78,26 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 			 * You can get the benchmarks in one .zip archive at the following URL
 			 * http://www.informatik.uni-freiburg.de/~heizmann/2019smtcomp/2019SmtcompQuantifierNonincremental.zip
 			 */
-//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/ABVFP", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/ALIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/AUFLIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/AUFLIRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/AUFNIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/AUFNIRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/BV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
-//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/BVFP", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
-//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/FP", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
+////			new DirectoryFileEndingsPair("examples/local/2019smtcomp/ABVFP", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/ALIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/AUFLIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/AUFLIRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/AUFNIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/AUFNIRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+////			new DirectoryFileEndingsPair("examples/local/2019smtcomp/BV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
+////			new DirectoryFileEndingsPair("examples/local/2019smtcomp/BVFP", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
+////			new DirectoryFileEndingsPair("examples/local/2019smtcomp/FP", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
 			new DirectoryFileEndingsPair("examples/local/2019smtcomp/LIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/LRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/NIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/NRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UF", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFBV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFIDL", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFLIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFLRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFNIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/uc", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/LRA//scholl-smt08//", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/NIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/NRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UF", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+////			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFBV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFIDL", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFLIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFLRA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/UFNIA", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+////			new DirectoryFileEndingsPair("examples/local/2019smtcomp/uc", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 	};
 
 
@@ -106,7 +106,7 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 	 */
 	@Override
 	public long getTimeout() {
-		return 10 * 1000;
+		return 60 * 1000;
 	}
 
 	/**
@@ -116,9 +116,9 @@ public class UltimateEliminatorSmtcomp2019 extends AbstractModelCheckerTestSuite
 	 *
 	 */
 	private static final String[] mSettings = {
-			"UltimateEliminator/testing-z3.epf",
-			"UltimateEliminator/testing-yices2.epf",
-			"UltimateEliminator/testing-smtinterpol.epf",
+//			"UltimateEliminator/testing-z3.epf",
+//			"UltimateEliminator/testing-yices2.epf",
+//			"UltimateEliminator/testing-smtinterpol.epf",
 			"UltimateEliminator/testing-mathsat.epf",
 	};
 

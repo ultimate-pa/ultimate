@@ -243,6 +243,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
+//			final String test = SmtTestGenerationUtils.generateStringForTestfile2(pred.getFormula());
 			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript,
 					pred.getFormula(), mSimplificationTechnique, mXnfConversionTechnique);
 			// 2016-05-14 Matthias: Which structure of the resulting
