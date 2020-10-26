@@ -140,7 +140,7 @@ public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEnc
 
 	protected void rememberEdgeMapping(final IIcfgTransition<IcfgLocation> newEdge,
 			final Map<TermVariable, IIcfgTransition<IcfgLocation>> originalEdges) {
-		mBacktranslator.mapEdges(newEdge, originalEdges); // TODO avoid casts
+		mBacktranslator.mapEdges(newEdge, originalEdges);
 	}
 
 	private static class DequeCollector<T> implements Collector<T, Deque<T>, Deque<T>> {
