@@ -605,7 +605,7 @@ public class QuantifierEliminationTest {
 		if (expectedResultAsString != null) {
 			final boolean resultIsEquivalentToExpectedResult =
 					SmtTestUtils.areLogicallyEquivalent(mgdScript.getScript(), result, expectedResultAsString);
-			Assert.assertTrue("Not equivalent to expected result " + result, resultIsEquivalentToExpectedResult);
+			Assert.assertTrue("Not equivalent to expected result: " + result, resultIsEquivalentToExpectedResult);
 		}
 		csvWriter.reportEliminationSuccess(result);
 	}
@@ -643,7 +643,7 @@ public class QuantifierEliminationTest {
 		if (expectedResultAsString != null) {
 			final boolean resultIsEquivalentToExpectedResult =
 					SmtTestUtils.areLogicallyEquivalent(mgdScript.getScript(), result, expectedResultAsString);
-			Assert.assertTrue("Not equivalent to expected result " + result, resultIsEquivalentToExpectedResult);
+			Assert.assertTrue("Not equivalent to expected result: " + result, resultIsEquivalentToExpectedResult);
 		}
 		csvWriter.reportEliminationSuccess(result);
 	}
