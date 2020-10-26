@@ -35,11 +35,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
+ * An annotation used to mark CFG locations that are the beginning or end of an atomic block, in the sense of SV-COMP's
+ * __VERIFIER_ATOMIC_* feature or in the sense of "atomic { }" statements in our Boogie dialect.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- *
  */
-public class AtomicBlockInfo extends ModernAnnotations {
+public final class AtomicBlockInfo extends ModernAnnotations {
 
 	private static final long serialVersionUID = -8370873908642083605L;
 
@@ -69,30 +70,60 @@ public class AtomicBlockInfo extends ModernAnnotations {
 		return map;
 	}
 
-	public static boolean isStartOfAtomicBlock(IElement element) {
-		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(),
-				x -> (AtomicBlockInfo) x);
+	/**
+	 * Determines if the given element (resp., location) is annotated as start of an atomic block.
+	 *
+	 * Note that a location can be both the start of an atomic block and the end of a (preceding) atomic block.
+	 *
+	 * @param element
+	 *            The element whose annotation is examined.
+	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the beginning of an atomic block.
+	 */
+	public static boolean isStartOfAtomicBlock(final IElement element) {
+		final AtomicBlockInfo annotation =
+				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), x -> (AtomicBlockInfo) x);
 		if (annotation != null) {
 			return annotation.mBeginAtomic;
 		}
 		return false;
 	}
 
-	public static boolean isEndOfAtomicBlock(IElement element) {
-		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(),
-				x -> (AtomicBlockInfo) x);
+	/**
+	 * Determines if the given element (resp., location) is annotated as end of an atomic block.
+	 *
+	 * Note that a location can be both the end of an atomic block and the start of a (succeeding) atomic block.
+	 *
+	 * @param element
+	 *            The element whose annotation is examined.
+	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the end of an atomic block.
+	 */
+	public static boolean isEndOfAtomicBlock(final IElement element) {
+		final AtomicBlockInfo annotation =
+				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), x -> (AtomicBlockInfo) x);
 		if (annotation != null) {
 			return annotation.mEndAtomic;
 		}
 		return false;
 	}
 
-	public static void addBeginAnnotation(IElement element) {
+	/**
+	 * Marks the given element (typically, a location) as the beginning of an atomic block.
+	 *
+	 * @param element
+	 *            The location to be marked.
+	 */
+	public static void addBeginAnnotation(final IElement element) {
 		final boolean isEnd = isEndOfAtomicBlock(element);
 		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(true, isEnd));
 	}
 
-	public static void addEndAnnotation(IElement element) {
+	/**
+	 * Marks the given element (typically, a location) as the end of an atomic block.
+	 *
+	 * @param element
+	 *            The location to be marked.
+	 */
+	public static void addEndAnnotation(final IElement element) {
 		final boolean isBegin = isStartOfAtomicBlock(element);
 		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(isBegin, true));
 	}

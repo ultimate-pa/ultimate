@@ -164,6 +164,14 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				case GEQ:
 				case LESS:
 				case LEQ:
+				case BVULE:
+				case BVULT:
+				case BVUGE:
+				case BVUGT:
+				case BVSLE:
+				case BVSLT:
+				case BVSGE:
+				case BVSGT:
 					if (inequalitiesWithTv > 0) {
 						// unable to eliminate quantifier, we may drop at most
 						// one inequality

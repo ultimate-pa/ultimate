@@ -2,12 +2,13 @@
 <feature
       id="BA_FeatureUltimateCommandLine"
       label="BA_FeatureUltimateCommandLine"
-      version="0.1.25">
+      version="0.2.0"
+      arch="x86_64">
 
    <requires>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.core"/>
-      <import plugin="de.uni_freiburg.informatik.ultimate.lib.util"/>
+      <import feature="BA_FeatureDependenciesCommon"/>
+      <import feature="BA_FeatureDependenciesCommandlineE4"/>
+      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin

@@ -284,3 +284,7 @@ releaseScripts/default/UReqCheck-linux/
 
 releaseScripts/default/UReqCheck-win32/
 /trunk/examples/Requirements/failure-paths/*
+
+/trunk/source/JavaCup/bootstrap/com/github/jhoenicke/javacup
+/trunk/source/JavaCup/classes/com/github/jhoenicke/javacup
+/trunk/source/JavaCup/java/com/github/jhoenicke/javacup

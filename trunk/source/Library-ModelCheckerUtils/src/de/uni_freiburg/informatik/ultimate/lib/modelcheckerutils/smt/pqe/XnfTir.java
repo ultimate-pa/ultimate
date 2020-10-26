@@ -212,6 +212,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					if (elpr == null) {
 						return null;
 					}
+					if (!SmtSortUtils.isIntSort(eliminatee.getSort())) {
+						return null;
+					}
 					final Pair<ExplicitLhsPolynomialRelation, Term> pair = elpr.divideByIntegerCoefficient(script,
 							bannedForDivCapture);
 					if (pair == null) {
@@ -304,6 +307,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "not eliminated";
 		return result;
 	}
+
+
 
 	/**
 	 * transforms
@@ -550,5 +555,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			return "Bound [mIsStrict=" + mIsStrict + ", mTerm=" + mTerm + "]";
 		}
 	}
+
+
+
 
 }

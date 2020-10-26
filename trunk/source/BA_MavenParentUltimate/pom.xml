@@ -1,9 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.1.25</version>
+	<version>0.2.0</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -15,7 +16,7 @@
 	</scm>
 
 	<properties>
-		<ultimate-version>0.1.25</ultimate-version>
+		<ultimate-version>0.2.0</ultimate-version>
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
@@ -29,7 +30,7 @@
 		<!-- https://mvnrepository.com/artifact/org.eluder.coveralls/coveralls-maven-plugin -->
 		<coveralls-version>4.3.0</coveralls-version>
 		<!-- https://mvnrepository.com/artifact/pl.project13.maven/git-commit-id-plugin -->
-		<git-commit-id-version>4.0.2</git-commit-id-version>
+		<git-commit-id-version>2.2.3</git-commit-id-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
 		<maven-clean-version>3.1.0</maven-clean-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
@@ -53,6 +54,7 @@
 		<acslparserDir>${workspaceDir}/ACSLParser/src/de/uni_freiburg/informatik/ultimate/acsl/parser</acslparserDir>
 		<acslastDir>${workspaceDir}/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast</acslastDir>
 		<astbuilderDir>${workspaceDir}/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder</astbuilderDir>
+		<baSharedJarsDir>${workspaceDir}/BA_SharedJARs</baSharedJarsDir>
 		<boogieparserDir>${workspaceDir}/BoogiePLParser/src/de/uni_freiburg/informatik/ultimate/boogie/parser</boogieparserDir>
 		<boogieastDir>${workspaceDir}/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast</boogieastDir>
 		<toolchainDir>${workspaceDir}/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain</toolchainDir>
@@ -77,24 +79,19 @@
 
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
-		<sonar.java.source>1.8</sonar.java.source>
+		<sonar.java.source>11</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<sonar.showProfiling>false</sonar.showProfiling>
 		<sonar.verbose>false</sonar.verbose>
 		<sonar.log.level>WARN</sonar.log.level>
 		<sonar.cpd.cross_project>true</sonar.cpd.cross_project>
 
-		<!--
-			For multi-module Maven builds, generate the comma-seperated list of xml
-			files (one per module) dynamically by using the command (on, e.g. monteverdi
-			jenkins the dir is /storage/jenkins/jenkins_home/jobs/Ultimate Nightly/workspace)
-
-			find . -path '*jacoco.xml' | sed 's/\.\/trunk\/source//' | sed 's/.*/${workspaceDir}&/' | tr '\n' ','
-
-			and copy it to the sonar.coverage.jacoco.xmlReportPaths property.
-
-		-->
-		<sonar.coverage.jacoco.xmlReportPaths>${workspaceDir}/SMTInterpol/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/JavaCup/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BlockEncodingV2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GUIGeneratedPreferencePages/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomatonDeltaDebugger/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateModel/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MSOD/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BuchiAutomizer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GuiRCP/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogieProcedureInliner/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ModelCheckerUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ModelCheckerUtilsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PathExpressions/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-CZT/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-srParse/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IRSDependencies/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqToTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomataScriptParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstractionConcurrent/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BA_MavenParentUltimate/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateCore/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTSolverBridge/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateEliminatorController/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Sifa/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateRegressionTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-srParseTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ChcSmtPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePreprocessor/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTInterpolTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateUtilTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ASTBuilder/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-jdom/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SmtParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePreprocessorTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/LassoRanker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SMTLIB/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-IcfgTransformer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-log4j/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Jung/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PEA/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PEAtoBoogie/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/LTL2aut/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PDR/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-JavaBDD/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstractionWithAFAs/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePLParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SifaTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MCR/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/JungVisualization/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-IcfgTransformerTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateUtil/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ChcToBoogie/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CoreRCP/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PEAtoBoogieTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/WitnessParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ACSLParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ojAlgo/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IcfgToChc/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CDTPlugin/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Log4j2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Batik/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AbstractInterpretationV2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BlockEncoding/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Referee/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CodeCheck/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ApacheCommonsLang/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateTestTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SyntaxChecker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CoreRCPTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Automata/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SpaceExParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-CHC/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MSODTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogieModSetAnnotator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PeaExampleGenerator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstraction/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/RCFGBuilder/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PathExpressionsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BuchiProgramProduct/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/InvariantSynthesis/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Crocotta/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SmtLibUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-AutomataTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-AcceleratedInterpolation/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AbstractInterpretationV2Test/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-TraceCheckerUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SMTLIBTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReachingDefinitions/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Disruptor/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IcfgTransformation/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateDeltaDebugger/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomataScriptInterpreter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TreeAutomizer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-BoogieAST/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateCLI/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTSolverBridgeTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CACSL2BoogieTranslator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ApacheCommonsCLI/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SpaceExParserTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/WitnessPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CDTParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Sifa/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GUILoggingWindow/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-xerces/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-LassoRanker/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<!-- For multi-module Maven builds, generate the comma-seperated list of 
+			xml files (one per module) dynamically by using the command (on, e.g. monteverdi 
+			jenkins the dir is /storage/jenkins/jenkins_home/jobs/Ultimate Nightly/workspace) 
+			find . -path '*jacoco.xml' | sed 's/\.\/trunk\/source//' | sed 's/.*/${workspaceDir}&/' 
+			| tr '\n' ',' and copy it to the sonar.coverage.jacoco.xmlReportPaths property. -->
+		<sonar.coverage.jacoco.xmlReportPaths>${workspaceDir}/SMTInterpol/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/JavaCup/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BlockEncodingV2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GUIGeneratedPreferencePages/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomatonDeltaDebugger/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateModel/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MSOD/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BuchiAutomizer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GuiRCP/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogieProcedureInliner/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ModelCheckerUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ModelCheckerUtilsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PathExpressions/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-CZT/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-srParse/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IRSDependencies/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqToTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomataScriptParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstractionConcurrent/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BA_MavenParentUltimate/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateCore/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTSolverBridge/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateEliminatorController/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Sifa/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateRegressionTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-srParseTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ChcSmtPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePreprocessor/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTInterpolTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateUtilTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ASTBuilder/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SmtParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePreprocessorTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/LassoRanker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SMTLIB/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-IcfgTransformer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Jung/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PEA/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PEAtoBoogie/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/LTL2aut/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PDR/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-JavaBDD/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstractionWithAFAs/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePLParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SifaTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MCR/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/JungVisualization/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-IcfgTransformerTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateUtil/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ChcToBoogie/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CoreRCP/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PEAtoBoogieTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/WitnessParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ACSLParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ojAlgo/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IcfgToChc/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CDTPlugin/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AbstractInterpretationV2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BlockEncoding/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Referee/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CodeCheck/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ApacheCommonsLang/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateTestTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SyntaxChecker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CoreRCPTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Automata/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SpaceExParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-CHC/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MSODTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogieModSetAnnotator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PeaExampleGenerator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstraction/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/RCFGBuilder/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PathExpressionsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BuchiProgramProduct/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/InvariantSynthesis/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Crocotta/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SmtLibUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-AutomataTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-AcceleratedInterpolation/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AbstractInterpretationV2Test/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-TraceCheckerUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SMTLIBTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReachingDefinitions/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Disruptor/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IcfgTransformation/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateDeltaDebugger/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomataScriptInterpreter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TreeAutomizer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-BoogieAST/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateCLI/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTSolverBridgeTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CACSL2BoogieTranslator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ApacheCommonsCLI/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SpaceExParserTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/WitnessPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CDTParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Sifa/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GUILoggingWindow/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-LassoRanker/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
 		<!-- Exclude completely from any sonar analysis (including coverage) -->
 		<sonar.exclusions>
@@ -321,46 +318,11 @@
 		<sonar.issue.ignore.multicriteria></sonar.issue.ignore.multicriteria>
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
-		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps
+		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
 			on OutOfMemory exceptions -->
 		<manualtest-argline>-Xmx4g </manualtest-argline>
 		<coverage-argline>-Xmx4g -ea</coverage-argline>
-
 	</properties>
-
-	<repositories>
-		<!--
-			We proxy repositories via monteverdi to reduce load and speed up the
-			build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url>
-			The user/password is managed by DD
-
-			The original URLs are
-			<url>http://download.eclipse.org/releases/mars/</url>
-			<url>http://download.eclipse.org/releases/neon/</url>
-			<url>http://download.eclipse.org/releases/2018-09/</url>
-		-->
-
-		<repository>
-			<id>eclipse-mars</id>
-			<layout>p2</layout>
-			<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-mars/</url>
-
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-
-
-		<repository>
-			<id>javaxRepository</id>
-			<name>Java.net Repository for Maven</name>
-			<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/javaxRepository/</url>
-			<layout>default</layout>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
 
 	<build>
 		<plugins>
@@ -370,13 +332,14 @@
 				<artifactId>tycho-maven-plugin</artifactId>
 				<version>${tycho-version}</version>
 				<extensions>true</extensions>
-
 			</plugin>
+
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
+					<!-- TODO: I am not sure if this is necessary. -->
 					<environments>
 						<environment>
 							<os>win32</os>
@@ -422,10 +385,10 @@
 					<commitIdGenerationMode>flat</commitIdGenerationMode>
 					<gitDescribe>
 						<skip>false</skip>
-						<!-- when the build is triggered while the repo is in "dirty state",
+						<!-- when the build is triggered while the repo is in "dirty state", 
 							append this suffix -->
 						<dirty>-m</dirty>
-						<!-- Only consider tags matching the given pattern. This can be used
+						<!-- Only consider tags matching the given pattern. This can be used 
 							to avoid leaking private tags from the repository. -->
 						<match>*</match>
 						<tags>true</tags>
@@ -450,12 +413,11 @@
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>
-
 		</plugins>
 
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -535,18 +497,14 @@
 		<module>../Library-ApacheCommonsCLI</module>
 		<module>../Library-ApacheCommonsLang</module>
 		<module>../Library-Automata</module>
-		<module>../Library-Batik</module>
 		<module>../Library-BoogieAST</module>
 		<module>../Library-CHC</module>
 		<module>../Library-CZT</module>
 		<module>../Library-Disruptor</module>
 		<module>../Library-IcfgTransformer</module>
 		<module>../Library-JavaBDD</module>
-		<module>../Library-jdom</module>
 		<module>../Library-Jung</module>
 		<module>../Library-LassoRanker</module>
-		<module>../Library-Log4j2</module>
-		<module>../Library-log4j</module>
 		<module>../Library-MCR</module>
 		<module>../Library-ModelCheckerUtils</module>
 		<module>../Library-MSOD</module>
@@ -563,7 +521,6 @@
 		<module>../Library-UltimateCore</module>
 		<module>../Library-UltimateModel</module>
 		<module>../Library-UltimateUtil</module>
-		<module>../Library-xerces</module>
 		<module>../LTL2aut</module>
 		<module>../PeaExampleGenerator</module>
 		<module>../PEAtoBoogie</module>
@@ -585,19 +542,66 @@
 		<module>../TreeAutomizer</module>
 		<module>../UltimateCLI</module>
 		<module>../UltimateDeltaDebugger</module>
-
 		<module>../WitnessParser</module>
 		<module>../WitnessPrinter</module>
 		<module>../UltimateEliminatorController</module>
-
 	</modules>
 
 	<profiles>
+		<profile>
+			<id>jdk_gt_1.8</id>
+			<!-- Java > 1.8 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
+			<activation>
+				<jdk>(1.8,]</jdk>
+			</activation>
+
+			<repositories>
+				<!-- We proxy repositories via monteverdi to reduce load and speed up 
+					the build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url> 
+					The user/password is managed by DD The original URLs are <url>http://download.eclipse.org/releases/mars/</url> 
+					<url>http://download.eclipse.org/releases/neon/</url> <url>http://download.eclipse.org/releases/2018-09/</url> -->
+				<repository>
+					<id>eclipse-4.17</id>
+					<layout>p2</layout>
+					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-4.17/</url>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+
+				<repository>
+					<id>cdt-10</id>
+					<layout>p2</layout>
+					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/cdt-10.0/</url>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+
+				<repository>
+					<id>orbit-R20200831200620</id>
+					<layout>p2</layout>
+					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-R20200831200620/</url>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+			</repositories>
+		</profile>
 
 		<profile>
-			<!-- The profile coverage is used to generate junit test case coverage
-				through jenkins and sonar. It uses all regression tests, but not UltimateTest,
-				as those tests are very slow and should be executed manually via profile
+			<!-- NOT supported JDK version <= 1.8. -->
+			<id>jdk_leq_1.8</id>
+			<!-- Java < 1.9 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
+			<activation>
+				<jdk>[,1.9)</jdk>
+			</activation>
+		</profile>
+
+		<profile>
+			<!-- The profile coverage is used to generate junit test case coverage 
+				through jenkins and sonar. It uses all regression tests, but not UltimateTest, 
+				as those tests are very slow and should be executed manually via profile 
 				manualtest. You should not need to run this profile manually. -->
 			<id>coverage</id>
 
@@ -617,6 +621,7 @@
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>true</trimStackTrace>
 							<redirectTestOutputToFile>true</redirectTestOutputToFile>
+							
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -626,7 +631,7 @@
 
 							<!-- Use this for global timeouts per class -->
 							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-
+							
 							<includes>
 								<include>**/*.java</include>
 							</includes>
@@ -662,7 +667,6 @@
 			<modules>
 				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
-
 				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../BoogiePreprocessorTest</module>
@@ -682,20 +686,20 @@
 				<module>../SpaceExParserTest</module>
 				<module>../PEAtoBoogieTest</module>
 
-				<!-- UltimateRegressionTest contains system tests that are relatively
+				<!-- UltimateRegressionTest contains system tests that are relatively 
 					fast -->
 				<module>../UltimateRegressionTest</module>
 
-				<!-- UltimateTest contains system tests, but should not be run. It is
+				<!-- UltimateTest contains system tests, but should not be run. It is 
 					excluded in surefire. -->
 				<module>../UltimateTest</module>
 			</modules>
 		</profile>
 
 		<profile>
-			<!-- The profile travis is used to generate junit test case coverage through
-				travis and coveralls. It uses all regression tests, but not UltimateTest,
-				as those tests are very slow and should be executed manually via profile
+			<!-- The profile travis is used to generate junit test case coverage through 
+				travis and coveralls. It uses all regression tests, but not UltimateTest, 
+				as those tests are very slow and should be executed manually via profile 
 				manualtest. You should not need to run this profile manually. -->
 			<id>travis</id>
 
@@ -750,7 +754,7 @@
 						<artifactId>coveralls-maven-plugin</artifactId>
 						<version>${coveralls-version}</version>
 						<configuration>
-							<!-- We should not publish the repo token, but I dont know any other
+							<!-- We should not publish the repo token, but I dont know any other 
 								way of telling travis. Its either here or in .travis.yml -->
 							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
 						</configuration>
@@ -761,7 +765,6 @@
 			<modules>
 				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
-
 				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../BoogiePreprocessorTest</module>
@@ -783,23 +786,18 @@
 		</profile>
 
 		<profile>
-			<!-- The profile manualtest is used to start manual tests from the commandline.
-				It allows you to run all tests, but you should nevertheless specify which
-				suite you want to run, as all the suites may require several days to
-				run.
-				To run this, you can use the following syntax: time mvn clean integration-test
-				-Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1 You can also
-				use
-				the following options to customize your run: -o enables offline mode,
-				skipping
-				lookup of online repositories -T n uses n threads during build export
-				_JAVA_OPTIONS="-enableassertions"
-				(Linux) or set _JAVA_OPTIONS=-enableassertions (Windows) before the actual
-				command supplies additional options to the test VM without changing this
-				pom.xml Further notes: Maven chooses your VM by inspecting JAVA_HOME.
-				Under
-				Windows, you can show it with echo %JAVA_HOME% and change it temporarily
-				with set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05 This profile should
+			<!-- The profile manualtest is used to start manual tests from the commandline. 
+				It allows you to run all tests, but you should nevertheless specify which 
+				suite you want to run, as all the suites may require several days to run. 
+				To run this, you can use the following syntax: time mvn clean integration-test 
+				-Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1 You can also use 
+				the following options to customize your run: -o enables offline mode, skipping 
+				lookup of online repositories -T n uses n threads during build export _JAVA_OPTIONS="-enableassertions" 
+				(Linux) or set _JAVA_OPTIONS=-enableassertions (Windows) before the actual 
+				command supplies additional options to the test VM without changing this 
+				pom.xml Further notes: Maven chooses your VM by inspecting JAVA_HOME. Under 
+				Windows, you can show it with echo %JAVA_HOME% and change it temporarily 
+				with set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05 This profile should 
 				(probably) only be used manually. -->
 			<id>manualtest</id>
 			<build>
@@ -817,12 +815,11 @@
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
-							<!-- redirectTestOutputToFile=false is the default, but to debug strange
-								maven/junit bugs, you may want to set it to true to have all the
-								test output
+							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
+								maven/junit bugs, you may want to set it to true to have all the test output 
 								written to file -->
 							<redirectTestOutputToFile>false</redirectTestOutputToFile>
-							<!-- if you want to change the argLine, use the global property; Note:
+							<!-- if you want to change the argLine, use the global property; Note: 
 								for some reason, in this profile we cannot use ${tycho.testArgLine} -->
 							<argLine>${manualtest-argline}</argLine>
 
@@ -862,12 +859,11 @@
 				<module>../SpaceExParserTest</module>
 				<module>../PEAtoBoogieTest</module>
 
-
-				<!-- UltimateRegressionTest contains system tests that are relatively
+				<!-- UltimateRegressionTest contains system tests that are relatively 
 					fast -->
 				<module>../UltimateRegressionTest</module>
 
-				<!-- UltimateTest contains system tests, but should not be run. It is
+				<!-- UltimateTest contains system tests, but should not be run. It is 
 					excluded in surefire. -->
 				<module>../UltimateTest</module>
 			</modules>
@@ -876,17 +872,17 @@
 		<profile>
 			<id>materialize</id>
 			<modules>
-				<module>../WebInterface</module>
-				<module>../Website</module>
-				<module>../WebUltimateBridge</module>
-
-				<module>../BA_FeatureUltimateDebug</module>
-				<module>../BA_FeatureUltimateCommandLine</module>
-				<module>../BA_FeatureUltimateDeltaDebugger</module>
+				<module>../BA_FeatureDependenciesCommon</module>
 				<module>../BA_FeatureDependenciesCommandlineE4</module>
 				<module>../BA_FeatureDependenciesDebugE4</module>
 				<module>../BA_FeatureUltimateCommon</module>
+				<module>../BA_FeatureUltimateDebug</module>
+				<module>../BA_FeatureUltimateCommandLine</module>
+				<module>../BA_FeatureUltimateDeltaDebugger</module>
 				<module>../BA_FeatureUltimateWebbridge</module>
+				<module>../WebInterface</module>
+				<module>../Website</module>
+				<module>../WebUltimateBridge</module>
 				<module>../BA_SiteRepository</module>
 				<module>../BA_Website</module>
 			</modules>

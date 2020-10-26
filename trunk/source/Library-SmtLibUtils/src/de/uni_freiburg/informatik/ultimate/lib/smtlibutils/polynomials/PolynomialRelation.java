@@ -52,9 +52,8 @@ import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Represents an term of the form ψ ▷ φ, where ψ and φ are
- * {@link PolynomialTerm}s or {@link AffineTerm}s and ▷ is a binary relation
- * symbol from the following list.
+ * Represents an term of the form ψ ▷ φ, where ψ and φ are {@link PolynomialTerm}s or {@link AffineTerm}s and ▷ is a
+ * binary relation symbol from the following list.
  * <p>
  * ▷ ∈ { =, !=, \<=, \<, \>=, \> }
  * </p>
@@ -62,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Allows to return this relation as an SMT term in the following two forms:
  * <ul>
  * <li>positive normal form
- * <li>the form where a specific variable is on the left hand side and all other
- * summands are moved to the right hand side.
+ * <li>the form where a specific variable is on the left hand side and all other summands are moved to the right hand
+ * side.
  * </ul>
  * </p>
  *
@@ -73,14 +72,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class PolynomialRelation implements IBinaryRelation {
 
-	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE = "No affine representation where desired variable is on left hand side";
+	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE =
+			"No affine representation where desired variable is on left hand side";
 	protected static final boolean TEMPORARY_POLYNOMIAL_TERM_TEST = false;
 	protected final Term mOriginalTerm;
 	protected final RelationSymbol mRelationSymbol;
 	protected final TrivialityStatus mTrivialityStatus;
 	/**
-	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the
-	 * mOriginalTerm.
+	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the mOriginalTerm.
 	 */
 	protected final AbstractGeneralizedAffineTerm<Term> mPolynomialTerm;
 
@@ -93,8 +92,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Create {@link PolynomialRelation} from {@link IPolynomialTerm} and
-	 * {@link RelationSymbol}.
+	 * Create {@link PolynomialRelation} from {@link IPolynomialTerm} and {@link RelationSymbol}.
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
 	 *
@@ -119,8 +117,8 @@ public class PolynomialRelation implements IBinaryRelation {
 			final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> polyLhs,
 			final AbstractGeneralizedAffineTerm<?> polyRhs, final Term originalTerm) {
 		mOriginalTerm = originalTerm;
-		final AbstractGeneralizedAffineTerm<Term> difference = sum(checkThenCast(polyLhs),
-				mul(checkThenCast(polyRhs), Rational.MONE));
+		final AbstractGeneralizedAffineTerm<Term> difference =
+				sum(checkThenCast(polyLhs), mul(checkThenCast(polyRhs), Rational.MONE));
 		final AbstractGeneralizedAffineTerm<Term> polyTerm;
 		final RelationSymbol relationSymbolAfterTransformation;
 
@@ -131,6 +129,10 @@ public class PolynomialRelation implements IBinaryRelation {
 				case DISTINCT:
 				case EQ:
 				case GEQ:
+				case BVULE:
+				case BVUGE:
+				case BVSLE:
+				case BVSGE:
 				case LEQ:
 					// relation symbol is not strict anyway
 					polyTerm = difference;
@@ -146,6 +148,11 @@ public class PolynomialRelation implements IBinaryRelation {
 					relationSymbolAfterTransformation = RelationSymbol.GEQ;
 					polyTerm = sum(difference, constructConstant(difference.getSort(), Rational.MONE));
 					break;
+				case BVULT:
+				case BVUGT:
+				case BVSLT:
+				case BVSGT:
+					throw new AssertionError("STRICT2NONSTRICT for Bitvector not implemented");
 				default:
 					throw new AssertionError("unknown symbol");
 				}
@@ -153,6 +160,10 @@ public class PolynomialRelation implements IBinaryRelation {
 				switch (relationSymbol) {
 				case DISTINCT:
 				case EQ:
+				case BVULT:
+				case BVUGT:
+				case BVSLT:
+				case BVSGT:
 				case LESS:
 				case GREATER:
 					// relation symbol is strict anyway
@@ -169,6 +180,11 @@ public class PolynomialRelation implements IBinaryRelation {
 					relationSymbolAfterTransformation = RelationSymbol.LESS;
 					polyTerm = sum(difference, constructConstant(difference.getSort(), Rational.MONE));
 					break;
+				case BVULE:
+				case BVUGE:
+				case BVSLE:
+				case BVSGE:
+					throw new AssertionError("NONSTRICT2STRICT for Bitvector not implemented");
 				default:
 					throw new AssertionError("unknown symbol");
 				}
@@ -212,9 +228,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Given a AbstractGeneralizedAffineTerm, check whether it is of Type AffineTerm
-	 * and PolynomialTerm. If yes, cast it (UNSAFE) and return the result, throw an
-	 * exception otherwise.
+	 * Given a AbstractGeneralizedAffineTerm, check whether it is of Type AffineTerm and PolynomialTerm. If yes, cast it
+	 * (UNSAFE) and return the result, throw an exception otherwise.
 	 */
 	private static AbstractGeneralizedAffineTerm<Term> checkThenCast(final AbstractGeneralizedAffineTerm<?> poly) {
 		if (!(poly instanceof AffineTerm || poly instanceof PolynomialTerm)) {
@@ -248,6 +263,15 @@ public class PolynomialRelation implements IBinaryRelation {
 			return computeTrivialityStatus(term, a -> a >= 0);
 		case LEQ:
 			return computeTrivialityStatus(term, a -> a <= 0);
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
+			return TrivialityStatus.NONTRIVIAL;
 		default:
 			throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
 		}
@@ -313,6 +337,15 @@ public class PolynomialRelation implements IBinaryRelation {
 					result = TrivialityStatus.NONTRIVIAL;
 				}
 				break;
+			case BVULE:
+			case BVULT:
+			case BVUGE:
+			case BVUGT:
+			case BVSLE:
+			case BVSLT:
+			case BVSGE:
+			case BVSGT:
+				result = TrivialityStatus.NONTRIVIAL;
 			default:
 				throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
 			}
@@ -338,10 +371,9 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns a term representation of this PolynomialRelation where each summand
-	 * occurs only positive and the greater-than relation symbols are replaced by
-	 * less-than relation symbols. If the term is equivalent to <i>true</i> (resp.
-	 * <i>false</i>) we return <i>true</i> (resp. <i>false</i>).
+	 * Returns a term representation of this PolynomialRelation where each summand occurs only positive and the
+	 * greater-than relation symbols are replaced by less-than relation symbols. If the term is equivalent to
+	 * <i>true</i> (resp. <i>false</i>) we return <i>true</i> (resp. <i>false</i>).
 	 */
 	public Term positiveNormalForm(final Script script) {
 		if (mTrivialityStatus == TrivialityStatus.EQUIVALENT_TO_TRUE) {
@@ -369,10 +401,10 @@ public class PolynomialRelation implements IBinaryRelation {
 							SmtUtils.rational2Term(script, mPolynomialTerm.getConstant(), mPolynomialTerm.getSort()));
 				}
 			}
-			final Term lhsTerm = SmtUtils.sum(script, mPolynomialTerm.getSort(),
-					lhsSummands.toArray(new Term[lhsSummands.size()]));
-			final Term rhsTerm = SmtUtils.sum(script, mPolynomialTerm.getSort(),
-					rhsSummands.toArray(new Term[rhsSummands.size()]));
+			final Term lhsTerm =
+					SmtUtils.sum(script, mPolynomialTerm.getSort(), lhsSummands.toArray(new Term[lhsSummands.size()]));
+			final Term rhsTerm =
+					SmtUtils.sum(script, mPolynomialTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
 			final Term result = BinaryRelation.constructLessNormalForm(script, mRelationSymbol, lhsTerm, rhsTerm);
 			assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(mOriginalTerm, result,
 					script) != LBool.SAT : "transformation to positive normal form " + "unsound";
@@ -381,14 +413,13 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this
-	 * PolynomialRelation or null if we cannot find such a
-	 * {@link SolvedBinaryRelation}.
+	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we cannot find
+	 * such a {@link SolvedBinaryRelation}.
 	 */
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
-		final ExplicitLhsPolynomialRelation elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, subject,
-				this);
+		final ExplicitLhsPolynomialRelation elpr =
+				ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, subject, this);
 		if (elpr == null) {
 			return null;
 		} else {
@@ -403,7 +434,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				final SolvedBinaryRelation result = new SolvedBinaryRelation(subject,
 						solvedElpr.getRhs().toTerm(script), solvedElpr.getRelationSymbol());
 				final Term relationToTerm = result.asTerm(script);
-				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(this.positiveNormalForm(script),
+				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(positiveNormalForm(script),
 						relationToTerm, script) != LBool.SAT : "solveForSubject unsound";
 				return result;
 			}
@@ -411,9 +442,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this
-	 * PolynomialRelation or null if we cannot find such a
-	 * {@link MultiCaseSolvedBinaryRelation}.
+	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we
+	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
 	 */
 	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Set<TermVariable> bannedForDivCapture) {
@@ -421,8 +451,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * @return true iff the relation ψ ▷ φ has (after simplification) a form where ψ
-	 *         and φ are both affine terms.
+	 * @return true iff the relation ψ ▷ φ has (after simplification) a form where ψ and φ are both affine terms.
 	 */
 	public boolean isAffine() {
 		return mPolynomialTerm.isAffine();
@@ -450,6 +479,9 @@ public class PolynomialRelation implements IBinaryRelation {
 		final AbstractGeneralizedAffineTerm<?> polyLhs = transformToPolynomialTerm(script, lhs);
 		final AbstractGeneralizedAffineTerm<?> polyRhs = transformToPolynomialTerm(script, rhs);
 		if (polyLhs.isErrorTerm() || polyRhs.isErrorTerm()) {
+			return null;
+		}
+		if (bnr.getRelationSymbol().isConvexInequality() && SmtSortUtils.isBitvecSort(lhs.getSort())) {
 			return null;
 		}
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();

@@ -49,7 +49,7 @@ done
 
 pushd "$automizer_location" > /dev/null
 
-if ! readlink -e "$PWD/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar" > /dev/null ; then
+if ! readlink -e "$PWD/plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar" > /dev/null ; then
     echo "$PWD does not contain Ultimate binaries"
     exit 1
 fi
@@ -89,7 +89,7 @@ java \
 -Dosgi.configuration.area=config/ \
 -Xmx100G \
 -Xss4m \
--jar plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar \
+-jar plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar \
 -tc "$toolchain_location" \
 -s "$settings_location" \
 -i $file \

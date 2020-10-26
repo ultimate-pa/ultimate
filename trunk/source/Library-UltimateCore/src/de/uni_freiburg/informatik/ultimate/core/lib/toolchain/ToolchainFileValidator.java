@@ -77,7 +77,8 @@ public class ToolchainFileValidator {
 	@SuppressWarnings({ "unchecked" })
 	public RunDefinition loadValidatedToolchain(final String xmlfile)
 			throws JAXBException, FileNotFoundException, SAXException {
-		final JAXBContext jc = JAXBContext.newInstance(TOOLCHAIN_PACKAGE);
+		
+		final JAXBContext jc = JAXBContext.newInstance(TOOLCHAIN_PACKAGE, ObjectFactory.class.getClassLoader());
 		final Unmarshaller unmarshaller = jc.createUnmarshaller();
 		final URL fullPathString = getClass().getResource(TOOLCHAIN_URI);
 		unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(fullPathString));

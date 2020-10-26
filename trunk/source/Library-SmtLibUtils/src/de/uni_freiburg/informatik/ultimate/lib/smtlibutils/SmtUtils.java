@@ -1178,6 +1178,62 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * @return term that is equivalent to (bvule lhs rhs) TODO move to BitvectorUtils/optimize
+	 */
+	public static Term bvule(final Script script, final Term lhs, final Term rhs) {
+		return comparison(script, "bvule", lhs, rhs);
+	}
+
+	/**
+	 * @return term that is equivalent to (bvult lhs rhs)
+	 */
+	public static Term bvult(final Script script, final Term lhs, final Term rhs) {
+		return comparison(script, "bvult", lhs, rhs);
+	}
+
+	/**
+	 * @return term that is equivalent to (bvuge lhs rhs)
+	 */
+	public static Term bvuge(final Script script, final Term lhs, final Term rhs) {
+		return comparison(script, "bvuge", lhs, rhs);
+	}
+
+	/**
+	 * @return term that is equivalent to (bvugt lhs rhs)
+	 */
+	public static Term bvugt(final Script script, final Term lhs, final Term rhs) {
+		return comparison(script, "bvugt", lhs, rhs);
+	}
+
+	/**
+	 * @return term that is equivalent to (bvsle lhs rhs)
+	 */
+	public static Term bvsle(final Script script, final Term lhs, final Term rhs) {
+		return comparison(script, "bvsle", lhs, rhs);
+	}
+
+	/**
+	 * @return term that is equivalent to (bvsle lhs rhs)
+	 */
+	public static Term bvslt(final Script script, final Term lhs, final Term rhs) {
+		return comparison(script, "bvslt", lhs, rhs);
+	}
+
+	/**
+	 * @return term that is equivalent to (bvsge lhs rhs)
+	 */
+	public static Term bvsge(final Script script, final Term lhs, final Term rhs) {
+		return comparison(script, "bvsge", lhs, rhs);
+	}
+
+	/**
+	 * @return term that is equivalent to (bvsge lhs rhs)
+	 */
+	public static Term bvsgt(final Script script, final Term lhs, final Term rhs) {
+		return comparison(script, "bvsgt", lhs, rhs);
+	}
+
+	/**
 	 * @return term that is equivalent to lhs X rhs where X is either leq, less, geq, or greater.
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
@@ -2449,10 +2505,18 @@ public final class SmtUtils {
 	 * @return true iff this number is the binary representation of a bitvector whose two's complement representation is
 	 *         -1 (i.e., minus one).
 	 */
+	// <pre>
+	// TODO #bvineq 20201017 Matthias:
+	// The name of this method might be misleading.
+	// </pre>
 	public static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
-		final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
-		final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
-		final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
-		return number.equals(rationalMinusOne);
+		if (number.equals(Rational.MONE)) {
+			return true;
+		} else {
+			final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
+			final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
+			final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
+			return number.equals(rationalMinusOne);
+		}
 	}
 }

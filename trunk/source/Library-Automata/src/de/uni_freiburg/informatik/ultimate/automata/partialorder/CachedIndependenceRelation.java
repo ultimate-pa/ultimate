@@ -33,18 +33,30 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * An independence relation that caches the result of an underlying relation. To
- * be used with computation-intensive independence relations.
- * 
+ * An independence relation that caches the result of an underlying relation. To be used with computation-intensive
+ * independence relations.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <S>
+ *            If the relation is conditional, the type of states serving as conditions. Use a wildcard for unconditional
+ *            relations.
+ * @param <L>
+ *            The type of letters whose independence is defined by the relation.
  */
-public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceRelation<STATE, LETTER> {
+public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S, L> {
 
-	private final IIndependenceRelation<STATE, LETTER> mUnderlying;
-	private final Map<STATE, HashRelation<LETTER, LETTER>> mPositiveCache = new HashMap<>();
-	private final Map<STATE, HashRelation<LETTER, LETTER>> mNegativeCache = new HashMap<>();
+	private final IIndependenceRelation<S, L> mUnderlying;
+	private final Map<S, HashRelation<L, L>> mPositiveCache = new HashMap<>();
+	private final Map<S, HashRelation<L, L>> mNegativeCache = new HashMap<>();
 
-	public CachedIndependenceRelation(final IIndependenceRelation<STATE, LETTER> underlying) {
+	/**
+	 * Create a new cache for the given relation.
+	 *
+	 * @param underlying
+	 *            The underlying relation that will be queried and whose results will be cached.
+	 */
+	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
 		mUnderlying = underlying;
 	}
 
@@ -59,18 +71,18 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 	}
 
 	@Override
-	public boolean contains(final STATE state, final LETTER a, final LETTER b) {
-		STATE stateKey = state;
+	public boolean contains(final S state, final L a, final L b) {
+		S stateKey = state;
 		if (!isConditional()) {
 			stateKey = null;
 		}
 
-		HashRelation<LETTER, LETTER> positive = mPositiveCache.get(stateKey);
+		HashRelation<L, L> positive = mPositiveCache.get(stateKey);
 		if (positive == null) {
 			positive = new HashRelation<>();
 		}
 
-		HashRelation<LETTER, LETTER> negative = mNegativeCache.get(stateKey);
+		HashRelation<L, L> negative = mNegativeCache.get(stateKey);
 		if (negative == null) {
 			negative = new HashRelation<>();
 		}
@@ -81,7 +93,7 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 			return false;
 		}
 
-		final boolean result = mUnderlying.contains(state, a, b);
+		final boolean result = mUnderlying.contains(stateKey, a, b);
 		if (result) {
 			positive.addPair(a, b);
 			mPositiveCache.put(stateKey, positive);
@@ -94,46 +106,38 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 	}
 
 	public int getNegativeCacheSize() {
-		final int negativeSize = mNegativeCache.entrySet().stream()
-				.collect(Collectors.summingInt(e -> e.getValue().size()));
-		return negativeSize;
+		return mNegativeCache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
 	}
 
 	public int getPositiveCacheSize() {
-		final int positiveSize = mPositiveCache.entrySet().stream()
-				.collect(Collectors.summingInt(e -> e.getValue().size()));
-		return positiveSize;
+		return mPositiveCache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
 	}
 
 	/**
-	 * Merges cached independencies for two letters into a combined letter. If both
-	 * are independent from some third letter c, the combined letter will be
-	 * independent from c as well.
+	 * Merges cached independencies for two letters into a combined letter. If both are independent from some third
+	 * letter c, the combined letter will be independent from c as well.
 	 *
-	 * This method can be used to transfer knowledge about letters to a (sequential
-	 * or choice) composition of these letters. The caller must ensure soundness, it
-	 * is not checked against the underlying relation (as this would defeat the
-	 * purpose).
+	 * This method can be used to transfer knowledge about letters to a (sequential or choice) composition of these
+	 * letters. The caller must ensure soundness, it is not checked against the underlying relation (as this would
+	 * defeat the purpose).
 	 *
 	 * @param a
 	 *            The first letter
 	 * @param b
 	 *            The second letter
 	 * @param ab
-	 *            The combination (e.g. sequential composition) of the previous two
-	 *            letters.
+	 *            The combination (e.g. sequential composition) of the previous two letters.
 	 */
-	public void mergeIndependencies(LETTER a, LETTER b, LETTER ab) {
-		for (final STATE state : mPositiveCache.keySet()) {
-			final HashRelation<LETTER, LETTER> relation = mPositiveCache.get(state);
+	public void mergeIndependencies(final L a, final L b, final L ab) {
+		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
 			// (a, c) + (b, c) -> (ab, c)
-			for (final LETTER c : relation.getImage(a)) {
+			for (final L c : relation.getImage(a)) {
 				if (relation.containsPair(b, c)) {
 					relation.addPair(ab, c);
 				}
 			}
 			// (c, a) + (c, b) -> (c, ab)
-			for (final LETTER c : relation.getDomain()) {
+			for (final L c : relation.getDomain()) {
 				if (relation.containsPair(c, a) && relation.containsPair(c, b)) {
 					relation.addPair(c, ab);
 				}
@@ -141,14 +145,18 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 		}
 	}
 
-	public void removeFromCache(LETTER a) {
-		for (final STATE state : mPositiveCache.keySet()) {
-			final HashRelation<LETTER, LETTER> relation = mPositiveCache.get(state);
+	/**
+	 * Purge all independencies involving a given letter from the cache.
+	 *
+	 * @param a
+	 *            The letter whose independencies shall be removed.
+	 */
+	public void removeFromCache(final L a) {
+		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
 			relation.removeDomainElement(a);
 			relation.removeRangeElement(a);
 		}
-		for (final STATE state : mNegativeCache.keySet()) {
-			final HashRelation<LETTER, LETTER> relation = mNegativeCache.get(state);
+		for (final HashRelation<L, L> relation : mNegativeCache.values()) {
 			relation.removeDomainElement(a);
 			relation.removeRangeElement(a);
 		}

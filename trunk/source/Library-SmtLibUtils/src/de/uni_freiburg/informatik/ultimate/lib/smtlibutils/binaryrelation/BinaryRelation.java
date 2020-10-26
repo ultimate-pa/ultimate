@@ -129,13 +129,22 @@ public abstract class BinaryRelation implements IBinaryRelation {
 	public static Term constructLessNormalForm(final Script script, final RelationSymbol relationSymbol,
 			final Term lhsTerm, final Term rhsTerm) throws AssertionError {
 		final Term result;
+
 		switch (relationSymbol) {
 		case DISTINCT:
 		case EQ:
+		case BVULE:
+		case BVULT:
+		case BVSLE:
+		case BVSLT:
 		case LEQ:
 		case LESS:
 			result = toTerm(script, relationSymbol, lhsTerm, rhsTerm);
 			break;
+		case BVUGE:
+		case BVUGT:
+		case BVSGE:
+		case BVSGT:
 		case GEQ:
 		case GREATER:
 			final RelationSymbol swapped = relationSymbol.swapParameters();
@@ -164,6 +173,14 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		case LESS:
 		case GEQ:
 		case GREATER:
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
 			result = script.term(relationSymbol.toString(), lhsTerm, rhsTerm);
 			break;
 		default:
@@ -190,8 +207,6 @@ public abstract class BinaryRelation implements IBinaryRelation {
 			return null;
 		}
 	}
-
-
 
 	public static class NoRelationOfThisKindException extends Exception {
 

@@ -38,7 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public enum RelationSymbol {
-	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">");
+	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">"), BVULE("bvule"), BVULT("bvult"), BVUGE(
+			"bvuge"), BVUGT("bvugt"), BVSLE("bvsle"), BVSLT("bvslt"), BVSGE("bvsge"), BVSGT("bvsgt");
 
 	private final String mStringRepresentation;
 
@@ -52,8 +53,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * @return {@link RelationSymbol} whose string representation is relAsString and
-	 *         null if no {@link RelationSymbol} has such a string representation.
+	 * @return {@link RelationSymbol} whose string representation is relAsString and null if no {@link RelationSymbol}
+	 *         has such a string representation.
 	 */
 	public static RelationSymbol convert(final String relAsString) {
 		switch (relAsString) {
@@ -69,14 +70,30 @@ public enum RelationSymbol {
 			return RelationSymbol.LESS;
 		case ">":
 			return RelationSymbol.GREATER;
+		case "bvule":
+			return RelationSymbol.BVULE;
+		case "bvult":
+			return RelationSymbol.BVULT;
+		case "bvuge":
+			return RelationSymbol.BVUGE;
+		case "bvugt":
+			return RelationSymbol.BVUGT;
+		case "bvsle":
+			return RelationSymbol.BVSLE;
+		case "bvslt":
+			return RelationSymbol.BVSLT;
+		case "bvsge":
+			return RelationSymbol.BVSGE;
+		case "bvsgt":
+			return RelationSymbol.BVSGT;
 		default:
 			return null;
 		}
 	}
 
 	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
-	 * relation ψ ◾ φ is equivalent to the negated relation ¬(ψ ▷ φ).
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
+	 * negated relation ¬(ψ ▷ φ).
 	 */
 	public RelationSymbol negate() {
 		final RelationSymbol result;
@@ -99,6 +116,30 @@ public enum RelationSymbol {
 		case GREATER:
 			result = RelationSymbol.LEQ;
 			break;
+		case BVULE:
+			result = RelationSymbol.BVUGT;
+			break;
+		case BVULT:
+			result = RelationSymbol.BVUGE;
+			break;
+		case BVUGE:
+			result = RelationSymbol.BVULT;
+			break;
+		case BVUGT:
+			result = RelationSymbol.BVULE;
+			break;
+		case BVSLE:
+			result = RelationSymbol.BVSGT;
+			break;
+		case BVSLT:
+			result = RelationSymbol.BVSGE;
+			break;
+		case BVSGE:
+			result = RelationSymbol.BVSLT;
+			break;
+		case BVSGT:
+			result = RelationSymbol.BVSLE;
+			break;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
 		}
@@ -106,9 +147,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
-	 * relation ψ ◾ φ is equivalent to the relation φ ▷ ψ, which is the relation
-	 * where we swapped the parameters.
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
+	 * relation φ ▷ ψ, which is the relation where we swapped the parameters.
 	 */
 	public RelationSymbol swapParameters() {
 		final RelationSymbol result;
@@ -130,6 +170,61 @@ public enum RelationSymbol {
 			break;
 		case GREATER:
 			result = RelationSymbol.LESS;
+			break;
+		case BVULE:
+			result = RelationSymbol.BVUGE;
+			break;
+		case BVULT:
+			result = RelationSymbol.BVUGT;
+			break;
+		case BVUGE:
+			result = RelationSymbol.BVULE;
+			break;
+		case BVUGT:
+			result = RelationSymbol.BVULT;
+			break;
+		case BVSLE:
+			result = RelationSymbol.BVSGE;
+			break;
+		case BVSLT:
+			result = RelationSymbol.BVSGT;
+			break;
+		case BVSGE:
+			result = RelationSymbol.BVSLE;
+			break;
+		case BVSGT:
+			result = RelationSymbol.BVSLT;
+			break;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+		return result;
+	}
+
+	/**
+	 * @return true iff the relation symbol is neither EQ nor DISTINCT. We call these inequalities "convex inequalities"
+	 *         to emphasize that DISTINCT is not called an inequality.
+	 */
+	public boolean isConvexInequality() {
+		final boolean result;
+		switch (this) {
+		case EQ:
+		case DISTINCT:
+			result = false;
+			break;
+		case LEQ:
+		case GEQ:
+		case LESS:
+		case GREATER:
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
+			result = true;
 			break;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
@@ -158,9 +253,131 @@ public enum RelationSymbol {
 		case GREATER:
 			result = SmtUtils.less(script, rhs, lhs);
 			break;
+		case BVULE:
+			result = SmtUtils.bvule(script, lhs, rhs);
+			break;
+		case BVULT:
+			result = SmtUtils.bvult(script, lhs, rhs);
+			break;
+		case BVUGE:
+			result = SmtUtils.bvule(script, lhs, rhs);
+			break;
+		case BVUGT:
+			result = SmtUtils.bvult(script, lhs, rhs);
+			break;
+		case BVSLE:
+			result = SmtUtils.bvsle(script, lhs, rhs);
+			break;
+		case BVSLT:
+			result = SmtUtils.bvslt(script, lhs, rhs);
+			break;
+		case BVSGE:
+			result = SmtUtils.bvsle(script, lhs, rhs);
+			break;
+		case BVSGT:
+			result = SmtUtils.bvslt(script, lhs, rhs);
+			break;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
 		}
 		return result;
+	}
+
+	public boolean isRelationSymbolGE() {
+		if ((this == RelationSymbol.GEQ) || (this == RelationSymbol.BVUGE) || (this == RelationSymbol.BVSGE)) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean isRelationSymbolLE() {
+		if ((this == RelationSymbol.LEQ) || (this == RelationSymbol.BVULE) || (this == RelationSymbol.BVSLE)) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean isRelationSymbolGT() {
+		if ((this == RelationSymbol.GREATER) || (this == RelationSymbol.BVUGT) || (this == RelationSymbol.BVSGT)) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean isRelationSymbolLT() {
+		if ((this == RelationSymbol.LESS) || (this == RelationSymbol.BVULT) || (this == RelationSymbol.BVSLT)) {
+			return true;
+		}
+		return false;
+	}
+
+	public RelationSymbol getNonStrictSymbol() {
+		switch (this) {
+		case EQ:
+			return RelationSymbol.EQ;
+		case DISTINCT:
+			return RelationSymbol.DISTINCT;
+		case LEQ:
+			return RelationSymbol.LEQ;
+		case GEQ:
+			return RelationSymbol.GEQ;
+		case LESS:
+			return RelationSymbol.LEQ;
+		case GREATER:
+			return RelationSymbol.GEQ;
+		case BVULE:
+			return RelationSymbol.BVULE;
+		case BVULT:
+			return RelationSymbol.BVULE;
+		case BVUGE:
+			return RelationSymbol.BVUGE;
+		case BVUGT:
+			return RelationSymbol.BVUGE;
+		case BVSLE:
+			return RelationSymbol.BVSLE;
+		case BVSLT:
+			return RelationSymbol.BVSLE;
+		case BVSGE:
+			return RelationSymbol.BVSGE;
+		case BVSGT:
+			return RelationSymbol.BVSGE;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+	}
+
+	public RelationSymbol getStrictSymbol() {
+		switch (this) {
+		case EQ:
+			return RelationSymbol.EQ;
+		case DISTINCT:
+			return RelationSymbol.DISTINCT;
+		case LEQ:
+			return RelationSymbol.LESS;
+		case GEQ:
+			return RelationSymbol.GREATER;
+		case LESS:
+			return RelationSymbol.LESS;
+		case GREATER:
+			return RelationSymbol.GREATER;
+		case BVULE:
+			return RelationSymbol.BVULT;
+		case BVULT:
+			return RelationSymbol.BVULT;
+		case BVUGE:
+			return RelationSymbol.BVUGT;
+		case BVUGT:
+			return RelationSymbol.BVUGT;
+		case BVSLE:
+			return RelationSymbol.BVSLT;
+		case BVSLT:
+			return RelationSymbol.BVSLT;
+		case BVSGE:
+			return RelationSymbol.BVSGT;
+		case BVSGT:
+			return RelationSymbol.BVSGT;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
 	}
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="ReqAnalyzer" uid="ReqAnalyzer" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.25" useFeatures="true" includeLaunchers="true">
+<product name="ReqAnalyzer" uid="ReqAnalyzer" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.0" useFeatures="true" includeLaunchers="true">
 
    <aboutInfo>
       <image path="icons/about.gif"/>
@@ -16,7 +16,7 @@
    <launcherArgs>
       <programArgs>--launcher.suppressErrors -nosplash -consoleLog
       </programArgs>
-       <programArgsLin>-data @user.home/.ultimate
+      <programArgsLin>-data @user.home/.ultimate
       </programArgsLin>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
@@ -28,33 +28,35 @@
 
    <windowImages/>
 
-
    <launcher name="ReqAnalyzer">
-      <solaris/>
       <win useIco="false">
          <bmp/>
       </win>
    </launcher>
 
-
    <vm>
-      <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</linux>
-      <macos include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</macos>
+      <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</linux>
+      <macos include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</macos>
       <solaris include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</solaris>
-      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</windows>
+      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</windows>
    </vm>
 
    <plugins>
    </plugins>
 
    <features>
-      <feature id="BA_FeatureUltimateCommandLine" version="0.1.25"/>
-      <feature id="BA_FeatureDependenciesCommandlineE4" version="0.1.25"/>
-      <feature id="BA_FeatureUltimateCommon" version="0.1.25"/>
+      <feature id="BA_FeatureUltimateCommandLine" version="0.2.0"/>
+      <feature id="BA_FeatureDependenciesCommandlineE4" version="0.2.0"/>
+      <feature id="BA_FeatureUltimateCommon" version="0.2.0"/>
+      <feature id="BA_FeatureDependenciesCommon" installMode="root"/>
    </features>
 
    <configurations>
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.osgi" autoStart="true" startLevel="1" />
    </configurations>
 
 </product>

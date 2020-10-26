@@ -41,7 +41,9 @@ import java.util.UUID;
 
 import javax.xml.bind.JAXBException;
 
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -186,6 +188,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 
 			// Ultimate is closing here
 			mToolchainManager.close();
+			ResourcesPlugin.getWorkspace().save(true, new NullProgressMonitor());
 			return rtrCode;
 		} finally {
 			// we have to ensure that the JobChangeAdapter is properly removed,
