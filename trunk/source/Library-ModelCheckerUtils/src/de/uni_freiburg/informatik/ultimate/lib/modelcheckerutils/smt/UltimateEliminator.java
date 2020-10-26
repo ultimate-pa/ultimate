@@ -163,7 +163,6 @@ public class UltimateEliminator extends WrapperScript {
 		final Term letFree = new FormulaUnLet().transform(term);
 		final Term annotationFree = new AnnotationRemover().transform(letFree);
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
-		mLogger.warn("AntiDER:\n" + SmtTestGenerationUtils.generateStringForTestfile2(unf));
 		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		// TODO futher optimizations. E.g., overapproximation by replacing all

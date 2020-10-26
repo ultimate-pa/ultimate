@@ -59,9 +59,8 @@ public class MuensterbergBenchmark {
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
-	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = !false;
-//	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000_99999;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 60_000;
+	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 

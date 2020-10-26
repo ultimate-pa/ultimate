@@ -111,7 +111,6 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
 			final Term term) {
 		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), quantifier, varsToQuantify, term);
-//		final String test = SmtTestGenerationUtils.generateStringForTestfile2(quantified);
 		final Term pushed =
 				new QuantifierPusher(mMgdScript, mServices, false, PqeTechniques.ONLY_DER).transform(quantified);
 		return pushed;

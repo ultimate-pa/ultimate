@@ -131,10 +131,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		if (predecessorIsSubsetComponent) {
 			return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
 		}
-//		final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE);
-		final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease = EnumSet.of(
-				VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING,
-				VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O);
+		final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE);
 		return new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, mUserDefinedMaxRank, true, false, true,
 				voluntaryRankDecrease).generateLevelRankings((LevelRankingConstraintDrdCheck<LETTER, STATE>) constraint,
 						false);

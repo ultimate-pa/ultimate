@@ -78,8 +78,8 @@ public class GeometricNonTerminationArgumentResult<P extends IElement, E> extend
 	/**
 	 * How many steps the infinite execution should be schematically unwinded
 	 */
-	private final static int SCHEMATIC_EXECUTION_LENGTH = 5;
-	private final static boolean ALTERNATIVE_LONG_DESCRIPTION = !true;
+	private final static int SCHEMATIC_EXECUTION_LENGTH = 3;
+	private final static boolean ALTERNATIVE_LONG_DESCRIPTION = true;
 
 	private final Map<E, Rational> mStateInit;
 	private final Map<E, Rational> mStateHonda;

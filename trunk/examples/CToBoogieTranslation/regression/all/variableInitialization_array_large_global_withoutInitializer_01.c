@@ -4,7 +4,7 @@
  * initialization.
  */
 // implicit initialization
-int a[10000];
+int a[1000];
 
 int main() {
   /* These assertions hold since all value are implicitly initialized to 0. */
@@ -14,7 +14,7 @@ int main() {
   if (a[1] != 0) {
     //@ assert \false;
   }
-  if (a[500] == 0) {
+  if (a[500] != 0) {
     //@ assert \false;
   }
   if (a[999] != 0) {

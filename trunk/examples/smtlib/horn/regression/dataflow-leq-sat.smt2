@@ -20,5 +20,4 @@
 
 
 (check-sat)
-;(get-value (I))
 ;(get-model)

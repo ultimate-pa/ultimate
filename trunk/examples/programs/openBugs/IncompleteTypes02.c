@@ -9,7 +9,7 @@ typedef struct myStruct myNewNameForStruct;
 typedef union myUnion myNewNameForUnion;
 
 struct myPointerStruct {
-	enum myEnum *p1;
+	myNewNameForEnum *p1;
 	myNewNameForStruct *p2;
 	myNewNameForUnion *p3;
 };
@@ -43,11 +43,7 @@ myNewNameForUnion myUnionArray[1];
 
 int main(void) {
 	myNewNameForEnum e = foo;
-	struct myStruct s;
-// 	s.myFirstField = 12;
 	struct myPointerStruct x;
 	x.p1 = &e;
-	x.p2 = &s;
- 	x.p2->myFirstField = 22;
 	return 0;
 }

@@ -104,7 +104,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 
 	private final BarelyCoveredLevelRankingsGenerator<LETTER, STATE> mBclrg;
 	private final boolean mLazySOptimization;
-	private final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
+	final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
 
 	/**
 	 * Constructor.
@@ -130,7 +130,6 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
 		if(lazySOptimization) {
 			mVoluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING, VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O);
-//			mVoluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE);
 		} else {
 			mVoluntaryRankDecrease = EnumSet
 				.of(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING);

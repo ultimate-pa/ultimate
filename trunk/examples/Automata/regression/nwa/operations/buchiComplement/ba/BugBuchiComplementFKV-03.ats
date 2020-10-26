@@ -9,7 +9,7 @@ assert(numberOfStates(complementNCSB) == 7);
 print(numberOfTransitions(complementNCSB));
 assert(numberOfTransitions(complementNCSB) == 13);
 
-NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy(ba);
+NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy3(ba);
 print(numberOfStates(complementNCSBLazy3));
 assert(numberOfStates(complementNCSBLazy3) == 6);
 print(numberOfTransitions(complementNCSBLazy3));
@@ -39,8 +39,6 @@ assert(numberOfStates(complementSchewe) == 12);
 print(numberOfTransitions(complementSchewe));
 assert(numberOfTransitions(complementSchewe) == 30);
 
-print(complementNCSB);
-print(complementNCSBLazy3);
 
 NestedWordAutomaton ba = (
   callAlphabet = { },

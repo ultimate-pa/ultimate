@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * Workaround that will be fixed in the next days.
- *
+ * 
  * Use keywords in filename to decide correctness of SV-COMP reachability benchmarks.
  *
  * @author heizmann@informatik.uni-freiburg.de
@@ -65,7 +65,8 @@ public class SvcompReachTestResultDecider extends SafetyCheckTestResultDecider {
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
 		final NestedMap2<String, String, SafetyCheckerOverallResult> map = TestUtil.constructPropertyMapSvcompSafety(
-				TestUtil.SVCOMP_PROP_UNREACHCALL);
+				TestUtil.SVCOMP_PROP_NOOVERFLOW, TestUtil.SVCOMP_PROP_UNREACHCALL, TestUtil.SVCOMP_PROP_VALIDMEMCLEANUP,
+				TestUtil.SVCOMP_PROP_VALIDMEMSAFETY);
 		return new YamlBasedExpectedResultFinder<SafetyCheckerOverallResult>(map);
 	}
 

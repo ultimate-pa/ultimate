@@ -164,7 +164,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
-//		statistics.addAllStatistics(mFinitePrefixOfDifference.getAutomataOperationStatistics());
+		statistics.addAllStatistics(mFinitePrefixOfDifference.getAutomataOperationStatistics());
 		statistics.addKeyValuePair(StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_PLACES, mResult.getPlaces().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());

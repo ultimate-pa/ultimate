@@ -131,7 +131,7 @@ public final class Difference
 	private static final boolean COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING = true;
 
 	private final LoopSyncMethod mLoopSyncMethod;
-
+	
 	/**
 	 * If true, we apply our {@link RemoveRedundantFlow} operation to the
 	 * on-demand computed preliminary difference. We take all information about

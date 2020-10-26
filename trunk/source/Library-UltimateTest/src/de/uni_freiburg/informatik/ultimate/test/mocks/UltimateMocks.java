@@ -57,7 +57,7 @@ public class UltimateMocks {
 	}
 
 	public static Script createZ3Script(final LogLevel defaultLogLevel) {
-		return createSolver("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in smt.arith.solver=2", defaultLogLevel);
+		return createSolver("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", defaultLogLevel);
 	}
 
 	public static Script createCVC4Script(final LogLevel defaultLogLevel) {

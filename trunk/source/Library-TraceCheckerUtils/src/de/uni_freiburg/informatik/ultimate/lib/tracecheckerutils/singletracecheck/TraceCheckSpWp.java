@@ -536,7 +536,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
-//			final String test = SmtTestGenerationUtils.generateStringForTestfile2(projectedT);
 			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices, false, PqeTechniques.ONLY_DER)
 					.transform(projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);

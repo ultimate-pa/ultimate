@@ -112,10 +112,10 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 
 
 	private static final String[] mUltimateRepository = {
-//		"examples/programs/regression",
-//		"examples/programs/quantifier/regression",
+		"examples/programs/regression",
+		"examples/programs/quantifier/regression",
 //		"examples/programs/recursive/regression",
-		"examples/programs/toy",
+//		"examples/programs/toy",
 //		"examples/programs/20170304-DifficultPathPrograms",
 	};
 
