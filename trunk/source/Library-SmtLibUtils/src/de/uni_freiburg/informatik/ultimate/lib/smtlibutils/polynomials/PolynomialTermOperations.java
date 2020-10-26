@@ -29,9 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * Provides static methods for combining {@link IPolynomialTerm}s. Methods make
- * sure that {@link AffineTerm}s are returned if {@link PolynomialTerm}s are not
- * needed.
+ * Provides static methods for combining {@link IPolynomialTerm}s. Methods make sure that {@link AffineTerm}s are
+ * returned if {@link PolynomialTerm}s are not needed.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -51,5 +50,8 @@ public class PolynomialTermOperations {
 		}
 	}
 
+	public static IPolynomialTerm sum(final IPolynomialTerm mul, final AffineTerm affineTerm) {
+		throw new UnsupportedOperationException();
+	}
 
 }
