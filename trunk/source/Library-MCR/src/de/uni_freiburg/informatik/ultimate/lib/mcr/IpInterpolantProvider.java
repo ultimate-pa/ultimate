@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -242,8 +243,10 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 
 	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<TermVariable> varsToKeep) {
 		final Term substituted = new SubstitutionWithLocalSimplification(mManagedScript, mapping).transform(term);
-		return McrUtils.abstractVariables(substituted, varsToKeep, QuantifiedFormula.EXISTS, mServices, mLogger,
-				mManagedScript, mSimplificationTechnique, mXnfConversionTechnique);
+		final Term abstracted = McrUtils.abstractVariables(substituted, varsToKeep, QuantifiedFormula.EXISTS,
+				mManagedScript, mServices);
+		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, abstracted,
+				mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
 	private Term[] getInterpolantsForSsa(final List<Term> ssa) {
