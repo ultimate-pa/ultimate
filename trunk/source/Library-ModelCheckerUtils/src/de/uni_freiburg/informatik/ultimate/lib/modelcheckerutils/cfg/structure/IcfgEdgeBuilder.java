@@ -2,31 +2,32 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
- * This file is part of the ULTIMATE BlockEncodingV2 plug-in.
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
- * The ULTIMATE BlockEncodingV2 plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE BlockEncodingV2 plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE BlockEncodingV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE BlockEncodingV2 plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE BlockEncodingV2 plug-in grant you additional permission
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -40,18 +41,10 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -65,8 +58,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  *
@@ -88,7 +79,7 @@ public class IcfgEdgeBuilder {
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mManagedScript = toolkit.getManagedScript();
@@ -98,22 +89,22 @@ public class IcfgEdgeBuilder {
 
 	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
 			final List<IcfgEdge> edges) {
-		return constructSequentialComposition(source, target, edges, false, false);
+		return constructSequentialComposition(source, target, edges, false, false, true);
 	}
 
 	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
 			final IcfgEdge first, final IcfgEdge second) {
 		final List<IcfgEdge> codeblocks = Arrays.asList(new IcfgEdge[] { first, second });
-		return constructSequentialComposition(source, target, codeblocks, false, false);
+		return constructSequentialComposition(source, target, codeblocks, false, false, true);
 	}
 
 	public IcfgEdge constructSimplifiedSequentialComposition(final IcfgLocation source, final IcfgLocation target,
 			final IcfgEdge block) {
-		return constructSequentialComposition(source, target, Collections.singletonList(block), true, true);
+		return constructSequentialComposition(source, target, Collections.singletonList(block), true, true, true);
 	}
 
-	private IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
-			final List<IcfgEdge> transitions, final boolean simplify, final boolean elimQuants) {
+	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
+			final List<IcfgEdge> transitions, final boolean simplify, final boolean elimQuants, final boolean connect) {
 		assert onlyInternal(transitions) : "You cannot have calls or returns in normal sequential compositions";
 
 		final List<UnmodifiableTransFormula> transFormulas =
@@ -128,9 +119,12 @@ public class IcfgEdgeBuilder {
 						mXnfConversionTechnique, mSimplificationTechnique, transFormulasWithBE);
 
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBE);
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(transitions, rtr);
+
+		if (connect) {
+			source.addOutgoing(rtr);
+			target.addIncoming(rtr);
+		}
 		return rtr;
 	}
 
@@ -187,8 +181,39 @@ public class IcfgEdgeBuilder {
 		return rtr;
 	}
 
+	/**
+	 * @deprecated Use overload, which allows proper usage of branch encoders
+	 */
+	@Deprecated(since = "2020-10-26")
 	public IcfgEdge constructParallelComposition(final IcfgLocation source, final IcfgLocation target,
 			final List<IcfgEdge> transitions) {
+		final Map<TermVariable, IcfgEdge> branchIndicator2edge = constructBranchIndicatorToEdgeMapping(transitions);
+		// TODO (Dominik 2020-10-25) To be useful, branch indicators must be stored or returned
+
+		final IcfgInternalTransition rtr = constructParallelComposition(source, target, branchIndicator2edge);
+		source.addOutgoing(rtr);
+		target.addIncoming(rtr);
+		return rtr;
+	}
+
+	/**
+	 * Constructs the parallel composition of the given edges. Note that the new edge is NOT connected to the source and
+	 * target locations.
+	 *
+	 * @param source
+	 *            The source location for the parallel composition
+	 * @param target
+	 *            The target location for the parallel composition
+	 * @param branchEncodersAndTransitions
+	 *            A mapping from branch encoder variables to the corresponding edge. You can use
+	 *            {@link constructBranchIndicatorToEdgeMapping} to create such a map.
+	 * @return A new internal transition representing the parallel composition of the input edges.
+	 */
+	public IcfgInternalTransition constructParallelComposition(final IcfgLocation source, final IcfgLocation target,
+			final Map<TermVariable, IcfgEdge> branchEncodersAndTransitions) {
+		assert !branchEncodersAndTransitions.isEmpty() : "Cannot compose 0 transitions";
+
+		final Collection<IcfgEdge> transitions = branchEncodersAndTransitions.values();
 		assert onlyInternal(transitions) : "You cannot have calls or returns in parallel compositions";
 
 		final List<UnmodifiableTransFormula> transFormulas =
@@ -202,44 +227,44 @@ public class IcfgEdgeBuilder {
 				transitions.stream().map(IcfgEdgeBuilder::getTransformulaWithBE).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfWithBEArray =
 				transFormulasWithBE.toArray(new UnmodifiableTransFormula[transFormulasWithBE.size()]);
-		final LinkedHashMap<TermVariable, IcfgEdge> branchIndicator2edge =
-				constructBranchIndicatorToEdgeMapping(parallelTf.hashCode(), mManagedScript, transitions);
 		final TermVariable[] branchIndicatorArray =
-				branchIndicator2edge.keySet().toArray(new TermVariable[branchIndicator2edge.size()]);
+				branchEncodersAndTransitions.keySet().toArray(new TermVariable[branchEncodersAndTransitions.size()]);
 		final UnmodifiableTransFormula parallelWithBranchIndicators = TransFormulaUtils.parallelComposition(mLogger,
 				mServices, mManagedScript, branchIndicatorArray, false, mXnfConversionTechnique, tfWithBEArray);
 
 		final IcfgInternalTransition rtr =
 				mEdgeFactory.createInternalTransition(source, target, null, parallelTf, parallelWithBranchIndicators);
-
-		// TODO (Dominik 2020-10-25) To be useful, branch indicators must be stored or returned
-
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 		return rtr;
 	}
 
-	private static LinkedHashMap<TermVariable, IcfgEdge> constructBranchIndicatorToEdgeMapping(final int serialNumber,
-			final ManagedScript managedScript, final List<IcfgEdge> transitions) {
+	/**
+	 * Creates fresh branch encoders for the given transitions. The returned map can be used with
+	 * {@code constructParallelComposition(IcfgLocation, IcfgLocation, Map<TermVariable, IcfgEdge>}.
+	 *
+	 * @param transitions
+	 *            A list of transitions
+	 * @return A mapping from fresh branch encoder variables to the given transitions.
+	 */
+	public Map<TermVariable, IcfgEdge> constructBranchIndicatorToEdgeMapping(final List<IcfgEdge> transitions) {
 		final LinkedHashMap<TermVariable, IcfgEdge> result = new LinkedHashMap<>();
-		managedScript.lock(result);
+		mManagedScript.lock(result);
 		for (int i = 0; i < transitions.size(); i++) {
-			final String varname = "BraInd" + i + "of" + serialNumber;
-			final Sort boolSort = SmtSortUtils.getBoolSort(managedScript.getScript());
-			final TermVariable tv = managedScript.constructFreshTermVariable(varname, boolSort);
+			final String varname = "BraInd" + i + "of" + transitions.size();
+			final Sort boolSort = SmtSortUtils.getBoolSort(mManagedScript.getScript());
+			final TermVariable tv = mManagedScript.constructFreshTermVariable(varname, boolSort);
 			result.put(tv, transitions.get(i));
 		}
-		managedScript.unlock(result);
+		mManagedScript.unlock(result);
 		return result;
 	}
 
-	private static boolean onlyInternal(final List<IcfgEdge> transitions) {
+	private static boolean onlyInternal(final Collection<IcfgEdge> transitions) {
 		return transitions.stream().allMatch(IcfgEdgeBuilder::onlyInternal);
 	}
 
 	private static boolean onlyInternal(final IcfgEdge transition) {
-		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof Summary);
+		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof IIcfgSummaryTransition<?>);
 	}
 
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
