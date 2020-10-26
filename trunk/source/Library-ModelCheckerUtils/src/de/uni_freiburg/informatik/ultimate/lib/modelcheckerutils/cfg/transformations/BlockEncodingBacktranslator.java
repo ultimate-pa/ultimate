@@ -124,11 +124,7 @@ public class BlockEncodingBacktranslator extends
 			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = oldIcfgPe.getTraceElement(i);
 			final Collection<IIcfgTransition<IcfgLocation>> mappedEdges =
 					translateBack(currentATE.getTraceElement(), oldBranchEncoders[i]);
-			if (mappedEdges == null || mappedEdges.isEmpty()) {
-				mLogger.warn("Skipped backtranslation of ATE [" + currentATE.getTraceElement().hashCode() + "] "
-						+ currentATE.getTraceElement() + " because there is no mapped edge");
-				continue;
-			}
+
 			final Iterator<IIcfgTransition<IcfgLocation>> iter = mappedEdges.iterator();
 			while (iter.hasNext()) {
 				final IIcfgTransition<IcfgLocation> currentEdge = iter.next();
