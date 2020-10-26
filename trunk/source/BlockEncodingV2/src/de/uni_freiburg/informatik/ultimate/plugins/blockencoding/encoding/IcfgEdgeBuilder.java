@@ -199,7 +199,7 @@ public class IcfgEdgeBuilder {
 				mManagedScript, null, false, mXnfConversionTechnique, tfArray);
 
 		final List<UnmodifiableTransFormula> transFormulasWithBE =
-				transitions.stream().map(this::getTransformulaWithBE).collect(Collectors.toList());
+				transitions.stream().map(IcfgEdgeBuilder::getTransformulaWithBE).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfWithBEArray =
 				transFormulasWithBE.toArray(new UnmodifiableTransFormula[transFormulasWithBE.size()]);
 		final LinkedHashMap<TermVariable, IcfgEdge> branchIndicator2edge =
