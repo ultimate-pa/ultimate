@@ -327,7 +327,7 @@ public final class TransFormulaUtils {
 		for (final UnmodifiableTransFormula tf : transFormulas) {
 			for (final IProgramVar bv : tf.getInVars().keySet()) {
 				if (!tfb.containsInVar(bv)) {
-					addInVariable(tfb, bv, tf, mgdScript);
+					addInVariable(tfb, bv, tf.getInVars().get(bv).getSort(), tf, mgdScript);
 				}
 			}
 			for (final IProgramVar bv : tf.getOutVars().keySet()) {
@@ -337,7 +337,7 @@ public final class TransFormulaUtils {
 				// We can omit this step in the special case where the
 				// variable is assigned in all branches.
 				if (!tfb.containsInVar(bv) && !assignedInAll(bv, transFormulas)) {
-					addInVariable(tfb, bv, tf, mgdScript);
+					addInVariable(tfb, bv, tf.getOutVars().get(bv).getSort(), tf, mgdScript);
 				}
 
 				final TermVariable outVar = tf.getOutVars().get(bv);
@@ -440,11 +440,10 @@ public final class TransFormulaUtils {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-	private static void addInVariable(final TransFormulaBuilder tfb, final IProgramVar bv, final TransFormula tf,
-			final ManagedScript mgdScript) {
+	private static void addInVariable(final TransFormulaBuilder tfb, final IProgramVar bv, final Sort sort,
+			final TransFormula tf, final ManagedScript mgdScript) {
 		assert !tfb.containsInVar(bv);
 
-		final Sort sort = tf.getInVars().get(bv).getSort();
 		final String baseName = bv.getGloballyUniqueId() + "_In";
 		final TermVariable inVar = mgdScript.constructFreshTermVariable(baseName, sort);
 		tfb.addInVar(bv, inVar);
