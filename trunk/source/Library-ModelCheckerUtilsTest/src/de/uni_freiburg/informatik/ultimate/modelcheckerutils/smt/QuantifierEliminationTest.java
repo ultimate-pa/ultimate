@@ -1052,7 +1052,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void omegaTestRequired01() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "c") };
-		final String formulaAsString = "(exists ((x Int) ) (and (<= (* 256 x) 93) (<= c (+ (* 256 x) 7))))";
+		final String formulaAsString = "(exists ((x Int) ) (and (<= (* 256 x) 93) (<= (+ c 7) (* 256 x))))";
 		runQuantifierPusherTest(funDecls, formulaAsString, "(<= c 7)", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
