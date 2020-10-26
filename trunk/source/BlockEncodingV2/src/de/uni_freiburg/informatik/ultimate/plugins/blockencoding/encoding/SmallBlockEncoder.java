@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
@@ -124,6 +125,11 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 			if (!(edge instanceof IIcfgInternalTransition<?>) || edge instanceof Summary) {
 				// only internal transitions can be converted in DNF
 				// summaries are not supported
+				continue;
+			}
+			if (edge instanceof IActionWithBranchEncoders && !((IActionWithBranchEncoders) edge)
+					.getTransitionFormulaWithBranchEncoders().getBranchEncoders().isEmpty()) {
+				mLogger.warn("Skipping small block encoding for transition with branch encoders: " + edge);
 				continue;
 			}
 
