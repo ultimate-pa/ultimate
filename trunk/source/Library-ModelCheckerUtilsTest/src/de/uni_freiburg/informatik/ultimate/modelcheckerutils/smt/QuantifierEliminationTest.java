@@ -593,8 +593,9 @@ public class QuantifierEliminationTest {
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-		csvWriter.reportEliminationBegin(formulaAsTerm);
-		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, formulaAsTerm,
+		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+		csvWriter.reportEliminationBegin(letFree);
+		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, letFree,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		SmtUtils.simplifyWithStatistics(mgdScript, result, null, services, SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
