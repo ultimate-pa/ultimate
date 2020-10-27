@@ -138,11 +138,9 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		}
 		mStateStack.pop();
 		if (currentDelaySet.isEmpty() == false) {
-			for (Set<L> sleepSet : currentDelaySet) {
-				if (sleepSet.equals(currentSleepSet)) {
-					currentDelaySet.remove(sleepSet);
-				}
-			}
+			currentSleepSet = currentDelaySet.iterator().next();
+			currentDelaySet.remove(currentSleepSet);
+			mSleepSetMap.put(currentState, currentSleepSet);
 			mDelaySetMap.put(currentState, currentDelaySet);
 			mStateStack.push(currentState);
 			getAcceptingRun();
