@@ -162,11 +162,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
 			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		final String funcname;
+		BitabsTranslation bitAbs = new BitabsTranslation(mTypeSizes, mSettings, mTypeHandler, mSymboltable, mFunctionDeclarations);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-			funcname = "bitwiseAnd";
-			break;
+	
+			Expression absAnd = bitAbs.abstractAnd(loc, op, left, typeLeft, right, typeRight, hook);
+			return absAnd;
+		//	funcname = "bitwiseAnd";
+		//	break;
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
 			funcname = "bitwiseOr";
