@@ -917,6 +917,14 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
+	public void tirExistsAntiDer() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi", "di") };
+		final String inputSTR = "(exists ((x Int)) (and (>= x lo) (<= x hi) (distinct x di)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void greaterTIR() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
