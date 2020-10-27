@@ -114,7 +114,7 @@ public class ThreadInstanceAdder {
 				final UnmodifiableTransFormula errorTransformula = TransFormulaBuilder
 						.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
 				final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
-						new Payload(), errorTransformula);
+						new Payload(), errorTransformula, errorTransformula);
 				callerNode.addOutgoing(errorTransition);
 				errorNode.addIncoming(errorTransition);
 //				integrateEdge(fct, backtranslator, callerNode, errorNode, errorTransition);

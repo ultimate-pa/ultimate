@@ -349,6 +349,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, root,
 						IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
 				final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
+				mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+
 				final PredicateFactory predicateFactory1 =
 						new PredicateFactory(mServices, petrifiedIcfg.getCfgSmtToolkit().getManagedScript(),
 								petrifiedIcfg.getCfgSmtToolkit().getSymbolTable());
@@ -374,11 +376,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						taBenchmark.aggregateBenchmarkData(concurClres.getCegarLoopStatisticsGenerator());
 						continue;
 					}
-				} else {
-					clres = concurClres;
-					mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
-					break;
 				}
+				clres = concurClres;
+				break;
 			}
 		}
 		final Result result = clres.getOverallResult();

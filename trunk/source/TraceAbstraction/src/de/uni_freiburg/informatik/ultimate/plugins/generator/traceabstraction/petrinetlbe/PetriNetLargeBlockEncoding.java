@@ -28,11 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,14 +46,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -81,15 +75,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
  */
 public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final BoundedPetriNet<L, IPredicate> mResult;
 	private final ManagedScript mManagedScript;
 
-	private final Map<L, List<L>> mSequentialCompositions;
-	private final Map<L, Set<L>> mChoiceCompositions;
-	private final Map<L, TermVariable> mBranchEncoderMap;
-
-	private final IUltimateServiceProvider mServices;
+	private final BoundedPetriNet<L, IPredicate> mResult;
+	private final BlockEncodingBacktranslator mBacktranslator;
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics =
 			new PetriNetLargeBlockEncodingStatisticsGenerator();
 
@@ -113,7 +104,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings,
-			final IPLBECompositionFactory<L> compositionFactory)
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> clazz)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
@@ -146,9 +137,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(new AutomataLibraryServices(services),
 					petriNet, compositionFactory, moverCheck);
 			mResult = lipton.getResult();
-			mSequentialCompositions = lipton.getSequentialCompositions();
-			mChoiceCompositions = lipton.getChoiceCompositions();
-			mBranchEncoderMap = compositionFactory.getBranchEncoders();
+			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
 
 			mStatistics.extractStatistics((SemanticIndependenceRelation<L>) semanticCheck);
 			mStatistics.extractStatistics((SyntacticIndependenceRelation<?, L>) variableCheck);
@@ -171,125 +160,38 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return "applying " + getClass().getSimpleName() + " to Petri net that " + petriNet.sizeInformation();
 	}
 
-	/**
-	 * Translates an execution from the new net to an execution of the old net. (Code adapted from
-	 * BlockEncodingBacktranslator)
-	 *
-	 * @param execution
-	 *            The execution of the new Petri Net.
-	 * @return The corresponding execution of the old Petri Net.
-	 */
-	public IProgramExecution<L, Term> translateExecution(final IProgramExecution<L, Term> execution) {
-		if (execution == null) {
-			throw new IllegalArgumentException("execution is null");
-		}
+	private BlockEncodingBacktranslator createBacktranslator(final Class<L> clazz,
+			final LiptonReduction<L, IPredicate> reduction, final IPLBECompositionFactory<L> compositionFactory) {
+		final BlockEncodingBacktranslator translator =
+				new BlockEncodingBacktranslator((Class<IIcfgTransition<IcfgLocation>>) clazz, Term.class, mLogger);
 
-		if (!(execution instanceof IcfgProgramExecution)) {
-			throw new IllegalArgumentException("argument is not IcfgProgramExecution but " + execution.getClass());
-
-		}
-		final IcfgProgramExecution<L> oldIcfgPe = ((IcfgProgramExecution<L>) execution);
-		final Map<TermVariable, Boolean>[] oldBranchEncoders = oldIcfgPe.getBranchEncoders();
-		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "wrong branchencoders";
-
-		final List<AtomicTraceElement<L>> newTrace = new ArrayList<>();
-		final List<ProgramState<Term>> newValues = new ArrayList<>();
-		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
-
-		for (int i = 0; i < oldIcfgPe.getLength(); ++i) {
-			final AtomicTraceElement<L> currentATE = oldIcfgPe.getTraceElement(i);
-			final L transition = currentATE.getTraceElement();
-
-			final Collection<L> newTransitions = translateBack(transition, oldBranchEncoders[i]);
-			int j = 0;
-			for (final L newTransition : newTransitions) {
-				newTrace.add(AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, newTransition).build());
-				j++;
-
-				// If more transitions to come, set the intermediate state to null
-				if (j < newTransitions.size()) {
-					newValues.add(null);
-					newBranchEncoders.add(null);
-				}
-			}
-
-			final ProgramState<Term> newProgramState = oldIcfgPe.getProgramState(i);
-			newValues.add(newProgramState);
-			newBranchEncoders.add(oldBranchEncoders[i]);
-		}
-
-		final Map<Integer, ProgramState<Term>> newValuesMap = new HashMap<>();
-		newValuesMap.put(-1, oldIcfgPe.getInitialProgramState());
-		for (int i = 0; i < newValues.size(); ++i) {
-			newValuesMap.put(i, newValues.get(i));
-		}
-
-		return new IcfgProgramExecution<L>(newTrace, newValuesMap,
-				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent(),
-				IcfgProgramExecution.getClassFromAtomicTraceElements(newTrace));
-	}
-
-	/**
-	 * Translate a transition that is the result of arbitrarily nested sequential and choice compositions back to the
-	 * sequence of original transitions.
-	 *
-	 * @param transition
-	 *            The transition to translate back.
-	 * @param branchEncoders
-	 *            Branch encoders indicating which branch of a choice composition was taken.
-	 */
-	private Collection<L> translateBack(final L transition, final Map<TermVariable, Boolean> branchEncoders) {
-		final ArrayDeque<L> result = new ArrayDeque<>();
-
-		final ArrayDeque<L> stack = new ArrayDeque<>();
-		stack.push(transition);
-
-		while (!stack.isEmpty()) {
-			final L current = stack.pop();
-
-			if (mSequentialCompositions.containsKey(current)) {
-				final List<L> sequence = mSequentialCompositions.get(current);
-				assert sequence != null;
-
-				// Put the transitions making up this composition on the stack.
-				// Last transition in the sequence is on top.
-				for (final L component : sequence) {
-					stack.push(component);
-				}
-			} else if (mChoiceCompositions.containsKey(current)) {
-				final Set<L> choices = mChoiceCompositions.get(current);
-				assert choices != null;
-
-				if (branchEncoders == null) {
-					mLogger.warn("Failed to translate choice composition: Branch encoders not available.");
-					result.addFirst(current);
-					continue;
-				}
-
-				boolean choiceFound = false;
-				for (final L choice : choices) {
-					assert mBranchEncoderMap.get(choice) != null : "Choice composition is missing branch encoder";
-					final TermVariable indicator = mBranchEncoderMap.get(choice);
-					assert branchEncoders.get(indicator) != null : "Branch indicator value was unknown";
-					if (branchEncoders.get(indicator)) {
-						stack.push(choice);
-						choiceFound = true;
-						break;
-					}
-				}
-				assert choiceFound : "Could not determine correct choice for choice composition";
-			} else {
-				// Transition is assumed to be original.
-				// As the last transition of a sequence is handled first (top of stack, see
-				// above), we must prepend this transition to the result (instead of appending).
-				result.addFirst(current);
+		for (final Map.Entry<L, List<L>> seq : reduction.getSequentialCompositions().entrySet()) {
+			final L newEdge = seq.getKey();
+			for (final L originalEdge : seq.getValue()) {
+				translator.mapEdges((IIcfgTransition<IcfgLocation>) newEdge,
+						(IIcfgTransition<IcfgLocation>) originalEdge);
 			}
 		}
-		return result;
+
+		final Map<L, TermVariable> branchEncoders = compositionFactory.getBranchEncoders();
+		for (final Map.Entry<L, Set<L>> choice : reduction.getChoiceCompositions().entrySet()) {
+			final L newEdge = choice.getKey();
+			for (final L originalEdge : choice.getValue()) {
+				final TermVariable branchEncoder = branchEncoders.get(originalEdge);
+				translator.mapEdges((IIcfgTransition<IcfgLocation>) newEdge,
+						(IIcfgTransition<IcfgLocation>) originalEdge, branchEncoder);
+			}
+		}
+
+		return translator;
 	}
 
 	public BoundedPetriNet<L, IPredicate> getResult() {
 		return mResult;
+	}
+
+	public BlockEncodingBacktranslator getBacktranslator() {
+		return mBacktranslator;
 	}
 
 	public PetriNetLargeBlockEncodingBenchmarks getPetriNetLargeBlockEncodingStatistics() {
@@ -300,8 +202,6 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	public interface IPLBECompositionFactory<L> extends ICompositionFactory<L> {
-
 		Map<L, TermVariable> getBranchEncoders();
-
 	}
 }
