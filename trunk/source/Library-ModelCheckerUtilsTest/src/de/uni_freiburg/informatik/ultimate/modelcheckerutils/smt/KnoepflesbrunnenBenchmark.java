@@ -266,6 +266,16 @@ public class KnoepflesbrunnenBenchmark {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void choirNightTrezor02OilInMuseeum() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "b", "i"),
+		};
+		final String formulaAsString = "(forall ((aux_div_aux_mod_v_main_~i~0_16_31_42 Int) (aux_div_v_main_~c~0_6_30 Int) (aux_div_v_main_~i~0_16_31 Int) (aux_div_main_~a~0_26 Int)) (let ((.cse3 (* 4294967296 aux_div_aux_mod_v_main_~i~0_16_31_42)) (.cse2 (* 4294967296 aux_div_v_main_~c~0_6_30)) (.cse1 (* 4294967296 aux_div_main_~a~0_26)) (.cse0 (* 4294967296 aux_div_v_main_~i~0_16_31))) (or (< 0 .cse0) (< .cse1 (+ .cse2 .cse0)) (< .cse1 (+ .cse3 .cse2 .cse0 1)) (<= (+ .cse1 4294967295) .cse2) (<= (+ .cse3 .cse0 4294967296) 0) (< 0 (+ .cse3 .cse0)) (<= (+ .cse1 4294967296) .cse2) (<= (+ .cse2 4294967296) .cse1) (<= (+ .cse0 4294967296) 0))))";
+		final String expectedResultAsString = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 //	@Test
 	public void LRA_scholl_smt08_RNDPRE_RNDPRE_3_52() {
