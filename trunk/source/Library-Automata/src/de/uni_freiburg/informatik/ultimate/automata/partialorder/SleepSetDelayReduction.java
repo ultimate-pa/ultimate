@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IStateFactory<S>>{
 	
@@ -25,8 +24,8 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	private final HashMap<S, Set<L>> mHashMap;
 	private final HashMap<S, Set<L>> mSleepSetMap;
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
-	private final HashMap<S, ArrayList<Pair<S, L>>> mPreMap;
-	private final Stack<S> mStack;
+	private final Stack<S> mStateStack;
+	private final Stack<L> mLetterStack;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private NestedRun<L, S> mAcceptingRun;
@@ -48,12 +47,12 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		mHashMap = new HashMap<S, Set<L>>();
 		mSleepSetMap = new HashMap<S, Set<L>>();
 		mDelaySetMap = new HashMap<S, Set<Set<L>>>();
-		mPreMap = new HashMap<S, ArrayList<Pair<S, L>>>();
-		mStack = new Stack<S>();
+		mStateStack = new Stack<S>();
+		mLetterStack = new Stack<L>();
 		for (S startState : mStartStateSet) {
 			mSleepSetMap.put(startState, Collections.<L>emptySet());
 			mDelaySetMap.put(startState, Collections.<Set<L>>emptySet());
-			mStack.push(startState);
+			mStateStack.push(startState);
 		}
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
@@ -68,10 +67,10 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	private NestedRun<L,S> getAcceptingRun(){
 		
 		// TODO Insert pseudo code here
-		S currentState = mStack.firstElement();
+		S currentState = mStateStack.firstElement();
 		//accepting run reconstruction
 		if (isGoalState(currentState)) {
-			return constructRun(currentState);
+			return constructRun();
 		}
 		ArrayList<L> successorTransitionList = new ArrayList<L>();
 		Set<L> currentSleepSet = mSleepSetMap.get(currentState);
@@ -118,12 +117,9 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 						succSleepSet.add(letterSleepSet);
 					}
 				}
+				mSleepSetMap.put(succState, succSleepSet);
 				Set<Set<L>> succDelaySet = Collections.<Set<L>>emptySet();
-				if(mStack.contains(succState)) {
-					//mapping for accepting run reconstruction
-					ArrayList<Pair<S, L>> preList = mPreMap.get(succState);
-					preList.add(0, new Pair<S, L>(currentState, letterTransition));
-					mPreMap.put(succState, preList);
+				if(mStateStack.contains(succState)) {
 					if (mDelaySetMap.get(succState) != null) {
 						succDelaySet.addAll(mDelaySetMap.get(succState));
 					}	
@@ -131,20 +127,16 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 					mDelaySetMap.put(succState, succDelaySet);
 				}
 				else {
-					//mapping for accepting run reconstruction
-					//mPreMap.put(succState, new Pair<S, L>(currentState, letterTransition));
-					ArrayList<Pair<S, L>> preList = new ArrayList<Pair<S, L>>();
-					preList.add(new Pair<S, L>(currentState, letterTransition));
-					mPreMap.put(succState, preList);
 					mDelaySetMap.put(succState, succDelaySet);
-					mStack.push(succState);
+					mStateStack.push(succState);
+					mLetterStack.push(letterTransition);
 					getAcceptingRun();
 				}
 				currentSleepSet.add(letterTransition);
 				mSleepSetMap.put(currentState, currentSleepSet);
 			}
 		}
-		mStack.pop();
+		mStateStack.pop();
 		if (currentDelaySet.isEmpty() == false) {
 			for (Set<L> sleepSet : currentDelaySet) {
 				if (sleepSet.equals(currentSleepSet)) {
@@ -152,9 +144,10 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 				}
 			}
 			mDelaySetMap.put(currentState, currentDelaySet);
-			mStack.push(currentState);
+			mStateStack.push(currentState);
 			getAcceptingRun();
 		}
+		mLetterStack.pop();
 		return null;
 	}
 	
@@ -162,26 +155,16 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		return mOperand.isFinal(state);
 	}
 	
-	private NestedRun<L, S> constructRun(S state){
-		if (mOperand.isInitial(state)) {
-			return null;
-		}
-		S currentState = state;
-		S preState = mPreMap.get(currentState).get(0).getFirst();
-		L currentTransition = mPreMap.get(currentState).get(0).getSecond();
-		while (currentState != null) {
-			//do stuff
-			mAcceptingStateSequence.add(currentState);
-			if (currentTransition != null) {
-				mAcceptingTransitionSequence.add(currentTransition);
+	private NestedRun<L, S> constructRun(){
+		S currentState = mStateStack.pop();
+		mAcceptingStateSequence.add(currentState);
+
+		while(mStateStack.isEmpty() == false) {
+			L currentTransition = mLetterStack.pop();
+			mAcceptingTransitionSequence.add(0, currentTransition);
+			currentState = mStateStack.pop();
+			mAcceptingStateSequence.add(0, currentState);
 			}
-			mPreMap.get(currentState).remove(0);
-			currentState = preState;
-			currentTransition = mPreMap.get(currentState).get(0).getSecond();
-			preState = mPreMap.get(currentState).get(0).getFirst();
-		}
-		Collections.reverse(mAcceptingStateSequence);
-		Collections.reverse(mAcceptingTransitionSequence);
 		for (L letter : mAcceptingTransitionSequence) {
 			Word<L> tempWord = new Word<L>(letter);
 			mAcceptingWord.concatenate(tempWord);
