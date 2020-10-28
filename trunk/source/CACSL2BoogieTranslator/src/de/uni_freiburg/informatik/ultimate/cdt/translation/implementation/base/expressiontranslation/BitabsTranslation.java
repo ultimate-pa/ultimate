@@ -132,9 +132,48 @@ public class BitabsTranslation {
 			final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 			//	return func;
-			
+			// for the case, a&1 = a when a is bloolean or one bit size?
 			//	Expression and_0_else = ExpressionFactory.constructIfThenElseExpression(right_cmp, condition, thenPart, elsePart);
 			Expression and_0 = ExpressionFactory.constructIfThenElseExpression(loc, cond_and_0, literal_0, func);
+			return and_0;
+			
+	}
+	
+	
+	
+	public Expression abstractOr(final ILocation loc, final int op, final Expression left,
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
+		final String funcname = "bitwiseAnd";	
+		//if	decides_to_apply(CYRUS_AND_0_LEFT, left, right)
+			if (left instanceof IntegerLiteral) {
+				String valueLeft =((IntegerLiteral) left).getValue();
+				System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
+				if (valueLeft.equals("1")) {
+					return left;
+				} else if (valueLeft.equals("0")){
+					return right;
+				} 
+			} else if (right instanceof IntegerLiteral) {
+				String valueRight = ((IntegerLiteral) right).getValue();
+				System.out.println("-----Right side constant value:" + valueRight.equals("1"));
+				if (valueRight.equals("1")) {
+					return right;
+				} else if (valueRight.equals("0")){
+					return left;
+				}
+			} 
+			Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+			Expression left_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_1);
+			Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_1);
+			final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
+			declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
+			final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+					new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
+			Expression right_ite = ExpressionFactory.constructIfThenElseExpression(loc, right_cmp, right, func);
+			//	return func;
+			// for the case, a|0 = a when a is bloolean or one bit size?
+			//	Expression and_0_else = ExpressionFactory.constructIfThenElseExpression(right_cmp, condition, thenPart, elsePart);
+			Expression and_0 = ExpressionFactory.constructIfThenElseExpression(loc, left_cmp, left, right_ite);
 			return and_0;
 			
 	}

@@ -173,8 +173,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 		//	break;
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			funcname = "bitwiseOr";
-			break;
+			Expression absOr = bitAbs.abstractOr(loc, op, left, typeLeft, right, typeRight, hook);
+			return absOr;
+//			funcname = "bitwiseOr";
+//			break;
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
 			funcname = "bitwiseXor";
