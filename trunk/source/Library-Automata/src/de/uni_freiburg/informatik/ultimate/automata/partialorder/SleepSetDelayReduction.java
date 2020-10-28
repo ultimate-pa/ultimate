@@ -90,10 +90,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 			Set<L> currentHash = mHashMap.get(currentState);
 			for (L letter : currentHash) {
 				if (currentSleepSet.contains(letter) == false) {
-					//following for loop is always executed exactly once, but needed to avoid a type mismatch
-					for (OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState, letter)) {
-						successorTransitionList.add(transition.getLetter());
-					}
+					successorTransitionList.add(letter);
 				}
 			}
 			for (L letter : currentSleepSet) {
@@ -108,7 +105,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		Comparator<L> order = mOrder.getOrder(currentState);
 		successorTransitionList.sort(order);
 		for (L letterTransition : successorTransitionList) {
-			//following for loop is always executed exactly once, but needed to avoid a type mismatch
+			//following for loop is always executed exactly once, because of determinism, but needed to avoid a type mismatch
 			for (OutgoingInternalTransition<L, S> currentTransition : mOperand.internalSuccessors(currentState, letterTransition)) {
 				S succState = currentTransition.getSucc();
 				Set<L> succSleepSet = Collections.<L>emptySet();
@@ -117,16 +114,16 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 						succSleepSet.add(letterSleepSet);
 					}
 				}
-				mSleepSetMap.put(succState, succSleepSet);
 				Set<Set<L>> succDelaySet = Collections.<Set<L>>emptySet();
 				if(mStateStack.contains(succState)) {
 					if (mDelaySetMap.get(succState) != null) {
 						succDelaySet.addAll(mDelaySetMap.get(succState));
 					}	
-					succDelaySet.add(mSleepSetMap.get(succState));
+					succDelaySet.add(succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
 				}
 				else {
+					mSleepSetMap.put(succState, succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
 					mStateStack.push(succState);
 					mLetterStack.push(letterTransition);
@@ -136,6 +133,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 				mSleepSetMap.put(currentState, currentSleepSet);
 			}
 		}
+		//currentState backtracked
 		mStateStack.pop();
 		if (currentDelaySet.isEmpty() == false) {
 			currentSleepSet = currentDelaySet.iterator().next();
