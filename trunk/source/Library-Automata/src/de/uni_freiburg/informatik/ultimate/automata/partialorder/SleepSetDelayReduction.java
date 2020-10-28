@@ -46,6 +46,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
+/**
+ * Implementation of Partial Order Reduction for Deterministic Finite Automata
+ * using Sleep Sets for reduction and a Delay Set for handling loops
+ * This version searches for an accepting run and constructs it if found.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ * 		letter type
+ * @param <S>
+ * 		state type
+ */
 public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IStateFactory<S>> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
@@ -60,9 +72,21 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	private NestedRun<L, S> mAcceptingRun;
 	private final ArrayList<L> mAcceptingTransitionSequence;
 	private final Word<L> mAcceptingWord;
-	private NestedWord<L> mAcceptingNestedWord;
 	private final ArrayList<S> mAcceptingStateSequence;
 
+	/**
+	 * Constructor for POR with Sleep Sets and Delay Set
+	 * 
+	 * @param operand
+	 * 		deterministic finite automaton
+	 * @param independenceRelation
+	 * 		the underlying independence relation
+	 * @param sleepSetOrder
+	 * 		order of transitions for further branchings
+	 * @param services
+	 * 		ultimate services
+	 * 
+	 */
 	public SleepSetDelayReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
 			final AutomataLibraryServices services) {
@@ -101,19 +125,17 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		}
 		final ArrayList<L> successorTransitionList = new ArrayList<>();
 		Set<L> currentSleepSet = mSleepSetMap.get(currentState);
-		final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
 
-		// state not visited yet
 		if (mHashMap.get(currentState) == null) {
+			// state not visited yet
 			mHashMap.put(currentState, mSleepSetMap.get(currentState));
 			for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 				if (!currentSleepSet.contains(transition.getLetter())) {
 					successorTransitionList.add(transition.getLetter());
 				}
 			}
-		}
-		// state already visited
-		else {
+		} else {
+			// state already visited
 			final Set<L> currentHash = mHashMap.get(currentState);
 			for (final L letter : currentHash) {
 				if (!currentSleepSet.contains(letter)) {
@@ -163,6 +185,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		}
 		// currentState backtracked
 		mStateStack.pop();
+		final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
 		if (!currentDelaySet.isEmpty()) {
 			currentSleepSet = currentDelaySet.iterator().next();
 			currentDelaySet.remove(currentSleepSet);
@@ -196,8 +219,8 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 			final Word<L> tempWord = new Word<>(letter);
 			mAcceptingWord.concatenate(tempWord);
 		}
-		mAcceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
-		mAcceptingRun = new NestedRun<>(mAcceptingNestedWord, mAcceptingStateSequence);
+		NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
+		mAcceptingRun = new NestedRun<>(acceptingNestedWord, mAcceptingStateSequence);
 		return mAcceptingRun;
 	}
 

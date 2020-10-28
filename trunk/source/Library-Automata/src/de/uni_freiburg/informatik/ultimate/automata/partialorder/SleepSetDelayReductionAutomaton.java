@@ -45,6 +45,18 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
+/**
+ * Implementation of Partial Order Reduction for Deterministic Finite Automata
+ * using Sleep Sets for reduction and a Delay Set for handling loops.
+ * This version constructs a reduced automaton.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ * 		letter type
+ * @param <S>
+ * 		state type
+ */
 public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, S, IStateFactory<S>> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
@@ -57,14 +69,26 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private NestedWordAutomaton<L, S> mReductionAutomaton;
-	private final IIntersectionStateFactory<S> mStateFactory;
 	
-
+	/**
+	 * Constructor for POR with Sleep Sets and Delay Set
+	 * 
+	 * @param operand
+	 * 		deterministic finite automaton
+	 * @param independenceRelation
+	 * 		the underlying independence relation
+	 * @param sleepSetOrder
+	 * 		order of transitions for further branchings
+	 * @param services
+	 * 		ultimate services
+	 * @param stateFactory
+	 * 		state factory
+	 * 
+	 */
 	public SleepSetDelayReductionAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
 			final AutomataLibraryServices services, final IIntersectionStateFactory<S> stateFactory) {
 		super(services);
-		mStateFactory = stateFactory;
 		mOperand = operand;
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
@@ -80,11 +104,8 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 			mSleepSetMap.put(startState, Collections.<L> emptySet());
 			mDelaySetMap.put(startState, Collections.<Set<L>> emptySet());
 			mStateStack.push(startState);
-			if (mOperand.isFinal(startState)) {
-				mReductionAutomaton.addState(true, true, startState);
-			} else {
-				mReductionAutomaton.addState(true, false, startState);
-			}
+			mReductionAutomaton.addState(true, mOperand.isFinal(startState), startState);
+
 		}
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
@@ -99,19 +120,17 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 		
 		final ArrayList<L> successorTransitionList = new ArrayList<>();
 		Set<L> currentSleepSet = mSleepSetMap.get(currentState);
-		final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
 
-		// state not visited yet
 		if (mHashMap.get(currentState) == null) {
+			// state not visited yet
 			mHashMap.put(currentState, mSleepSetMap.get(currentState));
 			for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 				if (!currentSleepSet.contains(transition.getLetter())) {
 					successorTransitionList.add(transition.getLetter());
 				}
 			}
-		}
-		// state already visited
-		else {
+		} else {
+			// state already visited
 			final Set<L> currentHash = mHashMap.get(currentState);
 			for (final L letter : currentHash) {
 				if (!currentSleepSet.contains(letter)) {
@@ -168,6 +187,7 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 		}
 		// currentState backtracked
 		mStateStack.pop();
+		final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
 		if (!currentDelaySet.isEmpty()) {
 			currentSleepSet = currentDelaySet.iterator().next();
 			currentDelaySet.remove(currentSleepSet);
