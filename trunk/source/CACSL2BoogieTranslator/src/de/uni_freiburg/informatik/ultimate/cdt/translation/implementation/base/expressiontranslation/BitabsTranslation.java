@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -120,14 +121,22 @@ public class BitabsTranslation {
 					return left;
 				} else if (valueRight.equals("0")){
 					return right;
-					}
-				} 
+				}
+			} 
+			Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+			Expression left_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_0);
+			Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_0);
+			Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_cmp, right_cmp);
 			final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 			declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
 			final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
-			return func;
-		
+			//	return func;
+			
+			//	Expression and_0_else = ExpressionFactory.constructIfThenElseExpression(right_cmp, condition, thenPart, elsePart);
+			Expression and_0 = ExpressionFactory.constructIfThenElseExpression(loc, cond_and_0, literal_0, func);
+			return and_0;
+			
 	}
 	
 	
