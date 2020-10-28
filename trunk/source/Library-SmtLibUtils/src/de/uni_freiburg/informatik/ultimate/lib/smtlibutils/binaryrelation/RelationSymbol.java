@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public enum RelationSymbol {
-	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">"), BVULE("bvule"), BVULT("bvult"), BVUGE(
-			"bvuge"), BVUGT("bvugt"), BVSLE("bvsle"), BVSLT("bvslt"), BVSGE("bvsge"), BVSGT("bvsgt");
+	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">"), BVULE("bvule"), BVULT("bvult"),
+	BVUGE("bvuge"), BVUGT("bvugt"), BVSLE("bvsle"), BVSLT("bvslt"), BVSGE("bvsge"), BVSGT("bvsgt");
 
 	private final String mStringRepresentation;
 
@@ -306,6 +306,14 @@ public enum RelationSymbol {
 
 	public boolean isRelationSymbolLT() {
 		if ((this == RelationSymbol.LESS) || (this == RelationSymbol.BVULT) || (this == RelationSymbol.BVSLT)) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean isNonStrictBvRelation() {
+		if ((this == RelationSymbol.BVUGE) || (this == RelationSymbol.BVULE) || (this == RelationSymbol.BVSGE)
+				|| (this == RelationSymbol.BVSLE)) {
 			return true;
 		}
 		return false;

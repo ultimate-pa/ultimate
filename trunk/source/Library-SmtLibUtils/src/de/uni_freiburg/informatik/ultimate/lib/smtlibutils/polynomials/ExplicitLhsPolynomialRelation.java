@@ -79,7 +79,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	protected final Monomial mLhsMonomial;
 	protected final IPolynomialTerm mRhs;
 
-	private ExplicitLhsPolynomialRelation(final RelationSymbol relationSymbol, final Rational lhsCoefficient,
+	public ExplicitLhsPolynomialRelation(final RelationSymbol relationSymbol, final Rational lhsCoefficient,
 			final Monomial lhsMonomial, final IPolynomialTerm rhs) {
 		super();
 		mRelationSymbol = relationSymbol;
@@ -148,10 +148,11 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 			throw new AssertionError("mul by zero not supported");
 		}
 		final Rational newLhsCoefficient = mLhsCoefficient.mul(factor);
-		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
-				mRelationSymbol, factor);
+		final RelationSymbol resultRelationSymbol =
+				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, factor);
 		final IPolynomialTerm newRhs;
-		if (tight && (resultRelationSymbol.equals(RelationSymbol.LESS) || resultRelationSymbol.equals(RelationSymbol.GREATER))) {
+		if (tight && (resultRelationSymbol.equals(RelationSymbol.LESS)
+				|| resultRelationSymbol.equals(RelationSymbol.GREATER))) {
 			final Rational offsetAbs;
 			if (resultRelationSymbol.equals(RelationSymbol.LESS)) {
 				offsetAbs = factor.abs().add(Rational.MONE).negate();
@@ -161,7 +162,8 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 			}
 			newRhs = PolynomialTermOperations.sum(PolynomialTermOperations.mul(mRhs, factor),
 					new AffineTerm(mLhsMonomial.getSort(), offsetAbs, Collections.emptyMap()));
-		} else if (!tight && (resultRelationSymbol.equals(RelationSymbol.LEQ) || resultRelationSymbol.equals(RelationSymbol.GEQ))) {
+		} else if (!tight && (resultRelationSymbol.equals(RelationSymbol.LEQ)
+				|| resultRelationSymbol.equals(RelationSymbol.GEQ))) {
 			final Rational offsetAbs;
 			if (resultRelationSymbol.equals(RelationSymbol.GEQ)) {
 				offsetAbs = factor.abs().add(Rational.MONE).negate();
@@ -174,10 +176,10 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		} else {
 			newRhs = PolynomialTermOperations.mul(mRhs, factor);
 		}
-		final ExplicitLhsPolynomialRelation result = new ExplicitLhsPolynomialRelation(resultRelationSymbol,
-				newLhsCoefficient, mLhsMonomial, newRhs);
-		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(this.asTerm(script),
-				result.asTerm(script), script) != LBool.SAT : "mul unsound";
+		final ExplicitLhsPolynomialRelation result =
+				new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
+		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(asTerm(script), result.asTerm(script),
+				script) != LBool.SAT : "mul unsound";
 		return result;
 	}
 

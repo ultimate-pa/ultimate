@@ -974,7 +974,7 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void bvultTIR() {
+	public void bvuleTIR() {
 		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("lo", new Sort[0], bvSort);
 		mScript.declareFun("hi", new Sort[0], bvSort);
@@ -982,6 +982,36 @@ public class QuantifierEliminationTest {
 		final String expectedResult = "(bvule lo hi)";
 		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+	@Test
+	public void bvugeTIR() {
+		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("lo", new Sort[0], bvSort);
+		mScript.declareFun("hi", new Sort[0], bvSort);
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvuge hi x  ) (bvuge  x lo)))";
+		final String expectedResult = "(bvuge hi lo)";
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvsgeTIR() {
+		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("lo", new Sort[0], bvSort);
+		mScript.declareFun("hi", new Sort[0], bvSort);
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvsge hi x  ) (bvsge x lo)))";
+		final String expectedResult = "(bvsge hi lo)";
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvsleTIR() {
+		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("lo", new Sort[0], bvSort);
+		mScript.declareFun("hi", new Sort[0], bvSort);
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvsle x hi ) (bvsle lo x)))";
+		final String expectedResult = "(bvsle lo hi)";
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	@Test
 	public void greaterTIRNegativeCoef() {
