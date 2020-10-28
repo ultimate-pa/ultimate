@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
@@ -73,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 
 /**
  *
@@ -139,42 +141,75 @@ public class BitabsTranslation {
 			
 	}
 	
-	
-	
 	public Expression abstractOr(final ILocation loc, final int op, final Expression left,
 			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
-		final String funcname = "bitwiseAnd";	
-		//if	decides_to_apply(CYRUS_AND_0_LEFT, left, right)
-			if (left instanceof IntegerLiteral) {
-				String valueLeft =((IntegerLiteral) left).getValue();
-				System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
-				if (valueLeft.equals("1")) {
-					return left;
+		final String funcname = "bitwiseOr";	
+		if (left instanceof IntegerLiteral) {
+			String valueLeft =((IntegerLiteral) left).getValue();
+			if (valueLeft.equals("1")) {
+				return left;
 				} else if (valueLeft.equals("0")){
 					return right;
-				} 
+					}
 			} else if (right instanceof IntegerLiteral) {
 				String valueRight = ((IntegerLiteral) right).getValue();
-				System.out.println("-----Right side constant value:" + valueRight.equals("1"));
 				if (valueRight.equals("1")) {
 					return right;
-				} else if (valueRight.equals("0")){
-					return left;
+					} else if (valueRight.equals("0")){
+						return left;
+						}
 				}
-			} 
-			Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
-			Expression left_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_1);
-			Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_1);
+		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+		Expression left_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_1);
+		Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_1);
+		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
+		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
+		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
+		Expression right_ite = ExpressionFactory.constructIfThenElseExpression(loc, right_cmp, right, func);
+		//	return func;
+		// for the case, a|0 = a when a is bloolean or one bit size?
+		//	Expression and_0_else = ExpressionFactory.constructIfThenElseExpression(right_cmp, condition, thenPart, elsePart);
+		Expression or_1 = ExpressionFactory.constructIfThenElseExpression(loc, left_cmp, left, right_ite);
+		return or_1;			
+	}
+	
+	
+	/**
+	 * Construct right shift rules.
+	 * In c for the gcc compiler with defualt settings, the a>>31 && a<0, return -1.
+	 * 
+	 **/
+	
+	public Expression abstractShiftRight(final ILocation loc, final int op, final Expression left,
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
+		final String funcname = "shiftRight";		
+		Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "-1");
+	
+		Expression literal_31 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "31");
+		Expression left_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_31);
+		Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_31);
+		Expression left_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, left, literal_0);
+		Expression right_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, right, literal_0);
+		
+		Expression left_cond_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_pos, right_cmp);
+		Expression right_cond_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_cmp, right_pos);
+		
+		final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+		Expression func;
+		if (shiftRightLiteralValue != null) {
+			func = constructShiftWithLiteralOptimization(loc, left, typeRight, shiftRightLiteralValue,
+					Operator.ARITHDIV);
+		} else {
 			final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 			declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
-			final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+			func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
-			Expression right_ite = ExpressionFactory.constructIfThenElseExpression(loc, right_cmp, right, func);
-			//	return func;
-			// for the case, a|0 = a when a is bloolean or one bit size?
-			//	Expression and_0_else = ExpressionFactory.constructIfThenElseExpression(right_cmp, condition, thenPart, elsePart);
-			Expression and_0 = ExpressionFactory.constructIfThenElseExpression(loc, left_cmp, left, right_ite);
-			return and_0;
+			}
+		Expression right_ite = ExpressionFactory.constructIfThenElseExpression(loc, right_cond_pos, literal_0, func);
+		Expression shiftRight_pos = ExpressionFactory.constructIfThenElseExpression(loc, left_cond_pos, literal_0, right_ite);
+		return shiftRight_pos;
 			
 	}
 	
@@ -190,7 +225,21 @@ public class BitabsTranslation {
 	}
 
 
-
+	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
+			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator op1) {
+		// 2017-11-18 Matthias: this could be done analogously in the
+		// bitprecise translation
+		int exponent;
+		try {
+			exponent = integerLiteralValue.intValueExact();
+		} catch (final ArithmeticException ae) {
+			throw new UnsupportedOperationException("rhs of leftshift is larger than C standard allows " + ae);
+		}
+		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
+		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
+		final Expression result = ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
+		return result;
+	}
 
 
 

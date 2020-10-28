@@ -192,13 +192,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
-			if (shiftRightLiteralValue != null) {
-				return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftRightLiteralValue,
-						Operator.ARITHDIV);
-			}
-			funcname = "shiftRight";
-			break;
+			Expression abs_shiftRight = bitAbs.abstractShiftRight(loc, op, left, typeLeft, right, typeRight, hook);
+			return abs_shiftRight;
+//			final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+//			if (shiftRightLiteralValue != null) {
+//				return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftRightLiteralValue,
+//						Operator.ARITHDIV);
+//			}
+//			funcname = "shiftRight";
+//			break;
 		default:
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
