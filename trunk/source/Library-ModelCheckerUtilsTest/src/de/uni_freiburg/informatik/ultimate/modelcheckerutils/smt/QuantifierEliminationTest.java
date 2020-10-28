@@ -818,7 +818,7 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void arrayEliminationBugBolivia() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "b", "c", "d", "x"), };
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
 		final String formulaAsString = "(forall ((a1 (Array Int (Array Int Int))) (a2 (Array Int Int)) (a3 (Array Int Int)) (b Int)) (or (= x 0) (forall ((a4 (Array Int Int)) (c Int) (a5 (Array Int Int)) (a6 (Array Int (Array Int Int))) (d Int)) (or (not (= (store a2 c 4) a5)) (not (= d 0)) (not (= (select a3 c) 0)) (not (= (store a3 c 1) a4)) (not (= a6 (store a1 c (store (select a1 c) d 2)))) (= c 0) (not (< b c))))))";
 		final String expectedResult = "(= x 0)";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
