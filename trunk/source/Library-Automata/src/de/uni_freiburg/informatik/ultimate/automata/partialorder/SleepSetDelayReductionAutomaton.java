@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,18 +45,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * Implementation of Partial Order Reduction for Deterministic Finite Automata
- * using Sleep Sets for reduction and a Delay Set for handling loops.
- * This version constructs a reduced automaton.
- * 
+ * Implementation of Partial Order Reduction for Deterministic Finite Automata using Sleep Sets for reduction and a
+ * Delay Set for handling loops. This version constructs a reduced automaton.
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- * 		letter type
+ *            letter type
  * @param <S>
- * 		state type
+ *            state type
  */
 public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, S, IStateFactory<S>> {
 
@@ -68,22 +69,22 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 	private final ArrayDeque<L> mLetterStack;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
-	private NestedWordAutomaton<L, S> mReductionAutomaton;
-	
+	private final NestedWordAutomaton<L, S> mReductionAutomaton;
+
 	/**
 	 * Constructor for POR with Sleep Sets and Delay Set
-	 * 
+	 *
 	 * @param operand
-	 * 		deterministic finite automaton
+	 *            deterministic finite automaton
 	 * @param independenceRelation
-	 * 		the underlying independence relation
+	 *            the underlying independence relation
 	 * @param sleepSetOrder
-	 * 		order of transitions for further branchings
+	 *            order of transitions for further branchings
 	 * @param services
-	 * 		ultimate services
+	 *            ultimate services
 	 * @param stateFactory
-	 * 		state factory
-	 * 
+	 *            state factory
+	 *
 	 */
 	public SleepSetDelayReductionAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
@@ -99,7 +100,7 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 		mDelaySetMap = new HashMap<>();
 		mStateStack = new ArrayDeque<>();
 		mLetterStack = new ArrayDeque<>();
-		mReductionAutomaton = new NestedWordAutomaton<L, S>(services, mOperand.getVpAlphabet(), stateFactory);
+		mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
 		for (final S startState : mStartStateSet) {
 			mSleepSetMap.put(startState, Collections.<L> emptySet());
 			mDelaySetMap.put(startState, Collections.<Set<L>> emptySet());
@@ -109,7 +110,7 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 		}
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
-		
+
 		constructReductionAutomaton();
 
 	}
@@ -117,7 +118,7 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 	private void constructReductionAutomaton() {
 
 		final S currentState = mStateStack.peek();
-		
+
 		final ArrayList<L> successorTransitionList = new ArrayList<>();
 		Set<L> currentSleepSet = mSleepSetMap.get(currentState);
 
@@ -137,11 +138,7 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 					successorTransitionList.add(letter);
 				}
 			}
-			for (final L letter : currentSleepSet) {
-				if (!currentHash.contains(letter)) {
-					currentSleepSet.remove(letter);
-				}
-			}
+			currentSleepSet = DataStructureUtils.intersection(currentSleepSet, currentHash);
 			mSleepSetMap.put(currentState, currentSleepSet);
 			mHashMap.put(currentState, currentSleepSet);
 		}
@@ -150,16 +147,19 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 		successorTransitionList.sort(order);
 		for (final L letterTransition : successorTransitionList) {
 			final var successors = mOperand.internalSuccessors(currentState, letterTransition).iterator();
+			if (!successors.hasNext()) {
+				continue;
+			}
 			final var currentTransition = successors.next();
 			assert !successors.hasNext() : "Automaton must be deterministic";
 
 			final S succState = currentTransition.getSucc();
 			final Set<L> succSleepSet = currentSleepSet.stream()
 					.filter(l -> mIndependenceRelation.contains(currentState, letterTransition, l))
-					.collect(Collectors.toSet());
-			final Set<Set<L>> succDelaySet = Collections.<Set<L>> emptySet();
-			
-			//add succState to the automaton
+					.collect(Collectors.toCollection(HashSet::new));
+			final Set<Set<L>> succDelaySet = new HashSet<>();
+
+			// add succState to the automaton
 			if (!mReductionAutomaton.contains(succState) && mOperand.isFinal(succState)) {
 				mReductionAutomaton.addState(false, true, succState);
 			} else if (!mReductionAutomaton.contains(succState)) {
@@ -167,7 +167,7 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 			}
 			// add transition from currentState to succState to the automaton
 			mReductionAutomaton.addInternalTransition(currentState, letterTransition, succState);
-			
+
 			if (mStateStack.contains(succState)) {
 				if (mDelaySetMap.get(succState) != null) {
 					succDelaySet.addAll(mDelaySetMap.get(succState));

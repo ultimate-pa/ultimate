@@ -71,6 +71,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReductionAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
@@ -118,6 +124,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.au
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -203,6 +211,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
+	private static final boolean USE_SLEEPSET_REDUCTION = true;
 
 	/**
 	 * If the trace histogram max is larger than this number we try to find a danger invariant. Only used for debugging.
@@ -358,8 +367,26 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				net = petrifiedCfg;
 			}
 			try {
-				mAbstraction = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
-						mStateFactoryForRefinement, net).getResult();
+				final INestedWordAutomaton<L, IPredicate> automaton =
+						new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
+								mStateFactoryForRefinement, net).getResult();
+				if (USE_SLEEPSET_REDUCTION) {
+					final IIndependenceRelation<IPredicate, L> indep = new CachedIndependenceRelation<>(
+							new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
+									new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false,
+											true))));
+					final ISleepSetOrder<IPredicate, L> order =
+							new ConstantSleepSetOrder<>(automaton.getVpAlphabet().getInternalAlphabet());
+					final long reductionStart = System.currentTimeMillis();
+					mAbstraction = new SleepSetDelayReductionAutomaton<>(automaton, indep, order,
+							new AutomataLibraryServices(mServices), mStateFactoryForRefinement).getResult();
+					final long reductionEnd = System.currentTimeMillis();
+					mLogger.warn("Sleep Set Reduction Time: " + (reductionEnd - reductionStart) + "ms");
+					mLogger.warn("Sleep set: input automaton " + automaton.sizeInformation());
+					mLogger.warn("Sleep set: output automaton " + automaton.sizeInformation());
+				} else {
+					mAbstraction = automaton;
+				}
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
 				if (unsafePlaces == null) {
