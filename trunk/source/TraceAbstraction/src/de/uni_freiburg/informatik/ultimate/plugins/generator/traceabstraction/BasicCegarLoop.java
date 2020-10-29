@@ -383,7 +383,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 					final long reductionEnd = System.currentTimeMillis();
 					mLogger.warn("Sleep Set Reduction Time: " + (reductionEnd - reductionStart) + "ms");
 					mLogger.warn("Sleep set: input automaton " + automaton.sizeInformation());
-					mLogger.warn("Sleep set: output automaton " + automaton.sizeInformation());
+					mLogger.warn("Sleep set: output automaton " + mAbstraction.sizeInformation());
 				} else {
 					mAbstraction = automaton;
 				}
