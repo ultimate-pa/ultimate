@@ -102,8 +102,8 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 		mLetterStack = new ArrayDeque<>();
 		mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
 		for (final S startState : mStartStateSet) {
-			mSleepSetMap.put(startState, Collections.<L> emptySet());
-			mDelaySetMap.put(startState, Collections.<Set<L>> emptySet());
+			mSleepSetMap.put(startState, new HashSet<L>());
+			mDelaySetMap.put(startState, new HashSet<Set<L>>());
 			mStateStack.push(startState);
 			mReductionAutomaton.addState(true, mOperand.isFinal(startState), startState);
 
@@ -196,7 +196,9 @@ public class SleepSetDelayReductionAutomaton<L, S> extends UnaryNwaOperation<L, 
 			mStateStack.push(currentState);
 			constructReductionAutomaton();
 		}
-		mLetterStack.pop();
+		if (!mOperand.isInitial(currentState)) {
+			mLetterStack.pop();
+		}
 	}
 
 	@Override

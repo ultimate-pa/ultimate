@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Implementation of Partial Order Reduction for Deterministic Finite Automata
@@ -102,8 +104,8 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		mStateStack = new ArrayDeque<>();
 		mLetterStack = new ArrayDeque<>();
 		for (final S startState : mStartStateSet) {
-			mSleepSetMap.put(startState, Collections.<L> emptySet());
-			mDelaySetMap.put(startState, Collections.<Set<L>> emptySet());
+			mSleepSetMap.put(startState, new HashSet<L>());
+			mDelaySetMap.put(startState, new HashSet<Set<L>>());
 			mStateStack.push(startState);
 		}
 		mOrder = sleepSetOrder;
@@ -142,11 +144,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 					successorTransitionList.add(letter);
 				}
 			}
-			for (final L letter : currentSleepSet) {
-				if (!currentHash.contains(letter)) {
-					currentSleepSet.remove(letter);
-				}
-			}
+			currentSleepSet = DataStructureUtils.intersection(currentSleepSet, currentHash);
 			mSleepSetMap.put(currentState, currentSleepSet);
 			mHashMap.put(currentState, currentSleepSet);
 		}
@@ -161,8 +159,8 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 			final S succState = currentTransition.getSucc();
 			final Set<L> succSleepSet = currentSleepSet.stream()
 					.filter(l -> mIndependenceRelation.contains(currentState, letterTransition, l))
-					.collect(Collectors.toSet());
-			final Set<Set<L>> succDelaySet = Collections.<Set<L>> emptySet();
+					.collect(Collectors.toCollection(HashSet::new));
+			final Set<Set<L>> succDelaySet = new HashSet<>();
 			if (mStateStack.contains(succState)) {
 				if (mDelaySetMap.get(succState) != null) {
 					succDelaySet.addAll(mDelaySetMap.get(succState));
@@ -197,7 +195,9 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 				return run;
 			}
 		}
-		mLetterStack.pop();
+		if (!mOperand.isInitial(currentState)) {
+			mLetterStack.pop();
+		}
 		return null;
 	}
 

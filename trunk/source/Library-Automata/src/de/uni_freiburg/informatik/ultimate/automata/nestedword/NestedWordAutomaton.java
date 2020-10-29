@@ -571,7 +571,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 
 	@Override
 	public String sizeInformation() {
-		final boolean verbose = false;
+		final boolean verbose = true;
 		if (!verbose) {
 			final int states = getStates().size();
 			return states + " states.";
