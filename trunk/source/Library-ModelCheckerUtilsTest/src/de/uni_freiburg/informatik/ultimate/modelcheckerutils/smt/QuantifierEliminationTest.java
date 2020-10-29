@@ -92,6 +92,10 @@ public class QuantifierEliminationTest {
 	private ILogger mLogger;
 	private static QuantifierEliminationTestCsvWriter mCsvWriter;
 
+	public static Sort getBitvectorSort8(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, 8);
+	}
+
 	public static Sort constructIntIntArray(final Script script) {
 		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script));
 	}
@@ -935,146 +939,116 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void greaterTIR() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
 		final String inputSTR = "(exists ((x Int)) 	(and (> (* 7 x) lo ) (> hi x)))";
 		final String expectedResult = "(<= (+ (div (+ (+ lo 1) (- 1)) 7) 2) hi)";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void lessTIR() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
 		final String inputSTR = "(exists ((x Int)) 	(and (< (* 7 x) hi ) (< lo x)))";
 		final String expectedResult = "(<= (+ lo 1) (div (+ hi (- 1)) 7))";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void greaterEqTIR() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
 		final String inputSTR = "(forall ((x Int)) 	(or (>= (* 7 x) lo ) (> hi x)))";
 		final String expectedResult = "(< (div (+ lo (- 1)) 7) hi)";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void lessEqTIR() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
 		final String inputSTR = "(forall ((x Int)) 	(or (<= (* 7 x) hi ) (< lo x)))";
 		final String expectedResult = "(< lo (+ (div (+ (+ hi 1) (- 1)) 7) 1))";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void bvuleTIR() {
-		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
-		mScript.declareFun("lo", new Sort[0], bvSort);
-		mScript.declareFun("hi", new Sort[0], bvSort);
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvule x hi ) (bvule lo x)))";
 		final String expectedResult = "(bvule lo hi)";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 	@Test
 	public void bvugeTIR() {
-		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
-		mScript.declareFun("lo", new Sort[0], bvSort);
-		mScript.declareFun("hi", new Sort[0], bvSort);
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvuge hi x  ) (bvuge  x lo)))";
 		final String expectedResult = "(bvuge hi lo)";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void bvsgeTIR() {
-		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
-		mScript.declareFun("lo", new Sort[0], bvSort);
-		mScript.declareFun("hi", new Sort[0], bvSort);
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvsge hi x  ) (bvsge x lo)))";
 		final String expectedResult = "(bvsge hi lo)";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void bvsleTIR() {
-		final Sort bvSort = SmtSortUtils.getBitvectorSort(mScript, 8);
-		mScript.declareFun("lo", new Sort[0], bvSort);
-		mScript.declareFun("hi", new Sort[0], bvSort);
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvsle x hi ) (bvsle lo x)))";
 		final String expectedResult = "(bvsle lo hi)";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
 	@Test
 	public void greaterTIRNegativeCoef() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
 		final String inputSTR = "(exists ((x Int)) 	(and (> (* (- 7) x) hi ) (< lo x)))";
 		final String expectedResult = "(<= (+ lo 2) (div (+ (+ hi 1) (- 1)) (- 7)))";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void lessTIRNegativeCoef() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
 		final String inputSTR = "(exists ((x Int)) 	(and (< (* (- 7) x) lo ) (> hi x)))";
 		final String expectedResult = "(<= (+ (div (+ lo (- 1)) (- 7)) 1) hi)";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void greaterEqTIRNegativeCoef() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
 		final String inputSTR = "(forall ((x Int)) 	(or (>= (* (- 7) x) hi ) (> x lo)))";
 		final String expectedResult = "(< lo (div (+ hi (- 1)) (- 7)))";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void lessEqTIRNegativeCoef() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
 		final String inputSTR = "(forall ((x Int)) 	(or (<= (* (- 7) x) lo ) (> hi x)))";
 		final String expectedResult = "(< (div (+ (+ lo 1) (- 1)) (- 7)) (+ hi 1))";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void antiDerTirExist() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
-		mScript.declareFun("y", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi", "y") };
 		final String inputSTR = "(exists ((x Int)) (and	(not(=(* 4 x) y)) (> x lo) (< x hi)) )";
 		final String expectedResult =
 				"(or (and (<= (+ lo 2) hi) (<= (+ lo 1) (div (+ y (- 1)) 4))) (and (<= (+ lo 2) hi) (<= (+ (div y 4) 2) hi)))";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void antiDerTirForall() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("lo", new Sort[0], intSort);
-		mScript.declareFun("hi", new Sort[0], intSort);
-		mScript.declareFun("y", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi", "y") };
 		final String inputSTR = "(forall ((x Int)) (or	(=(* 4 x) y) (> x lo) (< x hi))  )";
 		final String expectedResult =
 				"(and (or (< lo hi) (< lo (+ (div y 4) 1))) (or (< (div (+ y (- 1)) 4) hi) (< lo hi)))";
-		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
