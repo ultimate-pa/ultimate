@@ -319,6 +319,52 @@ public enum RelationSymbol {
 		return false;
 	}
 
+	public boolean isSignedBvRelation() {
+		switch (this) {
+		case EQ:
+		case DISTINCT:
+		case LEQ:
+		case GEQ:
+		case LESS:
+		case GREATER:
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+			return false;
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
+			return true;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+	}
+
+	public boolean isUnSignedBvRelation() {
+		switch (this) {
+		case EQ:
+		case DISTINCT:
+		case LEQ:
+		case GEQ:
+		case LESS:
+		case GREATER:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
+			return false;
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+			return true;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+	}
+
 	public RelationSymbol getNonStrictSymbol() {
 		switch (this) {
 		case EQ:

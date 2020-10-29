@@ -265,6 +265,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					return null;
 				}
 				final SolvedBinaryRelation sbr = bnr.solveForSubject(script, eliminatee);
+				if (sbr == null) {
+					return null;
+				}
 				// convert sbr to elpr
 				final IPolynomialTerm polyRhs =
 						(IPolynomialTerm) new PolynomialTermTransformer(script).transform(sbr.getRightHandSide());
@@ -473,8 +476,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 						new AffineTerm(lhs.getSort(), relSymbAndOffset.getSecond(), Collections.emptyMap()));
 			}
 			if (relSymbAndOffset.getFirst().isNonStrictBvRelation()) {
-				if ((lhs.getConstant() != Rational.ZERO) || (rhs.getConstant() != Rational.ZERO) || (!lhs.isAffine())
-						|| (!rhs.isAffine())) {
+				if (((lower.getRelationSymbol().isSignedBvRelation()) != (upper.getRelationSymbol()
+						.isSignedBvRelation()))
+						|| ((lower.getRelationSymbol().isUnSignedBvRelation()) != (upper.getRelationSymbol()
+								.isUnSignedBvRelation()))) {
 					return null;
 				}
 				return relSymbAndOffset.getFirst().constructTerm(script, lhs.toTerm(script), rhs.toTerm(script));
