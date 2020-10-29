@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -139,11 +138,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		} else {
 			// state already visited
 			final Set<L> currentHash = mHashMap.get(currentState);
-			for (final L letter : currentHash) {
-				if (!currentSleepSet.contains(letter)) {
-					successorTransitionList.add(letter);
-				}
-			}
+			successorTransitionList.addAll(DataStructureUtils.difference(currentHash, currentSleepSet));
 			currentSleepSet = DataStructureUtils.intersection(currentSleepSet, currentHash);
 			mSleepSetMap.put(currentState, currentSleepSet);
 			mHashMap.put(currentState, currentSleepSet);

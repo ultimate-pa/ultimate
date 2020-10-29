@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReductionAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReductionAutomatonIterative;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
