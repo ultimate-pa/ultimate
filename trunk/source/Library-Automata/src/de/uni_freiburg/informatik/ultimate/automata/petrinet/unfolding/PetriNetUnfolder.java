@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,12 +46,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
@@ -66,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
 public final class PetriNetUnfolder<L, P> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
 	private static final boolean B32_OPTIMIZATION = true;
+	private static final boolean USE_POR_PRUNING = true;
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
@@ -193,6 +197,10 @@ public final class PetriNetUnfolder<L, P> {
 		} else {
 			isCutOffEvent = event.isCutoffEvent();
 		}
+		if (USE_POR_PRUNING && isPORCutoff(event)) {
+			return false;
+		}
+
 		final boolean succOfEventIsAccpting = mUnfolding.addEvent(event);
 		// assert !unfolding.pairwiseConflictOrCausalRelation(e.getPredecessorConditions());
 		if (succOfEventIsAccpting && mRun == null) {
@@ -214,6 +222,122 @@ public final class PetriNetUnfolder<L, P> {
 				+ mUnfolding.getEvents().size() + ", total #Conditions: " + mUnfolding.getConditions().size());
 		mStatistics.add(event);
 		return false;
+	}
+
+	/**
+	 * Determines if the given event should be omitted from the unfolding, based on Partial Order Reduction reasoning.
+	 * This is the case if another event already exists that has the same marking, and the events' transitions are
+	 * independent.
+	 */
+	private boolean isPORCutoff(final Event<L, P> event) {
+		for (final Event<L, P> other : mUnfolding.getEvents()) {
+			if (!event.getMark().equals(other.getMark())) {
+				continue;
+			}
+
+			if (isIndependent(event.getTransition(), other.getTransition())) {
+				mLogger.warn("POR pruning event: " + event + " in favor of " + other);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Determines if the given transitions are independent in a POR sense. In fact, this method goes a bit further and
+	 * checks a sufficient condition that ensures that omitting one of these transitions from the unfolding still leaves
+	 * a persistent set.
+	 */
+	private boolean isIndependent(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+		// Step 1: Independent transitions may not disable each other
+		if (mayDisable(t1, t2) || mayDisable(t2, t1)) {
+			return false;
+		}
+
+		// Step 2: If t1 and t2 are independent, then either order of firing them reaches the same marking.
+		final Set<P> succ12 = jointSuccessors(t1, t2);
+		final Set<P> succ21 = jointSuccessors(t2, t1);
+		if (!succ12.equals(succ21)) {
+			return false;
+		}
+
+		// Step 3: The intermediate markings between firing t1 and t2 (or vice versa) may not enable any transition that
+		// is not also enabled before or after both have been fired.
+		return !mayHideEnabledTransition(t1, t2) && !mayHideEnabledTransition(t2, t1);
+	}
+
+	/**
+	 * Determines if firing one of the given transitions may disable the other.
+	 *
+	 * Suppose in a marking M, both transitions are enabled. Then we can write M = core(M) ∪ pre(t1) ∪ pre(t2), where
+	 * core(M) = M \ (pre(t1) ∪ pre(t2)).
+	 *
+	 * After firing t1, we reach a marking M1 = core(M) ∪ pre(t2)\pre(t1) ∪ suc(t1). In order for t2 to still be enabled
+	 * in M1, we must thus check that all the common predecessors of t1 and t2 are also successors of t1.
+	 */
+	private boolean mayDisable(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+		final Set<P> t1Pre = mOperand.getPredecessors(t1);
+		final Set<P> t2Pre = mOperand.getPredecessors(t2);
+		final Set<P> t1Succ = mOperand.getSuccessors(t1);
+
+		return !t2Pre.stream().filter(t1Pre::contains).allMatch(t1Succ::contains);
+	}
+
+	/**
+	 * Computes the set of all "new" successor places reached after firing t1 and then t2, assuming t1 does not disable
+	 * t2; i.e., all successor places that are not necessarily present in the original marking.
+	 *
+	 * Suppose in a marking M, both transitions are enabled. Then we can write M = core(M) ∪ pre(t1) ∪ pre(t2), where
+	 * core(M) = M \ (pre(t1) ∪ pre(t2)).
+	 *
+	 * After firing t1, we reach a marking M1 = core(M) ∪ pre(t2)\pre(t1) ∪ suc(t1). If t2 is still enabled and fired
+	 * from this marking, we reach the marking core(M) ∪ suc(t1)\pre(t2) ∪ suc(t2).
+	 *
+	 * Hence, this method computes the set suc(t1)\pre(t2) ∪ suc(t2).
+	 */
+	private Set<P> jointSuccessors(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+		final Set<P> t1Succ = mOperand.getSuccessors(t1);
+		final Set<P> t2Pre = mOperand.getPredecessors(t2);
+		final Set<P> t2Succ = mOperand.getSuccessors(t2);
+
+		return DataStructureUtils.union(DataStructureUtils.difference(t1Succ, t2Pre), t2Succ);
+	}
+
+	/**
+	 * Determines if firing t1 may enable a transition that is neither enabled before firing t1, nor after both t1 and
+	 * t2 have been fired; assuming t1 and t2 don't disable each other and reach the same successors after both have
+	 * been fired. We say that t3 is "hidden".
+	 *
+	 * Suppose in a marking M, both transitions are enabled. Then we can write M = core(M) ∪ pre(t1) ∪ pre(t2), where
+	 * core(M) = M \ (pre(t1) ∪ pre(t2)). After firing t1, we reach a marking M1 = core(M) ∪ pre(t2)\pre(t1) ∪ suc(t1).
+	 * Suppose now some transition t3 was enabled in M1.
+	 *
+	 * If pre(t3) ⊆ core(M) ∪ pre(t2)\pre(t1), then also pre(t3) ⊆ M and the transition is thus not hidden (it is
+	 * enabled already before t1 is ever fired).
+	 *
+	 * If on the other hand pre(t3) ⊆ core(M) ∪ suc(t1), then t3 is enabled after firing both t2 and then t1. By
+	 * assumption, it is then also enabled after firing first t1 and then t2. Hence t3 is not hidden in this case
+	 * either.
+	 *
+	 * Only in the remaining case, where pre(t3) contains at least one place in pre(t1)\pre(t1) and at least one place
+	 * in suc(t1), t3 may be hidden. Hence we check here if such a t3 exists.
+	 */
+	private boolean mayHideEnabledTransition(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+		final Set<P> t1Pre = mOperand.getPredecessors(t1);
+		final Set<P> t2Pre = mOperand.getPredecessors(t2);
+		final Set<P> t1Succ = mOperand.getSuccessors(t1);
+		final Set<P> intermediatePre = DataStructureUtils.difference(t2Pre, t1Pre);
+
+		final Set<P> possiblePlaces = DataStructureUtils.union(t1Succ, intermediatePre);
+		final Collection<ISuccessorTransitionProvider<L, P>> candidates =
+				mOperand.getSuccessorTransitionProviders(t1Succ, possiblePlaces);
+
+		for (final ISuccessorTransitionProvider<L, P> candidate : candidates) {
+			if (candidate.getPredecessorPlaces().stream().anyMatch(intermediatePre::contains)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
