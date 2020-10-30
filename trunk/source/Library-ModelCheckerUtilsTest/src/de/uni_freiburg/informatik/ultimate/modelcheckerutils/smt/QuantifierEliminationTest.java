@@ -608,9 +608,7 @@ public class QuantifierEliminationTest {
 			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
 		}
 		if (expectedResultAsString != null) {
-			final boolean resultIsEquivalentToExpectedResult =
-					SmtTestUtils.areLogicallyEquivalent(mgdScript.getScript(), result, expectedResultAsString);
-			Assert.assertTrue("Not equivalent to expected result: " + result, resultIsEquivalentToExpectedResult);
+			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);
 		}
 		csvWriter.reportEliminationSuccess(result);
 	}
@@ -646,11 +644,31 @@ public class QuantifierEliminationTest {
 			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
 		}
 		if (expectedResultAsString != null) {
-			final boolean resultIsEquivalentToExpectedResult =
-					SmtTestUtils.areLogicallyEquivalent(mgdScript.getScript(), result, expectedResultAsString);
-			Assert.assertTrue("Not equivalent to expected result: " + result, resultIsEquivalentToExpectedResult);
+			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);
 		}
 		csvWriter.reportEliminationSuccess(result);
+	}
+
+	private static void checkLogicalEquivalence(final Script script, final Term result,
+			final String expectedResultAsString) {
+		final Term expectedResultAsTerm = TermParseUtils.parseTerm(script, expectedResultAsString);
+		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResultAsTerm, script);
+		final String errorMessage;
+		switch (lbool) {
+		case SAT:
+			errorMessage = "Not equivalent to expected result: " + result;
+			break;
+		case UNKNOWN:
+			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
+			break;
+		case UNSAT:
+			errorMessage = null;
+			break;
+		default:
+			throw new AssertionError("unknown value " + lbool);
+		}
+		Assert.assertTrue(errorMessage, lbool == LBool.UNSAT);
+
 	}
 
 	@Test
