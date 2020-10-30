@@ -14,6 +14,7 @@
 /trunk/examples/ultbench/*
 trunk/examples/concurrent/bpl/VMCAI2021/generated/*.bpl
 trunk/examples/concurrent/bpl/VMCAI2021/generated/*.yml
+trunk/examples/Automata/PetriNet/cycling-token/generated/*.ats
 **/.metadata/*
 **/.settings/*
 **/target/*
