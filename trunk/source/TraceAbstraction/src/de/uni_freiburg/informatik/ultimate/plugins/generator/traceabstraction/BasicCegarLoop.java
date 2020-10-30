@@ -379,7 +379,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 					final ISleepSetOrder<IPredicate, L> order =
 							new ConstantSleepSetOrder<>(automaton.getVpAlphabet().getInternalAlphabet());
 					final long reductionStart = System.currentTimeMillis();
-					mAbstraction = new SleepSetDelayReductionAutomaton<>(automaton, indep, order,
+					mAbstraction = new SleepSetDelayReductionAutomatonIterative<>(automaton, indep, order,
 							new AutomataLibraryServices(mServices), mStateFactoryForRefinement).getResult();
 					final long reductionEnd = System.currentTimeMillis();
 					mLogger.warn("Sleep Set Reduction Time: " + (reductionEnd - reductionStart) + "ms");

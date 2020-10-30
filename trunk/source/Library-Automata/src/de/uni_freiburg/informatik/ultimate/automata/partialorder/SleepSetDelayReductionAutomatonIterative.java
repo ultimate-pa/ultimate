@@ -65,11 +65,10 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 	private final HashMap<S, Set<L>> mSleepSetMap;
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
 	private final ArrayDeque<S> mStateStack;
-	private final ArrayDeque<L> mLetterStack;
+	private final HashMap<S, ArrayDeque<S>> mStateStackMap;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private final NestedWordAutomaton<L, S> mReductionAutomaton;
-	private final HashMap<S, Set<L>> mExploredTransitions;
 
 	/**
 	 * Constructor for POR with Sleep Sets and Delay Set
@@ -99,15 +98,14 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 		mSleepSetMap = new HashMap<>();
 		mDelaySetMap = new HashMap<>();
 		mStateStack = new ArrayDeque<>();
-		mLetterStack = new ArrayDeque<>();
+		mStateStackMap = new HashMap<>();
 		mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
-		mExploredTransitions = new HashMap<>();
 		for (final S startState : mStartStateSet) {
 			mSleepSetMap.put(startState, new HashSet<L>());
 			mDelaySetMap.put(startState, new HashSet<Set<L>>());
 			mStateStack.push(startState);
+			mStateStackMap.put(startState, new ArrayDeque<S>());
 			mReductionAutomaton.addState(true, mOperand.isFinal(startState), startState);
-			mExploredTransitions.put(startState, new HashSet<L>());
 
 		}
 		mOrder = sleepSetOrder;
@@ -120,51 +118,56 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 	private void constructReductionAutomaton() {
 		
 		while (!mStateStack.isEmpty()) {
-
+			
 			final S currentState = mStateStack.peek();
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
 			Set<L> currentSleepSet = mSleepSetMap.get(currentState);
-			final Set<L> currentTransitions = new HashSet<L>();
-			for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
-				currentTransitions.add(transition.getLetter());
-			}
-			Set<L> exploredTransitions = new HashSet<L>();
-			exploredTransitions.addAll(mExploredTransitions.get(currentState));
-
+			final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
+			
 			if (mHashMap.get(currentState) == null) {
 				// state not visited yet
 				mHashMap.put(currentState, mSleepSetMap.get(currentState));
-				successorTransitionList.addAll(DataStructureUtils.difference(currentTransitions, currentSleepSet));
-			} else if (!currentTransitions.equals(exploredTransitions)){
-					// state already visited, but exploration not finished before
-				successorTransitionList.addAll(DataStructureUtils.difference(currentTransitions,
-						DataStructureUtils.union(currentSleepSet, exploredTransitions)));
-			} else {
-				// state already visited and exploration finished before
+				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
+					if (!currentSleepSet.contains(transition.getLetter())) {
+						successorTransitionList.add(transition.getLetter());
+					}
+				}
+			} else if (!currentDelaySet.isEmpty()) {
+				// state already visited but loops are not explored yet
+				currentSleepSet = currentDelaySet.iterator().next();
+				currentDelaySet.remove(currentSleepSet);
+				mSleepSetMap.put(currentState, currentSleepSet);
+				mDelaySetMap.put(currentState, currentDelaySet);
+				mStateStack.push(currentState);
 				final Set<L> currentHash = mHashMap.get(currentState);
 				successorTransitionList.addAll(DataStructureUtils.difference(currentHash, currentSleepSet));
 				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, currentHash);
+				mSleepSetMap.put(currentState, currentSleepSet);
 				mHashMap.put(currentState, currentSleepSet);
+			} else {
+				// state already visited and loops are explored
+				mStateStack.pop();
 			}
-			mSleepSetMap.put(currentState, currentSleepSet);
-
-			if (!successorTransitionList.isEmpty()) {
-				// sort successorTransitionList according to the given order
-				final Comparator<L> order = mOrder.getOrder(currentState);
-				successorTransitionList.sort(order);
-				L letterTransition = successorTransitionList.get(0);
+			
+			// sort successorTransitionList according to the given order
+			final Comparator<L> order = mOrder.getOrder(currentState);
+			successorTransitionList.sort(order);
+			
+			for (final L letterTransition : successorTransitionList) {
 				final var successors = mOperand.internalSuccessors(currentState, letterTransition).iterator();
 				if (!successors.hasNext()) {
 					continue;
 				}
 				final var currentTransition = successors.next();
 				assert !successors.hasNext() : "Automaton must be deterministic";
+
 				final S succState = currentTransition.getSucc();
 				final Set<L> succSleepSet = currentSleepSet.stream()
 						.filter(l -> mIndependenceRelation.contains(currentState, letterTransition, l))
 						.collect(Collectors.toCollection(HashSet::new));
 				final Set<Set<L>> succDelaySet = new HashSet<>();
-					// add succState to the automaton
+
+				// add succState to the automaton
 				if (!mReductionAutomaton.contains(succState) && mOperand.isFinal(succState)) {
 					mReductionAutomaton.addState(false, true, succState);
 				} else if (!mReductionAutomaton.contains(succState)) {
@@ -172,7 +175,10 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 				}
 				// add transition from currentState to succState to the automaton
 				mReductionAutomaton.addInternalTransition(currentState, letterTransition, succState);
-				if (mStateStack.contains(succState)) {
+
+				ArrayDeque<S> stateStack = new ArrayDeque<S>();
+				stateStack.addAll(mStateStackMap.get(currentState));
+				if (stateStack.contains(succState)) {
 					if (mDelaySetMap.get(succState) != null) {
 						succDelaySet.addAll(mDelaySetMap.get(succState));
 					}
@@ -182,39 +188,13 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 					mSleepSetMap.put(succState, succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
 					mStateStack.push(succState);
-					mLetterStack.push(letterTransition);
-					mExploredTransitions.put(succState, new HashSet<L>());
-					//constructReductionAutomaton();
+					stateStack.push(succState);
+					mStateStackMap.put(succState, stateStack);
 				}
-				exploredTransitions.add(letterTransition);
-				if (currentTransitions.equals(mExploredTransitions.get(currentState))) {
-					currentSleepSet.add(letterTransition);
-				}
+				currentSleepSet.add(letterTransition);
 				mSleepSetMap.put(currentState, currentSleepSet);
-			}
-			
-			if (currentTransitions.equals(mExploredTransitions.get(currentState))) {
-				// currentState backtracked
-				mStateStack.pop();
-				
-				final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
-				if (!currentDelaySet.isEmpty()) {
-					currentSleepSet = currentDelaySet.iterator().next();
-					currentDelaySet.remove(currentSleepSet);
-					mSleepSetMap.put(currentState, currentSleepSet);
-					mDelaySetMap.put(currentState, currentDelaySet);
-					mStateStack.push(currentState);
-					//constructReductionAutomaton();
-				}
-				
-				if (!mOperand.isInitial(currentState)) {
-					mLetterStack.pop();
-				}
-			} else {
-				mExploredTransitions.put(currentState, exploredTransitions);
-			}
-			
-		}
+			}	
+		}	
 	}
 
 	@Override
