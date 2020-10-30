@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
@@ -82,6 +83,7 @@ public class QuantifierEliminationTest {
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
+	private static final boolean LOG_SIMPLIFICATION_POSSIBILITY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
@@ -603,6 +605,12 @@ public class QuantifierEliminationTest {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		SmtUtils.simplifyWithStatistics(mgdScript, result, null, services, SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
+		if (LOG_SIMPLIFICATION_POSSIBILITY) {
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, null, services,
+					SimplificationTechnique.SIMPLIFY_DDA);
+			logger.info("Simplified result: " + esr.getSimplifiedTerm());
+			logger.info(esr.buildSizeReductionMessage());
+		}
 		if (checkResultIsQuantifierFree) {
 			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
 			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
@@ -639,6 +647,12 @@ public class QuantifierEliminationTest {
 		csvWriter.reportEliminationBegin(formulaAsTerm);
 		final Term result = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(nnf);
 		logger.info("Result: " + result);
+		if (LOG_SIMPLIFICATION_POSSIBILITY) {
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, null, services,
+					SimplificationTechnique.SIMPLIFY_DDA);
+			logger.info("Simplified result: " + esr.getSimplifiedTerm());
+			logger.info(esr.buildSizeReductionMessage());
+		}
 		if (checkResultIsQuantifierFree) {
 			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
 			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
