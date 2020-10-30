@@ -466,7 +466,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 		private Term combine(final Script script, final int quantifier, final ExplicitLhsPolynomialRelation lower,
 				final ExplicitLhsPolynomialRelation upper) {
-			final Pair<RelationSymbol, Rational> relSymbAndOffset = TirBounds.computeRelationSymbolAndOffset(quantifier,
+			final Pair<RelationSymbol, Rational> relSymbAndOffset = computeRelationSymbolAndOffset(quantifier,
 					lower.getRelationSymbol(), upper.getRelationSymbol(), lower.getRhs().getSort());
 			assert relSymbAndOffset.getSecond().equals(Rational.ZERO)
 					|| relSymbAndOffset.getSecond().equals(Rational.ONE)
@@ -493,55 +493,48 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return new PolynomialRelation(script, (AbstractGeneralizedAffineTerm<?>) resultRhs,
 					relSymbAndOffset.getFirst()).positiveNormalForm(script);
 		}
-
 	}
 
-	private static class TirBounds {
-
-		static Pair<RelationSymbol, Rational> computeRelationSymbolAndOffset(final int quantifier,
-				final RelationSymbol lowerBoundRelationSymbol, final RelationSymbol upperBoundRelationSymbol,
-				final Sort sort) {
-			final RelationSymbol resultRelationSymbol;
-			final Rational offset;
-			if (lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLE()) {
-				resultRelationSymbol = upperBoundRelationSymbol;
-				if ((quantifier == QuantifiedFormula.FORALL) && SmtSortUtils.isIntSort(sort)) {
-					offset = Rational.MONE;
-				} else {
-					offset = Rational.ZERO;
-				}
-			} else if ((lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLT())
-					|| (lowerBoundRelationSymbol.isRelationSymbolGT()
-							&& upperBoundRelationSymbol.isRelationSymbolLE())) {
-				if (quantifier == QuantifiedFormula.EXISTS) {
-					resultRelationSymbol = upperBoundRelationSymbol.getStrictSymbol();
-				} else if (quantifier == QuantifiedFormula.FORALL) {
-					resultRelationSymbol = upperBoundRelationSymbol.getNonStrictSymbol();
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
-				offset = Rational.ZERO;
-			} else if (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLT()) {
-				resultRelationSymbol = upperBoundRelationSymbol;
-				if ((quantifier == QuantifiedFormula.EXISTS) && SmtSortUtils.isIntSort(sort)) {
-					offset = Rational.ONE;
-				} else {
-					offset = Rational.ZERO;
-				}
+	private static Pair<RelationSymbol, Rational> computeRelationSymbolAndOffset(final int quantifier,
+			final RelationSymbol lowerBoundRelationSymbol, final RelationSymbol upperBoundRelationSymbol,
+			final Sort sort) {
+		final RelationSymbol resultRelationSymbol;
+		final Rational offset;
+		if (lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLE()) {
+			resultRelationSymbol = upperBoundRelationSymbol;
+			if ((quantifier == QuantifiedFormula.FORALL) && SmtSortUtils.isIntSort(sort)) {
+				offset = Rational.MONE;
 			} else {
-				// <pre>
-				// TODO #bvineq 20201017 Matthias:
-				// * Cases for new relation symbols probably have to be added above.
-				// * We probably need a special solution for upper bounds of
-				// the form "bvult 0" because is this case we should subtract -1
-				// * Idea: omit call to this method and replace result by "false"
-				// </pre>
-				throw new AssertionError(String.format("Unsupported relation symbols: Lower %s, Upper %s",
-						lowerBoundRelationSymbol, upperBoundRelationSymbol));
+				offset = Rational.ZERO;
 			}
-			return new Pair<RelationSymbol, Rational>(resultRelationSymbol, offset);
+		} else if ((lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLT())
+				|| (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLE())) {
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				resultRelationSymbol = upperBoundRelationSymbol.getStrictSymbol();
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				resultRelationSymbol = upperBoundRelationSymbol.getNonStrictSymbol();
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			offset = Rational.ZERO;
+		} else if (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLT()) {
+			resultRelationSymbol = upperBoundRelationSymbol;
+			if ((quantifier == QuantifiedFormula.EXISTS) && SmtSortUtils.isIntSort(sort)) {
+				offset = Rational.ONE;
+			} else {
+				offset = Rational.ZERO;
+			}
+		} else {
+			// <pre>
+			// TODO #bvineq 20201017 Matthias:
+			// * Cases for new relation symbols probably have to be added above.
+			// * We probably need a special solution for upper bounds of
+			// the form "bvult 0" because is this case we should subtract -1
+			// * Idea: omit call to this method and replace result by "false"
+			// </pre>
+			throw new AssertionError(String.format("Unsupported relation symbols: Lower %s, Upper %s",
+					lowerBoundRelationSymbol, upperBoundRelationSymbol));
 		}
-
+		return new Pair<RelationSymbol, Rational>(resultRelationSymbol, offset);
 	}
-
 }
