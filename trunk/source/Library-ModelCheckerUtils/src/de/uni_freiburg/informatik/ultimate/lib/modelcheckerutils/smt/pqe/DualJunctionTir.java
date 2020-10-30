@@ -79,11 +79,14 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	private final boolean mExpensiveEliminations;
 
 	/**
-	 * @param expensiveEliminations
-	 *            If set to true we do expensive eliminations where auxiliary variables and case distinctions are
-	 *            allowed. If set to false we do only inexpensive eliminations where non of the above is allowed. Note
-	 *            that in the first case we will not do all simple eliminations. If you want the full elimination power
-	 *            you should two instances of this class.
+	 * @param expensiveEliminations If set to true we do expensive eliminations
+	 *                              where auxiliary variables and case distinctions
+	 *                              are allowed. If set to false we do only
+	 *                              inexpensive eliminations where non of the above
+	 *                              is allowed. Note that in the first case we will
+	 *                              not do all simple eliminations. If you want the
+	 *                              full elimination power you should two instances
+	 *                              of this class.
 	 */
 	public DualJunctionTir(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean expensiveEliminations) {
@@ -108,8 +111,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Try to iteratively eliminate as many eliminatees as possible using the given "derHelper". Return null if did not
-	 * make progress for any eliminatee.
+	 * Try to iteratively eliminate as many eliminatees as possible using the given
+	 * "derHelper". Return null if did not make progress for any eliminatee.
 	 */
 	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt) {
 		EliminationTask currentEt = inputEt;
@@ -140,9 +143,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Try to eliminate some eliminatee using the given "derHelper". Return immediately after the first successful step
-	 * (note that a step can be successful if a case distinction was made and the variable was only eliminated in for
-	 * some cases). Return null if did not make progress for any eliminatee.
+	 * Try to eliminate some eliminatee using the given "derHelper". Return
+	 * immediately after the first successful step (note that a step can be
+	 * successful if a case distinction was made and the variable was only
+	 * eliminated in for some cases). Return null if did not make progress for any
+	 * eliminatee.
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
@@ -162,9 +167,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 								+ resultTerm;
 					}
 				}
-				// final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, resultTerm,
+				// final ExtendedSimplificationResult esr =
+				// SmtUtils.simplifyWithStatistics(mMgdScript, resultTerm,
 				// null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-				// final String sizeMessage = String.format("treesize reduction %d, result has %2.1f percent of original
+				// final String sizeMessage = String.format("treesize reduction %d, result has
+				// %2.1f percent of original
 				// size", esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
 				// mLogger.info(sizeMessage);
 				return new EliminationResult(
@@ -187,8 +194,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		if (elprs == null) {
 			return null;
 		}
-		final ExplicitLhsPolynomialRelations bestElprs =
-				bestDivision(script, eliminatee, bannedForDivCapture, quantifier, elprs);
+		final ExplicitLhsPolynomialRelations bestElprs = bestDivision(script, eliminatee, bannedForDivCapture,
+				quantifier, elprs);
 		final Term constraint = bestElprs.buildBoundConstraint(services, script, quantifier);
 		if (constraint == null) {
 			return null;
@@ -211,10 +218,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 		for (final Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation> pair : elprs
 				.getAntiDerRelations()) {
-			final ExplicitLhsPolynomialRelation solvedLower =
-					bestDivision(script, bannedForDivCapture, pair.getFirst());
-			final ExplicitLhsPolynomialRelation solvedUpper =
-					bestDivision(script, bannedForDivCapture, pair.getSecond());
+			final ExplicitLhsPolynomialRelation solvedLower = bestDivision(script, bannedForDivCapture,
+					pair.getFirst());
+			final ExplicitLhsPolynomialRelation solvedUpper = bestDivision(script, bannedForDivCapture,
+					pair.getSecond());
 			if (solvedLower == null) {
 				assert solvedUpper == null;
 				return null;
@@ -238,8 +245,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		if (solved != null) {
 			return solved;
 		}
-		final Pair<ExplicitLhsPolynomialRelation, Term> pair =
-				elpr.divideByIntegerCoefficient(script, bannedForDivCapture);
+		final Pair<ExplicitLhsPolynomialRelation, Term> pair = elpr.divideByIntegerCoefficient(script,
+				bannedForDivCapture);
 		if (pair != null) {
 			if (pair.getSecond() != null) {
 				throw new AssertionError("not this case");
@@ -269,8 +276,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					return null;
 				}
 				// convert sbr to elpr
-				final IPolynomialTerm polyRhs =
-						(IPolynomialTerm) new PolynomialTermTransformer(script).transform(sbr.getRightHandSide());
+				final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(script)
+						.transform(sbr.getRightHandSide());
 				elpr = new ExplicitLhsPolynomialRelation(sbr.getRelationSymbol(), Rational.ONE,
 						new Monomial(sbr.getLeftHandSide(), Rational.ONE), polyRhs);
 			} else {
@@ -336,8 +343,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		private final List<ExplicitLhsPolynomialRelation> mSimpleRelations = new ArrayList<>();
 		private final List<ExplicitLhsPolynomialRelation> mLowerBounds = new ArrayList<>();
 		private final List<ExplicitLhsPolynomialRelation> mUpperBounds = new ArrayList<>();
-		private final List<Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation>> mAntiDerBounds =
-				new ArrayList<>();
+		private final List<Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation>> mAntiDerBounds = new ArrayList<>();
 
 		void addSimpleRelation(final ExplicitLhsPolynomialRelation bound) {
 			mSimpleRelations.add(bound);
