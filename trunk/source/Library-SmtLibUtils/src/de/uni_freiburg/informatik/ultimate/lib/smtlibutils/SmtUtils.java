@@ -2499,6 +2499,11 @@ public final class SmtUtils {
 			return mReductionRatioInPercent;
 		}
 
+		public String buildSizeReductionMessage() {
+			return String.format("treesize reduction %d, result has %2.1f percent of original size",
+					getReductionOfTreeSize(), getReductionRatioInPercent());
+		}
+
 	}
 
 	/**

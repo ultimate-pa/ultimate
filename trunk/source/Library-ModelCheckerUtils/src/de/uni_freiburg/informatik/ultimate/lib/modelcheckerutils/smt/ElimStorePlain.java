@@ -620,9 +620,7 @@ public class ElimStorePlain {
 		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, preliminaryResult,
 				eTaskForVar.getContext(), mServices,
 				mSimplificationTechnique);
-		final String sizeMessage = String.format("treesize reduction %d, result has %2.1f percent of original size",
-				esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
-		mLogger.info(sizeMessage);
+		mLogger.info(esr.buildSizeReductionMessage());
 		final Term simplifiedResult = esr.getSimplifiedTerm();
 		final EliminationTaskWithContext res = new EliminationTaskWithContext(eTaskForVar.getQuantifier(),
 				newElimnateesForVar, simplifiedResult, eTaskForVar.getContext());
