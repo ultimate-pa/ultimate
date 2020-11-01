@@ -38,14 +38,16 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<
 		c1.computeFoataNormalForm();
 		c2.computeFoataNormalForm();
 		mFotateNormalFormComparisons++;
-		int depth = 1;
-		while(true) {
+		int maxDepth = Math.max(c1.getDepth(), c2.getDepth());
+
+		for (int depth = 1; depth < maxDepth +1; depth ++) {
 			result = c1.compareMin(c2, depth, mIdComparator);
 			if (result != 0){
 				return result;
 			}
-			depth++;
 		}
+		assert false: "the Order is total";
+		return 0;
 	}
 
 	@Override
