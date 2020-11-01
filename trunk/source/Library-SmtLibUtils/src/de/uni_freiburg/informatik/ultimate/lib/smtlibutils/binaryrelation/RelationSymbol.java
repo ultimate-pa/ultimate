@@ -53,8 +53,9 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * @return {@link RelationSymbol} whose string representation is relAsString and null if no {@link RelationSymbol}
-	 *         has such a string representation.
+	 * @return {@link RelationSymbol} whose string representation is relAsString
+	 *         and null if no {@link RelationSymbol} has such a string
+	 *         representation.
 	 */
 	public static RelationSymbol convert(final String relAsString) {
 		switch (relAsString) {
@@ -92,8 +93,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
-	 * negated relation ¬(ψ ▷ φ).
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
+	 * relation ψ ◾ φ is equivalent to the negated relation ¬(ψ ▷ φ).
 	 */
 	public RelationSymbol negate() {
 		final RelationSymbol result;
@@ -147,8 +148,9 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
-	 * relation φ ▷ ψ, which is the relation where we swapped the parameters.
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
+	 * relation ψ ◾ φ is equivalent to the relation φ ▷ ψ, which is the relation
+	 * where we swapped the parameters.
 	 */
 	public RelationSymbol swapParameters() {
 		final RelationSymbol result;
@@ -202,8 +204,9 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * @return true iff the relation symbol is neither EQ nor DISTINCT. We call these inequalities "convex inequalities"
-	 *         to emphasize that DISTINCT is not called an inequality.
+	 * @return true iff the relation symbol is neither EQ nor DISTINCT. We call
+	 *         these inequalities "convex inequalities" to emphasize that
+	 *         DISTINCT is not called an inequality.
 	 */
 	public boolean isConvexInequality() {
 		final boolean result;
@@ -314,6 +317,14 @@ public enum RelationSymbol {
 	public boolean isNonStrictBvRelation() {
 		if ((this == RelationSymbol.BVUGE) || (this == RelationSymbol.BVULE) || (this == RelationSymbol.BVSGE)
 				|| (this == RelationSymbol.BVSLE)) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean isStrictBvRelation() {
+		if ((this == RelationSymbol.BVUGT) || (this == RelationSymbol.BVULT) || (this == RelationSymbol.BVSGT)
+				|| (this == RelationSymbol.BVSLT)) {
 			return true;
 		}
 		return false;
