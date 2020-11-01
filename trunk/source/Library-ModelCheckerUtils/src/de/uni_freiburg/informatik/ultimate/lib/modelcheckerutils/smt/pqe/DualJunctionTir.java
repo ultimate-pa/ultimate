@@ -73,6 +73,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 	private static final boolean HANDLE_DER_OPERATOR = false;
 	private static final boolean COMPARE_TO_OLD_RESULT = false;
+	private static final boolean ERROR_FOR_OMEGA_TEST_APPLICABILITY = false;
 	/**
 	 * @see constructor
 	 */
@@ -432,11 +433,23 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 			final boolean allLowerCoefficientsOne = allCoefficientsOne(lowerBounds);
 			final boolean allUpperCoefficientsOne = allCoefficientsOne(upperBounds);
-			if (allLowerCoefficientsOne ^ allUpperCoefficientsOne) {
-				throw new AssertionError("we need the omega test");
+			if (allLowerCoefficientsOne != allUpperCoefficientsOne) {
+				if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
+					final String message = "we need the exact shadows from the omega test";
+					throw new AssertionError(message);
+				} else {
+					// TODO: log message
+					return null;
+				}
 			}
 			if (!allLowerCoefficientsOne && !allUpperCoefficientsOne) {
-				return null;
+				if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
+					final String message = "we need the omega test";
+					throw new AssertionError(message);
+				} else {
+					// TODO: log message
+					return null;
+				}
 			}
 			final Term[] allCombinations = new Term[lowerBounds.size() * upperBounds.size()];
 			int i = 0;
@@ -449,7 +462,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return QuantifierUtils.applyDualFiniteConnective(script, quantifier, allCombinations);
 		}
 
-		private boolean allCoefficientsOne(final List<ExplicitLhsPolynomialRelation> bounds) {
+		private static boolean allCoefficientsOne(final List<ExplicitLhsPolynomialRelation> bounds) {
 			for (final ExplicitLhsPolynomialRelation bound : bounds) {
 				if (!bound.getLhsMonomial().isLinear()) {
 					throw new AssertionError("cannot handle proper monomial");
