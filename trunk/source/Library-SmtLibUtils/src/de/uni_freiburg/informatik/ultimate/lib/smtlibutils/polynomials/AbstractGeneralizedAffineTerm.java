@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.AritmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -418,7 +418,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		if (!divident.isIntegral()) {
 			throw new AssertionError();
 		}
-		return toRational(AritmeticUtils.euclideanDiv(divident.numerator(), divisor));
+		return toRational(ArithmeticUtils.euclideanDiv(divident.numerator(), divisor));
 	}
 
 	private static Rational toRational(final BigInteger bi) {

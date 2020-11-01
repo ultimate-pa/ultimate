@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.AritmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
@@ -1663,7 +1663,7 @@ public final class SmtUtils {
 							}
 							// Euclidean division. E.g. (div -5 2) is -3
 							final BigInteger div =
-									AritmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
+									ArithmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
 							final Term resultTerm = SmtUtils.rational2Term(script,
 									Rational.valueOf(div, BigInteger.ONE), resultParams.get(0).getSort());
 							resultParams.set(0, resultTerm);
@@ -1729,7 +1729,7 @@ public final class SmtUtils {
 			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
 			if (affineDivident.isConstant()) {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
-				final BigInteger modulus = AritmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
+				final BigInteger modulus = ArithmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
 				return constructIntValue(script, modulus);
 			}
 			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
