@@ -179,8 +179,8 @@ public class ElimStorePlain {
 					}
 					final EliminationTaskWithContext etwc = new EliminationTaskWithContext(currentETask.getQuantifier(),
 							Collections.singleton(thisIterationEliminatee), currentETask.getTerm(), null);
-					final EliminationTask ssdElimRes = new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
-							eTask.getQuantifier()).elim1(etwc);
+					final EliminationTask ssdElimRes = new Elim1Store(mMgdScript, mServices, eTask.getQuantifier())
+							.elim1(etwc);
 					arrayEliminatees.addAll(ssdElimRes.getEliminatees());
 					// also add non-array eliminatees
 					arrayEliminatees.addAll(tr.getImage(0));
@@ -292,7 +292,7 @@ public class ElimStorePlain {
 			// EliminationTaskWithContext(eTask.getQuantifier(),
 			// eTask.getEliminatees(), eTask.getTerm(), totalContext);
 
-			final EliminationTaskWithContext ssdElimRes = applyComplexEliminationRules(revisedInput);
+			final EliminationTaskWithContext ssdElimRes = applyComplexEliminationRules(mServices, mLogger, mMgdScript, revisedInput);
 			final EliminationTaskWithContext eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
 					ssdElimRes, PqeTechniques.ALL_LOCAL);
 			resultOfRecursiveCall = doElimAllRec(eliminationTask2);
@@ -303,7 +303,9 @@ public class ElimStorePlain {
 				resultOfRecursiveCall.getEliminatees(), resultTerm, eTask.getContext());
 	}
 
-	private EliminationTaskWithContext applyComplexEliminationRules(final EliminationTaskWithContext eTask) throws ElimStorePlainException {
+	public static EliminationTaskWithContext applyComplexEliminationRules(final IUltimateServiceProvider services,
+			final ILogger logger, final ManagedScript mgdScript, final EliminationTaskWithContext eTask)
+			throws ElimStorePlainException {
 		final TermVariable eliminatee;
 		if (eTask.getEliminatees().size() != 1) {
 			throw new AssertionError("need exactly one eliminatee");
@@ -313,9 +315,9 @@ public class ElimStorePlain {
 		if (!QuantifierUtils.isQuantifierFree(eTask.getTerm())) {
 			throw new ElimStorePlainException("Alternating quantifiers not yet supported");
 		}
-		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript,
+		final Term polarizedContext = QuantifierUtils.negateIfUniversal(services, mgdScript,
 				eTask.getQuantifier(), eTask.getContext());
-		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), eTask.getTerm(), eliminatee);
+		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), eTask.getTerm(), eliminatee);
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 
@@ -330,9 +332,9 @@ public class ElimStorePlain {
 			{
 				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext,
-						eTask.getQuantifier(), mLogger, mMgdScript);
+						eTask.getQuantifier(), logger, mgdScript);
 				try {
-					de = new DerPreprocessor(mServices, mMgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
+					de = new DerPreprocessor(services, mgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
 							aoa.getDerRelations(eTask.getQuantifier()), aiem);
 				} catch (final ElimStorePlainException espe) {
 					aiem.unlockSolver();
@@ -344,8 +346,8 @@ public class ElimStorePlain {
 			termAfterDerPreprocessing = de.getResult();
 			if (de.introducedDerPossibility()) {
 				// do DER
-				final EliminationTaskWithContext afterDer = ElimStorePlain.applyNonSddEliminations(mServices,
-						mMgdScript, new EliminationTaskWithContext(eTask.getQuantifier(),
+				final EliminationTaskWithContext afterDer = ElimStorePlain.applyNonSddEliminations(services,
+						mgdScript, new EliminationTaskWithContext(eTask.getQuantifier(),
 								Collections.singleton(eliminatee), termAfterDerPreprocessing, eTask.getContext()),
 						PqeTechniques.ONLY_DER);
 				if (!afterDer.getEliminatees().isEmpty()) {
@@ -355,7 +357,7 @@ public class ElimStorePlain {
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, afterDer.getTerm(),
 						eTask.getContext());
 			} else {
-				aoaAfterDerPreprocessing = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), termAfterDerPreprocessing, eliminatee);
+				aoaAfterDerPreprocessing = new ArrayOccurrenceAnalysis(mgdScript.getScript(), termAfterDerPreprocessing, eliminatee);
 				newAuxVars.add(eliminatee);
 			}
 		}
@@ -367,11 +369,11 @@ public class ElimStorePlain {
 			termAfterAntiDerPreprocessing = termAfterDerPreprocessing;
 			aoaAfterAntiDerPreprocessing = aoaAfterDerPreprocessing;
 		} else {
-			final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, eTask.getQuantifier(), eliminatee,
+			final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mgdScript, eTask.getQuantifier(), eliminatee,
 					termAfterDerPreprocessing, aoa.getAntiDerRelations(eTask.getQuantifier()));
 			termAfterAntiDerPreprocessing = aadk.getResultTerm();
 			newAuxVars.addAll(aadk.getNewAuxVars());
-			aoaAfterAntiDerPreprocessing = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), termAfterAntiDerPreprocessing, eliminatee);
+			aoaAfterAntiDerPreprocessing = new ArrayOccurrenceAnalysis(mgdScript.getScript(), termAfterAntiDerPreprocessing, eliminatee);
 			if (!varOccurs(eliminatee, termAfterAntiDerPreprocessing)) {
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, termAfterAntiDerPreprocessing,
 						eTask.getContext());
@@ -381,16 +383,16 @@ public class ElimStorePlain {
 		// Step 3: select-over-store preprocessing
 		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext, eTask.getQuantifier(),
-				mLogger, mMgdScript);
+				logger, mgdScript);
 		ArrayOccurrenceAnalysis sosAoa = aoaAfterAntiDerPreprocessing;
 		Term sosTerm = termAfterAntiDerPreprocessing;
 		while (!sosAoa.getArraySelectOverStores().isEmpty()) {
 			final MultiDimensionalSelectOverNestedStore mdsos = sosAoa.getArraySelectOverStores().get(0);
-			final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mMgdScript, aiem,
+			final Term replaced = MultiDimensionalSelectOverStoreEliminationUtils.replace(mgdScript, aiem,
 					sosTerm, mdsos);
-			final Term replacedInNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(replaced);
+			final Term replacedInNnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(replaced);
 			sosTerm = replacedInNnf;
-			sosAoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), sosTerm, eliminatee);
+			sosAoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), sosTerm, eliminatee);
 			if(!varOccurs(eliminatee, replacedInNnf) || RETURN_AFTER_SOS) {
 				aiem.unlockSolver();
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars,
@@ -405,8 +407,8 @@ public class ElimStorePlain {
 		final EliminationTaskWithContext eTaskForStoreElimination = new EliminationTaskWithContext(
 				eTask.getQuantifier(), Collections.singleton(eliminatee), termAfterSos,
 				eTask.getContext());
-		final EliminationTaskWithContext resOfStoreElimination = new Elim1Store(mMgdScript, mServices,
-				mSimplificationTechnique, eTask.getQuantifier()).elim1(eTaskForStoreElimination);
+		final EliminationTaskWithContext resOfStoreElimination = new Elim1Store(mgdScript, services,
+				eTask.getQuantifier()).elim1(eTaskForStoreElimination);
 		// if (res.getEliminatees().contains(eliminatee)) {
 		// throw new AssertionError("elimination failed");
 		// }
@@ -416,7 +418,7 @@ public class ElimStorePlain {
 		return eliminationResult;
 	}
 
-	private boolean varOccurs(final TermVariable var, final Term term) {
+	private static boolean varOccurs(final TermVariable var, final Term term) {
 		return Arrays.stream(term.getFreeVars()).anyMatch(x -> (x == var));
 	}
 

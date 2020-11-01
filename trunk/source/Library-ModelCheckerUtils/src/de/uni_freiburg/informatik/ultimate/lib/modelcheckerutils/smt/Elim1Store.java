@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUti
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -53,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimp
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayOccurrenceAnalysis;
@@ -159,7 +159,7 @@ public class Elim1Store {
 
 
 	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique, final int quantifier) {
+			final int quantifier) {
 		super();
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
