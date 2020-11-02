@@ -74,6 +74,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private static final boolean USE_PQ = true;
 	private final boolean mUseFirstbornCutoffCheck;
 	private final boolean mUseB32Optimization;
+	private int mNumberOfGeneratedExtensions =0;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
 	 * to front because it will not create descendants. This optimization keeps
@@ -168,7 +169,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 
 	private void addFullyInstantiatedCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
 		for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
-			final Event<LETTER, PLACE> newEvent = new Event<>(cand.getInstantiated(), trans, mBranchingProcess);
+			mNumberOfGeneratedExtensions ++;
+			final Event<LETTER, PLACE> newEvent = new Event<>(cand.getInstantiated(), trans, mBranchingProcess, mNumberOfGeneratedExtensions);
 			if (mUseFirstbornCutoffCheck) {
 				if (firstbornCutoffCheck(newEvent)) {
 					mFastpathCutoffEventList.add(newEvent);

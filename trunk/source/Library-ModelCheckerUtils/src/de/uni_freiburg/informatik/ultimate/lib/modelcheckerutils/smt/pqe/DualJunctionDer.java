@@ -423,7 +423,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				throw new AssertionError("unknon value " + mIntricateOperations);
 			}
 			if (SolveForSubjectUtils.isVariableDivCaptured(mcsbr, bannedForDivCapture)) {
-				return null;
+				throw new AssertionError("variable got div captured");
 			}
 			if (eachCaseHasDerRelationSymbol(mcsbr, quantifier)) {
 				return mcsbr;
