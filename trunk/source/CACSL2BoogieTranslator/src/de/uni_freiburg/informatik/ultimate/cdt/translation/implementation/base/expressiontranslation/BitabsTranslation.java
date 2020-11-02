@@ -135,7 +135,7 @@ public class BitabsTranslation {
 					new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 			//	return func;
 			// for the case, a&1 = a when a is bloolean or one bit size?
-			//	Expression and_0_else = ExpressionFactory.constructIfThenElseExpression(right_cmp, condition, thenPart, elsePart);
+			// More case split results in nest if else expressions.	
 			Expression and_0 = ExpressionFactory.constructIfThenElseExpression(loc, cond_and_0, literal_0, func);
 			return and_0;
 			
@@ -169,7 +169,6 @@ public class BitabsTranslation {
 		Expression right_ite = ExpressionFactory.constructIfThenElseExpression(loc, right_cmp, right, func);
 		//	return func;
 		// for the case, a|0 = a when a is bloolean or one bit size?
-		//	Expression and_0_else = ExpressionFactory.constructIfThenElseExpression(right_cmp, condition, thenPart, elsePart);
 		Expression or_1 = ExpressionFactory.constructIfThenElseExpression(loc, left_cmp, left, right_ite);
 		return or_1;			
 	}
@@ -240,13 +239,6 @@ public class BitabsTranslation {
 		final Expression result = ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 		return result;
 	}
-
-
-
-
-
-
-
 
 
 

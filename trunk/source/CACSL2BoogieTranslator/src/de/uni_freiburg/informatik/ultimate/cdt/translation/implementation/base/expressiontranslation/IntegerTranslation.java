@@ -179,6 +179,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 //			break;
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
+			// xor rule with boolean, bit-vector size 1?
 			funcname = "bitwiseXor";
 			break;
 		case IASTBinaryExpression.op_shiftLeft:
