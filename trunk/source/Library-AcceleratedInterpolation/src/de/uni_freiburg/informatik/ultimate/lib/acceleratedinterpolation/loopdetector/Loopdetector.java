@@ -140,7 +140,6 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	 * only allow procedures of two types: I: loop in procedure II: procedure in loop, no recursive
 	 */
 	private Map<IcfgLocation, List<Integer>> filterProcedures(final Map<IcfgLocation, List<Integer>> possibleCycles) {
-		// final Map<String, ? extends IcfgLocation> procEntries = mIcfg.getProcedureEntryNodes();
 		final Map<IcfgLocation, List<Integer>> result = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Integer>> loop : possibleCycles.entrySet()) {
 			final IcfgLocation loopHead = loop.getKey();
@@ -161,6 +160,20 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 						final IIcfgCallTransition<IcfgLocation> call = (IIcfgCallTransition<IcfgLocation>) l;
 						if (call.getSucceedingProcedure().equals(call.getPrecedingProcedure())) {
 							mLogger.debug("Found Recursive call!");
+							loopBodyNoProcedures.remove(currentLoop.getSecond());
+						}
+						boolean foundReturn = false;
+						for (int k = i - 1; k < currentLoop.getFirst(); k++) {
+							if (mTrace.get(k) instanceof IReturnAction) {
+								final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> ret =
+										(IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) mTrace
+												.get(k);
+								if (call == ret.getCorrespondingCall()) {
+									foundReturn = true;
+								}
+							}
+						}
+						if (!foundReturn) {
 							loopBodyNoProcedures.remove(currentLoop.getSecond());
 						}
 					}
