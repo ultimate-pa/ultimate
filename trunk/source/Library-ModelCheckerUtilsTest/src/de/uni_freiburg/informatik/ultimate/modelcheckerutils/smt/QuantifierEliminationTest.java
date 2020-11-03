@@ -1014,7 +1014,7 @@ public class QuantifierEliminationTest {
 	public void bvTirBug01() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
 		final String inputSTR = "(exists ((main_~x~0 (_ BitVec 32))) (and (bvsgt main_~x~0 (_ bv100 32)) (not (= (bvadd main_~x~0 (_ bv4294967286 32)) (_ bv91 32))) (not (bvsgt main_~x~0 (_ bv101 32)))))";
-		final String expectedResult = null;
+		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -1022,7 +1022,7 @@ public class QuantifierEliminationTest {
 	public void bvTirBug02() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
 		final String inputSTR = "(exists ((main_~x~0 (_ BitVec 32))) (and (not (= (bvadd main_~x~0 (_ bv4294967286 32)) (_ bv91 32)))  (bvsge main_~x~0 (_ bv101 32))))";
-		final String expectedResult = null;
+		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -1030,7 +1030,7 @@ public class QuantifierEliminationTest {
 	public void bvTirBug03strict() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi", "y") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (not (=  y x)) (bvule lo x) (bvult x hi) (bvule lo y) (bvult y hi)))";
-		final String expectedResult = null;
+		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -1038,7 +1038,7 @@ public class QuantifierEliminationTest {
 	public void bvTirBug04nonstrict() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi", "y") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (not (=  y x)) (bvule lo x) (bvule x hi) (bvule lo y) (bvult y hi)))";
-		final String expectedResult = null;
+		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
