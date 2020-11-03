@@ -226,21 +226,22 @@ public final class PetriNetUnfolder<L, P> {
 
 	/**
 	 * Determines if the given event should be omitted from the unfolding, based on Partial Order Reduction reasoning.
-	 * This is the case if another event already exists that has the same marking, and the events' transitions are
-	 * independent.
+	 * This is the case if all existing events with the same cut have independent transitions, and at least one such
+	 * event already exists.
 	 */
 	private boolean isPORCutoff(final Event<L, P> event) {
+		boolean found = false;
 		for (final Event<L, P> other : mUnfolding.getEvents()) {
-			if (!event.getMark().equals(other.getMark())) {
+			if (!event.getConditionMark().equals(other.getConditionMark())) {
 				continue;
 			}
+			found = true;
 
-			if (isIndependent(event.getTransition(), other.getTransition())) {
-				mLogger.warn("POR pruning event: " + event + " in favor of " + other);
-				return true;
+			if (!isIndependent(event.getTransition(), other.getTransition())) {
+				return false;
 			}
 		}
-		return false;
+		return found;
 	}
 
 	/**
