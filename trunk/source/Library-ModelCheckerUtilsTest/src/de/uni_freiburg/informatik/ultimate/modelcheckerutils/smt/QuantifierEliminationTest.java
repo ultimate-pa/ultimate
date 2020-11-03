@@ -993,6 +993,7 @@ public class QuantifierEliminationTest {
 		final String expectedResult = "(and (bvsle lo mi) (bvsgt hi mi))";
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
 	public void bvTirSimplify() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi", "mi") };
@@ -1000,6 +1001,7 @@ public class QuantifierEliminationTest {
 		final String expectedResult = "false";
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
 	public void bvTir03Strict() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
@@ -1007,6 +1009,7 @@ public class QuantifierEliminationTest {
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
 	public void bvTirBug01() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
@@ -1014,6 +1017,7 @@ public class QuantifierEliminationTest {
 		final String expectedResult = null;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
 	public void bvTirBug02() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
@@ -1029,11 +1033,20 @@ public class QuantifierEliminationTest {
 		final String expectedResult = null;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
 	public void bvTirBug04nonstrict() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi", "y") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (not (=  y x)) (bvule lo x) (bvule x hi) (bvule lo y) (bvult y hi)))";
 		final String expectedResult = null;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirBug05OneStrictRelation() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi", "y") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvult x (_ bv0 8)))";
+		final String expectedResult = "false";
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
