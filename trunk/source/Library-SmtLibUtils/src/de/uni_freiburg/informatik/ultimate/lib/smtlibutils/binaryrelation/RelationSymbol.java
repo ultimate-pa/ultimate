@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -37,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
+
 public enum RelationSymbol {
 	EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">"), BVULE("bvule"), BVULT("bvult"),
 	BVUGE("bvuge"), BVUGT("bvugt"), BVSLE("bvsle"), BVSLT("bvslt"), BVSGE("bvsge"), BVSGT("bvsgt");
@@ -45,6 +48,10 @@ public enum RelationSymbol {
 
 	RelationSymbol(final String stringRepresentation) {
 		mStringRepresentation = stringRepresentation;
+	}
+
+	public enum BvSignedness {
+		SIGNED, UNSIGNED
 	}
 
 	@Override
@@ -314,20 +321,149 @@ public enum RelationSymbol {
 		return false;
 	}
 
-	public boolean isNonStrictBvRelation() {
-		if ((this == RelationSymbol.BVUGE) || (this == RelationSymbol.BVULE) || (this == RelationSymbol.BVSGE)
-				|| (this == RelationSymbol.BVSLE)) {
+	public boolean isStrictRelation() {
+		switch (this) {
+		case EQ:
+		case DISTINCT:
+		case LEQ:
+		case GEQ:
+		case BVULE:
+		case BVUGE:
+		case BVSGE:
+		case BVSLE:
+			return false;
+		case LESS:
+		case GREATER:
+		case BVULT:
+		case BVUGT:
+		case BVSLT:
+		case BVSGT:
 			return true;
+
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
 		}
-		return false;
 	}
 
-	public boolean isStrictBvRelation() {
-		if ((this == RelationSymbol.BVUGT) || (this == RelationSymbol.BVULT) || (this == RelationSymbol.BVSGT)
-				|| (this == RelationSymbol.BVSLT)) {
-			return true;
+	public RelationSymbol getInequality(final boolean strict, final Sort sort, final BvSignedness signess) {
+		switch (this) {
+		case EQ:
+			return RelationSymbol.EQ;
+		case DISTINCT:
+			return RelationSymbol.DISTINCT;
+		case LEQ:
+		case LESS:
+			final RelationSymbol rs1;
+			if (SmtSortUtils.isBitvecSort(sort)) {
+				if (strict) {
+					if (signess == BvSignedness.SIGNED) {
+						rs1 = RelationSymbol.BVSLT;
+					} else if (signess == BvSignedness.UNSIGNED) {
+						rs1 = RelationSymbol.BVULT;
+					} else {
+						rs1 = this;
+					}
+				} else {
+					if (signess == BvSignedness.SIGNED) {
+						rs1 = RelationSymbol.BVSLE;
+					} else if (signess == BvSignedness.UNSIGNED) {
+						rs1 = RelationSymbol.BVULE;
+					} else {
+						rs1 = this;
+					}
+				}
+			} else {
+				if (strict) {
+					rs1 = RelationSymbol.LESS;
+				} else {
+					rs1 = RelationSymbol.LEQ;
+				}
+
+			}
+			return rs1;
+		case GEQ:
+		case GREATER:
+			final RelationSymbol rs2;
+			if (SmtSortUtils.isBitvecSort(sort)) {
+				if (strict) {
+					if (signess == BvSignedness.SIGNED) {
+						rs2 = RelationSymbol.BVSGT;
+					} else if (signess == BvSignedness.UNSIGNED) {
+						rs2 = RelationSymbol.BVUGT;
+					} else {
+						rs2 = this;
+					}
+				} else {
+					if (signess == BvSignedness.SIGNED) {
+						rs2 = RelationSymbol.BVSGE;
+					} else if (signess == BvSignedness.UNSIGNED) {
+						rs2 = RelationSymbol.BVUGE;
+					} else {
+						rs2 = this;
+					}
+				}
+
+			} else {
+				if (strict) {
+					rs2 = RelationSymbol.GREATER;
+				} else {
+					rs2 = RelationSymbol.GEQ;
+				}
+			}
+			return rs2;
+		case BVULE:
+			if (strict) {
+				return RelationSymbol.BVULT;
+			} else {
+				return RelationSymbol.BVULE;
+			}
+
+		case BVULT:
+			if (strict) {
+				return RelationSymbol.BVULT;
+			} else {
+				return RelationSymbol.BVULE;
+			}
+		case BVUGE:
+			if (strict) {
+				return RelationSymbol.BVUGT;
+			} else {
+				return RelationSymbol.BVUGE;
+			}
+		case BVUGT:
+			if (strict) {
+				return RelationSymbol.BVUGT;
+			} else {
+				return RelationSymbol.BVUGE;
+			}
+		case BVSLE:
+			if (strict) {
+				return RelationSymbol.BVSLT;
+			} else {
+				return RelationSymbol.BVSLE;
+			}
+		case BVSLT:
+			if (strict) {
+				return RelationSymbol.BVSLT;
+			} else {
+				return RelationSymbol.BVSLE;
+			}
+		case BVSGE:
+			if (strict) {
+				return RelationSymbol.BVSGT;
+			} else {
+				return RelationSymbol.BVSGE;
+			}
+		case BVSGT:
+			if (strict) {
+				return RelationSymbol.BVSGT;
+			} else {
+				return RelationSymbol.BVSGE;
+			}
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
 		}
-		return false;
+
 	}
 
 	public boolean isSignedBvRelation() {
@@ -371,76 +507,6 @@ public enum RelationSymbol {
 		case BVUGE:
 		case BVUGT:
 			return true;
-		default:
-			throw new AssertionError("unknown RelationSymbol " + this);
-		}
-	}
-
-	public RelationSymbol getNonStrictSymbol() {
-		switch (this) {
-		case EQ:
-			return RelationSymbol.EQ;
-		case DISTINCT:
-			return RelationSymbol.DISTINCT;
-		case LEQ:
-			return RelationSymbol.LEQ;
-		case GEQ:
-			return RelationSymbol.GEQ;
-		case LESS:
-			return RelationSymbol.LEQ;
-		case GREATER:
-			return RelationSymbol.GEQ;
-		case BVULE:
-			return RelationSymbol.BVULE;
-		case BVULT:
-			return RelationSymbol.BVULE;
-		case BVUGE:
-			return RelationSymbol.BVUGE;
-		case BVUGT:
-			return RelationSymbol.BVUGE;
-		case BVSLE:
-			return RelationSymbol.BVSLE;
-		case BVSLT:
-			return RelationSymbol.BVSLE;
-		case BVSGE:
-			return RelationSymbol.BVSGE;
-		case BVSGT:
-			return RelationSymbol.BVSGE;
-		default:
-			throw new AssertionError("unknown RelationSymbol " + this);
-		}
-	}
-
-	public RelationSymbol getStrictSymbol() {
-		switch (this) {
-		case EQ:
-			return RelationSymbol.EQ;
-		case DISTINCT:
-			return RelationSymbol.DISTINCT;
-		case LEQ:
-			return RelationSymbol.LESS;
-		case GEQ:
-			return RelationSymbol.GREATER;
-		case LESS:
-			return RelationSymbol.LESS;
-		case GREATER:
-			return RelationSymbol.GREATER;
-		case BVULE:
-			return RelationSymbol.BVULT;
-		case BVULT:
-			return RelationSymbol.BVULT;
-		case BVUGE:
-			return RelationSymbol.BVUGT;
-		case BVUGT:
-			return RelationSymbol.BVUGT;
-		case BVSLE:
-			return RelationSymbol.BVSLT;
-		case BVSLT:
-			return RelationSymbol.BVSLT;
-		case BVSGE:
-			return RelationSymbol.BVSGT;
-		case BVSGT:
-			return RelationSymbol.BVSGT;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
 		}

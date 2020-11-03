@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -75,10 +76,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	private static final boolean HANDLE_DER_OPERATOR = false;
 	private static final boolean COMPARE_TO_OLD_RESULT = false;
 	private static final boolean ERROR_FOR_OMEGA_TEST_APPLICABILITY = false;
-
-	private enum BvSignedness {
-		SIGNED, UNSIGNED
-	}
 
 	/**
 	 * @see constructor
@@ -519,61 +516,27 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return true;
 		}
 
-		/*
-		 * AntiDer converts Distinct Bv Relation into RelationSymbol.GREATER and
-		 * RelationSymbol.LESS. This Method converts Greater or Less to it's
-		 * corresponding BV Relation depending on BvSignedness.
-		 */
-		private RelationSymbol getRS(final ExplicitLhsPolynomialRelation bound, final BvSignedness bvSigned) {
-			RelationSymbol resultRS = bound.getRelationSymbol();
-			if (SmtSortUtils.isBitvecSort(bound.getRhs().getSort())) {
-				if (bound.getRelationSymbol().equals(RelationSymbol.GREATER)) {
-					if (bvSigned == BvSignedness.SIGNED) {
-						resultRS = RelationSymbol.BVSGT;
-					} else if (bvSigned == BvSignedness.UNSIGNED) {
-						resultRS = RelationSymbol.BVUGT;
-					}
-				} else if (bound.getRelationSymbol().equals(RelationSymbol.LESS)
-						&& SmtSortUtils.isBitvecSort(bound.getRhs().getSort())) {
-					if (bvSigned == BvSignedness.SIGNED) {
-						resultRS = RelationSymbol.BVSLT;
-					} else if (bvSigned == BvSignedness.UNSIGNED) {
-						resultRS = RelationSymbol.BVULT;
-					}
-				}
-			}
-			return resultRS;
-
-		}
-
 		private Term combine(final Script script, final int quantifier, final ExplicitLhsPolynomialRelation lower,
 				final ExplicitLhsPolynomialRelation upper, final BvSignedness bvSigned) {
 
-			// Can't combine Signed and Unsigned Bitvector Relations
-			if (bvSigned == null) {
+			final Pair<RelationSymbol, Rational> relSymbAndOffset = computeRelationSymbolAndOffset(quantifier,
+					lower.getRelationSymbol(), upper.getRelationSymbol(), lower.getRhs().getSort(), bvSigned);
+
+			if (bvSigned == null || relSymbAndOffset == null) {
+				// Case1: Term has Signed and Unsigned BV Relations
+				// Case2: tried to combine 2 Strict BV Relations
 				return null;
 			}
-
-			final RelationSymbol lowerRS = getRS(lower, bvSigned);
-			final RelationSymbol upperRS = getRS(upper, bvSigned);
-			final Pair<RelationSymbol, Rational> relSymbAndOffset =
-					computeRelationSymbolAndOffset(quantifier, lowerRS, upperRS, lower.getRhs().getSort());
-
 			assert relSymbAndOffset.getSecond().equals(Rational.ZERO)
 					|| relSymbAndOffset.getSecond().equals(Rational.ONE)
 					|| relSymbAndOffset.getSecond().equals(Rational.MONE);
 			final IPolynomialTerm lhs = lower.getRhs();
 			final IPolynomialTerm rhs = upper.getRhs();
 
-			Term result;
-			if (lowerRS.isNonStrictBvRelation() || upperRS.isNonStrictBvRelation()) {
+			final Term result;
+			if (SmtSortUtils.isBitvecSort(lower.getRhs().getSort())) {
 				result = relSymbAndOffset.getFirst().constructTerm(script, lhs.toTerm(script), rhs.toTerm(script));
-			} else if (lowerRS.isStrictBvRelation() && upperRS.isStrictBvRelation()) {
-				// return null, if upper and lower RelationsSymbols are
-				// StrictBvRelation's
-				result = null;
 			} else {
-				// Not an Bitvector Relation
 				final IPolynomialTerm negatedRhs = PolynomialTermOperations.mul(rhs, Rational.MONE);
 				IPolynomialTerm resultRhs;
 				if (relSymbAndOffset.getSecond().equals(Rational.ZERO)) {
@@ -592,11 +555,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 	private static Pair<RelationSymbol, Rational> computeRelationSymbolAndOffset(final int quantifier,
 			final RelationSymbol lowerBoundRelationSymbol, final RelationSymbol upperBoundRelationSymbol,
-			final Sort sort) {
+			final Sort sort, final BvSignedness bvSigned) {
 		final RelationSymbol resultRelationSymbol;
 		final Rational offset;
 		if (lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLE()) {
-			resultRelationSymbol = upperBoundRelationSymbol;
+			resultRelationSymbol =
+					upperBoundRelationSymbol.getInequality(upperBoundRelationSymbol.isStrictRelation(), sort, bvSigned);
 			if ((quantifier == QuantifiedFormula.FORALL) && SmtSortUtils.isIntSort(sort)) {
 				offset = Rational.MONE;
 			} else {
@@ -605,19 +569,25 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		} else if ((lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLT())
 				|| (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLE())) {
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				resultRelationSymbol = upperBoundRelationSymbol.getStrictSymbol();
+				resultRelationSymbol = upperBoundRelationSymbol.getInequality(true, sort, bvSigned);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				resultRelationSymbol = upperBoundRelationSymbol.getNonStrictSymbol();
+				resultRelationSymbol = upperBoundRelationSymbol.getInequality(false, sort, bvSigned);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
 			offset = Rational.ZERO;
 		} else if (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLT()) {
-			resultRelationSymbol = upperBoundRelationSymbol;
+			resultRelationSymbol =
+					upperBoundRelationSymbol.getInequality(upperBoundRelationSymbol.isStrictRelation(), sort, bvSigned);
 			if ((quantifier == QuantifiedFormula.EXISTS) && SmtSortUtils.isIntSort(sort)) {
 				offset = Rational.ONE;
 			} else {
 				offset = Rational.ZERO;
+			}
+			if (SmtSortUtils.isBitvecSort(sort)) {
+				// return null, if upper and lower RelationsSymbols are
+				// StrictBvRelation's
+				return null;
 			}
 		} else {
 			// <pre>
