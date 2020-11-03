@@ -263,6 +263,13 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
+			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered = new HashMap(mNestedLoops);
+			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
+				if (nestedLoop.getValue() == null) {
+					mNestedLoops.remove(nestedLoop.getKey());
+					continue;
+				}
+			}
 			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoopsAsTf);
 			for (final Entry<IcfgLocation, IcfgLocation> nesting : mNestingRelation.entrySet()) {
 				accelerateNestedLoops(nesting.getKey(), nesting.getValue());
@@ -518,6 +525,9 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		/*
 		 * In case of multiple nested loops, accelerate the inner one first (maybe check for delay for that)
 		 */
+		if (!mNestedLoops.containsKey(nestedLoophead)) {
+			return;
+		}
 		if (mNestingRelation.containsKey(nestedLoophead)) {
 			accelerateNestedLoops(nestedLoophead, mNestingRelation.get(nestedLoophead));
 		}

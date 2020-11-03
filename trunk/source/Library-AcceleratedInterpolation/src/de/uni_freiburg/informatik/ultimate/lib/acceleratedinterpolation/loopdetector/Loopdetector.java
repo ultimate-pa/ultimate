@@ -191,7 +191,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 							loopBodyNoProcedures.remove(currentLoop.getSecond());
 						}
 						boolean foundReturn = false;
-						for (int k = i - 1; k < currentLoop.getFirst(); k++) {
+						for (int k = i - 1; k < currentLoop.getSecond(); k++) {
 							if (mTrace.get(k) instanceof IReturnAction) {
 								final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> ret =
 										(IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) mTrace

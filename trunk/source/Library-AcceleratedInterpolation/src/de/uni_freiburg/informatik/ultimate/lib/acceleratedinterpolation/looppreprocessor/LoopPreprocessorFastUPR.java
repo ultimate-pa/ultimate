@@ -114,8 +114,10 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
 
 		for (final Entry<IcfgLocation, Set<List<UnmodifiableTransFormula>>> loopSet : loop.entrySet()) {
 			final IcfgLocation loophead = loopSet.getKey();
+			if (loopSet.getValue() == null) {
+				continue;
+			}
 			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
-
 			for (final List<UnmodifiableTransFormula> loopTransitions : loopSet.getValue()) {
 				UnmodifiableTransFormula loopRelation = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 						mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
