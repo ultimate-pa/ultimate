@@ -94,6 +94,10 @@ public class QuantifierEliminationTest {
 	private ILogger mLogger;
 	private static QuantifierEliminationTestCsvWriter mCsvWriter;
 
+	public static Sort getBitvectorSort1(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, 1);
+	}
+
 	public static Sort getBitvectorSort8(final Script script) {
 		return SmtSortUtils.getBitvectorSort(script, 8);
 	}
@@ -1047,6 +1051,14 @@ public class QuantifierEliminationTest {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvult x c))";
 		final String expectedResult = "(bvult (_ bv0 8) c)";
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirBug06LimitedDomain() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort1, "c") };
+		final String inputSTR = "(exists ((x (_ BitVec 1)) (y (_ BitVec 1))) (and (not (= x y)) (not (= x c)) (not (= y c))))";
+		final String expectedResult = "false";
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
