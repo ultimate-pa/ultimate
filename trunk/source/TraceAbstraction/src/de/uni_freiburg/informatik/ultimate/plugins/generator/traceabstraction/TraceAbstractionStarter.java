@@ -370,7 +370,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					statistics.setResult(Result.SAFE);
 					clres = new CegarLoopResult<>(Result.SAFE, null, null, null, statistics, concurClres.getArtifact(),
 							concurClres.getFloydHoareAutomata());
-					mLogger.fatal("Reusing interpolants worked!");
+					mLogger.info(
+							"Interpolants can be generalized for " + numberOfThreadInstances + " thread instances.");
 					break;
 				}
 				oldIcfg = petrifiedIcfg;
@@ -386,6 +387,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 							+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 					numberOfThreadInstances++;
 					taBenchmark.aggregateBenchmarkData(concurClres.getCegarLoopStatisticsGenerator());
+					continue;
 				}
 				clres = concurClres;
 				break;
@@ -481,6 +483,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			for (final var edge : automaton.internalSuccessors(pred)) {
 				final L letter = edge.getLetter();
 				final Term oldPre = result.get(letter);
+				// TODO: Do not add all predicates?!?
 				result.put(letter, oldPre == null ? pred.getFormula() : SmtUtils.or(script, oldPre, pred.getFormula()));
 			}
 		}
