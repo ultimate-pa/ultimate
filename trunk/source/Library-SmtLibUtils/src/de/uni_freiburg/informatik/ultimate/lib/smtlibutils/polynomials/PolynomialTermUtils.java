@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.AritmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
 
 /**
@@ -73,7 +73,7 @@ public class PolynomialTermUtils {
 		final int bitsize = Integer.valueOf(sort.getIndices()[0]);
 		final BigInteger bvBigInt = bv.numerator();
 		final BigInteger numberOfValues = BigInteger.valueOf(2).pow(bitsize);
-		final BigInteger resultBigInt = AritmeticUtils.euclideanMod(bvBigInt, numberOfValues);
+		final BigInteger resultBigInt = ArithmeticUtils.euclideanMod(bvBigInt, numberOfValues);
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
 	}
 
@@ -314,13 +314,13 @@ public class PolynomialTermUtils {
 		final SparseMapBuilder<MNL, Rational> mapBuilder = new SparseMapBuilder<>();
 		Rational newCoeff;
 		for (final Entry<MNL, Rational> entry : agAffineTerm.getAbstractVariable2Coefficient().entrySet()) {
-			newCoeff = SmtUtils.toRational(AritmeticUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
+			newCoeff = SmtUtils.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
 			if (newCoeff != Rational.ZERO) {
 				mapBuilder.put(entry.getKey(), newCoeff);
 			}
 		}
 		final Rational constant = SmtUtils
-				.toRational(AritmeticUtils.euclideanMod(SmtUtils.toInt(agAffineTerm.getConstant()), divident));
+				.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(agAffineTerm.getConstant()), divident));
 		return constructor.apply(agAffineTerm.getSort(), constant, mapBuilder.getBuiltMap());
 	}
 

@@ -112,8 +112,8 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 
 
 	private static final String[] mUltimateRepository = {
-//		"examples/programs/regression",
-		"examples/programs/quantifier",
+		"examples/programs/regression",
+		"examples/programs/quantifier/regression",
 //		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
 //		"examples/programs/20170304-DifficultPathPrograms",
@@ -127,13 +127,18 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	 * because we assume that all settings files are in this folder.
 	 *
 	 */
-	private static final String[] mSettings = {
-//		"default/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
+	private static final String[] mSettingsBoogie = {
 		"automizer/ForwardPredicates.epf",
 		"automizer/BackwardPredicates.epf",
-//		"automizer/ForwardPredicatesAndBackwardPredicates.epf",
-//		"automizer/AutomizerReach-DumpPathPrograms.epf",
 	};
+
+	private static final String[] mSettingsC = {
+		"automizer/ForwardPredicates.epf",
+		"automizer/BackwardPredicates.epf",
+		"automizer/ForwardPredicatesBitvector.epf",
+		"automizer/BackwardPredicatesBitvector.epf",
+	};
+
 
 	/**
 	 * {@inheritDoc}
@@ -157,19 +162,19 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final String setting : mSettings) {
+		for (final String setting : mSettingsC) {
 			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mSVCOMP_Examples);
 			}
 		}
 
-		for (final String setting : mSettings) {
+		for (final String setting : mSettingsBoogie) {
 			for (final String toolchain : mBoogieToolchains) {
 				addTestCase(toolchain, setting, mUltimateRepository,
 						new String[] {".bpl"});
 			}
 		}
-		for (final String setting : mSettings) {
+		for (final String setting : mSettingsC) {
 			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mUltimateRepository,
 						new String[] {".c", ".i"});

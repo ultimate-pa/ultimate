@@ -101,8 +101,8 @@ public class ProcedureMultiplier {
 		final Map<String, List<ILocalProgramVar>> outParams = new HashMap<>(icfg.getCfgSmtToolkit().getOutParams());
 		final Set<String> procedures = new HashSet<>(icfg.getCfgSmtToolkit().getProcedures());
 		final SmtFunctionsAndAxioms smtSymbols = icfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms();
-		final DefaultIcfgSymbolTable symbolTable = new DefaultIcfgSymbolTable(icfg.getCfgSmtToolkit().getSymbolTable(),
-				procedures);
+		final DefaultIcfgSymbolTable symbolTable =
+				new DefaultIcfgSymbolTable(icfg.getCfgSmtToolkit().getSymbolTable(), procedures);
 		final ManagedScript managedScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final HashRelation<String, IProgramNonOldVar> proc2globals =
 				new HashRelation<>(icfg.getCfgSmtToolkit().getModifiableGlobalsTable().getProcToGlobals());
@@ -196,8 +196,12 @@ public class ProcedureMultiplier {
 							final IPayload payload = null;
 							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
 									managedScript, outEdge.getTransformula(), oldVar2newVar.get(copyIdentifier));
+							final UnmodifiableTransFormula transFormulaWithBE = TransFormulaBuilder.constructCopy(
+									managedScript, oldInternalEdge.getTransitionFormulaWithBranchEncoders(),
+									oldVar2newVar.get(copyIdentifier));
 							final IcfgInternalTransition newInternalEdge =
-									icfgEdgeFactory.createInternalTransition(source, target, payload, transFormula);
+									icfgEdgeFactory.createInternalTransition(source, target, payload,
+											transFormula, transFormulaWithBE);
 							backtranslator.mapEdges(newInternalEdge, oldInternalEdge);
 							ModelUtils.copyAnnotations(oldInternalEdge, newInternalEdge);
 							source.addOutgoing(newInternalEdge);

@@ -80,6 +80,17 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 		super(s, constant, variables2coeffcient);
 	}
 
+	@Override
+	protected IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+			final Map<Term, Rational> variables2coeffcient) {
+		return new AffineTerm(sort, constant, variables2coeffcient);
+	}
+
+	@Override
+	protected Term constructAbstractVar(final Term term) {
+		return term;
+	}
+
 	/**
 	 * @returns {@link AffineTerm} that has sort s and represents a Term of the given {@link Rational} value.
 	 */

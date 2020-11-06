@@ -34,9 +34,9 @@ import java.math.BigInteger;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public final class AritmeticUtils {
+public final class ArithmeticUtils {
 
-	private AritmeticUtils() {
+	private ArithmeticUtils() {
 		// do not instantiate this utility class
 	}
 

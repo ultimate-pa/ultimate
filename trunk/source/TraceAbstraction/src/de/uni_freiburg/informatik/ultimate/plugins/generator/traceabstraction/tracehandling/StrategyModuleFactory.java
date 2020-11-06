@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.mcr.SpInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.WpInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -236,10 +237,10 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 					simplificationTechnique, xnfConversionTechnique);
 		case WP:
 			return new WpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
-					xnfConversionTechnique, mPredicateUnifier);
+					xnfConversionTechnique, mPredicateUnifier, new IncrementalHoareTripleChecker(mCsToolkit, false));
 		case SP:
 			return new SpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
-					xnfConversionTechnique, mPredicateUnifier);
+					xnfConversionTechnique, mPredicateUnifier, new IncrementalHoareTripleChecker(mCsToolkit, false));
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
 		}

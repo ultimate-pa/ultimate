@@ -131,6 +131,8 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 		backbones.add(backbone);
 		loop.setBackbones(backbones);
 
+		loop.addExitCondition(loopTf);
+
 		final UnmodifiableTransFormula guard = TransFormulaUtils.computeGuard(loopTf, mScript, mServices, mLogger);
 		loop.setCondition(guard.getFormula());
 

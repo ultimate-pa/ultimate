@@ -35,9 +35,7 @@ fi
 
 echo "Updating..."
 git fetch --all
-git rebase
-git rebase master
-git push
+git reset --hard origin/ultimate
 popd > /dev/null
 
 

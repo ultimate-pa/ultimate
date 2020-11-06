@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <LETTER>
  *            The type of letters labeling Petri net transitions.
  */
-public class CoenabledRelation<LETTER> {
+public final class CoenabledRelation<LETTER> {
 
 	private final HashRelation<LETTER, LETTER> mRelation;
 
@@ -60,16 +60,28 @@ public class CoenabledRelation<LETTER> {
 
 	/**
 	 * Creates a new instance by computing the relation from the given Petri net.
+	 *
+	 * @param services
+	 *            Automata library services to be used in the computation
+	 * @param petriNet
+	 *            The net whose coenabled-relation shall be computed.
+	 *
+	 * @return A new relation computed from the finite unfolding prefix of the given net.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 *             if the computation is canceled
+	 * @throws PetriNetNot1SafeException
+	 *             if the given net is not 1-safe
 	 */
 	public static <PLACE, LETTER> CoenabledRelation<LETTER> fromPetriNet(final AutomataLibraryServices services,
 			final IPetriNet<LETTER, PLACE> petriNet)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final BranchingProcess<LETTER, PLACE> bp = new FinitePrefix<>(services, petriNet).getResult();
 		return new CoenabledRelation<>(computeFromBranchingProcess(bp));
 	}
 
 	private static <PLACE, LETTER> HashRelation<LETTER, LETTER>
-			computeFromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
+	computeFromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
 		final HashRelation<LETTER, LETTER> hashRelation = new HashRelation<>();
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 		final Collection<Event<LETTER, PLACE>> events = bp.getEvents();
@@ -85,10 +97,22 @@ public class CoenabledRelation<LETTER> {
 		return hashRelation;
 	}
 
+	/**
+	 * Determines the size of the relation.
+	 *
+	 * @return The number of pairs of letters that are in the relation.
+	 */
 	public int size() {
 		return mRelation.size();
 	}
 
+	/**
+	 * Computes the set of all coenabled letters.
+	 *
+	 * @param element
+	 *            The letter whose coenabled letters shall be computed.
+	 * @return The set of all letters b, such that the pair (element, b) is in the relation.
+	 */
 	public Set<LETTER> getImage(final LETTER element) {
 		return mRelation.getImage(element);
 	}

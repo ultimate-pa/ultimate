@@ -26,12 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.util.Arrays;
+
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Provides static methods for combining {@link IPolynomialTerm}s. Methods make
- * sure that {@link AffineTerm}s are returned if {@link PolynomialTerm}s are not
- * needed.
+ * Provides static methods for combining {@link IPolynomialTerm}s. Methods make sure that {@link AffineTerm}s are
+ * returned if {@link PolynomialTerm}s are not needed.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -51,5 +54,16 @@ public class PolynomialTermOperations {
 		}
 	}
 
+	public static IPolynomialTerm sum(final IPolynomialTerm... summands) {
+		if (Arrays.stream(summands).allMatch(x -> (x instanceof AffineTerm))) {
+			return AffineTerm.sum(summands);
+		} else {
+			return PolynomialTerm.sum(summands);
+		}
+	}
+
+	public static IPolynomialTerm convert(final Script script, final Term term) {
+		return (IPolynomialTerm) new PolynomialTermTransformer(script).transform(term);
+	}
 
 }

@@ -90,7 +90,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -255,7 +254,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
-	protected PetriNetLargeBlockEncoding<L> mLBE;
 	protected final IPLBECompositionFactory<L> mCompositionFactory;
 
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
@@ -357,13 +355,15 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			final BoundedPetriNet<L, IPredicate> net;
 			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-				mLBE = new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(), petrifiedCfg,
-						mPref.useLbeInConcurrentAnalysis(), mCompositionFactory);
-				final BoundedPetriNet<L, IPredicate> lbecfg = mLBE.getResult();
+				final PetriNetLargeBlockEncoding<L> lbe =
+						new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(), petrifiedCfg,
+								mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
+				final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
+				mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
 				net = lbecfg;
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
-								mLBE.getPetriNetLargeBlockEncodingStatistics()));
+								lbe.getPetriNetLargeBlockEncodingStatistics()));
 			} else {
 				net = petrifiedCfg;
 			}
@@ -1182,13 +1182,5 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	private final boolean isSequential() {
 		return super.mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
-	}
-
-	@Override
-	public IProgramExecution<L, Term> getRcfgProgramExecution() {
-		if (!isSequential() && mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-			return mLBE.translateExecution(mRcfgProgramExecution);
-		}
-		return super.getRcfgProgramExecution();
 	}
 }
