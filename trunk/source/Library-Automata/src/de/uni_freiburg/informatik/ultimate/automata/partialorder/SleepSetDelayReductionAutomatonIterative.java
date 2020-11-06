@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -87,7 +88,7 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 	 */
 	public SleepSetDelayReductionAutomatonIterative(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
-			final AutomataLibraryServices services, final IIntersectionStateFactory<S> stateFactory) {
+			final AutomataLibraryServices services, final IEmptyStackStateFactory<S> stateFactory) {
 		super(services);
 		mOperand = operand;
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
