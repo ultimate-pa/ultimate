@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd.Simplif
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -2518,10 +2519,21 @@ public final class SmtUtils {
 		if (number.equals(Rational.MONE)) {
 			return true;
 		} else {
-			final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
+			final int vecSize = SmtSortUtils.getBitvectorLength(bvSort);
 			final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
 			final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
 			return number.equals(rationalMinusOne);
 		}
 	}
+
+	public BigInteger computeSmallestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
+		return null;
+	}
+
+	public BigInteger computeLargestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
+		return null;
+	}
+
+
+
 }
