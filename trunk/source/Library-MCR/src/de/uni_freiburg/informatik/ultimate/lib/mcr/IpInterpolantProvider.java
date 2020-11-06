@@ -244,7 +244,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<TermVariable> varsToKeep) {
 		final Term substituted = new SubstitutionWithLocalSimplification(mManagedScript, mapping).transform(term);
 		final Term abstracted = McrUtils.abstractVariables(substituted, varsToKeep, QuantifiedFormula.EXISTS,
-				mManagedScript, mServices);
+				mManagedScript, mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
 		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, abstracted,
 				mSimplificationTechnique, mXnfConversionTechnique);
 	}
