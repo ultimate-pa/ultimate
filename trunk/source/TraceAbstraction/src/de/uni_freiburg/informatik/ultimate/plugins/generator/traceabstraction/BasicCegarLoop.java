@@ -75,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndepende
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReductionAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReductionAutomatonIterative;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -207,11 +206,31 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		VARIABLE_BASED_MOVER_CHECK,
 	}
 
+	/**
+	 * Indicates a kind of sleep set reduction.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 */
+	public enum SleepSetMode {
+		/**
+		 * No sleep set reduction is performed.
+		 */
+		NONE,
+		/**
+		 * Delay sets are used to handle loops, and the reduced automaton is a sub-structure of the input.
+		 */
+		DELAY_SET,
+		/**
+		 * Unrolling and splitting is performed to achieve a minimal reduction (in terms of the language). This
+		 * duplicates states of the input automaton.
+		 */
+		NEW_STATES
+	}
+
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
-	private static final boolean USE_SLEEPSET_REDUCTION = true;
 
 	/**
 	 * If the trace histogram max is larger than this number we try to find a danger invariant. Only used for debugging.
@@ -371,23 +390,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				final INestedWordAutomaton<L, IPredicate> automaton =
 						new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
 								mStateFactoryForRefinement, net).getResult();
-				if (USE_SLEEPSET_REDUCTION) {
-					final IIndependenceRelation<IPredicate, L> indep = new CachedIndependenceRelation<>(
-							new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
-									new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false,
-											true))));
-					final ISleepSetOrder<IPredicate, L> order =
-							new ConstantSleepSetOrder<>(automaton.getVpAlphabet().getInternalAlphabet());
-					final long reductionStart = System.currentTimeMillis();
-					mAbstraction = new SleepSetDelayReductionAutomatonIterative<>(automaton, indep, order,
-							new AutomataLibraryServices(mServices), mStateFactoryForRefinement).getResult();
-					final long reductionEnd = System.currentTimeMillis();
-					mLogger.warn("Sleep Set Reduction Time: " + (reductionEnd - reductionStart) + "ms");
-					mLogger.warn("Sleep set: input automaton " + automaton.sizeInformation());
-					mLogger.warn("Sleep set: output automaton " + mAbstraction.sizeInformation());
-				} else {
-					mAbstraction = automaton;
-				}
+				mAbstraction = computeSleepSetReduction(mPref.getSleepSetMode(), automaton);
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
 				if (unsafePlaces == null) {
@@ -413,6 +416,41 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(mServices, mAbstraction, mWitnessAutomaton,
 					mCsToolkit, mPredicateFactory, mStateFactoryForRefinement, mLogger, Property.NON_REACHABILITY);
 		}
+	}
+
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computeSleepSetReduction(final SleepSetMode mode,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+		if (mode == SleepSetMode.NONE) {
+			return input;
+		}
+
+		final IIndependenceRelation<IPredicate, L> indep = new CachedIndependenceRelation<>(
+				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
+						new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true))));
+		final ISleepSetOrder<IPredicate, L> order =
+				new ConstantSleepSetOrder<>(input.getVpAlphabet().getInternalAlphabet());
+
+		// TODO Use statistics methods to measure time
+		final long reductionStart = System.currentTimeMillis();
+
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result;
+		switch (mode) {
+		case DELAY_SET:
+			result = new SleepSetDelayReductionAutomatonIterative<>(input, indep, order,
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement).getResult();
+			break;
+		case NEW_STATES:
+			throw new UnsupportedOperationException("New-state sleep set reduction not yet implemented");
+		default:
+			throw new UnsupportedOperationException("Unknown sleep set mode: " + mode);
+		}
+
+		final long reductionEnd = System.currentTimeMillis();
+		mLogger.warn("Sleep Set Reduction Time: " + (reductionEnd - reductionStart) + "ms");
+		mLogger.warn("Sleep set: input automaton " + input.sizeInformation());
+		mLogger.warn("Sleep set: output automaton " + result.sizeInformation());
+
+		return result;
 	}
 
 	@Override
