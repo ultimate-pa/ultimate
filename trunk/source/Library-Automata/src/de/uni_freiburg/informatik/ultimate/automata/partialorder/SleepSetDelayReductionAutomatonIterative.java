@@ -62,7 +62,7 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final Set<S> mStartStateSet;
-	private final HashMap<S, Set<L>> mHashMap;
+	private final HashMap<S, Set<L>> mPrunedMap;
 	private final HashMap<S, Set<L>> mSleepSetMap;
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
 	private final ArrayDeque<S> mStateStack;
@@ -95,7 +95,7 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 
 		mStartStateSet = CoreUtil.constructHashSet(operand.getInitialStates());
 		assert (mStartStateSet.size() == 1) : "Only one initial state allowed";
-		mHashMap = new HashMap<>();
+		mPrunedMap = new HashMap<>();
 		mSleepSetMap = new HashMap<>();
 		mDelaySetMap = new HashMap<>();
 		mStateStack = new ArrayDeque<>();
@@ -125,9 +125,9 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 			Set<L> currentSleepSet = mSleepSetMap.get(currentState);
 			final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
 			
-			if (mHashMap.get(currentState) == null) {
+			if (mPrunedMap.get(currentState) == null) {
 				// state not visited yet
-				mHashMap.put(currentState, mSleepSetMap.get(currentState));
+				mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
 				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 					if (!currentSleepSet.contains(transition.getLetter())) {
 						successorTransitionList.add(transition.getLetter());
@@ -140,11 +140,11 @@ public class SleepSetDelayReductionAutomatonIterative<L, S> extends UnaryNwaOper
 				mSleepSetMap.put(currentState, currentSleepSet);
 				mDelaySetMap.put(currentState, currentDelaySet);
 				mStateStack.push(currentState);
-				final Set<L> currentHash = mHashMap.get(currentState);
-				successorTransitionList.addAll(DataStructureUtils.difference(currentHash, currentSleepSet));
-				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, currentHash);
+				final Set<L> pruned = mPrunedMap.get(currentState);
+				successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
+				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
 				mSleepSetMap.put(currentState, currentSleepSet);
-				mHashMap.put(currentState, currentSleepSet);
+				mPrunedMap.put(currentState, currentSleepSet);
 			} else {
 				// state already visited and loops are explored
 				mStateStack.pop();

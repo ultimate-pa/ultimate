@@ -82,7 +82,8 @@ public class Svcomp20SleepSetReduction extends AbstractTraceAbstractionTestSuite
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf"
+		//"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf"
+		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"
 	};
 
 	private static final String[] TOOLCHAINS = {

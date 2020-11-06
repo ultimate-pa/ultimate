@@ -63,7 +63,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final Set<S> mStartStateSet;
-	private final HashMap<S, Set<L>> mHashMap;
+	private final HashMap<S, Set<L>> mPrunedMap;
 	private final HashMap<S, Set<L>> mSleepSetMap;
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
 	private final ArrayDeque<S> mStateStack;
@@ -97,7 +97,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 
 		mStartStateSet = CoreUtil.constructHashSet(operand.getInitialStates());
 		assert (mStartStateSet.size() == 1) : "Only one initial state allowed";
-		mHashMap = new HashMap<>();
+		mPrunedMap = new HashMap<>();
 		mSleepSetMap = new HashMap<>();
 		mDelaySetMap = new HashMap<>();
 		mStateStack = new ArrayDeque<>();
@@ -127,9 +127,9 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		final ArrayList<L> successorTransitionList = new ArrayList<>();
 		Set<L> currentSleepSet = mSleepSetMap.get(currentState);
 
-		if (mHashMap.get(currentState) == null) {
+		if (mPrunedMap.get(currentState) == null) {
 			// state not visited yet
-			mHashMap.put(currentState, mSleepSetMap.get(currentState));
+			mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
 			for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 				if (!currentSleepSet.contains(transition.getLetter())) {
 					successorTransitionList.add(transition.getLetter());
@@ -137,11 +137,11 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 			}
 		} else {
 			// state already visited
-			final Set<L> currentHash = mHashMap.get(currentState);
-			successorTransitionList.addAll(DataStructureUtils.difference(currentHash, currentSleepSet));
-			currentSleepSet = DataStructureUtils.intersection(currentSleepSet, currentHash);
+			final Set<L> pruned = mPrunedMap.get(currentState);
+			successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
+			currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
 			mSleepSetMap.put(currentState, currentSleepSet);
-			mHashMap.put(currentState, currentSleepSet);
+			mPrunedMap.put(currentState, currentSleepSet);
 		}
 		// sort successorTransitionList according to the given order
 		final Comparator<L> order = mOrder.getOrder(currentState);
