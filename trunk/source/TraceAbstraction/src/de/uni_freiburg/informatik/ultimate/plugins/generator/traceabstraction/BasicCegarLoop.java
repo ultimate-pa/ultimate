@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReductionAutomatonIterative;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -440,6 +441,11 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement).getResult();
 			break;
 		case NEW_STATES:
+			/*
+			result = new SleepSetNewStateReduction<>(input, indep, order,
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement).getResult();
+			break;
+			*/
 			throw new UnsupportedOperationException("New-state sleep set reduction not yet implemented");
 		default:
 			throw new UnsupportedOperationException("Unknown sleep set mode: " + mode);
