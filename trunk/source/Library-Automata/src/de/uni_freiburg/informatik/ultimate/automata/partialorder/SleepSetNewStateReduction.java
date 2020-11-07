@@ -25,7 +25,6 @@ public class SleepSetNewStateReduction<L, S, S2> extends UnaryNwaOperation<L, S,
 	private final Set<S> mStartStateSet;
 	private final Set<S2> mVisitedSet;
 	private final ArrayDeque<S2> mStateStack;
-	//private final HashMap<S2, ArrayDeque<S2>> mStateStackMap;
 	private final HashMap<S2, Pair<S, Set<L>>> mStateMap;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
@@ -46,13 +45,10 @@ public class SleepSetNewStateReduction<L, S, S2> extends UnaryNwaOperation<L, S,
 		mVisitedSet = new HashSet<>();
 		mStateStack = new ArrayDeque<>();
 		mStateMap = new HashMap<>();
-		//mStateStackMap = new HashMap<>();
 		mReductionAutomaton = new NestedWordAutomaton<L, S2>(services, mOperand.getVpAlphabet(), stateFactory);
 		for (final S startState : mStartStateSet) {
-			//mSleepSetMap.put(startState, new HashSet<L>());
 			Set<L> emptySet = new HashSet<>();
 			Pair<S, Set<L>> startStatePair = new Pair<>(startState, emptySet);
-			//mStateStackMap.put(startState, new ArrayDeque<S>());
 			S2 newStartState = stateFactory.createSleepSetState(startState, emptySet);
 			mReductionAutomaton.addState(true, mOperand.isFinal(startState), newStartState);
 			mStateStack.push(newStartState);
@@ -74,7 +70,7 @@ public class SleepSetNewStateReduction<L, S, S2> extends UnaryNwaOperation<L, S,
 			S currentState = mStateMap.get(currentSleepSetState).getFirst();
 			Set<L> currentSleepSet = mStateMap.get(currentSleepSetState).getSecond();
 			
-			if (mVisitedSet.contains(currentSleepSetState)) {
+			if (!mVisitedSet.contains(currentSleepSetState)) {
 				// state not visited with this sleep set
 				mVisitedSet.add(currentSleepSetState);
 				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
