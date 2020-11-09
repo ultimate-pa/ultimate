@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -120,13 +121,14 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	public Map<PLACE, IPredicate> getFormulaMapping() {
 		final Map<PLACE, IPredicate> mapping = new HashMap<>();
 		for (final PLACE place : mNet.getPlaces()) {
-			final Set<IPredicate> clauses = new HashSet<>();
+			final Set<Term> clauses = new HashSet<>();
 			mFloydHoareAnnotation.forEach((marking, formula) -> {
 				if (marking.contains(place)) {
 					clauses.add(getMarkingPredicate(place, marking));
 				}
 			});
-			mapping.put(place, mFactory.or(clauses));
+			final Term disjunction = SmtUtils.or(mScript, clauses);
+			mapping.put(place, mFactory.newPredicate(disjunction));
 		}
 		return mapping;
 	}
@@ -136,15 +138,15 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 * @param marking
 	 * @return Predicate with conjunction of Ghost variables and predicate of marking
 	 */
-	private IPredicate getMarkingPredicate(final PLACE place, final Marking<LETTER, PLACE> marking) {		
-		final Set<IPredicate> terms = new HashSet<>();
+	private Term getMarkingPredicate(final PLACE place, final Marking<LETTER, PLACE> marking) {
+		final Set<Term> terms = new HashSet<>();
 		for (final PLACE otherPlace : marking) {
-			final IPredicate ghost = getGhostPredicate(otherPlace);
+			final Term ghost = mGhostVariables.get(otherPlace).getTerm();
 			terms.add(ghost);
-		}		
-		terms.addAll(getAllNotMarking(marking)); 
-		terms.add(mFloydHoareAnnotation.get(marking)); 
-		return mFactory.and(terms);
+		}
+		terms.addAll(getAllNotMarking(marking));
+		terms.add(mFloydHoareAnnotation.get(marking).getFormula());
+		return SmtUtils.and(mScript, terms);
 	}
 
 	/**
@@ -152,13 +154,14 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 * @param marking
 	 * @return Formula MethodB:Predicate with GhostVariables of all other places not in marking
 	 */
-	private Set<IPredicate> getAllNotMarking(final Marking<LETTER, PLACE> marking) {
+	private Set<Term> getAllNotMarking(final Marking<LETTER, PLACE> marking) {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
 		final Set<PLACE> notMarking = DataStructureUtils.difference(new HashSet<>(mNet.getPlaces()), markPlaces);
-		final Set<IPredicate> predicates = new HashSet<>();
-		for(PLACE place: notMarking) {
-			 predicates.add(mFactory.not(getGhostPredicate(place)));
-		}		
+		final Set<Term> predicates = new HashSet<>();
+		for (final PLACE place : notMarking) {
+			final Term ghost = mGhostVariables.get(place).getTerm();
+			predicates.add(SmtUtils.not(mScript, ghost));
+		}
 		return predicates;
 	}
 
@@ -167,16 +170,17 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 * @param marking
 	 * @return Formula MethodA: GhostVariables if marking is subset of other marking
 	 */
-	private Set<IPredicate> getSubsetMarking(final Marking<LETTER, PLACE> marking) {
+	private Set<Term> getSubsetMarking(final Marking<LETTER, PLACE> marking) {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
 		final Set<Marking<LETTER, PLACE>> markings = mFloydHoareAnnotation.keySet();
 		final Set<PLACE> notInMarking = new HashSet<>();
 		for(final Marking<LETTER, PLACE> otherMarking : markings) {
 			notInMarking.addAll(getSupPlaces(otherMarking,markPlaces));
 		}
-		final Set<IPredicate> predicates = new HashSet<>();
+		final Set<Term> predicates = new HashSet<>();
 		for(final PLACE place: notInMarking) {
-			predicates.add(mFactory.not(getGhostPredicate(place)));
+			final Term ghost = mGhostVariables.get(place).getTerm();
+			predicates.add(SmtUtils.not(mScript, ghost));
 		}
 		return predicates;
 	}
@@ -188,14 +192,6 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 			subPlaces = DataStructureUtils.difference(otherPlaces, markPlaces);		
 		}
 		return subPlaces;
-	}
-
-	/**
-	 * @param place
-	 * @return Predicate place's GhostVariable
-	 */
-	private IPredicate getGhostPredicate(final PLACE place) {
-		return mFactory.newPredicate(mGhostVariables.get(place).getTerm());
 	}
 
 	/**
