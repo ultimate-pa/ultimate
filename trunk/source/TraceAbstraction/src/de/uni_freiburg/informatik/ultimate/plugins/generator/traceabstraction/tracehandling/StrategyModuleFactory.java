@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
-import de.uni_freiburg.informatik.ultimate.lib.mcr.IpInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.SpInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.WpInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -231,9 +230,9 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		switch (mTaPrefs.getMcrInterpolantMethod()) {
-		case INTERPOLATION:
-			return new IpInterpolantProvider<>(mPrefs.getUltimateServices(), mLogger, managedScript, mPredicateUnifier,
-					simplificationTechnique, xnfConversionTechnique);
+		// case INTERPOLATION:
+		// return new IpInterpolantProvider<>(mPrefs.getUltimateServices(), mLogger, managedScript, mPredicateUnifier,
+		// simplificationTechnique, xnfConversionTechnique);
 		case WP:
 			return new WpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
 					xnfConversionTechnique, mPredicateUnifier);

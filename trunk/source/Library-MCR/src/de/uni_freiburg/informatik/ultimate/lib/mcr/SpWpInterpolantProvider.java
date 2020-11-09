@@ -29,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
 /**
  * IInterpolantProvider using sp or wp. For better interpolants, we abstract all variables away, that are not read
@@ -48,7 +47,7 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 	private final IPredicateUnifier mPredicateUnifier;
 
 	protected final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
-	protected Script mScript;
+	protected final Script mScript;
 
 	public SpWpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
@@ -68,25 +67,6 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		mAiem.unlockSolver();
 	}
 
-	private static <STATE> List<STATE> revTopSort(final INestedWordAutomaton<?, STATE> automaton,
-			final Map<STATE, ?> stateMap) {
-		final Map<STATE, Set<STATE>> successors = new HashMap<>();
-		for (final STATE state : automaton.getStates()) {
-			if (stateMap.containsKey(state)) {
-				continue;
-			}
-			final Set<STATE> succs = new HashSet<>();
-			for (final var edge : automaton.internalSuccessors(state)) {
-				final STATE succ = edge.getSucc();
-				if (!stateMap.containsKey(succ)) {
-					succs.add(succ);
-				}
-			}
-			successors.put(state, succs);
-		}
-		return new TopologicalSorter<>(successors::get).reversedTopologicalOrdering(successors.keySet()).get();
-	}
-
 	@Override
 	public <STATE> void addInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Map<STATE, IPredicate> states2Predicates) {
@@ -98,7 +78,7 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 			ipVars.addAll(vars);
 			liveIpVariables.put(entry.getKey(), vars);
 		}
-		final List<STATE> order = revTopSort(automaton, states2Predicates);
+		final List<STATE> order = McrUtils.reversedTopologicalOrdering(automaton, states2Predicates::containsKey);
 		for (final STATE state : order) {
 			final Set<TermVariable> vars = new HashSet<>();
 			for (final var edge : automaton.internalSuccessors(state)) {

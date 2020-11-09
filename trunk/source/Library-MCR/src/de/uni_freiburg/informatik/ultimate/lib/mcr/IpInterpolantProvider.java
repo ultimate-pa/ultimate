@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
+// TODO: Current approach has bad performance. Other approach?
 public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements IInterpolantProvider<LETTER> {
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;

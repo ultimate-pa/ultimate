@@ -731,6 +731,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum McrInterpolantMethod {
-		WP, SP, INTERPOLATION
+		WP, SP
 	}
 }
