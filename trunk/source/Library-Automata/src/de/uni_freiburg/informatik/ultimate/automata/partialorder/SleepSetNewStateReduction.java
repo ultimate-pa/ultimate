@@ -113,7 +113,7 @@ public class SleepSetNewStateReduction<L, S, S2> extends UnaryNwaOperation<L, S,
 	}
 
 	@Override
-	public Object getResult() {
+	public NestedWordAutomaton<L, S2> getResult() {
 		return mReductionAutomaton;
 	}
 
