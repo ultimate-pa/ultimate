@@ -252,7 +252,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	private IPetriNet<L, IPredicate> mPetriNet = null;
 	private Map<Marking<L, IPredicate>, IPredicate> mMarking2State = null;
-	protected PetriNetLargeBlockEncoding<L> mLBE;
 
 	protected final IPLBECompositionFactory<L> mCompositionFactory;
 
