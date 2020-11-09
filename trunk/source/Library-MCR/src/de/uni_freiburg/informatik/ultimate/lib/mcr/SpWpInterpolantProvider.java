@@ -113,22 +113,27 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		}
 		// Caluculate sp/wp for all states in the given order
 		for (final STATE state : order) {
-			Term term = calculateTerm(automaton, state, states2Predicates);
-			if (!QuantifierUtils.isQuantifierFree(term)) {
-				term = McrUtils.abstractVariables(term, liveIpVariables.get(state), getQuantifier(), mManagedScript,
-						mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
-				if (!QuantifierUtils.isQuantifierFree(term)) {
-					continue;
-				}
+			final Term term = calculateTerm(automaton, state, states2Predicates);
+			final IPredicate predicate = getPredicateWithAbstraction(term, liveIpVariables.get(state));
+			if (predicate != null) {
+				states2Predicates.put(state, predicate);
 			}
-			// Eliminate all stores (using case distinction on index equalities)
-			final var stores =
-					MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(mScript, term);
-			for (final var m : stores) {
-				term = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, term, m);
-			}
-			states2Predicates.put(state, mPredicateUnifier.getOrConstructPredicate(term));
 		}
+	}
+
+	private IPredicate getPredicateWithAbstraction(final Term term, final Set<TermVariable> importantVars) {
+		Term result = McrUtils.abstractVariables(term, importantVars, getQuantifier(), mManagedScript, mServices,
+				mLogger, mSimplificationTechnique, mXnfConversionTechnique);
+		if (!QuantifierUtils.isQuantifierFree(result)) {
+			return null;
+		}
+		// Eliminate all stores (using case distinction on index equalities)
+		final var stores =
+				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(mScript, result);
+		for (final var m : stores) {
+			result = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, result, m);
+		}
+		return mPredicateUnifier.getOrConstructPredicate(result);
 	}
 
 	protected abstract <STATE> Term calculateTerm(final INestedWordAutomaton<LETTER, STATE> automaton, STATE state,
