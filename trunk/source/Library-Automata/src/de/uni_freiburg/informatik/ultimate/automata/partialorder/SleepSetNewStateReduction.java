@@ -101,6 +101,7 @@ public class SleepSetNewStateReduction<L, S, S2> extends UnaryNwaOperation<L, S,
 						.filter(l -> mIndependenceRelation.contains(currentState, letterTransition, l))
 						.collect(Collectors.toCollection(HashSet::new));
 				S2 succSleepSetState = mStateFactory.createSleepSetState(succState, succSleepSet);
+				mStateMap.put(succSleepSetState, new Pair<>(succState, succSleepSet));
 				if (!mReductionAutomaton.contains(succSleepSetState)) {
 					mReductionAutomaton.addState(false, mOperand.isFinal(succState), succSleepSetState);
 				}
