@@ -83,6 +83,7 @@ public class PartialQuantifierElimination {
 	private static final boolean USE_PUSH_PULL = true;
 	private static final boolean DEBUG_EXTENDED_RESULT_CHECK = false;
 	private static final boolean DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION = false;
+	private static final boolean THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED = false;
 
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final Term term, final SimplificationTechnique simplificationTechnique,
@@ -111,6 +112,9 @@ public class PartialQuantifierElimination {
 				throw tce;
 			}
 			result = SmtUtils.quantifier(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result);
+			if (THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED && (result instanceof QuantifiedFormula)) {
+				throw new AssertionError("Not all eliminated: " + result);
+			}
 			result = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ONLY_DER).transform(result);
 		}
 		return result;

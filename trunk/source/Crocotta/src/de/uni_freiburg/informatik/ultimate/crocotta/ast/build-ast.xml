@@ -9,7 +9,7 @@
 	<target name="generate_ast">
 		<echo>Classpath will be set to ${astbuilderDir}:${cupDir}</echo>
 
-		<delete>
+		<delete quiet="true">
 			<fileset dir=".">
 				<exclude name="CrocottaQuery.java" />
 				<exclude name="*.ast" />

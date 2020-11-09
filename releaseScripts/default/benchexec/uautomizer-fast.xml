@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-1.9.dtd">
-<benchmark tool="ultimateautomizer" timelimit="60s" memlimit="8 GB" cpuCores="2">
+<benchmark tool="ultimateautomizer" timelimit="120s" hardtimelimit="120s" memlimit="8 GB" cpuCores="2">
+
 
   <resultfiles>**.graphml</resultfiles>
   
   <option name="--full-output"/>
     
-<rundefinition name="sv-comp20_prop-reachsafety">
+<rundefinition name="sv-comp21_prop-reachsafety">
   <tasks name="ReachSafety-Arrays">
     <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
     <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
@@ -76,7 +77,7 @@
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp20_prop-memsafety">
+<rundefinition name="sv-comp21_prop-memsafety">
   <tasks name="MemSafety-Arrays">
     <includesfile>../sv-benchmarks/c/MemSafety-Arrays.set</includesfile>
     <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
@@ -118,14 +119,9 @@
     <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
     <option name="--architecture">64bit</option>
   </tasks>
-  <tasks name="SoftwareSystems-SQLite-MemSafety">
-    <includesfile>../sv-benchmarks/c/SoftwareSystems-SQLite-MemSafety.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-  </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp20_prop-nooverflow">
+<rundefinition name="sv-comp21_prop-nooverflow">
   <tasks name="NoOverflows-BitVectors">
     <includesfile>../sv-benchmarks/c/NoOverflows-BitVectors.set</includesfile>
     <propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile>
@@ -144,7 +140,7 @@
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp20_prop-termination">
+<rundefinition name="sv-comp21_prop-termination">
   <tasks name="Termination-MainControlFlow">
     <includesfile>../sv-benchmarks/c/Termination-MainControlFlow.set</includesfile>
     <propertyfile>../sv-benchmarks/c/properties/termination.prp</propertyfile>

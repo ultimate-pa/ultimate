@@ -15,6 +15,10 @@
     <rundefinition name="Automizer FA-MCR-WP">
         <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-WP.epf</option>
 	</rundefinition>
+	
+	<rundefinition name="Automizer FA-MCR-SP">
+        <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-SP.epf</option>
+	</rundefinition>
     
 	<tasks name="SVCOMP ConcurrencySafety-Main">
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>

@@ -100,7 +100,7 @@ public class BDDDebugFrame
 					final CacheFrame cf = (CacheFrame) it.next();
 					cf.repaint();
 				}
-			} catch(final Exception _) {
+			} catch(final Exception e) {
 				// also catches NULL pointer expcetion during GC and stuff..
 			}
 		}

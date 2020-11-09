@@ -21,7 +21,7 @@ fi
 
 outputfile=$path/output.txt
 
-java  -Dosgi.configuration.area=config/  -Xmx32000M -Xss4m -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar  -data "$TMPDIR" -tc ./../AutomizerCHC.xml -s ./../AutomizerCHC_No_Goto.epf -i "$1" &> $outputfile
+java  -Dosgi.configuration.area=config/  -Xmx32000M -Xss4m -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar  -data "$TMPDIR" -tc ./../AutomizerCHC.xml -s ./../AutomizerCHC_No_Goto.epf -i "$1" &> $outputfile
 
 RESULT_UNSAFE=`cat $outputfile | grep "CounterExampleResult"`
 RESULT_SAFE=`cat $outputfile | grep "PositiveResult"`

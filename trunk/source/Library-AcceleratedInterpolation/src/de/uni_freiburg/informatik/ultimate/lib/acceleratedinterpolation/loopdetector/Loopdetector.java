@@ -108,7 +108,8 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 	 * Calculates loops from a given trace.
 	 */
 	private void findLoopPaths() {
-		final Map<IcfgLocation, List<Integer>> possibleCycles = mCycleFinder.getCyclesInTrace(mTraceLocations);
+		Map<IcfgLocation, List<Integer>> possibleCycles = mCycleFinder.getCyclesInTrace(mTraceLocations);
+		possibleCycles = findOverarchingLoop(possibleCycles);
 		final Set<IcfgLocation> nestedCycles = getNestedCycles(possibleCycles);
 		Map<IcfgLocation, List<Integer>> withoutNestedCycles = new HashMap<>(possibleCycles);
 		withoutNestedCycles = filterProcedures(withoutNestedCycles);
@@ -134,13 +135,39 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 		mLoopsAsTf = cycledPaths.getSecond();
 
 		mLogger.debug("Found Loops");
+		if (!mNestingRelation.isEmpty()) {
+			mLogger.debug("Found Nested Loops");
+		}
+	}
+
+	private Map<IcfgLocation, List<Integer>> findOverarchingLoop(final Map<IcfgLocation, List<Integer>> cycles) {
+		final Map<IcfgLocation, List<Integer>> result = new HashMap<>(cycles);
+		for (final Entry<IcfgLocation, List<Integer>> loop : cycles.entrySet()) {
+			final IcfgLocation loopHead = loop.getKey();
+			if (!result.containsKey(loopHead)) {
+				continue;
+			}
+			final int firstOccurence = loop.getValue().get(0);
+			final int lastOccurence = loop.getValue().get(loop.getValue().size() - 1);
+			for (final Entry<IcfgLocation, List<Integer>> otherLoop : cycles.entrySet()) {
+				final IcfgLocation loopHeadOther = otherLoop.getKey();
+				if (loopHead == loopHeadOther || !result.containsKey(loopHeadOther)) {
+					continue;
+				}
+				final int firstOccurenceOther = otherLoop.getValue().get(0);
+				final int lastOccurenceOther = otherLoop.getValue().get(otherLoop.getValue().size() - 1);
+				if (firstOccurence < firstOccurenceOther && lastOccurence < lastOccurenceOther) {
+					result.remove(loopHeadOther);
+				}
+			}
+		}
+		return result;
 	}
 
 	/*
 	 * only allow procedures of two types: I: loop in procedure II: procedure in loop, no recursive
 	 */
 	private Map<IcfgLocation, List<Integer>> filterProcedures(final Map<IcfgLocation, List<Integer>> possibleCycles) {
-		// final Map<String, ? extends IcfgLocation> procEntries = mIcfg.getProcedureEntryNodes();
 		final Map<IcfgLocation, List<Integer>> result = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Integer>> loop : possibleCycles.entrySet()) {
 			final IcfgLocation loopHead = loop.getKey();
@@ -161,6 +188,20 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 						final IIcfgCallTransition<IcfgLocation> call = (IIcfgCallTransition<IcfgLocation>) l;
 						if (call.getSucceedingProcedure().equals(call.getPrecedingProcedure())) {
 							mLogger.debug("Found Recursive call!");
+							loopBodyNoProcedures.remove(currentLoop.getSecond());
+						}
+						boolean foundReturn = false;
+						for (int k = i - 1; k < currentLoop.getSecond(); k++) {
+							if (mTrace.get(k) instanceof IReturnAction) {
+								final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> ret =
+										(IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) mTrace
+												.get(k);
+								if (call == ret.getCorrespondingCall()) {
+									foundReturn = true;
+								}
+							}
+						}
+						if (!foundReturn) {
 							loopBodyNoProcedures.remove(currentLoop.getSecond());
 						}
 					}
@@ -268,15 +309,11 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> implements ILoopdet
 
 			// final int firstOccurence = cycle.getValue().get(0);
 			// final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
-
 			for (int i = 0; i < cycleEntryPoints.size() - 1; i++) {
-
 				final int currentIntervalFirst = cycleEntryPoints.get(i);
 				final int currentIntervalLast = cycleEntryPoints.get(i + 1);
-
 				for (final Iterator<Map.Entry<IcfgLocation, List<Integer>>> otherCycles =
 						cyclesWithNested.entrySet().iterator(); otherCycles.hasNext();) {
-
 					final Map.Entry<IcfgLocation, List<Integer>> otherCycle = otherCycles.next();
 					final IcfgLocation loopHeadOther = otherCycle.getKey();
 					final List<Integer> othercycleEntryPoints = otherCycle.getValue();

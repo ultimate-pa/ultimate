@@ -63,8 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -91,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -154,6 +151,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
 
+	private final AccelerationMethod mAccelerationMethod;
+
 	private final AcceleratedInterpolationBenchmark mAccelInterpolBench;
 	private final Class<L> mTransitionClazz;
 
@@ -169,7 +168,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	 */
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier,
-			final IRun<L, IPredicate> counterexample, final Class<L> transitionClazz) {
+			final IRun<L, IPredicate> counterexample, final Class<L> transitionClazz,
+			final AccelerationMethod accelerationMethod) {
 		mLogger = logger;
 		mScript = script;
 		mTransitionClazz = transitionClazz;
@@ -191,7 +191,9 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		mInterpolants[mCounterexample.size() - 1] = mPredUnifier.getFalsePredicate();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
-		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
+		mAccelerationMethod = accelerationMethod;
+
+		mAccelerator = new Accelerator<>(mLogger, mScript, mServices, mSymbolTable);
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
 		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, 1, mIcfg);
 		mAccelInterpolBench.stop(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
@@ -261,6 +263,13 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
+			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered = new HashMap(mNestedLoops);
+			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
+				if (nestedLoop.getValue() == null) {
+					mNestedLoops.remove(nestedLoop.getKey());
+					continue;
+				}
+			}
 			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoopsAsTf);
 			for (final Entry<IcfgLocation, IcfgLocation> nesting : mNestingRelation.entrySet()) {
 				accelerateNestedLoops(nesting.getKey(), nesting.getValue());
@@ -280,7 +289,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			for (final UnmodifiableTransFormula loop : loopTf) {
 				mLogger.debug("Starting acceleration");
 				final UnmodifiableTransFormula acceleratedLoopRelation =
-						mAccelerator.accelerateLoop(loop, loophead.getKey(), AccelerationMethod.FAST_UPR);
+						mAccelerator.accelerateLoop(loop, loophead.getKey(), mAccelerationMethod);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
 					mLogger.debug("No acceleration found");
 					accelerationFinishedCorrectly = false;
@@ -291,6 +300,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
 						mSimplificationTechnique, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
+
 				mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
 				accelerations.add(tf);
 			}
@@ -357,17 +367,17 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	 * @param tf
 	 * @return
 	 */
-	private UnmodifiableTransFormula constructEpsilon(final UnmodifiableTransFormula tf) {
-		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
-		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
-		final ArrayList<Term> lhs = new ArrayList<>(inVars.values());
-		final ArrayList<Term> rhs = new ArrayList<>(outVars.values());
-
-		final Term equality = SmtUtils.pairwiseEquality(mScript.getScript(), lhs, rhs);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, false, null, true);
-		tfb.setFormula(equality);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(mScript);
+	private UnmodifiableTransFormula constructEpsilon() {
+		// final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
+		// final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
+		// final ArrayList<Term> lhs = new ArrayList<>(inVars.values());
+		// final ArrayList<Term> rhs = new ArrayList<>(outVars.values());
+		//
+		// final Term equality = SmtUtils.pairwiseEquality(mScript.getScript(), lhs, rhs);
+		// final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, false, null, true);
+		// tfb.setFormula(equality);
+		// tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return TransFormulaBuilder.getTrivialTransFormula(mScript);
 	}
 
 	/**
@@ -449,7 +459,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 					final L acceleratedTransition = (L) mIcfgEdgeFactory.createInternalTransition(target,
 							newExitLocation, target.getPayload(), loopAcceleration);
 
-					final UnmodifiableTransFormula epsilon = constructEpsilon(loopAcceleration);
+					final UnmodifiableTransFormula epsilon = constructEpsilon();
 					final L epsilonTransition = (L) mIcfgEdgeFactory.createInternalTransition(newExitLocation, target,
 							target.getPayload(), epsilon);
 
@@ -515,6 +525,9 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		/*
 		 * In case of multiple nested loops, accelerate the inner one first (maybe check for delay for that)
 		 */
+		if (!mNestedLoops.containsKey(nestedLoophead)) {
+			return;
+		}
 		if (mNestingRelation.containsKey(nestedLoophead)) {
 			accelerateNestedLoops(nestedLoophead, mNestingRelation.get(nestedLoophead));
 		}
@@ -541,7 +554,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		if (!accelerationFinishedCorrectly) {
 			return;
 		}
-		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices, 0,
+		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 				accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
 		Set<List<L>> nestingLoop;

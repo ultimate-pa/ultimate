@@ -153,8 +153,6 @@ public class LoopAcceleratorLite {
 		final Set<TermVariable> aux = new HashSet<>(loop.getVars());
 		final UnmodifiableTransFormula exitFormula =
 				buildFormula(mScript, loopSummary, loop.getInVars(), loop.getOutVars(), aux);
-
-		mLogger.debug("LOOP SUMMARY: " + loop.getExitConditions() + System.lineSeparator());
 		return exitFormula;
 
 	}

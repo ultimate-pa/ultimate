@@ -100,7 +100,10 @@ public class ToolchainManager {
 		if (toolchain == null) {
 			throw new IllegalArgumentException("toolchain");
 		}
-		if (!mActiveToolchains.remove(toolchain.getId(), toolchain)) {
+
+		final Toolchain removedTc = mActiveToolchains.remove(toolchain.getId());
+
+		if (removedTc != null && removedTc.getId() != toolchain.getId()) {
 			mLogger.warn("An concurrency error occured: Toolchain ID has changed during livecycle");
 		}
 		if (toolchain.getCurrentToolchainData() != null && toolchain.getCurrentToolchainData().getStorage() != null) {
@@ -251,7 +254,7 @@ public class ToolchainManager {
 				// some files cannot be parsed
 				final Set<File> notParseable = new HashSet<>(allFiles);
 				notParseable.removeAll(selectedFiles);
-				mLogger.warn(getLogPrefix() + ": No parsers available for " + getStringFromFiles(notParseable));
+				mLogger.error(getLogPrefix() + ": No parsers available for " + getStringFromFiles(notParseable));
 				return false;
 			}
 

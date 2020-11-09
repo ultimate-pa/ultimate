@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -171,10 +171,7 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 
 		final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata;
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
-			final LinkedHashSet<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> fhs =
-					basicCegarLoop.getFloydHoareAutomata();
-			floydHoareAutomata = new ArrayList<>();
-			floydHoareAutomata.addAll(fhs);
+			floydHoareAutomata = new ArrayList<>(basicCegarLoop.getFloydHoareAutomata());
 		} else {
 			floydHoareAutomata = null;
 		}
@@ -217,21 +214,16 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 			} else {
 				switch (automataType) {
 				case FINITE_AUTOMATA: {
-					// FIXME: Assign this variable properly
-					final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations =
-							null;
 					switch (taPrefs.getFloydHoareAutomataReuse()) {
 					case EAGER:
 						result = new EagerReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-								taPrefs.interpolation(), computeHoareAnnotation, services,
-								mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile,
-								compositionFactory, transitionClazz);
+								taPrefs.interpolation(), computeHoareAnnotation, services, Collections.emptyList(),
+								rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
 						break;
 					case LAZY_IN_ORDER:
 						result = new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-								taPrefs.interpolation(), computeHoareAnnotation, services,
-								mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile,
-								compositionFactory, transitionClazz);
+								taPrefs.interpolation(), computeHoareAnnotation, services, Collections.emptyList(),
+								rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
 						break;
 					case NONE:
 						result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,

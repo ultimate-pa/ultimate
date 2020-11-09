@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.util.AritmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
@@ -241,7 +241,7 @@ public class ExpressionFactory {
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
 		switch (operator) {
 		case ARITHDIV: {
-			final BigInteger result = AritmeticUtils.euclideanDiv(leftValue, rightValue);
+			final BigInteger result = ArithmeticUtils.euclideanDiv(leftValue, rightValue);
 			return createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMINUS: {
@@ -249,7 +249,7 @@ public class ExpressionFactory {
 			return createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMOD: {
-			final BigInteger result = AritmeticUtils.euclideanMod(leftValue, rightValue);
+			final BigInteger result = ArithmeticUtils.euclideanMod(leftValue, rightValue);
 			return createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMUL: {

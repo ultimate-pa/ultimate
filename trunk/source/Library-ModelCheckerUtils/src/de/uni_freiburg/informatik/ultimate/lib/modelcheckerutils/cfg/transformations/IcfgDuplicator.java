@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ActionUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -58,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -185,7 +188,16 @@ public class IcfgDuplicator {
 
 		final IcfgEdge rtr;
 		if (oldEdge instanceof IIcfgInternalTransition<?>) {
-			rtr = edgeFactory.createInternalTransition(newSource, newTarget, null, newAction.getTransformula());
+			final UnmodifiableTransFormula tfWithBE;
+			if (oldEdge instanceof IActionWithBranchEncoders) {
+				tfWithBE = TransFormulaBuilder.constructCopy(mManagedScript,
+						((IActionWithBranchEncoders) oldEdge).getTransitionFormulaWithBranchEncoders(),
+						Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
+			} else {
+				tfWithBE = newAction.getTransformula();
+			}
+			rtr = edgeFactory.createInternalTransition(newSource, newTarget, null, newAction.getTransformula(),
+					tfWithBE);
 		} else if (oldEdge instanceof IIcfgCallTransition<?>) {
 			rtr = createCopyCall(newSource, newTarget, oldEdge, newAction, edgeFactory);
 		} else if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {

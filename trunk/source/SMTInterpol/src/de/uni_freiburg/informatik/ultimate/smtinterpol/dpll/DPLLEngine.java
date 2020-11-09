@@ -335,33 +335,22 @@ public class DPLLEngine {
 				continue nextList;
 			}
 			final Literal[] lits = clause.mLiterals;
-			final Literal myLit = lits[index];
-			final Literal myLitStatus = myLit.getAtom().mDecideStatus;
-
-			/* Special case unit clause: propagate or return as conflict clause */
-			if (lits.length == 1) {
-				assert index == 0;
-				/* put it on backtrack watchers so it is reconsidered when we backtrack. */
-				myLit.getAtom().mBacktrackWatchers.append(clause, index);
-				if (myLitStatus != myLit) {
-					if (myLitStatus == null) {
-						/* Propagate the unit clause. */
-						myLit.getAtom().mExplanation = clause;
-						mProps++;
-						clause = setLiteral(myLit);
-					}
-					if (Config.PROFILE_TIME) {
-						mPropClauseTime += System.nanoTime() - time - mSetTime;
-					}
-					return clause;
+			/*
+			 * For non-unit clauses we check if the watched literal is set to false. If not,
+			 * just put the watcher back on the list. A unit clause has a watcher on a
+			 * virtual second literal that is treated as if it were always false. In that
+			 * case we don't check if it is still undecided.
+			 */
+			if (index < lits.length) {
+				final Literal myLit = lits[index];
+				if (myLit.getAtom().getDecideStatus() != myLit.negate()) {
+					/* The watcher is still fine. Put it on the mWatchers list of that literal */
+					myLit.mWatchers.append(clause, index);
+					continue nextList;
 				}
-				continue nextList;
-			}
-
-			if (myLitStatus != myLit.negate()) {
-				/* The watcher is still fine. Put it on the mWatchers list of that literal */
-				myLit.mWatchers.append(clause, index);
-				continue nextList;
+			} else {
+				/* this is only for unit clauses */
+				assert index == 1 && lits.length == 1;
 			}
 
 			/*
@@ -492,8 +481,8 @@ public class DPLLEngine {
 					mUnsatClause = clause;
 				}
 			} else {
-				/* propagate unit clause: only register watcher zero. */
-				mPendingWatcherList.append(clause, 0);
+				/* propagate unit clause: only register watcher on "virtual" second literal. */
+				mPendingWatcherList.append(clause, 1);
 			}
 		} else {
 			/*

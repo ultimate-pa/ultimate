@@ -155,10 +155,8 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, Collections.emptySet(), true,
 				Collections.emptySet(), false);
-		for (final TermVariable auxVar : tf.getAuxVars()) {
-			tfb.addAuxVar(auxVar);
-		}
 		tfb.setFormula(newTerm);
+		tfb.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mScript);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(mScript);
 	}

@@ -37,7 +37,7 @@ public abstract class BDDFactory {
 	public static final String getProperty(String key, String def) {
 		try {
 			return System.getProperty(key, def);
-		} catch (final AccessControlException _) {
+		} catch (final AccessControlException e) {
 			return def;
 		}
 	}
@@ -83,10 +83,10 @@ public abstract class BDDFactory {
 			final Class c = Class.forName(bddpackage);
 			final Method m = c.getMethod("init", new Class[] { int.class, int.class });
 			return (BDDFactory) m.invoke(null, new Object[] { new Integer(nodenum), new Integer(cachesize) });
-		} catch (final ClassNotFoundException _) {
-		} catch (final NoSuchMethodException _) {
-		} catch (final IllegalAccessException _) {
-		} catch (final InvocationTargetException _) {
+		} catch (final ClassNotFoundException e) {
+		} catch (final NoSuchMethodException e) {
+		} catch (final IllegalAccessException e) {
+		} catch (final InvocationTargetException e) {
 		}
 		// falling back to default java implementation.
 		return JFactory.init(nodenum, cachesize);
@@ -559,7 +559,7 @@ public abstract class BDDFactory {
 			if (r != null) {
 				try {
 					r.close();
-				} catch (final IOException _) {
+				} catch (final IOException e) {
 				}
 			}
 		}
@@ -730,7 +730,7 @@ public abstract class BDDFactory {
 			if (is != null) {
 				try {
 					is.close();
-				} catch (final IOException _) {
+				} catch (final IOException e) {
 				}
 			}
 		}

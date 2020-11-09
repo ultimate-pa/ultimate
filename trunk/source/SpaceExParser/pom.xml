@@ -34,13 +34,13 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.25</version>
+		<version>0.2.0</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser</artifactId>
-	<version>0.1.25</version>
+	<version>0.2.0</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<build>
@@ -54,8 +54,10 @@
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
+								<echo>Building SpaceEx File Parser with xjc</echo>
 								<echo>SpaceEx Parser: workspaceDir is ${workspaceDir}</echo>
 								<echo>SpaceEx Parser: spaceexDir is ${spaceexDir}</echo>
+<!--
 								<exec executable="xjc" failonerror="true">
 									<arg value="-d" />
 									<arg value="${workspaceDir}/SpaceExParser/src" />
@@ -64,6 +66,16 @@
 										value="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" />
 									<arg value="${spaceexDir}/sspaceex.xsd" />
 								</exec>
+-->	
+								<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+							    	<classpath>
+							        	<fileset dir="${baSharedJarsDir}" includes="*.jar"/>
+							    	</classpath>
+								</taskdef>
+								
+								<xjc schema="${spaceexDir}/sspaceex.xsd" package="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" destdir="${workspaceDir}/SpaceExParser/src">
+									<produces dir="${workspaceDir}/SpaceExParser/src/de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" includes="**/*.java"/>
+								</xjc>
 
 							</target>
 						</configuration>

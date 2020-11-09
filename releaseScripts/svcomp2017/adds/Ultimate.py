@@ -38,9 +38,9 @@ def getBinary():
     currentPlatform = platform.system()
     
     if currentPlatform == 'Windows':
-        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
+        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar', '-data', '@user.home/.ultimate']
     else:
-        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
+        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar', '-data', '@user.home/.ultimate']
     
     # check if ultimate bin is there 
     # if not os.path.isfile(ultimateBin):

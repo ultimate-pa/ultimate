@@ -26,10 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -40,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -91,6 +99,11 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		mConstant = constant;
 		mAbstractVariable2Coefficient = variables2coeffcient;
 	}
+
+	protected abstract IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+			final Map<AVAR, Rational> variables2coeffcient);
+
+	protected abstract AVAR constructAbstractVar(Term term);
 
 	/**
 	 * True if this represents not an legal term of its kind but an error during the translation process, e.g., if
@@ -365,4 +378,64 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 
 	public abstract AbstractGeneralizedAffineTerm<?> removeAndNegate(Monomial monomialOfSubject);
 
+	public IPolynomialTerm div(final Script script, final BigInteger divisor, final Set<TermVariable> bannedForDivCapture) {
+		if (!SmtSortUtils.isIntSort(getSort())) {
+			throw new AssertionError("only for int");
+		}
+		final Map<AVAR, Rational> variables2coeffcient = new HashMap<>();
+		final List<Term> summandsOfDiv = new ArrayList<>();
+		for (final Entry<AVAR, Rational> entry : getAbstractVariable2Coefficient().entrySet()) {
+			final Rational divisorAsRational = toRational(divisor);
+			final Rational quotient = entry.getValue().div(divisorAsRational);
+			if (quotient.isIntegral()) {
+				final Rational euclideanQuotient = euclideanDivision(entry.getValue(), divisor);
+				variables2coeffcient.put(entry.getKey(), euclideanQuotient);
+			} else {
+				if (Arrays.stream(entry.getKey().getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
+					return null;
+				}
+				summandsOfDiv.add(SmtUtils.mul(script, entry.getValue(), entry.getKey()));
+			}
+		}
+		final Rational constant;
+		if (summandsOfDiv.isEmpty()) {
+			constant = euclideanDivision(getConstant(), divisor);
+		} else {
+			constant = Rational.ZERO;
+			if (!getConstant().equals(Rational.ZERO)) {
+				summandsOfDiv.add(getConstant().toTerm(getSort()));
+			}
+			final Term sum = SmtUtils.sum(script, getSort(), summandsOfDiv.toArray(new Term[summandsOfDiv.size()]));
+
+			final Term div = SmtUtils.div(script, sum, SmtUtils.constructIntegerValue(script, getSort(), divisor));
+			final AVAR avar = constructAbstractVar(div);
+			variables2coeffcient.put(avar, Rational.ONE);
+		}
+		return constructNew(getSort(), constant, variables2coeffcient);
+	}
+
+	protected Rational euclideanDivision(final Rational divident, final BigInteger divisor) {
+		if (!divident.isIntegral()) {
+			throw new AssertionError();
+		}
+		return toRational(ArithmeticUtils.euclideanDiv(divident.numerator(), divisor));
+	}
+
+	private static Rational toRational(final BigInteger bi) {
+		return Rational.valueOf(bi, BigInteger.ONE);
+	}
+
+	public IPolynomialTerm add(final Rational offset) {
+		final Rational newConstant;
+		if (SmtSortUtils.isRealSort(getSort())) {
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isIntSort(getSort())) {
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isBitvecSort(getSort())) {
+			newConstant = PolynomialTermUtils.bringValueInRange(getConstant().add(offset), getSort());
+		} else {
+			throw new AssertionError("unsupported Sort " + getSort());
+		}
+		return constructNew(getSort(), newConstant, getAbstractVariable2Coefficient());
+	}
 }
