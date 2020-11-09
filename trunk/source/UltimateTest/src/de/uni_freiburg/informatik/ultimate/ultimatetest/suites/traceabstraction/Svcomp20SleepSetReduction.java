@@ -36,33 +36,29 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDec
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 public class Svcomp20SleepSetReduction extends AbstractTraceAbstractionTestSuite {
-	private static final boolean USE_SAFE_BENCHMARKS = true;
-	private static final boolean USE_UNSAFE_BENCHMARKS = true;
-	private static final int TIMEOUT = 60; // seconds
+	private static final int TIMEOUT = 180; // seconds
 
 	// @formatter:off
-	private static final String[] BENCHMARKS_UNSAFE_32BIT = {
-		"examples/svcomp/ldv-races/race-2_2-container_of.i",
-		"examples/svcomp/ldv-races/race-2_3-container_of.i",
-		"examples/svcomp/pthread/stack-2.i",
-		"examples/svcomp/pthread/triangular-longest-2.i",
-		"examples/svcomp/pthread-atomic/read_write_lock-2.i",
-		"examples/svcomp/pthread-divine/ring_1w1r-1.i",
-		"examples/svcomp/pthread-lit/qw2004-2.i",
-		"examples/svcomp/pthread-wmm/rfi004_rmo.oepc.i",
+	private static final String[] BENCHMARKS_ATOMIC = {
+			//"examples/svcomp/pthread-wmm/mix000_power.oepc.i",
+			"examples/svcomp/pthread-wmm/mix000_power.opt.i",
+			//"examples/svcomp/pthread-wmm/mix000_pso.oepc.i",
+			"examples/svcomp/pthread-wmm/mix000_pso.opt.i"
+			//"examples/svcomp/pthread-wmm/mix000_rmo.oepc.i",
+			//"examples/svcomp/pthread-wmm/mix000_rmo.opt.i"
+			/*
+			"examples/svcomp/pthread-wmm/mix000_tso.oepc.i",
+			"examples/svcomp/pthread-wmm/mix000_tso.opt.i",
+			"examples/svcomp/pthread-wmm/mix001_power.oepc.i",
+			"examples/svcomp/pthread-wmm/mix001_power.opt.i",
+			"examples/svcomp/pthread-wmm/mix001_pso.oepc.i",
+			"examples/svcomp/pthread-wmm/mix001_pso.opt.i",
+			"examples/svcomp/pthread-wmm/mix001_rmo.oepc.i",
+			"examples/svcomp/pthread-wmm/mix001_rmo.opt.i",
+			"examples/svcomp/pthread-wmm/mix001_tso.oepc.i",
+			"examples/svcomp/pthread-wmm/mix001_tso.opt.i"*/
 	};
 
-	private static final String[] BENCHMARKS_SAFE_32BIT = {
-		"examples/svcomp/ldv-races/race-4_1-thread_local_vars.i",
-		"examples/svcomp/pthread-atomic/read_write_lock-1.i",
-		"examples/svcomp/pthread-ext/03_incdec.i",
-		"examples/svcomp/pthread-ext/29_conditionals_vs.i",
-		"examples/svcomp/pthread-ext/34_double_lock_p2_vs.i",
-		"examples/svcomp/pthread-ext/39_rand_lock_p0_vs.i",
-		"examples/svcomp/pthread-ext/41_FreeBSD_abd_kbd_sliced.i",
-		"examples/svcomp/pthread-ext/44_Solaris_space_map_sliced.i",
-		"examples/svcomp/pthread-wmm/safe008_tso.opt.i",
-	};
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
@@ -82,8 +78,8 @@ public class Svcomp20SleepSetReduction extends AbstractTraceAbstractionTestSuite
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
-		//"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf"
-		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"
+		//"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-Delay.epf"
 	};
 
 	private static final String[] TOOLCHAINS = {
@@ -93,23 +89,11 @@ public class Svcomp20SleepSetReduction extends AbstractTraceAbstractionTestSuite
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (USE_SAFE_BENCHMARKS) {
-			for (final String file : BENCHMARKS_SAFE_32BIT) {
-				for (final String setting : SETTINGS_32BIT) {
-					for (final String toolchain : TOOLCHAINS) {
-						addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, setting, toolchain,
-								getTimeout()));
-					}
-				}
-			}
-		}
-		if (USE_UNSAFE_BENCHMARKS) {
-			for (final String file : BENCHMARKS_UNSAFE_32BIT) {
-				for (final String setting : SETTINGS_32BIT) {
-					for (final String toolchain : TOOLCHAINS) {
-						addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, setting, toolchain,
-								getTimeout()));
-					}
+		for (final String file : BENCHMARKS_ATOMIC) {
+			for (final String setting : SETTINGS_32BIT) {
+				for (final String toolchain : TOOLCHAINS) {
+					addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, setting, toolchain,
+							getTimeout()));
 				}
 			}
 		}
