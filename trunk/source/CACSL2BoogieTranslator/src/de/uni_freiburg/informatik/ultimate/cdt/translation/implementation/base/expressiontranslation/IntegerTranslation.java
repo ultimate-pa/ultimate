@@ -169,8 +169,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	
 			Expression absAnd = bitAbs.abstractAnd(loc, op, left, typeLeft, right, typeRight, hook);
 			return absAnd;
-		//	funcname = "bitwiseAnd";
-		//	break;
+//			funcname = "bitwiseAnd";
+//			break;
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
 			Expression absOr = bitAbs.abstractOr(loc, op, left, typeLeft, right, typeRight, hook);
@@ -180,8 +180,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
 			// xor rule with boolean, bit-vector size 1?
-			funcname = "bitwiseXor";
-			break;
+			Expression absXor = bitAbs.abstractXor(loc, op, left, typeLeft, right, typeRight, hook);
+			return absXor;
+//			funcname = "bitwiseXor";
+//			break;
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
 			final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
