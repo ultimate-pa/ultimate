@@ -40,12 +40,12 @@ public class Svcomp20SleepSetReduction extends AbstractTraceAbstractionTestSuite
 
 	// @formatter:off
 	private static final String[] BENCHMARKS_ATOMIC = {
-			//"examples/svcomp/pthread-wmm/mix000_power.oepc.i",
+			"examples/svcomp/pthread-wmm/mix000_power.oepc.i",
 			"examples/svcomp/pthread-wmm/mix000_power.opt.i",
-			//"examples/svcomp/pthread-wmm/mix000_pso.oepc.i",
-			"examples/svcomp/pthread-wmm/mix000_pso.opt.i"
-			//"examples/svcomp/pthread-wmm/mix000_rmo.oepc.i",
-			//"examples/svcomp/pthread-wmm/mix000_rmo.opt.i"
+			"examples/svcomp/pthread-wmm/mix000_pso.oepc.i",
+			"examples/svcomp/pthread-wmm/mix000_pso.opt.i",
+			"examples/svcomp/pthread-wmm/mix000_rmo.oepc.i",
+			"examples/svcomp/pthread-wmm/mix000_rmo.opt.i"
 			/*
 			"examples/svcomp/pthread-wmm/mix000_tso.oepc.i",
 			"examples/svcomp/pthread-wmm/mix000_tso.opt.i",
@@ -80,6 +80,7 @@ public class Svcomp20SleepSetReduction extends AbstractTraceAbstractionTestSuite
 	private static final String[] SETTINGS_32BIT = {
 		//"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"
 		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-Delay.epf"
+		//"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-New_States.epf"
 	};
 
 	private static final String[] TOOLCHAINS = {
