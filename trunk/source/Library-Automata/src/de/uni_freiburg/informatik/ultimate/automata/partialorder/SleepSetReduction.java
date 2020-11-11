@@ -59,12 +59,14 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 	private final ISleepSetStateFactory<L, S, S2> mStateFactory;
 	private final HashMap<S, Set<L>> mPrunedMap;
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
-	private BasicCegarLoop.SleepSetMode mMode;
+	private final Boolean mMode;
+	//private BasicCegarLoop.SleepSetMode mMode;
 	
 	public SleepSetReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
 			final AutomataLibraryServices services, final ISleepSetStateFactory<L, S, S2> stateFactory,
-			final BasicCegarLoop.SleepSetMode mode) {
+			//final BasicCegarLoop.SleepSetMode mode
+			final Boolean mode) {
 		super(services);
 		mStateFactory = stateFactory;
 		mOperand = operand;
@@ -86,7 +88,7 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 			mReductionAutomaton.addState(true, mOperand.isFinal(startState), newStartState);
 			mStateStack.push(newStartState);
 			mStateMap.put(newStartState, startStatePair);
-
+			mDelaySetMap.put(startState, new HashSet<Set<L>>());
 		}
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
@@ -106,8 +108,8 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 			final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
 			
 			
-			if ((mMode == BasicCegarLoop.SleepSetMode.NEW_STATES && !mVisitedSet.contains(currentSleepSetState)) || 
-					(mMode == BasicCegarLoop.SleepSetMode.DELAY_SET && mPrunedMap.get(currentState) == null)){
+			if ((!mMode && !mVisitedSet.contains(currentSleepSetState)) || 
+					(mMode && mPrunedMap.get(currentState) == null)){
 				// state not visited with this sleep set
 				mVisitedSet.add(currentSleepSetState);
 				mPrunedMap.put(currentState, currentSleepSet);
@@ -126,7 +128,7 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 				Pair<S, Set<L>> currentStatePair = new Pair<S, Set<L>>(currentState, currentSleepSet);
 				mStateMap.put(currentSleepSetState, currentStatePair);
 				mPrunedMap.put(currentState, currentSleepSet);
-			} else if (mMode == BasicCegarLoop.SleepSetMode.DELAY_SET){
+			} else if (mMode){
 				final Set<L> pruned = mPrunedMap.get(currentState);
 				successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
 				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
@@ -160,17 +162,10 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 				final Set<Set<L>> succDelaySet = new HashSet<>();
 				
 				S2 succSleepSetState = null;
-				switch (mMode) {
-				case DELAY_SET:
+				if (mMode) {
 					succSleepSetState = mStateFactory.createSleepSetState(succState, new HashSet<L>());
-					break;
-				case NEW_STATES:
+				} else {
 					succSleepSetState = mStateFactory.createSleepSetState(succState, succSleepSet);
-					break;
-				case NONE:
-					break;
-				default:
-					break;
 				}
 				mStateMap.put(succSleepSetState, new Pair<>(succState, succSleepSet));
 				
@@ -181,7 +176,7 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 				mReductionAutomaton.addInternalTransition(currentSleepSetState, letterTransition, succSleepSetState);
 
 				
-				if (mMode == BasicCegarLoop.SleepSetMode.DELAY_SET && mStateStack.contains(succSleepSetState)) {
+				if (mMode && mStateStack.contains(succSleepSetState)) {
 					succDelaySet.addAll(mDelaySetMap.get(succState));
 					succDelaySet.add(succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
