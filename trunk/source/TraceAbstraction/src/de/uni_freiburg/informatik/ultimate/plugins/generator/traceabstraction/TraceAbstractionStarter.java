@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -332,6 +333,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	// TODO: Should we pass errorLocs here?
 	private Result iterateNew(final DebugIdentifier name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
 			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<IcfgLocation> errorLocs,
@@ -344,8 +346,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation, taPrefs.getConcurrency(),
 					mCompositionFactory, mTransitionClazz);
 		} else {
-			CegarLoopResult<L> concurClres = null;
-			IIcfg<IcfgLocation> oldIcfg = null;
+			IIcfg<IcfgLocation> prevIcfg = null;
+			Set<IcfgLocation> prevErrorLocs = null;
+			PredicateFactory prevPredicateFactory = null;
 			int numberOfThreadInstances = 1;
 			while (true) {
 				mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
@@ -353,44 +356,44 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
 				final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
 				mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
-				final PredicateFactory predicateFactory1 =
-						new PredicateFactory(mServices, petrifiedIcfg.getCfgSmtToolkit().getManagedScript(),
-								petrifiedIcfg.getCfgSmtToolkit().getSymbolTable());
-				final Map<String, Set<IcfgLocation>> proc2errNodes = petrifiedIcfg.getProcedureErrorNodes();
-				final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
-				for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
-					errNodesOfAllProc.addAll(errNodeOfProc);
+				final CfgSmtToolkit cfgSmtToolkit = petrifiedIcfg.getCfgSmtToolkit();
+				final PredicateFactory newPredicateFactory = new PredicateFactory(mServices,
+						cfgSmtToolkit.getManagedScript(), cfgSmtToolkit.getSymbolTable());
+
+				if (prevIcfg != null && taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
+					// TODO: Can we optimize this (e.g. check asserts and in-use separately)?
+					final CegarLoopResult<L> resultWithoutAddingThreads = CegarLoopResult.iterate(mServices, name,
+							prevIcfg, taPrefs, prevPredicateFactory, prevErrorLocs, witnessAutomaton,
+							rawFloydHoareAutomataFromFile, computeHoareAnnotation, taPrefs.getConcurrency(),
+							mCompositionFactory, mTransitionClazz);
+					assert resultWithoutAddingThreads.getOverallResult() == Result.SAFE;
+					final var hoareAutomata = resultWithoutAddingThreads.getFloydHoareAutomata();
+					if (areOldAutomataSufficient(petrifiedIcfg, prevIcfg, newPredicateFactory, hoareAutomata)) {
+						// The program is safe!
+						// TODO: Is this the correct result?
+						clres = resultWithoutAddingThreads;
+						break;
+					}
 				}
-				if (concurClres != null && areOldAutomataSufficient(petrifiedIcfg, oldIcfg, predicateFactory1,
-						concurClres.getFloydHoareAutomata())) {
-					// The program is safe!
-					// TODO: What to return as statisticsGenerator and artifact (has to contain SAFE)?
-					final var statistics = new CegarLoopStatisticsGenerator();
-					// statistics.addReuseStats(concurClres.getCegarLoopStatisticsGenerator());
-					statistics.setResult(Result.SAFE);
-					clres = new CegarLoopResult<>(Result.SAFE, null, null, null, statistics, concurClres.getArtifact(),
-							concurClres.getFloydHoareAutomata());
-					mLogger.info(
-							"Interpolants can be generalized for " + numberOfThreadInstances + " thread instances.");
+				final Set<IcfgLocation> errNodesOfAllProc = petrifiedIcfg.getProcedureErrorNodes().values().stream()
+						.flatMap(Set::stream).collect(Collectors.toSet());
+				final CegarLoopResult<L> result = CegarLoopResult.iterate(mServices, name, petrifiedIcfg, taPrefs,
+						newPredicateFactory, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile,
+						computeHoareAnnotation, taPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
+				if (hasSufficientThreadInstances(result)) {
+					clres = result;
 					break;
 				}
-				oldIcfg = petrifiedIcfg;
-				concurClres = CegarLoopResult.iterate(mServices, name, petrifiedIcfg, taPrefs, predicateFactory1,
-						errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation,
-						taPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
-				if (hasInsufficientThreadInstances(concurClres)) {
-					// reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program",
-					// "unable to analyze", Severity.WARNING));
-					// mOverallResult = Result.UNKNOWN;
-					// return Result.UNKNOWN;
-					mLogger.warn(numberOfThreadInstances
-							+ " thread instances were not sufficient, I will increase this number and restart the analysis");
-					numberOfThreadInstances++;
-					taBenchmark.aggregateBenchmarkData(concurClres.getCegarLoopStatisticsGenerator());
-					continue;
-				}
-				clres = concurClres;
-				break;
+				mLogger.warn(numberOfThreadInstances
+						+ " thread instances were not sufficient, I will increase this number and restart the analysis");
+				numberOfThreadInstances++;
+				taBenchmark.aggregateBenchmarkData(result.getCegarLoopStatisticsGenerator());
+
+				prevIcfg = petrifiedIcfg;
+				// Remove all in use error locations
+				errNodesOfAllProc.removeAll(cfgSmtToolkit.getConcurrencyInformation().getInUseErrorNodeMap().values());
+				prevErrorLocs = errNodesOfAllProc;
+				prevPredicateFactory = newPredicateFactory;
 			}
 		}
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
@@ -408,9 +411,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private boolean areOldAutomataSufficient(final IIcfg<IcfgLocation> icfg, final IIcfg<IcfgLocation> oldIcfg,
 			final PredicateFactory predicateFactory,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> automataPairs) {
-		if (automataPairs == null || automataPairs.isEmpty()) {
-			return false;
-		}
 		final var toolkit = icfg.getCfgSmtToolkit();
 		final var managedScript = toolkit.getManagedScript();
 		final var aServices = new AutomataLibraryServices(mServices);
@@ -445,7 +445,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					if (copiedThreads.contains(newThread)) {
 						continue;
 					}
-					// TODO: Check the forks as well!
 					final var newActions = newTi.getActions(newThread);
 					final var oldActions = oldTi.getActions(entry.getValue());
 					for (int i = 0; i < newActions.size(); i++) {
@@ -469,10 +468,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final var prePred = predicateUnifier.getOrConstructPredicate(precondition);
 				final var postPred = predicateUnifier.getOrConstructPredicate(substituted);
 				if (htc.checkInternal(prePred, (IInternalAction) entry.getKey(), postPred) != Validity.VALID) {
+					htc.releaseLock();
 					return false;
 				}
 			}
 		}
+		htc.releaseLock();
 		return true;
 	}
 
@@ -483,23 +484,21 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			for (final var edge : automaton.internalSuccessors(pred)) {
 				final L letter = edge.getLetter();
 				final Term oldPre = result.get(letter);
-				// TODO: Do not add all predicates?!?
 				result.put(letter, oldPre == null ? pred.getFormula() : SmtUtils.or(script, oldPre, pred.getFormula()));
 			}
 		}
 		return result;
 	}
 
-	private static <L extends IIcfgTransition<?>> boolean
-			hasInsufficientThreadInstances(final CegarLoopResult<L> clres) {
+	private static <L extends IIcfgTransition<?>> boolean hasSufficientThreadInstances(final CegarLoopResult<L> clres) {
 		if (clres.getOverallResult() != Result.UNSAFE) {
-			return false;
+			return true;
 		}
 		final AtomicTraceElement<L> te =
 				clres.getProgramExecution().getTraceElement(clres.getProgramExecution().getLength() - 1);
 		final IcfgLocation tar = te.getTraceElement().getTarget();
 		final Check check = Check.getAnnotation(tar);
-		return check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
+		return !check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
 
 	}
 

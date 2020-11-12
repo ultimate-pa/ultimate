@@ -99,7 +99,8 @@ public class ThreadInformation<LETTER extends IIcfgTransition<?>> {
 	public List<IcfgEdge> getActions(final String thread) {
 		List<IcfgEdge> result = mThreads2Actions.get(thread);
 		if (result == null) {
-			final var iterator = new IcfgEdgeIterator(mEntryNodes.get(thread).getOutgoingEdges());
+			// TODO: What happens, if we have multiple incoming edges (i.e. forks)?
+			final var iterator = new IcfgEdgeIterator(mEntryNodes.get(thread).getIncomingEdges());
 			result = iterator.asStream().collect(Collectors.toList());
 			mThreads2Actions.put(thread, result);
 		}

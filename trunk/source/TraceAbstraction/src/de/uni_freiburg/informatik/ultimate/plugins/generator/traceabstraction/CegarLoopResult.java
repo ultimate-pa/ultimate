@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -122,6 +121,8 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 		return mFloydHoareAutomata;
 	}
 
+	// TODO: Move this to its own class (instead of result class)?
+	// TODO: Use errorLocs instead of creating errNodesOfAllProc?
 	public static <L extends IIcfgTransition<?>> CegarLoopResult<L> iterate(final IUltimateServiceProvider services,
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
 			final PredicateFactory predicateFactory, final Collection<IcfgLocation> errorLocs,
@@ -129,13 +130,8 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation, final Concurrency automataType,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		final Map<String, Set<IcfgLocation>> proc2errNodes = root.getProcedureErrorNodes();
-		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
-		for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
-			errNodesOfAllProc.addAll(errNodeOfProc);
-		}
 		final BasicCegarLoop<L> basicCegarLoop = constructCegarLoop(services, name, root, taPrefs,
-				root.getCfgSmtToolkit(), predicateFactory, errNodesOfAllProc, rawFloydHoareAutomataFromFile,
+				root.getCfgSmtToolkit(), predicateFactory, errorLocs, rawFloydHoareAutomataFromFile,
 				computeHoareAnnotation, automataType, compositionFactory, transitionClazz);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
