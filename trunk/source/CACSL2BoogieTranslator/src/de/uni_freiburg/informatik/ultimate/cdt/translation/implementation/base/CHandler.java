@@ -131,6 +131,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.Ch
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -146,6 +147,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -180,6 +182,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitabsTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -707,14 +710,59 @@ public class CHandler {
 
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
+			
+			//@Cyrus, debug
+			
+			if (BitabsTranslation.containBitwise(node)) {
+				
+				// for the general bitwise assignment case, we build up assume statements.
+				System.out.println("----Is this binary expression contains bitwise operator?: " + BitabsTranslation.containBitwise(node));
+				System.out.println("----assignment rhs expression before translation: " + node.getOperand2().toString() );
+				System.out.println("----assignment rhs expression after translation: "+ rightOperand.toString());
+				System.out.println("----assignment lhs expression after translation: "+ rightOperand.toString());
+				
+				final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+				builder.addAllExceptLrValue(leftOperand);
+				final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
+				final ExpressionResult rightOperandSwitched = mExprResultTransformer
+						.makeRepresentationReadyForConversionAndRexBoolToInt(rightOperand, loc, lType, node);
+				builder.addAllIncludingLrValue(rightOperandSwitched);
+				
+				Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+				Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+				
+				Expression left_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGT, leftOperand.getLrValue().getValue(), literal_0);
+				AssumeStatement assume_pos = new AssumeStatement(loc, left_pos);
+				Expression formula_left = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), literal_1);
+				AssumeStatement assume_stmt = new AssumeStatement(loc, formula_left);
+				
+				
+				ExpressionResult assign_rv = makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(), builder.build(),
+						node);	
+				
+		//		Build the new assignment with local variable
+				builder.addAllExceptLrValue(assign_rv);
+				
+				/* __VERIFIER_assume(n>=0); */
+			      /* __VERIFIER_assume(n<n0); */
+				   
+				builder.addStatement(assume_pos);
+				builder.addStatement(assume_stmt);
+				return builder.build();		
+				
+			} else {
+			
+		
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
 			final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
 			final ExpressionResult rightOperandSwitched = mExprResultTransformer
 					.makeRepresentationReadyForConversionAndRexBoolToInt(rightOperand, loc, lType, node);
 			builder.addAllIncludingLrValue(rightOperandSwitched);
+			
 			return makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(), builder.build(),
 					node);
+			}
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
@@ -1349,7 +1397,11 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTExpressionStatement node) {
+		
+		//for the bitswise abstraction,		
+	//	System.out.println("Expression in the statement before get translated:"+node.getExpression().toString());
 		final Result r = main.dispatch(node.getExpression());
+//		System.out.println("----ExpressionStatement in result:----"+ r.toString());
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult rExp = (ExpressionResult) r;
 
@@ -2621,7 +2673,7 @@ public class CHandler {
 					new LeftHandSide[] { lValue.getLhs() }, new Expression[] { rhsWithBitfieldTreatment });
 
 			builder.addStatement(assignStmt);
-
+			
 			for (final Overapprox oa : rhsConverted.getOverapprs()) {
 				for (final Statement stm : builder.getStatements()) {
 					oa.annotate(stm);
