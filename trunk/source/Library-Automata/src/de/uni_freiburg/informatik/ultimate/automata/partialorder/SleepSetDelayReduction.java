@@ -68,8 +68,8 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	private final ArrayDeque<S> mStateStack;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
-	private NestedWordAutomaton<L, S> mReductionAutomaton;
-	private NestedRun<L, S> mAcceptingRun;
+	//private NestedWordAutomaton<L, S> mReductionAutomaton;
+	//private NestedRun<L, S> mAcceptingRun;
 	private final IPartialOrderVisitor<L, S> mVisitor;
 	private boolean mExit;
 
@@ -109,7 +109,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 			mSleepSetMap.put(startState, new HashSet<L>());
 			mDelaySetMap.put(startState, new HashSet<Set<L>>());
 			mStateStack.push(startState);
-			mVisitor.initialize(startState);
+			mVisitor.addStartState(startState);
 			//mReductionAutomaton.addState(true, mOperand.isFinal(startState), startState);
 
 		}
@@ -198,7 +198,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 					mDelaySetMap.put(succState, succDelaySet);
 					mStateStack.push(succState);
 				} else {
-					mAcceptingRun = mVisitor.constructRun(mStateStack);
+					//mAcceptingRun = mVisitor.constructRun(mStateStack);
 				}
 				explored.add(letterTransition);
 			}
@@ -210,8 +210,8 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	@Override
 	public NestedWordAutomaton<L, S> getResult() {
 		// TODO Auto-generated method stub
-		mReductionAutomaton = mVisitor.getReductionAutomaton();
-		return mReductionAutomaton;
+		//mReductionAutomaton = mVisitor.getReductionAutomaton();
+		return null;
 	}
 
 	@Override

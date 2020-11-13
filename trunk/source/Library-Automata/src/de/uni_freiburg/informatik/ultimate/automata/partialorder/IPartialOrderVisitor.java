@@ -37,11 +37,7 @@ public interface IPartialOrderVisitor<L, S> {
 
 	void backtrackState(S state);
 	
-	NestedRun<L, S> constructRun(ArrayDeque<S> stateStack);
-	
-	public NestedWordAutomaton<L, S> getReductionAutomaton();
-	
-	void initialize(S state);
+	void addStartState(S state);
 
 	void discoverState();
 }

@@ -48,7 +48,7 @@ public class DelayVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S> {
 	}
 	
 	@Override
-	public void initialize(S state) {
+	public void addStartState(S state) {
 		mReductionAutomaton.addState(true, mOperand.isFinal(state), state);
 		
 	}
