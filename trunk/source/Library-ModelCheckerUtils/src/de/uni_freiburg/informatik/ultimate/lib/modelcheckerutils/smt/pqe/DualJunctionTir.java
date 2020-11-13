@@ -396,8 +396,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 		private Term buildBoundConstraint(final IUltimateServiceProvider services, final Script script,
 				final int quantifier) {
-			// TODO unused!!
-			final Term withoutAntiDer = buildDualFiniteJunction(script, quantifier, mLowerBounds, mUpperBounds, null);
+
+			// final Term withoutAntiDer = buildDualFiniteJunction(script,
+			// quantifier, mLowerBounds, mUpperBounds, null);
 			final Term antiDer = buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script);
 			if (antiDer == null) {
 				return null;
@@ -450,14 +451,14 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			for (final ExplicitLhsPolynomialRelation lower : lowerBounds) {
 				if (lower.getRelationSymbol().isUnSignedBvRelation()) {
 					eSet.add(BvSignedness.UNSIGNED);
-					if (upperBounds.isEmpty()) {
+					if (upperBounds.isEmpty() && lower.getRelationSymbol().isStrictRelation()) {
 						result = SmtUtils.and(script, result, constructBvBound(lower, script, lower.getRhs().getSort(),
 								BvSignedness.UNSIGNED, true, quantifier));
 						flag = true;
 					}
 				} else if (lower.getRelationSymbol().isSignedBvRelation()) {
 					eSet.add(BvSignedness.SIGNED);
-					if (upperBounds.isEmpty()) {
+					if (upperBounds.isEmpty() && lower.getRelationSymbol().isStrictRelation()) {
 						result = SmtUtils.and(script, result, constructBvBound(lower, script, lower.getRhs().getSort(),
 								BvSignedness.SIGNED, true, quantifier));
 						flag = true;
@@ -468,14 +469,14 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			for (final ExplicitLhsPolynomialRelation upper : upperBounds) {
 				if (upper.getRelationSymbol().isUnSignedBvRelation()) {
 					eSet.add(BvSignedness.UNSIGNED);
-					if (lowerBounds.isEmpty()) {
+					if (lowerBounds.isEmpty() && upper.getRelationSymbol().isStrictRelation()) {
 						result = SmtUtils.and(script, result, constructBvBound(upper, script, upper.getRhs().getSort(),
 								BvSignedness.UNSIGNED, false, quantifier));
 						flag = true;
 					}
 				} else if (upper.getRelationSymbol().isSignedBvRelation()) {
 					eSet.add(BvSignedness.SIGNED);
-					if (lowerBounds.isEmpty()) {
+					if (lowerBounds.isEmpty() && upper.getRelationSymbol().isStrictRelation()) {
 						result = SmtUtils.and(script, result, constructBvBound(upper, script, upper.getRhs().getSort(),
 								BvSignedness.SIGNED, false, quantifier));
 						flag = true;
