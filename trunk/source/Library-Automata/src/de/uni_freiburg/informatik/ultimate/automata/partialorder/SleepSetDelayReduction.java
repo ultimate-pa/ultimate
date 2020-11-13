@@ -36,28 +36,27 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * Implementation of Partial Order Reduction for Deterministic Finite Automata
- * using Sleep Sets for reduction and a Delay Set for handling loops
- * This version searches for an accepting run and constructs it if found.
- * 
+ * Implementation of Partial Order Reduction for Deterministic Finite Automata using Sleep Sets for reduction and a
+ * Delay Set for handling loops. This version can either construct a new automaton or search for an error trace.
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- * 		letter type
+ *            letter type
  * @param <S>
- * 		state type
+ *            state type
  */
 public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IStateFactory<S>> {
 
@@ -67,30 +66,32 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	private final HashMap<S, Set<L>> mSleepSetMap;
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
 	private final ArrayDeque<S> mStateStack;
-	private final ArrayDeque<L> mLetterStack;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
+	private NestedWordAutomaton<L, S> mReductionAutomaton;
 	private NestedRun<L, S> mAcceptingRun;
-	private final ArrayList<L> mAcceptingTransitionSequence;
-	private final Word<L> mAcceptingWord;
-	private final ArrayList<S> mAcceptingStateSequence;
+	private final IPartialOrderVisitor<L, S> mVisitor;
+	private boolean mExit;
 
 	/**
 	 * Constructor for POR with Sleep Sets and Delay Set
-	 * 
+	 *
 	 * @param operand
-	 * 		deterministic finite automaton
+	 *            deterministic finite automaton
 	 * @param independenceRelation
-	 * 		the underlying independence relation
+	 *            the underlying independence relation
 	 * @param sleepSetOrder
-	 * 		order of transitions for further branchings
+	 *            order of transitions for further branchings
 	 * @param services
-	 * 		ultimate services
-	 * 
+	 *            ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 *
 	 */
 	public SleepSetDelayReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
-			final AutomataLibraryServices services) {
+			final AutomataLibraryServices services, final IEmptyStackStateFactory<S> stateFactory,
+			final IPartialOrderVisitor<L, S> visitor) {
 		super(services);
 		mOperand = operand;
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
@@ -101,128 +102,116 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		mSleepSetMap = new HashMap<>();
 		mDelaySetMap = new HashMap<>();
 		mStateStack = new ArrayDeque<>();
-		mLetterStack = new ArrayDeque<>();
+		mVisitor = visitor;
+		//mReductionAutomaton = mVisitor.getReductionAutomaton();
+		//mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
 		for (final S startState : mStartStateSet) {
 			mSleepSetMap.put(startState, new HashSet<L>());
 			mDelaySetMap.put(startState, new HashSet<Set<L>>());
 			mStateStack.push(startState);
+			mVisitor.initialize(startState);
+			//mReductionAutomaton.addState(true, mOperand.isFinal(startState), startState);
+
 		}
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
-		mAcceptingTransitionSequence = new ArrayList<>();
-		mAcceptingStateSequence = new ArrayList<>();
-		mAcceptingWord = new Word<>();
-
-		mAcceptingRun = getAcceptingRun();
+		mExit = false;
+		constructReductionAutomaton();
 
 	}
 
-	private NestedRun<L, S> getAcceptingRun() {
-
-		final S currentState = mStateStack.peek();
-		// accepting run reconstruction
-		if (isGoalState(currentState)) {
-			return constructRun();
-		}
-		final ArrayList<L> successorTransitionList = new ArrayList<>();
-		Set<L> currentSleepSet = mSleepSetMap.get(currentState);
-
-		if (mPrunedMap.get(currentState) == null) {
-			// state not visited yet
-			mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
-			for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
-				if (!currentSleepSet.contains(transition.getLetter())) {
-					successorTransitionList.add(transition.getLetter());
-				}
-			}
-		} else {
-			// state already visited
-			final Set<L> pruned = mPrunedMap.get(currentState);
-			successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
-			currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
-			mSleepSetMap.put(currentState, currentSleepSet);
-			mPrunedMap.put(currentState, currentSleepSet);
-		}
-		// sort successorTransitionList according to the given order
-		final Comparator<L> order = mOrder.getOrder(currentState);
-		successorTransitionList.sort(order);
-		for (final L letterTransition : successorTransitionList) {
-			final var successors = mOperand.internalSuccessors(currentState, letterTransition).iterator();
-			final var currentTransition = successors.next();
-			assert !successors.hasNext() : "Automaton must be deterministic";
-
-			final S succState = currentTransition.getSucc();
-			final Set<L> succSleepSet = currentSleepSet.stream()
-					.filter(l -> mIndependenceRelation.contains(currentState, letterTransition, l))
-					.collect(Collectors.toCollection(HashSet::new));
-			final Set<Set<L>> succDelaySet = new HashSet<>();
-			if (mStateStack.contains(succState)) {
-				if (mDelaySetMap.get(succState) != null) {
-					succDelaySet.addAll(mDelaySetMap.get(succState));
-				}
-				succDelaySet.add(succSleepSet);
-				mDelaySetMap.put(succState, succDelaySet);
-			} else {
-				mSleepSetMap.put(succState, succSleepSet);
-				mDelaySetMap.put(succState, succDelaySet);
-				mStateStack.push(succState);
-				mLetterStack.push(letterTransition);
-				final var run = getAcceptingRun();
-				if (run != null) {
-					return run;
-				}
-			}
-			currentSleepSet.add(letterTransition);
-			mSleepSetMap.put(currentState, currentSleepSet);
-
-		}
-		// currentState backtracked
-		mStateStack.pop();
-		final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
-		if (!currentDelaySet.isEmpty()) {
-			currentSleepSet = currentDelaySet.iterator().next();
-			currentDelaySet.remove(currentSleepSet);
-			mSleepSetMap.put(currentState, currentSleepSet);
-			mDelaySetMap.put(currentState, currentDelaySet);
-			mStateStack.push(currentState);
-			final var run = getAcceptingRun();
-			if (run != null) {
-				return run;
-			}
-		}
-		if (!mOperand.isInitial(currentState)) {
-			mLetterStack.pop();
-		}
-		return null;
-	}
-
-	private Boolean isGoalState(final S state) {
-		return mOperand.isFinal(state);
-	}
-
-	private NestedRun<L, S> constructRun() {
-		S currentState = mStateStack.pop();
-		mAcceptingStateSequence.add(currentState);
-
+	private void constructReductionAutomaton() {
 		while (!mStateStack.isEmpty()) {
-			final L currentTransition = mLetterStack.pop();
-			mAcceptingTransitionSequence.add(0, currentTransition);
-			currentState = mStateStack.pop();
-			mAcceptingStateSequence.add(0, currentState);
+			
+			final S currentState = mStateStack.peek();
+			mVisitor.discoverState();
+			final ArrayList<L> successorTransitionList = new ArrayList<>();
+			Set<L> currentSleepSet = mSleepSetMap.get(currentState);
+			final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
+			
+			if(mPrunedMap.get(currentState) == null) {
+				// state not visited yet
+				mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
+				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
+					if (!currentSleepSet.contains(transition.getLetter())) {
+						successorTransitionList.add(transition.getLetter());
+					}
+				}
+				
+			} else if (!currentDelaySet.isEmpty()){
+				currentSleepSet = currentDelaySet.iterator().next();
+				currentDelaySet.remove(currentSleepSet);
+				final Set<L> pruned = mPrunedMap.get(currentState);
+				successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
+				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
+				mSleepSetMap.put(currentState, currentSleepSet);
+				mPrunedMap.put(currentState, currentSleepSet);
+			} else {
+				final Set<L> pruned = mPrunedMap.get(currentState);
+				successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
+				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
+				mSleepSetMap.put(currentState, currentSleepSet);
+				mPrunedMap.put(currentState, currentSleepSet);
+			}
+			
+			if (successorTransitionList.isEmpty()) {
+				mVisitor.backtrackState(currentState);
+				mStateStack.pop();
+			}
+			
+			// sort successorTransitionList according to the given order
+			final Comparator<L> order = mOrder.getOrder(currentState);
+			successorTransitionList.sort(order);
+			Set<L> explored = new HashSet<>();
+			
+			for (final L letterTransition : successorTransitionList) {
+				final var successors = mOperand.internalSuccessors(currentState, letterTransition).iterator();
+				if (!successors.hasNext()) {
+					continue;
+				}
+				final var currentTransition = successors.next();
+				assert !successors.hasNext() : "Automaton must be deterministic";
+
+				final S succState = currentTransition.getSucc();
+				final Set<L> succSleepSet = DataStructureUtils.union(currentSleepSet, explored).stream()
+						.filter(l -> mIndependenceRelation.contains(currentState, letterTransition, l))
+						.collect(Collectors.toCollection(HashSet::new));
+				final Set<Set<L>> succDelaySet = new HashSet<>();
+
+				/*
+				// add succState to the automaton
+				if (!mReductionAutomaton.contains(succState)) {
+					mReductionAutomaton.addState(false, mOperand.isFinal(succState), succState);
+					mDelaySetMap.put(succState, succDelaySet);
+				}
+				// add transition from currentState to succState to the automaton
+				mReductionAutomaton.addInternalTransition(currentState, letterTransition, succState);
+				*/
+				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
+				
+				if (!mExit && mStateStack.contains(succState)) {
+					succDelaySet.addAll(mDelaySetMap.get(succState));
+					succDelaySet.add(succSleepSet);
+					mDelaySetMap.put(succState, succDelaySet);
+				} else if (!mExit){
+					mSleepSetMap.put(succState, succSleepSet);
+					mDelaySetMap.put(succState, succDelaySet);
+					mStateStack.push(succState);
+				} else {
+					mAcceptingRun = mVisitor.constructRun(mStateStack);
+				}
+				explored.add(letterTransition);
+			}
+						
 		}
-		for (final L letter : mAcceptingTransitionSequence) {
-			final Word<L> tempWord = new Word<>(letter);
-			mAcceptingWord.concatenate(tempWord);
-		}
-		NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
-		mAcceptingRun = new NestedRun<>(acceptingNestedWord, mAcceptingStateSequence);
-		return mAcceptingRun;
+		
 	}
 
 	@Override
-	public Boolean getResult() {
+	public NestedWordAutomaton<L, S> getResult() {
 		// TODO Auto-generated method stub
-		return mAcceptingRun == null;
+		mReductionAutomaton = mVisitor.getReductionAutomaton();
+		return mReductionAutomaton;
 	}
 
 	@Override

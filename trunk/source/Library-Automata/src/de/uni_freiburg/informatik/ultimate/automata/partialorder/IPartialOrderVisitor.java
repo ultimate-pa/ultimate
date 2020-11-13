@@ -27,8 +27,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.ArrayDeque;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+
 public interface IPartialOrderVisitor<L, S> {
 	boolean discoverTransition(S source, L letter, S target);
 
 	void backtrackState(S state);
+	
+	NestedRun<L, S> constructRun(ArrayDeque<S> stateStack);
+	
+	public NestedWordAutomaton<L, S> getReductionAutomaton();
+	
+	void initialize(S state);
+
+	void discoverState();
 }

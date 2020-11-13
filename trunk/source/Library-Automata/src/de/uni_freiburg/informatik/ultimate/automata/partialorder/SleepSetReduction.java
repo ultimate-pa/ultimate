@@ -60,12 +60,10 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 	private final HashMap<S, Set<L>> mPrunedMap;
 	private final HashMap<S, Set<Set<L>>> mDelaySetMap;
 	private final Boolean mMode;
-	//private BasicCegarLoop.SleepSetMode mMode;
 	
 	public SleepSetReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
 			final AutomataLibraryServices services, final ISleepSetStateFactory<L, S, S2> stateFactory,
-			//final BasicCegarLoop.SleepSetMode mode
 			final Boolean mode) {
 		super(services);
 		mStateFactory = stateFactory;
@@ -124,7 +122,6 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 				final Set<L> pruned = mPrunedMap.get(currentState);
 				successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
 				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
-				//mSleepSetMap.put(currentState, currentSleepSet);
 				Pair<S, Set<L>> currentStatePair = new Pair<S, Set<L>>(currentState, currentSleepSet);
 				mStateMap.put(currentSleepSetState, currentStatePair);
 				mPrunedMap.put(currentState, currentSleepSet);
@@ -132,7 +129,6 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 				final Set<L> pruned = mPrunedMap.get(currentState);
 				successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
 				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
-				//mSleepSetMap.put(currentState, currentSleepSet);
 				Pair<S, Set<L>> currentStatePair = new Pair<S, Set<L>>(currentState, currentSleepSet);
 				mStateMap.put(currentSleepSetState, currentStatePair);
 				mPrunedMap.put(currentState, currentSleepSet);
@@ -182,7 +178,6 @@ public class SleepSetReduction<L, S, S2> extends UnaryNwaOperation<L, S, IStateF
 					mDelaySetMap.put(succState, succDelaySet);
 				} else {
 					mStateMap.put(succSleepSetState, new Pair<>(succState, succSleepSet));
-					//mSleepSetMap.put(succState, succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
 					mStateStack.push(succSleepSetState);
 				}
