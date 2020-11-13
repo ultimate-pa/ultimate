@@ -54,7 +54,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -68,7 +71,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -352,6 +357,82 @@ public class BitabsTranslation {
 			
 		}	
 	}
+	
+	public static Result abstractAssgin(CHandler chandler, final ExpressionResultTransformer exprResultTransformer,
+			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
+		final ILocation loc = locationFactory.createCLocation(node);
+		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
+		final ExpressionResult rightOperand = (ExpressionResult) main.dispatch(node.getOperand2());
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		
+		if (node.getOperand2() instanceof IASTBinaryExpression) {
+			// for the general bitwise assignment case, we build up assume statements.
+		//	System.out.println("----Is this binary expression contains bitwise operator?: " + BitabsTranslation.containBitwise(node));
+			
+			IASTBinaryExpression rhs_bit = (IASTBinaryExpression) node.getInitOperand2();					
+			boolean bit_op = BitabsTranslation.isBitwiseOperator(rhs_bit.getOperator());
+			System.out.println("----Is the binary operator a bitwise operator? " + bit_op);
+			
+			if (bit_op) {
+				System.out.println("----The bitwise operator is: " + rhs_bit.getRawSignature());
+					System.out.println("----assignment rhs expression before translation: "
+						+ node.getOperand2().getRawSignature());
+				System.out
+						.println("----assignment rhs expression after translation: " + rightOperand.toString());
+				System.out
+						.println("----assignment lhs expression after translation: " + rightOperand.toString());
+
+				builder.addAllExceptLrValue(leftOperand);
+				final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
+				final ExpressionResult rightOperandSwitched = exprResultTransformer
+						.makeRepresentationReadyForConversionAndRexBoolToInt(rightOperand, loc, lType, node);
+				builder.addAllIncludingLrValue(rightOperandSwitched);
+
+				Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+				Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+
+				Expression left_pos = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPGT, leftOperand.getLrValue().getValue(), literal_0);
+				AssumeStatement assume_pos = new AssumeStatement(loc, left_pos);
+				Expression formula_left = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), literal_1);
+
+				AssumeStatement assume_stmt = new AssumeStatement(loc, formula_left);
+				ExpressionResult assign_rv = chandler.makeAssignment(loc, leftOperand.getLrValue(),
+						leftOperand.getNeighbourUnionFields(), builder.build(), node);
+				// Build the new assignment with local variable
+				builder.addAllExceptLrValue(assign_rv);
+				/* __VERIFIER_assume(n>=0); */
+				/* __VERIFIER_assume(n<n0); */
+				builder.addStatement(assume_pos);
+				builder.addStatement(assume_stmt);
+				return builder.build();
+				} else {
+					// ToDo, x = 1+x&(x-3)?
+					throw new UnsupportedOperationException("ToDo, x = 1+x&(x-3)?...");
+					}
+			}
+		return builder.build();
+	}
+	
+	
+	
+	// Justify if an operator is bitwise operator
+	public static boolean isBitwiseOperator(int opcd) {
+	
+		switch(opcd) {
+		case IASTBinaryExpression.op_binaryAnd:
+		case IASTBinaryExpression.op_binaryAndAssign:
+		case IASTBinaryExpression.op_binaryOr:
+		case IASTBinaryExpression.op_binaryOrAssign:
+		case IASTBinaryExpression.op_binaryXor:
+		case IASTBinaryExpression.op_binaryXorAssign:
+			return true;
+		default: 
+			return false;			
+		}	
+	}
+	
 	
 	private void declareBitvectorFunction(final ILocation loc, final String prefixedFunctionName,
 			final boolean boogieResultTypeBool, final CPrimitive resultCType, final CPrimitive... paramCType) {

@@ -711,59 +711,71 @@ public class CHandler {
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
 			
-			//@Cyrus, debug
-			
-			if (BitabsTranslation.containBitwise(node)) {
-				
-				// for the general bitwise assignment case, we build up assume statements.
-				System.out.println("----Is this binary expression contains bitwise operator?: " + BitabsTranslation.containBitwise(node));
-				System.out.println("----assignment rhs expression before translation: " + node.getOperand2().toString() );
-				System.out.println("----assignment rhs expression after translation: "+ rightOperand.toString());
-				System.out.println("----assignment lhs expression after translation: "+ rightOperand.toString());
-				
-				final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-				builder.addAllExceptLrValue(leftOperand);
-				final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
-				final ExpressionResult rightOperandSwitched = mExprResultTransformer
-						.makeRepresentationReadyForConversionAndRexBoolToInt(rightOperand, loc, lType, node);
-				builder.addAllIncludingLrValue(rightOperandSwitched);
-				
-				Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
-				Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-				
-				Expression left_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGT, leftOperand.getLrValue().getValue(), literal_0);
-				AssumeStatement assume_pos = new AssumeStatement(loc, left_pos);
-				Expression formula_left = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), literal_1);
-				AssumeStatement assume_stmt = new AssumeStatement(loc, formula_left);
-				
-				
-				ExpressionResult assign_rv = makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(), builder.build(),
-						node);	
-				
-		//		Build the new assignment with local variable
-				builder.addAllExceptLrValue(assign_rv);
-				
-				/* __VERIFIER_assume(n>=0); */
-			      /* __VERIFIER_assume(n<n0); */
-				   
-				builder.addStatement(assume_pos);
-				builder.addStatement(assume_stmt);
-				return builder.build();		
-				
-			} else {
-			
-		
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-			builder.addAllExceptLrValue(leftOperand);
-			final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
-			final ExpressionResult rightOperandSwitched = mExprResultTransformer
-					.makeRepresentationReadyForConversionAndRexBoolToInt(rightOperand, loc, lType, node);
-			builder.addAllIncludingLrValue(rightOperandSwitched);
-			
-			return makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(), builder.build(),
+			//@Cyrus, debug. In this case we only transform with and-rule: r= a&b => r<=b, r<=a, they are positive, 
+			// and rhs is a bitwise binary expression.
+			boolean isBit = BitabsTranslation.containBitwise(node);
+			if (isBit) {
+				return BitabsTranslation.abstractAssgin(this, mExprResultTransformer, main, mLocationFactory, node);
+//				if (node.getOperand2() instanceof IASTBinaryExpression) {
+//					// for the general bitwise assignment case, we build up assume statements.
+//				//	System.out.println("----Is this binary expression contains bitwise operator?: " + BitabsTranslation.containBitwise(node));
+//					
+//					IASTBinaryExpression rhs_bit = (IASTBinaryExpression) node.getInitOperand2();					
+//					boolean bit_op = BitabsTranslation.isBitwiseOperator(rhs_bit.getOperator());
+//					System.out.println("----Is the binary operator a bitwise operator? " + bit_op);
+//					
+//					if (bit_op) {
+//						System.out.println("----The bitwise operator is: " + rhs_bit.getRawSignature());
+//					
+//						System.out.println("----assignment rhs expression before translation: "
+//								+ node.getOperand2().getRawSignature());
+//						System.out
+//								.println("----assignment rhs expression after translation: " + rightOperand.toString());
+//						System.out
+//								.println("----assignment lhs expression after translation: " + rightOperand.toString());
+//
+//						final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+//						builder.addAllExceptLrValue(leftOperand);
+//						final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
+//						final ExpressionResult rightOperandSwitched = mExprResultTransformer
+//								.makeRepresentationReadyForConversionAndRexBoolToInt(rightOperand, loc, lType, node);
+//						builder.addAllIncludingLrValue(rightOperandSwitched);
+//
+//						Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+//						Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+//
+//						Expression left_pos = ExpressionFactory.newBinaryExpression(loc,
+//								BinaryExpression.Operator.COMPGT, leftOperand.getLrValue().getValue(), literal_0);
+//						AssumeStatement assume_pos = new AssumeStatement(loc, left_pos);
+//						Expression formula_left = ExpressionFactory.newBinaryExpression(loc,
+//								BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), literal_1);
+//
+//						AssumeStatement assume_stmt = new AssumeStatement(loc, formula_left);
+//						ExpressionResult assign_rv = makeAssignment(loc, leftOperand.getLrValue(),
+//								leftOperand.getNeighbourUnionFields(), builder.build(), node);
+//						// Build the new assignment with local variable
+//						builder.addAllExceptLrValue(assign_rv);
+//						/* __VERIFIER_assume(n>=0); */
+//						/* __VERIFIER_assume(n<n0); */
+//						builder.addStatement(assume_pos);
+//						builder.addStatement(assume_stmt);
+//						return builder.build();
+//						} else {
+//							// ToDo, x = 1+x&(x-3)?
+//							throw new UnsupportedOperationException("ToDo, x = 1+x&(x-3)?...");
+//							}
+//					}
+				} else {
+					final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+					builder.addAllExceptLrValue(leftOperand);
+					final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
+					final ExpressionResult rightOperandSwitched = mExprResultTransformer
+							.makeRepresentationReadyForConversionAndRexBoolToInt(rightOperand, loc, lType, node);
+					builder.addAllIncludingLrValue(rightOperandSwitched);
+					return makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(), builder.build(),
 					node);
+					}
 			}
-		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
@@ -856,7 +868,7 @@ public class CHandler {
 					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr, node);
 			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
 		}
-		default:
+		default: 
 			final String msg = "Unknown or unsupported unary operation";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
