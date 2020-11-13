@@ -8,12 +8,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
-public class DelayVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S> {
+public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S> {
 	
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final NestedWordAutomaton<L, S> mReductionAutomaton;
 
-	public DelayVisitorAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+	public SleepSetVisitorAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final AutomataLibraryServices services, final IEmptyStackStateFactory<S> stateFactory) {
 		mOperand = operand;
 		mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);

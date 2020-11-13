@@ -116,11 +116,11 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
 		mExit = false;
-		constructReductionAutomaton();
+		search();
 
 	}
 
-	private void constructReductionAutomaton() {
+	private void search() {
 		while (!mStateStack.isEmpty()) {
 			
 			final S currentState = mStateStack.peek();

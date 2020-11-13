@@ -9,14 +9,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 
-public class DelayVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
+public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final ArrayDeque<ArrayList<L>> mLetterStack;
 	private final ArrayList<L> mAcceptingTransitionSequence;
 	private final Word<L> mAcceptingWord;
 	private final ArrayList<S> mAcceptingStateSequence;
 
-	public DelayVisitorSearch(final INwaOutgoingLetterAndTransitionProvider<L, S> operand) {
+	public SleepSetVisitorSearch(final INwaOutgoingLetterAndTransitionProvider<L, S> operand) {
 		mOperand = operand;
 		mLetterStack= new ArrayDeque<ArrayList<L>>();
 		mAcceptingTransitionSequence = new ArrayList<>();
