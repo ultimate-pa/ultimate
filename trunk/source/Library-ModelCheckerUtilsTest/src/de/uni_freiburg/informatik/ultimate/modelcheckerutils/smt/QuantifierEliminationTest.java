@@ -1047,10 +1047,38 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void bvTirBug05OneStrictRelation() {
+	public void bvTirBug01OneStrictRelation() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvult x c))";
-		final String expectedResult = "(bvult (_ bv0 8) c)";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	@Test
+	public void bvTirBug02OneStrictRelation() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c" , "a") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvult x c) (bvult x a)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	@Test
+	public void bvTirBug03OneStrictRelation() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvslt x c))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	@Test
+	public void bvTirBug04OneStrictRelation() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvugt x c))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	@Test
+	public void bvTirBug05OneStrictRelation() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvsgt x c))";
+		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
