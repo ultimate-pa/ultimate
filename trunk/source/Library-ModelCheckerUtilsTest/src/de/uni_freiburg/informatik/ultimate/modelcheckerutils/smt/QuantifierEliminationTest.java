@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -100,6 +101,18 @@ public class QuantifierEliminationTest {
 
 	public static Sort getBitvectorSort8(final Script script) {
 		return SmtSortUtils.getBitvectorSort(script, 8);
+	}
+
+	public static Sort getBitvectorSort32(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, 32);
+	}
+
+	public static Sort getArrayBv32Bv1Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort1(script));
+	}
+
+	public static Sort getIntBoolArray(final Script script) {
+		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getBoolSort(script));
 	}
 
 	public static Sort constructIntIntArray(final Script script) {
@@ -642,7 +655,9 @@ public class QuantifierEliminationTest {
 	private static void checkLogicalEquivalence(final Script script, final Term result,
 			final String expectedResultAsString) {
 		final Term expectedResultAsTerm = TermParseUtils.parseTerm(script, expectedResultAsString);
+		script.echo(new QuotedObject("Start correctness check for quantifier elimination."));
 		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResultAsTerm, script);
+		script.echo(new QuotedObject("Finished correctness check for quantifier elimination. Result: " + lbool));
 		final String errorMessage;
 		switch (lbool) {
 		case SAT:
@@ -799,6 +814,49 @@ public class QuantifierEliminationTest {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(mScript, formulaAsTerm);
 		Assert.assertTrue(mdns.getDimension() == 2);
+	}
+
+	@Test
+	public void arrayEliminationRushMountaineer01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
+		};
+		final String formulaAsString = "(exists ((|v_#valid_16| (Array (_ BitVec 32) (_ BitVec 1))) (|#t~string2.base| (_ BitVec 32))) (= (store (store (store |v_#valid_16| (_ bv0 32) (_ bv0 1)) |#t~string2.base| (_ bv1 1)) |~#a~0.base| (_ bv1 1)) |#valid|))";
+		final String expectedResult = formulaAsString;
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayEliminationRushMountaineer01Reduced() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "a"),
+		};
+		final String formulaAsString = "(exists ((ax (Array (_ BitVec 32) (_ BitVec 1))) (kx (_ BitVec 32))) (= (store (store ax (_ bv0 32) (_ bv0 1)) kx (_ bv1 1)) a))";
+		final String expectedResult = formulaAsString;
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, !true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayEliminationRushMountaineer02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
+		};
+		final String formulaAsString = "(exists ((|v_#valid_34| (Array (_ BitVec 32) (_ BitVec 1))) (|#t~string0.base| (_ BitVec 32)) (|#t~string3.base| (_ BitVec 32)) (|#t~string6.base| (_ BitVec 32)) (|#t~string9.base| (_ BitVec 32)) (|#t~string12.base| (_ BitVec 32)) (|#t~string15.base| (_ BitVec 32))) (= (store (store (store (store (store (store (store |v_#valid_34| (_ bv0 32) (_ bv0 1)) |#t~string0.base| (_ bv1 1)) |#t~string3.base| (_ bv1 1)) |#t~string6.base| (_ bv1 1)) |#t~string9.base| (_ bv1 1)) |#t~string12.base| (_ bv1 1)) |#t~string15.base| (_ bv1 1)) |#valid|))";
+		final String expectedResult = formulaAsString;
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayEliminationRushMountaineer03() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~x0~0.base"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
+		};
+		final String formulaAsString = "(exists ((|v_#valid_64| (Array (_ BitVec 32) (_ BitVec 1))) (|main_#t~malloc1.base| (_ BitVec 32)) (|main_#t~malloc2.base| (_ BitVec 32)) (|main_#t~malloc3.base| (_ BitVec 32))) (and (= (store (store (store (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base| (_ bv1 1)) |main_#t~malloc2.base| (_ bv1 1)) |main_#t~malloc3.base| (_ bv1 1)) |#valid|) (= (select (store (store (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base| (_ bv1 1)) |main_#t~malloc2.base| (_ bv1 1)) |main_#t~malloc3.base|) (_ bv0 1)) (= (_ bv0 1) (select (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base|))))";
+		final String expectedResult = formulaAsString;
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
