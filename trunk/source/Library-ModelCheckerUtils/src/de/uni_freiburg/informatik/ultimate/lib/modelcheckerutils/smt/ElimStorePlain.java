@@ -708,7 +708,7 @@ public class ElimStorePlain {
 			throws ElimStorePlainException {
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), eTask.getQuantifier(),
 				eTask.getEliminatees(), eTask.getTerm());
-		final Term pushed = new QuantifierPusher(mgdScript, services, true, techniques).transform(quantified);
+		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, techniques, quantified);
 
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);

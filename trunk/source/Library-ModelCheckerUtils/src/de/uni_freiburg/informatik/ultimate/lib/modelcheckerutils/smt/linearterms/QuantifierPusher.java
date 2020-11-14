@@ -127,17 +127,7 @@ public class QuantifierPusher extends TermTransformer {
 	 */
 	private final boolean mApplyDistributivity;
 
-	public QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services,
-			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques) {
-		mServices = services;
-		mMgdScript = script;
-		mScript = script.getScript();
-		mApplyDistributivity = applyDistributivity;
-		mPqeTechniques = quantifierEliminationTechniques;
-		mBannedForDivCapture = Collections.emptySet();
-	}
-
-	public QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services,
+	private QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final Set<TermVariable> bannedForDivCapture) {
 		mServices = services;
@@ -146,6 +136,22 @@ public class QuantifierPusher extends TermTransformer {
 		mApplyDistributivity = applyDistributivity;
 		mPqeTechniques = quantifierEliminationTechniques;
 		mBannedForDivCapture = bannedForDivCapture;
+	}
+
+	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
+			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
+			final Set<TermVariable> bannedForDivCapture, final Term inputTerm) {
+		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
+				bannedForDivCapture).transform(inputTerm);
+		return result;
+	}
+
+	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
+			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
+			final Term inputTerm) {
+		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
+				Collections.emptySet()).transform(inputTerm);
+		return result;
 	}
 
 	@Override

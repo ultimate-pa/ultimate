@@ -818,8 +818,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		freeVars.remove(newTv);
 		final Term quantified =
 				SmtUtils.quantifier(mToolkit.getScript(), QuantifiedFormula.EXISTS, freeVars, substituted);
-		return new QuantifierPusher(mToolkit.getManagedScript(), mToolkit.getServices(), false, PqeTechniques.ALL_LOCAL)
-				.transform(quantified);
+		return QuantifierPusher.eliminate(mToolkit.getServices(), mToolkit.getManagedScript(), false,
+				PqeTechniques.ALL_LOCAL, quantified);
 	}
 
 	@Override

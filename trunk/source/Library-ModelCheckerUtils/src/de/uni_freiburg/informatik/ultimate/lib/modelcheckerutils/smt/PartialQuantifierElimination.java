@@ -90,7 +90,7 @@ public class PartialQuantifierElimination {
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
-		final Term pushed = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(nnf);
+		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
 		final Term matrix = qs.getInnerTerm();
@@ -115,7 +115,7 @@ public class PartialQuantifierElimination {
 			if (THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED && (result instanceof QuantifiedFormula)) {
 				throw new AssertionError("Not all eliminated: " + result);
 			}
-			result = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ONLY_DER).transform(result);
+			result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ONLY_DER, result);
 		}
 		return result;
 	}
@@ -209,7 +209,7 @@ public class PartialQuantifierElimination {
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term quantified = mgdScript.getScript().quantifier(quantifier,
 				eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
-		final Term pushed = new QuantifierPusher(mgdScript, services, true, techniques).transform(quantified);
+		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, techniques, quantified);
 		// final Term commu = new CommuhashNormalForm(services, mgdScript.getScript()).transform(pushed);
 		// final Term pnf = new Nnf(script, services, freshTermVariableConstructor,
 		// QuantifierHandling.PULL).transform(pushed);
