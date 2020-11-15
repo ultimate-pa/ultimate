@@ -406,12 +406,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return QuantifierUtils.applyDualFiniteConnective(script, quantifier, antiDer);
 		}
 
-		private Term constructConstraintForSingleDirectionBounds(final ExplicitLhsPolynomialRelation bound,
-				final Script script, final Sort sort, final BvSignedness signedness, final boolean maxvalue,
-				final int quantifier) {
+		private Term constructConstraintForSingleDirectionBounds(final Term bound, final Script script, final Sort sort,
+				final BvSignedness signedness, final boolean maxvalue, final int quantifier) {
 
 			final BigInteger value;
-			final int size = SmtSortUtils.getBitvectorLength(bound.getRhs().getSort());
+			final int size = SmtSortUtils.getBitvectorLength(sort);
 			final double pow = Math.pow(2, size);
 			if (signedness.equals(BvSignedness.SIGNED)) {
 				if (maxvalue) {
@@ -431,7 +430,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 			final Term bvterm = SmtUtils.constructIntegerValue(script, SmtSortUtils.getBitvectorSort(script, size),
 					value);
-			return QuantifierUtils.applyAntiDerOperator(script, quantifier, bvterm, bound.getRhs().toTerm(script));
+			return QuantifierUtils.applyAntiDerOperator(script, quantifier, bvterm, bound);
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
@@ -447,15 +446,17 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				if (lower.getRelationSymbol().isUnSignedBvRelation()) {
 					eSet.add(BvSignedness.UNSIGNED);
 					if (upperBounds.isEmpty() && lower.getRelationSymbol().isStrictRelation()) {
-						result = SmtUtils.and(script, result, constructConstraintForSingleDirectionBounds(lower, script, lower.getRhs().getSort(),
-								BvSignedness.UNSIGNED, true, quantifier));
+						result = SmtUtils.and(script, result,
+								constructConstraintForSingleDirectionBounds(lower.getRhs().toTerm(script), script,
+										lower.getRhs().getSort(), BvSignedness.UNSIGNED, true, quantifier));
 						flag = true;
 					}
 				} else if (lower.getRelationSymbol().isSignedBvRelation()) {
 					eSet.add(BvSignedness.SIGNED);
 					if (upperBounds.isEmpty() && lower.getRelationSymbol().isStrictRelation()) {
-						result = SmtUtils.and(script, result, constructConstraintForSingleDirectionBounds(lower, script, lower.getRhs().getSort(),
-								BvSignedness.SIGNED, true, quantifier));
+						result = SmtUtils.and(script, result,
+								constructConstraintForSingleDirectionBounds(lower.getRhs().toTerm(script), script,
+										lower.getRhs().getSort(), BvSignedness.SIGNED, true, quantifier));
 						flag = true;
 					}
 				}
@@ -465,15 +466,17 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				if (upper.getRelationSymbol().isUnSignedBvRelation()) {
 					eSet.add(BvSignedness.UNSIGNED);
 					if (lowerBounds.isEmpty() && upper.getRelationSymbol().isStrictRelation()) {
-						result = SmtUtils.and(script, result, constructConstraintForSingleDirectionBounds(upper, script, upper.getRhs().getSort(),
-								BvSignedness.UNSIGNED, false, quantifier));
+						result = SmtUtils.and(script, result,
+								constructConstraintForSingleDirectionBounds(upper.getRhs().toTerm(script), script,
+										upper.getRhs().getSort(), BvSignedness.UNSIGNED, false, quantifier));
 						flag = true;
 					}
 				} else if (upper.getRelationSymbol().isSignedBvRelation()) {
 					eSet.add(BvSignedness.SIGNED);
 					if (lowerBounds.isEmpty() && upper.getRelationSymbol().isStrictRelation()) {
-						result = SmtUtils.and(script, result, constructConstraintForSingleDirectionBounds(upper, script, upper.getRhs().getSort(),
-								BvSignedness.SIGNED, false, quantifier));
+						result = SmtUtils.and(script, result,
+								constructConstraintForSingleDirectionBounds(upper.getRhs().toTerm(script), script,
+										upper.getRhs().getSort(), BvSignedness.SIGNED, false, quantifier));
 						flag = true;
 					}
 				}
