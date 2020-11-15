@@ -409,28 +409,28 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		private static Term constructConstraintForSingleDirectionBounds(final Term term, final Script script,
 				final Sort sort, final BvSignedness signedness, final boolean maxvalue, final int quantifier) {
 
-			final BigInteger value;
+			final BigInteger boundAsBigInt;
 			final int size = SmtSortUtils.getBitvectorLength(sort);
 			final double pow = Math.pow(2, size);
 			if (signedness.equals(BvSignedness.SIGNED)) {
 				if (maxvalue) {
 					final double bignum = (int) ((0.5 * pow) - 1);
-					value = BigDecimal.valueOf(bignum).toBigInteger();
+					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
 				} else {
 					final double bignum = (int) (-1 * (0.5 * pow));
-					value = BigDecimal.valueOf(bignum).toBigInteger();
+					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
 				}
 			} else {
 				if (maxvalue) {
 					final double bignum = (int) (pow - 1);
-					value = BigDecimal.valueOf(bignum).toBigInteger();
+					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
 				} else {
-					value = BigInteger.ZERO;
+					boundAsBigInt = BigInteger.ZERO;
 				}
 			}
-			final Term bvterm = SmtUtils.constructIntegerValue(script, SmtSortUtils.getBitvectorSort(script, size),
-					value);
-			return QuantifierUtils.applyAntiDerOperator(script, quantifier, bvterm, term);
+			final Term boundAsTerm = SmtUtils.constructIntegerValue(script, SmtSortUtils.getBitvectorSort(script, size),
+					boundAsBigInt);
+			return QuantifierUtils.applyAntiDerOperator(script, quantifier, boundAsTerm, term);
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
