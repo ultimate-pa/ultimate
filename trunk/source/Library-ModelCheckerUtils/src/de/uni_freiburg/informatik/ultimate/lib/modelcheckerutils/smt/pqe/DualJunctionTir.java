@@ -406,26 +406,42 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return QuantifierUtils.applyDualFiniteConnective(script, quantifier, antiDer);
 		}
 
+		private static enum Direction { UPPER, LOWER }
+
 		private static Term constructConstraintForSingleDirectionBounds(final Term term, final Script script,
-				final Sort sort, final BvSignedness signedness, final boolean maxvalue, final int quantifier) {
+				final Sort sort, final BvSignedness signedness, final Direction bound, final int quantifier) {
 
 			final int size = SmtSortUtils.getBitvectorLength(sort);
 			final double pow = Math.pow(2, size);
 			final BigInteger boundAsBigInt;
 			if (signedness.equals(BvSignedness.SIGNED)) {
-				if (maxvalue) {
-					final double bignum = (int) ((0.5 * pow) - 1);
-					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
-				} else {
+				switch (bound) {
+				case LOWER: {
 					final double bignum = (int) (-1 * (0.5 * pow));
 					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
+					break;
+				}
+				case UPPER: {
+					final double bignum = (int) ((0.5 * pow) - 1);
+					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
+					break;
+				}
+				default:
+					throw new AssertionError("unknown value " + bound);
 				}
 			} else {
-				if (maxvalue) {
+				switch (bound) {
+				case LOWER: {
+					boundAsBigInt = BigInteger.ZERO;
+					break;
+				}
+				case UPPER: {
 					final double bignum = (int) (pow - 1);
 					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
-				} else {
-					boundAsBigInt = BigInteger.ZERO;
+					break;
+				}
+				default:
+					throw new AssertionError("unknown value " + bound);
 				}
 			}
 			final Term boundAsTerm = SmtUtils.constructIntegerValue(script, sort, boundAsBigInt);
@@ -447,7 +463,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					if (upperBounds.isEmpty() && lower.getRelationSymbol().isStrictRelation()) {
 						result = SmtUtils.and(script, result,
 								constructConstraintForSingleDirectionBounds(lower.getRhs().toTerm(script), script,
-										lower.getRhs().getSort(), BvSignedness.UNSIGNED, true, quantifier));
+										lower.getRhs().getSort(), BvSignedness.UNSIGNED, Direction.UPPER, quantifier));
 						flag = true;
 					}
 				} else if (lower.getRelationSymbol().isSignedBvRelation()) {
@@ -455,7 +471,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					if (upperBounds.isEmpty() && lower.getRelationSymbol().isStrictRelation()) {
 						result = SmtUtils.and(script, result,
 								constructConstraintForSingleDirectionBounds(lower.getRhs().toTerm(script), script,
-										lower.getRhs().getSort(), BvSignedness.SIGNED, true, quantifier));
+										lower.getRhs().getSort(), BvSignedness.SIGNED, Direction.UPPER, quantifier));
 						flag = true;
 					}
 				}
@@ -467,7 +483,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					if (lowerBounds.isEmpty() && upper.getRelationSymbol().isStrictRelation()) {
 						result = SmtUtils.and(script, result,
 								constructConstraintForSingleDirectionBounds(upper.getRhs().toTerm(script), script,
-										upper.getRhs().getSort(), BvSignedness.UNSIGNED, false, quantifier));
+										upper.getRhs().getSort(), BvSignedness.UNSIGNED, Direction.LOWER, quantifier));
 						flag = true;
 					}
 				} else if (upper.getRelationSymbol().isSignedBvRelation()) {
@@ -475,7 +491,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					if (lowerBounds.isEmpty() && upper.getRelationSymbol().isStrictRelation()) {
 						result = SmtUtils.and(script, result,
 								constructConstraintForSingleDirectionBounds(upper.getRhs().toTerm(script), script,
-										upper.getRhs().getSort(), BvSignedness.SIGNED, false, quantifier));
+										upper.getRhs().getSort(), BvSignedness.SIGNED, Direction.LOWER, quantifier));
 						flag = true;
 					}
 				}
