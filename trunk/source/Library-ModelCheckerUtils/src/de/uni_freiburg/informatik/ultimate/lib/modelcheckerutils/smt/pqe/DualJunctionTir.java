@@ -511,19 +511,17 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				final int quantifier, final Script script) {
 			final int numberOfCorrespondingFiniteJuncts = (int) Math.pow(2, mAntiDerBounds.size());
 			final Term[] correspondingFiniteJuncts = new Term[numberOfCorrespondingFiniteJuncts];
-			ArrayList<ExplicitLhsPolynomialRelation> lowerBounds = new ArrayList<>(mLowerBounds);
-			ArrayList<ExplicitLhsPolynomialRelation> upperBounds = new ArrayList<>(mUpperBounds);
 			final EnumSet<BvSignedness> eSet = EnumSet.noneOf(BvSignedness.class);
-			eSet.addAll(checkSigedness(lowerBounds));
-			eSet.addAll(checkSigedness(upperBounds));
+			eSet.addAll(checkSigedness(mLowerBounds));
+			eSet.addAll(checkSigedness(mUpperBounds));
 
 			for (int i = 0; i < numberOfCorrespondingFiniteJuncts; i++) {
 				if (!services.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
 							"build " + i + " of " + numberOfCorrespondingFiniteJuncts + " xjuncts");
 				}
-				lowerBounds = new ArrayList<>(mLowerBounds);
-				upperBounds = new ArrayList<>(mUpperBounds);
+				final List<ExplicitLhsPolynomialRelation> lowerBounds = new ArrayList<>(mLowerBounds);
+				final List<ExplicitLhsPolynomialRelation> upperBounds = new ArrayList<>(mUpperBounds);
 				for (int k = 0; k < mAntiDerBounds.size(); k++) {
 					// zero means lower - one means upper
 					if (BigInteger.valueOf(i).testBit(k)) {
