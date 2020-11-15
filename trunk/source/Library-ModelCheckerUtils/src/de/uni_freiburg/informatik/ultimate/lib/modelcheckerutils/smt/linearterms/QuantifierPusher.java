@@ -67,7 +67,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -114,6 +116,8 @@ public class QuantifierPusher extends TermTransformer {
 	private static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
 
 	private static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
+	private static final boolean DEBUG_CHECK_RESULT = false;
+
 
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
@@ -143,15 +147,41 @@ public class QuantifierPusher extends TermTransformer {
 			final Set<TermVariable> bannedForDivCapture, final Term inputTerm) {
 		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
 				bannedForDivCapture).transform(inputTerm);
+		if (DEBUG_CHECK_RESULT) {
+			checkResult(script.getScript(), result, inputTerm);
+		}
 		return result;
 	}
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final Term inputTerm) {
-		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
-				Collections.emptySet()).transform(inputTerm);
-		return result;
+		return eliminate(services, script, applyDistributivity, quantifierEliminationTechniques,
+				Collections.emptySet(), inputTerm);
+	}
+
+	private static void checkResult(final Script script, final Term result, final Term input) {
+		script.echo(new QuotedObject("Start correctness check for quantifier elimination."));
+		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
+		script.echo(new QuotedObject("Finished correctness check for quantifier elimination. Result: " + lbool));
+		final String errorMessage;
+		switch (lbool) {
+		case SAT:
+			errorMessage = "Not equivalent to expected result: " + result;
+			break;
+		case UNKNOWN:
+			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
+			break;
+		case UNSAT:
+			errorMessage = null;
+			break;
+		default:
+			throw new AssertionError("unknown value " + lbool);
+		}
+		final boolean tolerateUnknown = true;
+		if (lbool == LBool.SAT || (!tolerateUnknown && lbool == LBool.UNKNOWN)) {
+			throw new AssertionError(errorMessage);
+		}
 	}
 
 	@Override
