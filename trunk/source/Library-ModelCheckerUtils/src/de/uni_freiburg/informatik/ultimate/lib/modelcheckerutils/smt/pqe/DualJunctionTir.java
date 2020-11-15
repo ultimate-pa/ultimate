@@ -494,6 +494,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			} else {
 				return null;
 			}
+			return constructConstraintForSingleDirectionBounds(script, quantifier, direction, bounds);
+		}
+
+		private Term constructConstraintForSingleDirectionBounds(final Script script, final int quantifier,
+				final Direction direction, List<ExplicitLhsPolynomialRelation> bounds) {
 			Term result = QuantifierUtils.getAbsorbingElement(script, quantifier);
 			for (final ExplicitLhsPolynomialRelation bound : bounds) {
 				if (bound.getRelationSymbol().isStrictRelation()
