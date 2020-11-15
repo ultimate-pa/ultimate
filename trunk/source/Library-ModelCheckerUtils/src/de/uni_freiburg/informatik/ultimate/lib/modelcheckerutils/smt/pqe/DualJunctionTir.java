@@ -428,8 +428,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					boundAsBigInt = BigInteger.ZERO;
 				}
 			}
-			final Term boundAsTerm = SmtUtils.constructIntegerValue(script, SmtSortUtils.getBitvectorSort(script, size),
-					boundAsBigInt);
+			final Term boundAsTerm = SmtUtils.constructIntegerValue(script, sort, boundAsBigInt);
 			return QuantifierUtils.applyAntiDerOperator(script, quantifier, boundAsTerm, term);
 		}
 
