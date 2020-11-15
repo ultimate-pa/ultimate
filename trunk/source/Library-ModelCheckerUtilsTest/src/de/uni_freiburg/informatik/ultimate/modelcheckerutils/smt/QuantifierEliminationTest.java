@@ -1191,7 +1191,7 @@ public class QuantifierEliminationTest {
 	public void bvTirBug06LimitedDomain() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort1, "c") };
 		final String inputSTR = "(exists ((x (_ BitVec 1)) (y (_ BitVec 1))) (and (not (= x y)) (not (= x c)) (not (= y c))))";
-		final String expectedResult = "false";
+		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -406,41 +405,39 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return QuantifierUtils.applyDualFiniteConnective(script, quantifier, antiDer);
 		}
 
-		private static enum Direction { UPPER, LOWER }
+		private static enum Direction {
+			UPPER, LOWER
+		}
 
 		private static Term constructConstraintForSingleDirectionBounds(final Term term, final Script script,
-				final Sort sort, final BvSignedness signedness, final Direction direction, final int quantifier) {
-			final BigInteger boundAsBigInt = getMaximalBound(sort, signedness, direction);
+				final Sort sort, final boolean signed, final Direction direction, final int quantifier) {
+			final BigInteger boundAsBigInt = getMaximalBound(sort, signed, direction);
 			final Term boundAsTerm = SmtUtils.constructIntegerValue(script, sort, boundAsBigInt);
 			return QuantifierUtils.applyAntiDerOperator(script, quantifier, boundAsTerm, term);
 		}
-
 
 		/**
 		 * Construct the maximal possible bounds for bitvector inequalities.
 		 * Let n be the length of the bitvector.
 		 * <ul>
-		 * <li> for unsigned inequalities the maximal lower bound is 0
-		 * <li> for unsigned inequalities the maximal upper bound is (2^n)-1
-		 * <li> for signed inequalities the maximal lower bound is -2^(n-1)
-		 * <li> for signed inequalities the maximal upper bound is (2^(n-1))-1
+		 * <li>for unsigned inequalities the maximal lower bound is 0
+		 * <li>for unsigned inequalities the maximal upper bound is (2^n)-1
+		 * <li>for signed inequalities the maximal lower bound is -2^(n-1)
+		 * <li>for signed inequalities the maximal upper bound is (2^(n-1))-1
 		 * </ul>
 		 */
-		private static BigInteger getMaximalBound(final Sort sort, final BvSignedness signedness,
-				final Direction direction) {
+		private static BigInteger getMaximalBound(final Sort sort, final boolean signed, final Direction direction) {
 			final int size = SmtSortUtils.getBitvectorLength(sort);
-			final double pow = Math.pow(2, size);
+			final BigInteger pow = BigInteger.TWO.pow(size);
 			final BigInteger boundAsBigInt;
-			if (signedness.equals(BvSignedness.SIGNED)) {
+			if (signed) {
 				switch (direction) {
 				case LOWER: {
-					final double bignum = (int) (-1 * (0.5 * pow));
-					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
+					boundAsBigInt = pow.divide(BigInteger.TWO).multiply(BigInteger.ONE).negate();
 					break;
 				}
 				case UPPER: {
-					final double bignum = (int) ((0.5 * pow) - 1);
-					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
+					boundAsBigInt = pow.divide(BigInteger.TWO).subtract(BigInteger.ONE);
 					break;
 				}
 				default:
@@ -453,8 +450,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					break;
 				}
 				case UPPER: {
-					final double bignum = (int) (pow - 1);
-					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
+					boundAsBigInt = pow.subtract(BigInteger.ONE);
 					break;
 				}
 				default:
@@ -464,6 +460,53 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return boundAsBigInt;
 		}
 
+		/*
+		 * Checks if there are Signed or Unsigend BitVector Relations in the
+		 * Bounds
+		 */
+		private EnumSet<BvSignedness> checkSigedness(final ArrayList<ExplicitLhsPolynomialRelation> bounds) {
+			final EnumSet<BvSignedness> eSet = EnumSet.noneOf(BvSignedness.class);
+			for (final ExplicitLhsPolynomialRelation bound : bounds) {
+				if (bound.getRelationSymbol().isUnSignedBvRelation()) {
+					eSet.add(BvSignedness.UNSIGNED);
+				} else if (bound.getRelationSymbol().isSignedBvRelation()) {
+					eSet.add(BvSignedness.SIGNED);
+				}
+			}
+			return eSet;
+		}
+
+		/*
+		 * Calculates the equivalent Quantifier free Term, if BitVector Sort,
+		 * one Bounds List is empty and the RelationSymbol is Strict.
+		 */
+		private Term checkforSingleDirectionBounds(final Script script,
+				final ArrayList<ExplicitLhsPolynomialRelation> lowerBounds,
+				final ArrayList<ExplicitLhsPolynomialRelation> upperBounds, final int quantifier) {
+			final Direction direction;
+			ArrayList<ExplicitLhsPolynomialRelation> bounds;
+			if (upperBounds.isEmpty()) {
+				direction = Direction.UPPER;
+				bounds = lowerBounds;
+			} else if (lowerBounds.isEmpty()) {
+				bounds = upperBounds;
+				direction = Direction.LOWER;
+			} else {
+				return null;
+			}
+			Term result = QuantifierUtils.getAbsorbingElement(script, quantifier);
+			for (final ExplicitLhsPolynomialRelation bound : bounds) {
+				if (bound.getRelationSymbol().isStrictRelation()
+						&& SmtSortUtils.isBitvecSort(bound.getRhs().getSort())) {
+					result = SmtUtils.and(script, result, // edited
+							constructConstraintForSingleDirectionBounds(bound.getRhs().toTerm(script), script,
+									bound.getRhs().getSort(), bound.getRelationSymbol().isSignedBvRelation(), direction,
+									quantifier));
+				}
+			}
+			return result;
+		}
+
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
 				final int quantifier, final Script script) {
 			final int numberOfCorrespondingFiniteJuncts = (int) Math.pow(2, mAntiDerBounds.size());
@@ -471,50 +514,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			ArrayList<ExplicitLhsPolynomialRelation> lowerBounds = new ArrayList<>(mLowerBounds);
 			ArrayList<ExplicitLhsPolynomialRelation> upperBounds = new ArrayList<>(mUpperBounds);
 			final EnumSet<BvSignedness> eSet = EnumSet.noneOf(BvSignedness.class);
-			Term result = script.term("true");
-			boolean flag = false;
-			for (final ExplicitLhsPolynomialRelation lower : lowerBounds) {
-				if (lower.getRelationSymbol().isUnSignedBvRelation()) {
-					eSet.add(BvSignedness.UNSIGNED);
-					if (upperBounds.isEmpty() && lower.getRelationSymbol().isStrictRelation()) {
-						result = SmtUtils.and(script, result,
-								constructConstraintForSingleDirectionBounds(lower.getRhs().toTerm(script), script,
-										lower.getRhs().getSort(), BvSignedness.UNSIGNED, Direction.UPPER, quantifier));
-						flag = true;
-					}
-				} else if (lower.getRelationSymbol().isSignedBvRelation()) {
-					eSet.add(BvSignedness.SIGNED);
-					if (upperBounds.isEmpty() && lower.getRelationSymbol().isStrictRelation()) {
-						result = SmtUtils.and(script, result,
-								constructConstraintForSingleDirectionBounds(lower.getRhs().toTerm(script), script,
-										lower.getRhs().getSort(), BvSignedness.SIGNED, Direction.UPPER, quantifier));
-						flag = true;
-					}
-				}
-			}
-
-			for (final ExplicitLhsPolynomialRelation upper : upperBounds) {
-				if (upper.getRelationSymbol().isUnSignedBvRelation()) {
-					eSet.add(BvSignedness.UNSIGNED);
-					if (lowerBounds.isEmpty() && upper.getRelationSymbol().isStrictRelation()) {
-						result = SmtUtils.and(script, result,
-								constructConstraintForSingleDirectionBounds(upper.getRhs().toTerm(script), script,
-										upper.getRhs().getSort(), BvSignedness.UNSIGNED, Direction.LOWER, quantifier));
-						flag = true;
-					}
-				} else if (upper.getRelationSymbol().isSignedBvRelation()) {
-					eSet.add(BvSignedness.SIGNED);
-					if (lowerBounds.isEmpty() && upper.getRelationSymbol().isStrictRelation()) {
-						result = SmtUtils.and(script, result,
-								constructConstraintForSingleDirectionBounds(upper.getRhs().toTerm(script), script,
-										upper.getRhs().getSort(), BvSignedness.SIGNED, Direction.LOWER, quantifier));
-						flag = true;
-					}
-				}
-			}
-			if (flag) {
-				return result;
-			}
+			eSet.addAll(checkSigedness(lowerBounds));
+			eSet.addAll(checkSigedness(upperBounds));
 
 			for (int i = 0; i < numberOfCorrespondingFiniteJuncts; i++) {
 				if (!services.getProgressMonitorService().continueProcessing()) {
@@ -531,7 +532,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 						lowerBounds.add(mAntiDerBounds.get(k).getFirst());
 					}
 				}
-
+				// Check for Single Direction Bounds after adding AntiDer Bounds
+				final Term singleDirectionTerm;
+				singleDirectionTerm = checkforSingleDirectionBounds(script, lowerBounds, upperBounds, quantifier);
+				if (singleDirectionTerm != null) {
+					return singleDirectionTerm;
+				}
 				correspondingFiniteJuncts[i] =
 						buildDualFiniteJunction(script, quantifier, lowerBounds, upperBounds, eSet);
 				if (correspondingFiniteJuncts[i] == null) {
@@ -573,7 +579,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			for (final ExplicitLhsPolynomialRelation lower : lowerBounds) {
 				for (final ExplicitLhsPolynomialRelation upper : upperBounds) {
 					final BvSignedness bvSigned;
-
 					if (eSet != null) {
 						if (eSet.equals(EnumSet.allOf(BvSignedness.class))) {
 							bvSigned = null;
