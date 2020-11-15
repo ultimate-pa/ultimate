@@ -1116,37 +1116,73 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void bvTirBug01OneStrictRelation() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
-		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvult x c))";
+	public void bvTirSingleDirectionExistsLowerUnsigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvult x a) (bvugt b x)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
-	public void bvTirBug02OneStrictRelation() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c" , "a") };
-		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvult x c) (bvult x a)))";
+	public void bvTirSingleDirectionExistsLowerSigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvslt x a) (bvsgt b x)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
-	public void bvTirBug03OneStrictRelation() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
-		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvslt x c))";
+	public void bvTirSingleDirectionExistsUpperUnsigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvugt x a) (bvult b x)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
-	public void bvTirBug04OneStrictRelation() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
-		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvugt x c))";
+	public void bvTirSingleDirectionExistsUpperSigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvsgt x a) (bvslt b x)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 	@Test
-	public void bvTirBug05OneStrictRelation() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
-		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvsgt x c))";
+	public void bvTirSingleDirectionForallLowerUnsigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvult x a) (bvugt b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionForallLowerSigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvslt x a) (bvsgt b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionForallUpperUnsigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvugt x a) (bvult b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionForallUpperSigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvsgt x a) (bvslt b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirBugSingleDirectionAndAntiDer() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c" , "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvult x c) (distinct x b)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
