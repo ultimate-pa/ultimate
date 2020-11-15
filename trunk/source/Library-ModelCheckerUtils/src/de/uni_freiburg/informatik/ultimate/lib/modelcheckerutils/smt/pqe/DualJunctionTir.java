@@ -460,7 +460,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return boundAsBigInt;
 		}
 
-		/*
+		/**
 		 * Checks if there are Signed or Unsigend BitVector Relations in the
 		 * Bounds
 		 */
@@ -476,7 +476,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return eSet;
 		}
 
-		/*
+		/**
 		 * Calculates the equivalent Quantifier free Term, if BitVector Sort,
 		 * one Bounds List is empty and the RelationSymbol is Strict.
 		 */
