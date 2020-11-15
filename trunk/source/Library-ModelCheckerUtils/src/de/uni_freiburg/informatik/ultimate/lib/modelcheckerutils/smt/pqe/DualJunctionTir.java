@@ -409,9 +409,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		private static Term constructConstraintForSingleDirectionBounds(final Term term, final Script script,
 				final Sort sort, final BvSignedness signedness, final boolean maxvalue, final int quantifier) {
 
-			final BigInteger boundAsBigInt;
 			final int size = SmtSortUtils.getBitvectorLength(sort);
 			final double pow = Math.pow(2, size);
+			final BigInteger boundAsBigInt;
 			if (signedness.equals(BvSignedness.SIGNED)) {
 				if (maxvalue) {
 					final double bignum = (int) ((0.5 * pow) - 1);
