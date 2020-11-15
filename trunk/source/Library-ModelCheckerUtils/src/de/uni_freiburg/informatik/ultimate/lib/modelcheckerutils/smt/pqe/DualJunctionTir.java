@@ -464,7 +464,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		 * Checks if there are Signed or Unsigend BitVector Relations in the
 		 * Bounds
 		 */
-		private EnumSet<BvSignedness> checkSigedness(final ArrayList<ExplicitLhsPolynomialRelation> bounds) {
+		private EnumSet<BvSignedness> checkSigedness(final List<ExplicitLhsPolynomialRelation> bounds) {
 			final EnumSet<BvSignedness> eSet = EnumSet.noneOf(BvSignedness.class);
 			for (final ExplicitLhsPolynomialRelation bound : bounds) {
 				if (bound.getRelationSymbol().isUnSignedBvRelation()) {
