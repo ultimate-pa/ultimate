@@ -431,13 +431,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 			final Term bvterm = SmtUtils.constructIntegerValue(script, SmtSortUtils.getBitvectorSort(script, size),
 					value);
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				return RelationSymbol.DISTINCT.constructTerm(script, bvterm, bound.getRhs().toTerm(script));
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				return RelationSymbol.EQ.constructTerm(script, bvterm, bound.getRhs().toTerm(script));
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			return QuantifierUtils.applyAntiDerOperator(script, quantifier, bvterm, bound.getRhs().toTerm(script));
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
