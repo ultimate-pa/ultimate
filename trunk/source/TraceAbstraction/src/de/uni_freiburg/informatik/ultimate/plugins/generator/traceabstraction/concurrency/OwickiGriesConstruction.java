@@ -144,11 +144,34 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 			final Term ghost = mGhostVariables.get(otherPlace).getTerm();
 			terms.add(ghost);
 		}
-		terms.addAll(getAllNotMarking(marking));
+		terms.addAll(getCopredMarking(marking, place));
 		terms.add(mFloydHoareAnnotation.get(marking).getFormula());
 		return SmtUtils.and(mScript, terms);
 	}
-
+	
+	/**
+	 *
+	 * @param marking
+	 * @param placef: place to which the formula will be assigned
+	 * @return Formula MethodC:Predicate with GhostVariables of all co-predecesor places.
+	 */
+	private Set<Term> getCopredMarking(final Marking<LETTER, PLACE> marking, final PLACE placef) {
+		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
+		final Set<PLACE> notMarking = getCopred(placef, markPlaces);
+		final Set<Term> predicates = new HashSet<>();
+		for (final PLACE place : notMarking) {
+			final Term ghost = mGhostVariables.get(place).getTerm();
+			predicates.add(SmtUtils.not(mScript, ghost));
+		}
+		return predicates;
+	}
+	
+	private Set<PLACE> getCopred(PLACE place, Set<PLACE> markPlaces){
+		final Set<PLACE> places = new HashSet<>();
+		for (final ITransition <LETTER, PLACE> transition : mNet.getSuccessors(place)){
+			places.addAll(DataStructureUtils.difference(mNet.getPredecessors(transition), markPlaces));		
+		}return places;
+	}
 	/**
 	 *
 	 * @param marking
