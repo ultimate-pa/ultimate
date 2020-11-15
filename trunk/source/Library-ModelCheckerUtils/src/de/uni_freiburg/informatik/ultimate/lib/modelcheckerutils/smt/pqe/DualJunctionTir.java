@@ -481,10 +481,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		 * one Bounds List is empty and the RelationSymbol is Strict.
 		 */
 		private Term checkforSingleDirectionBounds(final Script script,
-				final ArrayList<ExplicitLhsPolynomialRelation> lowerBounds,
-				final ArrayList<ExplicitLhsPolynomialRelation> upperBounds, final int quantifier) {
+				final List<ExplicitLhsPolynomialRelation> lowerBounds,
+				final List<ExplicitLhsPolynomialRelation> upperBounds, final int quantifier) {
 			final Direction direction;
-			ArrayList<ExplicitLhsPolynomialRelation> bounds;
+			List<ExplicitLhsPolynomialRelation> bounds;
 			if (upperBounds.isEmpty()) {
 				direction = Direction.UPPER;
 				bounds = lowerBounds;
