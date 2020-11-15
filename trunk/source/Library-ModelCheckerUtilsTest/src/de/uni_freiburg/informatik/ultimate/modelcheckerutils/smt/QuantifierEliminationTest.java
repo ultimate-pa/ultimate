@@ -817,7 +817,7 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void arrayEliminationRushMountaineer01() {
+	public void arrayEliminationRushingMountaineer01() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
@@ -828,7 +828,7 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void arrayEliminationRushMountaineer01Reduced() {
+	public void arrayEliminationRushingMountaineer01Reduced() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "a"),
 		};
@@ -838,7 +838,7 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void arrayEliminationRushMountaineer02() {
+	public void arrayEliminationRushingMountaineer02() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
@@ -849,7 +849,7 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void arrayEliminationRushMountaineer03() {
+	public void arrayEliminationRushingMountaineer03() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~x0~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
