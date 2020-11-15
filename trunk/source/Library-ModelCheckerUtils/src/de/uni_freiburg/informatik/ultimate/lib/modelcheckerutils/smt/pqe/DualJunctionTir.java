@@ -406,8 +406,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return QuantifierUtils.applyDualFiniteConnective(script, quantifier, antiDer);
 		}
 
-		private Term constructConstraintForSingleDirectionBounds(final Term bound, final Script script, final Sort sort,
-				final BvSignedness signedness, final boolean maxvalue, final int quantifier) {
+		private static Term constructConstraintForSingleDirectionBounds(final Term term, final Script script,
+				final Sort sort, final BvSignedness signedness, final boolean maxvalue, final int quantifier) {
 
 			final BigInteger value;
 			final int size = SmtSortUtils.getBitvectorLength(sort);
@@ -430,7 +430,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 			final Term bvterm = SmtUtils.constructIntegerValue(script, SmtSortUtils.getBitvectorSort(script, size),
 					value);
-			return QuantifierUtils.applyAntiDerOperator(script, quantifier, bvterm, bound);
+			return QuantifierUtils.applyAntiDerOperator(script, quantifier, bvterm, term);
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
