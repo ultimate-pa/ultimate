@@ -409,13 +409,30 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		private static enum Direction { UPPER, LOWER }
 
 		private static Term constructConstraintForSingleDirectionBounds(final Term term, final Script script,
-				final Sort sort, final BvSignedness signedness, final Direction bound, final int quantifier) {
+				final Sort sort, final BvSignedness signedness, final Direction direction, final int quantifier) {
+			final BigInteger boundAsBigInt = getMaximalBound(sort, signedness, direction);
+			final Term boundAsTerm = SmtUtils.constructIntegerValue(script, sort, boundAsBigInt);
+			return QuantifierUtils.applyAntiDerOperator(script, quantifier, boundAsTerm, term);
+		}
 
+
+		/**
+		 * Construct the maximal possible bounds for bitvector inequalities.
+		 * Let n be the length of the bitvector.
+		 * <ul>
+		 * <li> for unsigned inequalities the maximal lower bound is 0
+		 * <li> for unsigned inequalities the maximal upper bound is (2^n)-1
+		 * <li> for signed inequalities the maximal lower bound is -2^(n-1)
+		 * <li> for signed inequalities the maximal upper bound is (2^(n-1))-1
+		 * </ul>
+		 */
+		private static BigInteger getMaximalBound(final Sort sort, final BvSignedness signedness,
+				final Direction direction) {
 			final int size = SmtSortUtils.getBitvectorLength(sort);
 			final double pow = Math.pow(2, size);
 			final BigInteger boundAsBigInt;
 			if (signedness.equals(BvSignedness.SIGNED)) {
-				switch (bound) {
+				switch (direction) {
 				case LOWER: {
 					final double bignum = (int) (-1 * (0.5 * pow));
 					boundAsBigInt = BigDecimal.valueOf(bignum).toBigInteger();
@@ -427,10 +444,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					break;
 				}
 				default:
-					throw new AssertionError("unknown value " + bound);
+					throw new AssertionError("unknown value " + direction);
 				}
 			} else {
-				switch (bound) {
+				switch (direction) {
 				case LOWER: {
 					boundAsBigInt = BigInteger.ZERO;
 					break;
@@ -441,11 +458,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					break;
 				}
 				default:
-					throw new AssertionError("unknown value " + bound);
+					throw new AssertionError("unknown value " + direction);
 				}
 			}
-			final Term boundAsTerm = SmtUtils.constructIntegerValue(script, sort, boundAsBigInt);
-			return QuantifierUtils.applyAntiDerOperator(script, quantifier, boundAsTerm, term);
+			return boundAsBigInt;
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
