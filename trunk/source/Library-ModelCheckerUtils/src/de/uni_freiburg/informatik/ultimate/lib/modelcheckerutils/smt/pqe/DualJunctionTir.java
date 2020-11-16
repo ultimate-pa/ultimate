@@ -213,8 +213,16 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	private static ExplicitLhsPolynomialRelations bestDivision(final Script script, final TermVariable eliminatee,
 			final Set<TermVariable> bannedForDivCapture, final int quantifier,
 			final ExplicitLhsPolynomialRelations elprs) {
-		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations();
-		for (final ExplicitLhsPolynomialRelation elpr : elprs.getSimpleRelations()) {
+		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations(elprs.getSort());
+		for (final ExplicitLhsPolynomialRelation elpr : elprs.getLowerBounds()) {
+			final ExplicitLhsPolynomialRelation solved = bestDivision(script, bannedForDivCapture, elpr);
+			if (solved == null) {
+				return null;
+			} else {
+				result.addSimpleRelation(solved);
+			}
+		}
+		for (final ExplicitLhsPolynomialRelation elpr : elprs.getUpperBounds()) {
 			final ExplicitLhsPolynomialRelation solved = bestDivision(script, bannedForDivCapture, elpr);
 			if (solved == null) {
 				return null;
@@ -271,7 +279,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 	private static ExplicitLhsPolynomialRelations convert(final List<Term> withEliminatee, final Script script,
 			final TermVariable eliminatee, final int quantifier) {
-		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations();
+		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations(eliminatee.getSort());
 		for (final Term t : withEliminatee) {
 			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t);
 			ExplicitLhsPolynomialRelation elpr;
@@ -349,14 +357,17 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	}
 
 	private static class ExplicitLhsPolynomialRelations {
-		private final List<ExplicitLhsPolynomialRelation> mSimpleRelations = new ArrayList<>();
+		private final Sort mSort;
 		private final List<ExplicitLhsPolynomialRelation> mLowerBounds = new ArrayList<>();
 		private final List<ExplicitLhsPolynomialRelation> mUpperBounds = new ArrayList<>();
 		private final List<Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation>> mAntiDerBounds =
 				new ArrayList<>();
 
+		public ExplicitLhsPolynomialRelations(final Sort sort) {
+			mSort = sort;
+		}
+
 		void addSimpleRelation(final ExplicitLhsPolynomialRelation bound) {
-			mSimpleRelations.add(bound);
 			switch (bound.getRelationSymbol()) {
 			case DISTINCT:
 			case EQ:
@@ -388,8 +399,16 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					new Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation>(lowerBound, upperBound));
 		}
 
-		public List<ExplicitLhsPolynomialRelation> getSimpleRelations() {
-			return mSimpleRelations;
+		public Sort getSort() {
+			return mSort;
+		}
+
+		public List<ExplicitLhsPolynomialRelation> getLowerBounds() {
+			return mLowerBounds;
+		}
+
+		public List<ExplicitLhsPolynomialRelation> getUpperBounds() {
+			return mUpperBounds;
 		}
 
 		public List<Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation>> getAntiDerRelations() {
