@@ -67,9 +67,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -148,7 +146,9 @@ public class QuantifierPusher extends TermTransformer {
 		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
 				bannedForDivCapture).transform(inputTerm);
 		if (DEBUG_CHECK_RESULT) {
-			checkResult(script.getScript(), result, inputTerm);
+			final boolean tolerateUnknown = true;
+			SmtUtils.checkLogicalEquivalenceForDebugging(script.getScript(), result, inputTerm, QuantifierPusher.class,
+					tolerateUnknown);
 		}
 		return result;
 	}
@@ -158,30 +158,6 @@ public class QuantifierPusher extends TermTransformer {
 			final Term inputTerm) {
 		return eliminate(services, script, applyDistributivity, quantifierEliminationTechniques,
 				Collections.emptySet(), inputTerm);
-	}
-
-	private static void checkResult(final Script script, final Term result, final Term input) {
-		script.echo(new QuotedObject("Start correctness check for quantifier elimination."));
-		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
-		script.echo(new QuotedObject("Finished correctness check for quantifier elimination. Result: " + lbool));
-		final String errorMessage;
-		switch (lbool) {
-		case SAT:
-			errorMessage = "Not equivalent to expected result: " + result;
-			break;
-		case UNKNOWN:
-			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
-			break;
-		case UNSAT:
-			errorMessage = null;
-			break;
-		default:
-			throw new AssertionError("unknown value " + lbool);
-		}
-		final boolean tolerateUnknown = true;
-		if (lbool == LBool.SAT || (!tolerateUnknown && lbool == LBool.UNKNOWN)) {
-			throw new AssertionError(errorMessage);
-		}
 	}
 
 	@Override

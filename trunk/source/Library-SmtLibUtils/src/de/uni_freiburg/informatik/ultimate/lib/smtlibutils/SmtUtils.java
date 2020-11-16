@@ -2281,8 +2281,37 @@ public final class SmtUtils {
 	 *         was able to prove that both formulas are not equivalent, and LBool.UNKNOWN otherwise.
 	 */
 	public static LBool checkEquivalence(final Term formula1, final Term formula2, final Script script) {
-		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
+		final Term notEq = script.term("distinct", formula1, formula2);
 		return Util.checkSat(script, notEq);
+	}
+
+
+	public static void checkLogicalEquivalenceForDebugging(final Script script, final Term result, final Term input,
+			final Class<?> checkedClass, final boolean tolerateUnknown) {
+		script.echo(new QuotedObject(String.format("Start correctness check for %s.", checkedClass.getSimpleName())));
+		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
+		script.echo(new QuotedObject(
+				String.format("Finished correctness check for %s. Result: " + lbool, checkedClass.getSimpleName())));
+		final String errorMessage;
+		switch (lbool) {
+		case SAT:
+			errorMessage = String.format("%s: Not equivalent to expected result: %s Input: %s",
+					checkedClass.getSimpleName(), result, input);
+			break;
+		case UNKNOWN:
+			errorMessage = String.format(
+					"%s: Insufficient ressources for checking equivalence to expected result: %s Input: %s",
+					checkedClass.getSimpleName(), result, input);
+			break;
+		case UNSAT:
+			errorMessage = null;
+			break;
+		default:
+			throw new AssertionError("unknown value " + lbool);
+		}
+		if (lbool == LBool.SAT || (!tolerateUnknown && lbool == LBool.UNKNOWN)) {
+			throw new AssertionError(errorMessage);
+		}
 	}
 
 	/**
