@@ -422,10 +422,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			if (bvSingleDirectionBounds) {
 				return checkforSingleDirectionBounds(script, mLowerBounds, mUpperBounds, quantifier);
 			}
+			final EnumSet<BvSignedness> bvSignednesses = collectBvSignednesses();
 
 			// final Term withoutAntiDer = buildDualFiniteJunction(script,
 			// quantifier, mLowerBounds, mUpperBounds, null);
-			final Term antiDer = buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script);
+			final Term antiDer = buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script, bvSignednesses);
 			if (antiDer == null) {
 				return null;
 			}
@@ -487,20 +488,32 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return boundAsBigInt;
 		}
 
+
 		/**
-		 * Checks if there are Signed or Unsigend BitVector Relations in the
-		 * Bounds
+		 * Collect the kinds of signedness (signed, unsigned) that occur in all upper
+		 * and all lower bounds.
 		 */
-		private EnumSet<BvSignedness> checkSigedness(final List<ExplicitLhsPolynomialRelation> bounds) {
-			final EnumSet<BvSignedness> eSet = EnumSet.noneOf(BvSignedness.class);
+		private EnumSet<BvSignedness> collectBvSignednesses() {
+			final EnumSet<BvSignedness> bvSignednesses = EnumSet.noneOf(BvSignedness.class);
+			bvSignednesses.addAll(collectBvSignednesses(mLowerBounds));
+			bvSignednesses.addAll(collectBvSignednesses(mUpperBounds));
+			return bvSignednesses;
+		}
+
+		/**
+		 * Collect the kinds of signedness (signed, unsigned) that occur in the given
+		 * bounds.
+		 */
+		private static EnumSet<BvSignedness> collectBvSignednesses(final List<ExplicitLhsPolynomialRelation> bounds) {
+			final EnumSet<BvSignedness> bvSignednesses = EnumSet.noneOf(BvSignedness.class);
 			for (final ExplicitLhsPolynomialRelation bound : bounds) {
 				if (bound.getRelationSymbol().isUnSignedBvRelation()) {
-					eSet.add(BvSignedness.UNSIGNED);
+					bvSignednesses.add(BvSignedness.UNSIGNED);
 				} else if (bound.getRelationSymbol().isSignedBvRelation()) {
-					eSet.add(BvSignedness.SIGNED);
+					bvSignednesses.add(BvSignedness.SIGNED);
 				}
 			}
-			return eSet;
+			return bvSignednesses;
 		}
 
 		/**
@@ -557,13 +570,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
-				final int quantifier, final Script script) {
+				final int quantifier, final Script script, final EnumSet<BvSignedness> bvSignednesses) {
 
 			final int numberOfCorrespondingFiniteJuncts = (int) Math.pow(2, mAntiDerBounds.size());
 			final Term[] correspondingFiniteJuncts = new Term[numberOfCorrespondingFiniteJuncts];
-			final EnumSet<BvSignedness> eSet = EnumSet.noneOf(BvSignedness.class);
-			eSet.addAll(checkSigedness(mLowerBounds));
-			eSet.addAll(checkSigedness(mUpperBounds));
+
 
 			for (int i = 0; i < numberOfCorrespondingFiniteJuncts; i++) {
 				if (!services.getProgressMonitorService().continueProcessing()) {
@@ -581,13 +592,14 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					}
 				}
 				correspondingFiniteJuncts[i] =
-						buildDualFiniteJunction(script, quantifier, lowerBounds, upperBounds, eSet);
+						buildDualFiniteJunction(script, quantifier, lowerBounds, upperBounds, bvSignednesses);
 				if (correspondingFiniteJuncts[i] == null) {
 					return null;
 				}
 			}
 			return QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, correspondingFiniteJuncts);
 		}
+
 
 		private Term buildDualFiniteJunction(final Script script, final int quantifier,
 				final List<ExplicitLhsPolynomialRelation> lowerBounds,
