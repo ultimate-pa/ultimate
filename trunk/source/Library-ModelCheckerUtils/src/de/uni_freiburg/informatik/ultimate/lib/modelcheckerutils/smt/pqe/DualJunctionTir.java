@@ -232,8 +232,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				assert solvedUpper == null;
 				return null;
 			} else {
-				if (pair.getFirst().getLhsCoefficient().isNegative()) {
-					assert pair.getSecond().getLhsCoefficient().isNegative();
+				final Sort sort = pair.getFirst().getLhsMonomial().getSort();
+				if (ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(pair.getFirst().getLhsCoefficient(),
+						sort)) {
+					assert ExplicitLhsPolynomialRelation
+							.swapOfRelationSymbolRequired(pair.getSecond().getLhsCoefficient(), sort);
 					// upper and lower have been swapped
 					result.addAntiDerRelation(solvedUpper, solvedLower);
 				} else {
