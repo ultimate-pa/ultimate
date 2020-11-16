@@ -486,11 +486,23 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			final Direction direction;
 			List<ExplicitLhsPolynomialRelation> bounds;
 			if (upperBounds.isEmpty()) {
-				direction = Direction.UPPER;
+				if (quantifier == QuantifiedFormula.EXISTS) {
+					direction = Direction.UPPER;
+				} else if (quantifier == QuantifiedFormula.FORALL) {
+					direction = Direction.LOWER;
+				} else {
+					throw new AssertionError("Unknown quantifier " + quantifier);
+				}
 				bounds = lowerBounds;
 			} else if (lowerBounds.isEmpty()) {
+				if (quantifier == QuantifiedFormula.EXISTS) {
+					direction = Direction.LOWER;
+				} else if (quantifier == QuantifiedFormula.FORALL) {
+					direction = Direction.UPPER;
+				} else {
+					throw new AssertionError("Unknown quantifier " + quantifier);
+				}
 				bounds = upperBounds;
-				direction = Direction.LOWER;
 			} else {
 				return null;
 			}
