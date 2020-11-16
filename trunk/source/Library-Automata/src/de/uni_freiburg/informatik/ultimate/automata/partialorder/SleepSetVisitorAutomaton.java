@@ -39,10 +39,6 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 		// do nothing
 	}
 	
-	public NestedRun<L, S> constructRun(ArrayDeque<S> stateStack) {
-		return null;
-	}
-	
 	public NestedWordAutomaton<L, S> getReductionAutomaton(){
 		return mReductionAutomaton;
 	}

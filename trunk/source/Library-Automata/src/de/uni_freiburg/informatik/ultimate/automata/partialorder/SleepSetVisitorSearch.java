@@ -23,6 +23,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
 		mAcceptingStateSequence = new ArrayList<>();
 		mAcceptingWord = new Word<>();
 	}
+	@Override
 	public void discoverState() {
 		mLetterStack.push(new ArrayList<L>());
 	}
@@ -58,10 +59,6 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
 		}
 		NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
 		return new NestedRun<>(acceptingNestedWord, mAcceptingStateSequence);
-	}
-	
-	public NestedWordAutomaton<L, S> getReductionAutomaton(){
-		return null;
 	}
 	
 	@Override
