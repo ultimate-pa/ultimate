@@ -536,6 +536,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			final EnumSet<BvSignedness> eSet = EnumSet.noneOf(BvSignedness.class);
 			eSet.addAll(checkSigedness(mLowerBounds));
 			eSet.addAll(checkSigedness(mUpperBounds));
+			final boolean bvSingleDirectionBounds = !eSet.isEmpty() && mAntiDerBounds.isEmpty()
+					&& (mLowerBounds.isEmpty() != mUpperBounds.isEmpty());
+			if (bvSingleDirectionBounds) {
+				return checkforSingleDirectionBounds(script, mLowerBounds, mUpperBounds, quantifier);
+			}
 
 			for (int i = 0; i < numberOfCorrespondingFiniteJuncts; i++) {
 				if (!services.getProgressMonitorService().continueProcessing()) {
@@ -551,12 +556,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					} else {
 						lowerBounds.add(mAntiDerBounds.get(k).getFirst());
 					}
-				}
-				// Check for Single Direction Bounds after adding AntiDer Bounds
-				final Term singleDirectionTerm;
-				singleDirectionTerm = checkforSingleDirectionBounds(script, lowerBounds, upperBounds, quantifier);
-				if (singleDirectionTerm != null) {
-					return singleDirectionTerm;
 				}
 				correspondingFiniteJuncts[i] =
 						buildDualFiniteJunction(script, quantifier, lowerBounds, upperBounds, eSet);
