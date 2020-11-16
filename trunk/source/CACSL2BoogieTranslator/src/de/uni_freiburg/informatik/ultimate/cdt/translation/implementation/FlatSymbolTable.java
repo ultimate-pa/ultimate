@@ -419,6 +419,8 @@ public class FlatSymbolTable {
 	public String getCIdForBoogieId(final String boogieId) {
 		return mBoogieIdToCId.get(boogieId);
 	}
+	
+
 
 	/**
 	 * Fetches the Boogie Declaration for the given C Declaration
@@ -470,6 +472,14 @@ public class FlatSymbolTable {
 		return Collections.unmodifiableMap(mBoogieIdToCId);
 	}
 
+/**
+ * @cyrus, to get the declared global variables.
+ * @return global scope. 
+ */
+	public Map<String, SymbolTableValue> getGlobalScope() {
+		return mGlobalScope;
+	}
+	
 	private static boolean hasOwnScope(final IASTNode node) {
 		final boolean hasImplicitScope = node instanceof IASTFunctionDefinition || node instanceof IASTForStatement;
 		final boolean hasExplicitScope =
