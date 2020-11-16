@@ -510,18 +510,23 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 
 		private Term constructConstraintForSingleDirectionBounds(final Script script, final int quantifier,
-				final Direction direction, List<ExplicitLhsPolynomialRelation> bounds) {
-			Term result = QuantifierUtils.getAbsorbingElement(script, quantifier);
+				final Direction direction, final List<ExplicitLhsPolynomialRelation> bounds) {
+			final List<Term> dualFiniteJunction = new ArrayList<>();
 			for (final ExplicitLhsPolynomialRelation bound : bounds) {
-				if (bound.getRelationSymbol().isStrictRelation()
-						&& SmtSortUtils.isBitvecSort(bound.getRhs().getSort())) {
-					result = SmtUtils.and(script, result, // edited
-							constructConstraintForSingleDirectionBounds(bound.getRhs().toTerm(script), script,
-									bound.getRhs().getSort(), bound.getRelationSymbol().isSignedBvRelation(), direction,
-									quantifier));
+				if ((quantifier == QuantifiedFormula.EXISTS) && (bound.getRelationSymbol().isStrictRelation())) {
+					dualFiniteJunction.add(constructConstraintForSingleDirectionBounds(bound.getRhs().toTerm(script),
+							script, bound.getRhs().getSort(), bound.getRelationSymbol().isSignedBvRelation(), direction,
+							quantifier));
+				} else if ((quantifier == QuantifiedFormula.FORALL)
+						&& (!bound.getRelationSymbol().isStrictRelation())) {
+					dualFiniteJunction.add(constructConstraintForSingleDirectionBounds(bound.getRhs().toTerm(script),
+							script, bound.getRhs().getSort(), bound.getRelationSymbol().isSignedBvRelation(), direction,
+							quantifier));
+				} else {
+					// does not contribute to constraint
 				}
 			}
-			return result;
+			return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualFiniteJunction);
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
