@@ -417,6 +417,11 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 		private Term buildBoundConstraint(final IUltimateServiceProvider services, final Script script,
 				final int quantifier) {
+			final boolean bvSingleDirectionBounds = SmtSortUtils.isBitvecSort(mSort) && mAntiDerBounds.isEmpty()
+					&& (mLowerBounds.isEmpty() != mUpperBounds.isEmpty());
+			if (bvSingleDirectionBounds) {
+				return checkforSingleDirectionBounds(script, mLowerBounds, mUpperBounds, quantifier);
+			}
 
 			// final Term withoutAntiDer = buildDualFiniteJunction(script,
 			// quantifier, mLowerBounds, mUpperBounds, null);
@@ -553,16 +558,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
 				final int quantifier, final Script script) {
+
 			final int numberOfCorrespondingFiniteJuncts = (int) Math.pow(2, mAntiDerBounds.size());
 			final Term[] correspondingFiniteJuncts = new Term[numberOfCorrespondingFiniteJuncts];
 			final EnumSet<BvSignedness> eSet = EnumSet.noneOf(BvSignedness.class);
 			eSet.addAll(checkSigedness(mLowerBounds));
 			eSet.addAll(checkSigedness(mUpperBounds));
-			final boolean bvSingleDirectionBounds = !eSet.isEmpty() && mAntiDerBounds.isEmpty()
-					&& (mLowerBounds.isEmpty() != mUpperBounds.isEmpty());
-			if (bvSingleDirectionBounds) {
-				return checkforSingleDirectionBounds(script, mLowerBounds, mUpperBounds, quantifier);
-			}
 
 			for (int i = 0; i < numberOfCorrespondingFiniteJuncts; i++) {
 				if (!services.getProgressMonitorService().continueProcessing()) {
