@@ -603,7 +603,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					final BvSignedness bvSigned;
 					if (eSet != null) {
 						if (eSet.equals(EnumSet.allOf(BvSignedness.class))) {
-							bvSigned = null;
+							// we cannot combine strict and unstrict bitvector inequalities
+							return null;
 						} else if (eSet.contains(BvSignedness.UNSIGNED)) {
 							bvSigned = BvSignedness.UNSIGNED;
 						} else if (eSet.contains(BvSignedness.SIGNED)) {
@@ -649,9 +650,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			final Pair<RelationSymbol, Rational> relSymbAndOffset = computeRelationSymbolAndOffset(quantifier,
 					lower.getRelationSymbol(), upper.getRelationSymbol(), lower.getRhs().getSort(), bvSigned);
 
-			if (bvSigned == null || relSymbAndOffset == null) {
-				// Case1: Term has Signed and Unsigned BV Relations
-				// Case2: tried to combine 2 Strict BV Relations
+			if (relSymbAndOffset == null) {
+				// tried to combine 2 Strict BV Relations
 				return null;
 			}
 			assert relSymbAndOffset.getSecond().equals(Rational.ZERO)
