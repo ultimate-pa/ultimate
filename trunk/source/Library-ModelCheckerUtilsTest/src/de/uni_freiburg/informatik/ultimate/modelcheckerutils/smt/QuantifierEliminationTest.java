@@ -1150,7 +1150,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void bvTirSingleDirectionForallLowerUnsigned() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
-		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvult x a) (bvugt b x)))";
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvule x a) (bvuge b x)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -1158,7 +1158,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void bvTirSingleDirectionForallLowerSigned() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
-		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvslt x a) (bvsgt b x)))";
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvsle x a) (bvsge b x)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -1166,7 +1166,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void bvTirSingleDirectionForallUpperUnsigned() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
-		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvugt x a) (bvult b x)))";
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvuge x a) (bvule b x)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -1174,7 +1174,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void bvTirSingleDirectionForallUpperSigned() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
-		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvsgt x a) (bvslt b x)))";
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvsge x a) (bvsle b x)))";
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
