@@ -422,11 +422,30 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			if (bvSingleDirectionBounds) {
 				return checkforSingleDirectionBounds(script, mLowerBounds, mUpperBounds, quantifier);
 			}
-			final EnumSet<BvSignedness> bvSignednesses = collectBvSignednesses();
+			final BvSignedness bvSignedness;
+			if (SmtSortUtils.isBitvecSort(mSort)) {
+				final EnumSet<BvSignedness> bvSignednesses = collectBvSignednesses();
+				if (bvSignednesses.equals(EnumSet.allOf(BvSignedness.class))) {
+					// we cannot combine strict and unstrict bitvector inequalities
+					return null;
+				} else if (bvSignednesses.equals(EnumSet.of(BvSignedness.UNSIGNED))) {
+					bvSignedness = BvSignedness.UNSIGNED;
+				} else if (bvSignednesses.equals(EnumSet.of(BvSignedness.SIGNED))) {
+					bvSignedness = BvSignedness.SIGNED;
+				} else {
+					assert (bvSignednesses.equals(EnumSet.noneOf(BvSignedness.class)));
+					assert (mLowerBounds.isEmpty() && mUpperBounds.isEmpty());
+					assert !mAntiDerBounds.isEmpty() : "there are no bounds";
+					// we are free to choose and take UNSIGNED for no specific reason
+					bvSignedness = BvSignedness.UNSIGNED;
+				}
+			} else {
+				bvSignedness = null;
+			}
 
 			// final Term withoutAntiDer = buildDualFiniteJunction(script,
 			// quantifier, mLowerBounds, mUpperBounds, null);
-			final Term antiDer = buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script, bvSignednesses);
+			final Term antiDer = buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script, bvSignedness);
 			if (antiDer == null) {
 				return null;
 			}
@@ -570,11 +589,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
-				final int quantifier, final Script script, final EnumSet<BvSignedness> bvSignednesses) {
+				final int quantifier, final Script script, final BvSignedness bvSignedness) {
 
 			final int numberOfCorrespondingFiniteJuncts = (int) Math.pow(2, mAntiDerBounds.size());
 			final Term[] correspondingFiniteJuncts = new Term[numberOfCorrespondingFiniteJuncts];
-
 
 			for (int i = 0; i < numberOfCorrespondingFiniteJuncts; i++) {
 				if (!services.getProgressMonitorService().continueProcessing()) {
@@ -591,8 +609,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 						lowerBounds.add(mAntiDerBounds.get(k).getFirst());
 					}
 				}
-				correspondingFiniteJuncts[i] =
-						buildDualFiniteJunction(script, quantifier, lowerBounds, upperBounds, bvSignednesses);
+				correspondingFiniteJuncts[i] = buildDualFiniteJunction(script, quantifier, lowerBounds, upperBounds,
+						bvSignedness);
 				if (correspondingFiniteJuncts[i] == null) {
 					return null;
 				}
@@ -603,7 +621,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 		private Term buildDualFiniteJunction(final Script script, final int quantifier,
 				final List<ExplicitLhsPolynomialRelation> lowerBounds,
-				final List<ExplicitLhsPolynomialRelation> upperBounds, final EnumSet<BvSignedness> eSet) {
+				final List<ExplicitLhsPolynomialRelation> upperBounds, final BvSignedness bvSignedness) {
 			if (lowerBounds.size() == 0 || upperBounds.size() == 0) {
 				return QuantifierUtils.applyDualFiniteConnective(script, quantifier);
 			}
@@ -632,23 +650,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			int i = 0;
 			for (final ExplicitLhsPolynomialRelation lower : lowerBounds) {
 				for (final ExplicitLhsPolynomialRelation upper : upperBounds) {
-					final BvSignedness bvSigned;
-					if (eSet != null) {
-						if (eSet.equals(EnumSet.allOf(BvSignedness.class))) {
-							// we cannot combine strict and unstrict bitvector inequalities
-							return null;
-						} else if (eSet.contains(BvSignedness.UNSIGNED)) {
-							bvSigned = BvSignedness.UNSIGNED;
-						} else if (eSet.contains(BvSignedness.SIGNED)) {
-							bvSigned = BvSignedness.SIGNED;
-						} else {
-							bvSigned = BvSignedness.UNSIGNED;
-						}
-					} else {
-						bvSigned = null;
-					}
 
-					allCombinations[i] = combine(script, quantifier, lower, upper, bvSigned);
+					allCombinations[i] = combine(script, quantifier, lower, upper, bvSignedness);
 					if (allCombinations[i] == null) {
 						// null e.g., if lower and upper RelationSymbols are strict BV
 						// relations and quantifier is exists
@@ -677,10 +680,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 
 		private Term combine(final Script script, final int quantifier, final ExplicitLhsPolynomialRelation lower,
-				final ExplicitLhsPolynomialRelation upper, final BvSignedness bvSigned) {
+				final ExplicitLhsPolynomialRelation upper, final BvSignedness bvSignedness) {
 
 			final Pair<RelationSymbol, Rational> relSymbAndOffset = computeRelationSymbolAndOffset(quantifier,
-					lower.getRelationSymbol(), upper.getRelationSymbol(), lower.getRhs().getSort(), bvSigned);
+					lower.getRelationSymbol(), upper.getRelationSymbol(), lower.getRhs().getSort(), bvSignedness);
 			assert relSymbAndOffset.getSecond().equals(Rational.ZERO)
 					|| relSymbAndOffset.getSecond().equals(Rational.ONE)
 					|| relSymbAndOffset.getSecond().equals(Rational.MONE);
@@ -716,12 +719,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 	private static Pair<RelationSymbol, Rational> computeRelationSymbolAndOffset(final int quantifier,
 			final RelationSymbol lowerBoundRelationSymbol, final RelationSymbol upperBoundRelationSymbol,
-			final Sort sort, final BvSignedness bvSigned) {
+			final Sort sort, final BvSignedness bvSignedness) {
 		final RelationSymbol resultRelationSymbol;
 		final Rational offset;
 		if (lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLE()) {
 			resultRelationSymbol = upperBoundRelationSymbol.getInequality(upperBoundRelationSymbol.isStrictRelation(),
-					sort, bvSigned);
+					sort, bvSignedness);
 			if ((quantifier == QuantifiedFormula.FORALL)
 					&& (SmtSortUtils.isIntSort(sort) || SmtSortUtils.isBitvecSort(sort))) {
 				offset = Rational.MONE;
@@ -731,16 +734,16 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		} else if ((lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLT())
 				|| (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLE())) {
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				resultRelationSymbol = upperBoundRelationSymbol.getInequality(true, sort, bvSigned);
+				resultRelationSymbol = upperBoundRelationSymbol.getInequality(true, sort, bvSignedness);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				resultRelationSymbol = upperBoundRelationSymbol.getInequality(false, sort, bvSigned);
+				resultRelationSymbol = upperBoundRelationSymbol.getInequality(false, sort, bvSignedness);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
 			offset = Rational.ZERO;
 		} else if (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLT()) {
 			resultRelationSymbol = upperBoundRelationSymbol.getInequality(upperBoundRelationSymbol.isStrictRelation(),
-					sort, bvSigned);
+					sort, bvSignedness);
 			if ((quantifier == QuantifiedFormula.EXISTS)
 					&& (SmtSortUtils.isIntSort(sort) || SmtSortUtils.isBitvecSort(sort))) {
 				offset = Rational.ONE;
