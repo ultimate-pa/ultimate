@@ -1203,6 +1203,13 @@ public class QuantifierEliminationTest {
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void bvTirOffsetBug01() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvuge x a) (bvule x b)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 	@Test
 	public void greaterTIRNegativeCoef() {
