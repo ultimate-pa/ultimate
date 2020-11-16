@@ -618,8 +618,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 					allCombinations[i] = combine(script, quantifier, lower, upper, bvSigned);
 					if (allCombinations[i] == null) {
-						// true if lower and upper RelationSymbols are Strict BV
-						// Relations
+						// null e.g., if lower and upper RelationSymbols are strict BV
+						// relations and quantifier is exists
 						return null;
 					}
 					i++;
@@ -649,11 +649,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 			final Pair<RelationSymbol, Rational> relSymbAndOffset = computeRelationSymbolAndOffset(quantifier,
 					lower.getRelationSymbol(), upper.getRelationSymbol(), lower.getRhs().getSort(), bvSigned);
-
-			if (relSymbAndOffset == null) {
-				// tried to combine 2 Strict BV Relations
-				return null;
-			}
 			assert relSymbAndOffset.getSecond().equals(Rational.ZERO)
 					|| relSymbAndOffset.getSecond().equals(Rational.ONE)
 					|| relSymbAndOffset.getSecond().equals(Rational.MONE);
@@ -662,7 +657,14 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 			final Term result;
 			if (SmtSortUtils.isBitvecSort(lower.getRhs().getSort())) {
-				result = relSymbAndOffset.getFirst().constructTerm(script, lhs.toTerm(script), rhs.toTerm(script));
+				if (!relSymbAndOffset.getSecond().equals(Rational.ZERO)) {
+					// for bitvectors we cannot handle offsets
+					// e.g., required if we combine two strict
+					// relations for an existential quantifier
+					result = null;
+				} else {
+					result = relSymbAndOffset.getFirst().constructTerm(script, lhs.toTerm(script), rhs.toTerm(script));
+				}
 			} else {
 				final IPolynomialTerm negatedRhs = PolynomialTermOperations.mul(rhs, Rational.MONE);
 				IPolynomialTerm resultRhs;
@@ -686,9 +688,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		final RelationSymbol resultRelationSymbol;
 		final Rational offset;
 		if (lowerBoundRelationSymbol.isRelationSymbolGE() && upperBoundRelationSymbol.isRelationSymbolLE()) {
-			resultRelationSymbol =
-					upperBoundRelationSymbol.getInequality(upperBoundRelationSymbol.isStrictRelation(), sort, bvSigned);
-			if ((quantifier == QuantifiedFormula.FORALL) && SmtSortUtils.isIntSort(sort)) {
+			resultRelationSymbol = upperBoundRelationSymbol.getInequality(upperBoundRelationSymbol.isStrictRelation(),
+					sort, bvSigned);
+			if ((quantifier == QuantifiedFormula.FORALL)
+					&& (SmtSortUtils.isIntSort(sort) || SmtSortUtils.isBitvecSort(sort))) {
 				offset = Rational.MONE;
 			} else {
 				offset = Rational.ZERO;
@@ -704,26 +707,15 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 			offset = Rational.ZERO;
 		} else if (lowerBoundRelationSymbol.isRelationSymbolGT() && upperBoundRelationSymbol.isRelationSymbolLT()) {
-			resultRelationSymbol =
-					upperBoundRelationSymbol.getInequality(upperBoundRelationSymbol.isStrictRelation(), sort, bvSigned);
-			if ((quantifier == QuantifiedFormula.EXISTS) && SmtSortUtils.isIntSort(sort)) {
+			resultRelationSymbol = upperBoundRelationSymbol.getInequality(upperBoundRelationSymbol.isStrictRelation(),
+					sort, bvSigned);
+			if ((quantifier == QuantifiedFormula.EXISTS)
+					&& (SmtSortUtils.isIntSort(sort) || SmtSortUtils.isBitvecSort(sort))) {
 				offset = Rational.ONE;
 			} else {
 				offset = Rational.ZERO;
 			}
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				// return null, if upper and lower RelationsSymbols are
-				// StrictBvRelation's
-				return null;
-			}
 		} else {
-			// <pre>
-			// TODO #bvineq 20201017 Matthias:
-			// * Cases for new relation symbols probably have to be added above.
-			// * We probably need a special solution for upper bounds of
-			// the form "bvult 0" because is this case we should subtract -1
-			// * Idea: omit call to this method and replace result by "false"
-			// </pre>
 			throw new AssertionError(String.format("Unsupported relation symbols: Lower %s, Upper %s",
 					lowerBoundRelationSymbol, upperBoundRelationSymbol));
 		}
