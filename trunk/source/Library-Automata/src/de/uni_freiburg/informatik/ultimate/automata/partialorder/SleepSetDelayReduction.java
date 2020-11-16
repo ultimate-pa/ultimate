@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,7 +104,6 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		mDelaySetMap = new HashMap<>();
 		mStateStack = new ArrayDeque<>();
 		mVisitor = visitor;
-		//mReductionAutomaton = mVisitor.getReductionAutomaton();
 		//mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
 		for (final S startState : mStartStateSet) {
 			mSleepSetMap.put(startState, new HashSet<L>());
@@ -121,7 +121,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	}
 
 	private void search() {
-		while (!mStateStack.isEmpty()) {
+		while (!mExit && !mStateStack.isEmpty()) {
 			
 			final S currentState = mStateStack.peek();
 			mVisitor.discoverState();
@@ -163,6 +163,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 			final Comparator<L> order = mOrder.getOrder(currentState);
 			successorTransitionList.sort(order);
 			Set<L> explored = new HashSet<>();
+			ArrayList<S> successorStateList = new ArrayList<>();
 			
 			for (final L letterTransition : successorTransitionList) {
 				final var successors = mOperand.internalSuccessors(currentState, letterTransition).iterator();
@@ -196,11 +197,14 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 				} else if (!mExit){
 					mSleepSetMap.put(succState, succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
-					mStateStack.push(succState);
-				} else {
-					//mAcceptingRun = mVisitor.constructRun(mStateStack);
+					successorStateList.add(succState);
+					//mStateStack.push(succState);
 				}
 				explored.add(letterTransition);
+			}
+			Collections.reverse(successorStateList);
+			for (S succState : successorStateList) {
+				mStateStack.push(succState);
 			}
 						
 		}
@@ -209,14 +213,11 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 
 	@Override
 	public NestedWordAutomaton<L, S> getResult() {
-		// TODO Auto-generated method stub
-		//mReductionAutomaton = mVisitor.getReductionAutomaton();
 		return null;
 	}
 
 	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<L, S> getOperand() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

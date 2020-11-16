@@ -38,7 +38,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
 	public void backtrackState(Object state) {
 		//pop state's list and remove letter leading to state from predecessor's list
 		mLetterStack.pop();
-		mLetterStack.peek().remove(-1);	
+		mLetterStack.peek().remove(0);	
 	}
 	
 	public NestedRun<L, S> constructRun(ArrayDeque<S> stateStack) {
@@ -47,7 +47,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
 
 		while (!stateStack.isEmpty()) {
 			final ArrayList<L> currentTransitionList = mLetterStack.pop();
-			final L currentTransition = currentTransitionList.get(-1);
+			final L currentTransition = currentTransitionList.get(0);
 			mAcceptingTransitionSequence.add(0, currentTransition);
 			currentState = stateStack.pop();
 			mAcceptingStateSequence.add(0, currentState);
