@@ -36,15 +36,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -59,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @param <S>
  *            state type
  */
-public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IStateFactory<S>> {
+public class SleepSetDelayReduction<L, S> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final Set<S> mStartStateSet;
@@ -69,8 +63,8 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	private final ArrayDeque<S> mStateStack;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
-	//private NestedWordAutomaton<L, S> mReductionAutomaton;
-	//private NestedRun<L, S> mAcceptingRun;
+	// private NestedWordAutomaton<L, S> mReductionAutomaton;
+	// private NestedRun<L, S> mAcceptingRun;
 	private final IPartialOrderVisitor<L, S> mVisitor;
 	private boolean mExit;
 
@@ -91,9 +85,7 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 	 */
 	public SleepSetDelayReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
-			final AutomataLibraryServices services, final IEmptyStackStateFactory<S> stateFactory,
 			final IPartialOrderVisitor<L, S> visitor) {
-		super(services);
 		mOperand = operand;
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
@@ -104,13 +96,13 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 		mDelaySetMap = new HashMap<>();
 		mStateStack = new ArrayDeque<>();
 		mVisitor = visitor;
-		//mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
+		// mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
 		for (final S startState : mStartStateSet) {
 			mSleepSetMap.put(startState, new HashSet<L>());
 			mDelaySetMap.put(startState, new HashSet<Set<L>>());
 			mStateStack.push(startState);
 			mVisitor.addStartState(startState);
-			//mReductionAutomaton.addState(true, mOperand.isFinal(startState), startState);
+			// mReductionAutomaton.addState(true, mOperand.isFinal(startState), startState);
 
 		}
 		mOrder = sleepSetOrder;
@@ -122,14 +114,14 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 
 	private void search() {
 		while (!mExit && !mStateStack.isEmpty()) {
-			
+
 			final S currentState = mStateStack.peek();
 			mVisitor.discoverState();
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
 			Set<L> currentSleepSet = mSleepSetMap.get(currentState);
 			final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
-			
-			if(mPrunedMap.get(currentState) == null) {
+
+			if (mPrunedMap.get(currentState) == null) {
 				// state not visited yet
 				mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
 				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
@@ -137,8 +129,8 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 						successorTransitionList.add(transition.getLetter());
 					}
 				}
-				
-			} else if (!currentDelaySet.isEmpty()){
+
+			} else if (!currentDelaySet.isEmpty()) {
 				currentSleepSet = currentDelaySet.iterator().next();
 				currentDelaySet.remove(currentSleepSet);
 				final Set<L> pruned = mPrunedMap.get(currentState);
@@ -153,18 +145,18 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 				mSleepSetMap.put(currentState, currentSleepSet);
 				mPrunedMap.put(currentState, currentSleepSet);
 			}
-			
+
 			if (successorTransitionList.isEmpty()) {
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
 			}
-			
+
 			// sort successorTransitionList according to the given order
 			final Comparator<L> order = mOrder.getOrder(currentState);
 			successorTransitionList.sort(order);
-			Set<L> explored = new HashSet<>();
-			ArrayList<S> successorStateList = new ArrayList<>();
-			
+			final Set<L> explored = new HashSet<>();
+			final ArrayList<S> successorStateList = new ArrayList<>();
+
 			for (final L letterTransition : successorTransitionList) {
 				final var successors = mOperand.internalSuccessors(currentState, letterTransition).iterator();
 				if (!successors.hasNext()) {
@@ -180,45 +172,31 @@ public class SleepSetDelayReduction<L, S> extends UnaryNwaOperation<L, S, IState
 				final Set<Set<L>> succDelaySet = new HashSet<>();
 
 				/*
-				// add succState to the automaton
-				if (!mReductionAutomaton.contains(succState)) {
-					mReductionAutomaton.addState(false, mOperand.isFinal(succState), succState);
-					mDelaySetMap.put(succState, succDelaySet);
-				}
-				// add transition from currentState to succState to the automaton
-				mReductionAutomaton.addInternalTransition(currentState, letterTransition, succState);
-				*/
+				 * // add succState to the automaton if (!mReductionAutomaton.contains(succState)) {
+				 * mReductionAutomaton.addState(false, mOperand.isFinal(succState), succState);
+				 * mDelaySetMap.put(succState, succDelaySet); } // add transition from currentState to succState to the
+				 * automaton mReductionAutomaton.addInternalTransition(currentState, letterTransition, succState);
+				 */
 				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
-				
+
 				if (!mExit && mStateStack.contains(succState)) {
 					succDelaySet.addAll(mDelaySetMap.get(succState));
 					succDelaySet.add(succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
-				} else if (!mExit){
+				} else if (!mExit) {
 					mSleepSetMap.put(succState, succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
 					successorStateList.add(succState);
-					//mStateStack.push(succState);
+					// mStateStack.push(succState);
 				}
 				explored.add(letterTransition);
 			}
 			Collections.reverse(successorStateList);
-			for (S succState : successorStateList) {
+			for (final S succState : successorStateList) {
 				mStateStack.push(succState);
 			}
-						
+
 		}
-		
-	}
 
-	@Override
-	public NestedWordAutomaton<L, S> getResult() {
-		return null;
 	}
-
-	@Override
-	protected INwaOutgoingLetterAndTransitionProvider<L, S> getOperand() {
-		return null;
-	}
-
 }

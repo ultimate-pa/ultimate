@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
 public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S> {
-	
+
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final NestedWordAutomaton<L, S> mReductionAutomaton;
 
@@ -42,13 +42,14 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 		mOperand = operand;
 		mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
 	}
+
 	@Override
 	public void discoverState() {
 		// do nothing
-		
 	}
+
 	@Override
-	public boolean discoverTransition(S source, L letter, S target) {
+	public boolean discoverTransition(final S source, final L letter, final S target) {
 		// add succState to the automaton
 		if (!mReductionAutomaton.contains(target)) {
 			mReductionAutomaton.addState(false, mOperand.isFinal(target), target);
@@ -59,18 +60,18 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 	}
 
 	@Override
-	public void backtrackState(Object state) {
+	public void backtrackState(final S state) {
 		// do nothing
 	}
-	
-	public NestedWordAutomaton<L, S> getReductionAutomaton(){
+
+	public NestedWordAutomaton<L, S> getReductionAutomaton() {
 		return mReductionAutomaton;
 	}
-	
+
 	@Override
-	public void addStartState(S state) {
+	public void addStartState(final S state) {
 		mReductionAutomaton.addState(true, mOperand.isFinal(state), state);
-		
+
 	}
 
 }

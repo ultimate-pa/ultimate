@@ -75,9 +75,9 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndepende
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReductionAutomatonIterative;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReductionAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -434,27 +434,24 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 						new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true))));
 		final ISleepSetOrder<IPredicate, L> order =
 				new ConstantSleepSetOrder<>(input.getVpAlphabet().getInternalAlphabet());
+		final SleepSetVisitorAutomaton<L, IPredicate> automatonConstructor = new SleepSetVisitorAutomaton<>(input,
+				new AutomataLibraryServices(mServices), mStateFactoryForRefinement);
 
 		// TODO Use statistics methods to measure time
 		final long reductionStart = System.currentTimeMillis();
 
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result;
 		switch (mode) {
 		case DELAY_SET:
-			/*result = new SleepSetReduction<L, IPredicate, IPredicate>(input, indep, order, new AutomataLibraryServices(mServices), 
-			mSleepSetStateFactory, true).getResult();*/
-			result = new SleepSetDelayReductionAutomatonIterative<>(input, indep, order,
-					new AutomataLibraryServices(mServices), mStateFactoryForRefinement).getResult();
+			new SleepSetDelayReduction<>(input, indep, order, automatonConstructor);
 			break;
 		case NEW_STATES:
-			/*result = new SleepSetReduction<L, IPredicate, IPredicate>(input, indep, order, new AutomataLibraryServices(mServices), 
-			 mSleepSetStateFactory, false).getResult();*/
-			result = new SleepSetNewStateReductionAutomaton<>(input, indep, order, new AutomataLibraryServices(mServices),
-					mSleepSetStateFactory).getResult();
+			new SleepSetNewStateReduction<>(input, indep, order, mSleepSetStateFactory, automatonConstructor);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unknown sleep set mode: " + mode);
 		}
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =
+				automatonConstructor.getReductionAutomaton();
 
 		final long reductionEnd = System.currentTimeMillis();
 		mLogger.warn("Sleep Set Reduction Time: " + (reductionEnd - reductionStart) + "ms");

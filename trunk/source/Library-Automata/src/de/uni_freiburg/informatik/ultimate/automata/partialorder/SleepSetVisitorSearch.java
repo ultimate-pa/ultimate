@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
-public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
+public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final ArrayDeque<ArrayList<L>> mLetterStack;
 	private final ArrayDeque<ArrayList<S>> mStateStack;
@@ -45,35 +45,36 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
 
 	public SleepSetVisitorSearch(final INwaOutgoingLetterAndTransitionProvider<L, S> operand) {
 		mOperand = operand;
-		mLetterStack= new ArrayDeque<ArrayList<L>>();
-		mStateStack= new ArrayDeque<ArrayList<S>>();
+		mLetterStack = new ArrayDeque<>();
+		mStateStack = new ArrayDeque<>();
 		mAcceptingTransitionSequence = new ArrayList<>();
 		mAcceptingStateSequence = new ArrayList<>();
 		mAcceptingWord = new Word<>();
 	}
+
 	@Override
 	public void discoverState() {
 		mLetterStack.push(new ArrayList<L>());
 		mStateStack.push(new ArrayList<S>());
 	}
-	
+
 	@Override
-	public boolean discoverTransition(S source, L letter, S target) {
-		//push letter onto Stack
+	public boolean discoverTransition(final S source, final L letter, final S target) {
+		// push letter onto Stack
 		mLetterStack.peek().add(letter);
 		mStateStack.peek().add(target);
 		return mOperand.isFinal(target);
 	}
 
 	@Override
-	public void backtrackState(Object state) {
-		//pop state's list and remove letter leading to state from predecessor's list
+	public void backtrackState(final S state) {
+		// pop state's list and remove letter leading to state from predecessor's list
 		mLetterStack.pop();
 		mLetterStack.peek().remove(0);
 		mStateStack.pop();
 		mStateStack.peek().remove(0);
 	}
-	
+
 	public NestedRun<L, S> constructRun() {
 		ArrayList<S> currentStateList = mStateStack.pop();
 		S currentState = currentStateList.get(-1);
@@ -88,7 +89,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
 			currentTransition = currentTransitionList.get(0);
 			mAcceptingTransitionSequence.add(0, currentTransition);
 		}
-		
+
 		while (!mStateStack.isEmpty()) {
 			currentTransitionList = mLetterStack.pop();
 			currentTransition = currentTransitionList.get(0);
@@ -97,17 +98,17 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L,S> {
 			currentState = currentStateList.get(0);
 			mAcceptingStateSequence.add(0, currentState);
 		}
-		
+
 		for (final L letter : mAcceptingTransitionSequence) {
 			final Word<L> tempWord = new Word<>(letter);
 			mAcceptingWord.concatenate(tempWord);
 		}
-		NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
+		final NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
 		return new NestedRun<>(acceptingNestedWord, mAcceptingStateSequence);
 	}
-	
+
 	@Override
-	public void addStartState(S state) {
+	public void addStartState(final S state) {
 		// do nothing
 	}
 }
