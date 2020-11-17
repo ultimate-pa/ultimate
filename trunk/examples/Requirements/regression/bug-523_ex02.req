@@ -12,3 +12,10 @@ R3: Globally, it is always the case that if "a" holds for at least "1000" time u
 // INITIAL     a=* b=* out=*
 // [0;500]     a=true b=false out=false
 // [500;1000]  a=true b=true out=false
+
+// Sometimes it also finds this CEX
+// Requirements R2, R1 are rt-inconsistent
+// We found a FailurePath: 
+// INITIAL      a=* b=* out=*
+// [0;1000]     a=true b=false out=false
+// [1000;1500]  a=false b=true out=false
