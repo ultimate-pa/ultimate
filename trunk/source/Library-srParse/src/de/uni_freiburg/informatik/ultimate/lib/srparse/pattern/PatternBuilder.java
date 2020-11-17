@@ -58,10 +58,11 @@ public class PatternBuilder {
 			BndExistencePattern.class, BndInvariancePattern.class, BndPossResponsePattern.class,
 			BndRecurrencePattern.class, BndResponsePatternTT.class, BndResponsePatternTU.class,
 			BndResponsePatternUT.class, BndTriggeredEntryConditionPattern.class, ConstrainedChainPattern.class,
-			InitializationPattern.class, InstAbsPattern.class, InvariantPattern.class, MaxDurationPattern.class,
-			MinDurationPattern.class, PossibilityPattern.class, PrecedenceChain12Pattern.class,
-			PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
-			ResponsePattern.class, UniversalityPattern.class, UniversalityPatternDelayed.class };
+			EdgeResponsePatternDelayed.class, InitializationPattern.class, InstAbsPattern.class, InvariantPattern.class,
+			MaxDurationPattern.class, MinDurationPattern.class, PossibilityPattern.class,
+			PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class, PrecedencePattern.class,
+			ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
+			UniversalityPatternDelayed.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
