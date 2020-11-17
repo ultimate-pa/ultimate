@@ -7,8 +7,8 @@ R2: Globally, it is always the case that if "b" holds, then "out" holds after at
 R3: Globally, it is always the case that if "a" holds for at least "10" time units, then "!a" holds afterwards.
 
 
-// Requirements R1, R2 are rt-inconsistent
+// Requirements R2, R1 are rt-inconsistent
 // We found a FailurePath: 
-// 0   a=* b=* out=*
-// 10  a=true b=false out=false
-// 5   a=false b=true out=false
+// INITIAL     a=* b=* out=*
+// [0;10]      a=true b=false out=false
+// [10;15]     a=false b=true out=false
