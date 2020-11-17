@@ -1,0 +1,8 @@
+Input A is bool
+Input B is bool
+
+req1: Globally, it is always the case that if "A" holds, then "!B" holds for at least "10" time units.
+req2: Globally, it is always the case that if "A" holds, then "B" holds as well.
+
+
+// Both should be vacuous
