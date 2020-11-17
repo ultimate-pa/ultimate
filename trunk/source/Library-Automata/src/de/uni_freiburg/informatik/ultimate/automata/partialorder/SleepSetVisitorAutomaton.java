@@ -55,7 +55,7 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 		}
 		// add transition from currentState to succState to the automaton
 		mReductionAutomaton.addInternalTransition(source, letter, target);
-		return mOperand.isFinal(target);
+		return false;
 	}
 
 	@Override
