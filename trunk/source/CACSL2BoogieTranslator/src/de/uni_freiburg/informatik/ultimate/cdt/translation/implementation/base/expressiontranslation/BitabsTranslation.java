@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -42,8 +43,10 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -53,7 +56,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -66,12 +71,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -92,8 +99,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
@@ -376,7 +385,10 @@ public class BitabsTranslation {
 		}	
 	}
 	
-	public static Result abstractAssgin(CHandler chandler, ProcedureManager procedureManager, FlatSymbolTable symbolTable, ExpressionResultTransformer exprResultTransformer, IDispatcher main, LocationFactory locationFactory, IASTBinaryExpression node) {
+	public static Result abstractAssgin(CHandler chandler, ArrayList<Declaration> mDeclarations, ExpressionTranslation mExpressionTranslation,
+			INameHandler mNameHandler, AuxVarInfoBuilder mAuxVarInfoBuilder, FlatSymbolTable symbolTable,
+			ExpressionResultTransformer exprResultTransformer, IDispatcher main, LocationFactory locationFactory,
+			IASTBinaryExpression node) {
 		final ILocation loc = locationFactory.createCLocation(node);
 		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
 		final ExpressionResult rightOperand = (ExpressionResult) main.dispatch(node.getOperand2());
@@ -385,87 +397,142 @@ public class BitabsTranslation {
 		varCounter++;
 		if (node.getOperand2() instanceof IASTBinaryExpression) {
 			// for the general bitwise assignment case, we build up assume statements.
-		//	System.out.println("----Is this binary expression contains bitwise operator?: " + BitabsTranslation.containBitwise(node));
-			
-			IASTBinaryExpression rhs_bit = (IASTBinaryExpression) node.getOperand2();					
+			// System.out.println("----Is this binary expression contains bitwise operator?:
+			// " + BitabsTranslation.containBitwise(node));
+
+			IASTBinaryExpression rhs_bit = (IASTBinaryExpression) node.getOperand2();
 			boolean bit_op = BitabsTranslation.isBitwiseOperator(rhs_bit.getOperator());
 			System.out.println("----Is the binary operator a bitwise operator? " + bit_op);
+
+			if (bit_op) {
+
+				if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryAnd) {
+					ExpressionResult rhs_opr1 = (ExpressionResult) main.dispatch(rhs_bit.getOperand1());
+					ExpressionResult rhs_opr2 = (ExpressionResult) main.dispatch(rhs_bit.getOperand2());
+					Expression opr1 = rhs_opr1.getLrValue().getValue();
+					Expression opr2 = rhs_opr2.getLrValue().getValue();
+
+					// Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+					Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+
+					Expression opr1_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGT, opr1, literal_0);
+					Expression opr2_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGT, opr2, literal_0);
+
+					Expression opr_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_signed, opr2_signed);
+					Expression cond_rhs = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, opr1, opr2);
+					Expression rhs_ite = ExpressionFactory.constructIfThenElseExpression(loc, cond_rhs, opr1, opr2);
+
+					// We need to create a new id expression to store the expression here.
+					// leftOperand we supposed to be an idEcpression, implicit cast
+					IdentifierExpression id_left = (IdentifierExpression) leftOperand.getLrValue().getValue();
+					//Create the LRValue for the assignment statement.
+					VariableLHS idLhs_left = new VariableLHS (loc, id_left.getType(), id_left.getIdentifier(), id_left.getDeclarationInformation());
+					LRValue idLhs_lrVal = new LocalLValue(idLhs_left, lType, false, false, null);
+					
+					// predefined global id
+					String cId = ("__").concat(Integer.toString(varCounter));
+	
+					// need to find all the global scope, with the same problem here ....
+					final SymbolTableValue stv = symbolTable.getGlobalScope().get(cId);
 			
-			if (bit_op) {				
-				ExpressionResult rhs_opr1 = (ExpressionResult) main.dispatch(rhs_bit.getOperand1());
-				ExpressionResult rhs_opr2 = (ExpressionResult) main.dispatch(rhs_bit.getOperand2());
-				Expression opr1 = rhs_opr1.getLrValue().getValue();
-				Expression opr2 = rhs_opr2.getLrValue().getValue();
-				
-				Expression cond_rhs = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, opr1, opr2);
-				Expression rhs_ite = ExpressionFactory.constructIfThenElseExpression(loc, cond_rhs, opr1, opr2);
-				
-				// We need to create a new id expression to store the expression here. 
-				// leftOperand we supposed to be an idEcpression, implicit cast
-				IdentifierExpression id_left = (IdentifierExpression)leftOperand.getLrValue().getValue();
-				String cId = ("__").concat(Integer.toString(varCounter));
-		//		final String cIdMp = symbolTable.applyMultiparseRenaming(node.getContainingFilename(), cId);
-				
-				System.out.println("symboleTable, printing out here:"+symbolTable.toString());
-				System.out.println("boogieEIdentifierMapping, printing out here:"+symbolTable.getBoogieCIdentifierMapping());
+					String bId = stv.getBoogieName();
+					Declaration bDec = stv.getBoogieDecl();
+					CType cType = stv.getCType();
+					DeclarationInformation decInfo = stv.getDeclarationInformation();
 
-				// need to find all the global scope, with the same problem here ....
-				final SymbolTableValue stv = symbolTable.getGlobalScope().get(cId);
+					// ToDo How to create a new global declaration? No association back to c ast,
+					// create boogie declaration directly.
+					// final Result declSpecifierResult =
 
-				System.out.println(", printing out global scope here : "+ symbolTable.getGlobalScope().get(cId));
+					Expression bit_var = ExpressionFactory.constructIdentifierExpression(loc, (BoogieType) id_left.getType(), bId, decInfo);
+					final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc, (BoogieType) id_left.getType(), bId, decInfo);
+					LRValue bit_lrVal = new LocalLValue(idLhs, cType, false, false, null);
+
+					final ExpressionResult rightOperandSwitched = exprResultTransformer
+							.makeRepresentationReadyForConversionAndRexBoolToInt(rhs_opr2, loc, lType, node);
+					builder.addAllIncludingLrValue(rightOperandSwitched);
+
+					
+					Expression left_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGT,
+							leftOperand.getLrValue().getValue(), literal_0);
+					
+					AssumeStatement assume_pos = new AssumeStatement(loc, opr_signed);
+					Expression formula_left = ExpressionFactory.newBinaryExpression(loc,
+							BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), bit_var);
+
+					AssumeStatement assume_stmt = new AssumeStatement(loc, formula_left);
+					
+					final AssignmentStatement assignVal = StatementFactory.constructAssignmentStatement(loc,
+							new LeftHandSide[] { idLhs }, new Expression[] { rhs_ite });
+					String nondetName = "__VERRIFIER_nondet_int()";
+				
+					// elseStmt should be an assignment with __VERRIFIER_nondet_int() (nondet funciton) call
+					System.out.println("-----auxvarinfoBuilder in bitabs: "+ mAuxVarInfoBuilder.toString());
+					final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+					
+
+					resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+					resultBuilder.addAuxVar(auxvarinfo);
 			
-				String bId = stv.getBoogieName();
-				Declaration bDec = stv.getBoogieDecl();
-				CType cType = stv.getCType();
-				DeclarationInformation decInfo = stv.getDeclarationInformation();
-				
-		      // ToDo How to create a new global declaration? No association back to c ast, create boogie declaration directly.
-			//	final Result declSpecifierResult = main.dispatch((IASTSimpleDeclaration)node.getOperand2());
-			
-//				final ASTType translatedType = new PrimitiveType(loc, (BoogieType)id_left.getType(), bId);
-//				final Declaration boogieDec = new VariableDeclaration(loc, new Attribute[0],
-//						new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-//				// creata a dummy c declaration:
-//				CDeclaration cDec = new CDeclaration(lType, "bit_instument");
-//				symbolTable.storeCSymbol(node, cDec.getName(),
-//						new SymbolTableValue(bId, boogieDec, cDec, decInfo, node, false));
-//				
-		
-		       Expression bit_var = ExpressionFactory.constructIdentifierExpression(loc, (BoogieType)id_left.getType(), bId, decInfo);
-				final VariableLHS idLhs = // new VariableLHS(loc, bId);
-						ExpressionFactory.constructVariableLHS(loc, (BoogieType)id_left.getType(), bId, decInfo);
-				LRValue bit_lrVal = new LocalLValue(idLhs, cType, false, false, null);
-			
-				final ExpressionResult rightOperandSwitched = exprResultTransformer
-						.makeRepresentationReadyForConversionAndRexBoolToInt(rhs_opr2, loc, lType, node);
-				builder.addAllIncludingLrValue(rightOperandSwitched);
+					final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
+					resultBuilder.setLrValue(returnValue);
+					mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
+							resultBuilder);
 
-			//	Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
-				Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+					assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
+							resultBuilder.getAuxVars());
+					ExpressionResult nondetResult = resultBuilder.build();
 
-				Expression left_pos = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.COMPGT, leftOperand.getLrValue().getValue(), literal_0);
-				AssumeStatement assume_pos = new AssumeStatement(loc, left_pos);
-				Expression formula_left = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), bit_var);
+					final ExpressionResult nondetSwitched = exprResultTransformer
+							.makeRepresentationReadyForConversionAndRexBoolToInt(nondetResult, loc, lType, node);
+					ExpressionResult assignElse = chandler.makeAssignment(loc, idLhs_lrVal,
+							leftOperand.getNeighbourUnionFields(), nondetSwitched, node);
+					
+					// We need to register this auxiliary variable, and this is local variable;
+					// How to register a local auxiliary variable declaration?
+					// for global: 
+//					mDeclarations.add(auxvarinfo.getVarDec());
+					final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+					System.out.println("----symboleTable, all local Variables?:  " + symbolTable.toString());
+//					
+//					symbolTable.storeCSymbol(node, nondetName,
+//							new SymbolTableValue(auxvarinfo.getExp().getIdentifier(), null, node.getOriginalNode(), auxvarinfo.getVarDec(), node, false));
+//					
+					final ArrayList<Statement> stmt = new ArrayList<>(assignElse.getStatements());
+					final ArrayList<Declaration> decl = new ArrayList<>(assignElse.getDeclarations());
+					final List<Overapprox> overappr = new ArrayList<>();
 
-				AssumeStatement assume_stmt = new AssumeStatement(loc, formula_left);
-				// make a new node?
-				//Change the leftOperand to and_var, and right operand with leftOperand.
-				ExpressionResult assign_rv = chandler.makeAssignment(loc, bit_lrVal,
-						leftOperand.getNeighbourUnionFields(), builder.build(), node);
-				// Build the new assignment with local variable
-				builder.addAllExceptLrValue(assign_rv);
-				/* __VERIFIER_assume(n>=0); */
-				/* __VERIFIER_assume(n<n0); */
-				builder.addStatement(assume_pos);
-				builder.addStatement(assume_stmt);
-				return builder.build();
+					stmt.addAll(CTranslationUtil.createHavocsForAuxVars(assignElse.getAuxVars()));
+					overappr.addAll(assignElse.getOverapprs());
+					ExpressionResult exprAssign = new ExpressionResult(stmt, assignElse.getLrValue(), decl,
+							Collections.emptySet(), overappr);
+							
+					List<Statement> thenStmt = new ArrayList<>();
+				// we need to create a modifiable list.
+				//	List<Statement> elseStmt = new ArrayList<>(exprAssign.getStatements());
+					List<Statement> elseStmt = new ArrayList<>();
+					
+					thenStmt.add(assignVal);
+					thenStmt.add(assume_pos);					
+					thenStmt.add(assume_stmt);
+					// else branch for the nondet
+					IfStatement ifstmt = new IfStatement(loc, opr_signed,
+							thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt.toArray(new Statement[elseStmt.size()]));
+				//TODO ite statement, this is more sound abstraction rule,
+				// but we have a problem to register auxiliary variable(local) for nondet() assignment.
+				//builder.addStatement(ifstmt);
+					builder.addStatements(thenStmt);
+					return builder.build();
 				} else {
-					// ToDo, x = 1+x&(x-3)?
-					throw new UnsupportedOperationException("ToDo, x = 1+x&(x-3)?...");
-					}
+					throw new UnsupportedOperationException(
+							"No rules for other bitiwse operator other than & in assume");
+				}
+			} else {
+				//TODO, x = 1+x&(x-3)?
+				throw new UnsupportedOperationException("ToDo, x = 1+x&(x-3)?...");
 			}
+		}
 		return builder.build();
 	}
 	
@@ -514,6 +581,7 @@ public class BitabsTranslation {
 		final Expression result = ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 		return result;
 	}
+	
 
 
 

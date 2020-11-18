@@ -707,7 +707,6 @@ public class CHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
 		final ExpressionResult rightOperand = (ExpressionResult) main.dispatch(node.getOperand2());
-
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
 			
@@ -715,8 +714,9 @@ public class CHandler {
 			// and rhs is a bitwise binary expression.
 			boolean isBit = BitabsTranslation.containBitwise(node);
 			if (isBit) {
-				return BitabsTranslation.abstractAssgin(this, mProcedureManager, mSymbolTable, mExprResultTransformer, main, mLocationFactory, node);
-				} else {
+				return BitabsTranslation.abstractAssgin(this, mDeclarations, mExpressionTranslation, mNameHandler, mAuxVarInfoBuilder,
+						mSymbolTable, mExprResultTransformer, main, mLocationFactory, node);
+			} else {
 					final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 					builder.addAllExceptLrValue(leftOperand);
 					final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
@@ -1362,7 +1362,6 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTExpressionStatement node) {
 		
 		//for the bitswise abstraction,		
-	//	System.out.println("Expression in the statement before get translated:"+node.getExpression().toString());
 		final Result r = main.dispatch(node.getExpression());
 //		System.out.println("----ExpressionStatement in result:----"+ r.toString());
 		if (r instanceof ExpressionResult) {
@@ -1414,6 +1413,7 @@ public class CHandler {
 		if (functionName instanceof IASTIdExpression) {
 			final Result standardFunction =
 					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
+			System.out.println("-----IASTFunctionCallExpression is null?" + standardFunction.toString());
 			if (standardFunction != null) {
 				return standardFunction;
 			}
@@ -2554,7 +2554,6 @@ public class CHandler {
 		final ExpressionResult rhsConverted =
 				mExprResultTransformer.performImplicitConversion(rhs, leftHandSide.getCType(), loc);
 		final RValue rightHandSideValueWithConversionsApplied = (RValue) rhsConverted.getLrValue();
-
 		// for wraparound --> and avoiding it for ints that store pointers
 		// updates the value in the symbol table accordingly
 		// TODO: this is really ugly, do we still need this??
@@ -2614,11 +2613,11 @@ public class CHandler {
 			 * take over everything but neighbour union fields -- those will be given to assignorHavocUnionNeighbours as
 			 * an extra parameter
 			 */
+			
 			builder.addStatements(rhsConverted.getStatements());
 			builder.addDeclarations(rhsConverted.getDeclarations());
 			builder.addOverapprox(rhsConverted.getOverapprs());
 			builder.addAuxVars(rhsConverted.getAuxVars());
-
 			final LocalLValue lValue = (LocalLValue) leftHandSide;
 			builder.setLrValue(lValue);
 
@@ -2856,6 +2855,7 @@ public class CHandler {
 
 				// no initializer --> essentially needs to be havoced f.i. in each loop iteration
 				if (!onHeap) {
+					System.out.println("---Havoc for local variable here(not on heap!): " + lhs.toString());
 					erb.addStatement(new HavocStatement(loc, new VariableLHS[] { lhs }));
 				} else {
 					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
