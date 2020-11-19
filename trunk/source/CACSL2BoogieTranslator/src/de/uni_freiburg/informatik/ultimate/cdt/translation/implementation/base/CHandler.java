@@ -649,7 +649,7 @@ public class CHandler {
 				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		mExpressionTranslation.getFunctionDeclarations().finish();
 		mDeclarations.addAll(declaredFunctions);
-
+		System.out.println("all the declarations in procedure implementaion should be added to here: " + mDeclarations.toString());
 		// TODO Need to get a CLocation from somewhere
 		// the overall translation result:
 		final Unit boogieUnit = new Unit(
@@ -714,7 +714,7 @@ public class CHandler {
 			// and rhs is a bitwise binary expression.
 			boolean isBit = BitabsTranslation.containBitwise(node);
 			if (isBit) {
-				return BitabsTranslation.abstractAssgin(this, mDeclarations, mExpressionTranslation, mNameHandler, mAuxVarInfoBuilder,
+				return BitabsTranslation.abstractAssgin(this, mProcedureManager, mDeclarations, mExpressionTranslation, mNameHandler, mAuxVarInfoBuilder,
 						mSymbolTable, mExprResultTransformer, main, mLocationFactory, node);
 			} else {
 					final ExpressionResultBuilder builder = new ExpressionResultBuilder();
@@ -1363,14 +1363,14 @@ public class CHandler {
 		
 		//for the bitswise abstraction,		
 		final Result r = main.dispatch(node.getExpression());
-//		System.out.println("----ExpressionStatement in result:----"+ r.toString());
+		System.out.println("----expression result in ExpressionStatement in :----"+ r.toString());
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult rExp = (ExpressionResult) r;
 
 			final ArrayList<Statement> stmt = new ArrayList<>(rExp.getStatements());
 			final ArrayList<Declaration> decl = new ArrayList<>(rExp.getDeclarations());
 			final List<Overapprox> overappr = new ArrayList<>();
-
+			System.out.println("----auxVars in ExpressionStatement:----"+ rExp.getAuxVars());
 			stmt.addAll(CTranslationUtil.createHavocsForAuxVars(rExp.getAuxVars()));
 			overappr.addAll(rExp.getOverapprs());
 			return new ExpressionResult(stmt, rExp.getLrValue(), decl, Collections.emptySet(), overappr);
@@ -1385,6 +1385,7 @@ public class CHandler {
 					stmt.addAll(res.getStatements());
 					decl.addAll(res.getDeclarations());
 					stmt.addAll(CTranslationUtil.createHavocsForAuxVars(res.getAuxVars()));
+					System.out.println("----auxVars in ExpressionStatement in(list) :----"+ res.getAuxVars());
 					overappr.addAll(res.getOverapprs());
 				}
 			}
@@ -1413,7 +1414,6 @@ public class CHandler {
 		if (functionName instanceof IASTIdExpression) {
 			final Result standardFunction =
 					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
-			System.out.println("-----IASTFunctionCallExpression is null?" + standardFunction.toString());
 			if (standardFunction != null) {
 				return standardFunction;
 			}
@@ -3314,7 +3314,6 @@ public class CHandler {
 					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());
 
 		}
-
 		return new ExpressionResult(rop.getStatements(),
 				LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
 				rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());

@@ -385,7 +385,7 @@ public class BitabsTranslation {
 		}	
 	}
 	
-	public static Result abstractAssgin(CHandler chandler, ArrayList<Declaration> mDeclarations, ExpressionTranslation mExpressionTranslation,
+	public static Result abstractAssgin(CHandler chandler, ProcedureManager mProcedureManager, ArrayList<Declaration> mDeclarations, ExpressionTranslation mExpressionTranslation,
 			INameHandler mNameHandler, AuxVarInfoBuilder mAuxVarInfoBuilder, FlatSymbolTable symbolTable,
 			ExpressionResultTransformer exprResultTransformer, IDispatcher main, LocationFactory locationFactory,
 			IASTBinaryExpression node) {
@@ -415,8 +415,8 @@ public class BitabsTranslation {
 					// Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
 					Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-					Expression opr1_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGT, opr1, literal_0);
-					Expression opr2_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGT, opr2, literal_0);
+					Expression opr1_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, literal_0);
+					Expression opr2_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr2, literal_0);
 
 					Expression opr_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_signed, opr2_signed);
 					Expression cond_rhs = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, opr1, opr2);
@@ -470,6 +470,7 @@ public class BitabsTranslation {
 					System.out.println("-----auxvarinfoBuilder in bitabs: "+ mAuxVarInfoBuilder.toString());
 					final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+//					VariableDeclaration auxDec = auxvarinfo.getVarDec();
 					
 
 					resultBuilder.addDeclaration(auxvarinfo.getVarDec());
@@ -492,13 +493,18 @@ public class BitabsTranslation {
 					// We need to register this auxiliary variable, and this is local variable;
 					// How to register a local auxiliary variable declaration?
 					// for global: 
-//					mDeclarations.add(auxvarinfo.getVarDec());
-					final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-					System.out.println("----symboleTable, all local Variables?:  " + symbolTable.toString());
-//					
-//					symbolTable.storeCSymbol(node, nondetName,
-//							new SymbolTableValue(auxvarinfo.getExp().getIdentifier(), null, node.getOriginalNode(), auxvarinfo.getVarDec(), node, false));
-//					
+				//	mDeclarations.add(auxvarinfo.getVarDec());
+					
+					// create the CDelaration for auxVar
+					CDeclaration auxCdecl = new CDeclaration(lType, nondetName);
+					DeclarationInformation auxDeclInfo = new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
+				//  DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+					
+					SymbolTableValue aux_stv = new SymbolTableValue(auxvarinfo.getExp().getIdentifier(), auxvarinfo.getVarDec(),
+							auxCdecl, auxDeclInfo, node, false);
+					
+					symbolTable.storeCSymbol(node, auxvarinfo.getExp().getIdentifier(), aux_stv);
+
 					final ArrayList<Statement> stmt = new ArrayList<>(assignElse.getStatements());
 					final ArrayList<Declaration> decl = new ArrayList<>(assignElse.getDeclarations());
 					final List<Overapprox> overappr = new ArrayList<>();
@@ -510,8 +516,8 @@ public class BitabsTranslation {
 							
 					List<Statement> thenStmt = new ArrayList<>();
 				// we need to create a modifiable list.
-				//	List<Statement> elseStmt = new ArrayList<>(exprAssign.getStatements());
-					List<Statement> elseStmt = new ArrayList<>();
+					List<Statement> elseStmt = new ArrayList<>(exprAssign.getStatements());
+				//	List<Statement> elseStmt = new ArrayList<>();
 					
 					thenStmt.add(assignVal);
 					thenStmt.add(assume_pos);					
@@ -521,8 +527,9 @@ public class BitabsTranslation {
 							thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt.toArray(new Statement[elseStmt.size()]));
 				//TODO ite statement, this is more sound abstraction rule,
 				// but we have a problem to register auxiliary variable(local) for nondet() assignment.
-				//builder.addStatement(ifstmt);
-					builder.addStatements(thenStmt);
+				
+					builder.addStatement(ifstmt);
+				//	builder.addStatements(thenStmt);
 					return builder.build();
 				} else {
 					throw new UnsupportedOperationException(
