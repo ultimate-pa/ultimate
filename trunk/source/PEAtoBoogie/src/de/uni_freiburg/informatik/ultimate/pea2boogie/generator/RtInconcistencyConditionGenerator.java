@@ -536,11 +536,12 @@ public class RtInconcistencyConditionGenerator {
 		final Set<TermVariable> rtr = new HashSet<>();
 		final Set<String> primedVars = mReqSymboltable.getPrimedVars();
 		final Set<String> eventVars = mReqSymboltable.getEventVars();
+		final Set<String> stateVars = (Set<String>) mReqSymboltable.getStateVars();
 		for (final TermVariable var : freeVars) {
 			final Expression expr = mBoogie2Smt.getTerm2Expression().translate(var);
 			if (expr instanceof IdentifierExpression) {
 				final String name = ((IdentifierExpression) expr).getIdentifier();
-				if (primedVars.contains(name) || eventVars.contains(name)) {
+				if (primedVars.contains(name) || eventVars.contains(name) || stateVars.contains(name)) {
 					rtr.add(var);
 				}
 			} else {
