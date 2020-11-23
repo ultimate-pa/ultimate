@@ -42,26 +42,26 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class TermContextTransformationEngine<C, R> {
+public class TermContextTransformationEngine<C> {
 
-	private final TermWalker<C, R> mTermWalker;
+	private final TermWalker<C> mTermWalker;
 	private final ArrayDeque<Task> mStack;
 
-	private TermContextTransformationEngine(final TermWalker<C, R> termWalker) {
+	private TermContextTransformationEngine(final TermWalker<C> termWalker) {
 		super();
 		mTermWalker = termWalker;
 		mStack = new ArrayDeque<>();
 	}
 
-	public static <C, R> R transform(final TermWalker<C, R> termWalker, final C initialContext, final Term term) {
+	public static <C> Term transform(final TermWalker<C> termWalker, final C initialContext, final Term term) {
 		return new TermContextTransformationEngine<>(termWalker).transform(initialContext, term);
 	}
 
-	private R transform(final C context, final Term term) {
+	private Term transform(final C context, final Term term) {
 		final DescendResult dr = mTermWalker.convert(context, term);
 		final Task initialTask = constructTaskForDescendResult(context, dr);
 		if (initialTask instanceof TermContextTransformationEngine.AscendResultTask) {
-			final AscendResultTask art = (TermContextTransformationEngine<C, R>.AscendResultTask) initialTask;
+			final AscendResultTask art = (TermContextTransformationEngine<C>.AscendResultTask) initialTask;
 			return art.getResult();
 		}
 		mStack.push(initialTask);
@@ -69,7 +69,7 @@ public class TermContextTransformationEngine<C, R> {
 			// warning: doStep() might alter stack
 			final Task newTask = mStack.peek().doStep();
 			if (newTask instanceof TermContextTransformationEngine.AscendResultTask) {
-				final AscendResultTask art = (TermContextTransformationEngine<C, R>.AscendResultTask) newTask;
+				final AscendResultTask art = (TermContextTransformationEngine<C>.AscendResultTask) newTask;
 				if (mStack.isEmpty()) {
 					return art.getResult();
 				} else {
@@ -92,19 +92,19 @@ public class TermContextTransformationEngine<C, R> {
 
 		abstract Task doStep();
 
-		abstract void integrateResult(final R result);
+		abstract void integrateResult(final Term result);
 
 	}
 
 	private class AscendResultTask extends Task {
-		public AscendResultTask(final C context, final R result) {
+		public AscendResultTask(final C context, final Term result) {
 			super(context);
 			mResult = result;
 		}
 
-		final R mResult;
+		final Term mResult;
 
-		public R getResult() {
+		public Term getResult() {
 			return mResult;
 		}
 
@@ -114,7 +114,7 @@ public class TermContextTransformationEngine<C, R> {
 		}
 
 		@Override
-		void integrateResult(final R result) {
+		void integrateResult(final Term result) {
 			throw new AssertionError();
 		}
 
@@ -123,40 +123,48 @@ public class TermContextTransformationEngine<C, R> {
 	private class ApplicationTermTask extends Task {
 		int mNext;
 		final ApplicationTerm mOriginal;
-		final List<R> mResult;
+		final Term[] mResult;
+		boolean mChangeInThisIteration = false;
 
 		public ApplicationTermTask(final C context, final ApplicationTerm original) {
 			super(context);
 			mNext = 0;
 			mOriginal = original;
-			mResult = new ArrayList(original.getParameters().length);
+			mResult = Arrays.copyOf(original.getParameters(), original.getParameters().length);
 		}
 
 		@Override
 		Task doStep() {
+			if (mNext == mOriginal.getParameters().length && mChangeInThisIteration
+					&& mTermWalker.applyRepeatedlyUntilNoChange()) {
+				mNext = 0;
+				mChangeInThisIteration = false;
+			}
 			final Task result;
 			if (mNext == mOriginal.getParameters().length) {
-				final R res = mTermWalker.constructResultForApplicationTerm(super.mContext, mOriginal, mResult);
+				final Term res = mTermWalker.constructResultForApplicationTerm(super.mContext, mOriginal, mResult);
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
 			} else {
-				final ArrayList<Term> otherParams = new ArrayList<>(Arrays.asList(mOriginal.getParameters()));
+				final ArrayList<Term> otherParams = new ArrayList<>(Arrays.asList(mResult));
 				otherParams.remove(mNext);
 				final C currentContext = mTermWalker.constructContextForApplicationTerm(super.mContext,
 						mOriginal.getFunction(), otherParams);
-				final DescendResult res = mTermWalker.convert(currentContext, mOriginal.getParameters()[mNext]);
+				final DescendResult res = mTermWalker.convert(currentContext, mResult[mNext]);
 				result = constructTaskForDescendResult(currentContext, res);
 			}
 			return result;
 		}
 
 		@Override
-		void integrateResult(final R result) {
+		void integrateResult(final Term result) {
 			assert (mNext < mOriginal.getParameters().length);
-			mResult.add(result);
+			if (!mResult[mNext].equals(result)) {
+				mChangeInThisIteration = true;
+			}
+			mResult[mNext] = result;
 			mNext++;
-			assert mNext == mResult.size();
 		}
 	}
 
@@ -165,7 +173,7 @@ public class TermContextTransformationEngine<C, R> {
 		if (res instanceof IntermediateResultForDescend) {
 			result = constructTask(currentContext, ((IntermediateResultForDescend) res).getIntermediateResult());
 		} else if (res instanceof FinalResultForAscend) {
-			result = new AscendResultTask(currentContext, ((FinalResultForAscend<R>) res).getFinalResult());
+			result = new AscendResultTask(currentContext, ((FinalResultForAscend<Term>) res).getFinalResult());
 		} else {
 			throw new AssertionError("unknown result " + res);
 		}
@@ -174,7 +182,7 @@ public class TermContextTransformationEngine<C, R> {
 
 	private class QuantifiedFormulaTask extends Task {
 		private final QuantifiedFormula mOriginal;
-		private R mResultSubformula;
+		private Term mResultSubformula;
 
 		public QuantifiedFormulaTask(final C context, final QuantifiedFormula quantifiedFormula) {
 			super(context);
@@ -185,7 +193,8 @@ public class TermContextTransformationEngine<C, R> {
 		Task doStep() {
 			final Task result;
 			if (mResultSubformula != null) {
-				final R res = mTermWalker.constructResultForQuantifiedFormula(super.mContext, mOriginal, mResultSubformula);
+				final Term res = mTermWalker.constructResultForQuantifiedFormula(super.mContext, mOriginal,
+						mResultSubformula);
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
@@ -199,7 +208,7 @@ public class TermContextTransformationEngine<C, R> {
 		}
 
 		@Override
-		void integrateResult(final R result) {
+		void integrateResult(final Term result) {
 			mResultSubformula = result;
 		}
 
@@ -219,19 +228,21 @@ public class TermContextTransformationEngine<C, R> {
 		return result;
 	}
 
-	public abstract static class TermWalker<C, R> {
+	public abstract static class TermWalker<C> {
 
 		abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> otherParams);
+
+		abstract boolean applyRepeatedlyUntilNoChange();
 
 		abstract C constructContextForQuantifiedFormula(C context, int quant, TermVariable[] vars);
 
 		abstract DescendResult convert(final C context, final Term term);
 
-		abstract R constructResultForApplicationTerm(C context, ApplicationTerm originalApplicationTerm,
-				List<R> resultParams);
+		abstract Term constructResultForApplicationTerm(C context, ApplicationTerm originalApplicationTerm,
+				Term[] result);
 
-		abstract R constructResultForQuantifiedFormula(C context, QuantifiedFormula originalQuantifiedFormula,
-				R resultSubformula);
+		abstract Term constructResultForQuantifiedFormula(C context, QuantifiedFormula originalQuantifiedFormula,
+				Term resultSubformula);
 	}
 
 	public interface DescendResult {
@@ -252,15 +263,15 @@ public class TermContextTransformationEngine<C, R> {
 
 	}
 
-	public static class FinalResultForAscend<R> implements DescendResult {
-		private final R mFinalResult;
+	public static class FinalResultForAscend<Term> implements DescendResult {
+		private final Term mFinalResult;
 
-		public FinalResultForAscend(final R finalResult) {
+		public FinalResultForAscend(final Term finalResult) {
 			super();
 			mFinalResult = finalResult;
 		}
 
-		public R getFinalResult() {
+		public Term getFinalResult() {
 			return mFinalResult;
 		}
 
