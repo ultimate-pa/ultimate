@@ -113,7 +113,7 @@ public final class SmtUtils {
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
+		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE, POLY_PAC
 	}
 
 	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
@@ -169,6 +169,9 @@ public final class SmtUtils {
 				break;
 			case NONE:
 				return formula;
+			case POLY_PAC:
+				simplified = PolyPacSimplificationTermWalker.simplify(script.getScript(), formula);
+				break;
 			default:
 				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
 			}
