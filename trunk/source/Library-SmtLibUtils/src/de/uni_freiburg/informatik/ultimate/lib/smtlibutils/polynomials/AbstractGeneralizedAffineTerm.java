@@ -41,6 +41,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -438,4 +439,31 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		}
 		return constructNew(getSort(), newConstant, getAbstractVariable2Coefficient());
 	}
+
+
+	public enum ComparisonResult {
+		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT
+	}
+
+
+	public static ComparisonResult compare(final PolynomialRelation lhs, final PolynomialRelation rhs) {
+		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
+		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
+		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
+			throw new AssertionError("incomparable");
+		}
+		final ComparisonResult result;
+		if (lhs.getRelationSymbol().equals(RelationSymbol.EQ) && rhs.getRelationSymbol().equals(RelationSymbol.EQ)) {
+			if (lhs.getPolynomialTerm().getConstant().equals(rhs.getPolynomialTerm().getConstant())) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.INCONSISTENT;
+			}
+		} else {
+			result = null;
+		}
+		return result;
+	}
+
+
 }
