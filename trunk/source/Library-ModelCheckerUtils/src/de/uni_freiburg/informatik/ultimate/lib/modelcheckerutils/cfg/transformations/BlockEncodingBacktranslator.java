@@ -269,7 +269,8 @@ public class BlockEncodingBacktranslator extends
 	 */
 	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge, final IIcfgTransition<IcfgLocation> originalEdge,
 			final TermVariable branchEncoder) {
-		assert !mBranchEncoderMapping.containsKey(originalEdge) : "Ambiguous branch encoder for transition";
+		final TermVariable oldEncoder = mBranchEncoderMapping.get(originalEdge);
+		assert oldEncoder == null || oldEncoder == branchEncoder : "Ambiguous branch encoder for transition";
 		mBranchEncoderMapping.put(originalEdge, branchEncoder);
 
 		final Set<IIcfgTransition<IcfgLocation>> limboEdges = mParallelCompositions.get(originalEdge);
