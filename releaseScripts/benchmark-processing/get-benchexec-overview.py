@@ -630,7 +630,10 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
             yml = elem.attrib["name"]
             base_yml = ntpath.basename(yml)
             logfile_basename = "{}.{}.log".format(tool_name, base_yml)
-            rtr[logfile_basename] = Run(elem, logfile_basename)
+            try:
+                rtr[logfile_basename] = Run(elem, logfile_basename)
+            except ValueError as ve:
+                print(f"Could not create Run from {logfile_basename}: {ve}")
 
     return rtr, True
 

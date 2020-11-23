@@ -76,9 +76,7 @@ def parse_xml(filename):
 
             if key == "category" and value == "wrong":
                 property = run.attrib['properties']
-                architecture = re.sub('--architecture ', '', run.attrib['options'])
-                key = property + '_' + architecture
-                unsound.setdefault(key, set()).add(run.get('name'))
+                unsound.setdefault(property, set()).add(run.get('name'))
     return unsound
 
 def process_url_file(url_file, target_dir):
