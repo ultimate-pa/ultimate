@@ -49,12 +49,6 @@ public class BndDelayedResponsePatternUT extends PatternType<BndDelayedResponseP
 		super(scope, id, cdds, durations);
 	}
 
-	// @Override
-	// public BndDelayedResponsePatternUT create(final SrParseScope<?>scope, final String id, final List<CDD> cdds,
-	// final List<String> durations) {
-	// return new BndDelayedResponsePatternUT(scope, id, cdds, durations);
-	// }
-
 	@Override
 	public BndDelayedResponsePatternUT create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
@@ -76,7 +70,7 @@ public class BndDelayedResponsePatternUT extends PatternType<BndDelayedResponseP
 		final List<CounterTrace> ct = new ArrayList<>();
 		if (scope instanceof SrParseScopeGlobally) {
 			ct.add(counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.GREATER, c1), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.LESSEQUAL, c1),
+			ct.add(counterTrace(phaseT(), phase(R), phaseE(S.negate(), BoundTypes.LESSEQUAL, c1),
 					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
