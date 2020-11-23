@@ -465,6 +465,10 @@ public class PolynomialRelation implements IBinaryRelation {
 		return mPolynomialTerm.isVariable(var);
 	}
 
+	public PolynomialRelation negate(final Script script) {
+		return new PolynomialRelation(script, mPolynomialTerm, mRelationSymbol.negate());
+	}
+
 	public static PolynomialRelation convert(final Script script, final Term term) {
 		return convert(script, term, TransformInequality.NO_TRANFORMATION);
 	}
