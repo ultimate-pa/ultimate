@@ -466,6 +466,9 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
             run = runs[os.path.basename(f.logfile)]
             msg_detail += f'\n{" ":<8} {format_number(run.walltime, 2):>8}s {f.logfile}'
             msg_detail += f'\n{" ":<18} {"Call:":<8} {f.call}'
+            if r.category() not in interesting_strings:
+                print(f"{r.category()} not in interesting_strings")
+                continue
             mc = interesting_strings[r.category()]
             if mc.delta_debug:
                 desc = "--deltadebugger.result.short.description.prefix" if mc.delta_debug_short else "--deltadebugger.result.long.description.prefix"
