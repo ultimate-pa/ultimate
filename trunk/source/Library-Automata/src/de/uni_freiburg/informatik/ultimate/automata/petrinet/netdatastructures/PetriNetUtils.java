@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -140,7 +139,7 @@ public final class PetriNetUtils {
 			final INestedWordAutomaton<LETTER, PLACE> subtrahend, final BoundedPetriNet<LETTER, PLACE> result)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException, AutomataLibraryException {
 		final AutomatonWithImplicitSelfloops<LETTER, PLACE> subtrahendWithSelfloopsInAcceptingStates = new AutomatonWithImplicitSelfloops<>(
-				services, subtrahend, subtrahend.getAlphabet(), new HashSet<>(subtrahend.getFinalStates()));
+				services, subtrahend, subtrahend.getAlphabet(), subtrahend::isFinal);
 		final INestedWordAutomaton<LETTER, PLACE> op1AsNwa = (new PetriNet2FiniteAutomaton<>(services, stateFactory,
 				minuend)).getResult();
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> rcResult = (new DifferenceDD<>(services,
