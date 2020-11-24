@@ -62,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfUpd;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -143,8 +145,12 @@ public class QuantifierPusher extends TermTransformer {
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final Set<TermVariable> bannedForDivCapture, final Term inputTerm) {
+		final ExtendedSimplificationResult esr1 = SmtUtils.simplifyWithStatistics(script, inputTerm, null, services, SimplificationTechnique.POLY_PAC);
+//		services.getLoggingService().getLogger(QuantifierPusher.class).info(esr1.buildSizeReductionMessage());
 		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
-				bannedForDivCapture).transform(inputTerm);
+				bannedForDivCapture).transform(esr1.getSimplifiedTerm());
+//		final ExtendedSimplificationResult esr2 = SmtUtils.simplifyWithStatistics(script, result, null, services, SimplificationTechnique.POLY_PAC);
+//		services.getLoggingService().getLogger(QuantifierPusher.class).info(esr1.buildSizeReductionMessage());
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
 			SmtUtils.checkLogicalEquivalenceForDebugging(script.getScript(), result, inputTerm, QuantifierPusher.class,
