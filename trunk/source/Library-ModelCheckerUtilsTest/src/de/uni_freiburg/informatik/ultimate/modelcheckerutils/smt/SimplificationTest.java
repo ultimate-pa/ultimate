@@ -117,6 +117,20 @@ public class SimplificationTest {
 		mCsvWriter.reportTestFinished();
 	}
 
+	@Test
+	public void ddaExample6 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
+		final String formulaAsString = "(and (distinct x 1) (or (<= x 0) (> x 2) (= x 1)))";
+		runSimplificationTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void alternativeRepresentations () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y"), };
+		final String formulaAsString = "(and (distinct y x) (or (<= x 0) (> x 2) (= x y)))";
+		runSimplificationTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript);
+	}
+
 
 	/**
 	 * Benchmark from MCR. Quantifier elimination did not terminate.
