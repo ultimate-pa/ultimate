@@ -65,6 +65,7 @@ public class PolyPoNeWithContext extends PolyPoNe {
 		if (SmtUtils.isFalseLiteral(context)) {
 			return mScript.term("true");
 		}
+		// warning: context is always conjunctive
 		return or(Arrays.asList(SmtUtils.getConjuncts(context)), params);
 	}
 

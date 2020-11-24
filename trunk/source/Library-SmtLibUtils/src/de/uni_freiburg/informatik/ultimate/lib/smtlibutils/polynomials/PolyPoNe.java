@@ -68,6 +68,9 @@ public class PolyPoNe {
 
 	void add(final Collection<Term> params, final boolean negate) {
 		for (final Term param : params) {
+			// TODO 20201123 Matthias: For bitvectors distinct and equality are polynomial,
+			// the other inequalities not, hence distinct and equality should also be added
+			// as nonPoly. Add another data structure for binary relations
 			final PolynomialRelation polyPolyRel = PolynomialRelation.convert(mScript, param);
 			if (polyPolyRel != null) {
 				final PolynomialRelation addedRel = negate ? polyPolyRel.negate(mScript) : polyPolyRel;
@@ -99,6 +102,19 @@ public class PolyPoNe {
 
 	protected Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
+		final Check res1 = compareToExistingRepresentations(newPolyRel, removeExpliedPolyRels);
+		if (res1 != null) {
+			return res1;
+		}
+		final PolynomialRelation alternativeRepresentation = newPolyRel.mul(mScript, Rational.MONE);
+		final Check res2 = compareToExistingRepresentations(alternativeRepresentation, removeExpliedPolyRels);
+		if (res2 != null) {
+			return res2;
+		}
+		return Check.MAYBE_USEFUL;
+	}
+
+	private Check compareToExistingRepresentations(final PolynomialRelation newPolyRel, final boolean removeExpliedPolyRels) {
 		final Set<PolynomialRelation> existingPolyRels = mPolyRels
 				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
 		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
@@ -120,8 +136,9 @@ public class PolyPoNe {
 				}
 			}
 		}
-		return Check.MAYBE_USEFUL;
+		return null;
 	}
+
 
 	protected final boolean addPolyRel(final Script script, final PolynomialRelation polyRel,
 			final boolean removeExpliedPolyRels) {
