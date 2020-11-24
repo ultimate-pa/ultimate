@@ -459,6 +459,24 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 			} else {
 				result = ComparisonResult.INCONSISTENT;
 			}
+		} else if (lhs.getRelationSymbol().equals(RelationSymbol.DISTINCT) && rhs.getRelationSymbol().equals(RelationSymbol.DISTINCT)) {
+			if (lhs.getPolynomialTerm().getConstant().equals(rhs.getPolynomialTerm().getConstant())) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = null;
+			}
+		} else if (lhs.getRelationSymbol().equals(RelationSymbol.DISTINCT) && rhs.getRelationSymbol().equals(RelationSymbol.EQ)) {
+			if (lhs.getPolynomialTerm().getConstant().equals(rhs.getPolynomialTerm().getConstant())) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+		} else if (lhs.getRelationSymbol().equals(RelationSymbol.EQ) && rhs.getRelationSymbol().equals(RelationSymbol.DISTINCT)) {
+			if (lhs.getPolynomialTerm().getConstant().equals(rhs.getPolynomialTerm().getConstant())) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
 		} else {
 			result = null;
 		}
