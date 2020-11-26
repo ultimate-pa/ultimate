@@ -80,8 +80,7 @@ public class CoreUtil {
 
 	public static String getIsoUtcTimestamp() {
 		final TimeZone tz = TimeZone.getTimeZone("UTC");
-		// Quoted "Z" to indicate UTC, no timezone offset
-		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		df.setTimeZone(tz);
 		return df.format(new Date());
 	}
