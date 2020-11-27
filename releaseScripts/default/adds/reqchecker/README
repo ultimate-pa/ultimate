@@ -15,9 +15,9 @@ Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 This archive also contains binaries for the following theorem provers.
  * Z3 (https://github.com/Z3Prover/z3) 
    - Linux (z3)
-     z3-4.8.8 - 64 bit build from master dd064a555 (2020-04-22)
+     z3-4.8.9 - 64 bit build from master f58618aa0 (2020-11-27)
    - Windows (z3.exe)
-     z3-4.8.8 - 64 bit build from master dd064a555 (2020-04-22)
+     z3-4.8.9 - 64 bit build from master f58618aa0 (2020-11-27)
 
  * CVC4 (http://cvc4.cs.nyu.edu/)
    - Linux 
