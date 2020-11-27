@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.Transformations.AvailableTransformations;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.CheckType;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory.InstantiationMethod;
 
 /**
  * Options specific to the solver but independent of the front end.  To speed up
@@ -43,6 +44,7 @@ public class SolverOptions {
 	private final BooleanOption mSimpIps;
 	private final BooleanOption mProofCheckMode;
 	private final EnumOption<CheckType> mSimpCheckType;
+	private final EnumOption<InstantiationMethod> mInstantiationMethod;
 
 	SolverOptions(final OptionMap options, final LogProxy logger) {
 		mTimeout = new LongOption(0, true, "Soft timeout in milliseconds for "
@@ -72,6 +74,8 @@ public class SolverOptions {
 		mSimpCheckType = new EnumOption<>(CheckType.QUICK, true,
 				CheckType.class, "Strength of checks used by the strong context"
 				+ " simplifier used in the simplify command");
+		mInstantiationMethod = new EnumOption<>(InstantiationMethod.E_MATCHING_CONFLICT, false,
+				InstantiationMethod.class, "Quantifier Theory: Method to instantiate quantified formulas.");
 
 		// general standard compliant options
 		options.addOption(SMTLIBConstants.VERBOSITY, new VerbosityOption(logger));
@@ -115,8 +119,7 @@ public class SolverOptions {
 		options.addOption(SMTInterpolOptions.CHECK_TYPE, mCheckType);
 		options.addOption(SMTInterpolOptions.EPR, new BooleanOption(false, false,
 				"Assume formula is in EPR fragment. This give an error if the formula is outside EPR."));
-		options.addOption(SMTInterpolOptions.E_MATCHING, new BooleanOption(true, false,
-				"Quantifier Theory: Use E-matching for conflict and unit search."));
+		options.addOption(SMTInterpolOptions.INSTANTIATION_METHOD, mInstantiationMethod);
 		options.addOption(SMTInterpolOptions.UNKNOWN_TERM_DAWGS, new BooleanOption(true, false,
 				"Quantifier Theory: Use fourth instance value UNKNOWN_TERM as default in literal dawgs."));
 		options.addOption(SMTInterpolOptions.PROPAGATE_UNKNOWN_TERMS, new BooleanOption(false, false,
@@ -147,6 +150,8 @@ public class SolverOptions {
 		mSimpIps = (BooleanOption) options.getOption(SMTInterpolOptions.SIMPLIFY_INTERPOLANTS);
 		mProofCheckMode = (BooleanOption) options.getOption(SMTInterpolOptions.PROOF_CHECK_MODE);
 		mSimpCheckType = (EnumOption<CheckType>) options.getOption(SMTInterpolOptions.SIMPLIFY_CHECK_TYPE);
+		mInstantiationMethod =
+				(EnumOption<InstantiationMethod>) options.getOption(SMTInterpolOptions.INSTANTIATION_METHOD);
 	}
 
 	public final CheckType getCheckType() {
@@ -199,6 +204,10 @@ public class SolverOptions {
 
 	public CheckType getSimplifierCheckType() {
 		return mSimpCheckType.getValue();
+	}
+
+	public InstantiationMethod getInstantiationMethod() {
+		return mInstantiationMethod.getValue();
 	}
 
 }

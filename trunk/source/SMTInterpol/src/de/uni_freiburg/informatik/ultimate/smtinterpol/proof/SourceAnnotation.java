@@ -33,15 +33,24 @@ public class SourceAnnotation implements IAnnotation {
 	public static final SourceAnnotation EMPTY_SOURCE_ANNOT = new SourceAnnotation("", null);
 	private final String mAnnot;
 	private final Term mSource;
+	private final boolean mFromQuantTheory;
 
 	public SourceAnnotation(final String annot, final Term source) {
 		mAnnot = annot;
 		mSource = source;
+		mFromQuantTheory = false;
+	}
+
+	public SourceAnnotation(final SourceAnnotation orig, final boolean fromQuantTheory) {
+		mAnnot = orig.mAnnot;
+		mSource = orig.mSource;
+		mFromQuantTheory = fromQuantTheory;
 	}
 
 	public SourceAnnotation(final SourceAnnotation orig, final Term newSource) {
 		mAnnot = orig.mAnnot;
 		mSource = newSource;
+		mFromQuantTheory = orig.mFromQuantTheory;
 	}
 
 	public String getAnnotation() {
@@ -50,6 +59,10 @@ public class SourceAnnotation implements IAnnotation {
 
 	public Term getSource() {
 		return mSource;
+	}
+
+	public boolean isFromQuantTheory() {
+		return mFromQuantTheory;
 	}
 
 	@Override
