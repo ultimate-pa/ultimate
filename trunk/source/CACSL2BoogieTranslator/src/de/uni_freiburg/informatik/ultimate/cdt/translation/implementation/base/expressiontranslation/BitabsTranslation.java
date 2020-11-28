@@ -357,33 +357,6 @@ public class BitabsTranslation {
 		return xor;			
 	}
 	
-	/*
-	 * method to decide if an expression has bitwise operator  
-	 * @param bexpr
-	 *        for now we consider all binary cases, because the unary complement rule is not clear yet.
-	 * 	
-	 */  
-	public static boolean containBitwise(final IASTBinaryExpression bexpr) {
-		IASTExpression opr1 = bexpr.getOperand1();
-		IASTExpression opr2 = bexpr.getOperand2();
-		switch(bexpr.getOperator()) {
-		case IASTBinaryExpression.op_binaryAnd:
-		case IASTBinaryExpression.op_binaryAndAssign:
-		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryOrAssign:
-		case IASTBinaryExpression.op_binaryXor:
-		case IASTBinaryExpression.op_binaryXorAssign:
-			return true;
-		default: {
-			if (opr1 instanceof IASTBinaryExpression) 
-				return containBitwise((IASTBinaryExpression) opr1);
-			else if (opr2 instanceof IASTBinaryExpression)
-				return containBitwise((IASTBinaryExpression) opr2);
-			else return false;
-			}
-			
-		}	
-	}
 	
 	public static Result abstractAssgin(CHandler chandler, ProcedureManager mProcedureManager, ArrayList<Declaration> mDeclarations, ExpressionTranslation mExpressionTranslation,
 			INameHandler mNameHandler, AuxVarInfoBuilder mAuxVarInfoBuilder, FlatSymbolTable symbolTable,
@@ -401,10 +374,10 @@ public class BitabsTranslation {
 			// System.out.println("----Is this binary expression contains bitwise operator?:
 			// " + BitabsTranslation.containBitwise(node));
 
-			IASTBinaryExpression rhs_bit = (IASTBinaryExpression) node.getOperand2();
+			IASTBinaryExpression rhs_bit = getBitwiseBinary ((IASTBinaryExpression)node.getOperand2());
 			boolean bit_op = BitabsTranslation.isBitwiseOperator(rhs_bit.getOperator());
 			System.out.println("----Is the binary operator a bitwise operator? " + bit_op);
-
+			// make sure the bitiwse operator is right after the assignment operator in the expression.
 			if (bit_op) {
 
 				if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryAnd) {
@@ -514,9 +487,29 @@ public class BitabsTranslation {
 							thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt.toArray(new Statement[elseStmt.size()]));
 					builder.addStatement(ifstmt);
 					return builder.build();
+				} else if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryOr) {
+					ExpressionResult or_abs = (ExpressionResult) main.dispatch(rhs_bit);
+					final ExpressionResultBuilder builder_or = new ExpressionResultBuilder();
+					builder_or.addAllExceptLrValue(leftOperand);
+					final ExpressionResult rightOperandSwitched = exprResultTransformer
+							.makeRepresentationReadyForConversionAndRexBoolToInt(or_abs, loc, lType, node);
+					builder_or.addAllIncludingLrValue(rightOperandSwitched);
+					return chandler.makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(), builder_or.build(),
+					node);
+					
+				} else if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryXor) {
+					ExpressionResult xor_abs = (ExpressionResult) main.dispatch(rhs_bit);
+					final ExpressionResultBuilder builder_xor = new ExpressionResultBuilder();
+					builder_xor.addAllExceptLrValue(leftOperand);
+					final ExpressionResult rightOperandSwitched = exprResultTransformer
+							.makeRepresentationReadyForConversionAndRexBoolToInt(xor_abs, loc, lType, node);
+					builder_xor.addAllIncludingLrValue(rightOperandSwitched);
+					return chandler.makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(), builder_xor.build(),
+					node);
+					
 				} else {
 					throw new UnsupportedOperationException(
-							"No rules for other bitiwse operator other than & in assume");
+							"No general rules for bitiwse operator other than &, | in assume");
 				}
 			} else {
 				//TODO, x = 1+x&(x-3)?
@@ -526,7 +519,41 @@ public class BitabsTranslation {
 		return builder.build();
 	}
 	
+/*
+ * Utility methods
+ */	
 	
+	/*
+	 * method to decide if an expression has bitwise operator  
+	 * @param bexpr
+	 *        for now we consider all binary cases, because the unary complement rule is not clear yet.
+	 * 	
+	 */  
+	public static boolean containBitwise(final IASTExpression expr) {
+		if (expr instanceof IASTBinaryExpression) {
+			IASTBinaryExpression bexpr = (IASTBinaryExpression) expr;
+			IASTExpression opr1 = bexpr.getOperand1();
+			IASTExpression opr2 = bexpr.getOperand2();
+			switch (bexpr.getOperator()) {
+			case IASTBinaryExpression.op_binaryAnd:
+			case IASTBinaryExpression.op_binaryAndAssign:
+			case IASTBinaryExpression.op_binaryOr:
+			case IASTBinaryExpression.op_binaryOrAssign:
+			case IASTBinaryExpression.op_binaryXor:
+			case IASTBinaryExpression.op_binaryXorAssign:
+				return true;
+			default: {
+				if (opr1 instanceof IASTBinaryExpression)
+					return containBitwise(opr1);
+				else if (opr2 instanceof IASTBinaryExpression)
+					return containBitwise(opr2);
+				else
+					return false;
+				}
+			}
+		} else {return false;}
+	}
+
 	
 	// Justify if an operator is bitwise operator
 	public static boolean isBitwiseOperator(int opcd) {
@@ -543,6 +570,33 @@ public class BitabsTranslation {
 			return false;			
 		}	
 	}
+	
+	// Justify if an operator is bitwise operator we should return a list that collect all the bit-wise expressions.
+	public static IASTBinaryExpression getBitwiseBinary (IASTBinaryExpression binExpr) {
+		int opcd = binExpr.getOperator();
+		switch(opcd) {
+		case IASTBinaryExpression.op_binaryAnd:
+		case IASTBinaryExpression.op_binaryAndAssign:
+		case IASTBinaryExpression.op_binaryOr:
+		case IASTBinaryExpression.op_binaryOrAssign:
+		case IASTBinaryExpression.op_binaryXor:
+		case IASTBinaryExpression.op_binaryXorAssign:
+			return binExpr;
+		default: {
+			boolean left_bit = containBitwise(binExpr.getOperand1());
+			boolean right_bit = containBitwise(binExpr.getOperand2());
+			if (left_bit) {
+				return getBitwiseBinary((IASTBinaryExpression)binExpr.getOperand1());
+			} else if (right_bit) {
+				return getBitwiseBinary((IASTBinaryExpression)binExpr.getOperand2());
+			}
+			else {
+				throw new UnsupportedOperationException("Neithter opertands of the %s contatins bitwise operation!" + binExpr.toString());
+			}
+		}
+		}	
+	}
+	
 	
 	
 	private void declareBitvectorFunction(final ILocation loc, final String prefixedFunctionName,
@@ -571,11 +625,6 @@ public class BitabsTranslation {
 		final Expression result = ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 		return result;
 	}
-	
-
-
-
-
 
 
 }
