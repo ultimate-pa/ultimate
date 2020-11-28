@@ -1363,7 +1363,6 @@ public class CHandler {
 		
 		//for the bitswise abstraction,		
 		final Result r = main.dispatch(node.getExpression());
-		System.out.println("----expression result in ExpressionStatement in :----"+ r.toString());
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult rExp = (ExpressionResult) r;
 
@@ -1385,7 +1384,6 @@ public class CHandler {
 					stmt.addAll(res.getStatements());
 					decl.addAll(res.getDeclarations());
 					stmt.addAll(CTranslationUtil.createHavocsForAuxVars(res.getAuxVars()));
-					System.out.println("----auxVars in ExpressionStatement in(list) :----"+ res.getAuxVars());
 					overappr.addAll(res.getOverapprs());
 				}
 			}
