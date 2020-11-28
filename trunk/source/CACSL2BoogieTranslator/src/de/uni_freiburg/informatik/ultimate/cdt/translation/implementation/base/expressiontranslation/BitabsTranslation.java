@@ -119,7 +119,7 @@ public class BitabsTranslation {
 
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
-	protected final ITypeHandler mTypeHandler;
+	protected static ITypeHandler mTypeHandler;
 //	protected final IPointerIntegerConversion mPointerIntegerConversion;
 	protected final FlatSymbolTable mSymboltable;
 
@@ -179,7 +179,7 @@ public class BitabsTranslation {
 		Expression and_0 = ExpressionFactory.constructIfThenElseExpression(loc, cond_and_0, literal_0, func);
 		
 		// for the case, a&1, if size(a) is not 1, the result would diverge: -2&1=0, 2&1=0, 3&1=1.
-		
+	
 		Expression left_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq1, left_eq0);
 		Expression right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_eq1, right_eq0);	
 
@@ -394,6 +394,7 @@ public class BitabsTranslation {
 		final ExpressionResult rightOperand = (ExpressionResult) main.dispatch(node.getOperand2());
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
+		// for declare the auxiliary vars.
 		varCounter++;
 		if (node.getOperand2() instanceof IASTBinaryExpression) {
 			// for the general bitwise assignment case, we build up assume statements.
@@ -423,86 +424,75 @@ public class BitabsTranslation {
 					Expression rhs_ite = ExpressionFactory.constructIfThenElseExpression(loc, cond_rhs, opr1, opr2);
 
 					// We need to create a new id expression to store the expression here.
-					// leftOperand we supposed to be an idEcpression, implicit cast
+					// leftOperand we supposed to be an idExpression, implicit cast
 					IdentifierExpression id_left = (IdentifierExpression) leftOperand.getLrValue().getValue();
+					BoogieType bType = (BoogieType) id_left.getType();
 					//Create the LRValue for the assignment statement.
 					VariableLHS idLhs_left = new VariableLHS (loc, id_left.getType(), id_left.getIdentifier(), id_left.getDeclarationInformation());
 					LRValue idLhs_lrVal = new LocalLValue(idLhs_left, lType, false, false, null);
 					
+					//Declare a global variable, and register it to the global cope.
+					String bId = ("abs").concat(Integer.toString(varCounter));
+					final ASTType astType = mTypeHandler.cType2AstType(loc, lType);
+					DeclarationInformation decInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+					final VariableDeclaration declVar = new VariableDeclaration(loc, new Attribute[0],
+							new VarList[] { new VarList(loc, new String[] { bId }, astType) });	
+					mDeclarations.add(declVar);
+
+					Expression bit_var = ExpressionFactory.constructIdentifierExpression(loc, bType, bId, decInfo);
+					final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc, bType, bId, decInfo);
+					LRValue bit_lrVal = new LocalLValue(idLhs, lType, false, false, null);
+				
 					// predefined global id
-					String cId = ("__").concat(Integer.toString(varCounter));
-	
-					// need to find all the global scope, with the same problem here ....
-					final SymbolTableValue stv = symbolTable.getGlobalScope().get(cId);
-			
-					String bId = stv.getBoogieName();
-					Declaration bDec = stv.getBoogieDecl();
-					CType cType = stv.getCType();
-					DeclarationInformation decInfo = stv.getDeclarationInformation();
-
-					// ToDo How to create a new global declaration? No association back to c ast,
-					// create boogie declaration directly.
-					// final Result declSpecifierResult =
-
-					Expression bit_var = ExpressionFactory.constructIdentifierExpression(loc, (BoogieType) id_left.getType(), bId, decInfo);
-					final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc, (BoogieType) id_left.getType(), bId, decInfo);
-					LRValue bit_lrVal = new LocalLValue(idLhs, cType, false, false, null);
+//					String cId = ("__").concat(Integer.toString(varCounter));
+//					final SymbolTableValue stv = symbolTable.getGlobalScope().get(cId);
+//			
+//					String bId = stv.getBoogieName();
+//					Declaration bDec = stv.getBoogieDecl();
+//					CType cType = stv.getCType();
+//					DeclarationInformation decInfo = stv.getDeclarationInformation();
+//	
+//					Expression bit_var = ExpressionFactory.constructIdentifierExpression(loc, (BoogieType) id_left.getType(), bId, decInfo);
+//					final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc, (BoogieType) id_left.getType(), bId, decInfo);
+//					LRValue bit_lrVal = new LocalLValue(idLhs, cType, false, false, null);
 
 					final ExpressionResult rightOperandSwitched = exprResultTransformer
 							.makeRepresentationReadyForConversionAndRexBoolToInt(rhs_opr2, loc, lType, node);
 					builder.addAllIncludingLrValue(rightOperandSwitched);
-
 					
 					Expression left_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGT,
-							leftOperand.getLrValue().getValue(), literal_0);
-					
+							leftOperand.getLrValue().getValue(), literal_0);					
 					AssumeStatement assume_pos = new AssumeStatement(loc, opr_signed);
 					Expression formula_left = ExpressionFactory.newBinaryExpression(loc,
 							BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), bit_var);
-
-					AssumeStatement assume_stmt = new AssumeStatement(loc, formula_left);
-					
+					AssumeStatement assume_stmt = new AssumeStatement(loc, formula_left);					
 					final AssignmentStatement assignVal = StatementFactory.constructAssignmentStatement(loc,
 							new LeftHandSide[] { idLhs }, new Expression[] { rhs_ite });
-					String nondetName = "__VERRIFIER_nondet_int()";
-				
 					// elseStmt should be an assignment with __VERRIFIER_nondet_int() (nondet funciton) call
-					System.out.println("-----auxvarinfoBuilder in bitabs: "+ mAuxVarInfoBuilder.toString());
+					String nondetName = "__VERRIFIER_nondet_int()";				
 					final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-//					VariableDeclaration auxDec = auxvarinfo.getVarDec();
-					
-
+					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, lType, SFO.AUXVAR.NONDET);
 					resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 					resultBuilder.addAuxVar(auxvarinfo);
 			
-					final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
+					final LRValue returnValue = new RValue(auxvarinfo.getExp(), lType);
 					resultBuilder.setLrValue(returnValue);
 					mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
 							resultBuilder);
-
 					assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
 							resultBuilder.getAuxVars());
 					ExpressionResult nondetResult = resultBuilder.build();
-
 					final ExpressionResult nondetSwitched = exprResultTransformer
 							.makeRepresentationReadyForConversionAndRexBoolToInt(nondetResult, loc, lType, node);
 					ExpressionResult assignElse = chandler.makeAssignment(loc, idLhs_lrVal,
 							leftOperand.getNeighbourUnionFields(), nondetSwitched, node);
 					
-					// We need to register this auxiliary variable, and this is local variable;
-					// How to register a local auxiliary variable declaration?
-					// for global: 
-				//	mDeclarations.add(auxvarinfo.getVarDec());
-					
+					// We need to register this auxiliary variable, and this is local variable;					
 					// create the CDelaration for auxVar
 					CDeclaration auxCdecl = new CDeclaration(lType, nondetName);
 					DeclarationInformation auxDeclInfo = new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
-				//  DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-					
 					SymbolTableValue aux_stv = new SymbolTableValue(auxvarinfo.getExp().getIdentifier(), auxvarinfo.getVarDec(),
-							auxCdecl, auxDeclInfo, node, false);
-					
+							auxCdecl, auxDeclInfo, node, false);					
 					symbolTable.storeCSymbol(node, auxvarinfo.getExp().getIdentifier(), aux_stv);
 
 					final ArrayList<Statement> stmt = new ArrayList<>(assignElse.getStatements());
@@ -515,21 +505,14 @@ public class BitabsTranslation {
 							Collections.emptySet(), overappr);
 							
 					List<Statement> thenStmt = new ArrayList<>();
-				// we need to create a modifiable list.
-					List<Statement> elseStmt = new ArrayList<>(exprAssign.getStatements());
-				//	List<Statement> elseStmt = new ArrayList<>();
-					
+					List<Statement> elseStmt = new ArrayList<>(exprAssign.getStatements());									
 					thenStmt.add(assignVal);
 					thenStmt.add(assume_pos);					
 					thenStmt.add(assume_stmt);
 					// else branch for the nondet
 					IfStatement ifstmt = new IfStatement(loc, opr_signed,
 							thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt.toArray(new Statement[elseStmt.size()]));
-				//TODO ite statement, this is more sound abstraction rule,
-				// but we have a problem to register auxiliary variable(local) for nondet() assignment.
-				
 					builder.addStatement(ifstmt);
-				//	builder.addStatements(thenStmt);
 					return builder.build();
 				} else {
 					throw new UnsupportedOperationException(
