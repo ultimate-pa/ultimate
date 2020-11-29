@@ -823,8 +823,8 @@ public class QuantifierEliminationTest {
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
 		final String formulaAsString = "(exists ((|v_#valid_16| (Array (_ BitVec 32) (_ BitVec 1))) (|#t~string2.base| (_ BitVec 32))) (= (store (store (store |v_#valid_16| (_ bv0 32) (_ bv0 1)) |#t~string2.base| (_ bv1 1)) |~#a~0.base| (_ bv1 1)) |#valid|))";
-		final String expectedResult = formulaAsString;
-		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		final String expectedResult = "(and (exists ((|#t~string2.base| (_ BitVec 32))) (and (= (_ bv1 1) (select |#valid| |#t~string2.base|)) (or (= (_ bv0 32) |#t~string2.base|) (= (_ bv0 1) (select |#valid| (_ bv0 32))) (= (_ bv0 32) |~#a~0.base|)))) (= (_ bv1 1) (select |#valid| |~#a~0.base|)))";
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -833,7 +833,7 @@ public class QuantifierEliminationTest {
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "a"),
 		};
 		final String formulaAsString = "(exists ((ax (Array (_ BitVec 32) (_ BitVec 1))) (kx (_ BitVec 32))) (= (store (store ax (_ bv0 32) (_ bv0 1)) kx (_ bv1 1)) a))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(exists ((kx (_ BitVec 32))) (and (= (select a kx) (_ bv1 1)) (or (= kx (_ bv0 32)) (= (select a (_ bv0 32)) (_ bv0 1)))))";
 		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, !true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -855,7 +855,7 @@ public class QuantifierEliminationTest {
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
 		final String formulaAsString = "(exists ((|v_#valid_64| (Array (_ BitVec 32) (_ BitVec 1))) (|main_#t~malloc1.base| (_ BitVec 32)) (|main_#t~malloc2.base| (_ BitVec 32)) (|main_#t~malloc3.base| (_ BitVec 32))) (and (= (store (store (store (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base| (_ bv1 1)) |main_#t~malloc2.base| (_ bv1 1)) |main_#t~malloc3.base| (_ bv1 1)) |#valid|) (= (select (store (store (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base| (_ bv1 1)) |main_#t~malloc2.base| (_ bv1 1)) |main_#t~malloc3.base|) (_ bv0 1)) (= (_ bv0 1) (select (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base|))))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(and (exists ((|main_#t~malloc1.base| (_ BitVec 32)) (|main_#t~malloc3.base| (_ BitVec 32)) (|main_#t~malloc2.base| (_ BitVec 32))) (and (= (select |#valid| |main_#t~malloc1.base|) (_ bv1 1)) (not (= main_~x0~0.base |main_#t~malloc3.base|)) (= (_ bv1 1) (select |#valid| |main_#t~malloc2.base|)) (not (= |main_#t~malloc3.base| |main_#t~malloc1.base|)) (not (= |main_#t~malloc2.base| |main_#t~malloc3.base|)) (not (= main_~x0~0.base |main_#t~malloc1.base|)) (= (select |#valid| |main_#t~malloc3.base|) (_ bv1 1)))) (= (select |#valid| main_~x0~0.base) (_ bv1 1)))";
 		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -877,6 +877,15 @@ public class QuantifierEliminationTest {
 		final String expectedResult = "(= x 0)";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+	@Test
+	public void arrayTirCaretakersOfHonor() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "end", "i"), };
+		final String formulaAsString = "(and (exists ((a (Array Int Int)) (v_i_9 Int)) (and (<= i (+ v_i_9 1)) (= 42 (select a end)) (<= v_i_9 0) (not (= 42 (select a v_i_9))))) (<= 0 end))";
+		final String expectedResult = "(and (<= i 1) (< i (+ end 1)) (<= 0 end))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	@Test
 	public void applyDistributivity() {
@@ -1285,6 +1294,20 @@ public class QuantifierEliminationTest {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "c") };
 		final String formulaAsString = "(exists ((x Int) ) (and (<= (* 256 x) 93) (<= (- c 7) (* 256 x))))";
 		runQuantifierPusherTest(funDecls, formulaAsString, "(<= c 7)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void omegaTest02ProgVerifSheet10Ex04Square() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "square_res", "square_odd", "square_li", "square_i") };
+		final String formulaAsString = "(forall ((aux_div_v_square_res_12_49 Int) (aux_mod_v_square_res_12_49 Int) (v_square_i_11 Int)) (or (< (+ (* 2 aux_div_v_square_res_12_49) aux_mod_v_square_res_12_49) (+ square_res (* 2 square_odd))) (not (<= v_square_i_11 (+ square_i 1))) (> 0 aux_mod_v_square_res_12_49) (<= v_square_i_11 aux_div_v_square_res_12_49) (>= aux_mod_v_square_res_12_49 2)))";
+		runQuantifierPusherTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void omegaTest03calloc02() {
+		final FunDecl[] funDecls = { };
+		final String formulaAsString = "(exists ((|v_#Ultimate.meminit_#sizeOfFields_AFTER_CALL_3| Int) (|v_#Ultimate.meminit_#t~loopctr3_20| Int) (|v_#Ultimate.meminit_#t~loopctr3_BEFORE_RETURN_3| Int) (|v_#Ultimate.meminit_#product_AFTER_CALL_3| Int)) (and (<= |v_#Ultimate.meminit_#t~loopctr3_20| 0) (not (< |v_#Ultimate.meminit_#t~loopctr3_BEFORE_RETURN_3| |v_#Ultimate.meminit_#product_AFTER_CALL_3|)) (<= 12 |v_#Ultimate.meminit_#product_AFTER_CALL_3|) (<= |v_#Ultimate.meminit_#sizeOfFields_AFTER_CALL_3| 4) (<= |v_#Ultimate.meminit_#t~loopctr3_BEFORE_RETURN_3| (+ (* 2 |v_#Ultimate.meminit_#sizeOfFields_AFTER_CALL_3|) |v_#Ultimate.meminit_#t~loopctr3_20|))))";
+		runQuantifierPusherTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
