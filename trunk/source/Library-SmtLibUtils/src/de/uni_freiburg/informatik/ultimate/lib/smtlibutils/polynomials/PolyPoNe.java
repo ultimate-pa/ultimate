@@ -114,11 +114,13 @@ public class PolyPoNe {
 		return Check.MAYBE_USEFUL;
 	}
 
-	private Check compareToExistingRepresentations(final PolynomialRelation newPolyRel, final boolean removeExpliedPolyRels) {
+	private Check compareToExistingRepresentations(final PolynomialRelation newPolyRel,
+			final boolean removeExpliedPolyRels) {
 		final Set<PolynomialRelation> existingPolyRels = mPolyRels
 				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
 		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
-			final ComparisonResult comp = AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel, newPolyRel);
+			final ComparisonResult comp = AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel,
+					newPolyRel);
 			if (comp != null) {
 				switch (comp) {
 				case IMPLIES:
@@ -138,7 +140,6 @@ public class PolyPoNe {
 		}
 		return null;
 	}
-
 
 	protected final boolean addPolyRel(final Script script, final PolynomialRelation polyRel,
 			final boolean removeExpliedPolyRels) {
