@@ -279,6 +279,10 @@ public class QuantifierPusher extends TermTransformer {
 		}
 
 		final Term term1 = flattenQuantifiedFormulas(mMgdScript, quantifiedFormula);
+		if (!(term1 instanceof QuantifiedFormula)) {
+			// some quantifiers could be removed for trivial reasons
+			return term1;
+		}
 		inputEt = new EliminationTask((QuantifiedFormula) term1, mBannedForDivCapture);
 
 //		final Term simp = SmtUtils.simplify(mMgdScript, inputEt.getTerm(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
