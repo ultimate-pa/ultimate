@@ -372,7 +372,8 @@ public class QuantifierPusher extends TermTransformer {
 
 		if (eliminatees.size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
 			final EliminationTask et = doit(quantifier, eliminatees, dualFiniteParams);
-			if (et.getEliminatees().isEmpty()) {
+			// return if something was eliminated
+			if (!et.getEliminatees().containsAll(inputEt.getEliminatees())) {
 				return et.toTerm(mScript);
 			} else {
 				final Term[] correspondingFinite = QuantifierUtils.getXjunctsOuter(quantifier, et.getTerm());
