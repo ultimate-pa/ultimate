@@ -40,10 +40,10 @@ This archive also contains binaries for the following theorem provers.
        Note that this version does not output the git hash, but it should be the same as the Linux version
 
  * MathSAT5 (http://mathsat.fbk.eu)  
-   - Windows (mathsat.exe, mpir.dll)
-     MathSAT5 version 5.6.3 (973d615f065f) (May 12 2020 08:55:00, gmp 6.1.2, msvc 18.00, 64-bit)
+   - Windows (mathsat.exe, mpir.dll, mathsat.dll)
+     MathSAT5 version 5.6.5 (63ef7602814c) (Nov  9 2020 09:13:57, gmp 6.0.0/mpir 3.0.0, msvc 18.00, 64-bit)
    - Linux (mathsat)
-     MathSAT5 version 5.6.3 (973d615f065f) (May 12 2020 08:42:13, gmp 6.1.0, gcc 4.8.5, 64-bit)
+     MathSAT5 version 5.6.5 (63ef7602814c) (Nov  9 2020 08:58:55, gmp 6.1.2, gcc 7.5.0, 64-bit)
 
 For each of these theorem provers, a corresponding license file (z3-LICENSE, cvc4-LICENSE, 
 mathsat-LICENSE) can be found in our archive. Please consult these files for additional 
