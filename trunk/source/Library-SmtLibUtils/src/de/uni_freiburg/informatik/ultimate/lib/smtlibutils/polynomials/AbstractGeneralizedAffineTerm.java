@@ -442,43 +442,482 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 
 
 	public enum ComparisonResult {
-		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT
+		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT;
+
+		public ComparisonResult switchDiection() {
+			final ComparisonResult result;
+			switch (this) {
+			case EQUIVALENT:
+				result = this;
+				break;
+			case EXPLIES:
+				result = IMPLIES;
+				break;
+			case IMPLIES:
+				result = EXPLIES;
+				break;
+			case INCONSISTENT:
+				result = this;
+				break;
+			default:
+				throw new AssertionError("unknown value " + this);
+			}
+			return result;
+		}
 	}
 
 
-	public static ComparisonResult compare(final PolynomialRelation lhs, final PolynomialRelation rhs) {
+	public static ComparisonResult compareRepresentation(final PolynomialRelation lhs, final PolynomialRelation rhs) {
 		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
 		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
 		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
 			throw new AssertionError("incomparable");
 		}
+		final RelationSymbol lhsRelationSymbol = lhs.getRelationSymbol();
+		final RelationSymbol rhsRelationSymbol = rhs.getRelationSymbol();
+		final Rational lhsConstant = lhs.getPolynomialTerm().getConstant();
+		final Rational rhsConstant = rhs.getPolynomialTerm().getConstant();
+		final ComparisonResult result = compare(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant);
+		assert doubleCheck(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant,
+				result) : "double check failed";
+		return result;
+	}
+
+	private static boolean doubleCheck(final RelationSymbol lhsRelationSymbol, final RelationSymbol rhsRelationSymbol,
+			final Rational lhsConstant, final Rational rhsConstant, final ComparisonResult result) {
+		final ComparisonResult otherDirection = compare(rhsRelationSymbol, lhsRelationSymbol, rhsConstant, lhsConstant);
+		if (result == null) {
+			return (otherDirection == null);
+		} else {
+			return result.switchDiection().equals(otherDirection);
+		}
+	}
+
+	/**
+	 * Compare the relations lc lrel 0 and rc rrel 0
+	 */
+	private static ComparisonResult compare(final RelationSymbol lhsRelationSymbol,
+			final RelationSymbol rhsRelationSymbol, final Rational lhsConstant, final Rational rhsConstant)
+			throws AssertionError {
 		final ComparisonResult result;
-		if (lhs.getRelationSymbol().equals(RelationSymbol.EQ) && rhs.getRelationSymbol().equals(RelationSymbol.EQ)) {
-			if (lhs.getPolynomialTerm().getConstant().equals(rhs.getPolynomialTerm().getConstant())) {
-				result = ComparisonResult.EQUIVALENT;
-			} else {
-				result = ComparisonResult.INCONSISTENT;
-			}
-		} else if (lhs.getRelationSymbol().equals(RelationSymbol.DISTINCT) && rhs.getRelationSymbol().equals(RelationSymbol.DISTINCT)) {
-			if (lhs.getPolynomialTerm().getConstant().equals(rhs.getPolynomialTerm().getConstant())) {
+		switch (lhsRelationSymbol) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			result = compareDistinct(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case EQ:
+			result = compareEq(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case GEQ:
+			result = compareGeq(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case GREATER:
+			result = compareGreater(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case LEQ:
+			result = compareLeq(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case LESS:
+			result = compareLess(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		default:
+			throw new AssertionError("unknown value: " + lhsRelationSymbol);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc neq 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareDistinct(final Rational lhsConstant, final RelationSymbol relationSymbol,
+			final Rational rhsConstant) {
+		final ComparisonResult result;
+		switch (relationSymbol) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lhsConstant.equals(rhsConstant)) {
 				result = ComparisonResult.EQUIVALENT;
 			} else {
 				result = null;
 			}
-		} else if (lhs.getRelationSymbol().equals(RelationSymbol.DISTINCT) && rhs.getRelationSymbol().equals(RelationSymbol.EQ)) {
-			if (lhs.getPolynomialTerm().getConstant().equals(rhs.getPolynomialTerm().getConstant())) {
+			break;
+		case EQ:
+			if (lhsConstant.equals(rhsConstant)) {
 				result = ComparisonResult.INCONSISTENT;
 			} else {
 				result = ComparisonResult.EXPLIES;
 			}
-		} else if (lhs.getRelationSymbol().equals(RelationSymbol.EQ) && rhs.getRelationSymbol().equals(RelationSymbol.DISTINCT)) {
-			if (lhs.getPolynomialTerm().getConstant().equals(rhs.getPolynomialTerm().getConstant())) {
+			break;
+		case GEQ:
+			if (lhsConstant.compareTo(rhsConstant) > 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case GREATER:
+			if (lhsConstant.compareTo(rhsConstant) >= 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = null;
+			}
+
+			break;
+		case LEQ:
+			if (lhsConstant.compareTo(rhsConstant) < 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case LESS:
+			if (lhsConstant.compareTo(rhsConstant) <= 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + relationSymbol);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc = 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareEq(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.equals(rc)) {
 				result = ComparisonResult.INCONSISTENT;
 			} else {
 				result = ComparisonResult.IMPLIES;
 			}
-		} else {
-			result = null;
+			break;
+		case EQ:
+			if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.INCONSISTENT;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc >= 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareGeq(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.IMPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.EXPLIES;
+			} else if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc > 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareGreater(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.IMPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.EXPLIES;
+			} else if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc <= 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareLeq(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.IMPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.EXPLIES;
+			} else if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc < 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareLess(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.IMPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.EXPLIES;
+			} else if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
 		}
 		return result;
 	}

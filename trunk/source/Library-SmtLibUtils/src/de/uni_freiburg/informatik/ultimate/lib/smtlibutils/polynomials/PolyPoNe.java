@@ -118,7 +118,7 @@ public class PolyPoNe {
 		final Set<PolynomialRelation> existingPolyRels = mPolyRels
 				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
 		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
-			final ComparisonResult comp = AbstractGeneralizedAffineTerm.compare(existingPolyRel, newPolyRel);
+			final ComparisonResult comp = AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel, newPolyRel);
 			if (comp != null) {
 				switch (comp) {
 				case IMPLIES:
