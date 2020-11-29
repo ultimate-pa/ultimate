@@ -386,7 +386,7 @@ public class BitabsTranslation {
 					Expression opr1 = rhs_opr1.getLrValue().getValue();
 					Expression opr2 = rhs_opr2.getLrValue().getValue();
 
-					// Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+					Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
 					Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
 					Expression opr1_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, literal_0);
@@ -485,8 +485,17 @@ public class BitabsTranslation {
 					// else branch for the nondet
 					IfStatement ifstmt = new IfStatement(loc, opr_signed,
 							thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt.toArray(new Statement[elseStmt.size()]));
-					builder.addStatement(ifstmt);
+					// add another if else nested statement statically to capture the bit-wise operations in the stem position
+					
+					Expression opr1_eq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, literal_0);
+					Expression opr2_eq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, literal_0);
+					Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr2_eq0);
+					final AssignmentStatement assignLiteral = StatementFactory.constructAssignmentStatement(loc,
+							new LeftHandSide[] { idLhs_left }, new Expression[] { literal_0 });
+					IfStatement ifstmt1 = new IfStatement(loc, cond_and_0, new Statement[] { assignLiteral }, new Statement[] { ifstmt });					
+					builder.addStatement(ifstmt1);					
 					return builder.build();
+					
 				} else if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryOr) {
 					ExpressionResult or_abs = (ExpressionResult) main.dispatch(rhs_bit);
 					final ExpressionResultBuilder builder_or = new ExpressionResultBuilder();
