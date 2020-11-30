@@ -64,7 +64,7 @@ fi
 
 echo "Pushing to remote "
 git add -A
-git commit -a -m"Update Ultimate tool family to version $VERSION"
+git commit -a -m"Update Ultimate tool family (uautomizer, ukojak, utaipan) to version $VERSION"
 git push
 
 echo "Now file a pull request and wait for its acceptance!"
