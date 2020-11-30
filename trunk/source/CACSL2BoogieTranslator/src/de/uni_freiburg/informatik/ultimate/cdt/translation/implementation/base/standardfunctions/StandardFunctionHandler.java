@@ -468,6 +468,8 @@ public class StandardFunctionHandler {
 		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
+		fill(map, "reach_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
+
 		fill(map, "__VERIFIER_assume", this::handleVerifierAssume);
 
 		fill(map, "__VERIFIER_nondet_bool",
