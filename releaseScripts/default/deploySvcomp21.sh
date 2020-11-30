@@ -1,6 +1,7 @@
 #!/bin/bash
+# Script that deploys a new version to SVCOMP 21. You have to call makeFresh.sh before.
 
-SVCOMP_GITLAB_DIR=/storage/repos/svcomp-archives-2021/2021
+SVCOMP_GITLAB_DIR="/storage/repos/svcomp-archives-2021/2021"
 POST_FINAL=false
 
 EXPECTED_FILES=(
@@ -69,3 +70,4 @@ git push
 
 echo "Now file a pull request and wait for its acceptance!"
 popd > /dev/null
+

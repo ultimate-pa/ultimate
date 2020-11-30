@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-1.9.dtd">
-<benchmark tool="ultimateautomizer" timelimit="15 min" hardtimelimit="16 min" memlimit="15 GB" cpuCores="8">
+<benchmark tool="ultimateautomizer" timelimit="15 min" hardtimelimit="16 min" memlimit="15 GB" cpuCores="2">
     <resultfiles>**.graphml</resultfiles>
     <option name="--full-output"/>
     <rundefinition name="sv-comp21_prop-reachsafety">
@@ -17,4 +17,4 @@
     </rundefinition>
     <!-- <rundefinition name="sv-comp21_prop-nooverflow"><tasks name="SoftwareSystems-BusyBox-NoOverflows"><includesfile>../sv-benchmarks/c/SoftwareSystems-BusyBox-NoOverflows.set</includesfile><propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile></tasks></rundefinition> -->
     <!-- <rundefinition name="sv-comp21_prop-termination"><tasks name="Unsound"><includesfile>../sv-benchmarks/c/Termination-Other.set</includesfile><propertyfile>../sv-benchmarks/c/properties/termination.prp</propertyfile></tasks></rundefinition> -->
-</benchmark>
+</benchmark>  
