@@ -494,6 +494,7 @@ public class QuantifierPusher extends TermTransformer {
 
 	private EliminationTask doit(final int quantifier, final Set<TermVariable> eliminatees, final Term[] dualFiniteParams) {
 		final List<TermVariable> remainingEliminatees = new ArrayList<>(eliminatees);
+		final List<TermVariable> failedEliminatees = new ArrayList<>(eliminatees);
 		List<Term> currentDualFiniteParams = new ArrayList<>(Arrays.asList(dualFiniteParams));
 		List<TermVariable> remainingEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(remainingEliminatees, currentDualFiniteParams);
 		while (!remainingEliminateesThatDoNotOccurInAllParams.isEmpty()) {
@@ -518,14 +519,26 @@ public class QuantifierPusher extends TermTransformer {
 					dualFiniteJunction);
 			final Set<TermVariable> bannedForDivCapture = new HashSet<>(eliminatees);
 			bannedForDivCapture.addAll(mBannedForDivCapture);
-			final Term pushed = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques,
+			Term pushed = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques,
 					bannedForDivCapture).transform(quantified);
+			if (pushed instanceof QuantifiedFormula) {
+				final QuantifiedFormula qf = (QuantifiedFormula) pushed;
+				for (final TermVariable var : Arrays.asList(qf.getVariables())) {
+					if (minionEliminatees.contains(var)) {
+						failedEliminatees.add(var);
+					} else {
+						remainingEliminatees.add(var);
+					}
+				}
+				pushed = qf.getSubformula();
+			}
 			remainingEliminatees.removeAll(minionEliminatees);
 			final List<Term> pushedFiniteParams = Arrays.asList(QuantifierUtils.getXjunctsInner(quantifier, pushed));
 			currentDualFiniteParams = new ArrayList<>(pushedFiniteParams);
 			currentDualFiniteParams.addAll(finiteParamsWithoutEliminatee);
 			remainingEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(remainingEliminatees, currentDualFiniteParams);
 		}
+		remainingEliminatees.addAll(failedEliminatees);
 		return new EliminationTask(quantifier, new HashSet<>(remainingEliminatees),
 				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, currentDualFiniteParams), mBannedForDivCapture);
 	}
