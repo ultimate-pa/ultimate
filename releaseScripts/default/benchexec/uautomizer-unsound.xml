@@ -4,12 +4,8 @@
     <resultfiles>**.graphml</resultfiles>
     <option name="--full-output"/>
     <rundefinition name="sv-comp21_prop-reachsafety">
-        <tasks name="Taipan">
-            <includesfile>../sv-benchmarks/c/taipan_unsound-unreach-call.set</includesfile>
-            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
-        </tasks>
-        <tasks name="Automizer">
-            <includesfile>../sv-benchmarks/c/automizer_unsound-unreach-call.set</includesfile>
+        <tasks name="All">
+            <includesfile>../sv-benchmarks/c/unsound-unreach-call.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
 
