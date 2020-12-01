@@ -428,10 +428,10 @@ public class CHandler {
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
-		mStandardFunctionHandler =
-				new StandardFunctionHandler(functionTable, mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mReporter, mTypeSizes, mSymbolTable, mSettings,
-						mExprResultTransformer, mLocationFactory, mTypeHandler, mCExpressionTranslator);
+		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, functionTable, mAuxVarInfoBuilder, mNameHandler,
+				mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, mProcedureManager, mReporter, mTypeSizes,
+				mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler,
+				mCExpressionTranslator);
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
@@ -513,9 +513,10 @@ public class CHandler {
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
-		mStandardFunctionHandler = new StandardFunctionHandler(prerunCHandler.mFunctionTable, mAuxVarInfoBuilder,
-				mNameHandler, mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, procedureManager, mReporter,
-				mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler, mCExpressionTranslator);
+		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, prerunCHandler.mFunctionTable,
+				mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler, mTypeSizeComputer,
+				procedureManager, mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer,
+				mLocationFactory, mTypeHandler, mCExpressionTranslator);
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
