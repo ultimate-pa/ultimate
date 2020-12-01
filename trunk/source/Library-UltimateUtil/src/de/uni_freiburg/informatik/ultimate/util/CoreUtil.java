@@ -42,6 +42,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,13 +83,13 @@ public class CoreUtil {
 	public static String getIsoUtcTimestamp() {
 		final Instant now = Instant.now();
 		final DateTimeFormatter format = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC"));
-		return format.format(now);
+		return format.format(now.truncatedTo(ChronoUnit.SECONDS));
 	}
 
 	public static String getIsoUtcTimestampWithUtcOffset() {
 		final ZonedDateTime zdt = ZonedDateTime.now();
 		final DateTimeFormatter format = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-		return format.format(zdt);
+		return format.format(zdt.truncatedTo(ChronoUnit.SECONDS));
 	}
 
 	/**
