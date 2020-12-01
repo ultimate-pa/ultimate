@@ -36,6 +36,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -467,8 +468,8 @@ public class StandardFunctionHandler {
 
 		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
-		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
-		fill(map, "reach_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
+		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc, name));
+		fill(map, "reach_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc, name));
 
 		fill(map, "__VERIFIER_assume", this::handleVerifierAssume);
 
@@ -1914,8 +1915,8 @@ public class StandardFunctionHandler {
 	}
 
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc) {
-		final Statement st = createReachabilityAssert(loc);
+			final ILocation loc, final String name) {
+		final Statement st = createReachabilityAssert(loc, name);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
@@ -1924,7 +1925,7 @@ public class StandardFunctionHandler {
 	 * settings. If we want to check reachability, an assert false will be generated. If not, (e.g., if we only want to
 	 * check memsafety), an assume false will be generated.
 	 */
-	private Statement createReachabilityAssert(final ILocation loc) {
+	private Statement createReachabilityAssert(final ILocation loc, final String functionName) {
 		final boolean checkSvcompErrorfunction = mSettings.checkSvcompErrorFunction();
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
@@ -1943,16 +1944,22 @@ public class StandardFunctionHandler {
 		// https://github.com/sosy-lab/sv-benchmarks/pull/1001
 		final Check check;
 		if (checkSvcompErrorfunction) {
+			final Function<Spec, String> funPosMessage =
+					s -> s == Spec.ERROR_FUNCTION ? "call to " + functionName + " is unreachable"
+							: Check.getDefaultPositiveMessage(s);
+			final Function<Spec, String> funNegMessage =
+					s -> s == Spec.ERROR_FUNCTION ? "a call to " + functionName + " is reachable"
+							: Check.getDefaultNegativeMessage(s);
 			if (checkMemoryleakInMain) {
-				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK));
+				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK), funPosMessage, funNegMessage);
 			} else {
-				check = new Check(Spec.ERROR_FUNCTION);
+				check = new Check(Spec.ERROR_FUNCTION, funPosMessage, funNegMessage);
 			}
 		} else {
 			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
 		}
-		final Statement st = new AssertStatement(loc, new NamedAttribute[] {
-				new NamedAttribute(loc, "reach", new Expression[] { new StringLiteral(loc, check.toString()) }) },
+		final Statement st = new AssertStatement(loc, new NamedAttribute[] { new NamedAttribute(loc, "reach",
+				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },
 				falseLiteral);
 		check.annotate(st);
 		if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {
