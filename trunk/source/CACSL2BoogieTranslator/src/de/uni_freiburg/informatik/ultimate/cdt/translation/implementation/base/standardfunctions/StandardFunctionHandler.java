@@ -1348,7 +1348,7 @@ public class StandardFunctionHandler {
 			final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
 			return erb.addStatement(new AssumeStatement(loc, falseLiteral)).build();
 		}
-		return erb.addStatement(createReachabilityAssert(loc)).build();
+		return erb.addStatement(createReachabilityAssert(loc, name)).build();
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
