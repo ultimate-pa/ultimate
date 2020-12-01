@@ -34,8 +34,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -117,6 +119,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnn
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -164,13 +167,19 @@ public class StandardFunctionHandler {
 
 	private final CExpressionTranslator mCEpressionTranslator;
 
-	public StandardFunctionHandler(final Map<String, IASTNode> functionTable, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final INameHandler nameHandler, final ExpressionTranslation expressionTranslation,
-			final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ProcedureManager procedureManager, final CTranslationResultReporter reporter,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final LocationFactory locationFactory,
-			final ITypeHandler typeHandler, final CExpressionTranslator cEpressionTranslator) {
+	private final ILogger mLogger;
+
+	private final Set<String> mOverwrittenFunctionNames;
+
+	public StandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
+			final CTranslationResultReporter reporter, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
+			final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
+			final LocationFactory locationFactory, final ITypeHandler typeHandler,
+			final CExpressionTranslator cEpressionTranslator) {
+		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeAndOffsetComputer;
@@ -187,6 +196,7 @@ public class StandardFunctionHandler {
 		mTypeHandler = typeHandler;
 		mCEpressionTranslator = cEpressionTranslator;
 		mFunctionModels = getFunctionModels();
+		mOverwrittenFunctionNames = getOverwrittenFunctionNames(settings);
 	}
 
 	/**
@@ -212,12 +222,28 @@ public class StandardFunctionHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				return null;
+				if (mOverwrittenFunctionNames.contains(transformedName)) {
+					mLogger.warn(String.format(
+							"Function %s is already implemented but we override the implementation for the call at %s",
+							transformedName, node.getFileLocation()));
+				} else {
+					return null;
+				}
 			}
 			final ILocation loc = getLoc(main, node);
 			return functionModel.handleFunction(main, node, loc, name);
 		}
 		return null;
+	}
+
+	private static Set<String> getOverwrittenFunctionNames(final TranslationSettings settings) {
+		if (!settings.isSvcompMode()) {
+			return Collections.emptySet();
+		}
+
+		final Set<String> rtr = new HashSet<>();
+		rtr.add("reach_error");
+		return rtr;
 	}
 
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
