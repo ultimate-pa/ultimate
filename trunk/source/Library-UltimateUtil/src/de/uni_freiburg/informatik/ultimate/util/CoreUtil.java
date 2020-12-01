@@ -37,15 +37,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +58,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -79,10 +80,15 @@ public class CoreUtil {
 	}
 
 	public static String getIsoUtcTimestamp() {
-		final TimeZone tz = TimeZone.getTimeZone("UTC");
-		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		df.setTimeZone(tz);
-		return df.format(new Date());
+		final Instant now = Instant.now();
+		final DateTimeFormatter format = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC"));
+		return format.format(now);
+	}
+
+	public static String getIsoUtcTimestampWithUtcOffset() {
+		final ZonedDateTime zdt = ZonedDateTime.now();
+		final DateTimeFormatter format = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+		return format.format(zdt);
 	}
 
 	/**

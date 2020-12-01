@@ -212,7 +212,7 @@ public final class SolverBuilder {
 
 		setSolverModeDependentOptions(solverSettings, script);
 
-		final String advertising = "SMT script generated on " + CoreUtil.getIsoUtcTimestamp()
+		final String advertising = "SMT script generated on " + CoreUtil.getIsoUtcTimestampWithUtcOffset()
 				+ " by Ultimate (https://ultimate.informatik.uni-freiburg.de/)";
 
 		script.setInfo(":source", advertising);
