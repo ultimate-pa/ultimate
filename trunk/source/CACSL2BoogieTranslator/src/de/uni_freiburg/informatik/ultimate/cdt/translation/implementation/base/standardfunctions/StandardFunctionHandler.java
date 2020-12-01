@@ -1341,22 +1341,13 @@ public class StandardFunctionHandler {
 		for (final IASTInitializerClause argument : arguments) {
 			argDispatchResults.add((ExpressionResult) main.dispatch(argument));
 		}
-		return new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults)
-				.addStatement(createReachabilityAssert(loc)).build();
-	}
 
-	private Result handleAssert(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
-
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 4, name, arguments);
-
-		final List<ExpressionResult> argDispatchResults = new ArrayList<>();
-		for (final IASTInitializerClause argument : arguments) {
-			argDispatchResults.add((ExpressionResult) main.dispatch(argument));
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
+		if (mSettings.isSvcompMode()) {
+			final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
+			return erb.addStatement(new AssumeStatement(loc, falseLiteral)).build();
 		}
-		return new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults)
-				.addStatement(createReachabilityAssert(loc)).build();
+		return erb.addStatement(createReachabilityAssert(loc)).build();
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
