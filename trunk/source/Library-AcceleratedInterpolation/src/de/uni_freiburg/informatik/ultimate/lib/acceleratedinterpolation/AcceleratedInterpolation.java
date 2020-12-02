@@ -263,7 +263,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
-			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered = new HashMap(mNestedLoops);
+			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered =
+					new HashMap<IcfgLocation, Set<List<L>>>(mNestedLoops);
 			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
 				if (nestedLoop.getValue() == null) {
 					mNestedLoops.remove(nestedLoop.getKey());
@@ -333,14 +334,16 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			 * translate the given trace into a meta trace which makes use of the loop acceleration.
 			 */
 			final NestedRun<L, IPredicate> metaTrace = generateMetaTrace();
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Meta-Trace: ");
+				for (int i = 0; i < metaTrace.getLength() - 1; i++) {
+					mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
+				}
+			}
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
 			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
 				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Meta-Trace: ");
-					for (int i = 0; i < metaTrace.getLength() - 1; i++) {
-						mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
-					}
 					mLogger.debug("Is " + interpolator.getTraceCheckResult().toString());
 				}
 				final IPredicate[] inductiveInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(
@@ -490,7 +493,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			acceleratedTraceSchemeStates.add(lastAcceleratedSPred);
 			acceleratedTraceSchemeStates.add(newExitSPred);
 			final Pair<Integer, Integer> loopSize = mLoopSize.get(l.getTarget());
-			i = i + loopSize.getSecond() - loopSize.getFirst();
+			i = i + loopSize.getSecond() - loopSize.getFirst() + 1;
 		}
 
 		acceleratedTraceSchemeStates.add(traceStates.get(counterExampleNonAccelerated.size()));

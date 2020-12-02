@@ -144,8 +144,11 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
 		switch (option) {
 		case "mod":
 			return moduloTransformation(loopRelation);
-		case "not":
-			return notTransformation(loopRelation);
+		/*
+		 * Disabled as it lead to unsound results by forcing underapproximation.
+		 */
+		// case "not":
+		// return notTransformation(loopRelation);
 		case "div":
 			return divisionTransformation(loopRelation);
 		default:
