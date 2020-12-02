@@ -85,7 +85,8 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		final boolean simplify = true;
 		// Try to eliminate auxiliary variables to avoid quantifier alterations in
 		// subsequent SMT solver calls during verification.
-		final boolean tryAuxVarElimination = true;
+		// TODO (Dominik 2020-12-02): Disabled due to timeout / OOM in old quantifier elimination (XnfTransformer).
+		final boolean tryAuxVarElimination = false;
 
 		final IcfgLocation source = first.getSource();
 		final IcfgLocation target = second.getTarget();
