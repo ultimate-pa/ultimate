@@ -129,7 +129,7 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 			final Summary sum = (Summary) cb;
 			matchLocations(sum.getCallStatement());
 		} else {
-			throw new AssertionError("unknown type of CodeBlock");
+			throw new AssertionError("Unknown type of CodeBlock: " + cb.getClass().getSimpleName());
 		}
 	}
 
