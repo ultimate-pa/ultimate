@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -157,7 +158,7 @@ public class CfgBuilder {
 	private final BoogieDeclarations mBoogieDeclarations;
 	private TransFormulaAdder mTransFormulaAdder;
 
-	private final Collection<Summary> mImplementationSummarys = new ArrayList<>();
+	private final Collection<Summary> mImplementationSummarys = new LinkedHashSet<>();
 
 	private final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> mForks = new HashMap<>();
 	private final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoins = new ArrayList<>();
@@ -749,6 +750,7 @@ public class CfgBuilder {
 							outEdge.disconnectSource();
 							outEdge.disconnectTarget();
 							mLogger.info("dead code at ProgramPoint " + entry.getValue() + ": " + outEdge);
+							mImplementationSummarys.remove(outEdge);
 						}
 					}
 				}
