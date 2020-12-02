@@ -106,12 +106,6 @@ public class AuxVarInfoBuilder {
 	/**
 	 * Normal aux vars are havocced as soon as possible (once we arrive at "statement level" in the translated C
 	 * program). Some aux vars are havocced only when the scope (procedure) is left
-	 *
-	 * @param loc
-	 * @param cType
-	 * @param declInfo
-	 * @param compoundliteral
-	 * @return
 	 */
 	public AuxVarInfo constructAuxVarInfoForBlockScope(final ILocation loc, final CType cType, final AUXVAR auxVarType,
 			final DeclarationInformation declInfo) {
@@ -122,6 +116,21 @@ public class AuxVarInfoBuilder {
 		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
 
 		return constructAuxVarHelper(loc, id, astType, declInfo);
+	}
+
+	/**
+	 * Global float literals in the bitvector translation may require aux vars to be created. If this is the case, they
+	 * are actually not of global scope, but rather only used in Ultimate.init. Use this method to create such aux vars.
+	 */
+	public AuxVarInfo constructAuxVarInfoForFloatLiteralBv(final ILocation loc, final CType cType,
+			final AUXVAR auxVarType) {
+		assert auxVarType == SFO.AUXVAR.NONDET : "only nondet auxvars are allowed for initialization of global float literals";
+		if (mProcedureManager.isGlobalScope()) {
+			final String id = mNameHandler.getTempVarUIDForBlockScope(auxVarType, cType);
+			final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+			return constructAuxVarHelper(loc, id, astType, new DeclarationInformation(StorageClass.LOCAL, SFO.INIT));
+		}
+		return constructAuxVarInfo(loc, cType, auxVarType);
 	}
 
 	private AuxVarInfo constructAuxVarHelper(final ILocation loc, final String id, final ASTType astType,

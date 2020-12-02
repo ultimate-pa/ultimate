@@ -632,8 +632,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final CPrimitive cType = (CPrimitive) rvalue.getCType();
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		if (cType.isSmtFloat()) {
-			final AuxVarInfo auxvarinfo =
-					mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType.getBvVariant(), SFO.AUXVAR.NONDET);
+			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfoForFloatLiteralBv(loc,
+					cType.getBvVariant(), SFO.AUXVAR.NONDET);
+
 			erb.addDeclaration(auxvarinfo.getVarDec());
 			erb.addAuxVar(auxvarinfo);
 
@@ -1292,7 +1293,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue first, final RValue second) {
 
 		// Should only handle functions that are directly mapped to a smt function.
-		
+
 		// Note: arguments are already converted to the correct float variant based on FloatFunction#isBvFloat
 		// If they are not, do not try to convert in BitvectorTranslation, but fix it further up in the call hierarchy
 
