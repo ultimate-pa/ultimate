@@ -870,18 +870,21 @@ public class PostProcessor {
 		// initialization for statics and other globals
 		for (final Entry<VariableDeclaration, CDeclaration> en : mStaticObjectsHandler
 				.getGlobalVariableDeclsWithAssociatedCDecls().entrySet()) {
-			final ILocation currentDeclsLoc = en.getKey().getLocation();
-			final InitializerResult initializer = en.getValue().getInitializer();
+			final CDeclaration cDecl = en.getValue();
 
 			/*
 			 * global variables with external linkage are not implicitly initialized. (They are initialized by the
 			 * module that provides them..)
 			 */
-			if (en.getValue().isExtern()) {
+			if (cDecl.isExtern()) {
 				continue;
 			}
 
-			for (final VarList vl : en.getKey().getVariables()) {
+			final InitializerResult initializer = cDecl.getInitializer();
+			final VariableDeclaration varDecl = en.getKey();
+			final ILocation currentDeclsLoc = varDecl.getLocation();
+
+			for (final VarList vl : varDecl.getVariables()) {
 				for (final String id : vl.getIdentifiers()) {
 
 					final VariableLHS lhs = ExpressionFactory.constructVariableLHS(currentDeclsLoc,
@@ -889,14 +892,14 @@ public class PostProcessor {
 							DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 					if (mCHandler.isHeapVar(id)) {
-						final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
+						final LocalLValue llVal = new LocalLValue(lhs, cDecl.getType(), null);
 						staticObjectInitStatements.add(
 								mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, hook, MemoryArea.STACK));
 						proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
 					}
 
 					final ExpressionResult initRex =
-							mInitHandler.initialize(currentDeclsLoc, lhs, en.getValue().getType(), initializer, hook);
+							mInitHandler.initialize(currentDeclsLoc, lhs, cDecl.getType(), initializer, hook);
 					for (final Statement stmt : initRex.getStatements()) {
 						if (stmt instanceof CallStatement) {
 							proceduresCalledByUltimateInit.add(((CallStatement) stmt).getMethodName());
