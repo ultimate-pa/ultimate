@@ -1219,6 +1219,14 @@ public class QuantifierEliminationTest {
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+	
+	@Test
+	public void bvTirHospitalized() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "A", "q", "r") };
+		final String inputSTR = "(forall ((B (_ BitVec 32))) (= A (bvadd (bvmul q B) r)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 	@Test
 	public void greaterTIRNegativeCoef() {

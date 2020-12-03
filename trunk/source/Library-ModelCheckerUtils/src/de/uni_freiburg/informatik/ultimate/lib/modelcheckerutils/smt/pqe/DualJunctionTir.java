@@ -282,7 +282,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations(eliminatee.getSort());
 		for (final Term t : withEliminatee) {
 			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t);
-			ExplicitLhsPolynomialRelation elpr;
+			final ExplicitLhsPolynomialRelation elpr;
 			if (polyRel == null) {
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(t);
 				if (bnr == null) {
@@ -299,9 +299,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 						new Monomial(sbr.getLeftHandSide(), Rational.ONE), polyRhs);
 			} else {
 				elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, eliminatee, polyRel);
-			}
-			if (elpr == null) {
-				return null;
+				if (elpr == null) {
+					return null;
+				}
+				if (!elpr.getLhsMonomial().isLinear()) {
+					return null;
+				}
 			}
 			switch (elpr.getRelationSymbol()) {
 			case GEQ:
