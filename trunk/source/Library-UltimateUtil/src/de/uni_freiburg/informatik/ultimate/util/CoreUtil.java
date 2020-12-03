@@ -129,17 +129,25 @@ public class CoreUtil {
 		try {
 			final InputStream prop = cl.getResourceAsStream("version.properties");
 			if (prop == null) {
-				return "?-m";
+				return "?-?-m";
 			}
 			properties.load(prop);
 		} catch (final IOException e) {
 			return null;
 		}
 
-		final String hash = properties.getProperty("git.commit.id.abbrev", "UNKNOWN");
-		final String dirty = properties.getProperty("git.dirty", "UNKNOWN");
+		final String unknown = "?";
+		final String branch = properties.getProperty("git.branch", unknown);
+		final String hash = properties.getProperty("git.commit.id.abbrev", unknown);
+		final String dirty = properties.getProperty("git.dirty", unknown);
 
-		return hash + ("UNKNOWN".equals(dirty) ? "" : "true".equals(dirty) ? "-m" : "");
+		final String format;
+		if (!"true".equals(dirty)) {
+			format = "%s-%s";
+		} else {
+			format = "%s-%s-m";
+		}
+		return String.format(format, branch, hash);
 	}
 
 	/**
