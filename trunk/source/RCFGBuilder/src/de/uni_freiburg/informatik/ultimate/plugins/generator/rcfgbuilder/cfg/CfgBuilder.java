@@ -320,12 +320,19 @@ public class CfgBuilder {
 				if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation) successor).isErrorLocation()) {
 					return true;
 				}
-				mLogger.warn(
-						"Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.",
-						successor);
 
 				// We tolerate nodes without successors, such as thread exit locations.
-				return successor.getOutgoingEdges().isEmpty();
+				final boolean successorIsSink = successor.getOutgoingEdges().isEmpty();
+				if (successorIsSink) {
+					mLogger.warn(
+							"Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.",
+							successor);
+				} else {
+					mLogger.error(
+							"Unexpected successor node of atomic block begin: %s is neither atomic block end nor a sink node.",
+							successor);
+				}
+				return successorIsSink;
 			});
 		} else {
 			return true;
