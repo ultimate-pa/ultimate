@@ -1646,6 +1646,10 @@ public class MemoryHandler {
 				final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.getLrValue().getValue(), ignoreLoc);
+			} else if (hda.getName().equals(SFO.REAL)) {
+				final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
+				exprRes = mExpressionTranslation.convertIntToFloat(ignoreLoc, exprRes, new CPrimitive(primitive));
+				convertedValue = exprRes.getLrValue().getValue();
 			} else {
 				// convert to smallest
 				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
@@ -1694,6 +1698,22 @@ public class MemoryHandler {
 		}
 		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.UCHAR, CPrimitives.USHORT, CPrimitives.UINT,
 				CPrimitives.ULONG, CPrimitives.ULONGLONG }) {
+			if (mTypeSizes.getSize(primitive) == byteSize) {
+				return primitive;
+			}
+		}
+		throw new AssertionError("don't know how to store value on heap");
+	}
+
+	/**
+	 * Returns a CPrimitive which is floating and non-complex that has the smallest bytesize.
+	 */
+	private CPrimitives getFloatingCprimitiveThatFitsBest(final int byteSize) {
+		if (byteSize == 0) {
+			return CPrimitives.FLOAT;
+		}
+		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.FLOAT, CPrimitives.DOUBLE,
+				CPrimitives.LONGDOUBLE }) {
 			if (mTypeSizes.getSize(primitive) == byteSize) {
 				return primitive;
 			}
