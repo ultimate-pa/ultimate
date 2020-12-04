@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -63,39 +64,45 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	private final Map<Marking<L, S>, S> mMarking2State = new HashMap<>();
 	private final Map<S, Marking<L, S>> mState2Marking = new HashMap<>();
 	private Set<S> mInitialStates;
+	private final S mEmptyStackState;
+	private VpAlphabet<L> mAlphabet;
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param factory
 	 * 		state factory
+	 * @param emptyStackStateFactory
+	 * 		state factory for empty stack
 	 * @param operand
 	 * 		Petri Net
 	 * @throws PetriNetNot1SafeException
 	 */
 	public LazyPetriNet2FiniteAutomaton(
 			final IPetriNet2FiniteAutomatonStateFactory<S> factory,
+			final IEmptyStackStateFactory<S> emptyStackStateFactory, 
 			final IPetriNet<L, S> operand) throws PetriNetNot1SafeException{
 		mOperand = operand;
 		mStateFactory = factory;
+		mEmptyStackState = emptyStackStateFactory.createEmptyStackState();
 	}
 
 	@Override
 	public IStateFactory<S> getStateFactory() {
-		// TODO Auto-generated method stub
-		return null;
+		return mStateFactory;
 	}
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mAlphabet == null) {
+			mAlphabet = new VpAlphabet<L>(mOperand.getAlphabet());
+		}
+		return mAlphabet;
 	}
 
 	@Override
 	public S getEmptyStackState() {
-		// TODO Auto-generated method stub
-		return null;
+		return mEmptyStackState;
 	}
 
 	@Override
@@ -138,42 +145,49 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+		return mMarking2State.size();
 	}
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return null;
+		return "currently " + size() + " states, but on-demand construction may add more states";
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter)
-			throws PetriNetNot1SafeException {
+	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
 		final Marking<L,S> marking = mState2Marking.get(state);
 		final Collection<OutgoingInternalTransition<L, S>> result = new ArrayList<>();
 		final Set<ITransition<L, S>> outgoing = getOutgoingNetTransitions(marking);
 		for (final ITransition<L, S> transition : outgoing) {
 			if (transition.getSymbol() == letter && marking.isTransitionEnabled(transition, mOperand)) {
-				final Marking<L, S> succMarking = marking.fireTransition(transition, mOperand);
-				final S succState = getOrConstructState(succMarking);
-				result.add(new OutgoingInternalTransition<>(letter, succState));
+				Marking<L, S> succMarking;
+				try {
+					succMarking = marking.fireTransition(transition, mOperand);
+					final S succState = getOrConstructState(succMarking);
+					result.add(new OutgoingInternalTransition<>(letter, succState));
+				} catch (PetriNetNot1SafeException e) {
+					throw new IllegalArgumentException("Petri net must be 1-safe!");
+				}
 			}
 		}
 		return result;
 	}
 	
 	@Override
-	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state) throws PetriNetNot1SafeException {
+	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state) {
 		final Marking<L,S> marking = mState2Marking.get(state);
 		final Collection<OutgoingInternalTransition<L, S>> result = new ArrayList<>();
 		final Set<ITransition<L, S>> outgoing = getOutgoingNetTransitions(marking);
 		for (final ITransition<L, S> transition : outgoing) {
 			if (marking.isTransitionEnabled(transition, mOperand)) {
-				final Marking<L, S> succMarking = marking.fireTransition(transition, mOperand);
-				final S succState = getOrConstructState(succMarking);
-				result.add(new OutgoingInternalTransition<>(transition.getSymbol(), succState));
+				Marking<L, S> succMarking;
+				try {
+					succMarking = marking.fireTransition(transition, mOperand);
+					final S succState = getOrConstructState(succMarking);
+					result.add(new OutgoingInternalTransition<>(transition.getSymbol(), succState));
+				} catch (PetriNetNot1SafeException e) {
+					throw new IllegalArgumentException("Petri net must be 1-safe!");
+				}
 			}
 		}
 		return result;
@@ -189,14 +203,12 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public Iterable<OutgoingCallTransition<L, S>> callSuccessors(final S state, final L letter) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Only internal transitions allowed!");
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Only internal transitions allowed!");
 	}
 
 }
