@@ -27,20 +27,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
+	private final IPetriNet<L, S> mOperand;
+	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
+	private final Map<Marking<L, S>, S> mMarking2State = new HashMap<>();
+	private Set<S> mInitialStates;
+	
 	public LazyPetriNet2FiniteAutomaton(final IPetriNet<L, S> net,
-			final IPetriNet2FiniteAutomatonStateFactory<S> factory) {
-
+			final IPetriNet2FiniteAutomatonStateFactory<S> factory,
+			final IPetriNet<L, S> operand) {
+		mOperand = operand;
+		mStateFactory = factory;
 	}
 
 	@Override
@@ -63,8 +75,26 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public Iterable<S> getInitialStates() {
-		// TODO Auto-generated method stub
+		if (mInitialStates == null) {
+			mInitialStates = constructInitialState();
+		}
+		return mInitialStates;
+	}
+
+	private Set<S> constructInitialState() {
+		getOrConstructState(new Marking(mOperand.getInitialPlaces()), true);
 		return null;
+	}
+
+	private S getOrConstructState(Marking marking, boolean isInitial) {
+		S state = mMarking2State.get(marking);
+		if (state == null) {
+			final boolean isFinal = mOperand.isAccepting(marking);
+			state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
+			mMarking2State.put(marking, state);
+		}
+		return state;
+		
 	}
 
 	@Override
