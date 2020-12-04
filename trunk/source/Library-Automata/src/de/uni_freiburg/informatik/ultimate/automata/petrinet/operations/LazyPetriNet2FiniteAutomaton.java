@@ -27,7 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -46,11 +51,12 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	private final IPetriNet<L, S> mOperand;
 	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
 	private final Map<Marking<L, S>, S> mMarking2State = new HashMap<>();
+	private final Map<S, Marking<L, S>> mState2Marking = new HashMap<>();
 	private Set<S> mInitialStates;
 	
 	public LazyPetriNet2FiniteAutomaton(final IPetriNet<L, S> net,
 			final IPetriNet2FiniteAutomatonStateFactory<S> factory,
-			final IPetriNet<L, S> operand) {
+			final IPetriNet<L, S> operand) throws PetriNetNot1SafeException{
 		mOperand = operand;
 		mStateFactory = factory;
 	}
@@ -82,16 +88,16 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	}
 
 	private Set<S> constructInitialState() {
-		getOrConstructState(new Marking(mOperand.getInitialPlaces()), true);
+		getOrConstructState(new Marking<L,S>(mOperand.getInitialPlaces()));
 		return null;
 	}
 
-	private S getOrConstructState(Marking marking, boolean isInitial) {
+	private S getOrConstructState(Marking<L,S> marking) {
 		S state = mMarking2State.get(marking);
 		if (state == null) {
-			final boolean isFinal = mOperand.isAccepting(marking);
 			state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
 			mMarking2State.put(marking, state);
+			mState2Marking.put(state, marking);
 		}
 		return state;
 		
@@ -99,14 +105,16 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public boolean isInitial(final S state) {
-		// TODO Auto-generated method stub
+		Set<S> initialPlaces = mOperand.getInitialPlaces();
+		if (mState2Marking.get(state).containsAll(initialPlaces)){
+			return true;
+		}
 		return false;
 	}
 
 	@Override
 	public boolean isFinal(final S state) {
-		// TODO Auto-generated method stub
-		return false;
+		return mOperand.isAccepting(mState2Marking.get(state));
 	}
 
 	@Override
@@ -122,9 +130,26 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
-		// TODO Auto-generated method stub
-		return null;
+	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) throws PetriNetNot1SafeException {
+		final Marking<L,S> marking = mState2Marking.get(state);
+		final Collection<OutgoingInternalTransition<L, S>> result = new ArrayList<>();
+		final Set<ITransition<L, S>> outgoing = getOutgoingNetTransitions(marking);
+		for (final ITransition<L, S> transition : outgoing) {
+			if (marking.isTransitionEnabled(transition, mOperand)) {
+				final Marking<L, S> succMarking = marking.fireTransition(transition, mOperand);
+				final S succState = getOrConstructState(succMarking);
+				result.add(new OutgoingInternalTransition<>(letter, succState));
+			}
+		}
+		return result;
+	}
+	
+	private Set<ITransition<L, S>> getOutgoingNetTransitions(final Marking<L, S> marking) {
+		final Set<ITransition<L, S>> transitions = new HashSet<>();
+		for (final S place : marking) {
+			transitions.addAll(mOperand.getSuccessors(place));
+		}
+		return transitions;
 	}
 
 	@Override
