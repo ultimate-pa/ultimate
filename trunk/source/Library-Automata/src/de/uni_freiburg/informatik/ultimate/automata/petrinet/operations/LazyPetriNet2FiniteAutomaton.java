@@ -111,8 +111,10 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	}
 
 	private Set<S> constructInitialState() {
-		getOrConstructState(new Marking<L,S>(mOperand.getInitialPlaces()));
-		return null;
+		final Set<S> initialStates = new HashSet<>();
+		final S init = getOrConstructState(new Marking<L,S>(mOperand.getInitialPlaces()));
+		initialStates.add(init);
+		return initialStates;
 	}
 
 	private S getOrConstructState(Marking<L,S> marking) {

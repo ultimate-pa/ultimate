@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitor
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
@@ -392,9 +393,11 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				net = petrifiedCfg;
 			}
 			try {
-				final INestedWordAutomaton<L, IPredicate> automaton =
+				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton =
+						new LazyPetriNet2FiniteAutomaton<L, IPredicate>(mStateFactoryForRefinement, net);
+				/*final INestedWordAutomaton<L, IPredicate> automaton =
 						new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
-								mStateFactoryForRefinement, net).getResult();
+								mStateFactoryForRefinement, net).getResult();*/
 				mAbstraction = computeSleepSetReduction(mPref.getSleepSetMode(), automaton);
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
