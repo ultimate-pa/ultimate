@@ -31,9 +31,37 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
+/**
+ * Implementation of Partial Order Reduction for Deterministic Finite Automata using Sleep Sets for reduction and a
+ * Delay Set for handling loops. This version constructs a reduced automaton.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            letter type
+ * @param <S>
+ *            state type
+ */
 public class InformationStorage<L, S> extends ProductNwa<L, S> {
 	private final IIntersectionStateFactory<S> mStateFactory;
 
+	/**
+	 * Implementation of Partial Order Reduction for Deterministic Finite Automata using Sleep Sets for reduction and a
+	 * Delay Set for handling loops. This version constructs a reduced automaton.
+	 *
+	 * @param fstOperand
+	 *            automaton in which the information shall be stored
+	 * @param sndOperand
+	 *            automaton from which the information shall be taken
+	 * @param stateFactory
+	 *            state factory 
+	 * @param assumeInSndNonFinalIsTrap
+	 *            assume that in the second operand a non-final state is a trap (i.e., whenever we reach a non-final
+	 *            state we can never go back to a final state. 2016-11-19 Matthias: I don't know if "trap" is well-known
+	 *            terminology or a term that we invented.)
+	 * @throws AutomataLibraryException
+	 *             if alphabets differ                      
+	 */
 	public InformationStorage(INwaOutgoingLetterAndTransitionProvider<L, S> fstOperand,
 			INwaOutgoingLetterAndTransitionProvider<L, S> sndOperand,
 			final IIntersectionStateFactory<S> stateFactory, boolean assumeInSndNonFinalIsTrap) 
