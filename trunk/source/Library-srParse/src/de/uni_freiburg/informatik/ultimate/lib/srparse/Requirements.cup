@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatter
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTU;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndTriggeredEntryConditionPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndTriggeredEntryConditionPatternDelayed;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ConstrainedChainPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponsePatternDelayed;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
@@ -271,6 +272,8 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 				{: RESULT = new PatternBuilder().setType(BndEntryConditionPattern.class).addCdd(s,r).addDuration(c1); :}
 			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:s HOLDS COMMA? THEN expression:t HOLDS
 				{: RESULT = new PatternBuilder().setType(BndTriggeredEntryConditionPattern.class).addCdd(t,s,r).addDuration(c1); :}
+			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:s HOLDS COMMA? THEN expression:t HOLDS AFTER AT MOST duration:c2
+				{: RESULT = new PatternBuilder().setType(BndTriggeredEntryConditionPatternDelayed.class).addCdd(t,s,r).addDuration(c1,c2); :}	
   			;
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}
