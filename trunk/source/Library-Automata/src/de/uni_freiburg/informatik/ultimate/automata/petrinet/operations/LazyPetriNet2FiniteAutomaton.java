@@ -64,7 +64,6 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	private final Map<Marking<L, S>, S> mMarking2State = new HashMap<>();
 	private final Map<S, Marking<L, S>> mState2Marking = new HashMap<>();
 	private Set<S> mInitialStates;
-	private final S mEmptyStackState;
 	private VpAlphabet<L> mAlphabet;
 	
 	/**
@@ -80,11 +79,9 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	 */
 	public LazyPetriNet2FiniteAutomaton(
 			final IPetriNet2FiniteAutomatonStateFactory<S> factory,
-			final IEmptyStackStateFactory<S> emptyStackStateFactory, 
 			final IPetriNet<L, S> operand) throws PetriNetNot1SafeException{
 		mOperand = operand;
 		mStateFactory = factory;
-		mEmptyStackState = emptyStackStateFactory.createEmptyStackState();
 	}
 
 	@Override
@@ -102,7 +99,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public S getEmptyStackState() {
-		return mEmptyStackState;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
