@@ -228,8 +228,6 @@ public class BitabsTranslation {
 		Expression right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_cmp1, right_cmp0);	
 //		Expression left_right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1, right_size1);
 		
-		//case that a is non-zero, assuming they are in the condition, that always evaluated to true?		
-		
 		// a|1 -> a
 		Expression left_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_cmp1, right_size1);
 		Expression right_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1, right_cmp1);
@@ -366,6 +364,14 @@ public class BitabsTranslation {
 				Expression opr1 = rhs_opr1.getLrValue().getValue();
 				Expression opr2 = rhs_opr2.getLrValue().getValue();
 
+				Expression opr1_eq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, literal_0);
+				Expression opr2_eq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, literal_0);
+				Expression opr1_eq1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, literal_1);
+				Expression opr2_eq1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, literal_1);
+				Expression opr1_bit = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr1_eq1);
+				Expression opr2_bit = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr2_eq0, opr2_eq1);				
+				Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr2_eq0);
+				
 				Expression opr1_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, literal_0);
 				Expression opr2_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr2, literal_0);
 
@@ -388,7 +394,6 @@ public class BitabsTranslation {
 						new VarList[] { new VarList(loc, new String[] { bId }, astType) });	
 				 //Declare a global variable, and register it to the global cope.
 				mDeclarations.add(declVar);
-
 				IdentifierExpression bit_var = ExpressionFactory.constructIdentifierExpression(loc, bType, bId, decInfo);
 				final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc, bType, bId, decInfo);
 			
@@ -416,16 +421,24 @@ public class BitabsTranslation {
 					Expression rhs_ite = ExpressionFactory.constructIfThenElseExpression(loc, cond_rhs, opr1, opr2);
 					Expression formula_left = ExpressionFactory.newBinaryExpression(loc,
 							BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), bit_var);					
-					IfStatement ifstmt = assumeIte (chandler, mProcedureManager, builder, lType, node, leftOperand, mNameHandler, mAuxVarInfoBuilder, symbolTable,
+					IfStatement ifstmt_and = assumeIte (chandler, mProcedureManager, builder, lType, node, leftOperand, mNameHandler, mAuxVarInfoBuilder, symbolTable,
 							exprResultTransformer, mExpressionTranslation, main, rhs_bit, rhs_ite, formula_left, idLhs);
 			
-					// add another if else nested statement statically to capture the bit-wise operations in the stem position					
-					Expression opr1_eq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, literal_0);
-					Expression opr2_eq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, literal_0);
-					Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr2_eq0);
+					// add another if else nested statement statically to capture the bit-wise operations in the stem position
+					// and-1 rule condition
+					Expression opr1_bit1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_eq1, opr2_bit);
+					Expression opr2_bit1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_bit, opr2_eq1);
+					
 					final AssignmentStatement assignLiteral = StatementFactory.constructAssignmentStatement(loc,
 							new LeftHandSide[] { idLhs_left }, new Expression[] { literal_0 });
-					IfStatement ifstmt1 = new IfStatement(loc, cond_and_0, new Statement[] { assignLiteral }, new Statement[] { ifstmt });					
+					final AssignmentStatement assignOpr1 = StatementFactory.constructAssignmentStatement(loc,
+							new LeftHandSide[] { idLhs_left }, new Expression[] { opr1 });
+					final AssignmentStatement assignOpr2 = StatementFactory.constructAssignmentStatement(loc,
+							new LeftHandSide[] { idLhs_left }, new Expression[] { opr2 });
+					
+					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit1, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_and });
+					IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit1, new Statement[] { assignOpr2 }, new Statement[] { ifstmt_opr1 });					
+					IfStatement ifstmt1 = new IfStatement(loc, cond_and_0, new Statement[] { assignLiteral }, new Statement[] { ifstmt_opr2 });					
 					builder.addStatement(ifstmt1);					
 					return builder.build();
 					
@@ -434,16 +447,29 @@ public class BitabsTranslation {
 					Expression or_formula_left = ExpressionFactory.newBinaryExpression(loc,
 							BinaryExpression.Operator.COMPGEQ, leftOperand.getLrValue().getValue(), bit_var);
 		
-					IfStatement or_ifstmt = assumeIte (chandler, mProcedureManager, builder, lType, node, leftOperand, mNameHandler, mAuxVarInfoBuilder, symbolTable,
+					IfStatement ifstmt_or = assumeIte (chandler, mProcedureManager, builder, lType, node, leftOperand, mNameHandler, mAuxVarInfoBuilder, symbolTable,
 							exprResultTransformer, mExpressionTranslation, main, rhs_bit, or_rhs_ite, or_formula_left, idLhs);
 					// add another if else nested statement statically to capture the bit-wise operations in the stem position
 					
-					Expression opr1_eq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, literal_0);
-					Expression opr2_eq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, literal_0);
-					Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr2_eq0);
-					final AssignmentStatement assignLiteral = StatementFactory.constructAssignmentStatement(loc,
-							new LeftHandSide[] { idLhs_left }, new Expression[] { literal_0 });
-					IfStatement ifstmt1 = new IfStatement(loc, cond_and_0, new Statement[] { assignLiteral }, new Statement[] { or_ifstmt });					
+					// or-0 rule condition
+					Expression opr1_bit0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_eq0, opr2_bit);
+					Expression opr2_bit0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_bit, opr2_eq0);
+					//or-1 rule condition
+					Expression opr1_bit1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_eq1, opr2_bit);
+					Expression opr2_bit1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_bit, opr2_eq1);
+					Expression cond_or1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_bit1, opr2_bit1);
+					
+					
+					final AssignmentStatement assignLiteral1 = StatementFactory.constructAssignmentStatement(loc,
+							new LeftHandSide[] { idLhs_left }, new Expression[] { literal_1 });
+					final AssignmentStatement assignOpr1 = StatementFactory.constructAssignmentStatement(loc,
+							new LeftHandSide[] { idLhs_left }, new Expression[] { opr1 });
+					final AssignmentStatement assignOpr2 = StatementFactory.constructAssignmentStatement(loc,
+							new LeftHandSide[] { idLhs_left }, new Expression[] { opr2 });
+					
+					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_or });
+					IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit0, new Statement[] { assignOpr2 }, new Statement[] { ifstmt_opr1 });
+					IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 }, new Statement[] { ifstmt_opr2 });					
 					builder.addStatement(ifstmt1);					
 					return builder.build();					
 					
