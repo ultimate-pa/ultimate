@@ -372,10 +372,7 @@ public class BitabsTranslation {
 				Expression opr2_bit = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr2_eq0, opr2_eq1);				
 				Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr2_eq0);
 				
-				Expression opr1_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, literal_0);
-				Expression opr2_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr2, literal_0);
 
-				Expression opr_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_signed, opr2_signed);
 				Expression cond_rhs = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, opr1, opr2);
 				
 				// We need to create a new id expression to store the expression here.
@@ -384,7 +381,7 @@ public class BitabsTranslation {
 				BoogieType bType = (BoogieType) id_left.getType();
 				//Create the LRValue for the assignment statement.
 				VariableLHS idLhs_left = new VariableLHS (loc, id_left.getType(), id_left.getIdentifier(), id_left.getDeclarationInformation());
-				LRValue idLhs_lrVal = new LocalLValue(idLhs_left, lType, false, false, null);
+//				LRValue idLhs_lrVal = new LocalLValue(idLhs_left, lType, false, false, null);
 			
 				// Declare Global variable for assume abstraction, and, or general rules.
 				String bId = ("abs").concat(Integer.toString(varCounter));
@@ -521,7 +518,6 @@ public class BitabsTranslation {
 
 		Expression opr1_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, literal_0);
 		Expression opr2_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr2, literal_0);
-
 		Expression opr_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, opr1_signed, opr2_signed);
 		
 		
