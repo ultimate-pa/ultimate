@@ -342,6 +342,14 @@ public class BitabsTranslation {
 		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
 		// this is an assignment expression, we won't need to translate it as before.
 //		final ExpressionResult rightOperand = (ExpressionResult) main.dispatch(node.getOperand2());
+		// We need to create a new id expression to store the expression here.
+		// leftOperand we supposed to be an idExpression, implicit cast
+		IdentifierExpression id_left = (IdentifierExpression) leftOperand.getLrValue().getValue();
+		BoogieType bType = (BoogieType) id_left.getType();
+		//Create the LRValue for the assignment statement.
+		VariableLHS idLhs_left = new VariableLHS (loc, id_left.getType(), id_left.getIdentifier(), id_left.getDeclarationInformation());
+//		LRValue idLhs_lrVal = new LocalLValue(idLhs_left, lType, false, false, null);
+
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
 		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
@@ -371,17 +379,8 @@ public class BitabsTranslation {
 				Expression opr1_bit = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr1_eq1);
 				Expression opr2_bit = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr2_eq0, opr2_eq1);				
 				Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr2_eq0);
-				
 
 				Expression cond_rhs = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, opr1, opr2);
-				
-				// We need to create a new id expression to store the expression here.
-				// leftOperand we supposed to be an idExpression, implicit cast
-				IdentifierExpression id_left = (IdentifierExpression) leftOperand.getLrValue().getValue();
-				BoogieType bType = (BoogieType) id_left.getType();
-				//Create the LRValue for the assignment statement.
-				VariableLHS idLhs_left = new VariableLHS (loc, id_left.getType(), id_left.getIdentifier(), id_left.getDeclarationInformation());
-//				LRValue idLhs_lrVal = new LocalLValue(idLhs_left, lType, false, false, null);
 			
 				// Declare Global variable for assume abstraction, and, or general rules.
 				String bId = ("abs").concat(Integer.toString(varCounter));
@@ -488,6 +487,33 @@ public class BitabsTranslation {
 				//TODO, x = 1+x&(x-3)?
 				throw new UnsupportedOperationException("ToDo, x = 1+x&(x-3)?...");
 			}
+		} else if (node.getOperand2() instanceof IASTUnaryExpression) {
+			IASTUnaryExpression uIexpr = (IASTUnaryExpression) node.getOperand2();
+			ExpressionResult uopr = (ExpressionResult) main.dispatch(uIexpr.getOperand());
+			if (isBitwiseOperator(uIexpr.getOperator())) {
+				
+				Expression formula_neg = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), literal_0);
+				Expression formula_pos = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPGEQ, leftOperand.getLrValue().getValue(), literal_0);
+				Expression com_pos = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPGEQ, uopr.getLrValue().getValue(), literal_0);
+				Expression com_neg = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPLT, uopr.getLrValue().getValue(), literal_0);				
+				
+				AssumeStatement assume_then = new AssumeStatement(loc, formula_neg);
+				AssumeStatement assume_else = new AssumeStatement(loc, formula_pos);
+				AssumeStatement assume_neg = new AssumeStatement(loc, com_neg);
+//				IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assume_else }, new Statement[] { ifstmt1 });
+				IfStatement ifstmt_com = new IfStatement(loc, com_pos, new Statement[] { assume_then }, new Statement[] {assume_neg, assume_else });
+				builder.addStatement(ifstmt_com);
+				return builder.build();
+				
+			} else {
+				//TODO, x = expr1 + ~expr2?
+				throw new UnsupportedOperationException("ToDo, x = expr1 + ~expr2?...");
+			}
+			
 		}
 		return builder.build();
 	}
@@ -588,7 +614,7 @@ public class BitabsTranslation {
 	 *        for now we consider all binary cases, because the unary complement rule is not clear yet.
 	 * 	
 	 */  
-   
+
 	public static boolean containBitwise(final IASTExpression expr) {
 		if (expr instanceof IASTBinaryExpression) {
 			IASTBinaryExpression bexpr = (IASTBinaryExpression) expr;
@@ -611,9 +637,18 @@ public class BitabsTranslation {
 					return false;
 				}
 			}
-		} else {return false;}
+		} else if (expr instanceof IASTUnaryExpression) {
+			IASTUnaryExpression uexpr = (IASTUnaryExpression) expr;
+			IASTExpression opr = uexpr.getOperand();
+			if (uexpr.getOperator() == IASTUnaryExpression.op_tilde) {
+				return true;
+			} else {
+				return containBitwise(opr);
+			}
+		} else {
+			return false;
+		}
 	}
-
 	
 	// Justify if an operator is bitwise operator
 	public static boolean isBitwiseOperator(int opcd) {
@@ -625,6 +660,7 @@ public class BitabsTranslation {
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
+		case IASTUnaryExpression.op_tilde:
 			return true;
 		default: 
 			return false;			
