@@ -772,7 +772,7 @@
 				<module>../CoreRCPTest</module>
 				<module>../Library-AutomataTest</module>
 				<module>../Library-IcfgTransformerTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
+				<!-- <module>../Library-ModelCheckerUtilsTest</module>  -->
 				<module>../Library-MSODTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-srParseTest</module>
