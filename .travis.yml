@@ -20,9 +20,15 @@ before_script:
   - export PATH=$PATH:$PWD/ltl2ba-1.2b1:$PWD/releaseScripts/default/adds
    
 script: 
-  - cd trunk/source/BA_MavenParentUltimate
-  - mvn clean install -Ptravis -Dmaven.test.failure.ignore=true 
-  
+  - while true; do sleep 10 && echo -n "."; done &
+  - cd trunk/source/BA_MavenParentUltimate && mvn clean install -Ptravis -Dmaven.test.failure.ignore=true 
+  - kill $!
+
+
+cache:
+  directories:
+    - $HOME/.m2
+
 branches:
   only:
     - dev
