@@ -166,12 +166,12 @@ public class FastUprTest {
 		runAndTestAcceleration(this::getTfEx05LoopBody, "false", mMgdSmtInterpol);
 	}
 
-	// @Test disabled because Z3 runs out of ressources during acceleration
+	// @Test disabled because Z3 runs out of resources during acceleration
 	public void tfEx02_Z3() {
 		runAndTestAcceleration(this::getTfEx02LoopBody, "???", mMgdZ3);
 	}
 
-	@Test
+	// @Test test disabled because Z3 runs out of resources during acceleration
 	public void compareTfEx01() {
 		compareAccelerations(this::getTfEx01LoopBody);
 	}
