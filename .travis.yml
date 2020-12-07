@@ -33,4 +33,4 @@ notifications:
     on_success: change
     on_failure: always
 
-sudo: false
+dist: xenial
