@@ -137,7 +137,7 @@ public class CoreUtil {
 		}
 
 		final String unknown = "?";
-		final String branch = properties.getProperty("git.branch", unknown);
+		final String branch = properties.getProperty("git.branch", unknown).replace('/', '.');
 		final String hash = properties.getProperty("git.commit.id.abbrev", unknown);
 		final String dirty = properties.getProperty("git.dirty", unknown);
 
