@@ -110,7 +110,7 @@ public class FastUprTest {
 	 * The expected formulas for {@link #tfEx01_Z3()} and {@link #tfEx01_SmtInterpol()} are equivalent according to
 	 * SmtInterpol (Z3 says unknown)
 	 */
-	@Test
+	// @Test disable because it also takes ~4h on jenkins
 	public void tfEx01_Z3() {
 		runAndTestAcceleration(this::getTfEx01LoopBody,
 				"(or (and (<= (+ (* (- 1) c_x_primed) c_x) (- 1)) (<= (+ (* (- 1) c_x) c_x_primed) 1)) "
