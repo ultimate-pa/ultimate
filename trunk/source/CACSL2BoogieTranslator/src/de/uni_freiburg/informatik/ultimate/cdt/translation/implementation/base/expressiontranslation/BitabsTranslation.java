@@ -383,7 +383,8 @@ public class BitabsTranslation {
 				Expression cond_rhs = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, opr1, opr2);
 			
 				// Declare Global variable for assume abstraction, and, or general rules.
-				String bId = ("abs").concat(Integer.toString(varCounter));
+//				String bId = ("abs").concat(Integer.toString(varCounter));
+				String bId = ("abs_").concat(id_left.getIdentifier());
 				final ASTType astType = mTypeHandler.cType2AstType(loc, lType);
 				DeclarationInformation decInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 				final VariableDeclaration declVar = new VariableDeclaration(loc, new Attribute[0],
