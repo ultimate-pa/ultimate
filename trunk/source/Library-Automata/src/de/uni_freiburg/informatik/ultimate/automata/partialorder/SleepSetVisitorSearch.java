@@ -89,10 +89,13 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	public NestedRun<L, S> constructRun() {
 		
 		//problem: initial == final
-		if (mStateStack.isEmpty()) {
+		if (mIsGoalState.apply(mStartState)) {
 			mAcceptingStateSequence.add(mStartState);
 			final NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
 			return new NestedRun<>(acceptingNestedWord, mAcceptingStateSequence);
+		}
+		else if (mStateStack.isEmpty()) {
+			return null;
 		}
 		
 		ArrayList<L> currentTransitionList = mLetterStack.pop();

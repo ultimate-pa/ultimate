@@ -106,14 +106,16 @@ public class SleepSetNewStateReduction<L, S, S2> {
 
 			if (!mVisitedSet.contains(currentSleepSetState)) {
 				// state not visited with this sleep set
+				//mVisitor.discoverState(currentState);
 				mVisitedSet.add(currentSleepSetState);
 				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 					if (!currentSleepSet.contains(transition.getLetter())) {
 						successorTransitionList.add(transition.getLetter());
 					}
 				}
-			} else {
-				// state already visited with this sleep set
+			}
+			
+			if (successorTransitionList.isEmpty()) {
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
 				mBacktrack = true;
@@ -145,6 +147,9 @@ public class SleepSetNewStateReduction<L, S, S2> {
 				 * mReductionAutomaton.addInternalTransition(currentSleepSetState, letterTransition, succSleepSetState);
 				 */
 				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
+				if (mExit) {
+					break;
+				}
 				successorStateList.add(succSleepSetState);
 				// mStateStack.push(succSleepSetState);
 				explored.add(letterTransition);
