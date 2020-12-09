@@ -57,6 +57,7 @@ public class SleepSetNewStateReduction<L, S, S2> {
 	// private NestedRun<L, S> mAcceptingRun;
 	private final IPartialOrderVisitor<L, S> mVisitor;
 	private boolean mExit;
+	private boolean mBacktrack;
 
 	public SleepSetNewStateReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
@@ -72,12 +73,13 @@ public class SleepSetNewStateReduction<L, S, S2> {
 		mStateStack = new ArrayDeque<>();
 		mStateMap = new HashMap<>();
 		mVisitor = visitor;
+		mExit = false;
 		// mReductionAutomaton = new NestedWordAutomaton<L, S2>(services, mOperand.getVpAlphabet(), stateFactory);
 		for (final S startState : mStartStateSet) {
 			final Set<L> emptySet = new HashSet<>();
 			final Pair<S, Set<L>> startStatePair = new Pair<>(startState, emptySet);
 			final S2 newStartState = stateFactory.createSleepSetState(startState, emptySet);
-			mVisitor.addStartState(startState);
+			mExit = mVisitor.addStartState(startState);
 			// mReductionAutomaton.addState(true, mOperand.isFinal(startState), newStartState);
 			mStateStack.push(newStartState);
 			mStateMap.put(newStartState, startStatePair);
@@ -85,7 +87,7 @@ public class SleepSetNewStateReduction<L, S, S2> {
 		}
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
-		mExit = false;
+		mBacktrack = false;
 		search();
 	}
 
@@ -94,10 +96,13 @@ public class SleepSetNewStateReduction<L, S, S2> {
 		while (!mExit && !mStateStack.isEmpty()) {
 
 			final S2 currentSleepSetState = mStateStack.peek();
-			mVisitor.discoverState();
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
 			final S currentState = mStateMap.get(currentSleepSetState).getFirst();
 			final Set<L> currentSleepSet = mStateMap.get(currentSleepSetState).getSecond();
+			if (!mBacktrack) {
+				mVisitor.discoverState(currentState);
+			}
+			mBacktrack = false;
 
 			if (!mVisitedSet.contains(currentSleepSetState)) {
 				// state not visited with this sleep set
@@ -111,6 +116,7 @@ public class SleepSetNewStateReduction<L, S, S2> {
 				// state already visited with this sleep set
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
+				mBacktrack = true;
 			}
 
 			// sort successorTransitionList according to the given order

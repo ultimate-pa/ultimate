@@ -37,7 +37,7 @@ public interface IPartialOrderVisitor<L, S> {
 
 	void backtrackState(S state);
 	
-	void addStartState(S state);
+	boolean addStartState(S state);
 
-	void discoverState();
+	void discoverState(S state);
 }

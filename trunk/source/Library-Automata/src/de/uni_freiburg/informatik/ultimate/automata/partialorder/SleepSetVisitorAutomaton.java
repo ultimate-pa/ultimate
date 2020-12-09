@@ -44,7 +44,7 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 	}
 
 	@Override
-	public void discoverState() {
+	public void discoverState(final S state) {
 		// do nothing
 	}
 
@@ -69,8 +69,9 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 	}
 
 	@Override
-	public void addStartState(final S state) {
+	public boolean addStartState(final S state) {
 		mReductionAutomaton.addState(true, mOperand.isFinal(state), state);
+		return false;
 
 	}
 

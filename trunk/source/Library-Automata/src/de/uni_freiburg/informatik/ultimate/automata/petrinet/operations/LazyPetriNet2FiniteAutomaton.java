@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -165,7 +166,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 					final S succState = getOrConstructState(succMarking);
 					result.add(new OutgoingInternalTransition<>(letter, succState));
 				} catch (PetriNetNot1SafeException e) {
-					throw new IllegalArgumentException("Petri net must be 1-safe!");
+					throw new IllegalArgumentException("Petri net must be 1-safe!", e);
 				}
 			}
 		}
@@ -185,7 +186,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 					final S succState = getOrConstructState(succMarking);
 					result.add(new OutgoingInternalTransition<>(transition.getSymbol(), succState));
 				} catch (PetriNetNot1SafeException e) {
-					throw new IllegalArgumentException("Petri net must be 1-safe!");
+					throw new IllegalArgumentException("Petri net must be 1-safe!", e);
 				}
 			}
 		}
@@ -202,12 +203,12 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public Iterable<OutgoingCallTransition<L, S>> callSuccessors(final S state, final L letter) {
-		throw new UnsupportedOperationException("Only internal transitions allowed!");
+		return Collections.emptySet();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
-		throw new UnsupportedOperationException("Only internal transitions allowed!");
+		return Collections.emptySet();
 	}
 
 }

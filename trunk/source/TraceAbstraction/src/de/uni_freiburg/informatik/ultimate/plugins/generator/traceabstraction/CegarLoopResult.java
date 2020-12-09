@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetCegar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -222,9 +223,13 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 								rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
 						break;
 					case NONE:
-						result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+						result = new SleepSetCegar<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 								taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
 								transitionClazz);
+						/*
+						result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+								taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
+								transitionClazz);*/
 						break;
 					default:
 						throw new AssertionError("unknown value: " + taPrefs.getFloydHoareAutomataReuse());
