@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.tempNewState;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.tempVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -65,7 +67,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 
-	SleepSetVisitorSearch<L, IPredicate> mVisitor;
+	//SleepSetVisitorSearch<L, IPredicate> mVisitor;
+	tempVisitorSearch<L, IPredicate> mVisitor;
 	SleepSetMode mSleepSetMode;
 	ArrayList<NestedWordAutomaton<L, IPredicate>> mInterpolantAutomataList = new ArrayList<>();
 
@@ -107,12 +110,14 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 				e.printStackTrace();
 			}
 		}
-
-		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState);
+		//mVisitor = new SleepSetVisitorSearch<>(this::isGoalState);
+		mVisitor = new tempVisitorSearch<>(this::isGoalState);
+		
 		if (mSleepSetMode == SleepSetMode.DELAY_SET) {
 			new SleepSetDelayReduction<>(newAbstraction, indep, order, mVisitor);
 		} else if (mSleepSetMode == SleepSetMode.NEW_STATES) {
-			new SleepSetNewStateReduction<>(newAbstraction, indep, order, mSleepSetStateFactory, mVisitor);
+			//new SleepSetNewStateReduction<>(newAbstraction, indep, order, mSleepSetStateFactory, mVisitor);
+			new tempNewState<>(newAbstraction, indep, order, mSleepSetStateFactory, mVisitor);
 		}
 
 		mCounterexample = mVisitor.constructRun();
