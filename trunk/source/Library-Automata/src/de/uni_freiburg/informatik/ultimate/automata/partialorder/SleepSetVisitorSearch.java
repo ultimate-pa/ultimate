@@ -56,8 +56,10 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 
 	@Override
 	public void discoverState(final S state) {
-		mLetterStack.push(new ArrayList<L>());
-		mStateStack.push(new ArrayList<S>());
+		if (!state.equals(mStartState)) {
+			mLetterStack.push(new ArrayList<L>());
+			mStateStack.push(new ArrayList<S>());
+		}
 		//mStateStack.peek().add(state); //test
 	}
 
@@ -72,8 +74,10 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	@Override
 	public void backtrackState(final S state) {
 		// pop state's list and remove letter leading to state from predecessor's list
-		mLetterStack.pop();
-		mStateStack.pop();
+		if (mStateStack.peek().isEmpty()) {
+			mLetterStack.pop();
+			mStateStack.pop();
+		}
 		if (!mLetterStack.isEmpty()) {
 			try {
 				mLetterStack.peek().remove(0);
@@ -103,19 +107,8 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 		mAcceptingTransitionSequence.add(0, currentTransition);
 		ArrayList<S> currentStateList = mStateStack.pop();
 		S currentState = currentStateList.get(currentStateList.size() - 1);
-		mAcceptingStateSequence.add(currentState);
+		mAcceptingStateSequence.add(0, currentState);
 		
-		//ArrayList<L> currentTransitionList;
-		//L currentTransition;
-		/*
-		if (!mStateStack.isEmpty()) {
-			currentTransitionList = mLetterStack.pop();
-			currentTransition = currentTransitionList.get(currentTransitionList.size() - 1);
-			mAcceptingTransitionSequence.add(0, currentTransition);
-			currentTransitionList = mLetterStack.pop();
-			currentTransition = currentTransitionList.get(0);
-			mAcceptingTransitionSequence.add(0, currentTransition);
-		}*/
 		while (!mStateStack.isEmpty()) {
 			currentTransitionList = mLetterStack.pop();
 			currentTransition = currentTransitionList.get(0);
@@ -139,6 +132,8 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	@Override
 	public boolean addStartState(final S state) {
 		mStartState = state;
+		mLetterStack.push(new ArrayList<L>());
+		mStateStack.push(new ArrayList<S>());
 		return mIsGoalState.apply(state);
 		// do nothing
 	}

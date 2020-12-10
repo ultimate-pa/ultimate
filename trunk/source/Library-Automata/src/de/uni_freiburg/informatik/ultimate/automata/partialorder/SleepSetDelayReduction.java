@@ -184,7 +184,7 @@ public class SleepSetDelayReduction<L, S> {
 				 * mDelaySetMap.put(succState, succDelaySet); } // add transition from currentState to succState to the
 				 * automaton mReductionAutomaton.addInternalTransition(currentState, letterTransition, succState);
 				 */
-				//mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
+				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
 
 				if (!mExit && mStateStack.contains(succState)) {
 					succDelaySet.addAll(mDelaySetMap.get(succState));
@@ -195,7 +195,7 @@ public class SleepSetDelayReduction<L, S> {
 					mDelaySetMap.put(succState, succDelaySet);
 					successorStateList.add(succState);
 					// mStateStack.push(succState);
-					mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
+					//mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
 				}
 				explored.add(letterTransition);
 			}

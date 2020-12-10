@@ -32,8 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
- * Implementation of Partial Order Reduction for Deterministic Finite Automata using Sleep Sets for reduction and a
- * Delay Set for handling loops. This version constructs a reduced automaton.
+ * Implementation of the Information Storage Operation for Partial Order Reduction.
  *
  * @author Marcel Ebbinghaus
  *
@@ -46,8 +45,7 @@ public class InformationStorage<L, S> extends ProductNwa<L, S> {
 	private final IIntersectionStateFactory<S> mStateFactory;
 
 	/**
-	 * Implementation of Partial Order Reduction for Deterministic Finite Automata using Sleep Sets for reduction and a
-	 * Delay Set for handling loops. This version constructs a reduced automaton.
+	 * Implementation of the Information Storage Operation for Partial Order Reduction.
 	 *
 	 * @param fstOperand
 	 *            automaton in which the information shall be stored
@@ -57,8 +55,7 @@ public class InformationStorage<L, S> extends ProductNwa<L, S> {
 	 *            state factory 
 	 * @param assumeInSndNonFinalIsTrap
 	 *            assume that in the second operand a non-final state is a trap (i.e., whenever we reach a non-final
-	 *            state we can never go back to a final state. 2016-11-19 Matthias: I don't know if "trap" is well-known
-	 *            terminology or a term that we invented.)
+	 *            state we can never go back to a final state.
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ                      
 	 */

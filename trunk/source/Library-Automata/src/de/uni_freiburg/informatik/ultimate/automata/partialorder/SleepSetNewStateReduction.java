@@ -100,13 +100,13 @@ public class SleepSetNewStateReduction<L, S, S2> {
 			final S currentState = mStateMap.get(currentSleepSetState).getFirst();
 			final Set<L> currentSleepSet = mStateMap.get(currentSleepSetState).getSecond();
 			if (!mBacktrack) {
-				mVisitor.discoverState(currentState);
+				//mVisitor.discoverState(currentState);
 			}
 			mBacktrack = false;
 
 			if (!mVisitedSet.contains(currentSleepSetState)) {
 				// state not visited with this sleep set
-				//mVisitor.discoverState(currentState);
+				mVisitor.discoverState(currentState);
 				mVisitedSet.add(currentSleepSetState);
 				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 					if (!currentSleepSet.contains(transition.getLetter())) {
@@ -115,7 +115,7 @@ public class SleepSetNewStateReduction<L, S, S2> {
 				}
 			}
 			
-			if (successorTransitionList.isEmpty()) {
+			else /*(successorTransitionList.isEmpty())*/ {
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
 				mBacktrack = true;
@@ -141,18 +141,13 @@ public class SleepSetNewStateReduction<L, S, S2> {
 						.collect(Collectors.toCollection(HashSet::new));
 				final S2 succSleepSetState = mStateFactory.createSleepSetState(succState, succSleepSet);
 				mStateMap.put(succSleepSetState, new Pair<>(succState, succSleepSet));
-				/*
-				 * if (!mReductionAutomaton.contains(succSleepSetState)) { mReductionAutomaton.addState(false,
-				 * mOperand.isFinal(succState), succSleepSetState); }
-				 * mReductionAutomaton.addInternalTransition(currentSleepSetState, letterTransition, succSleepSetState);
-				 */
 				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
-				if (mExit) {
-					break;
-				}
 				successorStateList.add(succSleepSetState);
 				// mStateStack.push(succSleepSetState);
 				explored.add(letterTransition);
+				if (mExit) {
+					break;
+				}
 			}
 			Collections.reverse(successorStateList);
 			for (final S2 succSleepSetState : successorStateList) {

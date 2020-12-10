@@ -223,9 +223,11 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 								rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
 						break;
 					case NONE:
+						
 						result = new SleepSetCegar<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 								taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
 								transitionClazz);
+								
 						/*
 						result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 								taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
