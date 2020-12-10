@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2018-2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2018-2019 University of Freiburg
+ * Copyright (C) 2020 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -44,37 +44,39 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 
 /**
  * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
- * mode, and then {@code Z3}.
+ * mode, and then {@code Z3}. It uses no {@link AssertCodeBlockOrder} for Mathsat, and
+ * {@link InterpolationTechnique#FPandBPonlyIfFpWasNotPerfect} for all solvers.
  * <p>
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
- * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class BearRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
 
-	public WolfRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public BearRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory, createModules(factory),
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
 	static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
 			createModules(final StrategyModuleFactory<LETTER> factory) {
-
+		final AssertCodeBlockOrder[] order = { AssertCodeBlockOrder.NOT_INCREMENTALLY };
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, LETTER>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
-			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBP));
+			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
+					order));
 		}
-		rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBP, Logics.ALL));
-		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP));
+		rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
+				Logics.ALL));
+		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 
 	@Override
 	public String getName() {
-		return RefinementStrategy.WOLF.toString();
+		return RefinementStrategy.BEAR.toString();
 	}
 }
