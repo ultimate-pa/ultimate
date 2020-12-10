@@ -712,8 +712,9 @@ public class CHandler {
 			
 			//@Cyrus, debug. In this case we only transform with and-rule: r= a&b => r<=b, r<=a, they are positive, 
 			// and rhs is a bitwise binary expression.
-			boolean isBit = BitabsTranslation.containBitwise(node);
-			if (isBit) {
+			boolean isBit = BitabsTranslation.containBitwise(node.getOperand2());
+			
+			if (isBit & (node.getOperand1() instanceof IASTIdExpression)) {
 				return BitabsTranslation.abstractAssgin(this, mProcedureManager, mDeclarations, mExpressionTranslation, mNameHandler, mAuxVarInfoBuilder,
 						mSymbolTable, mExprResultTransformer, main, mLocationFactory, node);
 			} else {
@@ -1360,8 +1361,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTExpressionStatement node) {
-		
-		//for the bitswise abstraction,		
+			
 		final Result r = main.dispatch(node.getExpression());
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult rExp = (ExpressionResult) r;
@@ -1369,7 +1369,6 @@ public class CHandler {
 			final ArrayList<Statement> stmt = new ArrayList<>(rExp.getStatements());
 			final ArrayList<Declaration> decl = new ArrayList<>(rExp.getDeclarations());
 			final List<Overapprox> overappr = new ArrayList<>();
-			System.out.println("----auxVars in ExpressionStatement:----"+ rExp.getAuxVars());
 			stmt.addAll(CTranslationUtil.createHavocsForAuxVars(rExp.getAuxVars()));
 			overappr.addAll(rExp.getOverapprs());
 			return new ExpressionResult(stmt, rExp.getLrValue(), decl, Collections.emptySet(), overappr);
