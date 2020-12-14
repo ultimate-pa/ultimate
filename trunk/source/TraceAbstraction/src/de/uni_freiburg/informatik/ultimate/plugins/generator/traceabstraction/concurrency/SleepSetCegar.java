@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
@@ -55,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -104,7 +105,10 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> newAbstraction = abstraction;
 		for (final NestedWordAutomaton<L, IPredicate> interpolantAutomaton : mInterpolantAutomataList) {
 			try {
-				newAbstraction = new InformationStorage<>(newAbstraction, interpolantAutomaton, factory, false);
+				final TotalizeNwa<L, IPredicate> totalInterpol =
+						new TotalizeNwa<>(interpolantAutomaton, mStateFactoryForRefinement, true);
+				assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
+				newAbstraction = new InformationStorage<>(newAbstraction, totalInterpol, factory, false);
 			} catch (final AutomataLibraryException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -136,10 +140,19 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 	}
 
 	private Boolean isGoalState(final IPredicate state) {
-		final MLPredicate mlstate = (MLPredicate) state;
-		final boolean isErrorState = Arrays.stream(mlstate.getProgramPoints()).anyMatch(mErrorLocs::contains);
+		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
+				+ state.getClass();
+
+		final IcfgLocation[] programPoints;
+		if (state instanceof ISLPredicate) {
+			programPoints = new IcfgLocation[] { ((ISLPredicate) state).getProgramPoint() };
+		} else {
+			programPoints = ((IMLPredicate) state).getProgramPoints();
+		}
+		final boolean isErrorState = Arrays.stream(programPoints).anyMatch(mErrorLocs::contains);
 		// TODO (Dominik 2020-12-09): Below is a hack. Replace by a better solution.
-		return isErrorState && !state.getFormula().toString().equals("false");
+		final boolean isFalse = state.getFormula().toString().equals("false");
+		return isErrorState && !isFalse;
 	}
 
 	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {
