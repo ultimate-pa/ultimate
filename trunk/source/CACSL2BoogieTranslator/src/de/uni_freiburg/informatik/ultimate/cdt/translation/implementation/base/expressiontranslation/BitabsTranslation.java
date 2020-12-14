@@ -152,8 +152,7 @@ public class BitabsTranslation {
 					} 
 			} else if (right instanceof IntegerLiteral) {
 				String valueRight = ((IntegerLiteral) right).getValue();
-				System.out.println("-----Right side constant value:" + valueRight.equals("1"));
-				if (valueRight.equals("1")) {
+					if (valueRight.equals("1")) {
 					return left;
 					} else if (valueRight.equals("0")){
 						return right;
@@ -345,6 +344,7 @@ public class BitabsTranslation {
 		// We need to create a new id expression to store the expression here.
 		// leftOperand we supposed to be an idExpression, implicit cast
 		IdentifierExpression id_left = (IdentifierExpression) leftOperand.getLrValue().getValue();
+		
 		BoogieType bType = (BoogieType) id_left.getType();
 		//Create the LRValue for the assignment statement.
 		VariableLHS idLhs_left = new VariableLHS (loc, id_left.getType(), id_left.getIdentifier(), id_left.getDeclarationInformation());
@@ -384,7 +384,7 @@ public class BitabsTranslation {
 			
 				// Declare Global variable for assume abstraction, and, or general rules.
 //				String bId = ("abs").concat(Integer.toString(varCounter));
-				String bId = ("abs_").concat(id_left.getIdentifier());
+				String bId = ("abs_").concat(Integer.toString(loc.getEndLine()));
 				final ASTType astType = mTypeHandler.cType2AstType(loc, lType);
 				DeclarationInformation decInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 				final VariableDeclaration declVar = new VariableDeclaration(loc, new Attribute[0],
@@ -463,10 +463,18 @@ public class BitabsTranslation {
 							new LeftHandSide[] { idLhs_left }, new Expression[] { opr1 });
 					final AssignmentStatement assignOpr2 = StatementFactory.constructAssignmentStatement(loc,
 							new LeftHandSide[] { idLhs_left }, new Expression[] { opr2 });
-					
-					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_or });
+					Expression condPos = ifstmt_or.getCondition();
+					Statement[] thenPos = ifstmt_or.getThenPart();
+					//nondet() assignment.
+					Statement[] elsePos = ifstmt_or.getElsePart();
+//					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_or });
+//					IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit0, new Statement[] { assignOpr2 }, new Statement[] { ifstmt_opr1 });
+//					IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 }, new Statement[] { ifstmt_opr2 });	
+					// change the order to test result, general first
+					IfStatement ifstmt_literal = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 }, thenPos);
+					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_literal });
 					IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit0, new Statement[] { assignOpr2 }, new Statement[] { ifstmt_opr1 });
-					IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 }, new Statement[] { ifstmt_opr2 });					
+					IfStatement ifstmt1 = new IfStatement(loc, condPos, thenPos, new Statement[] { ifstmt_opr2 });			
 					builder.addStatement(ifstmt1);					
 					return builder.build();					
 					
