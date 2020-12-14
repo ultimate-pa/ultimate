@@ -120,15 +120,17 @@ public class SleepSetDelayReduction<L, S> {
 			final S currentState = mStateStack.peek();
 			Set<L> currentSleepSet = mSleepSetMap.get(currentState);
 			final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
+			/*
 			if (!mBacktrack) {
 				mVisitor.discoverState(currentState);
 			}
-			mBacktrack = false;
+			mBacktrack = false;*/
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
 
 
 			if (mPrunedMap.get(currentState) == null) {
 				// state not visited yet
+				mVisitor.discoverState(currentState);
 				mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
 				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 					if (!currentSleepSet.contains(transition.getLetter())) {
@@ -150,13 +152,18 @@ public class SleepSetDelayReduction<L, S> {
 				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
 				mSleepSetMap.put(currentState, currentSleepSet);
 				mPrunedMap.put(currentState, currentSleepSet);
+				if (successorTransitionList.isEmpty()) {
+					mVisitor.backtrackState(currentState);
+					mStateStack.pop();
+					//mBacktrack = true;
+				}
 			}
-
+/*
 			if (successorTransitionList.isEmpty()) {
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
-				mBacktrack = true;
-			}
+				//mBacktrack = true;
+			}*/
 
 			// sort successorTransitionList according to the given order
 			final Comparator<L> order = mOrder.getOrder(currentState);
@@ -186,11 +193,12 @@ public class SleepSetDelayReduction<L, S> {
 				 */
 				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
 
-				if (!mExit && mStateStack.contains(succState)) {
+				if (mStateStack.contains(succState)) {
 					succDelaySet.addAll(mDelaySetMap.get(succState));
 					succDelaySet.add(succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
-				} else if (!mExit) {
+					mVisitor.backtrackState(currentState);
+				} else {
 					mSleepSetMap.put(succState, succSleepSet);
 					mDelaySetMap.put(succState, succDelaySet);
 					successorStateList.add(succState);
@@ -198,6 +206,9 @@ public class SleepSetDelayReduction<L, S> {
 					//mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
 				}
 				explored.add(letterTransition);
+				if (mExit) {
+					break;
+				}
 			}
 			Collections.reverse(successorStateList);
 			for (final S succState : successorStateList) {

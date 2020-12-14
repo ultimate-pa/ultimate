@@ -99,10 +99,11 @@ public class SleepSetNewStateReduction<L, S, S2> {
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
 			final S currentState = mStateMap.get(currentSleepSetState).getFirst();
 			final Set<L> currentSleepSet = mStateMap.get(currentSleepSetState).getSecond();
+			/*
 			if (!mBacktrack) {
-				//mVisitor.discoverState(currentState);
+				mVisitor.discoverState(currentState);
 			}
-			mBacktrack = false;
+			mBacktrack = false;*/
 
 			if (!mVisitedSet.contains(currentSleepSetState)) {
 				// state not visited with this sleep set
@@ -118,7 +119,7 @@ public class SleepSetNewStateReduction<L, S, S2> {
 			else /*(successorTransitionList.isEmpty())*/ {
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
-				mBacktrack = true;
+				//mBacktrack = true;
 			}
 
 			// sort successorTransitionList according to the given order
