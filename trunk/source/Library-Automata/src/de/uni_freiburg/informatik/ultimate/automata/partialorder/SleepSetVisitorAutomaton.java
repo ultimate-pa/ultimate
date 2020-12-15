@@ -75,4 +75,10 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 
 	}
 
+	@Override
+	public void delayState(S state) {
+		// do nothing
+		
+	}
+
 }

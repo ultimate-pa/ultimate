@@ -56,11 +56,10 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 
 	@Override
 	public void discoverState(final S state) {
-		if (!state.equals(mStartState)) {
+		if (!state.equals(mStartState) && !mStateStack.peek().isEmpty()) {
 			mLetterStack.push(new ArrayList<L>());
 			mStateStack.push(new ArrayList<S>());
 		}
-		//mStateStack.peek().add(state); //test
 	}
 
 	@Override
@@ -86,8 +85,12 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 				System.out.print("Size of LetterStack is: " + mLetterStack.size() + " and size of StateStack is: " + mStateStack.size());
 				System.out.print("Size of LetterStack entry is: " + mLetterStack.peek().size() + " and size of StateStack entry is: " + mStateStack.peek().size());
 			}
-
 		}
+	}
+	
+	public void delayState(final S state) {
+		mLetterStack.peek().remove(mLetterStack.peek().size() - 1);
+		mStateStack.peek().remove(mStateStack.peek().size() - 1);
 	}
 
 	public NestedRun<L, S> constructRun() {

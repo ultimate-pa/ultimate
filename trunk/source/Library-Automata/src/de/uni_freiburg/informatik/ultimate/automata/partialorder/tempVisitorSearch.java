@@ -28,7 +28,7 @@ public class tempVisitorSearch<L, S> implements IPartialOrderVisitor<L, S>{
 
 	@Override
 	public void discoverState(final S state) {
-
+		//do nothing
 	}
 
 	@Override
@@ -87,5 +87,12 @@ public class tempVisitorSearch<L, S> implements IPartialOrderVisitor<L, S>{
 		mStartState = state;
 		mStateStack.push(state);
 		return mIsGoalState.apply(state);
+	}
+
+	@Override
+	public void delayState(S state) {
+		mLetterStack.pop();
+		mStateStack.pop();
+		
 	}
 }

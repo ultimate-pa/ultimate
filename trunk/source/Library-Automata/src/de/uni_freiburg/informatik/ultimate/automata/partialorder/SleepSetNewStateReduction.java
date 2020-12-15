@@ -53,11 +53,8 @@ public class SleepSetNewStateReduction<L, S, S2> {
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private final ISleepSetStateFactory<L, S, S2> mStateFactory;
-	// private final NestedWordAutomaton<L, S2> mReductionAutomaton;
-	// private NestedRun<L, S> mAcceptingRun;
 	private final IPartialOrderVisitor<L, S> mVisitor;
 	private boolean mExit;
-	private boolean mBacktrack;
 
 	public SleepSetNewStateReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
@@ -74,20 +71,17 @@ public class SleepSetNewStateReduction<L, S, S2> {
 		mStateMap = new HashMap<>();
 		mVisitor = visitor;
 		mExit = false;
-		// mReductionAutomaton = new NestedWordAutomaton<L, S2>(services, mOperand.getVpAlphabet(), stateFactory);
 		for (final S startState : mStartStateSet) {
 			final Set<L> emptySet = new HashSet<>();
 			final Pair<S, Set<L>> startStatePair = new Pair<>(startState, emptySet);
 			final S2 newStartState = stateFactory.createSleepSetState(startState, emptySet);
 			mExit = mVisitor.addStartState(startState);
-			// mReductionAutomaton.addState(true, mOperand.isFinal(startState), newStartState);
 			mStateStack.push(newStartState);
 			mStateMap.put(newStartState, startStatePair);
 
 		}
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
-		mBacktrack = false;
 		search();
 	}
 
@@ -99,11 +93,6 @@ public class SleepSetNewStateReduction<L, S, S2> {
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
 			final S currentState = mStateMap.get(currentSleepSetState).getFirst();
 			final Set<L> currentSleepSet = mStateMap.get(currentSleepSetState).getSecond();
-			/*
-			if (!mBacktrack) {
-				mVisitor.discoverState(currentState);
-			}
-			mBacktrack = false;*/
 
 			if (!mVisitedSet.contains(currentSleepSetState)) {
 				// state not visited with this sleep set
@@ -116,10 +105,9 @@ public class SleepSetNewStateReduction<L, S, S2> {
 				}
 			}
 			
-			else /*(successorTransitionList.isEmpty())*/ {
+			else {
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
-				//mBacktrack = true;
 			}
 
 			// sort successorTransitionList according to the given order
@@ -144,8 +132,8 @@ public class SleepSetNewStateReduction<L, S, S2> {
 				mStateMap.put(succSleepSetState, new Pair<>(succState, succSleepSet));
 				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
 				successorStateList.add(succSleepSetState);
-				// mStateStack.push(succSleepSetState);
 				explored.add(letterTransition);
+				
 				if (mExit) {
 					break;
 				}

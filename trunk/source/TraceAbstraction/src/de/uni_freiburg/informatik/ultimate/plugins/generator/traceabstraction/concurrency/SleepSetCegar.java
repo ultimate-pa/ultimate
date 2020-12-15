@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.tempDelaySet;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.tempNewState;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.tempVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
@@ -119,6 +120,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		
 		if (mSleepSetMode == SleepSetMode.DELAY_SET) {
 			new SleepSetDelayReduction<>(newAbstraction, indep, order, mVisitor);
+			//new tempDelaySet<>(newAbstraction, indep, order, mVisitor);
 		} else if (mSleepSetMode == SleepSetMode.NEW_STATES) {
 			new SleepSetNewStateReduction<>(newAbstraction, indep, order, mSleepSetStateFactory, mVisitor);
 			//new tempNewState<>(newAbstraction, indep, order, mSleepSetStateFactory, mVisitor);
@@ -129,7 +131,8 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		if (mCounterexample == null) {
 			return true;
 		}
-
+		System.out.print("Size of mCounterexample is: " + mCounterexample.getLength());
+		System.out.print(mCounterexample.getStateSequence());
 		return false;
 	}
 
