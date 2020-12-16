@@ -639,9 +639,12 @@ public class BitabsTranslation {
 				return true;
 			default: {
 				if (opr1 instanceof IASTBinaryExpression)
-					return containBitwise(opr1);
+				//   No recursive here;
+				//	return containBitwise(opr1);
+					return false;
 				else if (opr2 instanceof IASTBinaryExpression)
-					return containBitwise(opr2);
+				//	return containBitwise(opr2);
+					return false;
 				else
 					return false;
 				}
@@ -652,7 +655,9 @@ public class BitabsTranslation {
 			if (uexpr.getOperator() == IASTUnaryExpression.op_tilde) {
 				return true;
 			} else {
-				return containBitwise(opr);
+			// no recursive here;
+			//	return containBitwise(opr);
+				return false;
 			}
 		} else {
 			return false;
