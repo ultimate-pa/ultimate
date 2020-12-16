@@ -223,20 +223,22 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 								rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
 						break;
 					case NONE:
-						
-						result = new SleepSetCegar<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-								taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
-								transitionClazz);
-								
-						/*
 						result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 								taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
-								transitionClazz);*/
+								transitionClazz);
 						break;
 					default:
 						throw new AssertionError("unknown value: " + taPrefs.getFloydHoareAutomataReuse());
 					}
 				}
+					break;
+				case SLEEP_SET_FA:
+					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
+						throw new UnsupportedOperationException("Reuse with sleep set-based analysis");
+					}
+					result = new SleepSetCegar<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+							taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
+							transitionClazz);
 					break;
 				case PETRI_NET: {
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {

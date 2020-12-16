@@ -67,6 +67,7 @@ public final class TAPreferences {
 	private final Minimization mMinimize;
 	private final boolean mHoare;
 	private final Concurrency mConcurrency;
+	private final boolean mLazyPetri2NFA;
 	private final HoareTripleChecks mHoareTripleChecks;
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
@@ -94,7 +95,7 @@ public final class TAPreferences {
 	}
 
 	public enum Concurrency {
-		FINITE_AUTOMATA, PETRI_NET
+		FINITE_AUTOMATA, PETRI_NET, SLEEP_SET_FA
 	}
 
 	public enum LooperCheck {
@@ -140,6 +141,7 @@ public final class TAPreferences {
 		mMinimize = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE, Minimization.class);
 
 		mConcurrency = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
+		mLazyPetri2NFA = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LAZY_PETRI2NFA);
 
 		mLimitTraceHistogram = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TRACE_HISTOGRAM);
 		mLimitAnalysisTime = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
@@ -315,6 +317,10 @@ public final class TAPreferences {
 
 	public Concurrency getConcurrency() {
 		return mConcurrency;
+	}
+
+	public boolean useLazyPetri2NFAConversion() {
+		return mLazyPetri2NFA;
 	}
 
 	public boolean computeHoareAnnotation() {

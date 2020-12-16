@@ -128,6 +128,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
+	public static final String LABEL_LAZY_PETRI2NFA = "Lazy Petri-NFA conversion";
 	public static final String LABEL_CONFIGURATION_ORDER = "Order on configurations for Petri net unfoldings";
 	public static final String LABEL_CUTOFF = "cut-off requires same transition";
 	public static final String LABEL_BACKFOLDING = "Use backfolding";
@@ -191,6 +192,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
 	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
+	public static final boolean DEF_LAZY_PETRI2NFA = false;
 	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
@@ -439,6 +441,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						Minimization.values()),
 				new UltimatePreferenceItem<>(LABEL_CONCURRENCY, DEF_CONCURRENCY, PreferenceType.Combo,
 						Concurrency.values()),
+				new UltimatePreferenceItem<>(LABEL_LAZY_PETRI2NFA, DEF_LAZY_PETRI2NFA, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CONFIGURATION_ORDER, DEF_CONFIGURATION_ORDER, PreferenceType.Combo,
 						EventOrderEnum.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),

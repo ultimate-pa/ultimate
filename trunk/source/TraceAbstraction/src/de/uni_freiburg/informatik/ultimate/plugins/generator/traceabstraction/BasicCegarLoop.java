@@ -392,22 +392,26 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			} else {
 				net = petrifiedCfg;
 			}
-			try {
-				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton =
-						new LazyPetriNet2FiniteAutomaton<L, IPredicate>(mStateFactoryForRefinement, net);
-				/*final INestedWordAutomaton<L, IPredicate> automaton =
-						new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
-								mStateFactoryForRefinement, net).getResult();*/
-				mAbstraction = computeSleepSetReduction(mPref.getSleepSetMode(), automaton);
-			} catch (final PetriNetNot1SafeException e) {
-				final Collection<?> unsafePlaces = e.getUnsafePlaces();
-				if (unsafePlaces == null) {
-					throw new AssertionError("Unable to find Petri net place that violates 1-safety");
+
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
+			if (mPref.useLazyPetri2NFAConversion()) {
+				automaton = new LazyPetriNet2FiniteAutomaton<>(mStateFactoryForRefinement, net);
+			} else {
+				try {
+					automaton = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
+							mStateFactoryForRefinement, net).getResult();
+				} catch (final PetriNetNot1SafeException e) {
+					final Collection<?> unsafePlaces = e.getUnsafePlaces();
+					if (unsafePlaces == null) {
+						throw new AssertionError("Unable to find Petri net place that violates 1-safety");
+					}
+					final ISLPredicate unsafePlace = (ISLPredicate) unsafePlaces.iterator().next();
+					final String proc = unsafePlace.getProgramPoint().getProcedure();
+					throw new IllegalStateException(
+							"Petrification does not provide enough thread instances for " + proc);
 				}
-				final ISLPredicate unsafePlace = (ISLPredicate) unsafePlaces.iterator().next();
-				final String proc = unsafePlace.getProgramPoint().getProcedure();
-				throw new IllegalStateException("Petrification does not provide enough thread instances for " + proc);
 			}
+			mAbstraction = computeSleepSetReduction(mPref.getSleepSetMode(), automaton);
 		}
 
 		if (mComputeHoareAnnotation
