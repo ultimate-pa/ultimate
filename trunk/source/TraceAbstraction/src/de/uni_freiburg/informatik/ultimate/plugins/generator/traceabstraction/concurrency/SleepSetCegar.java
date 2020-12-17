@@ -27,14 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
@@ -45,9 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.tempDelaySet;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.tempNewState;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.tempVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -55,8 +50,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -66,26 +63,40 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 
 public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+	private final SleepSetMode mSleepSetMode;
+	private final IIntersectionStateFactory<IPredicate> mFactory;
 
-	SleepSetVisitorSearch<L, IPredicate> mVisitor;
-	//tempVisitorSearch<L, IPredicate> mVisitor;
-	SleepSetMode mSleepSetMode;
-	ArrayList<NestedWordAutomaton<L, IPredicate>> mInterpolantAutomataList = new ArrayList<>();
-
-	public SleepSetCegar(final DebugIdentifier name, final IIcfg rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection errorLocs,
-			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final IUltimateServiceProvider services, final IPLBECompositionFactory compositionFactory,
-			final Class transitionClazz) {
+	public SleepSetCegar(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Collection<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
 		mSleepSetMode = mPref.getSleepSetMode();
+		mFactory = new InformationStorageFactory();
 	}
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
+		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
+		final IHoareTripleChecker htc = getHoareTripleChecker();
+
+		// TODO (Dominik 2020-12-17): Use settings to determine enhancement, re-using code in BasicCegarLoop
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia =
+				constructInterpolantAutomatonForOnDemandEnhancement(mInterpolAutomaton, predicateUnifier, htc,
+						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);
+		final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, mStateFactoryForRefinement, true);
+		assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
+
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
+				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
+		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
+
+		// TODO really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
 
@@ -101,45 +112,25 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		final ISleepSetOrder<IPredicate, L> order =
 				new ConstantSleepSetOrder<>(abstraction.getVpAlphabet().getInternalAlphabet());
 
-		final IIntersectionStateFactory<IPredicate> factory = new InformationStorageFactory();
+		final SleepSetVisitorSearch<L, IPredicate> visitor = new SleepSetVisitorSearch<>(this::isGoalState);
+		// mVisitor = new tempVisitorSearch<>(this::isGoalState);
 
-		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> newAbstraction = abstraction;
-		for (final NestedWordAutomaton<L, IPredicate> interpolantAutomaton : mInterpolantAutomataList) {
-			try {
-				final TotalizeNwa<L, IPredicate> totalInterpol =
-						new TotalizeNwa<>(interpolantAutomaton, mStateFactoryForRefinement, true);
-				assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
-				newAbstraction = new InformationStorage<>(newAbstraction, totalInterpol, factory, false);
-			} catch (final AutomataLibraryException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState);
-		//mVisitor = new tempVisitorSearch<>(this::isGoalState);
-		
 		if (mSleepSetMode == SleepSetMode.DELAY_SET) {
-			new SleepSetDelayReduction<>(newAbstraction, indep, order, mVisitor);
-			//new tempDelaySet<>(newAbstraction, indep, order, mVisitor);
+			// new tempDelaySet<>(abstraction, indep, order, mVisitor);
+			new SleepSetDelayReduction<>(abstraction, indep, order, visitor);
 		} else if (mSleepSetMode == SleepSetMode.NEW_STATES) {
-			new SleepSetNewStateReduction<>(newAbstraction, indep, order, mSleepSetStateFactory, mVisitor);
-			//new tempNewState<>(newAbstraction, indep, order, mSleepSetStateFactory, mVisitor);
+			// new tempNewState<>(abstraction, indep, order, mSleepSetStateFactory, mVisitor);
+			new SleepSetNewStateReduction<>(abstraction, indep, order, mSleepSetStateFactory, visitor);
 		}
 
-		mCounterexample = mVisitor.constructRun();
-
+		mCounterexample = visitor.constructRun();
 		if (mCounterexample == null) {
 			return true;
 		}
-		System.out.print("Size of mCounterexample is: " + mCounterexample.getLength());
-		System.out.print(mCounterexample.getStateSequence());
-		return false;
-	}
 
-	@Override
-	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		super.constructInterpolantAutomaton();
-		mInterpolantAutomataList.add(mInterpolAutomaton);
+		mLogger.info("Size of mCounterexample is: " + mCounterexample.getLength());
+		mLogger.info(mCounterexample.getStateSequence());
+		return false;
 	}
 
 	private Boolean isGoalState(final IPredicate state) {
@@ -153,6 +144,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 			programPoints = ((IMLPredicate) state).getProgramPoints();
 		}
 		final boolean isErrorState = Arrays.stream(programPoints).anyMatch(mErrorLocs::contains);
+
 		// TODO (Dominik 2020-12-09): Below is a hack. Replace by a better solution.
 		final boolean isFalse = state.getFormula().toString().equals("false");
 		return isErrorState && !isFalse;

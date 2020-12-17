@@ -702,6 +702,16 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
 	}
 
+	protected final IHoareTripleChecker getHoareTripleChecker() {
+		final IHoareTripleChecker refinementHtc = mRefinementEngine.getHoareTripleChecker();
+		if (refinementHtc != null) {
+			return refinementHtc;
+		}
+
+		return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementEngine.getPredicateUnifier());
+	}
+
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		mStateFactoryForRefinement.setIteration(mIteration);
@@ -710,13 +720,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		final INestedWordAutomaton<L, IPredicate> minuend = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 
 		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
-		final IHoareTripleChecker htc;
-		if (mRefinementEngine.getHoareTripleChecker() != null) {
-			htc = mRefinementEngine.getHoareTripleChecker();
-		} else {
-			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-					mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
-		}
+		final IHoareTripleChecker htc = getHoareTripleChecker();
 
 		final AutomatonType automatonType;
 		final boolean useErrorAutomaton;
