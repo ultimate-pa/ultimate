@@ -232,7 +232,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
-	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 
@@ -277,6 +276,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private final ScoringMethod mScoringMethod;
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
+	protected final boolean mRemoveDeadEnds;
 
 	protected final IPLBECompositionFactory<L> mCompositionFactory;
 
@@ -366,6 +366,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mScoringMethod = taPrefs.getHeuristicEmptinessCheckScoringMethod();
 		mAStarHeuristic = taPrefs.getHeuristicEmptinessCheckAStarHeuristic();
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
+		mRemoveDeadEnds = taPrefs.getRemoveDeadEnds();
 	}
 
 	@Override
@@ -868,7 +869,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				checkEnhancement(subtrahendBeforeEnhancement, subtrahend);
 			}
 
-			if (REMOVE_DEAD_ENDS) {
+			if (mRemoveDeadEnds) {
 				if (mComputeHoareAnnotation) {
 					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
 					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
