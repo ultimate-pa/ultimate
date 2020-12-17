@@ -157,7 +157,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 		// try to eliminate auxiliary variables to avoid quantifier alternation in
 		// implication check
-		final boolean tryAuxVarElimination = true;
+		final boolean tryAuxVarElimination = false;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
 				tryAuxVarElimination, false, mXnfConversionTechnique, mSimplificationTechnique,
