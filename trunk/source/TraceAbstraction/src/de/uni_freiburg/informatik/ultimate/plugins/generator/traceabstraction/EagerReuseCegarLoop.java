@@ -156,7 +156,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 
 		dumpOrAppendAutomatonForReuseIfEnabled(reuseAut, predicateUnifier);
 
-		if (REMOVE_DEAD_ENDS) {
+		if (mRemoveDeadEnds) {
 			if (mComputeHoareAnnotation) {
 				final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
 				mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());

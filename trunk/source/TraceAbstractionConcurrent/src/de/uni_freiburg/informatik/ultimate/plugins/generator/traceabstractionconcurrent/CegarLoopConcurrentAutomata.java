@@ -190,7 +190,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
-		if (REMOVE_DEAD_ENDS) {
+		if (mRemoveDeadEnds) {
 			if (mComputeHoareAnnotation) {
 				final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
 				mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
