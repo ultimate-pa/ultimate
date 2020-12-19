@@ -135,6 +135,15 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	private final LBool performInclusionCheck(final IPredicate context, final L a, final L b) {
+		if (mManagedScript.isLocked()) {
+			mLogger.info("Requesting ManagedScript unlock before implication check");
+			final boolean unlocked = mManagedScript.requestLockRelease();
+			if (!unlocked) {
+				mLogger.warn("Failed to unlock ManagedScript. Unable to check independence, returning UNKNOWN.");
+				return LBool.UNKNOWN;
+			}
+		}
+
 		UnmodifiableTransFormula transFormula1 = compose(a.getTransformula(), b.getTransformula());
 		final UnmodifiableTransFormula transFormula2 = compose(b.getTransformula(), a.getTransformula());
 
@@ -146,8 +155,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			transFormula1 = compose(guard, transFormula1);
 		}
 
-		final LBool result = TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
-		return result;
+		return TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
 	}
 
 	private final UnmodifiableTransFormula compose(final UnmodifiableTransFormula first,
