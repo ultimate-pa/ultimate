@@ -665,6 +665,12 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord(),
 				false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
+
+		// FIXME (Dominik 2020-12-19): The assertion below is problematic, because it has side-effects!
+		// In particular, InductivityCheck calls IncrementalHoareTripleChecker, which in the method unAssertCodeBlock
+		// unlocks a ManagedScript. If assertions are disabled, this remains locked. This leads to exceptions if other
+		// callers try to lock it. With assertions enabled, the line below causes the ManagedScript to be unlocked and
+		// no exceptions occur.
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 	}
