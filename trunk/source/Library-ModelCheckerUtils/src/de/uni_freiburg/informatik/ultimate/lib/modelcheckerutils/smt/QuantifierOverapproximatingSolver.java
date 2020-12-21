@@ -144,7 +144,7 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 	private Term overApproximate(final Term term) {
 		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true).transform(term);
 		// Optimization 2
-		final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL).transform(nnf);
+		final Term pushed = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
 		Term qfree = mMgdScript.getScript().term("true");
 		for (Term cojunct : SmtUtils.getConjuncts(pushed)) {
 			if (!QuantifierUtils.isQuantifierFree(cojunct)) {

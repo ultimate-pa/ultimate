@@ -453,8 +453,9 @@ public class ProofChecker extends NonRecursive {
 	 */
 	private int mNumInstancesUsed;
 	private int mNumInstancesFromDER;
-	private int mNumInstancesFromCheckpoint;
-	private int mNumInstancesFromFinalcheck;
+	private int mNumInstancesFromConflictUnitSearch;
+	private int mNumInstancesFromEMatching;
+	private int mNumInstancesFromEnumeration;
 
 	/**
 	 * Create a proof checker.
@@ -504,8 +505,10 @@ public class ProofChecker extends NonRecursive {
 
 		// TODO Handle this in a better way (e.g. as part of statistics)
 		if (proof.getTheory().getLogic().isQuantified()) {
-			mLogger.warn("Proof: Instances of quantified clauses used: %d (DER: %d Checkpoint: %d Final check: %d)",
-					mNumInstancesUsed, mNumInstancesFromDER, mNumInstancesFromCheckpoint, mNumInstancesFromFinalcheck);
+			mLogger.warn(
+					"Proof: Instances of quantified clauses used: %d (DER: %d Conflict/unit search: %d E-matching: %d Enumeration: %d)",
+					mNumInstancesUsed, mNumInstancesFromDER, mNumInstancesFromConflictUnitSearch,
+					mNumInstancesFromEMatching, mNumInstancesFromEnumeration);
 		}
 		return mError == 0;
 	}
@@ -651,10 +654,13 @@ public class ProofChecker extends NonRecursive {
 			final Object[] subannots = ((Object[]) lemmaAnnotation);
 			assert subannots.length == 5;
 			final String solverPart = (String) subannots[2];
-			if (solverPart == ":Checkpoint") {
-				mNumInstancesFromCheckpoint++;
-			} else if (solverPart == ":Finalcheck") {
-				mNumInstancesFromFinalcheck++;
+			if (solverPart == ":conflict") {
+				mNumInstancesFromConflictUnitSearch++;
+			} else if (solverPart == ":e-matching") {
+				mNumInstancesFromEMatching++;
+			} else {
+				assert solverPart == ":enumeration";
+				mNumInstancesFromEnumeration++;
 			}
 			checkInstLemma(clause, subannots);
 		} else {
@@ -1400,8 +1406,8 @@ public class ProofChecker extends NonRecursive {
 
 		// Check that the annotation of the lemma is well-formed.
 		if (quantAnnotation.length != 5 || quantAnnotation[0] != ":subs" || !(quantAnnotation[1] instanceof Term[])
-				|| (quantAnnotation[2] != ":DER" && quantAnnotation[2] != ":Checkpoint"
-						&& quantAnnotation[2] != ":Finalcheck")
+				|| (quantAnnotation[2] != ":conflict" && quantAnnotation[2] != ":e-matching"
+						&& quantAnnotation[2] != ":enumeration")
 				|| quantAnnotation[3] != ":subproof" || !(quantAnnotation[4] instanceof ApplicationTerm)) {
 			reportError("Malformed QuantAnnotation.");
 			return;
@@ -3527,8 +3533,11 @@ public class ProofChecker extends NonRecursive {
 			break;
 		case ":subst":
 			result = checkSplitSubst((Term[]) splitAnnot.getValue(), origTerm, splitTerm);
-			mNumInstancesUsed++;
-			mNumInstancesFromDER++;
+			if (splitTerm.getFreeVars().length == 0) {
+				// Partial instantiated clauses count when they become ground instances in an inst-lemma.
+				mNumInstancesUsed++;
+				mNumInstancesFromDER++;
+			}
 			break;
 		default:
 			result = false;

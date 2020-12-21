@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
+// TODO: Current approach has bad performance. Other approach?
 public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements IInterpolantProvider<LETTER> {
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
@@ -244,7 +245,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<TermVariable> varsToKeep) {
 		final Term substituted = new SubstitutionWithLocalSimplification(mManagedScript, mapping).transform(term);
 		final Term abstracted = McrUtils.abstractVariables(substituted, varsToKeep, QuantifiedFormula.EXISTS,
-				mManagedScript, mServices);
+				mManagedScript, mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
 		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, abstracted,
 				mSimplificationTechnique, mXnfConversionTechnique);
 	}

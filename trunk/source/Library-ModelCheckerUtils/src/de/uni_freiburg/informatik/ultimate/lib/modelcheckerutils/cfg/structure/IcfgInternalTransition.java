@@ -39,14 +39,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
  *
  */
 public final class IcfgInternalTransition extends AbstractIcfgTransition
-		implements IIcfgInternalTransition<IcfgLocation> {
+		implements IIcfgInternalTransition<IcfgLocation>, IActionWithBranchEncoders {
 	private static final long serialVersionUID = -4893486021673688404L;
+
 	private final UnmodifiableTransFormula mTransFormula;
+	private final UnmodifiableTransFormula mTransFormulaWithBranchEncoders;
 
 	protected IcfgInternalTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula transFormula, final int id) {
+			final UnmodifiableTransFormula transFormula, final UnmodifiableTransFormula transFormulaWithBranchEncoders,
+			final int id) {
 		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
+		mTransFormulaWithBranchEncoders =
+				Objects.requireNonNull(transFormulaWithBranchEncoders, "A transformula is missing");
 	}
 
 	@Override
@@ -58,5 +63,10 @@ public final class IcfgInternalTransition extends AbstractIcfgTransition
 	@Override
 	public String toString() {
 		return toDebugString(mTransFormula.toString());
+	}
+
+	@Override
+	public UnmodifiableTransFormula getTransitionFormulaWithBranchEncoders() {
+		return mTransFormulaWithBranchEncoders;
 	}
 }

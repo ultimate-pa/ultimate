@@ -114,7 +114,7 @@ public class ThreadInstanceAdder {
 				final UnmodifiableTransFormula errorTransformula = TransFormulaBuilder
 						.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
 				final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
-						new Payload(), errorTransformula);
+						new Payload(), errorTransformula, errorTransformula);
 				callerNode.addOutgoing(errorTransition);
 				errorNode.addIncoming(errorTransition);
 //				integrateEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
@@ -448,7 +448,12 @@ public class ThreadInstanceAdder {
 
 	private static String generateThreadInstanceId(final int forkNumber, final String procedureName,
 			final int threadInstanceNumber, final int threadInstanceMax) {
-		return procedureName + "Thread" + threadInstanceNumber + "of" +  threadInstanceMax + "ForFork" + forkNumber;
+		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + forkNumber;
+	}
+
+	private static String generateThreadInstanceId(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork,
+			final String procedureName, final int threadInstanceNumber, final int threadInstanceMax) {
+		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + fork.hashCode();
 	}
 
 	private static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId,

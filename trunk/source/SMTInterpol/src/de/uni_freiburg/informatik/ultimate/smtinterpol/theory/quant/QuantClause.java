@@ -53,6 +53,7 @@ public class QuantClause {
 	private final QuantLiteral[] mQuantLits;
 
 	private final SourceAnnotation mSource;
+	private final SourceAnnotation mQuantSource;
 	private final Term mClauseWithProof;
 
 	/**
@@ -93,6 +94,7 @@ public class QuantClause {
 		mGroundLits = groundLits;
 		mQuantLits = mQuantTheory.getLiteralCopies(quantLits, this);
 		mSource = source;
+		mQuantSource = new SourceAnnotation(source, true);
 		mClauseWithProof = clauseWithProof;
 
 		mVars = computeVars();
@@ -145,8 +147,23 @@ public class QuantClause {
 		return mQuantLits;
 	}
 
+	/**
+	 * Get the source annotation of this QuantClause. This should only be used when dealing with ground terms existing
+	 * in the QuantClause.
+	 * 
+	 * @return the (ground) source annotation.
+	 */
 	public SourceAnnotation getSource() {
 		return mSource;
+	}
+
+	/**
+	 * Get the source annotation of this QuantClause containing the information that it comes from the QuantifierTheory.
+	 * 
+	 * @return the (quant) source annotation.
+	 */
+	public SourceAnnotation getQuantSource() {
+		return mQuantSource;
 	}
 
 	public TermVariable[] getVars() {

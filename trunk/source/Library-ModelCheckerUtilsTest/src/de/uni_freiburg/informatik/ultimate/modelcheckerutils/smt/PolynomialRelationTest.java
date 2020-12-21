@@ -71,8 +71,7 @@ public class PolynomialRelationTest {
 
 	private static final String SOLVER_COMMAND_Z3 =
 			"z3 SMTLIB2_COMPLIANT=true -t:6000 -memory:2024 -smt2 -in smt.arith.solver=2";
-	private static final String SOLVER_COMMAND_CVC4 =
-			"cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=6000";
+	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	/**
 	 * If DEFAULT_SOLVER_COMMAND is not null we ignore the solver specified for each test and use only the solver
@@ -121,7 +120,6 @@ public class PolynomialRelationTest {
 		}
 		return result;
 	}
-
 
 	@Test
 	public void relationRealDefault() {
@@ -345,9 +343,8 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * The mapping {x->2, y->6} is a satisfying assignment because 2*2=4 and 2*6=4
-	 * because we have to take everything modulo 8. If we would divide both sides by
-	 * 2 this mapping is not a satisfying assignment any more.
+	 * The mapping {x->2, y->6} is a satisfying assignment because 2*2=4 and 2*6=4 because we have to take everything
+	 * modulo 8. If we would divide both sides by 2 this mapping is not a satisfying assignment any more.
 	 */
 	@Test
 	public void relationBvEQ06NoDiv() {
@@ -355,7 +352,6 @@ public class PolynomialRelationTest {
 		final String inputSTR = "(= (bvmul (_ bv2 8) x) (bvmul (_ bv2 8) y ))";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
-
 
 	// Result in DNF: (or (and (= y 0) (= z 0)) (and (= (mod z y) 0) (not (= y 0)) (= x (div z y))))
 	// @Test Insufficient resources to check soundness
@@ -365,8 +361,8 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
-
-	// Result in DNF: (or (and (distinct x (div z y)) (not (= y 0))) (and (not (= y 0)) (not (= (mod z y) 0))) (and (not (= z 0)) (= y 0)))
+	// Result in DNF: (or (and (distinct x (div z y)) (not (= y 0))) (and (not (= y 0)) (not (= (mod z y) 0))) (and (not
+	// (= z 0)) (= y 0)))
 	// Result in CNF: (and (or (not (= z 0)) (not (= y 0))) (or (= y 0) (distinct x (div z y)) (not (= (mod z y) 0))))
 	// @Test Commented because mathsat does not terminate
 	public void relationIntPolyPuristDistinct() {
@@ -388,8 +384,7 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Disjuncts of the DNF result:
-	 * (and (= x (div (div t 2) a)) (not (= a 0)) (= (mod t 2) 0) (= (mod (div t 2) a) 0))
+	 * Disjuncts of the DNF result: (and (= x (div (div t 2) a)) (not (= a 0)) (= (mod t 2) 0) (= (mod (div t 2) a) 0))
 	 * (and (= (mod t 2) 0) (= a 0) (= (div t 2) 0))
 	 *
 	 * You get the CNF result if you swap the and/or and negate all atoms of
@@ -403,11 +398,8 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Disjuncts of the DNF result:
-	 * (and (= x (distinct (div (div t 2) a)))  (not (= a 0)))
-	 * (and (= a 0)  (not (= (div t 2) 0)))
-	 * (and (not (= (mod (div t 2) a) 0))  (not (= a 0)))
-	 * (and (not (= (mod t 2) 0)))
+	 * Disjuncts of the DNF result: (and (= x (distinct (div (div t 2) a))) (not (= a 0))) (and (= a 0) (not (= (div t
+	 * 2) 0))) (and (not (= (mod (div t 2) a) 0)) (not (= a 0))) (and (not (= (mod t 2) 0)))
 	 *
 	 * You get the CNF result if you swap the and/or and negate all atoms of
 	 * {@link PolynomialRelationTest#relationIntPolyEq}
@@ -420,8 +412,7 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Delete after {@link PolynomialRelationTest#relationIntPolyDistinct} can be
-	 * solved.
+	 * Delete after {@link PolynomialRelationTest#relationIntPolyDistinct} can be solved.
 	 */
 	@Test
 	public void relationIntPolyDistinctSimplified() {
@@ -438,8 +429,7 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Delete after {@link PolynomialRelationTest#relationIntPolyDistinct} can be
-	 * solved.
+	 * Delete after {@link PolynomialRelationTest#relationIntPolyDistinct} can be solved.
 	 */
 	@Test
 	public void relationIntPolyLessSimplified() {
@@ -456,8 +446,7 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Delete after {@link PolynomialRelationTest#relationIntPolyLeq} can be
-	 * solved.
+	 * Delete after {@link PolynomialRelationTest#relationIntPolyLeq} can be solved.
 	 */
 	@Test
 	public void relationIntPolyLeqSimplified() {
@@ -536,7 +525,7 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
-	@Test
+	// @Test > 170h on Jenkins
 	public void relationIntPolyCVC4MATHSATEQ9() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 y x) (* 21 z y))";
@@ -610,7 +599,6 @@ public class PolynomialRelationTest {
 		Assert.assertNull(sbr);
 	}
 
-
 	private void testSolveForX(final String solverCommand, final String inputAsString, final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
@@ -635,8 +623,8 @@ public class PolynomialRelationTest {
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term subject = TermParseUtils.parseTerm(script, "x");
-		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript,
-				subject);
+		final SolvedBinaryRelation sbr =
+				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, subject);
 		Assert.assertNull("Solvable, but unsolvable expected", sbr);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
@@ -972,16 +960,15 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Example that is motivated by the problem that the terms of the following two
-	 * lines do not evaluate to the same value for Euclidean division of integers.
+	 * Example that is motivated by the problem that the terms of the following two lines do not evaluate to the same
+	 * value for Euclidean division of integers.
 	 *
 	 * <pre>
 	 * 20 / (-2 * 7)  =  20 / -14  =  -1    (the remainder is 6)
 	 * 20 / -2 / 7  =  -10 / 7  =   -2    (the remainder is 4)
 	 * </pre>
 	 *
-	 * So if we have -2 * y * x = 20 * t the intermediate transformation to y * x =
-	 * -10 * t is unsound.
+	 * So if we have -2 * y * x = 20 * t the intermediate transformation to y * x = -10 * t is unsound.
 	 */
 	@Test
 	public void relationIntNonlin01MilkFactoryOutlet() {

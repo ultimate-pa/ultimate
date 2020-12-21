@@ -68,7 +68,7 @@ public final class TranslationSettings {
 	private final MemoryModel mMemoryModelPreference;
 	private final boolean mFpToIeeeBvExtension;
 	private final boolean mSmtBoolArraysWorkaround;
-	private final String mCheckedMethod;
+	private final String mEntryMethod;
 	private final TranslationMode mTranslationMode;
 	private final boolean mCheckSvcompErrorFunction;
 	private final boolean mIsSvcompMemtrackCompatibilityMode;
@@ -89,7 +89,7 @@ public final class TranslationSettings {
 		mCheckMemoryLeakInMain = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN);
 
 		mCheckSvcompErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
-		mCheckedMethod = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
+		mEntryMethod = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
 		mTranslationMode = ups.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mCheckIfFreedPointerIsValid = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
@@ -162,7 +162,7 @@ public final class TranslationSettings {
 		mMemoryModelPreference = memoryModelPreference;
 		mFpToIeeeBvExtension = fpToIeeeBvExtension;
 		mSmtBoolArraysWorkaround = smtBoolArraysWorkaround;
-		mCheckedMethod = checkedMethod;
+		mEntryMethod = checkedMethod;
 		mTranslationMode = translationMode;
 		mCheckSvcompErrorFunction = checkSvcompErrorFunction;
 		mIsSvcompMemtrackCompatibilityMode = isSvcompMemtrackCompatibilityMode;
@@ -254,8 +254,8 @@ public final class TranslationSettings {
 		return mSmtBoolArraysWorkaround;
 	}
 
-	public String getCheckedMethod() {
-		return mCheckedMethod;
+	public String getEntryMethod() {
+		return mEntryMethod;
 	}
 
 	public boolean isSvcompMode() {
@@ -319,7 +319,7 @@ public final class TranslationSettings {
 				mCheckArrayAccessOffHeap, mUnsignedTreatment, mInRange, mPointerIntegerConversion,
 				mCheckIfFreedPointerIsValid, mPointerBaseValidity, mPointerTargetFullyAllocated,
 				mCheckPointerSubtractionAndComparisonValidity, memoryModel, mFpToIeeeBvExtension,
-				mSmtBoolArraysWorkaround, mCheckedMethod, mTranslationMode, mCheckSvcompErrorFunction,
+				mSmtBoolArraysWorkaround, mEntryMethod, mTranslationMode, mCheckSvcompErrorFunction,
 				mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryModelResolutionOnPointerCasts);

@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  *
@@ -134,6 +136,11 @@ public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEnc
 
 	protected void rememberEdgeMapping(final IIcfgTransition<?> newEdge, final IIcfgTransition<?> originalEdge) {
 		mBacktranslator.mapEdges((IcfgEdge) newEdge, (IcfgEdge) originalEdge);
+	}
+
+	protected void rememberEdgeMapping(final IIcfgTransition<IcfgLocation> newEdge,
+			final Map<TermVariable, IIcfgTransition<IcfgLocation>> originalEdges) {
+		mBacktranslator.mapEdges(newEdge, originalEdges);
 	}
 
 	private static class DequeCollector<T> implements Collector<T, Deque<T>, Deque<T>> {

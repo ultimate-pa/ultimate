@@ -203,6 +203,8 @@ public final class Term2Expression implements Serializable {
 					&& !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term);
+				} else if ("concat".equals(symb.getName())) {
+					return translateBitvectorConcat(type, term);
 				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 					return translateWithSymbolTable(symb, type, termParams);
 				} else {
@@ -275,6 +277,14 @@ public final class Term2Expression implements Serializable {
 		return new BitVectorAccessExpression(null, type, bitvector, end, start);
 	}
 
+	private Expression translateBitvectorConcat(final IBoogieType type, final ApplicationTerm term) {
+		assert "concat".equals(term.getFunction().getName()) : "no extract";
+		assert term.getParameters().length == 2;
+		final Expression op1 = translate(term.getParameters()[0]);
+		final Expression op2 = translate(term.getParameters()[1]);
+		return new BinaryExpression(null, Operator.BITVECCONCAT, op1, op2);
+	}
+
 	/**
 	 * Use symbol table to translate a SMT function application into a Boogie function application.
 	 */
@@ -337,7 +347,7 @@ public final class Term2Expression implements Serializable {
 		final List<Expression> reverseIndices = new ArrayList<>();
 		ApplicationTerm localTerm = term;
 		while ("select".equals(localTerm.getFunction().getName())
-				&& (localTerm.getParameters()[0] instanceof ApplicationTerm)) {
+				&& localTerm.getParameters()[0] instanceof ApplicationTerm) {
 			assert localTerm.getParameters().length == 2;
 			final Expression index = translate(localTerm.getParameters()[1]);
 			reverseIndices.add(index);
@@ -678,7 +688,7 @@ public final class Term2Expression implements Serializable {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + mFreshIdentiferCounter;
-			result = prime * result + ((mQuantifiedVariables == null) ? 0 : mQuantifiedVariables.hashCode());
+			result = prime * result + (mQuantifiedVariables == null ? 0 : mQuantifiedVariables.hashCode());
 			return result;
 		}
 

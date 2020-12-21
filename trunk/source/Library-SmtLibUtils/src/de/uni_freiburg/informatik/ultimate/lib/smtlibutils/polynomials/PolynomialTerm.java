@@ -48,6 +48,17 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		super();
 	}
 
+	@Override
+	protected IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+			final Map<Monomial, Rational> variables2coeffcient) {
+		return PolynomialTerm.minimalRepresentation(sort, constant, variables2coeffcient);
+	}
+
+	@Override
+	protected Monomial constructAbstractVar(final Term term) {
+		return new Monomial(term, Rational.ONE);
+	}
+
 	/**
 	 * Check if term is of a type that may be a variable of an PolynomialTerm.
 	 */

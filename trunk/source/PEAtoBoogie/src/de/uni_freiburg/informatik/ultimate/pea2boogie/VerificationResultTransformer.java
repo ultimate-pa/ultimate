@@ -75,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
@@ -96,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Utility class that helps with reporting results.
@@ -161,8 +161,13 @@ public class VerificationResultTransformer {
 						(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
 								.getProgramExecution(),
 						reqCheck);
-
-				final Map<Rational, Map<Term, Term>> delta2var2value =
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Result before Pea2Boogie result transformation");
+					mLogger.debug(oldRes);
+					mLogger.debug("PE after Pea2Boogie result transformation");
+					mLogger.debug(newPe);
+				}
+				final List<Entry<Rational, Map<Term, Term>>> delta2var2value =
 						generateTimeSequenceMap(newPe.getProgramStates());
 				final String failurePath = formatTimeSequenceMap(delta2var2value);
 				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
@@ -175,25 +180,41 @@ public class VerificationResultTransformer {
 		}
 	}
 
-	private String formatTimeSequenceMap(final Map<Rational, Map<Term, Term>> delta2var2value) {
+	private String formatTimeSequenceMap(final List<Entry<Rational, Map<Term, Term>>> delta2var2value) {
 
-		final int maxLength =
-				delta2var2value.keySet().stream().map(a -> a.toString().length()).max(Integer::compare).get() + 2;
+		final int deltaMaxLength =
+				delta2var2value.stream().map(a -> a.getKey().toString().length()).max(Integer::compare).get();
+		// there might be two numbers of maxlength, we have 3 additional chars "(;]", we want 2 spaces
+		// if maxLength is smaller than INITIAL (7) + 5 , use 12 instead
+		final int maxLength = deltaMaxLength * 2 + 5 < 12 ? 12 : deltaMaxLength * 2 + 5;
+
 		final StringBuilder sb = new StringBuilder();
-		for (final Entry<Rational, Map<Term, Term>> entry : delta2var2value.entrySet()) {
-			final String deltaValue;
-			if (entry.getKey().isRational()) {
-				deltaValue = SmtUtils.toDecimal(entry.getKey()).toPlainString();
-			} else {
-				deltaValue = entry.getKey().toString();
-			}
-
-			sb.append(deltaValue);
-			appendRepeatedly(sb, " ", maxLength - deltaValue.length());
+		Rational last = Rational.ZERO;
+		Rational current = Rational.ZERO;
+		String lastValues = "";
+		for (final Entry<Rational, Map<Term, Term>> entry : delta2var2value) {
 			final String values =
 					entry.getValue().entrySet().stream().map(this::formatVarValue).collect(Collectors.joining(" "));
+			if (lastValues.equals(values)) {
+				// subsume these values in the current step
+				continue;
+			}
+			current = current.add(entry.getKey());
+
+			final String currentStr;
+			if (current == Rational.ZERO) {
+				currentStr = "INITIAL";
+			} else {
+				currentStr = "[" + last.toString() + ";" + current.toString() + "]";
+			}
+			sb.append(currentStr);
+			appendRepeatedly(sb, " ", maxLength - currentStr.length());
+
 			sb.append(values);
 			sb.append(CoreUtil.getPlatformLineSeparator());
+
+			lastValues = values;
+			last = current;
 		}
 
 		return sb.toString();
@@ -206,7 +227,8 @@ public class VerificationResultTransformer {
 	/**
 	 * @return A map from delta value to variable values that are interesting at this point of time
 	 */
-	private Map<Rational, Map<Term, Term>> generateTimeSequenceMap(final List<ProgramState<Term>> programStates) {
+	private List<Entry<Rational, Map<Term, Term>>>
+			generateTimeSequenceMap(final List<ProgramState<Term>> programStates) {
 		final List<ProgramState<Term>> stateSequence =
 				programStates.stream().filter(Objects::nonNull).collect(Collectors.toList());
 
@@ -219,7 +241,7 @@ public class VerificationResultTransformer {
 		mReqSymbolTable.getClockVars().stream().forEach(vars::remove);
 		mReqSymbolTable.getPcVars().stream().forEach(vars::remove);
 
-		final Map<Rational, Map<Term, Term>> delta2term2values = new LinkedHashMap<>();
+		final List<Entry<Rational, Map<Term, Term>>> delta2term2values = new ArrayList<>();
 
 		Map<Term, Term> last = Collections.emptyMap();
 		int i = 0;
@@ -236,7 +258,7 @@ public class VerificationResultTransformer {
 			}
 
 			final Map<Term, Term> current = new LinkedHashMap<>();
-			delta2term2values.put(deltaValue, current);
+			delta2term2values.add(new Pair<>(deltaValue, current));
 
 			for (final Entry<String, Term> entry : vars.entrySet()) {
 				// keep last signal if we dont have a current value

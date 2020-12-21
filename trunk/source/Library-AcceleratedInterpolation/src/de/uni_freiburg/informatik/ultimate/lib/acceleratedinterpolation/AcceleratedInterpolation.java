@@ -263,6 +263,14 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
+			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered =
+					new HashMap<IcfgLocation, Set<List<L>>>(mNestedLoops);
+			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
+				if (nestedLoop.getValue() == null) {
+					mNestedLoops.remove(nestedLoop.getKey());
+					continue;
+				}
+			}
 			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoopsAsTf);
 			for (final Entry<IcfgLocation, IcfgLocation> nesting : mNestingRelation.entrySet()) {
 				accelerateNestedLoops(nesting.getKey(), nesting.getValue());
@@ -326,14 +334,16 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			 * translate the given trace into a meta trace which makes use of the loop acceleration.
 			 */
 			final NestedRun<L, IPredicate> metaTrace = generateMetaTrace();
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Meta-Trace: ");
+				for (int i = 0; i < metaTrace.getLength() - 1; i++) {
+					mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
+				}
+			}
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
 			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
 				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Meta-Trace: ");
-					for (int i = 0; i < metaTrace.getLength() - 1; i++) {
-						mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
-					}
 					mLogger.debug("Is " + interpolator.getTraceCheckResult().toString());
 				}
 				final IPredicate[] inductiveInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(
@@ -483,7 +493,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			acceleratedTraceSchemeStates.add(lastAcceleratedSPred);
 			acceleratedTraceSchemeStates.add(newExitSPred);
 			final Pair<Integer, Integer> loopSize = mLoopSize.get(l.getTarget());
-			i = i + loopSize.getSecond() - loopSize.getFirst();
+			i = i + loopSize.getSecond() - loopSize.getFirst() + 1;
 		}
 
 		acceleratedTraceSchemeStates.add(traceStates.get(counterExampleNonAccelerated.size()));
@@ -518,6 +528,9 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		/*
 		 * In case of multiple nested loops, accelerate the inner one first (maybe check for delay for that)
 		 */
+		if (!mNestedLoops.containsKey(nestedLoophead)) {
+			return;
+		}
 		if (mNestingRelation.containsKey(nestedLoophead)) {
 			accelerateNestedLoops(nestedLoophead, mNestingRelation.get(nestedLoophead));
 		}
@@ -544,7 +557,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		if (!accelerationFinishedCorrectly) {
 			return;
 		}
-		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices, 0,
+		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 				accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
 		Set<List<L>> nestingLoop;

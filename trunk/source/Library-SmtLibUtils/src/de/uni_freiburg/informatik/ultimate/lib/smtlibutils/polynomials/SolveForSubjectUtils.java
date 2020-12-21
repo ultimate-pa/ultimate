@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -300,7 +301,8 @@ public class SolveForSubjectUtils {
 	 * and ensures that no information is lost.</li>
 	 * </ul>
 	 */
-	public static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb, final Term rhs,
+	@Deprecated
+	private static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb, final Term rhs,
 			final boolean divisorIsPositive, final Term divisor) {
 		final Term result;
 		switch (relSymb) {
@@ -354,6 +356,118 @@ public class SolveForSubjectUtils {
 	}
 
 	/**
+	 * If we divide an integer RHS, the result is nontrivial. If we just apply division some information related to
+	 * divisibility is lost.
+	 * <ul>
+	 * <li>If the relation symbol is EQ or DISTINCT, the lost information is that the RHS was (resp. was not) divisible
+	 * by the divisor. And can be added later.</li>
+	 * <li>Otherwise, the lost information is more complicated, we can not easily add it later. Instead, we construct a
+	 * more complicated quotient that depends on
+	 * <ul>
+	 * <li>the sign of the divident's values</li>
+	 * <li>the relation symbol</li>
+	 * </ul>
+	 * and ensures that no information is lost.</li>
+	 * </ul>
+	 */
+	public static IPolynomialTerm constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb,
+			final IPolynomialTerm rhs, final boolean divisorIsPositive, final Term divisor,
+			final Set<TermVariable> bannedForDivCapture) {
+		final Rational preDivisionOffset;
+		final Rational postDivisionOffset;
+		switch (relSymb) {
+		case LESS:
+			if (divisorIsPositive) {
+				// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
+				preDivisionOffset = Rational.MONE;
+				postDivisionOffset = Rational.ONE;
+			} else {
+				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
+				preDivisionOffset = Rational.MONE;
+				postDivisionOffset = Rational.MONE;
+			}
+			break;
+		case GREATER:
+			// k*x > t is equivalent to x > (t div k) for all k
+			preDivisionOffset = Rational.ZERO;
+			postDivisionOffset = Rational.ZERO;
+			break;
+		case LEQ:
+			// k*x <= t is equivalent to x <= (t div k) for all k
+			preDivisionOffset = Rational.ZERO;
+			postDivisionOffset = Rational.ZERO;
+			break;
+		case GEQ:
+			if (divisorIsPositive) {
+				// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
+				preDivisionOffset = Rational.MONE;
+				postDivisionOffset = Rational.ONE;
+			} else {
+				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
+				preDivisionOffset = Rational.MONE;
+				postDivisionOffset = Rational.MONE;
+			}
+			break;
+		case EQ:
+			// Default quotient, additional divisibility information has to be added later
+			preDivisionOffset = Rational.ZERO;
+			postDivisionOffset = Rational.ZERO;
+			break;
+		case DISTINCT:
+			// Default quotient, additional divisibility information has to be added later
+			preDivisionOffset = Rational.ZERO;
+			postDivisionOffset = Rational.ZERO;
+			break;
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
+			throw new AssertionError("bitvector relation with integer not possible: " + relSymb);
+		default:
+			throw new AssertionError("unknown relation symbol: " + relSymb);
+		}
+		final IPolynomialTerm beforeDiv;
+		if (preDivisionOffset.equals(Rational.ZERO)) {
+			beforeDiv = rhs;
+		} else {
+			beforeDiv = ((AbstractGeneralizedAffineTerm<?>) rhs).add(preDivisionOffset);
+		}
+		final IPolynomialTerm afterDiv;
+		final Rational divisorAsRational = SmtUtils.tryToConvertToLiteral(divisor);
+		if (divisorAsRational == null) {
+			if (Arrays.stream(beforeDiv.toTerm(script).getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
+				afterDiv = null;
+			} else {
+				afterDiv = PolynomialTermOperations.convert(script,
+						SmtUtils.div(script, beforeDiv.toTerm(script), divisor));
+			}
+		} else {
+			if (!divisorAsRational.isIntegral()) {
+				throw new AssertionError("expected int");
+			}
+			if (divisorAsRational.isNegative() == divisorIsPositive) {
+				throw new AssertionError("inconsistent information on sign");
+			}
+			final BigInteger divisorAsInt = divisorAsRational.numerator();
+			afterDiv = ((AbstractGeneralizedAffineTerm<?>) beforeDiv).div(script, divisorAsInt, bannedForDivCapture);
+		}
+		if (afterDiv == null) {
+			return null;
+		}
+		final IPolynomialTerm result;
+		if (postDivisionOffset.equals(Rational.ZERO)) {
+			result = afterDiv;
+		} else {
+			result = ((AbstractGeneralizedAffineTerm<?>) afterDiv).add(postDivisionOffset);
+		}
+		return result;
+	}
+
+	/**
 	 * Construct quotient
 	 *
 	 * <pre>
@@ -366,6 +480,7 @@ public class SolveForSubjectUtils {
 	 *            value that is added after the division and that is determined from the relation symbol and the sign of
 	 *            the divisor's values.
 	 */
+	@Deprecated
 	private static Term constructRhsIntegerQuotientHelper(final Script script, final Term divident,
 			final Rational postDivisionOffset, final Term divisor) {
 		// The preDivisionOffset is always minus one.

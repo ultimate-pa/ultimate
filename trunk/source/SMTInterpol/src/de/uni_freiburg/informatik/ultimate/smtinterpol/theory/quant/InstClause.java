@@ -86,6 +86,7 @@ class InstClause {
 		int numUndef = 0;
 		for (final Literal lit : mLits) {
 			if (lit.getAtom().getDecideStatus() == lit) {
+				mNumUndefLits = -1;
 				return -1;
 			}
 			if (lit.getAtom().getDecideStatus() == null) {

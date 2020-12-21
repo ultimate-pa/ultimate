@@ -9,7 +9,7 @@
     	<echo>cupDir is ${cupDir}</echo>
     	<echo>flexJar is ${flexJar}</echo>
         <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
-        	<arg line="-expect 1" />
+        	<arg line="-expect 2" />
             <arg value="Requirements.cup" />
         </java>
         <java jar="${flexJar}" fork="true" failonerror="true">

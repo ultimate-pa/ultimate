@@ -35,12 +35,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class StandardOctTerm extends OctTerm {
 
-	public StandardOctTerm(BigDecimal constant, TermVariable firstVar, boolean firstNegative, TermVariable secondVar,
-			boolean secondNegative) {
+	public StandardOctTerm(final BigDecimal constant, final TermVariable firstVar, final boolean firstNegative,
+			final TermVariable secondVar, final boolean secondNegative) {
 		super(constant, firstVar, firstNegative, secondVar, secondNegative);
 	}
 
-	public StandardOctTerm(BigDecimal constant, TermVariable firstVar, boolean firstNegative) {
+	public StandardOctTerm(final BigDecimal constant, final TermVariable firstVar, final boolean firstNegative) {
 		super(constant, firstVar, firstNegative);
 	}
 
@@ -59,6 +59,11 @@ public class StandardOctTerm extends OctTerm {
 	}
 
 	private String getLeftString() {
+		// TODO: what if there are no firstNegative or firstVar? -> they can be null like here:
+		// svcomp/loop-invgen/SpamAssassin-loop.i
+		if ((mFirstVar == null) || (mSecondVar == null)) {
+			return "Found wrong var";
+		}
 		if (isOneVar()) {
 			return (mFirstNegative ? "-" : "") + "2*" + mFirstVar.toString();
 		} else {
@@ -72,7 +77,7 @@ public class StandardOctTerm extends OctTerm {
 	}
 
 	@Override
-	protected Term rightTerm(Script script) {
+	protected Term rightTerm(final Script script) {
 		return script.decimal(getValue());
 	}
 

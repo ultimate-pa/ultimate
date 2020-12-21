@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd.Simplif
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -77,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.AritmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
@@ -112,7 +113,7 @@ public final class SmtUtils {
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
+		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE, POLY_PAC
 	}
 
 	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
@@ -168,6 +169,9 @@ public final class SmtUtils {
 				break;
 			case NONE:
 				return formula;
+			case POLY_PAC:
+				simplified = PolyPacSimplificationTermWalker.simplify(script.getScript(), formula);
+				break;
 			default:
 				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
 			}
@@ -1663,7 +1667,7 @@ public final class SmtUtils {
 							}
 							// Euclidean division. E.g. (div -5 2) is -3
 							final BigInteger div =
-									AritmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
+									ArithmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
 							final Term resultTerm = SmtUtils.rational2Term(script,
 									Rational.valueOf(div, BigInteger.ONE), resultParams.get(0).getSort());
 							resultParams.set(0, resultTerm);
@@ -1729,7 +1733,7 @@ public final class SmtUtils {
 			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
 			if (affineDivident.isConstant()) {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
-				final BigInteger modulus = AritmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
+				final BigInteger modulus = ArithmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
 				return constructIntValue(script, modulus);
 			}
 			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
@@ -2280,8 +2284,37 @@ public final class SmtUtils {
 	 *         was able to prove that both formulas are not equivalent, and LBool.UNKNOWN otherwise.
 	 */
 	public static LBool checkEquivalence(final Term formula1, final Term formula2, final Script script) {
-		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
+		final Term notEq = script.term("distinct", formula1, formula2);
 		return Util.checkSat(script, notEq);
+	}
+
+
+	public static void checkLogicalEquivalenceForDebugging(final Script script, final Term result, final Term input,
+			final Class<?> checkedClass, final boolean tolerateUnknown) {
+		script.echo(new QuotedObject(String.format("Start correctness check for %s.", checkedClass.getSimpleName())));
+		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
+		script.echo(new QuotedObject(
+				String.format("Finished correctness check for %s. Result: " + lbool, checkedClass.getSimpleName())));
+		final String errorMessage;
+		switch (lbool) {
+		case SAT:
+			errorMessage = String.format("%s: Not equivalent to expected result: %s Input: %s",
+					checkedClass.getSimpleName(), result, input);
+			break;
+		case UNKNOWN:
+			errorMessage = String.format(
+					"%s: Insufficient ressources for checking equivalence to expected result: %s Input: %s",
+					checkedClass.getSimpleName(), result, input);
+			break;
+		case UNSAT:
+			errorMessage = null;
+			break;
+		default:
+			throw new AssertionError("unknown value " + lbool);
+		}
+		if (lbool == LBool.SAT || (!tolerateUnknown && lbool == LBool.UNKNOWN)) {
+			throw new AssertionError(errorMessage);
+		}
 	}
 
 	/**
@@ -2499,6 +2532,11 @@ public final class SmtUtils {
 			return mReductionRatioInPercent;
 		}
 
+		public String buildSizeReductionMessage() {
+			return String.format("treesize reduction %d, result has %2.1f percent of original size",
+					getReductionOfTreeSize(), getReductionRatioInPercent());
+		}
+
 	}
 
 	/**
@@ -2513,10 +2551,21 @@ public final class SmtUtils {
 		if (number.equals(Rational.MONE)) {
 			return true;
 		} else {
-			final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
+			final int vecSize = SmtSortUtils.getBitvectorLength(bvSort);
 			final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
 			final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
 			return number.equals(rationalMinusOne);
 		}
 	}
+
+	public BigInteger computeSmallestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
+		return null;
+	}
+
+	public BigInteger computeLargestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
+		return null;
+	}
+
+
+
 }

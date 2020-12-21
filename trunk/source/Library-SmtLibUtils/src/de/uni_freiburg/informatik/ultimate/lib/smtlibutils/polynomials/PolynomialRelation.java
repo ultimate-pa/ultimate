@@ -79,7 +79,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	protected final RelationSymbol mRelationSymbol;
 	protected final TrivialityStatus mTrivialityStatus;
 	/**
-	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the mOriginalTerm.
+	 * {@link PolynomialTerm}s or {@link AffineTerm}s ψ such that the relation ψ ▷ 0
+	 * is equivalent to the mOriginalTerm.
 	 */
 	protected final AbstractGeneralizedAffineTerm<Term> mPolynomialTerm;
 
@@ -462,6 +463,23 @@ public class PolynomialRelation implements IBinaryRelation {
 	 */
 	public boolean isVariable(final Term var) {
 		return mPolynomialTerm.isVariable(var);
+	}
+
+	public PolynomialRelation negate(final Script script) {
+		return new PolynomialRelation(script, mPolynomialTerm, mRelationSymbol.negate());
+	}
+
+	public PolynomialRelation mul(final Script script, final Rational r) {
+		final RelationSymbol resultRelationSymbol = ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(r,
+				mPolynomialTerm.getSort()) ? mRelationSymbol.swapParameters() : mRelationSymbol;
+		return new PolynomialRelation(script,
+				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(mPolynomialTerm, r),
+				resultRelationSymbol);
+	}
+
+	@Override
+	public String toString() {
+		return mOriginalTerm.toString();
 	}
 
 	public static PolynomialRelation convert(final Script script, final Term term) {

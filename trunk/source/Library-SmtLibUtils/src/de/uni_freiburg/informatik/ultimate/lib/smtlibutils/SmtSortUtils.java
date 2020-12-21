@@ -113,6 +113,17 @@ public final class SmtSortUtils {
 	}
 
 	/**
+	 * @return number of bits
+	 */
+	public static int getBitvectorLength(final Sort sort) {
+		if (!isBitvecSort(sort)) {
+			return -1;
+		} else {
+			return Integer.parseInt(sort.getIndices()[0]);
+		}
+	}
+
+	/**
 	 * @param size
 	 *            number of bits
 	 */
