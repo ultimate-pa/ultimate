@@ -649,7 +649,6 @@ public class CHandler {
 				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		mExpressionTranslation.getFunctionDeclarations().finish();
 		mDeclarations.addAll(declaredFunctions);
-		System.out.println("all the declarations in procedure implementaion should be added to here: " + mDeclarations.toString());
 		// TODO Need to get a CLocation from somewhere
 		// the overall translation result:
 		final Unit boogieUnit = new Unit(
@@ -713,7 +712,7 @@ public class CHandler {
 			//@Cyrus, debug. In this case we only transform with and-rule: r= a&b => r<=b, r<=a, they are positive, 
 			// and rhs is a bitwise binary expression.
 			boolean isBit = BitabsTranslation.containBitwise(node.getOperand2());
-			
+			System.out.println("left hand side expression in assignment: "+ leftOperand.getLrValue().toString());
 			if (isBit & (node.getOperand1() instanceof IASTIdExpression)) {
 				return BitabsTranslation.abstractAssgin(this, mProcedureManager, mDeclarations, mExpressionTranslation, mNameHandler, mAuxVarInfoBuilder,
 						mSymbolTable, mExprResultTransformer, main, mLocationFactory, node);
@@ -2852,7 +2851,6 @@ public class CHandler {
 
 				// no initializer --> essentially needs to be havoced f.i. in each loop iteration
 				if (!onHeap) {
-					System.out.println("---Havoc for local variable here(not on heap!): " + lhs.toString());
 					erb.addStatement(new HavocStatement(loc, new VariableLHS[] { lhs }));
 				} else {
 					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
