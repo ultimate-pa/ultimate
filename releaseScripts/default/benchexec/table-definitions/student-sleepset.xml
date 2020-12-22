@@ -8,6 +8,8 @@
 
   <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
   <column title="reductiontime" displayTitle="Reduction Time" sourceUnit="ms">Sleep Set Reduction Time: (\d+)ms</column>
+  <column title="releasetime" displayTitle="Script Release Time" sourceUnit="ms">Script Release Time: (\d+)ms</column>
+  <column title="independencetime" displayTitle="Independence Inclusion Check Time" sourceUnit="ms">Independence Inclusion Check Time: (\d+)ms</column>
   <column title="statesBefore" displayTitle="States (before reduction)">Sleep set: input automaton\s*has (\d+) states</column>
   <column title="statesAfter" displayTitle="States (after reduction)">Sleep set: output automaton\s*has (\d+) states</column>
   <column title="nondeadlockBefore" displayTitle="Non-Deadlock States (before reduction)">Sleep set: input automaton\s*has \d+ states, (\d+) states have \(on average [\d\.]+\) internal successors</column>
