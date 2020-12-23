@@ -202,7 +202,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 
 		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
 		mMetaTraceTransformer = new MetaTraceTransformer<>(mLogger, mScript, mCounterexample, mPredUnifier, mServices,
-				mPredTransformer);
+				mPredTransformer, mIcfg.getCfgSmtToolkit());
 		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
 
 		mApproximationType = AccelerationApproximationType.PRECISE;
@@ -259,7 +259,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
-		final ILoopPreprocessor<IcfgLocation, UnmodifiableTransFormula> loopPreprocessor =
+		final ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> loopPreprocessor =
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
@@ -271,13 +271,13 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 					continue;
 				}
 			}
-			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoopsAsTf);
+			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoops);
 			for (final Entry<IcfgLocation, IcfgLocation> nesting : mNestingRelation.entrySet()) {
 				accelerateNestedLoops(nesting.getKey(), nesting.getValue());
 			}
 		}
 
-		mLoopsTf = loopPreprocessor.preProcessLoop(mLoopsAsTf);
+		mLoopsTf = loopPreprocessor.preProcessLoopInterprocedual(mLoops);
 		mLogger.debug("Done Preprocessing");
 
 		final Iterator<Entry<IcfgLocation, Set<List<L>>>> loopheadIterator = mLoops.entrySet().iterator();
@@ -340,9 +340,11 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 					mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
 				}
 			}
+
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
 			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
 				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
+				final IPredicate[] refinedInterpolants = refineMetaInterpolants(tempInterpolants, metaTrace);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Is " + interpolator.getTraceCheckResult().toString());
 				}
@@ -352,6 +354,25 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			}
 		}
 		return interpolator.getTraceCheckResult();
+	}
+
+	private IPredicate[] refineMetaInterpolants(final IPredicate[] unrefinedMetaInterpolants,
+			final NestedRun<L, IPredicate> metaTrace) {
+
+		final IPredicate[] result = new IPredicate[unrefinedMetaInterpolants.length];
+		final List<L> metaTraceTransitions = metaTrace.getWord().asList();
+		for (int i = 0; i < metaTrace.getLength() - 2; i++) {
+			final IPredicate metaInterpolant;
+			if (i == 0) {
+				metaInterpolant = mPredUnifier.getTruePredicate();
+			} else {
+				metaInterpolant = unrefinedMetaInterpolants[i - 1];
+			}
+			final UnmodifiableTransFormula transition = metaTraceTransitions.get(i).getTransformula();
+			final Term inductiveInterpolant = mPredTransformer.strongestPostcondition(metaInterpolant, transition);
+			result[i] = mPredUnifier.getOrConstructPredicate(inductiveInterpolant);
+		}
+		return result;
 	}
 
 	private IProgramExecution<L, Term> computeProgramExecution() {
