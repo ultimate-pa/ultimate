@@ -169,6 +169,7 @@ public class CounterTrace {
 		public String toString(final boolean useUnicode) {
 			final String AND = useUnicode ? ZString.AND : "/\\";
 			final String NOEVENT = useUnicode ? "\u229F" : "[-]";
+			final String EMPTY = useUnicode ? "\u2080" : "0";
 			final String GEQ = useUnicode ? ZString.GEQ : ">=";
 			final String LEQ = useUnicode ? ZString.LEQ : "<=";
 
@@ -195,16 +196,32 @@ public class CounterTrace {
 				sb.append(' ').append(AND).append(' ').append(ELL);
 				switch (getBoundType()) {
 				case BOUND_LESS:
-					sb.append(" < ");
+					if (!isAllowEmpty()) {
+						sb.append(" < ");
+						break;
+					}
+					sb.append(" <").append(EMPTY).append(' ');
 					break;
 				case BOUND_LESSEQUAL:
-					sb.append(' ').append(LEQ).append(' ');
+					if (!isAllowEmpty()) {
+						sb.append(' ').append(LEQ).append(' ');
+						break;
+					}
+					sb.append(' ').append(LEQ).append(EMPTY).append(' ');
 					break;
 				case BOUND_GREATER:
-					sb.append(" > ");
+					if (!isAllowEmpty()) {
+						sb.append(" > ");
+						break;
+					}
+					sb.append(" >").append(EMPTY).append(' ');
 					break;
 				case BOUND_GREATEREQUAL:
-					sb.append(' ').append(GEQ).append(' ');
+					if (!isAllowEmpty()) {
+						sb.append(' ').append(GEQ).append(' ');
+						break;
+					}
+					sb.append(' ').append(GEQ).append(EMPTY).append(' ');
 					break;
 				default:
 					throw new IllegalArgumentException();
