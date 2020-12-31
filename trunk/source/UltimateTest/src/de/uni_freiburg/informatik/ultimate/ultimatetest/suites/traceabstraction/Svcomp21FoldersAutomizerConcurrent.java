@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class Svcomp20FoldersAutomizerConcurrent extends AbstractTraceAbstractionTestSuite {
+public class Svcomp21FoldersAutomizerConcurrent extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
 	 private static final int FILES_PER_DIR_LIMIT = 5;
