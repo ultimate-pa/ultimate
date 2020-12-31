@@ -142,22 +142,22 @@ public class BitabsTranslation {
 			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		final String funcname = "bitwiseAnd";	
 		//if	decides_to_apply(CYRUS_AND_0_LEFT, left, right)
-		if (left instanceof IntegerLiteral) {
-			String valueLeft =((IntegerLiteral) left).getValue();
-			System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
-			if (valueLeft.equals("1")) {
-				return right;
-				} else if (valueLeft.equals("0")){
-					return left;
-					} 
-			} else if (right instanceof IntegerLiteral) {
-				String valueRight = ((IntegerLiteral) right).getValue();
-					if (valueRight.equals("1")) {
-					return left;
-					} else if (valueRight.equals("0")){
-						return right;
-						}
-				} 
+//		if (left instanceof IntegerLiteral) {
+//			String valueLeft =((IntegerLiteral) left).getValue();
+//			System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
+//			if (valueLeft.equals("1")) {
+//				return right;
+//				} else if (valueLeft.equals("0")){
+//					return left;
+//					} 
+//			} else if (right instanceof IntegerLiteral) {
+//				String valueRight = ((IntegerLiteral) right).getValue();
+//					if (valueRight.equals("1")) {
+//					return left;
+//					} else if (valueRight.equals("0")){
+//						return right;
+//						}
+//				} 
 		// If left is equal literal 0 or right is equal literal 0. 
 		Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
@@ -172,8 +172,7 @@ public class BitabsTranslation {
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
-		//	return func;
-		
+				
 		// case a&0
 		Expression and_0 = ExpressionFactory.constructIfThenElseExpression(loc, cond_and_0, literal_0, func);
 		
