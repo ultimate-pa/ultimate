@@ -466,14 +466,17 @@ public class BitabsTranslation {
 					Statement[] thenPos = ifstmt_or.getThenPart();
 					//nondet() assignment.
 					Statement[] elsePos = ifstmt_or.getElsePart();
-//					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_or });
-//					IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit0, new Statement[] { assignOpr2 }, new Statement[] { ifstmt_opr1 });
-//					IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 }, new Statement[] { ifstmt_opr2 });	
-					// change the order to test result, general first
-					IfStatement ifstmt_literal = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 }, thenPos);
-					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_literal });
+					
+					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_or });
 					IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit0, new Statement[] { assignOpr2 }, new Statement[] { ifstmt_opr1 });
-					IfStatement ifstmt1 = new IfStatement(loc, condPos, thenPos, new Statement[] { ifstmt_opr2 });			
+					IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 }, new Statement[] { ifstmt_opr2 });	
+					// change the order to test result, general first
+//
+//					IfStatement ifstmt_literal = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 }, elsePos);
+//					IfStatement ifstmt_opr1 = new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_literal });
+//					IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit0, new Statement[] { assignOpr2 }, new Statement[] { ifstmt_opr1 });
+//					IfStatement ifstmt1 = new IfStatement(loc, condPos, thenPos, new Statement[] { ifstmt_opr2 });	
+				
 					builder.addStatement(ifstmt1);					
 					return builder.build();					
 					
