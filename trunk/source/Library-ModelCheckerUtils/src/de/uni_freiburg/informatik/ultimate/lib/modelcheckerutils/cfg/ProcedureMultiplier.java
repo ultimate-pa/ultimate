@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadCurrentTransition;
@@ -251,6 +252,10 @@ public class ProcedureMultiplier {
 							target.addIncoming(newJoinEdge);
 							// add to join list
 							joinCurrentThreads.add(newJoinEdge);
+						} else if (outEdge instanceof IcfgCallTransition) {
+							throw new UnsupportedOperationException(String.format(
+									"%s does not support %s. Calls and returns should habe been removed by inlining. (Did the inlining fail because this program is recursive.)",
+									this.getClass().getSimpleName(), outEdge.getClass().getSimpleName()));
 						} else {
 							throw new UnsupportedOperationException(this.getClass().getSimpleName()
 									+ " does not support " + outEdge.getClass().getSimpleName());
