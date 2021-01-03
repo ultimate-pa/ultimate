@@ -535,4 +535,14 @@ public class MuensterbergBenchmark {
 		QuantifierEliminationTest.runQuantifierPusherTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void Mountaineer01 () {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~a~0", "~#f~0.offset", "~g~0"),
+				new FunDecl(SmtSortUtils::getRoundingmodeSort, "currentRoundingMode"),
+				};
+		final String formulaAsString = "(forall ((|~#f~0.base| (_ BitVec 32)) (|v_#memory_int_38| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (|#memory_int| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (|v_skolemized_q#valueAsBitvector_3| (_ BitVec 32))) (or (not (= |v_#memory_int_38| (store |#memory_int| |~#f~0.base| (store (select |#memory_int| |~#f~0.base|) (bvadd (bvmul ~a~0 (_ bv4 32)) |~#f~0.offset|) |v_skolemized_q#valueAsBitvector_3|)))) (not (= ((_ to_fp 8 24) currentRoundingMode ~g~0) (fp ((_ extract 31 31) |v_skolemized_q#valueAsBitvector_3|) ((_ extract 30 23) |v_skolemized_q#valueAsBitvector_3|) ((_ extract 22 0) |v_skolemized_q#valueAsBitvector_3|)))) (forall ((|v_skolemized_q#valueAsBitvector_9| (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_7| (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_8| (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_10| (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_11| (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_12| (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_5| (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_6| (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_4| (_ BitVec 32))) (= (_ bv0 8) ((_ extract 7 0) (select (let ((.cse0 (bvmul ~a~0 (_ bv4 32)))) (store (store (store (store (store (store (store (store (store (select |v_#memory_int_38| |~#f~0.base|) (bvadd .cse0 |~#f~0.offset| (_ bv4 32)) |v_skolemized_q#valueAsBitvector_4|) (bvadd .cse0 |~#f~0.offset| (_ bv8 32)) |v_skolemized_q#valueAsBitvector_5|) (bvadd .cse0 |~#f~0.offset| (_ bv12 32)) |v_skolemized_q#valueAsBitvector_6|) (bvadd .cse0 |~#f~0.offset| (_ bv16 32)) |v_skolemized_q#valueAsBitvector_7|) (bvadd .cse0 |~#f~0.offset| (_ bv20 32)) |v_skolemized_q#valueAsBitvector_8|) (bvadd .cse0 |~#f~0.offset| (_ bv24 32)) |v_skolemized_q#valueAsBitvector_9|) (bvadd .cse0 |~#f~0.offset| (_ bv28 32)) |v_skolemized_q#valueAsBitvector_10|) (bvadd .cse0 |~#f~0.offset| (_ bv32 32)) |v_skolemized_q#valueAsBitvector_11|) (bvadd .cse0 |~#f~0.offset| (_ bv36 32)) |v_skolemized_q#valueAsBitvector_12|)) |~#f~0.offset|))))))";
+		QuantifierEliminationTest.runQuantifierPusherTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 }
