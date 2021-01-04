@@ -535,8 +535,8 @@ public class MuensterbergBenchmark {
 		QuantifierEliminationTest.runQuantifierPusherTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	@Test
-	public void Mountaineer01 () {
+//	@Test
+	public void FakeFloatingMountaineer01 () {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~a~0", "~#f~0.offset", "~g~0"),
 				new FunDecl(SmtSortUtils::getRoundingmodeSort, "currentRoundingMode"),
