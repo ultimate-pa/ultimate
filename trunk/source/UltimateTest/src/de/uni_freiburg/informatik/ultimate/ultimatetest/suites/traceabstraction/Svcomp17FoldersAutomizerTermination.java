@@ -114,6 +114,7 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 			
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-ASTER.epf",
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-DANDELION.epf",
+//			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-ROSE.epf",
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-SUNFLOWER.epf",
 			
 			// "buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_GntaZero.epf",
