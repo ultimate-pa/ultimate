@@ -39,8 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.NonDeclaringTermTransferrer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -64,17 +65,18 @@ public class SmtFunctionsAndAxioms {
 	 * belongs.
 	 */
 	private final HistoryRecordingScript mScript;
+	private final ManagedScript mMgdScript;
 	private final IPredicate mAxioms;
 
 	/**
 	 * Create a {@link SmtFunctionsAndAxioms} instance with no axioms.
 	 *
-	 * @param script
-	 *            A {@link Script} instance that was used to build the ICFG to which this {@link SmtFunctionsAndAxioms}
-	 *            instance belongs.
+	 * @param mgdScript
+	 *            A {@link ManagedScript} instance that was used to build the ICFG to which this
+	 *            {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
-	public SmtFunctionsAndAxioms(final Script script) {
-		this(script.term("true"), new String[0], script);
+	public SmtFunctionsAndAxioms(final ManagedScript mgdScript) {
+		this(mgdScript.getScript().term("true"), new String[0], mgdScript);
 	}
 
 	/**
@@ -86,12 +88,13 @@ public class SmtFunctionsAndAxioms {
 	 * @param defininingProcedures
 	 *            The procedures from which the axioms come or null.
 	 * @param script
-	 *            A {@link Script} instance that was used to build the axioms term and the ICFG to which this
+	 *            A {@link ManagedScript} instance that was used to build the axioms term and the ICFG to which this
 	 *            {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
-	public SmtFunctionsAndAxioms(final Term axioms, final String[] defininingProcedures, final Script script) {
+	public SmtFunctionsAndAxioms(final Term axioms, final String[] defininingProcedures,
+			final ManagedScript mgdScript) {
 		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, defininingProcedures, axioms, Collections.emptySet(),
-				axioms), script);
+				axioms), mgdScript);
 	}
 
 	/**
@@ -100,13 +103,14 @@ public class SmtFunctionsAndAxioms {
 	 * @param axioms
 	 *            Axioms given as {@link IPredicate}
 	 * @param script
-	 *            A {@link Script} instance that was used to build the axioms and the ICFG to which this
+	 *            A {@link ManagedScript} instance that was used to build the axioms and the ICFG to which this
 	 *            {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
-	public SmtFunctionsAndAxioms(final IPredicate axioms, final Script script) {
+	public SmtFunctionsAndAxioms(final IPredicate axioms, final ManagedScript mgdScript) {
 		mAxioms = Objects.requireNonNull(axioms);
-		mScript = Objects
-				.requireNonNull(HistoryRecordingScript.extractHistoryRecordingScript(Objects.requireNonNull(script)));
+		mMgdScript = mgdScript;
+		mScript = Objects.requireNonNull(
+				HistoryRecordingScript.extractHistoryRecordingScript(Objects.requireNonNull(mgdScript.getScript())));
 		assert axioms.getClosedFormula() == axioms.getFormula() : "Axioms are not closed";
 		assert axioms.getFormula().getFreeVars().length == 0 : "Axioms are not closed";
 		assert axioms.getProcedures() != null;
@@ -125,7 +129,7 @@ public class SmtFunctionsAndAxioms {
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
 		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, new String[0],
 				additionalAxioms, Collections.emptySet(), newAxioms);
-		return new SmtFunctionsAndAxioms(newAxiomsPred, mScript);
+		return new SmtFunctionsAndAxioms(newAxiomsPred, mMgdScript);
 	}
 
 	// TODO: We also want a transfer function that transfers only some variables s.t. trace checks can be more focused
@@ -155,7 +159,7 @@ public class SmtFunctionsAndAxioms {
 	 * TODO: Also inline axioms.
 	 */
 	public Term inline(final Term term) {
-		return new SmtFunctionInliner().inline(mScript, term);
+		return new SmtFunctionInliner().inline(mMgdScript, term);
 	}
 
 	public IPredicate getAxioms() {
@@ -180,13 +184,15 @@ public class SmtFunctionsAndAxioms {
 	 */
 	private static class SmtFunctionInliner extends TermTransformer {
 
+		private ManagedScript mMgdScript;
 		private HistoryRecordingScript mScript;
 
-		public Term inline(final Script script, final Term term) {
-			mScript = HistoryRecordingScript.extractHistoryRecordingScript(script);
+		public Term inline(final ManagedScript mgdScript, final Term term) {
+			mMgdScript = mgdScript;
+			mScript = HistoryRecordingScript.extractHistoryRecordingScript(mgdScript.getScript());
 			if (mScript == null) {
 				throw new IllegalArgumentException(
-						script.getClass() + " does not contain a " + HistoryRecordingScript.class);
+						mgdScript.getScript().getClass() + " does not contain a " + HistoryRecordingScript.class);
 			}
 			return transform(term);
 		}
@@ -222,7 +228,7 @@ public class SmtFunctionsAndAxioms {
 				}
 				substitutionMapping.put(paramVar, newArgs[i]);
 			}
-			setResult(new Substitution(mScript, substitutionMapping).transform(body));
+			setResult(new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(body));
 		}
 	}
 

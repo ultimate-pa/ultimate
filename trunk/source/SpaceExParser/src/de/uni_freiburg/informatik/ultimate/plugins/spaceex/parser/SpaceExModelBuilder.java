@@ -157,7 +157,7 @@ public class SpaceExModelBuilder {
 				Collections.singletonMap(HybridTranslatorConstants.PROC_NAME, Collections.emptyList());
 		final Map<String, List<ILocalProgramVar>> outParams = inParams;
 		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, procedures, inParams, outParams,
-				new IcfgEdgeFactory(new SerialProvider()), null, new SmtFunctionsAndAxioms(script));
+				new IcfgEdgeFactory(new SerialProvider()), null, new SmtFunctionsAndAxioms(managedScript));
 	}
 
 	public BasicIcfg<IcfgLocation> getModel() {

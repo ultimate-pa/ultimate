@@ -68,8 +68,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.TransitiveClosure;
@@ -509,7 +509,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			throw new UnsupportedOperationException("overapproximation of axioms is not yet supported");
 		}
 
-		final Script script = mOriginalIcfg.getCfgSmtToolkit().getManagedScript().getScript();
+		final ManagedScript script = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
 		if (mAdditionalAxioms.isEmpty()) {
 			return new SmtFunctionsAndAxioms(translationResult.getAxiom(), script);
 		}
@@ -518,7 +518,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 				mAdditionalAxioms.stream().map(a -> a.getClosedFormula()).collect(Collectors.toList());
 		newAxiomsClosed.add(translationResult.getAxiom().getClosedFormula());
 
-		final Term newAxioms = SmtUtils.and(script, newAxiomsClosed);
+		final Term newAxioms = SmtUtils.and(script.getScript(), newAxiomsClosed);
 		return new SmtFunctionsAndAxioms(newAxioms, new String[0], script);
 	}
 
