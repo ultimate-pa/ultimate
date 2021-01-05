@@ -202,14 +202,14 @@ public class SmtFunctionsAndAxioms {
 			final String funName = appTerm.getFunction().getName();
 			final ISmtDeclarable decl = mScript.getSymbolTable().get(funName);
 			if (decl == null) {
-				super.convertApplicationTerm(appTerm, newArgs);
+				setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mScript));
 				return;
 			}
 			assert decl instanceof DeclarableFunctionSymbol;
 			final DeclarableFunctionSymbol funDecl = (DeclarableFunctionSymbol) decl;
 			final Term body = funDecl.getDefinition();
 			if (body == null) {
-				super.convertApplicationTerm(appTerm, newArgs);
+				setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mScript));
 				return;
 			}
 			if (appTerm.getParameters().length == 0) {
