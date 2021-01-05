@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2021 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 20216 University of Freiburg
  *
  * This file is part of the ULTIMATE UnitTest Library.
  *
@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.test.decider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.YamlBasedExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
+import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.TerminationAnalysisOverallResult;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class SvcompReachTestResultDecider extends SafetyCheckTestResultDecider {
+public class SvcompTerminationTestResultDecider extends TerminationAnalysisTestResultDecider {
 
 	/**
 	 *
@@ -49,16 +49,16 @@ public class SvcompReachTestResultDecider extends SafetyCheckTestResultDecider {
 	 *                              JUnit, if false, the TestResult UNKNOWN is a
 	 *                              failure for JUnit.
 	 */
-	public SvcompReachTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+	public SvcompTerminationTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
-	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		final NestedMap2<String, String, SafetyCheckerOverallResult> map = TestUtil
-				.constructPropertyMapSvcompSafety(TestUtil.SVCOMP_PROP_UNREACHCALL);
-		return new YamlBasedExpectedResultFinder<SafetyCheckerOverallResult>(map);
+	public IExpectedResultFinder<TerminationAnalysisOverallResult> constructExpectedResultFinder() {
+		final NestedMap2<String, String, TerminationAnalysisOverallResult> map = TestUtil
+				.constructPropertyMapSvcompTermination(TestUtil.SVCOMP_PROP_TERMINATION);
+		return new YamlBasedExpectedResultFinder<TerminationAnalysisOverallResult>(map);
 	}
 
 }
