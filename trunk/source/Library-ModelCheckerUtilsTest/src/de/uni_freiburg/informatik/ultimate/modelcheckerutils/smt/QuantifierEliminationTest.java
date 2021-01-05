@@ -435,7 +435,7 @@ public class QuantifierEliminationTest {
 		final DeclarableFunctionSymbol additionalFunction = DeclarableFunctionSymbol.createFromString(mScript,
 				"~initToZeroAtPointerBaseAddress~int", functionDefinitionAsString, paramIds, paramSorts, resultSort);
 		additionalFunction.defineOrDeclare(mScript);
-		final SmtFunctionsAndAxioms smtSymbols = new SmtFunctionsAndAxioms(mScript);
+		final SmtFunctionsAndAxioms smtSymbols = new SmtFunctionsAndAxioms(mMgdScript);
 
 		mScript.declareFun("b", new Sort[0], arrayFromIntToIntToInt);
 		mScript.declareFun("j", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
