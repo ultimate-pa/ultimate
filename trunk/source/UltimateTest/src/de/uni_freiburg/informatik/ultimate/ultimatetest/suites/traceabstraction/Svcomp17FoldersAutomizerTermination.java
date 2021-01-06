@@ -110,16 +110,15 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	 * List of path to setting files. Ultimate will run on each program with each setting that is defined here. The path
 	 * are defined relative to the folder "trunk/examples/settings/", because we assume that all settings files are in
 	 * this folder.
-	 * 
+	 *
 	 */
 	private static final String[] mSettings = {
-			"svcomp2017/automizer/svcomp-Termination-32bit-Automizer_Default.epf",
-			
+			"default/automizer/svcomp-Termination-32bit-Automizer_Default.epf",
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-ASTER.epf",
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-DANDELION.epf",
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-ROSE.epf",
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-SUNFLOWER.epf",
-			
+
 			// "buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_GntaZero.epf",
 			// "buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_DefaultBarcelogic.epf",
 			// "buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_Default.epf",
@@ -145,7 +144,7 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	// @formatter:on
 
 	@Override
-	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new SvcompTerminationTestResultDecider(urd, false);
 	}
 }
