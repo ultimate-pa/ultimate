@@ -161,6 +161,10 @@ public class VerificationResultTransformer {
 						(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
 								.getProgramExecution(),
 						reqCheck);
+				if (newPe == null) {
+					return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence);
+				}
+
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Result before Pea2Boogie result transformation");
 					mLogger.debug(oldRes);
@@ -171,7 +175,6 @@ public class VerificationResultTransformer {
 						generateTimeSequenceMap(newPe.getProgramStates());
 				final String failurePath = formatTimeSequenceMap(delta2var2value);
 				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
-
 			}
 			return new ReqCheckFailResult<>(element, plugin, translatorSequence);
 
@@ -330,6 +333,11 @@ public class VerificationResultTransformer {
 		final TraceCheck<IAction> tcl = new TraceCheck<>(truePred, falsePred, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()]))), mServices, toolkit,
 				assertionOrder, true, false);
+		if (!tcl.providesRcfgProgramExecution()) {
+			mLogger.warn(
+					"Could not extract reduced program execution from trace: TraceCheck reported " + tcl.isCorrect());
+			return null;
+		}
 
 		final List<IAction> sequentialTrace = extractSequential(tcl.getRcfgProgramExecution(), mgdScript);
 
