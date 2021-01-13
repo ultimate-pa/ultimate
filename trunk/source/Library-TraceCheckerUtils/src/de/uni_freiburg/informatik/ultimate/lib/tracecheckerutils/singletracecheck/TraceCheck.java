@@ -32,8 +32,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -252,6 +254,23 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
 			mRcfgProgramExecution = icfgProgramExecution;
 		}
+	}
+
+	/**
+	 * Create new trace check with a fresh solver and default settings.
+	 */
+	public static TraceCheck<IAction> createTraceCheck(final IPredicate pre, final IPredicate post,
+			final List<? extends IAction> trace, final CfgSmtToolkit toolkit, final ManagedScript mgdScriptTc) {
+		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
+		final NestedWord<IAction> nw = NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()])));
+		final NestedFormulas<IAction, UnmodifiableTransFormula, IPredicate> rv =
+				new DefaultTransFormulas<>(nw, pre, post, pendingContexts, toolkit.getOldVarsAssignmentCache(), false);
+		final AssertCodeBlockOrder acbo = new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
+		final boolean computeRcfgProgramExecution = true;
+		final boolean collectInterpolatSequenceStatistics = false;
+		final boolean unlockSmtSolverAlsoIfUnsat = true;
+		return new TraceCheck<>(pre, post, pendingContexts, nw, rv, toolkit.getServices(), toolkit, mgdScriptTc, acbo,
+				computeRcfgProgramExecution, collectInterpolatSequenceStatistics, unlockSmtSolverAlsoIfUnsat);
 	}
 
 	@Override
