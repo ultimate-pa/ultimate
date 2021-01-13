@@ -37,12 +37,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
@@ -71,12 +69,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -314,13 +314,19 @@ public class VerificationResultTransformer {
 
 	private IProgramExecution<IAction, Term> generateRtInconsistencyResult(final IcfgProgramExecution<?> pe,
 			final ReqCheck reqCheck) {
+		mLogger.info("Analyzing reasons for rt-inconsistency");
 		final List<CodeBlock> trace = new ArrayList<>(pe.getLength());
 		pe.stream().map(a -> (CodeBlock) a.getTraceElement()).forEach(trace::add);
 
 		final CodeBlockFactory cbf = CodeBlockFactory.getFactory((IToolchainStorage) mServices);
 		final CfgSmtToolkit toolkit = cbf.getToolkit();
 
-		final ManagedScript mgdScript = toolkit.getManagedScript();
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, SolverBuilder.LOGIC_Z3)
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
+
+		final ManagedScript mgdScript =
+				toolkit.createFreshManagedScript(solverSettings, "RtInconsistencyPostProcessor");
 		final Script script = mgdScript.getScript();
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(mServices, mgdScript, toolkit.getSymbolTable());
 		final BasicPredicate truePred = bpf.newPredicate(script.term("true"));
@@ -329,27 +335,30 @@ public class VerificationResultTransformer {
 		final AssertCodeBlockOrder assertionOrder =
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
 
-		// first, recheck to ensure that we have branch encoders
-		final TraceCheck<IAction> tcl = new TraceCheck<>(truePred, falsePred, new TreeMap<Integer, IPredicate>(),
-				NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()]))), mServices, toolkit,
-				assertionOrder, true, false);
-		if (!tcl.providesRcfgProgramExecution()) {
-			mLogger.warn(
-					"Could not extract reduced program execution from trace: TraceCheck reported " + tcl.isCorrect());
+		try {
+
+			// first, recheck to ensure that we have branch encoders
+			final TraceCheck<IAction> tcl = TraceCheck.createTraceCheck(truePred, falsePred, trace, toolkit, mgdScript);
+			if (!tcl.providesRcfgProgramExecution()) {
+				mLogger.warn("Could not extract reduced program execution from trace: TraceCheck reported "
+						+ tcl.isCorrect());
+				return null;
+			}
+
+			final List<IAction> sequentialTrace = extractSequential(tcl.getRcfgProgramExecution(), mgdScript);
+			final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScript);
+			final TraceCheck<IAction> tc =
+					TraceCheck.createTraceCheck(truePred, falsePred, cleanedTrace, toolkit, mgdScript);
+			if (tc.isCorrect() == LBool.SAT) {
+				return tc.getRcfgProgramExecution();
+			}
+			throw new AssertionError("Expected branch is not SAT");
+		} catch (final ToolchainCanceledException e) {
+			mLogger.warn("Timeout during analysis of rt-inconsistency reasons");
 			return null;
+		} finally {
+			mgdScript.getScript().exit();
 		}
-
-		final List<IAction> sequentialTrace = extractSequential(tcl.getRcfgProgramExecution(), mgdScript);
-
-		final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScript);
-
-		final TraceCheck<IAction> tc = new TraceCheck<>(truePred, falsePred, new TreeMap<Integer, IPredicate>(),
-				NestedWord.nestedWord(new Word<>(cleanedTrace.toArray(new IAction[cleanedTrace.size()]))), mServices,
-				toolkit, assertionOrder, true, false);
-		if (tc.isCorrect() == LBool.SAT) {
-			return tc.getRcfgProgramExecution();
-		}
-		throw new AssertionError("Expected branch is not SAT");
 	}
 
 	private List<IAction> removeUnrelatedVariables(final List<IAction> sequentialTrace, final ReqCheck reqCheck,
