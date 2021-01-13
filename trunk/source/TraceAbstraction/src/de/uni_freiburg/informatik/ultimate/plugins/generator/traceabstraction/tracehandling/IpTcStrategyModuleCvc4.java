@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
  * Creates external instance of CVC 4 using {@link TraceCheckSpWp}.
@@ -81,8 +80,7 @@ public class IpTcStrategyModuleCvc4<LETTER extends IIcfgTransition<?>> extends I
 		final String command = mUseTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT : SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
 		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
 				.setUseExternalSolver(true, command, mLogic).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, getSolverName());
-		return createExternalManagedScript(solver);
+		return createExternalManagedScript(solverSettings);
 	}
 
 	@Override

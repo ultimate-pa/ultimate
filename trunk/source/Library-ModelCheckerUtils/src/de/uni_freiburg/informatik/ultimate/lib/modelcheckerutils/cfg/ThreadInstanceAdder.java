@@ -504,10 +504,10 @@ public class ThreadInstanceAdder {
 		newSymbolTable.finishConstruction();
 		final ConcurrencyInformation concurrencyInformation = new ConcurrencyInformation(threadInstanceMap,
 				inUseErrorNodeMap, joinTransitions);
-		return new CfgSmtToolkit(new ModifiableGlobalsTable(proc2Globals), cfgSmtToolkit.getManagedScript(),
-				newSymbolTable, cfgSmtToolkit.getProcedures(), cfgSmtToolkit.getInParams(),
-				cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(), concurrencyInformation,
-				cfgSmtToolkit.getSmtFunctionsAndAxioms());
+		return new CfgSmtToolkit(mServices, new ModifiableGlobalsTable(proc2Globals),
+				cfgSmtToolkit.getManagedScript(), newSymbolTable, cfgSmtToolkit.getProcedures(),
+				cfgSmtToolkit.getInParams(), cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(),
+				concurrencyInformation, cfgSmtToolkit.getSmtFunctionsAndAxioms());
 	}
 
 	private static void addVar(final IProgramNonOldVar var, final DefaultIcfgSymbolTable newSymbolTable,

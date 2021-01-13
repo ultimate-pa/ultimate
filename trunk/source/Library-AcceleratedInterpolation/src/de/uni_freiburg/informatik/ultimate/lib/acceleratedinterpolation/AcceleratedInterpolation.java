@@ -86,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -264,7 +263,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
 			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered =
-					new HashMap<IcfgLocation, Set<List<L>>>(mNestedLoops);
+					new HashMap<>(mNestedLoops);
 			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
 				if (nestedLoop.getValue() == null) {
 					mNestedLoops.remove(nestedLoop.getKey());
@@ -414,11 +413,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	private ManagedScript constructManagedScriptForInterpolation() throws AssertionError {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(false)
 				.setSolverMode(SolverMode.Internal_SMTInterpol);
-		final String solverId = solverSettings.getBaseNameOfDumpedScript();
-		final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, solverId);
-		final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
-		mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
-		return mgdScriptTc;
+		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(solverSettings);
 	}
 
 	/**

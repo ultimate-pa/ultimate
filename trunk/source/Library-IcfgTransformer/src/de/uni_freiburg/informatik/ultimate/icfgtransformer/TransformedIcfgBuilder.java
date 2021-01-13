@@ -341,9 +341,10 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		final SmtFunctionsAndAxioms transformedSymbols =
 				transformSmtFunctionsAndAxioms(oldToolkit.getSmtFunctionsAndAxioms());
-		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
-				newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
-				oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
+		final CfgSmtToolkit csToolkit =
+				new CfgSmtToolkit(oldToolkit.getServices(), newModifiedGlobals, oldToolkit.getManagedScript(),
+						newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
+						oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
 	}
 
@@ -404,7 +405,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			revertedCallGraph.addPair(en.getValue(), en.getKey());
 		}
 
-		final ISuccessorProvider<String> successorProvider = new ISuccessorProvider<String>() {
+		final ISuccessorProvider<String> successorProvider = new ISuccessorProvider<>() {
 			@Override
 			public Iterator<String> getSuccessors(final String node) {
 				return revertedCallGraph.getImage(node).iterator();

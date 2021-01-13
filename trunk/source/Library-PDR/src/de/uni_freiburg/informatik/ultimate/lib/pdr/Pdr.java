@@ -1378,9 +1378,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		// we extract and one to perform the actual checks
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.Internal_SMTInterpol).setSolverLogics(Logics.AUFLIRA);
-		final Script script = SolverBuilder.buildAndInitializeSolver(services, solverSettings, "PdrSolver");
-		csToolkit.getSmtFunctionsAndAxioms().transferAllSymbols(script);
-		return new ManagedScript(services, script);
+		return csToolkit.createFreshManagedScript(solverSettings, "PdrSolver");
 	}
 
 	/** ITraceCheck interface **/
