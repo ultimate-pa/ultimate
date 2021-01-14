@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -66,10 +67,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -321,34 +322,33 @@ public class VerificationResultTransformer {
 		final CodeBlockFactory cbf = CodeBlockFactory.getFactory((IToolchainStorage) mServices);
 		final CfgSmtToolkit toolkit = cbf.getToolkit();
 
+		final String solverName = "RtInconsistencyPostProcessor";
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
 				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, SolverBuilder.LOGIC_Z3)
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
 
-		final ManagedScript mgdScript =
-				toolkit.createFreshManagedScript(solverSettings, "RtInconsistencyPostProcessor");
-		final Script script = mgdScript.getScript();
-		final BasicPredicateFactory bpf = new BasicPredicateFactory(mServices, mgdScript, toolkit.getSymbolTable());
-		final BasicPredicate truePred = bpf.newPredicate(script.term("true"));
-		final BasicPredicate falsePred = bpf.newPredicate(script.term("false"));
-
-		final AssertCodeBlockOrder assertionOrder =
-				new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
+		final ManagedScript mgdScriptTc = toolkit.createFreshManagedScript(solverSettings, solverName);
+		final Script scriptTc = mgdScriptTc.getScript();
+		final BasicPredicateFactory bpf = new BasicPredicateFactory(mServices, mgdScriptTc, toolkit.getSymbolTable());
+		final BasicPredicate truePred = bpf.newPredicate(scriptTc.term("true"));
+		final BasicPredicate falsePred = bpf.newPredicate(scriptTc.term("false"));
+		final ManagedScript mgdScriptAux = toolkit.getManagedScript();
 
 		try {
-
 			// first, recheck to ensure that we have branch encoders
-			final TraceCheck<IAction> tcl = TraceCheck.createTraceCheck(truePred, falsePred, trace, toolkit, mgdScript);
+			final TraceCheck<IAction> tcl =
+					TraceCheck.createTraceCheck(truePred, falsePred, trace, toolkit, mgdScriptTc);
 			if (!tcl.providesRcfgProgramExecution()) {
 				mLogger.warn("Could not extract reduced program execution from trace: TraceCheck reported "
 						+ tcl.isCorrect());
 				return null;
 			}
 
-			final List<IAction> sequentialTrace = extractSequential(tcl.getRcfgProgramExecution(), mgdScript);
-			final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScript);
+			final List<IAction> sequentialTrace =
+					sequentialize(tcl.getRcfgProgramExecution(), mgdScriptTc, mgdScriptAux);
+			final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScriptTc);
 			final TraceCheck<IAction> tc =
-					TraceCheck.createTraceCheck(truePred, falsePred, cleanedTrace, toolkit, mgdScript);
+					TraceCheck.createTraceCheck(truePred, falsePred, cleanedTrace, toolkit, mgdScriptTc);
 			if (tc.isCorrect() == LBool.SAT) {
 				return tc.getRcfgProgramExecution();
 			}
@@ -357,7 +357,7 @@ public class VerificationResultTransformer {
 			mLogger.warn("Timeout during analysis of rt-inconsistency reasons");
 			return null;
 		} finally {
-			mgdScript.getScript().exit();
+			mgdScriptTc.getScript().exit();
 		}
 	}
 
@@ -415,9 +415,20 @@ public class VerificationResultTransformer {
 		return rtr;
 	}
 
-	private List<IAction> extractSequential(final IcfgProgramExecution<?> pe, final ManagedScript mgdScript) {
+	/**
+	 * Apply the branch encoders to all parallel compositions of the original program execution and transfer all
+	 * resulting transformulas from the initial script (aux) to the script we are using (tc) before projection.
+	 *
+	 * The sequentialisation is necessary to identify the reason for rt inconsistency. The transfer happens here because
+	 * we want to use TransFormulaUtils.sequentialComposition, which might timeout during quantifier elimination, which
+	 * in turn might pollute the solver, so we are using a separate solver for this.
+	 */
+	private List<IAction> sequentialize(final IcfgProgramExecution<?> pe, final ManagedScript mgdScriptTc,
+			final ManagedScript mgdScriptAux) {
 		final Map<TermVariable, Boolean>[] branchEncoders = pe.getBranchEncoders();
 		final List<IAction> rtr = new ArrayList<>();
+		final TermTransferrer tt = new TermTransferrer(mgdScriptAux.getScript(), mgdScriptTc.getScript());
+		final Map<IProgramVarOrConst, IProgramVarOrConst> programVarCache = new HashMap<>();
 		for (int i = 0; i < pe.getLength(); i++) {
 			final AtomicTraceElement<? extends IAction> ate = pe.getTraceElement(i);
 
@@ -433,12 +444,18 @@ public class VerificationResultTransformer {
 				branchEncoder = branchEncoders[i];
 			}
 
+			// IActions of the old script
 			final List<IAction> sequentialActions =
 					extractSequential(Collections.singletonList((CodeBlock) ate.getTraceElement()), branchEncoder);
 
-			final List<UnmodifiableTransFormula> transFormulas =
-					sequentialActions.stream().map(a -> a.getTransformula()).collect(Collectors.toList());
-			final UnmodifiableTransFormula sc = TransFormulaUtils.sequentialComposition(mLogger, mServices, mgdScript,
+			// Transfer transformulas to new script
+			final List<UnmodifiableTransFormula> transFormulas = sequentialActions.stream()
+					.map(a -> TransFormulaBuilder
+							.transferTransformula(tt, mgdScriptTc, programVarCache, a.getTransformula())
+							.getTransformula())
+					.collect(Collectors.toList());
+
+			final UnmodifiableTransFormula sc = TransFormulaUtils.sequentialComposition(mLogger, mServices, mgdScriptTc,
 					false, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					SimplificationTechnique.NONE, transFormulas);
 			rtr.add(new BasicInternalAction(null, null, sc));
