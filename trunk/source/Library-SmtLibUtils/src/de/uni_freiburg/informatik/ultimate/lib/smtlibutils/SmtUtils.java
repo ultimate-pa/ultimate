@@ -925,15 +925,23 @@ public final class SmtUtils {
 	 *         parameters.
 	 */
 	public static boolean isAtomicFormula(final Term term) {
-		if (isTrueLiteral(term) || isFalseLiteral(term) || isConstant(term)) {
-			return true;
+		if (SmtSortUtils.isBoolSort(term.getSort())) {
+			if (isTrueLiteral(term) || isFalseLiteral(term)) {
+				return true;
+			}
+			if ((term instanceof TermVariable) || isConstant(term)) {
+				return true;
+			}
+			if (term instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (NonCoreBooleanSubTermTransformer.isCoreBooleanNonAtom(appTerm)) {
+					return false;
+				} else {
+					return true;
+				}
+			}
 		}
-		if (term instanceof ApplicationTerm) {
-			// Note that this is only correct because we checked for constant terms (i.e.,
-			// unary function symbols) above.
-			return !allParamsAreBool((ApplicationTerm) term);
-		}
-		return term instanceof TermVariable;
+		return false;
 	}
 
 	/**
