@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -166,6 +167,20 @@ public class TermContextTransformationEngine<C> {
 			mResult[mNext] = result;
 			mNext++;
 		}
+
+		@Override
+		public String toString() {
+			final StringBuilder builder = new StringBuilder();
+			builder.append("next:");
+			builder.append(mNext);
+			builder.append(" (");
+			builder.append(mOriginal.getFunction().toString());
+			builder.append(Arrays.stream(mResult).map(Term::toStringDirect).collect(Collectors.joining(" ")));
+			builder.append(")");
+			return builder.toString();
+		}
+
+
 	}
 
 	private Task constructTaskForDescendResult(final C currentContext, final DescendResult res) {
@@ -211,6 +226,13 @@ public class TermContextTransformationEngine<C> {
 		void integrateResult(final Term result) {
 			mResultSubformula = result;
 		}
+
+		@Override
+		public String toString() {
+			return mOriginal.toStringDirect();
+		}
+
+
 
 	}
 
