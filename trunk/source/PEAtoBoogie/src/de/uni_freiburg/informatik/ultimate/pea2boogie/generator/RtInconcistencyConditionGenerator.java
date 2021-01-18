@@ -63,14 +63,15 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
+import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -99,16 +100,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class RtInconcistencyConditionGenerator {
 
 	private static final boolean ONLY_CONJUNCTIVE_INVARIANTS = false;
-
 	private static final boolean SIMPLIFY_BEFORE_QELIM = false;
 	private static final boolean TRY_SOLVER_BEFORE_QELIM = false;
+
 	private static final boolean PRINT_STATS = true;
 	private static final boolean PRINT_QUANTIFIED_FORMULAS = false;
-
+	private static final boolean PRINT_NON_TRIVIAL_CHECKS = false;
+	private static final boolean PRINT_PEA_DOT = false;
+	private static final boolean PRINT_INDIVIDUAL_RT_INCONSISTENCY_CHECK = false;
 	private static final String SOLVER_LOG_DIR = null;
 	// private static final String SOLVER_LOG_DIR = "C:\\Users\\firefox\\Desktop\\dump\\";
-
-	private static final boolean PRINT_NON_TRIVIAL_CHECKS = false;
 
 	private final IReqSymbolTable mReqSymboltable;
 	private final Term mPrimedInvariant;
@@ -274,6 +275,15 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
+		if (PRINT_PEA_DOT) {
+			mLogger.info("### Printing DOT for Peas ###");
+			for (int i = 0; i < automata.length; ++i) {
+				final PhaseEventAutomata pea = automata[i];
+				mLogger.info(pea.getName() + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(pea));
+			}
+			mLogger.info("### Finished printing DOT ###");
+		}
+
 		final int[][] phases = createPhasePairs(automata);
 
 		final List<int[]> phasePermutations = CrossProducts.crossProduct(phases);
@@ -306,6 +316,10 @@ public class RtInconcistencyConditionGenerator {
 			}
 
 			final Term rtInconsistencyCheckLhs = SmtUtils.and(mScript, impliesLHS);
+			if (PRINT_INDIVIDUAL_RT_INCONSISTENCY_CHECK) {
+				mLogger.info("%s => %s", rtInconsistencyCheckLhs, checkRhsAndInvariant);
+			}
+
 			final Term rtInconsistencyCheck = SmtUtils.implies(mScript, rtInconsistencyCheckLhs, checkRhsAndInvariant);
 			rtInconsistencyChecks.add(rtInconsistencyCheck);
 		}
