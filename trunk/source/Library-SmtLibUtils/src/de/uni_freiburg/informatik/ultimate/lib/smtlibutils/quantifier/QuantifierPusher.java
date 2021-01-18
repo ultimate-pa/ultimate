@@ -100,7 +100,7 @@ public class QuantifierPusher extends TermTransformer {
 	private static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
 
 	private static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
-
+	private static final boolean ARRAY_ELIMINATION = false;
 	private static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
@@ -844,6 +844,9 @@ public class QuantifierPusher extends TermTransformer {
 //					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			if (ARRAY_ELIMINATION) {
+				elimtechniques.add(new DualJunctionSaa(mgdScript, services, true));
+			}
 			break;
 		case NO_UPD:
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
