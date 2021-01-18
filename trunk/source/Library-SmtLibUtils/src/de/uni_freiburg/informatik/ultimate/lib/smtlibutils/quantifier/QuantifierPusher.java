@@ -88,7 +88,7 @@ public class QuantifierPusher extends TermTransformer {
 		NO_UPD,
 	}
 
-	private enum FormulaClassification {
+	public enum FormulaClassification {
 		NOT_QUANTIFIED, CORRESPONDING_FINITE_CONNECTIVE, DUAL_FINITE_CONNECTIVE, SAME_QUANTIFIER, DUAL_QUANTIFIER, ATOM,
 	}
 
@@ -223,7 +223,7 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-	private Term pushInner(final IUltimateServiceProvider services,
+	public static Term pushInner(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final Set<TermVariable> bannedForDivCapture, final QuantifiedFormula quantifiedFormula) {
 		final Set<TermVariable> resBannedForDivCapture = new HashSet<TermVariable>();
@@ -236,7 +236,7 @@ public class QuantifierPusher extends TermTransformer {
 		return res;
 	}
 
-	private static Term applyEliminationToAtom(final IUltimateServiceProvider services,
+	public static Term applyEliminationToAtom(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final Set<TermVariable> bannedForDivCapture, final QuantifiedFormula quantifiedFormula) {
 		final EliminationTask et = new EliminationTask(quantifiedFormula, bannedForDivCapture);
@@ -250,7 +250,7 @@ public class QuantifierPusher extends TermTransformer {
 		return elimResult;
 	}
 
-	private static Term pushOverCorrespondingFiniteConnective(final Script script,
+	public static Term pushOverCorrespondingFiniteConnective(final Script script,
 			final QuantifiedFormula quantifiedFormula) {
 		assert quantifiedFormula.getSubformula() instanceof ApplicationTerm;
 		final ApplicationTerm appTerm = (ApplicationTerm) quantifiedFormula.getSubformula();
@@ -265,7 +265,7 @@ public class QuantifierPusher extends TermTransformer {
 		return script.term(appTerm.getFunction().getName(), newParams);
 	}
 
-	private static Term tryToPushOverDualFiniteConnective(final IUltimateServiceProvider services,
+	public static Term tryToPushOverDualFiniteConnective(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final Set<TermVariable> bannedForDivCapture, final QuantifiedFormula quantifiedFormula) {
 
@@ -892,7 +892,7 @@ public class QuantifierPusher extends TermTransformer {
 		return elimtechniques;
 	}
 
-	private static FormulaClassification classify(final Term term) {
+	public static FormulaClassification classify(final Term term) {
 		if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula) term;
 			return classify(qf.getQuantifier(), qf.getSubformula());
@@ -925,7 +925,7 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-	private Term processDualQuantifier(final QuantifiedFormula quantifiedFormula) {
+	public Term processDualQuantifier(final QuantifiedFormula quantifiedFormula) {
 		assert quantifiedFormula.getSubformula() instanceof QuantifiedFormula;
 		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) quantifiedFormula.getSubformula();
 		assert quantifiedSubFormula.getQuantifier() == SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier());
