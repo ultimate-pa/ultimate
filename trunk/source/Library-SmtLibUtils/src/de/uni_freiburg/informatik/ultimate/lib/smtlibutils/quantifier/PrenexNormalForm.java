@@ -83,7 +83,7 @@ public class PrenexNormalForm extends TermTransformer {
 
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-		if (NonCoreBooleanSubTermTransformer.isCoreBoolean(appTerm)) {
+		if (NonCoreBooleanSubTermTransformer.isCoreBooleanNonAtom(appTerm)) {
 			final String fun = appTerm.getFunction().getName();
 			if (fun.equals("=")) {
 				throw new UnsupportedOperationException("not yet implemented, we need term in nnf");
