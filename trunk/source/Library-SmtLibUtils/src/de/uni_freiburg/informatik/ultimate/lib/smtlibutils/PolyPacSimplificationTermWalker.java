@@ -53,23 +53,33 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	@Override
 	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb,
 			final List<Term> otherParams) {
+		return buildCriticalConstraintForApplicationTerm(mScript, context, symb, otherParams);
+	}
+
+	public static Term buildCriticalConstraintForApplicationTerm(final Script script, final Term parentContext,
+			final FunctionSymbol symb, final List<Term> otherParams) throws AssertionError {
 		Term result;
 		if (symb.getName().equals("and")) {
-			result = SmtUtils.and(mScript, otherParams);
+			result = SmtUtils.and(script, otherParams);
 		} else if (symb.getName().equals("or")) {
-			final List<Term> otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(mScript, x))
+			final List<Term> otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(script, x))
 					.collect(Collectors.toList());
-			result = SmtUtils.and(mScript, otherParamsNegated);
+			result = SmtUtils.and(script, otherParamsNegated);
 		} else {
 			throw new AssertionError("only conjunction and disjunction are supported");
 		}
-		result = SmtUtils.and(mScript, result, context);
+		result = SmtUtils.and(script, result, parentContext);
 		return result;
 	}
 
 	@Override
 	Term constructContextForQuantifiedFormula(final Term context, final int quant, final TermVariable[] vars) {
-		return SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, Arrays.asList(vars), context);
+		return buildCriticalContraintForQuantifiedFormula(mScript, context, vars);
+	}
+
+	public static Term buildCriticalContraintForQuantifiedFormula(final Script script, final Term context,
+			final TermVariable[] vars) {
+		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, Arrays.asList(vars), context);
 	}
 
 	@Override
