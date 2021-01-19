@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -48,12 +49,19 @@ public class EliminationTaskWithContext extends EliminationTask {
 		mContext = context;
 	}
 
+	public EliminationTaskWithContext(final QuantifiedFormula quantifiedFormula,
+			final Set<TermVariable> additionallyBannedForDivCapture, final Term context) {
+		super(quantifiedFormula, additionallyBannedForDivCapture);
+		mContext = context;
+	}
+
+
 	public Term getContext() {
 		return mContext;
 	}
 
 
-
+	@Deprecated
 	public EliminationTaskWithContext addConjunct(final Script script, final Term conjunct) {
 		return new EliminationTaskWithContext(getQuantifier(), getEliminatees(), getTerm(),
 				SmtUtils.and(script, getContext(), conjunct));
