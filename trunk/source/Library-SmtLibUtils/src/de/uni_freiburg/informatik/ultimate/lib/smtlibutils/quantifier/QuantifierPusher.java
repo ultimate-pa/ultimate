@@ -274,16 +274,23 @@ public class QuantifierPusher extends TermTransformer {
 			final Set<TermVariable> bannedForDivCapture, final EliminationTaskWithContext et) {
 
 
-		final Term term1 = flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
-		if (!(term1 instanceof QuantifiedFormula)) {
+		final Term flattened1 = flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
+		if (!(flattened1 instanceof QuantifiedFormula)) {
 			// some quantifiers could be removed for trivial reasons
-			return term1;
+			return flattened1;
 		}
-		final EliminationTaskWithContext inputEt = new EliminationTaskWithContext((QuantifiedFormula) term1, bannedForDivCapture, et.getContext());
-
+		final EliminationTaskWithContext res1Et = new EliminationTaskWithContext((QuantifiedFormula) flattened1, bannedForDivCapture, et.getContext());
+		final EliminationTaskWithContext pushed = pushDualQuantifiersInParams(services, mgdScript, applyDistributivity,
+				pqeTechniques, res1Et);
+		final Term flattened2 = flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) pushed.toTerm(mgdScript.getScript()));
+		if (!(flattened2 instanceof QuantifiedFormula)) {
+			// some quantifiers could be removed for trivial reasons
+			return flattened2;
+		}
+		final EliminationTaskWithContext res2Et = new EliminationTaskWithContext((QuantifiedFormula) flattened2, bannedForDivCapture, et.getContext());
 //		final Term simp = SmtUtils.simplify(mMgdScript, inputEt.getTerm(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
 
-		return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques, inputEt);
+		return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques, res2Et);
 	}
 
 	private static boolean isDualFiniteConnective(final EliminationTask et) {
@@ -298,8 +305,8 @@ public class QuantifierPusher extends TermTransformer {
 
 	private static Term tryToPushOverDualFiniteConnective2(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final EliminationTaskWithContext inputEt) {
-		if (!isDualFiniteConnective(inputEt)) {
+			final EliminationTaskWithContext et) {
+		if (!isDualFiniteConnective(et)) {
 			throw new AssertionError(NOT_DUAL_FINITE_CONNECTIVE);
 		}
 
@@ -307,7 +314,7 @@ public class QuantifierPusher extends TermTransformer {
 		// do partition
 		// if you can push something, push and return
 		// if you cannot push, continue
-		final ParameterPartition pp = new ParameterPartition(mgdScript.getScript(), (QuantifiedFormula) inputEt.toTerm(mgdScript.getScript()));
+		final ParameterPartition pp = new ParameterPartition(mgdScript.getScript(), (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
 		if (!pp.isIsPartitionTrivial()) {
 			return pp.getTermWithPushedQuantifier();
 		}
@@ -330,8 +337,7 @@ public class QuantifierPusher extends TermTransformer {
 		// if not less quantified return term after elimination
 		// if not exists return
 
-		final EliminationTaskWithContext et = pushDualQuantifiersInParams(services, mgdScript, applyDistributivity,
-				pqeTechniques, inputEt);
+
 		// TODO 20200525 Matthias:
 		// (1) maybe elimination techniques should be applied before
 		// and after pushing params
@@ -372,9 +378,9 @@ public class QuantifierPusher extends TermTransformer {
 
 		if (et.getEliminatees().size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
 			final EliminationTask etSequentialization = doit(services, mgdScript, applyDistributivity, pqeTechniques,
-					inputEt);
+					et);
 			// return if something was eliminated
-			if (!etSequentialization.getEliminatees().containsAll(inputEt.getEliminatees())) {
+			if (!etSequentialization.getEliminatees().containsAll(et.getEliminatees())) {
 				return etSequentialization.toTerm(mgdScript.getScript());
 			} else {
 				final Term[] correspondingFinite = QuantifierUtils
@@ -392,7 +398,7 @@ public class QuantifierPusher extends TermTransformer {
 		if (DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION) {
 			final int rec = DerScout.computeRecommendation(mgdScript.getScript(), et.getEliminatees(), dualFiniteParams, et.getQuantifier());
 			if (rec != -1) {
-				final CondisDepthCode cdc = new CondisDepthCodeGenerator().transduce(inputEt.getTerm());
+				final CondisDepthCode cdc = new CondisDepthCodeGenerator().transduce(et.getTerm());
 				final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
 				logger.info("Applying distributivity to a " + cdc + " term");
 				final Term correspondingFinite = applyDistributivityAndPushOneStep(services, mgdScript,
@@ -425,7 +431,7 @@ public class QuantifierPusher extends TermTransformer {
 					return correspondingFinite;
 				}
 				final Set<TermVariable> bfdvForRecursiveCall = new HashSet<>(et.getEliminatees());
-				bfdvForRecursiveCall.addAll(inputEt.getBannedForDivCapture());
+				bfdvForRecursiveCall.addAll(et.getBannedForDivCapture());
 				final Term pushed = new QuantifierPusher(mgdScript, services, applyDistributivity, pqeTechniques,
 						bfdvForRecursiveCall).transform(correspondingFinite);
 				if (allStillQuantified(et.getEliminatees(), pushed)) {
