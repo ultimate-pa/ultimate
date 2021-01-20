@@ -39,12 +39,11 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Smart array ackermanization.
+ * Smart array Ackermanization.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class DualJunctionSaa extends DualJunctionQuantifierElimination {
-
 
 	/**
 	 * @see constructor
@@ -85,13 +84,6 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 		}
 	}
 
-	/**
-	 * Try to eliminate some eliminatee using the given "derHelper". Return
-	 * immediately after the first successful step (note that a step can be
-	 * successful if a case distinction was made and the variable was only
-	 * eliminated in for some cases). Return null if did not make progress for
-	 * any eliminatee.
-	 */
 	private EliminationTask tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			if (!SmtSortUtils.isArraySort(eliminatee.getSort())) {
@@ -99,12 +91,14 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			}
 			EliminationTaskWithContext res;
 			try {
-				res = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, new EliminationTaskWithContext(
-						inputEt.getQuantifier(), Collections.singleton(eliminatee), inputEt.getTerm(), mScript.term("true")));
+				res = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript,
+						new EliminationTaskWithContext(inputEt.getQuantifier(), Collections.singleton(eliminatee),
+								inputEt.getTerm(), mScript.term("true")));
 			} catch (final SMTLIBException e) {
 				throw new AssertionError(e);
 			} catch (final ElimStorePlainException e) {
-				throw new AssertionError(e);			}
+				throw new AssertionError(e);
+			}
 			if (res != null) {
 				final Set<TermVariable> eliminatees = new HashSet<TermVariable>(inputEt.getEliminatees());
 				eliminatees.remove(eliminatee);
