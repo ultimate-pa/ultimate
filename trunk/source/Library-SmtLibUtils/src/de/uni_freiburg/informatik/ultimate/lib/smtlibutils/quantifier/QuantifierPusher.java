@@ -474,10 +474,11 @@ public class QuantifierPusher extends TermTransformer {
 						inputEt.getBannedForDivCapture()).transform(dualFiniteParams[i]);
 			}
 		}
-		final EliminationTaskWithContext et = new EliminationTaskWithContext(inputEt.getQuantifier(),
-				inputEt.getEliminatees(), QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
-						inputEt.getQuantifier(), dualFiniteParams),
-				inputEt.getBannedForDivCapture(), inputEt.getContext());
+		final QuantifiedFormula qf = (QuantifiedFormula) mgdScript.getScript().quantifier(inputEt.getQuantifier(),
+				inputEt.getEliminatees().toArray(new TermVariable[inputEt.getEliminatees().size()]), QuantifierUtils
+						.applyDualFiniteConnective(mgdScript.getScript(), inputEt.getQuantifier(), dualFiniteParams));
+		final EliminationTaskWithContext et =
+				new EliminationTaskWithContext(qf, inputEt.getBannedForDivCapture(), inputEt.getContext());
 		return et;
 	}
 
