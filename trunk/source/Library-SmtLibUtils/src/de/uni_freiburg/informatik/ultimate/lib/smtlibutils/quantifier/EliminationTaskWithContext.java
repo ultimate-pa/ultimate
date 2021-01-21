@@ -29,9 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -44,27 +42,27 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class EliminationTaskWithContext extends EliminationTask {
 	private final Term mContext;
 
-	public EliminationTaskWithContext(final int quantifier, final Set<TermVariable> eliminatees, final Term term, final Term context) {
+	public EliminationTaskWithContext(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
+			final Set<TermVariable> bannedForDivCapture, final Term context) {
+		super(quantifier, eliminatees, term, bannedForDivCapture);
+		mContext = context;
+	}
+
+	public EliminationTaskWithContext(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
+			final Term context) {
 		super(quantifier, eliminatees, term);
 		mContext = context;
 	}
 
 	public EliminationTaskWithContext(final QuantifiedFormula quantifiedFormula,
-			final Set<TermVariable> additionallyBannedForDivCapture, final Term context) {
-		super(quantifiedFormula, additionallyBannedForDivCapture);
+			final Set<TermVariable> bannedForDivCapture, final Term context) {
+		super(quantifiedFormula, bannedForDivCapture);
 		mContext = context;
 	}
 
 
 	public Term getContext() {
 		return mContext;
-	}
-
-
-	@Deprecated
-	public EliminationTaskWithContext addConjunct(final Script script, final Term conjunct) {
-		return new EliminationTaskWithContext(getQuantifier(), getEliminatees(), getTerm(),
-				SmtUtils.and(script, getContext(), conjunct));
 	}
 
 }
