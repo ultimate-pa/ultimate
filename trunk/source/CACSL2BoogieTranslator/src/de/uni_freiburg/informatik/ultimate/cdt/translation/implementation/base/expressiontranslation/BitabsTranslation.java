@@ -212,8 +212,10 @@ public class BitabsTranslation {
 		 
 		Expression condLeft1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_eq1, rightUnsigned);
 		Expression condRight1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftUnsigned, right_eq1);
-		Expression right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc, condRight1, leftMod2, and_0);
-		Expression and_abs = ExpressionFactory.constructIfThenElseExpression(loc, condLeft1, rightMod2, right_1_ite);
+//		Expression right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc, condRight1, leftMod2, and_0);
+//		Expression and_abs = ExpressionFactory.constructIfThenElseExpression(loc, condLeft1, rightMod2, right_1_ite);
+		Expression right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_eq1, leftMod2, and_0);
+		Expression and_abs = ExpressionFactory.constructIfThenElseExpression(loc, right_eq1, rightMod2, right_1_ite);
 		return and_abs;
 	}
 
