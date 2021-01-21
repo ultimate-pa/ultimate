@@ -689,7 +689,15 @@ public class QuantifierEliminationTest {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "kOuter", "iOuter", "kInner", "iInner", "v") };
 		final String formulaAsString = "(forall ((a (Array Int (Array Int Int)))) (or (not (= (select (select (store a kOuter (store (select a kOuter) kInner v)) iOuter) iInner) 7)) (not (= iOuter kOuter))))";
 		final String expectedResultAsString = "(and (or (not (= iOuter kOuter)) (= iInner kInner)) (or (not (= iOuter kOuter)) (not (= v 7))))";
-		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void contextInauguration() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "k", "i", "x", "y") };
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= k i) (or (= (+ 0 (select a k)) (+ x (select a i))) (= (+ 1 (select a k)) (+ y (select a i))))))";
+		final String expectedResultAsString = "(and (= i k) (or (= y 1) (= x 0)))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
