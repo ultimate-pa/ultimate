@@ -114,7 +114,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  * @author Cyrus Liu
  *
  */
-public class BitabsTranslation { 
+public class BitabsTranslation {
 
 	public static final int STRING_OVERAPPROXIMATION_THRESHOLD = 8;
 
@@ -142,22 +142,6 @@ public class BitabsTranslation {
 			final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		final String funcname = "bitwiseAnd";
 		// if decides_to_apply(CYRUS_AND_0_LEFT, left, right)
-//		if (left instanceof IntegerLiteral) {
-//			String valueLeft =((IntegerLiteral) left).getValue();
-//			System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
-//			if (valueLeft.equals("1")) {
-//				return right;
-//				} else if (valueLeft.equals("0")){
-//					return left;
-//					} 
-//			} else if (right instanceof IntegerLiteral) {
-//				String valueRight = ((IntegerLiteral) right).getValue();
-//					if (valueRight.equals("1")) {
-//					return left;
-//					} else if (valueRight.equals("0")){
-//						return right;
-//						}
-//				} 
 		// If left is equal literal 0 or right is equal literal 0.
 		Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
@@ -175,6 +159,40 @@ public class BitabsTranslation {
 		Expression rightUnsigned = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, right,
 				literal_0);
 
+		
+		  Expression left_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq1, left_eq0); 
+		  Expression right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_eq1, right_eq0);
+
+			/*
+			 * Expression cond_left_1 = ExpressionFactory.newBinaryExpression(loc,
+			 * BinaryExpression.Operator.LOGICAND, left_eq1, right_size1); Expression
+			 * cond_right_1 =
+			 * ExpressionFactory.newBinaryExpression(loc,BinaryExpression.Operator.LOGICAND,
+			 * left_size1, right_eq1); Expression right_1_ite =
+			 * ExpressionFactory.constructIfThenElseExpression(loc, cond_right_1, left,
+			 * and_0); Expression and_abs =
+			 * ExpressionFactory.constructIfThenElseExpression(loc, cond_left_1, right,
+			 * right_1_ite);
+			 */
+				  
+				  
+		if (left instanceof IntegerLiteral) {
+			String valueLeft = ((IntegerLiteral) left).getValue();
+			System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
+			if (valueLeft.equals("1")) {
+				return right;
+			} else if (valueLeft.equals("0")) {
+				return left;
+			}
+		} else if (right instanceof IntegerLiteral) {
+			String valueRight = ((IntegerLiteral) right).getValue();
+			if (valueRight.equals("1")) {
+				return left;
+			} else if (valueRight.equals("0")) {
+				return right;
+			}
+		}
+
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 
 		Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq0,
@@ -189,29 +207,21 @@ public class BitabsTranslation {
 		// for the case, a&1, if size(a) is not 1, the result would diverge, this is
 		// actually equal to modular : -2&1=0, 2&1=0, 3&1=1.
 
-		/*
-		 * Expression left_size1 = ExpressionFactory.newBinaryExpression(loc,
-		 * BinaryExpression.Operator.LOGICOR, left_eq1, left_eq0); Expression
-		 * right_size1 = ExpressionFactory.newBinaryExpression(loc,
-		 * BinaryExpression.Operator.LOGICOR, right_eq1, right_eq0);
-		 */
-		// a>0, a&1 <==> a%2
-		Expression leftMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, left, literal2);
-		Expression rightMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, right, literal2);
-
-		/*
-		 * Expression cond_left_1 = ExpressionFactory.newBinaryExpression(loc,
-		 * BinaryExpression.Operator.LOGICAND, left_eq1, right_size1); Expression
-		 * cond_right_1 = ExpressionFactory.newBinaryExpression(loc,
-		 * BinaryExpression.Operator.LOGICAND, left_size1, right_eq1); Expression
-		 * right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc,
-		 * cond_right_1, left, and_0); Expression and_abs =
-		 * ExpressionFactory.constructIfThenElseExpression(loc, cond_left_1, right,
-		 * right_1_ite);
-		 */
+		
+	
 		 
-		Expression condLeft1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_eq1, rightUnsigned);
-		Expression condRight1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftUnsigned, right_eq1);
+		// a>0, a&1 <==> a%2
+		Expression leftMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, left,
+				literal2);
+		Expression rightMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, right,
+				literal2);
+
+		 
+
+		Expression condLeft1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_eq1,
+				rightUnsigned);
+		Expression condRight1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+				leftUnsigned, right_eq1);
 //		Expression right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc, condRight1, leftMod2, and_0);
 //		Expression and_abs = ExpressionFactory.constructIfThenElseExpression(loc, condLeft1, rightMod2, right_1_ite);
 		Expression right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_eq1, leftMod2, and_0);
