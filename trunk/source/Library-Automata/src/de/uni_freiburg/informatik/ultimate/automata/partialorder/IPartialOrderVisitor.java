@@ -41,5 +41,5 @@ public interface IPartialOrderVisitor<L, S> {
 	
 	boolean addStartState(S state);
 
-	void discoverState(S state);
+	boolean discoverState(S state);
 }

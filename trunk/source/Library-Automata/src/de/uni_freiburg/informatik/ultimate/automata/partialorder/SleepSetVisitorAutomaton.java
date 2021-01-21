@@ -44,8 +44,9 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 	}
 
 	@Override
-	public void discoverState(final S state) {
+	public boolean discoverState(final S state) {
 		// do nothing
+		return false;
 	}
 
 	@Override

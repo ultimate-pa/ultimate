@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 	private final SleepSetMode mSleepSetMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
+	final SleepSetVisitorSearch<L, IPredicate> mVisitor;
 
 	public SleepSetCegar(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -78,6 +79,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 				services, compositionFactory, transitionClazz);
 		mSleepSetMode = mPref.getSleepSetMode();
 		mFactory = new InformationStorageFactory();
+		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState);
 	}
 
 	@Override
@@ -112,7 +114,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		final ISleepSetOrder<IPredicate, L> order =
 				new ConstantSleepSetOrder<>(abstraction.getVpAlphabet().getInternalAlphabet());
 
-		final SleepSetVisitorSearch<L, IPredicate> visitor = new SleepSetVisitorSearch<>(this::isGoalState);
+		final SleepSetVisitorSearch<L, IPredicate> visitor = mVisitor;
 		// mVisitor = new tempVisitorSearch<>(this::isGoalState);
 
 		if (mSleepSetMode == SleepSetMode.DELAY_SET) {
@@ -166,7 +168,11 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 			}
 
 			final IcfgLocation[] locations = ((IMLPredicate) state1).getProgramPoints();
-			return mPredicateFactory.newMLPredicate(locations, formula);
+			IPredicate newState = mPredicateFactory.newMLPredicate(locations, formula);
+			if (mVisitor.isDeadEndState(state1)) {
+				mVisitor.addDeadEndState(newState);
+			}
+			return newState;
 		}
 	}
 }

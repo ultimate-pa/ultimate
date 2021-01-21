@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -37,15 +39,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
 public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
-	private final ArrayDeque<ArrayList<L>> mLetterStack;
-	private final ArrayDeque<ArrayList<S>> mStateStack;
-	private final ArrayList<L> mAcceptingTransitionSequence;
+	private Set<S> mDeadEndSet;
+	private  ArrayDeque<ArrayList<L>> mLetterStack;
+	private  ArrayDeque<ArrayList<S>> mStateStack;
+	private  ArrayList<L> mAcceptingTransitionSequence;
 	private Word<L> mAcceptingWord;
-	private final ArrayList<S> mAcceptingStateSequence;
+	private  ArrayList<S> mAcceptingStateSequence;
 	private final Function<S, Boolean> mIsGoalState;
 	private S mStartState;
 	
 	public SleepSetVisitorSearch(Function<S, Boolean> isGoalState) {
+		mDeadEndSet = new HashSet<S>();
 		mLetterStack = new ArrayDeque<>();
 		mStateStack = new ArrayDeque<>();
 		mAcceptingTransitionSequence = new ArrayList<>();
@@ -55,11 +59,12 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	}
 
 	@Override
-	public void discoverState(final S state) {
+	public boolean discoverState(final S state) {
 		if (!state.equals(mStartState) && !mStateStack.peek().isEmpty()) {
 			mLetterStack.push(new ArrayList<L>());
 			mStateStack.push(new ArrayList<S>());
 		}
+		return isDeadEndState(state);
 	}
 
 	@Override
@@ -73,6 +78,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	@Override
 	public void backtrackState(final S state) {
 		// pop state's list and remove letter leading to state from predecessor's list
+		mDeadEndSet.add(state); //disable this line to disable DeadEndDetection
 		if (mStateStack.peek().isEmpty()) {
 			mLetterStack.pop();
 			mStateStack.pop();
@@ -134,10 +140,27 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 
 	@Override
 	public boolean addStartState(final S state) {
+		reset();
 		mStartState = state;
 		mLetterStack.push(new ArrayList<L>());
 		mStateStack.push(new ArrayList<S>());
 		return mIsGoalState.apply(state);
 		// do nothing
+	}
+	
+	private void reset() {
+		mLetterStack = new ArrayDeque<>();
+		mStateStack = new ArrayDeque<>();
+		mAcceptingTransitionSequence = new ArrayList<>();
+		mAcceptingStateSequence = new ArrayList<>();
+		mAcceptingWord = new Word<>();
+	}
+	
+	public boolean isDeadEndState(S state) {
+		return mDeadEndSet.contains(state);
+	}
+	
+	public void addDeadEndState(S state) {
+		mDeadEndSet.add(state);
 	}
 }
