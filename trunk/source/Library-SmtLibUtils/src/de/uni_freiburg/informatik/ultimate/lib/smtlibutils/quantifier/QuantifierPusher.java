@@ -190,8 +190,8 @@ public class QuantifierPusher extends TermTransformer {
 				break;
 			}
 			case ATOM: {
-				final Term tmp = applyEliminationToAtom(mServices, mMgdScript, mApplyDistributivity, mPqeTechniques,
-						mBannedForDivCapture, (QuantifiedFormula) currentTerm);
+				final Term tmp = applyEliminationToAtom(mServices, mMgdScript, mApplyDistributivity,
+						mPqeTechniques, mBannedForDivCapture, (QuantifiedFormula) currentTerm, mMgdScript.term(null, "true"));
 				if (tmp == null) {
 					// no more eliminations possible
 					// let's recurse, there may be quantifiers in subformulas
@@ -242,10 +242,10 @@ public class QuantifierPusher extends TermTransformer {
 		return res;
 	}
 
-	public static Term applyEliminationToAtom(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final Set<TermVariable> bannedForDivCapture, final QuantifiedFormula quantifiedFormula) {
-		final EliminationTask et = new EliminationTask(quantifiedFormula, bannedForDivCapture);
+	public static Term applyEliminationToAtom(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
+			final Set<TermVariable> bannedForDivCapture, final QuantifiedFormula quantifiedFormula, final Term criticalContraint) {
+		final EliminationTaskWithContext et = new EliminationTaskWithContext(quantifiedFormula, bannedForDivCapture, criticalContraint);
 		final Term elimResult;
 		if (et.getEliminatees().size() < quantifiedFormula.getVariables().length) {
 			// instant removal of variables that do not occur
