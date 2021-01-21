@@ -93,7 +93,7 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			try {
 				res = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript,
 						new EliminationTaskWithContext(inputEt.getQuantifier(), Collections.singleton(eliminatee),
-								inputEt.getTerm(), mScript.term("true")));
+								inputEt.getTerm(), ((EliminationTaskWithContext) inputEt).getContext()));
 			} catch (final SMTLIBException e) {
 				throw new AssertionError(e);
 			} catch (final ElimStorePlainException e) {
