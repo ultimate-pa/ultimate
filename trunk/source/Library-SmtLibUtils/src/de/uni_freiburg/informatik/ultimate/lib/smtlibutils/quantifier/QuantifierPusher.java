@@ -275,26 +275,25 @@ public class QuantifierPusher extends TermTransformer {
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final Set<TermVariable> bannedForDivCapture, final EliminationTaskWithContext et) {
 
-		final Term flattened1 =
-				flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
+		final Term flattened1 = flattenQuantifiedFormulas(mgdScript,
+				(QuantifiedFormula) et.toTerm(mgdScript.getScript()));
 		if (!(flattened1 instanceof QuantifiedFormula)) {
 			// some quantifiers could be removed for trivial reasons
 			return flattened1;
 		}
-		final EliminationTaskWithContext res1Et =
-				new EliminationTaskWithContext((QuantifiedFormula) flattened1, bannedForDivCapture, et.getContext());
-		final EliminationTaskWithContext pushed =
-				pushDualQuantifiersInParams(services, mgdScript, applyDistributivity, pqeTechniques, res1Et);
-		final Term flattened2 =
-				flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) pushed.toTerm(mgdScript.getScript()));
+		final EliminationTaskWithContext res1Et = new EliminationTaskWithContext((QuantifiedFormula) flattened1,
+				bannedForDivCapture, et.getContext());
+		final EliminationTaskWithContext pushed = pushDualQuantifiersInParams(services, mgdScript, applyDistributivity,
+				pqeTechniques, res1Et);
+		final Term flattened2 = flattenQuantifiedFormulas(mgdScript,
+				(QuantifiedFormula) pushed.toTerm(mgdScript.getScript()));
 		if (!(flattened2 instanceof QuantifiedFormula)) {
 			// some quantifiers could be removed for trivial reasons
 			return flattened2;
 		}
-		final EliminationTaskWithContext res2Et =
-				new EliminationTaskWithContext((QuantifiedFormula) flattened2, bannedForDivCapture, et.getContext());
-		// final Term simp = SmtUtils.simplify(mMgdScript, inputEt.getTerm(), mServices,
-		// SimplificationTechnique.SIMPLIFY_DDA);
+		final EliminationTaskWithContext res2Et = new EliminationTaskWithContext((QuantifiedFormula) flattened2,
+				bannedForDivCapture, et.getContext());
+//		final Term simp = SmtUtils.simplify(mMgdScript, inputEt.getTerm(), mServices, SimplificationTechnique.SIMPLIFY_DDA);
 
 		return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques, res2Et);
 	}
