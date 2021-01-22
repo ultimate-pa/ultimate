@@ -104,8 +104,7 @@ public class SleepSetNewStateReduction<L, S, S2> {
 							successorTransitionList.add(transition.getLetter());
 						}
 					}
-				}
-				else {
+				} else {
 					mVisitor.backtrackState(currentState);
 					mStateStack.pop();
 				}

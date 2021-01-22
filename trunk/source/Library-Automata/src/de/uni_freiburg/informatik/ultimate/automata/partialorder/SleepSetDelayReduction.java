@@ -118,13 +118,19 @@ public class SleepSetDelayReduction<L, S> {
 
 			if (mPrunedMap.get(currentState) == null) {
 				// state not visited yet
-				mVisitor.discoverState(currentState);
+				boolean stop = mVisitor.discoverState(currentState);
 				mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
-				for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
-					if (!currentSleepSet.contains(transition.getLetter())) {
-						successorTransitionList.add(transition.getLetter());
+				if (!stop) {
+					for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
+						if (!currentSleepSet.contains(transition.getLetter())) {
+							successorTransitionList.add(transition.getLetter());
+						}
 					}
+				} else {
+					mVisitor.backtrackState(currentState);
+					mStateStack.pop();
 				}
+				
 
 			} else if (!currentDelaySet.isEmpty()) {
 				currentSleepSet = currentDelaySet.iterator().next();
@@ -135,16 +141,21 @@ public class SleepSetDelayReduction<L, S> {
 				mSleepSetMap.put(currentState, currentSleepSet);
 				mPrunedMap.put(currentState, currentSleepSet);
 			} else {
-				mVisitor.discoverState(currentState);
-				final Set<L> pruned = mPrunedMap.get(currentState);
-				successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
-				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
-				mSleepSetMap.put(currentState, currentSleepSet);
-				mPrunedMap.put(currentState, currentSleepSet);
-				if (successorTransitionList.isEmpty()) {
+				boolean stop = mVisitor.discoverState(currentState);
+				if (!stop) {
+					final Set<L> pruned = mPrunedMap.get(currentState);
+					successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
+					currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
+					mSleepSetMap.put(currentState, currentSleepSet);
+					mPrunedMap.put(currentState, currentSleepSet);
+					if (successorTransitionList.isEmpty()) {
+						mVisitor.backtrackState(currentState);
+						mStateStack.pop();
+					}
+				} else {
 					mVisitor.backtrackState(currentState);
 					mStateStack.pop();
-				}
+				}	
 			}
 /*
 			if (successorTransitionList.isEmpty()) {
