@@ -46,9 +46,10 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	private Word<L> mAcceptingWord;
 	private  ArrayList<S> mAcceptingStateSequence;
 	private final Function<S, Boolean> mIsGoalState;
+	private final Function<S, Boolean> mIsHopelessState;
 	private S mStartState;
 	
-	public SleepSetVisitorSearch(Function<S, Boolean> isGoalState) {
+	public SleepSetVisitorSearch(Function<S, Boolean> isGoalState, Function<S, Boolean> isHopelessState) {
 		mDeadEndSet = new HashSet<S>();
 		mLetterStack = new ArrayDeque<>();
 		mStateStack = new ArrayDeque<>();
@@ -56,6 +57,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 		mAcceptingStateSequence = new ArrayList<>();
 		mAcceptingWord = new Word<>();
 		mIsGoalState = isGoalState;
+		mIsHopelessState = isHopelessState;
 	}
 
 	@Override
@@ -64,7 +66,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 			mLetterStack.push(new ArrayList<L>());
 			mStateStack.push(new ArrayList<S>());
 		}
-		return isDeadEndState(state);
+		return isDeadEndState(state) || mIsHopelessState.apply(state);
 	}
 
 	@Override

@@ -79,7 +79,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 				services, compositionFactory, transitionClazz);
 		mSleepSetMode = mPref.getSleepSetMode();
 		mFactory = new InformationStorageFactory();
-		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState);
+		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, this::isHopelessState);
 	}
 
 	@Override
@@ -150,6 +150,10 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		// TODO (Dominik 2020-12-09): Below is a hack. Replace by a better solution.
 		final boolean isFalse = state.getFormula().toString().equals("false");
 		return isErrorState && !isFalse;
+	}
+	
+	private Boolean isHopelessState(final IPredicate state) {
+		return state.getFormula().toString().equals("false");
 	}
 
 	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {
