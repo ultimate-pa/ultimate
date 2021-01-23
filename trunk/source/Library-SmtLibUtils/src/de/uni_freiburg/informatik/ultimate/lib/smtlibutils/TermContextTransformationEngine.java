@@ -151,7 +151,7 @@ public class TermContextTransformationEngine<C> {
 				final ArrayList<Term> otherParams = new ArrayList<>(Arrays.asList(mResult));
 				otherParams.remove(mNext);
 				final C currentContext = mTermWalker.constructContextForApplicationTerm(super.mContext,
-						mOriginal.getFunction(), otherParams);
+						mOriginal.getFunction(), Arrays.asList(mResult), mNext);
 				final DescendResult res = mTermWalker.convert(currentContext, mResult[mNext]);
 				result = constructTaskForDescendResult(currentContext, res);
 			}
@@ -252,7 +252,8 @@ public class TermContextTransformationEngine<C> {
 
 	public abstract static class TermWalker<C> {
 
-		abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> otherParams);
+		abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> allParams,
+				int selectedParam);
 
 		abstract boolean applyRepeatedlyUntilNoChange();
 

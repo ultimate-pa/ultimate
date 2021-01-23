@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,12 +53,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 
 	@Override
 	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb,
-			final List<Term> otherParams) {
-		return buildCriticalConstraintForApplicationTerm(mScript, context, symb, otherParams);
+			final List<Term> allParams, final int selectedParam) {
+		return buildCriticalConstraintForApplicationTerm(mScript, context, symb, allParams, selectedParam);
 	}
 
 	public static Term buildCriticalConstraintForApplicationTerm(final Script script, final Term parentContext,
-			final FunctionSymbol symb, final List<Term> otherParams) throws AssertionError {
+			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
+		final List<Term> otherParams = new ArrayList<>(allParams);
+		otherParams.remove(selectedParam);
 		Term result;
 		if (symb.getName().equals("and")) {
 			result = SmtUtils.and(script, otherParams);
