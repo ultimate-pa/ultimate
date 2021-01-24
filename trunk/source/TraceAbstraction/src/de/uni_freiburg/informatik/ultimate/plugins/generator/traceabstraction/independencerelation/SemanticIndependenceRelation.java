@@ -140,10 +140,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final long checkTime = System.nanoTime() - startTime;
 		mComputationTimeNano += checkTime;
 
-		mLogger.info("Independence Inclusion Check Time: %d ms", checkTime / 1000000);
+		mLogger.debug("Independence Inclusion Check Time: %d ms", checkTime / 1000000);
 		if (checkTime > 1000000000) {
 			// for more than 1s, report details
-			mLogger.warn("Expensive independence query for statements %s and %s under condition %s", a, b, context);
+			mLogger.warn("Expensive independence query (%d ms) for statements %s and %s under condition %s",
+					checkTime / 1000000, a, b, context);
 		}
 
 		return result == LBool.UNSAT;
@@ -159,7 +160,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			mLogger.warn("Requesting ManagedScript unlock before implication check");
 			final boolean unlocked = mManagedScript.requestLockRelease();
 			final long releaseEnd = System.currentTimeMillis();
-			mLogger.warn("Script Release Time: " + (releaseEnd - releaseStart) + "ms");
+			mLogger.debug("Script Release Time: " + (releaseEnd - releaseStart) + "ms");
 			if (!unlocked) {
 				mLogger.warn("Failed to unlock ManagedScript. Unable to check independence, returning UNKNOWN.");
 				return LBool.UNKNOWN;
