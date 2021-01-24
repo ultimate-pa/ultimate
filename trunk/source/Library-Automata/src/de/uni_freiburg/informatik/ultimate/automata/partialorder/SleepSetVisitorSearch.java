@@ -96,6 +96,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 		}
 	}
 	
+	@Override
 	public void delayState(final S state) {
 		mLetterStack.peek().remove(mLetterStack.peek().size() - 1);
 		mStateStack.peek().remove(mStateStack.peek().size() - 1);
@@ -159,6 +160,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	}
 	
 	public boolean isDeadEndState(S state) {
+	// TODO (Dominik 2021-01-24) Consider moving dead-end optimization to subclass
 		return mDeadEndSet.contains(state);
 	}
 	
