@@ -27,8 +27,9 @@ public class tempVisitorSearch<L, S> implements IPartialOrderVisitor<L, S>{
 	}
 
 	@Override
-	public void discoverState(final S state) {
-		//do nothing
+	public boolean discoverState(final S state) {
+		// do nothing
+		return false;
 	}
 
 	@Override
