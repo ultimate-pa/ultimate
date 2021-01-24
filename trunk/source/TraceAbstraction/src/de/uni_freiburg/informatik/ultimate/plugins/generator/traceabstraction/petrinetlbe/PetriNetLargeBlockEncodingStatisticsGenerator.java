@@ -66,8 +66,8 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator implements IStatistic
 	}
 
 	public void extractStatistics(final CachedIndependenceRelation<?, ?> cachedCheck) {
-		mCheckedPairsTotal += cachedCheck.getPositiveCacheSize();
-		mCheckedPairsTotal += cachedCheck.getNegativeCacheSize();
+		mCheckedPairsTotal += cachedCheck.getCache().getPositiveCacheSize();
+		mCheckedPairsTotal += cachedCheck.getCache().getNegativeCacheSize();
 	}
 
 	public void addLiptonStatistics(final LiptonReductionStatisticsGenerator stat) {
