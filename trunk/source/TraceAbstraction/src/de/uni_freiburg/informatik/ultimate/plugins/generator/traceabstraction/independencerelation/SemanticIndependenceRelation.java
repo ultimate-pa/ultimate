@@ -27,7 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -36,11 +40,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * An independence relation that implements an SMT-based inclusion or equality check on the semantics.
@@ -130,12 +137,23 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		default:
 			throw new AssertionError();
 		}
-		mComputationTimeNano += (System.nanoTime() - startTime);
+		final long checkTime = System.nanoTime() - startTime;
+		mComputationTimeNano += checkTime;
+
+		mLogger.info("Independence Inclusion Check Time: %d ms", checkTime / 1000000);
+		if (checkTime > 1000000000) {
+			// for more than 1s, report details
+			mLogger.warn("Expensive independence query for statements %s and %s under condition %s", a, b, context);
+		}
+
 		return result == LBool.UNSAT;
 	}
 
 	private final LBool performInclusionCheck(final IPredicate context, final L a, final L b) {
-		final long inclusionCheckStart = System.currentTimeMillis();
+		if (context != null && "false".equals(context.getFormula().toString())) {
+			return LBool.UNSAT;
+		}
+
 		if (mManagedScript.isLocked()) {
 			final long releaseStart = System.currentTimeMillis();
 			mLogger.warn("Requesting ManagedScript unlock before implication check");
@@ -158,11 +176,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 					TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
 			transFormula1 = compose(guard, transFormula1);
 		}
-		final long inclusionCheckEnd = System.currentTimeMillis();
-		final LBool result = TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
-		mLogger.info("Independence Inclusion Check Time: " + (inclusionCheckEnd - inclusionCheckStart) + "ms");
-		return result;
-		//return TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
+		return TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
 	}
 
 	private final UnmodifiableTransFormula compose(final UnmodifiableTransFormula first,
@@ -193,5 +207,45 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	public long getComputationTimeNano() {
 		return mComputationTimeNano;
+	}
+
+	/**
+	 * Implements a condition normalizer for {@link SemanticIndependenceRelation}. See
+	 * {@link CachedIndependenceRelation.IConditionNormalizer} for details.
+	 *
+	 * Note that using this normalizer is only sound if all conditions are either consistent or syntactically equals to
+	 * "false". Other inconsistent conditions can lead to trivial independence (under the inconsistent condition) to be
+	 * cached as non-conditional independence.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of actions of the independence relation.
+	 */
+	public static final class ConditionNormalizer<L extends IAction>
+			implements CachedIndependenceRelation.IConditionNormalizer<IPredicate, L> {
+
+		@Override
+		public Object normalize(final IPredicate state, final L a, final L b) {
+			final Term condition = state.getFormula();
+
+			// Syntactically determine if condition is possibly relevant to independence.
+			final Set<TermVariable> inputVars = Stream
+					.concat(a.getTransformula().getInVars().keySet().stream(),
+							b.getTransformula().getInVars().keySet().stream())
+					.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+			final boolean isRelevant = Arrays.stream(condition.getFreeVars()).anyMatch(inputVars::contains);
+			if (!isRelevant && isConsistent(state)) {
+				// Fall back to independence without condition.
+				return null;
+			}
+
+			// Identify condition by formula rather than predicate.
+			return condition;
+		}
+
+		private static boolean isConsistent(final IPredicate state) {
+			return !"false".equals(state.getFormula().toString());
+		}
 	}
 }

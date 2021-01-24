@@ -27,8 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -36,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.Cache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
@@ -68,7 +73,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 	private final SleepSetMode mSleepSetMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
-	final SleepSetVisitorSearch<L, IPredicate> mVisitor;
+	private final SleepSetVisitorSearch<L, IPredicate> mVisitor;
+
+	// Maps an IPredicate built through refinement rounds to the sequence of conjuncts it was built from.
+	// This is used to distribute an independence query across conjuncts.
+	private final Map<IPredicate, IPredicate[]> mPredicateConjuncts = new HashMap<>();
+
+	private ISleepSetOrder<IPredicate, L> mSleepSetOrder;
+	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations = new ArrayList<>();
+	private final CachedIndependenceRelation.Cache<IPredicate, L> mIndependenceCache;
 
 	public SleepSetCegar(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -79,7 +92,16 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 				services, compositionFactory, transitionClazz);
 		mSleepSetMode = mPref.getSleepSetMode();
 		mFactory = new InformationStorageFactory();
-		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, this::isHopelessState);
+		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, SleepSetCegar::isFalseState);
+		mIndependenceCache = new Cache<>(new SemanticIndependenceRelation.ConditionNormalizer<>());
+	}
+
+	@Override
+	protected void getInitialAbstraction() throws AutomataLibraryException {
+		super.getInitialAbstraction();
+		mSleepSetOrder =
+				new ConstantSleepSetOrder<>(((INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction)
+						.getVpAlphabet().getInternalAlphabet());
 	}
 
 	@Override
@@ -107,25 +129,27 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 
-		final IIndependenceRelation<IPredicate, L> indep =
-				new CachedIndependenceRelation<>(new UnionIndependenceRelation<>(
-						Arrays.asList(new SyntacticIndependenceRelation<>(), new SemanticIndependenceRelation<>(
-								mServices, mCsToolkit.getManagedScript(), mIteration > 0, true))));
-		final ISleepSetOrder<IPredicate, L> order =
-				new ConstantSleepSetOrder<>(abstraction.getVpAlphabet().getInternalAlphabet());
-
-		final SleepSetVisitorSearch<L, IPredicate> visitor = mVisitor;
-		// mVisitor = new tempVisitorSearch<>(this::isGoalState);
+		final IIndependenceRelation<IPredicate, L> newIndependence;
+		if (mIteration == 0) {
+			newIndependence = new CachedIndependenceRelation<>(
+					new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
+							new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true))),
+					mIndependenceCache);
+		} else {
+			newIndependence = new CachedIndependenceRelation<>(
+					new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), true, true),
+					mIndependenceCache);
+		}
+		mIndependenceRelations.add(newIndependence);
+		final IIndependenceRelation<IPredicate, L> indep = new DistributingIndependenceRelation(mIndependenceRelations);
 
 		if (mSleepSetMode == SleepSetMode.DELAY_SET) {
-			// new tempDelaySet<>(abstraction, indep, order, mVisitor);
-			new SleepSetDelayReduction<>(abstraction, indep, order, visitor);
+			new SleepSetDelayReduction<>(abstraction, indep, mSleepSetOrder, mVisitor);
 		} else if (mSleepSetMode == SleepSetMode.NEW_STATES) {
-			// new tempNewState<>(abstraction, indep, order, mSleepSetStateFactory, mVisitor);
-			new SleepSetNewStateReduction<>(abstraction, indep, order, mSleepSetStateFactory, visitor);
+			new SleepSetNewStateReduction<>(abstraction, indep, mSleepSetOrder, mSleepSetStateFactory, mVisitor);
 		}
 
-		mCounterexample = visitor.constructRun();
+		mCounterexample = mVisitor.constructRun();
 		if (mCounterexample == null) {
 			return true;
 		}
@@ -146,14 +170,50 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 			programPoints = ((IMLPredicate) state).getProgramPoints();
 		}
 		final boolean isErrorState = Arrays.stream(programPoints).anyMatch(mErrorLocs::contains);
-
-		// TODO (Dominik 2020-12-09): Below is a hack. Replace by a better solution.
-		final boolean isFalse = state.getFormula().toString().equals("false");
-		return isErrorState && !isFalse;
+		return isErrorState && !isFalseState(state);
 	}
-	
-	private Boolean isHopelessState(final IPredicate state) {
+
+	private static Boolean isFalseState(final IPredicate state) {
+		// TODO (Dominik 2020-12-09): Below is a hack. Replace by a better solution.
 		return state.getFormula().toString().equals("false");
+	}
+
+	private IPredicate[] getConjuncts(final IPredicate conjunction) {
+		return mPredicateConjuncts.getOrDefault(conjunction, new IPredicate[] { conjunction });
+	}
+
+	private final class DistributingIndependenceRelation implements IIndependenceRelation<IPredicate, L> {
+		private final List<IIndependenceRelation<IPredicate, L>> mRelations;
+		private final boolean mSymmetric;
+		private final boolean mConditional;
+
+		public DistributingIndependenceRelation(final List<IIndependenceRelation<IPredicate, L>> relations) {
+			mRelations = relations;
+			mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
+			mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mSymmetric;
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mConditional;
+		}
+
+		@Override
+		public boolean contains(final IPredicate state, final L a, final L b) {
+			final IPredicate[] conjuncts = getConjuncts(state);
+			assert conjuncts.length == mRelations.size();
+			for (int i = 0; i < mRelations.size(); ++i) {
+				if (mRelations.get(i).contains(conjuncts[i], a, b)) {
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 
 	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {
@@ -164,18 +224,27 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 
 		@Override
 		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
+			// Create the actual predicate
 			final Term formula;
 			if (mPredicateFactory.isDontCare(state1)) {
 				formula = state2.getFormula();
 			} else {
 				formula = mPredicateFactory.and(state1, state2).getFormula();
 			}
-
 			final IcfgLocation[] locations = ((IMLPredicate) state1).getProgramPoints();
-			IPredicate newState = mPredicateFactory.newMLPredicate(locations, formula);
+			final IPredicate newState = mPredicateFactory.newMLPredicate(locations, formula);
+
+			// Update the map back to individual conjuncts
+			final IPredicate[] oldDistribution = getConjuncts(state1);
+			final IPredicate[] newDistribution = Arrays.copyOf(oldDistribution, oldDistribution.length + 1);
+			newDistribution[newDistribution.length - 1] = state2;
+			mPredicateConjuncts.put(newState, newDistribution);
+
+			// Transfer dead state info
 			if (mVisitor.isDeadEndState(state1)) {
 				mVisitor.addDeadEndState(newState);
 			}
+
 			return newState;
 		}
 	}
