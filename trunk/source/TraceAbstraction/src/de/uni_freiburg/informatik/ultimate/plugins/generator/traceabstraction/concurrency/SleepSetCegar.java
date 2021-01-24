@@ -104,6 +104,13 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 						.getVpAlphabet().getInternalAlphabet());
 	}
 
+	// Turn off one-shot sleepset reduction before initial iteration.
+	@Override
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computeSleepSetReduction(final SleepSetMode mode,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+		return input;
+	}
+
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
