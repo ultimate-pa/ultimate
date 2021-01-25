@@ -41,7 +41,7 @@ public class tempVisitorSearch<L, S> implements IPartialOrderVisitor<L, S>{
 	}
 
 	@Override
-	public void backtrackState(final S state) {
+	public void backtrackState(final S state, boolean loop) {
 		// pop state's list and remove letter leading to state from predecessor's list
 		if (!state.equals(mStartState)) {
 			mLetterStack.pop();
