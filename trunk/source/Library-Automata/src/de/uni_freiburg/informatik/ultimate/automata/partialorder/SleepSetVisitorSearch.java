@@ -78,12 +78,9 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	}
 
 	@Override
-	public void backtrackState(final S state, final boolean loop) {
+	public void backtrackState(final S state) {
 		// pop state's list and remove letter leading to state from predecessor's list
-		if (!loop) {
-			mDeadEndSet.add(state);
-		}
-		//mDeadEndSet.add(state); //disable this line to disable DeadEndDetection
+		mDeadEndSet.add(state); //disable this line to disable DeadEndDetection
 		if (mStateStack.peek().isEmpty()) {
 			mLetterStack.pop();
 			mStateStack.pop();

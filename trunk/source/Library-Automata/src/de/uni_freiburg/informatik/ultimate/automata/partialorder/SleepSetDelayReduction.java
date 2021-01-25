@@ -110,7 +110,7 @@ public class SleepSetDelayReduction<L, S> {
 	private void search() {
 		while (!mExit && !mStateStack.isEmpty()) {
 
-			final S currentState = mStateStack.pop();
+			final S currentState = mStateStack.peek();
 			Set<L> currentSleepSet = mSleepSetMap.get(currentState);
 			final Set<Set<L>> currentDelaySet = mDelaySetMap.get(currentState);
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
@@ -121,20 +121,18 @@ public class SleepSetDelayReduction<L, S> {
 				boolean stop = mVisitor.discoverState(currentState);
 				mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
 				if (!stop) {
-					mStateStack.push(currentState); //bla
 					for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 						if (!currentSleepSet.contains(transition.getLetter())) {
 							successorTransitionList.add(transition.getLetter());
 						}
 					}
 				} else {
-					mVisitor.backtrackState(currentState, mStateStack.contains(currentState));
-					//mStateStack.pop();
+					mVisitor.backtrackState(currentState);
+					mStateStack.pop();
 				}
 				
 
 			} else if (!currentDelaySet.isEmpty()) {
-				mStateStack.push(currentState); //bla
 				currentSleepSet = currentDelaySet.iterator().next();
 				currentDelaySet.remove(currentSleepSet);
 				final Set<L> pruned = mPrunedMap.get(currentState);
@@ -145,19 +143,18 @@ public class SleepSetDelayReduction<L, S> {
 			} else {
 				boolean stop = mVisitor.discoverState(currentState);
 				if (!stop) {
-					mStateStack.push(currentState); //bla
 					final Set<L> pruned = mPrunedMap.get(currentState);
 					successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
 					currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
 					mSleepSetMap.put(currentState, currentSleepSet);
 					mPrunedMap.put(currentState, currentSleepSet);
 					if (successorTransitionList.isEmpty()) {
-						mVisitor.backtrackState(currentState, mStateStack.contains(currentState));
+						mVisitor.backtrackState(currentState);
 						mStateStack.pop();
 					}
 				} else {
-					mVisitor.backtrackState(currentState, mStateStack.contains(currentState));
-					//mStateStack.pop();
+					mVisitor.backtrackState(currentState);
+					mStateStack.pop();
 				}	
 			}
 /*

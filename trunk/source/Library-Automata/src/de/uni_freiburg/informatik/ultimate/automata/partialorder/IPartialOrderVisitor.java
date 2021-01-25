@@ -31,10 +31,10 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 public interface IPartialOrderVisitor<L, S> {
 	boolean discoverTransition(S source, L letter, S target);
 
+	void backtrackState(S state);
+
 	// TODO (Dominik 2021-01-24) Medium-term we should try to get rid of this method, as "delaying" states is an
 	// implementation detail of SleepSetDelayReduction that should not exposed to visitors.
-	void backtrackState(S state, boolean loop);
-	
 	void delayState(S state);
 
 	boolean addStartState(S state);
