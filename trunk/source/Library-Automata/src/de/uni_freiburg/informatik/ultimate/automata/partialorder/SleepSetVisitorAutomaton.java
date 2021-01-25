@@ -61,7 +61,7 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 	}
 
 	@Override
-	public void backtrackState(final S state) {
+	public void backtrackState(final S state, final boolean loop) {
 		// do nothing
 	}
 

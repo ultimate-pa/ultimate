@@ -89,7 +89,7 @@ public class SleepSetNewStateReduction<L, S, S2> {
 
 		while (!mExit && !mStateStack.isEmpty()) {
 
-			final S2 currentSleepSetState = mStateStack.peek();
+			final S2 currentSleepSetState = mStateStack.pop();
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
 			final S currentState = mStateMap.get(currentSleepSetState).getFirst();
 			final Set<L> currentSleepSet = mStateMap.get(currentSleepSetState).getSecond();
@@ -97,22 +97,23 @@ public class SleepSetNewStateReduction<L, S, S2> {
 			if (!mVisitedSet.contains(currentSleepSetState)) {
 				// state not visited with this sleep set
 				boolean stop = mVisitor.discoverState(currentState);
+				mVisitedSet.add(currentSleepSetState);
+				mStateStack.push(currentSleepSetState);
 				if (!stop) {
-					mVisitedSet.add(currentSleepSetState);
 					for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
 						if (!currentSleepSet.contains(transition.getLetter())) {
 							successorTransitionList.add(transition.getLetter());
 						}
 					}
 				} else {
-					mVisitor.backtrackState(currentState);
-					mStateStack.pop();
+					//mVisitor.backtrackState(currentState, true);
+					//mStateStack.pop();
 				}
 			}
 			
 			else {
-				mVisitor.backtrackState(currentState);
-				mStateStack.pop();
+				mVisitor.backtrackState(currentState, mStateStack.contains(currentSleepSetState));
+				//mStateStack.pop();
 			}
 
 			// sort successorTransitionList according to the given order
