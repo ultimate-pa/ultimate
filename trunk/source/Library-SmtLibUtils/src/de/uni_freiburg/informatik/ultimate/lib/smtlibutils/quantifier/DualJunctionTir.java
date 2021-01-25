@@ -179,9 +179,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				// size", esr.getReductionOfTreeSize(),
 				// esr.getReductionRatioInPercent());
 				// mLogger.info(sizeMessage);
-				return new EliminationResult(
-						new EliminationTask(inputEt.getQuantifier(), inputEt.getEliminatees(), resultTerm),
-						Collections.emptySet());
+				return new EliminationResult(inputEt.update(resultTerm), Collections.emptySet());
 			}
 		}
 		return null;

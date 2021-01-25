@@ -454,14 +454,13 @@ public class QuantifierPusher extends TermTransformer {
 				if (!EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION) {
 					return correspondingFinite;
 				}
-				final Set<TermVariable> bfdvForRecursiveCall = new HashSet<>(et.getEliminatees());
-				bfdvForRecursiveCall.addAll(et.getBannedForDivCapture());
+				final Set<TermVariable> boundInRecursiveCall = et.getBoundByAncestors();
 				final Term criticalConstraint = PolyPacSimplificationTermWalker
 						.buildCriticalConstraintForApplicationTerm(mgdScript.getScript(), et.getContext(),
 								((ApplicationTerm) et.getTerm()).getFunction(), Arrays.asList(dualFiniteParams),
 								i);
 				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
-						bfdvForRecursiveCall, criticalConstraint, correspondingFinite);
+						boundInRecursiveCall, criticalConstraint, correspondingFinite);
 				if (allStillQuantified(et.getEliminatees(), pushed)) {
 					// we should not pay the high price for applying distributivity if we do not get
 					// a formula with less quantified variales in return
@@ -495,7 +494,7 @@ public class QuantifierPusher extends TermTransformer {
 								((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams),
 								i);
 				dualFiniteParams[i] = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
-						inputEt.getBannedForDivCapture(), criticalConstraint, dualFiniteParams[i]);
+						inputEt.getBoundByAncestors(), criticalConstraint, dualFiniteParams[i]);
 			}
 		}
 		final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
@@ -583,10 +582,10 @@ public class QuantifierPusher extends TermTransformer {
 					determineMinionEliminatees(et.getEliminatees(), finiteParamsWithoutEliminatee);
 			final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
 					et.getQuantifier(), finiteParamsWithEliminatee);
+			// FIXME: Bin other eliminatees in context.
 			final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
 					new HashSet<>(minionEliminatees), dualFiniteJunction);
-			final Set<TermVariable> bfdcForRecursiveCall = new HashSet<>(et.getEliminatees());
-			bfdcForRecursiveCall.addAll(et.getBannedForDivCapture());
+			final Set<TermVariable> boundInRecursiveCall = et.getBannedForDivCapture();
 			final Term criticalConstraint;
 			{
 				final List<Term> additionalConjunction = new ArrayList<>();
@@ -603,7 +602,7 @@ public class QuantifierPusher extends TermTransformer {
 
 			}
 			Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
-					bfdcForRecursiveCall, criticalConstraint, quantified);
+					boundInRecursiveCall, criticalConstraint, quantified);
 			if (pushed instanceof QuantifiedFormula) {
 				final QuantifiedFormula qf = (QuantifiedFormula) pushed;
 				for (final TermVariable var : Arrays.asList(qf.getVariables())) {
@@ -844,6 +843,9 @@ public class QuantifierPusher extends TermTransformer {
 					return er.integrateNewEliminatees().toTerm(mgdScript.getScript());
 				}
 				currentEt = er.integrateNewEliminatees();
+				if (!currentEt.getBoundByAncestors().equals(inputEt.getBoundByAncestors())) {
+					throw new AssertionError("Illegal modification of banned variables.");
+				}
 			}
 			iterations++;
 			if (iterations % 10 == 0) {

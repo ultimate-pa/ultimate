@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -107,9 +106,7 @@ public abstract class DualJunctionQuantifierElimination {
 		}
 
 		public EliminationTask integrateNewEliminatees() {
-			final Set<TermVariable> eliminatees = new LinkedHashSet<>(getNewEliminatees());
-			eliminatees.addAll(getEliminationTask().getEliminatees());
-			return new EliminationTask(getEliminationTask().getQuantifier(), eliminatees, getEliminationTask().getTerm());
+			return mEliminationTask.integrateNewEliminatees(mNewEliminatees);
 		}
 	}
 

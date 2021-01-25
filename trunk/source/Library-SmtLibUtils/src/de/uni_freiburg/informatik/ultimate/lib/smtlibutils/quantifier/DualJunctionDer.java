@@ -375,9 +375,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			final SolvedBinaryRelation sbr = pair.getSecond();
 			final Term dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), dualJuncts, pair,
 					dualJunctsResult);
-			return new EliminationResult(
-					new EliminationTask(et.getQuantifier(), et.getEliminatees(), dualJunctionResult),
-					Collections.emptySet());
+			return new EliminationResult(et.update(dualJunctionResult),	Collections.emptySet());
 		}
 	}
 
@@ -455,9 +453,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			}
 			final Term correspondingJunction = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(),
 					et.getQuantifier(), correspondingJunctsResult);
-			return new EliminationResult(
-					new EliminationTask(et.getQuantifier(), et.getEliminatees(), correspondingJunction),
-					mcsbr.getAuxiliaryVariables());
+			return new EliminationResult(et.update(correspondingJunction), mcsbr.getAuxiliaryVariables());
 		}
 	}
 

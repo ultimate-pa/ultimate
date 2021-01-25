@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 
+import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -63,6 +65,31 @@ public class EliminationTaskWithContext extends EliminationTask {
 
 	public Term getContext() {
 		return mContext;
+	}
+
+
+	@Override
+	public EliminationTaskWithContext integrateNewEliminatees(final Set<TermVariable> additionalEliminatees) {
+		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
+				getTerm());
+		final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(getEliminatees());
+		final boolean modified = resultEliminatees.addAll(additionalOccuringEliminatees);
+		if (modified) {
+			return new EliminationTaskWithContext(getQuantifier(), resultEliminatees, getTerm(), getBoundByAncestors(),
+					mContext);
+		} else {
+			return this;
+		}
+	}
+
+	@Override
+	public EliminationTaskWithContext update(final Set<TermVariable> newEliminatees, final Term term) {
+		return new EliminationTaskWithContext(getQuantifier(), newEliminatees, term, getBoundByAncestors(), mContext);
+	}
+
+	@Override
+	public EliminationTaskWithContext update(final Term term) {
+		return new EliminationTaskWithContext(getQuantifier(), getEliminatees(), term, getBoundByAncestors(), mContext);
 	}
 
 }

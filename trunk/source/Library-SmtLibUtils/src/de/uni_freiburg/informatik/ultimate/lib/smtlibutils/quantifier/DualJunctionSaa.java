@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -100,10 +101,13 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 				throw new AssertionError(e);
 			}
 			if (res != null) {
-				final Set<TermVariable> eliminatees = new HashSet<TermVariable>(inputEt.getEliminatees());
-				eliminatees.remove(eliminatee);
-				eliminatees.addAll(res.getEliminatees());
-				return new EliminationTask(res.getQuantifier(), eliminatees, res.getTerm());
+				if (Arrays.asList(res.getTerm().getFreeVars()).contains(eliminatee)) {
+					throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEt.toTerm(mScript));
+				}
+				final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(inputEt.getEliminatees());
+				resultEliminatees.remove(eliminatee);
+				resultEliminatees.addAll(res.getEliminatees());
+				return inputEt.update(resultEliminatees, res.getTerm());
 			}
 		}
 		return null;

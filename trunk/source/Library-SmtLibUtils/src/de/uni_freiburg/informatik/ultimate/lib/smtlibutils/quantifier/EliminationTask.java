@@ -55,16 +55,16 @@ public class EliminationTask {
 	private final int mQuantifier;
 	private final LinkedHashSet<TermVariable> mEliminatees;
 	private final Term mTerm;
-	private final Set<TermVariable> mAdditionallyBannedForDivCapture;
+	private final Set<TermVariable> mBoundByAncestors;
 
 	public EliminationTask(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
-			final Set<TermVariable> additionallyBannedForDivCapture) {
+			final Set<TermVariable> boundByAncestors) {
 		super();
 		assert (quantifier == QuantifiedFormula.EXISTS || quantifier == QuantifiedFormula.FORALL);
 		mQuantifier = quantifier;
 		mEliminatees = QuantifierUtils.projectToFreeVars(eliminatees, term);
 		mTerm = term;
-		mAdditionallyBannedForDivCapture = additionallyBannedForDivCapture;
+		mBoundByAncestors = boundByAncestors;
 	}
 
 	public EliminationTask(final int quantifier, final Set<TermVariable> eliminatees, final Term term) {
@@ -73,7 +73,7 @@ public class EliminationTask {
 		mQuantifier = quantifier;
 		mEliminatees = QuantifierUtils.projectToFreeVars(eliminatees, term);
 		mTerm = term;
-		mAdditionallyBannedForDivCapture = Collections.emptySet();
+		mBoundByAncestors = Collections.emptySet();
 	}
 
 	public EliminationTask(final QuantifiedFormula quantifiedFormula) {
@@ -82,17 +82,17 @@ public class EliminationTask {
 		mEliminatees = QuantifierUtils.projectToFreeVars(Arrays.asList(quantifiedFormula.getVariables()),
 				quantifiedFormula.getSubformula());
 		mTerm = quantifiedFormula.getSubformula();
-		mAdditionallyBannedForDivCapture = Collections.emptySet();
+		mBoundByAncestors = Collections.emptySet();
 	}
 
 	public EliminationTask(final QuantifiedFormula quantifiedFormula,
-			final Set<TermVariable> additionallyBannedForDivCapture) {
+			final Set<TermVariable> boundByAncestors) {
 		super();
 		mQuantifier = quantifiedFormula.getQuantifier();
 		mEliminatees = QuantifierUtils.projectToFreeVars(Arrays.asList(quantifiedFormula.getVariables()),
 				quantifiedFormula.getSubformula());
 		mTerm = quantifiedFormula.getSubformula();
-		mAdditionallyBannedForDivCapture = additionallyBannedForDivCapture;
+		mBoundByAncestors = boundByAncestors;
 	}
 
 	public int getQuantifier() {
@@ -103,13 +103,17 @@ public class EliminationTask {
 		return Collections.unmodifiableSet(mEliminatees);
 	}
 
+	public Set<TermVariable> getBoundByAncestors() {
+		return Collections.unmodifiableSet(mBoundByAncestors);
+	}
+
 	public Term getTerm() {
 		return mTerm;
 	}
 
 	public Set<TermVariable> getBannedForDivCapture() {
 		final Set<TermVariable> result = new HashSet<>(mEliminatees);
-		result.addAll(mAdditionallyBannedForDivCapture);
+		result.addAll(mBoundByAncestors);
 		return Collections.unmodifiableSet(result);
 	}
 
@@ -119,6 +123,26 @@ public class EliminationTask {
 		} else {
 			return script.quantifier(mQuantifier, mEliminatees.toArray(new TermVariable[mEliminatees.size()]), mTerm);
 		}
+	}
+
+	public EliminationTask integrateNewEliminatees(final Set<TermVariable> additionalEliminatees) {
+		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
+				mTerm);
+		final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(mEliminatees);
+		final boolean modified = resultEliminatees.addAll(additionalOccuringEliminatees);
+		if (modified) {
+			return new EliminationTask(mQuantifier, resultEliminatees, mTerm, mBoundByAncestors);
+		} else {
+			return this;
+		}
+	}
+
+	public EliminationTask update(final Set<TermVariable> newEliminatees, final Term term) {
+		return new EliminationTask(mQuantifier, newEliminatees, term, mBoundByAncestors);
+	}
+
+	public EliminationTask update(final Term term) {
+		return new EliminationTask(mQuantifier, mEliminatees, term, mBoundByAncestors);
 	}
 
 
