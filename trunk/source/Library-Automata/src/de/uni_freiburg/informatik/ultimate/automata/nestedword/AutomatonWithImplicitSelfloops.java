@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -64,11 +65,11 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 	protected final ILogger mLogger;
 	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mInputAutomaton;
 	protected final Set<LETTER> mLooperLetters;
-	protected final Set<STATE> mLooperStates;
+	protected final Predicate<STATE> mLooperStates;
 
 	public AutomatonWithImplicitSelfloops(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> inputAutomaton,
-			final Set<LETTER> loopersLetters, final Set<STATE> looperStates) {
+			final Set<LETTER> loopersLetters, final Predicate<STATE> looperStates) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -83,7 +84,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 	public AutomatonWithImplicitSelfloops(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> inputAutomaton,
 			final Set<LETTER> loopersLetters) {
-		this(services, inputAutomaton, loopersLetters, new ContainsAny());
+		this(services, inputAutomaton, loopersLetters, x -> true);
 	}
 
 	@Override
@@ -133,7 +134,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
-		if (mLooperStates.contains(state)) {
+		if (mLooperStates.test(state)) {
 			final Set<LETTER> letters = new HashSet<>();
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
 				letters.add(outTrans.getLetter());
@@ -157,7 +158,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
-		if (mLooperStates.contains(state)) {
+		if (mLooperStates.test(state)) {
 			if (mLooperLetters.contains(letter)) {
 				return Collections.singleton(new OutgoingInternalTransition(letter, state));
 			} else {
@@ -170,7 +171,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
-		if (mLooperStates.contains(state)) {
+		if (mLooperStates.test(state)) {
 			// TODO 2019-10-15 Matthias: Make this method efficient if required.
 			final List<Iterator<OutgoingInternalTransition<LETTER, STATE>>> iterators = new ArrayList<>();
 			for (final LETTER letter : mInputAutomaton.getAlphabet()) {

@@ -37,15 +37,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +59,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -79,11 +81,15 @@ public class CoreUtil {
 	}
 
 	public static String getIsoUtcTimestamp() {
-		final TimeZone tz = TimeZone.getTimeZone("UTC");
-		// Quoted "Z" to indicate UTC, no timezone offset
-		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-		df.setTimeZone(tz);
-		return df.format(new Date());
+		final Instant now = Instant.now();
+		final DateTimeFormatter format = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC"));
+		return format.format(now.truncatedTo(ChronoUnit.SECONDS));
+	}
+
+	public static String getIsoUtcTimestampWithUtcOffset() {
+		final ZonedDateTime zdt = ZonedDateTime.now();
+		final DateTimeFormatter format = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+		return format.format(zdt.truncatedTo(ChronoUnit.SECONDS));
 	}
 
 	/**
@@ -123,17 +129,25 @@ public class CoreUtil {
 		try {
 			final InputStream prop = cl.getResourceAsStream("version.properties");
 			if (prop == null) {
-				return "?-m";
+				return "?-?-m";
 			}
 			properties.load(prop);
 		} catch (final IOException e) {
 			return null;
 		}
 
-		final String hash = properties.getProperty("git.commit.id.abbrev", "UNKNOWN");
-		final String dirty = properties.getProperty("git.dirty", "UNKNOWN");
+		final String unknown = "?";
+		final String branch = properties.getProperty("git.branch", unknown).replace('/', '.');
+		final String hash = properties.getProperty("git.commit.id.abbrev", unknown);
+		final String dirty = properties.getProperty("git.dirty", unknown);
 
-		return hash + ("UNKNOWN".equals(dirty) ? "" : "true".equals(dirty) ? "-m" : "");
+		final String format;
+		if (!"true".equals(dirty)) {
+			format = "%s-%s";
+		} else {
+			format = "%s-%s-m";
+		}
+		return String.format(format, branch, hash);
 	}
 
 	/**

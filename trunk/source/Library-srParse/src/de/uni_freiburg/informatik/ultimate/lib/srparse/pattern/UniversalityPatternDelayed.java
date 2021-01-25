@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that "R" holds at most "c1" time units later
+ * {scope}, it is always the case that "R" holds after at at most "c1" time units
  *
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  *
@@ -107,9 +107,9 @@ public class UniversalityPatternDelayed extends PatternType<UniversalityPatternD
 		}
 		sb.append("it is always the case that \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds at most \"");
+		sb.append("\" holds after at most \"");
 		sb.append(getDuration().get(0));
-		sb.append("\" time units later");
+		sb.append("\" time units");
 		return sb.toString();
 	}
 

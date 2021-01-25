@@ -567,7 +567,8 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 					}
 					return Result.UNKNOWN;
 				case REPORT_NONTERMINATION:
-					if (!lassoWasOverapproximated().isEmpty()) {
+					final Map<String, ILocation> overapprox = lassoWasOverapproximated();
+					if (!overapprox.isEmpty()) {
 						mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
 						if (mConstructTermcompProof) {
 							mTermcompProofBenchmark.reportRemainderModule(false);
@@ -640,7 +641,7 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 		return Result.TIMEOUT;
 	}
 
-	private Map<String, ILocation> lassoWasOverapproximated() {
+	public Map<String, ILocation> lassoWasOverapproximated() {
 		final NestedWord<L> stem = mCounterexample.getStem().getWord();
 		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
 		final Map<String, ILocation> overapproximations = new HashMap<>();

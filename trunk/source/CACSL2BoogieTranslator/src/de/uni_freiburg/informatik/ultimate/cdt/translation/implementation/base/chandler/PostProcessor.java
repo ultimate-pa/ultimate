@@ -200,7 +200,7 @@ public class PostProcessor {
 		final Set<String> undefinedTypes = mTypeHandler.getUndefinedTypes();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 
-		final String checkedMethod = mSettings.getCheckedMethod();
+		final String checkedMethod = mSettings.getEntryMethod();
 
 		if (!checkedMethod.equals(SFO.EMPTY) && mProcedureManager.hasProcedure(checkedMethod)) {
 			mLogger.info("Analyzing one entry point: " + checkedMethod);
@@ -899,7 +899,7 @@ public class PostProcessor {
 		final ArrayList<VariableDeclaration> startDecl = new ArrayList<>();
 		startStmt.add(
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], SFO.INIT, new Expression[0]));
-		final String checkedMethod = mSettings.getCheckedMethod();
+		final String checkedMethod = mSettings.getEntryMethod();
 		final VarList[] checkedMethodOutParams =
 				mProcedureManager.getProcedureDeclaration(checkedMethod).getOutParams();
 		final VarList[] checkedMethodInParams = mProcedureManager.getProcedureDeclaration(checkedMethod).getInParams();

@@ -367,19 +367,21 @@ public class FastUPRCore {
 		// INCONSISTENCY
 
 		final HashSet<TermVariable> vars = intervalBeginning.getVariables();
-		final Term satisfiableVars = script.quantifier(QuantifiedFormula.EXISTS, vars.toArray(new TermVariable[0]),
-				intervalBeginning.toTerm(script));
-
-		final Term satisfiable = script.quantifier(QuantifiedFormula.FORALL,
-				new TermVariable[] { differenceN.getParametricVar() }, script.term("or", lesserZero, satisfiableVars));
-
 		final boolean isSat = mTermChecker.checkQuantifiedTerm(quantTerm);
 		if (!isSat) {
 			return false;
 		}
-		final boolean isConsistent = mTermChecker.checkQuantifiedTerm(satisfiable);
+		if (!vars.isEmpty()) {
+			final Term satisfiableVars = script.quantifier(QuantifiedFormula.EXISTS, vars.toArray(new TermVariable[0]),
+					intervalBeginning.toTerm(script));
 
-		return isConsistent;
+			final Term satisfiable =
+					script.quantifier(QuantifiedFormula.FORALL, new TermVariable[] { differenceN.getParametricVar() },
+							script.term("or", lesserZero, satisfiableVars));
+			return mTermChecker.checkQuantifiedTerm(satisfiable);
+
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	private boolean isOctagon(final Term relation, final Script script) {

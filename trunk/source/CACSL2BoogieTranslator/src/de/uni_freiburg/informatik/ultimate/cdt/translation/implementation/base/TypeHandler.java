@@ -300,6 +300,13 @@ public class TypeHandler implements ITypeHandler {
 			} else if (cId.equals("__pthread_list_t")) {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.VOID))));
+			} else if (cId.equals("__float128")) {
+				// DD 2020-12-02: Not entirely accurate, because it is actually architecture dependent.
+				// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
+				// https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
+				final CPrimitive cType = new CPrimitive(CPrimitives.LONGDOUBLE);
+				final ASTType astType = cType2AstType(loc, cType);
+				return (new TypesResult(astType, node.isConst(), false, cType));
 			} else {
 				final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 				final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
@@ -493,8 +500,8 @@ public class TypeHandler implements ITypeHandler {
 		final TypesResult result = new TypesResult(type, false, false, cvar);
 
 		if (mIncompleteType.remove(identifier)) {
-			final TypesResult typeResult = mDefinedTypes.get(rslvName);
-			final CStructOrUnion incompleteStruct = (CStructOrUnion) typeResult.getCType();
+			// final TypesResult typeResult = mDefinedTypes.get(rslvName);
+			// final CStructOrUnion incompleteStruct = (CStructOrUnion) typeResult.getCType();
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
 			// mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, this);

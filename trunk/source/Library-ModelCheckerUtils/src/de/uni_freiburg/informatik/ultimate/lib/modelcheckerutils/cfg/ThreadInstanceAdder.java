@@ -114,7 +114,7 @@ public class ThreadInstanceAdder {
 				final UnmodifiableTransFormula errorTransformula = TransFormulaBuilder
 						.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
 				final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
-						new Payload(), errorTransformula);
+						new Payload(), errorTransformula, errorTransformula);
 				callerNode.addOutgoing(errorTransition);
 				errorNode.addIncoming(errorTransition);
 //				integrateEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
@@ -125,6 +125,7 @@ public class ThreadInstanceAdder {
 			}
 		}
 
+		int joinOtherThreadTransitions = 0;
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
 		// location of the procedure
 		// to all target locations of each JoinCurrentThreadEdge
@@ -139,11 +140,13 @@ public class ThreadInstanceAdder {
 				if (threadIdCompatible && returnValueCompatible) {
 					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(),
 							icfg, backtranslator, addThreadInUseViolationEdges);
+					joinOtherThreadTransitions++;
 				}
 			}
 
 			// }
 		}
+		mLogger.info("Constructed " + joinOtherThreadTransitions + " joinOtherThreadTransitions.");
 		return icfg;
 	}
 
@@ -445,7 +448,12 @@ public class ThreadInstanceAdder {
 
 	private static String generateThreadInstanceId(final int forkNumber, final String procedureName,
 			final int threadInstanceNumber, final int threadInstanceMax) {
-		return procedureName + "Thread" + threadInstanceNumber + "of" +  threadInstanceMax + "ForFork" + forkNumber;
+		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + forkNumber;
+	}
+
+	private static String generateThreadInstanceId(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork,
+			final String procedureName, final int threadInstanceNumber, final int threadInstanceMax) {
+		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + fork.hashCode();
 	}
 
 	private static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId,
@@ -496,10 +504,10 @@ public class ThreadInstanceAdder {
 		newSymbolTable.finishConstruction();
 		final ConcurrencyInformation concurrencyInformation = new ConcurrencyInformation(threadInstanceMap,
 				inUseErrorNodeMap, joinTransitions);
-		return new CfgSmtToolkit(new ModifiableGlobalsTable(proc2Globals), cfgSmtToolkit.getManagedScript(),
-				newSymbolTable, cfgSmtToolkit.getProcedures(), cfgSmtToolkit.getInParams(),
-				cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(), concurrencyInformation,
-				cfgSmtToolkit.getSmtFunctionsAndAxioms());
+		return new CfgSmtToolkit(mServices, new ModifiableGlobalsTable(proc2Globals),
+				cfgSmtToolkit.getManagedScript(), newSymbolTable, cfgSmtToolkit.getProcedures(),
+				cfgSmtToolkit.getInParams(), cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(),
+				concurrencyInformation, cfgSmtToolkit.getSmtFunctionsAndAxioms());
 	}
 
 	private static void addVar(final IProgramNonOldVar var, final DefaultIcfgSymbolTable newSymbolTable,

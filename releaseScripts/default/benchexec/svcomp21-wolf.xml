@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="ultimateautomizer" timelimit="5 min" memlimit="8 GB" cpuCores="2">
+    <!-- Until architecture can be specified directly for the C translation, no-wrapper cannot distinguish between different architectures -->
+    <option name="--force-no-wrapper"/>
+    <option name="--traceabstraction.trace.refinement.strategy">WOLF</option>
+    <option name="-tc">config/AutomizerReach.xml</option>
+    
+    <rundefinition name="SV-COMP21_unreach-call">
+        <option name="-s">config/svcomp-Reach-64bit-Automizer_Bitvector.epf</option>
+        <tasks name="ReachSafety-Arrays">
+            <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-BitVectors">
+            <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-ControlFlow">
+            <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-ECA">
+            <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-Floats">
+            <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-Heap">
+            <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-Loops">
+            <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-ProductLines">
+            <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-Recursive">
+            <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-Sequentialized">
+            <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-XCSP">
+            <includesfile>../sv-benchmarks/c/ReachSafety-XCSP.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ReachSafety-Combinations">
+            <includesfile>../sv-benchmarks/c/ReachSafety-Combinations.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="ConcurrencySafety-Main">
+            <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety">
+            <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety">
+            <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+            <excludesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64Large-ReachSafety.set</excludesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="SoftwareSystems-DeviceDriversLinux64Large-ReachSafety">
+            <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64Large-ReachSafety.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+        <tasks name="SoftwareSystems-uthash-ReachSafety">
+            <includesfile>../sv-benchmarks/c/SoftwareSystems-uthash-ReachSafety.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
+    </rundefinition>
+    <rundefinition name="SV-COMP21_valid-memcleanup">
+        <option name="-s">config/svcomp-MemCleanup-64bit-Automizer_Bitvector.epf</option>
+        <tasks name="MemSafety-MemCleanup">
+            <includesfile>../sv-benchmarks/c/MemSafety-MemCleanup.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memcleanup.prp</propertyfile>
+        </tasks>
+    </rundefinition>
+    <rundefinition name="SV-COMP21_valid-memsafety">
+        <option name="-s">config/svcomp-DerefFreeMemtrack-64bit-Automizer_Bitvector.epf</option>
+        <tasks name="MemSafety-Arrays">
+            <includesfile>../sv-benchmarks/c/MemSafety-Arrays.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+        <tasks name="MemSafety-Heap">
+            <includesfile>../sv-benchmarks/c/MemSafety-Heap.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+        <tasks name="MemSafety-LinkedLists">
+            <includesfile>../sv-benchmarks/c/MemSafety-LinkedLists.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+        <tasks name="MemSafety-Other">
+            <includesfile>../sv-benchmarks/c/MemSafety-Other.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+        <tasks name="MemSafety-Juliet">
+            <includesfile>../sv-benchmarks/c/MemSafety-Juliet.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+        <tasks name="SoftwareSystems-BusyBox-MemSafety">
+            <includesfile>../sv-benchmarks/c/SoftwareSystems-BusyBox-MemSafety.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+        <tasks name="SoftwareSystems-OpenBSD-MemSafety">
+            <includesfile>../sv-benchmarks/c/SoftwareSystems-OpenBSD-MemSafety.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+        <tasks name="SoftwareSystems-uthash-MemSafety">
+            <includesfile>../sv-benchmarks/c/SoftwareSystems-uthash-MemSafety.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+    </rundefinition>
+</benchmark>

@@ -55,27 +55,27 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTPrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfDer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -299,10 +299,9 @@ public final class TransFormulaUtils {
 	 * @param xnfConversionTechnique
 	 */
 	public static UnmodifiableTransFormula parallelComposition(final ILogger logger,
-			final IUltimateServiceProvider services, final int serialNumber, final ManagedScript mgdScript,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final TermVariable[] branchIndicators, final boolean tranformToCNF,
 			final XnfConversionTechnique xnfConversionTechnique, final UnmodifiableTransFormula... transFormulas) {
-		//FIXME Matthias 2019-09-22: remove serial number, use ManagedScript to construct fresh variables
 		logger.debug("parallel composition");
 		boolean useBranchEncoders;
 		if (branchIndicators == null) {
@@ -328,9 +327,7 @@ public final class TransFormulaUtils {
 		for (final UnmodifiableTransFormula tf : transFormulas) {
 			for (final IProgramVar bv : tf.getInVars().keySet()) {
 				if (!tfb.containsInVar(bv)) {
-					final Sort sort = tf.getInVars().get(bv).getSort();
-					final String inVarName = bv.getGloballyUniqueId() + "_In" + serialNumber;
-					tfb.addInVar(bv, mgdScript.variable(inVarName, sort));
+					addInVariable(tfb, bv, tf.getInVars().get(bv).getSort(), tf, mgdScript);
 				}
 			}
 			for (final IProgramVar bv : tf.getOutVars().keySet()) {
@@ -340,9 +337,7 @@ public final class TransFormulaUtils {
 				// We can omit this step in the special case where the
 				// variable is assigned in all branches.
 				if (!tfb.containsInVar(bv) && !assignedInAll(bv, transFormulas)) {
-					final Sort sort = tf.getOutVars().get(bv).getSort();
-					final String inVarName = bv.getGloballyUniqueId() + "_In" + serialNumber;
-					tfb.addInVar(bv, mgdScript.variable(inVarName, sort));
+					addInVariable(tfb, bv, tf.getOutVars().get(bv).getSort(), tf, mgdScript);
 				}
 
 				final TermVariable outVar = tf.getOutVars().get(bv);
@@ -364,8 +359,9 @@ public final class TransFormulaUtils {
 		for (final Entry<IProgramVar, Sort> entry : assignedInSomeBranch.entrySet()) {
 			final IProgramVar bv = entry.getKey();
 			final Sort sort = entry.getValue();
-			final String outVarName = bv.getGloballyUniqueId() + "_Out" + serialNumber;
-			tfb.addOutVar(bv, mgdScript.variable(outVarName, sort));
+			final String baseName = bv.getGloballyUniqueId() + "_Out";
+			final TermVariable outVar = mgdScript.constructFreshTermVariable(baseName, sort);
+			tfb.addOutVar(bv, outVar);
 		}
 
 		final Set<TermVariable> auxVars = new HashSet<>();
@@ -442,6 +438,16 @@ public final class TransFormulaUtils {
 			tfb.addAuxVar(auxVar);
 		}
 		return tfb.finishConstruction(mgdScript);
+	}
+
+	private static void addInVariable(final TransFormulaBuilder tfb, final IProgramVar bv, final Sort sort,
+			final TransFormula tf, final ManagedScript mgdScript) {
+		assert !tfb.containsInVar(bv);
+
+		final String baseName = bv.getGloballyUniqueId() + "_In";
+		final TermVariable inVar = mgdScript.constructFreshTermVariable(baseName, sort);
+		tfb.addInVar(bv, inVar);
+
 	}
 
 	/**
@@ -673,8 +679,8 @@ public final class TransFormulaUtils {
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
 		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
-		resultComposition =
-				new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(resultComposition);
+		resultComposition = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
+				resultComposition);
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
 		IPredicate beforeCallPredicate = truePredicate;
 		for (final UnmodifiableTransFormula tf : beforeCall) {
@@ -685,7 +691,7 @@ public final class TransFormulaUtils {
 				oldVarsAssignment, modifiableGlobalsOfEndProcedure);
 		final IPredicate afterCallPredicate = bpf.newPredicate(afterCallTerm);
 		Term endTerm = pt.strongestPostcondition(afterCallPredicate, afterCallTf);
-		endTerm = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(endTerm);
+		endTerm = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, endTerm);
 		final IPredicate endPredicate = bpf.newPredicate(endTerm);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(endPredicate, false, resultCompositionPredicate, false);
@@ -843,8 +849,8 @@ public final class TransFormulaUtils {
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
 		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
-		resultComposition =
-				new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(resultComposition);
+		resultComposition = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
+				resultComposition);
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
 		final Term afterCallTerm = pt.strongestPostconditionCall(truePredicate, callTf, globalVarsAssignment,
 				oldVarsAssignment, modifiableGlobals);
@@ -853,8 +859,8 @@ public final class TransFormulaUtils {
 		final IPredicate beforeReturnPredicate = bpf.newPredicate(beforeReturnTerm);
 		Term afterReturnTerm = pt.strongestPostconditionReturn(beforeReturnPredicate, truePredicate, returnTf, callTf,
 				oldVarsAssignment, modifiableGlobals);
-		afterReturnTerm =
-				new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(afterReturnTerm);
+		afterReturnTerm = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
+				afterReturnTerm);
 		final IPredicate afterReturnPredicate = bpf.newPredicate(afterReturnTerm);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);
@@ -1021,7 +1027,7 @@ public final class TransFormulaUtils {
 		final UnmodifiableTransFormula guard = computeGuard(tf, maScript, services, logger);
 		final UnmodifiableTransFormula negGuard =
 				negate(guard, maScript, services, logger, xnfConversionTechnique, simplificationTechnique);
-		final UnmodifiableTransFormula markhor = parallelComposition(logger, services, tf.hashCode(), maScript, null,
+		final UnmodifiableTransFormula markhor = parallelComposition(logger, services, maScript, null,
 				false, xnfConversionTechnique, tf, negGuard);
 		return markhor;
 	}
@@ -1032,8 +1038,8 @@ public final class TransFormulaUtils {
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 
-		final UnmodifiableTransFormula blockEnoded = parallelComposition(logger, services, tf.hashCode(), maScript,
-				null, false, xnfConversionTechnique, tf, altPath);
+		final UnmodifiableTransFormula blockEnoded =
+				parallelComposition(logger, services, maScript, null, false, xnfConversionTechnique, tf, altPath);
 		return blockEnoded;
 
 	}
@@ -1128,7 +1134,6 @@ public final class TransFormulaUtils {
 	 * will throw an Exception.
 	 *
 	 *
-	 * TODO 2017-08-07 Matthias: Get rid of serial number in parallel composition.
 	 *
 	 * @param logger
 	 * @param services
@@ -1140,9 +1145,9 @@ public final class TransFormulaUtils {
 	 * @return A TransFormula in guard form.
 	 */
 	public static UnmodifiableTransFormula constructRemainderGuard(final ILogger logger,
-			final IUltimateServiceProvider services, final int serialNumber, final ManagedScript mgdScript,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final UnmodifiableTransFormula... transFormulas) {
-		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, serialNumber, mgdScript,
+		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, mgdScript,
 				null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
 		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services, logger);
 		return negate(guardOfDisjunction, mgdScript, services, logger,

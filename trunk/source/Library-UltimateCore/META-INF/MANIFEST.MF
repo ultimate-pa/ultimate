@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.core
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.core
-Bundle-Version: 0.1.25
+Bundle-Version: 0.2.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
  de.uni_freiburg.informatik.ultimate.core.lib.models,
@@ -17,3 +17,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.smtlib
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.core
+Import-Package: com.sun.xml.bind.v2;version="2.2.0"

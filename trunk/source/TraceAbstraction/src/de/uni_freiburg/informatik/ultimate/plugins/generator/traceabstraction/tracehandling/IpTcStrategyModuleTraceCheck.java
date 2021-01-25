@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
 /**
@@ -80,12 +80,11 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 		stats.addStatistics(RefinementEngineStatisticsDefinitions.TRACE_CHECK, getOrConstruct().getStatistics());
 	}
 
-	protected ManagedScript createExternalManagedScript(final Script script) {
-		mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(script);
-		return new ManagedScript(mServices, script);
+	protected ManagedScript createExternalManagedScript(final SolverSettings solverSettings) {
+		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(solverSettings, getSolverName());
 	}
 
-	protected String getSolverName() {
+	private String getSolverName() {
 		return "TraceCheck_Iteration_" + mTaskIdentifier.toString();
 	}
 }

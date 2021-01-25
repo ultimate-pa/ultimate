@@ -173,7 +173,7 @@ public class MainTranslator {
 			final PreRunnerResult preRunnerResult = preRunner.getResult();
 
 			final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
-					preRunnerResult.getFunctionToIndex(), translationSettings.getCheckedMethod());
+					preRunnerResult.getFunctionToIndex(), translationSettings.getEntryMethod());
 
 			mLogger.info("Built tables and reachable declarations");
 			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
@@ -237,7 +237,7 @@ public class MainTranslator {
 				new PreprocessorHandler(reporter, locationFactory, translationSettings.isSvcompMode());
 		final ACSLHandler acslHandler =
 				new ACSLHandler(witnessInvariants != null, flatSymbolTable, expressionTranslation, typeHandler,
-						procedureManager, mainCHandler.getExpressionResultTransformer(), locationFactory, mainCHandler);
+						procedureManager, locationFactory, mainCHandler);
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witnessInvariants, locationFactory,
 				typeHandler, mainCHandler, ppHandler, acslHandler);
 

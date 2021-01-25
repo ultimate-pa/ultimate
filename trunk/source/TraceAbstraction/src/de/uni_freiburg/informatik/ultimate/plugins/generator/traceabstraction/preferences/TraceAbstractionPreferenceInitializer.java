@@ -615,6 +615,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		WOLF,
 		/**
+		 * Bitvector strategy similar to {@link #WOLF}, but no {@link AssertCodeBlockOrder} for Mathsat, and
+		 * {@link InterpolationTechnique#FPandBPonlyIfFpWasNotPerfect} for all solvers.
+		 */
+		BEAR,
+		/**
 		 * Heavy-weight bitvector strategy that tries SP with CVC4, Z3 and Mathsat with a high interpolant threshold
 		 */
 		WARTHOG,
@@ -651,7 +656,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Maximal Causality reduction strategy
 		 */
-		MCR
+		MCR,
 	}
 
 	/**
@@ -731,6 +736,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum McrInterpolantMethod {
-		WP, SP, INTERPOLATION
+		WP, SP
 	}
 }

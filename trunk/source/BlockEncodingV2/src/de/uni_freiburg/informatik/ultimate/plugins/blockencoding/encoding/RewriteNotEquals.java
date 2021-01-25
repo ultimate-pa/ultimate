@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
@@ -112,10 +113,10 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 		}
 
 		if (!repVarFac.isUnused()) {
-			final CfgSmtToolkit newToolkit = new CfgSmtToolkit(repVarFac.constructModifiableGlobalsTable(), mgScript,
-					repVarFac.constructIIcfgSymbolTable(), toolkit.getProcedures(), toolkit.getInParams(),
-					toolkit.getOutParams(), toolkit.getIcfgEdgeFactory(), toolkit.getConcurrencyInformation(),
-					toolkit.getSmtFunctionsAndAxioms());
+			final CfgSmtToolkit newToolkit = new CfgSmtToolkit(mServices, repVarFac.constructModifiableGlobalsTable(),
+					mgScript, repVarFac.constructIIcfgSymbolTable(), toolkit.getProcedures(),
+					toolkit.getInParams(), toolkit.getOutParams(), toolkit.getIcfgEdgeFactory(),
+					toolkit.getConcurrencyInformation(), toolkit.getSmtFunctionsAndAxioms());
 			icfg.setCfgSmtToolkit(newToolkit);
 		}
 

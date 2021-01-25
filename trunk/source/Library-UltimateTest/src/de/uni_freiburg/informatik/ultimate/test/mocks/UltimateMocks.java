@@ -62,8 +62,7 @@ public class UltimateMocks {
 
 	public static Script createCVC4Script(final LogLevel defaultLogLevel) {
 		// tlimit is given in milliseconds
-		return createSolver("cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=12000",
-				defaultLogLevel);
+		return createSolver("cvc4 --incremental --print-success --lang smt --tlimit-per=12000", defaultLogLevel);
 	}
 
 	public static Script createSolver(final String solverCommand, final LogLevel defaultLogLevel) {

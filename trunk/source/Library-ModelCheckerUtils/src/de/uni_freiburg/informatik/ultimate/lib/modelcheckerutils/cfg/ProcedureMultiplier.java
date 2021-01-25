@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadCurrentTransition;
@@ -101,8 +102,8 @@ public class ProcedureMultiplier {
 		final Map<String, List<ILocalProgramVar>> outParams = new HashMap<>(icfg.getCfgSmtToolkit().getOutParams());
 		final Set<String> procedures = new HashSet<>(icfg.getCfgSmtToolkit().getProcedures());
 		final SmtFunctionsAndAxioms smtSymbols = icfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms();
-		final DefaultIcfgSymbolTable symbolTable = new DefaultIcfgSymbolTable(icfg.getCfgSmtToolkit().getSymbolTable(),
-				procedures);
+		final DefaultIcfgSymbolTable symbolTable =
+				new DefaultIcfgSymbolTable(icfg.getCfgSmtToolkit().getSymbolTable(), procedures);
 		final ManagedScript managedScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final HashRelation<String, IProgramNonOldVar> proc2globals =
 				new HashRelation<>(icfg.getCfgSmtToolkit().getModifiableGlobalsTable().getProcToGlobals());
@@ -164,9 +165,9 @@ public class ProcedureMultiplier {
 		icfg.getCfgSmtToolkit().getManagedScript().unlock(this);
 
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
-		final CfgSmtToolkit newCfgSmtToolkit =
-				new CfgSmtToolkit(modifiableGlobalsTable, managedScript, symbolTable, procedures, inParams, outParams,
-						icfgEdgeFactory, icfg.getCfgSmtToolkit().getConcurrencyInformation(), smtSymbols);
+		final CfgSmtToolkit newCfgSmtToolkit = new CfgSmtToolkit(icfg.getCfgSmtToolkit().getServices(),
+				modifiableGlobalsTable, managedScript, symbolTable, procedures, inParams, outParams, icfgEdgeFactory,
+				icfg.getCfgSmtToolkit().getConcurrencyInformation(), smtSymbols);
 		final Map<IcfgLocation, IcfgLocation> newLoc2OldLoc = new HashMap<>();
 		for (final String proc : copyDirectives.getDomain()) {
 			final IcfgLocation procEntry = icfg.getProcedureEntryNodes().get(proc);
@@ -196,8 +197,11 @@ public class ProcedureMultiplier {
 							final IPayload payload = null;
 							final UnmodifiableTransFormula transFormula = TransFormulaBuilder.constructCopy(
 									managedScript, outEdge.getTransformula(), oldVar2newVar.get(copyIdentifier));
-							final IcfgInternalTransition newInternalEdge =
-									icfgEdgeFactory.createInternalTransition(source, target, payload, transFormula);
+							final UnmodifiableTransFormula transFormulaWithBE = TransFormulaBuilder.constructCopy(
+									managedScript, oldInternalEdge.getTransitionFormulaWithBranchEncoders(),
+									oldVar2newVar.get(copyIdentifier));
+							final IcfgInternalTransition newInternalEdge = icfgEdgeFactory.createInternalTransition(
+									source, target, payload, transFormula, transFormulaWithBE);
 							backtranslator.mapEdges(newInternalEdge, oldInternalEdge);
 							ModelUtils.copyAnnotations(oldInternalEdge, newInternalEdge);
 							source.addOutgoing(newInternalEdge);
@@ -247,6 +251,10 @@ public class ProcedureMultiplier {
 							target.addIncoming(newJoinEdge);
 							// add to join list
 							joinCurrentThreads.add(newJoinEdge);
+						} else if (outEdge instanceof IcfgCallTransition) {
+							throw new UnsupportedOperationException(String.format(
+									"%s does not support %s. Calls and returns should habe been removed by inlining. (Did the inlining fail because this program is recursive.)",
+									this.getClass().getSimpleName(), outEdge.getClass().getSimpleName()));
 						} else {
 							throw new UnsupportedOperationException(this.getClass().getSimpleName()
 									+ " does not support " + outEdge.getClass().getSimpleName());

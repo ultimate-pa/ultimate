@@ -168,18 +168,20 @@ public class ACSLHandler implements IACSLHandler {
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final LocationFactory mLocationFactory;
 	private final CHandler mCHandler;
+	private final CExpressionTranslator mCExpressionTranslator;
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
-			final ProcedureManager procedureManager, final ExpressionResultTransformer exprResultTransformer,
-			final LocationFactory locationFactory, final CHandler chandler) {
+			final ProcedureManager procedureManager, final LocationFactory locationFactory,
+			final CHandler chandler) {
 		mWitnessInvariantMode = witnessInvariantMode;
 		mSymboltable = symboltable;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
 		mProcedureManager = procedureManager;
-		mExprResultTransformer = exprResultTransformer;
+		mExprResultTransformer = chandler.getExpressionResultTransformer();
 		mLocationFactory = locationFactory;
+		mCExpressionTranslator = chandler.getCExpressionTranslator();
 		mCHandler = chandler;
 	}
 
@@ -386,7 +388,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCHandler.handleMultiplicativeOperation(loc, null, op, left, right, main.getAcslHook());
+			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, left, right, main.getAcslHook());
 		}
 		case ARITHMINUS:
 		case ARITHPLUS: {
@@ -395,7 +397,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCHandler.handleAdditiveOperation(loc, null, op, left, right, main.getAcslHook());
+			return mCExpressionTranslator.handleAdditiveOperation(loc, op, left, right, main.getAcslHook());
 		}
 		case COMPEQ:
 		case COMPNEQ: {
@@ -404,7 +406,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCHandler.handleEqualityOperators(loc, op, left, right);
+			return mCExpressionTranslator.handleEqualityOperators(loc, op, left, right);
 		}
 		case COMPGEQ:
 		case COMPGT:
@@ -415,7 +417,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCHandler.handleRelationalOperators(loc, op, left, right);
+			return mCExpressionTranslator.handleRelationalOperators(loc, op, left, right);
 		}
 		case LOGICAND:
 		case LOGICIFF:
@@ -488,11 +490,14 @@ public class ACSLHandler implements IACSLHandler {
 
 		switch (node.getOperator()) {
 		case LOGICNEG:
-			return mCHandler.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res, main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res,
+					main.getAcslHook());
 		case MINUS:
-			return mCHandler.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res, main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res,
+					main.getAcslHook());
 		case PLUS:
-			return mCHandler.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res, main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res,
+					main.getAcslHook());
 		case POINTER:
 		case ADDROF:
 		case LOGICCOMPLEMENT:
@@ -951,7 +956,8 @@ public class ACSLHandler implements IACSLHandler {
 		opPositive = mExprResultTransformer.switchToRValue(opPositive, loc, main.getAcslHook());
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getElsePart());
 		opNegative = mExprResultTransformer.switchToRValue(opNegative, loc, main.getAcslHook());
-		return mCHandler.handleConditionalOperator(loc, opCondition, opPositive, opNegative, main.getAcslHook());
+		return mCExpressionTranslator.handleConditionalOperator(loc, opCondition, opPositive, opNegative,
+				main.getAcslHook());
 	}
 
 }

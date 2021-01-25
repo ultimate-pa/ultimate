@@ -37,12 +37,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.ModuloNeighborTransformation;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RemoveNegation;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDisequality;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.PredicateHelper;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -50,18 +44,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
  * Preprocess a given loop by transforming not supported transitions.
@@ -71,13 +61,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @param <LETTER>
  *            transition type
  */
-public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
-		implements ILoopPreprocessor<IcfgLocation, UnmodifiableTransFormula> {
+public class LoopPreprocessorFastUPR<L extends IIcfgTransition<?>>
+		implements ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> {
 
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
 	// private final IPredicateUnifier mPredUnifier;
-	private final PredicateHelper<LETTER> mPredHelper;
+	private final PredicateHelper<L> mPredHelper;
 	private final IUltimateServiceProvider mServices;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final CfgSmtToolkit mCsToolkit;
@@ -92,7 +82,7 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
 	 */
 	public LoopPreprocessorFastUPR(final ILogger logger, final ManagedScript script,
 			final IUltimateServiceProvider services, final IPredicateUnifier predUnifier,
-			final PredicateHelper<LETTER> predHelper, final CfgSmtToolkit toolkit) {
+			final PredicateHelper<L> predHelper, final CfgSmtToolkit toolkit) {
 		mLogger = logger;
 		mScript = script;
 		// mPredUnifier = predUnifier;
@@ -101,7 +91,48 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
 		mCsToolkit = toolkit;
 		mReplacementVarFactory = new ReplacementVarFactory(mCsToolkit, false);
 
-		mOptions = new ArrayList<>(Arrays.asList("mod", "not"));
+		mOptions = new ArrayList<>(Arrays.asList("ite", "mod", "!=", "not"));
+	}
+
+	@Override
+	public Map<IcfgLocation, List<UnmodifiableTransFormula>>
+			preProcessLoopInterprocedual(final Map<IcfgLocation, Set<List<L>>> loop) {
+		final Map<IcfgLocation, List<UnmodifiableTransFormula>> result = new HashMap<>();
+		for (final Entry<IcfgLocation, Set<List<L>>> loopSet : loop.entrySet()) {
+			final IcfgLocation loophead = loopSet.getKey();
+			if (loopSet.getValue() == null) {
+				continue;
+			}
+			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
+			for (final List<L> loopActions : loopSet.getValue()) {
+
+				UnmodifiableTransFormula interprocedualTransformula = SequentialComposition
+						.getInterproceduralTransFormula(mCsToolkit, false, false, false, false, mLogger, mServices,
+								loopActions, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+								SimplificationTechnique.SIMPLIFY_DDA);
+
+				/*
+				 * final List<UnmodifiableTransFormula> loopTransitions = convertActionToFormula(loopActions); final
+				 * UnmodifiableTransFormula loopRelation = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+				 * mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+				 * SimplificationTechnique.SIMPLIFY_DDA, loopTransitions); /* Transform found unsupported operations:
+				 */
+				for (final String option : mOptions) {
+					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
+					if (!applicationTermFinder.findMatchingSubterms(interprocedualTransformula.getFormula())
+							.isEmpty()) {
+						interprocedualTransformula = preProcessing(option, interprocedualTransformula);
+					}
+					mLogger.debug("Preprocess");
+				}
+				final ModifiableTransFormula modTf = ModifiableTransFormulaUtils
+						.buildTransFormula(interprocedualTransformula, mReplacementVarFactory, mScript);
+				disjuncts.addAll(LoopPreprocessorTransformulaTransformer.splitDisjunction(modTf, mScript, mServices));
+			}
+			result.put(loophead, disjuncts);
+			mLogger.debug("Loop preprocessed");
+		}
+		return result;
 	}
 
 	/**
@@ -109,14 +140,16 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
 	 */
 	@Override
 	public Map<IcfgLocation, List<UnmodifiableTransFormula>>
-			preProcessLoop(final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> loop) {
+			preProcessLoop(final Map<IcfgLocation, Set<List<L>>> loop) {
 		final Map<IcfgLocation, List<UnmodifiableTransFormula>> result = new HashMap<>();
-
-		for (final Entry<IcfgLocation, Set<List<UnmodifiableTransFormula>>> loopSet : loop.entrySet()) {
+		for (final Entry<IcfgLocation, Set<List<L>>> loopSet : loop.entrySet()) {
 			final IcfgLocation loophead = loopSet.getKey();
+			if (loopSet.getValue() == null) {
+				continue;
+			}
 			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
-
-			for (final List<UnmodifiableTransFormula> loopTransitions : loopSet.getValue()) {
+			for (final List<L> loopActions : loopSet.getValue()) {
+				final List<UnmodifiableTransFormula> loopTransitions = convertActionToFormula(loopActions);
 				UnmodifiableTransFormula loopRelation = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 						mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 						SimplificationTechnique.SIMPLIFY_DDA, loopTransitions);
@@ -130,7 +163,9 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
 					}
 					mLogger.debug("Preprocess");
 				}
-				disjuncts.addAll(splitDisjunction(loopRelation));
+				final ModifiableTransFormula modTf =
+						ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
+				disjuncts.addAll(LoopPreprocessorTransformulaTransformer.splitDisjunction(modTf, mScript, mServices));
 			}
 			result.put(loophead, disjuncts);
 			mLogger.debug("Loop preprocessed");
@@ -139,143 +174,30 @@ public class LoopPreprocessorFastUPR<LETTER extends IIcfgTransition<?>>
 	}
 
 	private UnmodifiableTransFormula preProcessing(final String option, final UnmodifiableTransFormula loopRelation) {
+		final ModifiableTransFormula modTf =
+				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
 		switch (option) {
 		case "mod":
-			return moduloTransformation(loopRelation);
+			return LoopPreprocessorTransformulaTransformer.moduloTransformation(modTf, mScript, mReplacementVarFactory,
+					mServices);
 		case "not":
-			return notTransformation(loopRelation);
+			return LoopPreprocessorTransformulaTransformer.notTransformation(modTf, mScript);
 		case "div":
-			return divisionTransformation(loopRelation);
+			return LoopPreprocessorTransformulaTransformer.divisionTransformation(modTf, mScript,
+					mReplacementVarFactory);
+		case "ite":
+			return LoopPreprocessorTransformulaTransformer.iteTransformation(modTf, mScript);
 		default:
 			break;
 		}
 		return loopRelation;
 	}
 
-	/**
-	 * In case of modulo transformation we get a disjunction covering different cases of integer value intervals. For
-	 * acceleration split these disjunctions for underapprox
-	 *
-	 * @param loopRelation
-	 * @return
-	 */
-	private List<UnmodifiableTransFormula> splitDisjunction(final UnmodifiableTransFormula loopRelation) {
-		final DNF dnfConverter = new DNF(mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final ModifiableTransFormula modTf =
-				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
-		ModifiableTransFormula dnfModTf;
-		try {
-			dnfModTf = dnfConverter.process(mScript, modTf);
-		} catch (final TermException e) {
-			e.printStackTrace();
-			throw new UnsupportedOperationException("Could not turn into DNF");
+	private List<UnmodifiableTransFormula> convertActionToFormula(final List<L> actions) {
+		final List<UnmodifiableTransFormula> tfs = new ArrayList<UnmodifiableTransFormula>();
+		for (final L action : actions) {
+			tfs.add(action.getTransformula());
 		}
-		final List<UnmodifiableTransFormula> result = new ArrayList<>();
-		final ApplicationTerm dnfAppTerm = (ApplicationTerm) dnfModTf.getFormula();
-		if (dnfAppTerm.getFunction().getName() != "or") {
-			result.add(loopRelation);
-		} else {
-			for (final Term disjunct : dnfAppTerm.getParameters()) {
-				final TransFormulaBuilder tfb = new TransFormulaBuilder(loopRelation.getInVars(),
-						loopRelation.getOutVars(), true, null, true, null, false);
-				tfb.setFormula(disjunct);
-				tfb.addAuxVarsButRenameToFreshCopies(loopRelation.getAuxVars(), mScript);
-				tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-				result.add(tfb.finishConstruction(mScript));
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Rewrite not formulas such as != and not(< x y)
-	 *
-	 * @param loopRelation
-	 * @return
-	 */
-	private UnmodifiableTransFormula notTransformation(final UnmodifiableTransFormula loopRelation) {
-		mLogger.debug("Transforming not");
-		final ModifiableTransFormula modTf =
-				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
-		final RemoveNegation rn = new RemoveNegation();
-		final RewriteDisequality rd = new RewriteDisequality();
-		ModifiableTransFormula negFreeTf;
-		try {
-			negFreeTf = rn.process(mScript, modTf);
-			negFreeTf = rd.process(mScript, negFreeTf);
-		} catch (final TermException e) {
-			mLogger.debug("Could not deal with not");
-			negFreeTf = null;
-			e.printStackTrace();
-		}
-		return buildFormula(loopRelation, negFreeTf.getFormula());
-	}
-
-	/**
-	 * substitute modulo by a disjunction
-	 *
-	 * @param loopRelation
-	 * @return
-	 */
-	private UnmodifiableTransFormula moduloTransformation(final UnmodifiableTransFormula loopRelation) {
-		mLogger.debug("Transforming modulo");
-		final ModifiableTransFormula modTf =
-				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
-		final ModuloNeighborTransformation modNeighborTransformer = new ModuloNeighborTransformation(mServices, true);
-		ModifiableTransFormula modTfTransformed;
-		try {
-			modTfTransformed = modNeighborTransformer.process(mScript, modTf);
-		} catch (final TermException e) {
-			mLogger.debug("Could not deal with modulo");
-			modTfTransformed = null;
-			e.printStackTrace();
-		}
-		/*
-		 * TODO: programs with multiple modulos Use SubTermPropertyChecker -> returns multiple terms
-		 */
-
-		final List<Term> result = new ArrayList<>();
-		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", false);
-		if (modTfTransformed != null) {
-			final ApplicationTerm modAppTermTransformed = (ApplicationTerm) modTfTransformed.getFormula();
-			for (final Term param : modAppTermTransformed.getParameters()) {
-				if (applicationTermFinder.findMatchingSubterms(param).isEmpty()) {
-					result.add(param);
-				}
-			}
-		}
-		final Term disjunctionNoMod = SmtUtils.or(mScript.getScript(), result);
-		return buildFormula(loopRelation, disjunctionNoMod);
-	}
-
-	/**
-	 * Rewrite division
-	 *
-	 * @param loopRelation
-	 * @return
-	 */
-	private UnmodifiableTransFormula divisionTransformation(final UnmodifiableTransFormula loopRelation) {
-		mLogger.debug("Transforming division");
-		final ModifiableTransFormula modTf =
-				ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
-		final RewriteDivision rd = new RewriteDivision(mReplacementVarFactory);
-		ModifiableTransFormula divModTf;
-		try {
-			divModTf = rd.process(mScript, modTf);
-		} catch (final TermException e) {
-			mLogger.debug("Could not deal with division");
-			divModTf = null;
-			e.printStackTrace();
-		}
-		return buildFormula(loopRelation, divModTf.getFormula());
-	}
-
-	private UnmodifiableTransFormula buildFormula(final UnmodifiableTransFormula origin, final Term term) {
-		final TransFormulaBuilder tfb =
-				new TransFormulaBuilder(origin.getInVars(), origin.getOutVars(), true, null, true, null, false);
-		tfb.setFormula(term);
-		tfb.addAuxVarsButRenameToFreshCopies(origin.getAuxVars(), mScript);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(mScript);
+		return tfs;
 	}
 }

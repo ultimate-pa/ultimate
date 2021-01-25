@@ -311,7 +311,13 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		case "Perm Gen [shared-rw]":
 		case "Metaspace":
 		case "Compressed Class Space":
+		case "CodeHeap 'non-nmethods'":
+		case "CodeHeap 'profiled nmethods'":
+		case "CodeHeap 'non-profiled nmethods'":
 			return false;
+		case "G1 Eden Space":
+		case "G1 Old Gen":
+		case "G1 Survivor Space":
 		case "Eden Space":
 		case "PS Eden Space":
 		case "PS Survivor Space":
@@ -320,7 +326,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		case "Tenured Gen":
 			return true;
 		default:
-			throw new IllegalArgumentException("Unknown memory pool name " + memoryPoolName);
+			throw new IllegalArgumentException("Unknown memory pool name \"" + memoryPoolName+"\"");
 		}
 	}
 

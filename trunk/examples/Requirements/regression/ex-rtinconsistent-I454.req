@@ -1,0 +1,2 @@
+// #TestSpec: rt-inconsistent:req1; vacuous:; inconsistent:; results: 3
+req1: After "1 == 1", it is always the case that if "1 == 1" holds, then "0 == 1" holds after at most "50" time units.

@@ -1,60 +1,21 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-1.9.dtd">
-<benchmark tool="ultimateautomizer" timelimit="15 min" memlimit="15 GB" cpuCores="2">
-  <resultfiles>**.graphml</resultfiles>
-  <option name="--full-output"/>
+<benchmark tool="ultimateautomizer" timelimit="15 min" hardtimelimit="16 min" memlimit="15 GB" cpuCores="2">
+    <resultfiles>**.graphml</resultfiles>
+    <option name="--full-output"/>
+    <rundefinition name="sv-comp21_prop-reachsafety">
+        <tasks name="All">
+            <includesfile>../sv-benchmarks/c/unsound-unreach-call.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+        </tasks>
 
-
-<rundefinition name="sv-comp20_unsound_64">
-  <option name="--architecture">64bit</option>
-  
-  <tasks name="ReachSafety-64">
-    <includesfile>../sv-benchmarks/c/unsounds-unreach-call_64bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
-  </tasks>
-  <tasks name="MemSafety-64">
-    <includesfile>../sv-benchmarks/c/unsounds-valid-deref_valid-free_valid-memtrack_64bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
-  </tasks>
-  <tasks name="MemCleanup-64">
-    <includesfile>../sv-benchmarks/c/unsounds-valid-memcleanup_64bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/valid-memcleanup.prp</propertyfile>
-  </tasks>
-  
-  <tasks name="NoOverflows-64">
-    <includesfile>../sv-benchmarks/c/unsounds-no-overflow_64bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile>
-  </tasks>
-  
-  <tasks name="Termination-64">
-    <includesfile>../sv-benchmarks/c/unsounds-termination_64bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/termination.prp</propertyfile>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp20_unsound_32">
-  <option name="--architecture">32bit</option>
-  
-  <tasks name="ReachSafety-32">
-    <includesfile>../sv-benchmarks/c/unsounds-unreach-call_32bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
-  </tasks>
-  <tasks name="MemSafety-32">
-    <includesfile>../sv-benchmarks/c/unsounds-valid-deref_valid-free_valid-memtrack_32bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
-  </tasks>
-  <tasks name="MemCleanup-32">
-    <includesfile>../sv-benchmarks/c/unsounds-valid-memcleanup_32bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/valid-memcleanup.prp</propertyfile>
-  </tasks>
-  <tasks name="NoOverflows-32">
-    <includesfile>../sv-benchmarks/c/unsounds-no-overflow_32bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile>
-  </tasks>
-  <tasks name="Termination-32">
-    <includesfile>../sv-benchmarks/c/unsounds-termination_32bit.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/termination.prp</propertyfile>
-  </tasks>
-</rundefinition>
-
-</benchmark>
+    </rundefinition>
+    <rundefinition name="sv-comp21_prop-memsafety">
+        <tasks name="Kojak">
+            <includesfile>../sv-benchmarks/c/kojak_unsound-valid-memsafety.set</includesfile>
+            <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+        </tasks>
+    </rundefinition>
+    <!-- <rundefinition name="sv-comp21_prop-nooverflow"><tasks name="SoftwareSystems-BusyBox-NoOverflows"><includesfile>../sv-benchmarks/c/SoftwareSystems-BusyBox-NoOverflows.set</includesfile><propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile></tasks></rundefinition> -->
+    <!-- <rundefinition name="sv-comp21_prop-termination"><tasks name="Unsound"><includesfile>../sv-benchmarks/c/Termination-Other.set</includesfile><propertyfile>../sv-benchmarks/c/properties/termination.prp</propertyfile></tasks></rundefinition> -->
+</benchmark>  

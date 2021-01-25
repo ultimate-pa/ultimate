@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
@@ -81,12 +80,12 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -202,7 +201,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 
 		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
 		mMetaTraceTransformer = new MetaTraceTransformer<>(mLogger, mScript, mCounterexample, mPredUnifier, mServices,
-				mPredTransformer);
+				mPredTransformer, mIcfg.getCfgSmtToolkit());
 		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
 
 		mApproximationType = AccelerationApproximationType.PRECISE;
@@ -259,17 +258,25 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
-		final ILoopPreprocessor<IcfgLocation, UnmodifiableTransFormula> loopPreprocessor =
+		final ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> loopPreprocessor =
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
-			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoopsAsTf);
+			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered =
+					new HashMap<>(mNestedLoops);
+			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
+				if (nestedLoop.getValue() == null) {
+					mNestedLoops.remove(nestedLoop.getKey());
+					continue;
+				}
+			}
+			mNestedLoopsTf = loopPreprocessor.preProcessLoop(mNestedLoops);
 			for (final Entry<IcfgLocation, IcfgLocation> nesting : mNestingRelation.entrySet()) {
 				accelerateNestedLoops(nesting.getKey(), nesting.getValue());
 			}
 		}
 
-		mLoopsTf = loopPreprocessor.preProcessLoop(mLoopsAsTf);
+		mLoopsTf = loopPreprocessor.preProcessLoopInterprocedual(mLoops);
 		mLogger.debug("Done Preprocessing");
 
 		final Iterator<Entry<IcfgLocation, Set<List<L>>>> loopheadIterator = mLoops.entrySet().iterator();
@@ -326,14 +333,18 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			 * translate the given trace into a meta trace which makes use of the loop acceleration.
 			 */
 			final NestedRun<L, IPredicate> metaTrace = generateMetaTrace();
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Meta-Trace: ");
+				for (int i = 0; i < metaTrace.getLength() - 1; i++) {
+					mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
+				}
+			}
+
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
 			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
 				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
+				final IPredicate[] refinedInterpolants = refineMetaInterpolants(tempInterpolants, metaTrace);
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Meta-Trace: ");
-					for (int i = 0; i < metaTrace.getLength() - 1; i++) {
-						mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
-					}
 					mLogger.debug("Is " + interpolator.getTraceCheckResult().toString());
 				}
 				final IPredicate[] inductiveInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(
@@ -342,6 +353,25 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			}
 		}
 		return interpolator.getTraceCheckResult();
+	}
+
+	private IPredicate[] refineMetaInterpolants(final IPredicate[] unrefinedMetaInterpolants,
+			final NestedRun<L, IPredicate> metaTrace) {
+
+		final IPredicate[] result = new IPredicate[unrefinedMetaInterpolants.length];
+		final List<L> metaTraceTransitions = metaTrace.getWord().asList();
+		for (int i = 0; i < metaTrace.getLength() - 2; i++) {
+			final IPredicate metaInterpolant;
+			if (i == 0) {
+				metaInterpolant = mPredUnifier.getTruePredicate();
+			} else {
+				metaInterpolant = unrefinedMetaInterpolants[i - 1];
+			}
+			final UnmodifiableTransFormula transition = metaTraceTransitions.get(i).getTransformula();
+			final Term inductiveInterpolant = mPredTransformer.strongestPostcondition(metaInterpolant, transition);
+			result[i] = mPredUnifier.getOrConstructPredicate(inductiveInterpolant);
+		}
+		return result;
 	}
 
 	private IProgramExecution<L, Term> computeProgramExecution() {
@@ -383,11 +413,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	private ManagedScript constructManagedScriptForInterpolation() throws AssertionError {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(false)
 				.setSolverMode(SolverMode.Internal_SMTInterpol);
-		final String solverId = solverSettings.getBaseNameOfDumpedScript();
-		final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, solverId);
-		final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
-		mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
-		return mgdScriptTc;
+		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(solverSettings);
 	}
 
 	/**
@@ -483,7 +509,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			acceleratedTraceSchemeStates.add(lastAcceleratedSPred);
 			acceleratedTraceSchemeStates.add(newExitSPred);
 			final Pair<Integer, Integer> loopSize = mLoopSize.get(l.getTarget());
-			i = i + loopSize.getSecond() - loopSize.getFirst();
+			i = i + loopSize.getSecond() - loopSize.getFirst() + 1;
 		}
 
 		acceleratedTraceSchemeStates.add(traceStates.get(counterExampleNonAccelerated.size()));
@@ -518,6 +544,9 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		/*
 		 * In case of multiple nested loops, accelerate the inner one first (maybe check for delay for that)
 		 */
+		if (!mNestedLoops.containsKey(nestedLoophead)) {
+			return;
+		}
 		if (mNestingRelation.containsKey(nestedLoophead)) {
 			accelerateNestedLoops(nestedLoophead, mNestingRelation.get(nestedLoophead));
 		}
@@ -544,7 +573,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		if (!accelerationFinishedCorrectly) {
 			return;
 		}
-		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices, 0,
+		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 				accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
 		Set<List<L>> nestingLoop;

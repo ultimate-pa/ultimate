@@ -287,20 +287,12 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 				final List<IPredicate> notinUseStates = new ArrayList<>();
 				final List<IPredicate> inUseStates = new ArrayList<>();
 				for (final ThreadInstance ti : threadInstances) {
-					IPredicate threadNotInUsePredicate;
-					{
-						final String threadNotInUseString = ti.getThreadInstanceName() + "NotInUse";
-						threadNotInUsePredicate = predicateFactory.newDebugPredicate(threadNotInUseString);
-					}
-					IPredicate threadInUsePredicate;
-					{
-						final String threadInUseString = ti.getThreadInstanceName() + "InUse";
-						threadInUsePredicate = predicateFactory.newDebugPredicate(threadInUseString);
-					}
-					threadInstance2notinUseState.put(ti.getThreadInstanceName(), threadNotInUsePredicate);
-					threadInstance2inUseState.put(ti.getThreadInstanceName(), threadInUsePredicate);
-					net.addPlace(threadNotInUsePredicate, true, false);
-					net.addPlace(threadInUsePredicate, false, false);
+					final String threadInstanceId = ti.getThreadInstanceName();
+					final IPredicate threadNotInUsePredicate = threadInstance2notinUseState.computeIfAbsent(
+							threadInstanceId, x -> createThreadNotInUsePredicate(x, net, predicateFactory));
+					final IPredicate threadInUsePredicate = threadInstance2inUseState.computeIfAbsent(threadInstanceId,
+							x -> createThreadInUsePredicate(x, net, predicateFactory));
+
 					notinUseStates.add(threadNotInUsePredicate);
 					inUseStates.add(threadInUsePredicate);
 				}
@@ -400,6 +392,22 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 		return net;
+	}
+
+	private static <LETTER> IPredicate createThreadNotInUsePredicate(final String threadInstanceId,
+			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory) {
+		final String threadNotInUseString = threadInstanceId + "NotInUse";
+		final IPredicate threadNotInUsePredicate = predicateFactory.newDebugPredicate(threadNotInUseString);
+		net.addPlace(threadNotInUsePredicate, true, false);
+		return threadNotInUsePredicate;
+	}
+
+	private static <LETTER> IPredicate createThreadInUsePredicate(final String threadInstanceId,
+			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory) {
+		final String threadInUseString = threadInstanceId + "InUse";
+		final IPredicate threadInUsePredicate = predicateFactory.newDebugPredicate(threadInUseString);
+		net.addPlace(threadInUsePredicate, false, false);
+		return threadInUsePredicate;
 	}
 
 	private static int getThreadInstanceNumber(final IIcfgForkTransitionThreadCurrent<?> current,

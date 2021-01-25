@@ -62,28 +62,20 @@ public abstract class NonCoreBooleanSubTermTransformer {
 	}
 
 	private static boolean isCoreBooleanConnective(final String fun) {
-		if (fun.equals("=")) {
-			return true;
-		} else if (fun.equals("not")) {
-			return true;
-		} else if (fun.equals("and")) {
-			return true;
-		} else if (fun.equals("or")) {
-			return true;
-		} else if (fun.equals("=>")) {
-			return true;
-		} else if (fun.equals("xor")) {
-			return true;
-		} else if (fun.equals("distinct")) {
-			return true;
-		}
-		return fun.equals("ite");
+		return fun.equals("=") || fun.equals("not") || fun.equals("and")
+				|| fun.equals("or") || fun.equals("=>") || fun.equals("xor") || fun.equals("distinct")
+				|| fun.equals("ite");
 	}
 
-	public static boolean isCoreBoolean(final ApplicationTerm appTerm) {
+	/**
+	 * Returns true iff the input is a Boolean formula whose function symbol is
+	 * defined by the SMT-LIB core theory
+	 * {@link http://smtlib.org/theories-Core.shtml} has Boolean parameters, but is
+	 * not an atom (i.e., neither true nor false).
+	 */
+	public static boolean isCoreBooleanNonAtom(final ApplicationTerm appTerm) {
 		final String funName = appTerm.getFunction().getName();
 		return isCoreBooleanConnective(funName) && hasBooleanParams(appTerm.getParameters());
-
 	}
 
 	private class NonCoreBooleanSubtermTransformerHelper extends TermTransformer {
@@ -93,7 +85,7 @@ public abstract class NonCoreBooleanSubTermTransformer {
 			assert SmtSortUtils.isBoolSort(term.getSort()) : "not Bool";
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (isCoreBoolean(appTerm)) {
+				if (isCoreBooleanNonAtom(appTerm)) {
 					super.convert(term);
 				} else {
 					final Term transformed = transformNonCoreBooleanSubterm(term);

@@ -1,0 +1,15 @@
+// #TestSpec: rt-inconsistent:R1+R2; vacuous:; inconsistent:; results: 7
+Input a is bool
+Input b is bool
+Output out is bool
+
+R1: Globally, it is always the case that if "a" holds for at least "10" time units, then "!out" holds afterwards for at least "20" time units.
+R2: Globally, it is always the case that if "b" holds, then "out" holds after at most "5" time units.
+R3: Globally, it is always the case that if "a" holds for at least "10" time units, then "!a" holds afterwards.
+
+
+// Requirements R2, R1 are rt-inconsistent
+// We found a FailurePath: 
+// INITIAL     a=* b=* out=*
+// [0;10]      a=true b=false out=false
+// [10;15]     a=false b=true out=false

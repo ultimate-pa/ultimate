@@ -69,8 +69,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -261,8 +261,8 @@ public class ProcedureManager {
 
 			final Specification[] newSpecWithExtraEnsuresClauses;
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
-					&& (mSettings.checkAllocationPurity() || (mSettings.getCheckedMethod().equals(SFO.EMPTY)
-							|| mSettings.getCheckedMethod().equals(procedureName))
+					&& (mSettings.checkAllocationPurity() || (mSettings.getEntryMethod().equals(SFO.EMPTY)
+							|| mSettings.getEntryMethod().equals(procedureName))
 							&& mSettings.checkMemoryLeakInMain())) {
 				// add a specification to check for memory leaks
 

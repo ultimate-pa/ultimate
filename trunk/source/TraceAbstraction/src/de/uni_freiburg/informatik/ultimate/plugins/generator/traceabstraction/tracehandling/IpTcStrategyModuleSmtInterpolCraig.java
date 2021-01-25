@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
  * Creates internal instance of SMTInterpol.
@@ -78,8 +77,7 @@ public class IpTcStrategyModuleSmtInterpolCraig<LETTER extends IIcfgTransition<?
 
 		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier).setSolverMode(solverMode)
 				.setSmtInterpolTimeout(timeout).setSolverLogics(SolverBuilder.LOGIC_SMTINTERPOL);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, getSolverName());
-		return createExternalManagedScript(solver);
+		return createExternalManagedScript(solverSettings);
 	}
 
 	@Override

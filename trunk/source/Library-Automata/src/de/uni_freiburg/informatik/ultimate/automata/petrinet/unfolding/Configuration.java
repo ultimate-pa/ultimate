@@ -60,6 +60,7 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 	private final int mConfigurationDepth;
 	private final static boolean USE_DEPTH_TO_COMPUTE_FNF = true;
 
+
 	public Configuration(final Set<Event<LETTER, PLACE>> events, final int configurationDepth) {
 		mEvents = new ArrayList<>(events);
 		mFoataNormalForm = new ArrayList<>(configurationDepth + 1);
@@ -126,6 +127,12 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 			mSorted = true;
 		}
 	}
+	
+	public ArrayList<Event<LETTER, PLACE>> getSortedConfiguration(Comparator<Event<LETTER, PLACE>> comparator) {
+		final ArrayList<Event<LETTER, PLACE>>  result = new ArrayList<>(mEvents);
+		Collections.sort(result, comparator);
+		return result;
+	}
 
 	public void computeFoataNormalFormUsingDepth() {
 			for (int i = 0; i < mConfigurationDepth + 1; i++) {
@@ -159,5 +166,16 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 			mFoataComputed = true;
 		}
 		
+	}
+	
+	public int getDepth() {
+		return mConfigurationDepth;
+	}
+	
+	public List<Event<LETTER, PLACE>> getEvents(){
+		return mEvents;
+	}
+	public boolean contains(Event<LETTER, PLACE> e) {
+		return mEvents.contains(e);
 	}
 }

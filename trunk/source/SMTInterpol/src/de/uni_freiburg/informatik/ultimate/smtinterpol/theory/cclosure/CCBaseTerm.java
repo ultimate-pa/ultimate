@@ -24,7 +24,7 @@ public class CCBaseTerm extends CCTerm {
 	Object mSymbol;
 
 	public CCBaseTerm(final boolean isFunc, final int parentPos, final Object symb) {
-		super(isFunc, parentPos, symb.hashCode());
+		super(isFunc, parentPos, symb.hashCode(), 0);
 		mSymbol = symb;
 	}
 

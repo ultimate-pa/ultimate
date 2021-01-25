@@ -40,12 +40,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
  *
  * @param <T>
  */
-public interface ILoopPreprocessor<L, T> {
+public interface ILoopPreprocessor<LOC, L, T> {
 	/**
 	 * Takes a loop as a {@link UnmodifiableTransFormula} and removes or transforms unwanted transitions.
 	 *
 	 * @param loop
 	 * @return
 	 */
-	public Map<L, List<T>> preProcessLoop(final Map<L, Set<List<T>>> loop);
+	Map<LOC, List<T>> preProcessLoop(final Map<LOC, Set<List<L>>> loop);
+
+	Map<LOC, List<T>> preProcessLoopInterprocedual(final Map<LOC, Set<List<L>>> loop);
 }

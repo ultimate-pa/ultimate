@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffin
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.DestructiveEqualityReasoning.DERResult;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantLiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory.InstantiationMethod;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
@@ -164,7 +165,7 @@ public class Clausifier {
 			public void perform() {
 				final CCTerm arg = mConverted.pop();
 				final CCTerm func = mConverted.pop();
-				mConverted.push(mCClosure.createAppTerm(mIsFunc, func, arg));
+				mConverted.push(mCClosure.createAppTerm(mIsFunc, func, arg, mSource));
 			}
 		}
 
@@ -1190,6 +1191,7 @@ public class Clausifier {
 			case "store":
 			case "@diff":
 			case "const":
+			case "@EQ":
 				return true;
 			case "div":
 			case "mod":
@@ -1282,7 +1284,7 @@ public class Clausifier {
 
 	// TODO: make map or use option map
 	private boolean mIsEprEnabled;
-	private boolean mIsEMatchingEnabled;
+	private InstantiationMethod mInstantiationMethod;
 	private boolean mIsUnknownTermDawgsEnabled;
 	private boolean mPropagateUnknownTerms;
 	private boolean mPropagateUnknownAux;
@@ -1849,17 +1851,17 @@ public class Clausifier {
 	private void setupQuantifiers() {
 		if (mQuantTheory == null) {
 			mQuantTheory =
-					new QuantifierTheory(mTheory, mEngine, this, mIsEMatchingEnabled, mIsUnknownTermDawgsEnabled,
+					new QuantifierTheory(mTheory, mEngine, this, mInstantiationMethod, mIsUnknownTermDawgsEnabled,
 							mPropagateUnknownTerms, mPropagateUnknownAux);
 			mEngine.addTheory(mQuantTheory);
 		}
 	}
 
-	public void setQuantifierOptions(final boolean isEprEnabled, final boolean enableEmatching,
+	public void setQuantifierOptions(final boolean isEprEnabled, final InstantiationMethod instMethod,
 			final boolean enableUnknownTermDawgs, final boolean propagateUnknownTerm,
 			final boolean propagateUnknownAux) {
 		mIsEprEnabled = isEprEnabled;
-		mIsEMatchingEnabled = enableEmatching;
+		mInstantiationMethod = instMethod;
 		mIsUnknownTermDawgsEnabled = enableUnknownTermDawgs;
 		mPropagateUnknownTerms = propagateUnknownTerm;
 		mPropagateUnknownAux = propagateUnknownAux;
@@ -1969,9 +1971,8 @@ public class Clausifier {
 			mWarnedInconsistent = true;
 			return;
 		}
-		SourceAnnotation source = null;
+		SourceAnnotation source = SourceAnnotation.EMPTY_SOURCE_ANNOT;
 		if (mEngine.isProofGenerationEnabled()) {
-			source = SourceAnnotation.EMPTY_SOURCE_ANNOT;
 			if (f instanceof AnnotatedTerm) {
 				final AnnotatedTerm at = (AnnotatedTerm) f;
 				final Annotation[] annots = at.getAnnotations();

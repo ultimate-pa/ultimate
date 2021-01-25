@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static final int TIMEOUT = 10_000;
+	private static final int TIMEOUT = 85_000;
 
 	public ReqCheckerRegressionTestSuite() {
 		super();

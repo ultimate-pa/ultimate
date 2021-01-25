@@ -1635,8 +1635,6 @@ public class MemoryHandler {
 				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.getLrValue().getValue(), ignoreLoc);
 			} else {
 				// convert to smallest
-				final List<ReadWriteDefinition> rwds =
-						mMemoryModel.getReadWriteDefinitionForHeapDataArray(hda, getRequiredMemoryModelFeatures());
 				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
 				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
 				convertedValue = exprRes.getLrValue().getValue();
@@ -2158,9 +2156,8 @@ public class MemoryHandler {
 		final Expression memArray = hda.getIdentifierExpression();
 		if (useSelectInsteadOfStore) {
 			return ensuresArrayHasValues(loc, valueExprs, ptrExprs, memArray);
-		} else {
-			return ensuresArrayNestedUpdate(loc, valueExprs, ptrExprs, memArray);
 		}
+		return ensuresArrayNestedUpdate(loc, valueExprs, ptrExprs, memArray);
 	}
 
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
@@ -3099,9 +3096,7 @@ public class MemoryHandler {
 		final CACSLLocation ignoreLoc1 = LocationFactory.createIgnoreCLocation();
 		final CPrimitive cTypeOfPointerComponents1 = mExpressionTranslation.getCTypeOfPointerComponents();
 
-		final ASTType astTypeOfPointerComponents1 = mTypeHandler.cType2AstType(ignoreLoc1, cTypeOfPointerComponents1);
-		final BoogieType boogieTypeOfPointerComponents1 =
-				mTypeHandler.getBoogieTypeForBoogieASTType(astTypeOfPointerComponents1);
+		mTypeHandler.cType2AstType(ignoreLoc1, cTypeOfPointerComponents1);
 
 		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
 		// should not be necessary, doing just to be safe in case we add heap arrays with more complicated types
@@ -3152,9 +3147,7 @@ public class MemoryHandler {
 		final CACSLLocation ignoreLoc1 = LocationFactory.createIgnoreCLocation();
 		final CPrimitive cTypeOfPointerComponents1 = mExpressionTranslation.getCTypeOfPointerComponents();
 
-		final ASTType astTypeOfPointerComponents1 = mTypeHandler.cType2AstType(ignoreLoc1, cTypeOfPointerComponents1);
-		final BoogieType boogieTypeOfPointerComponents1 =
-				mTypeHandler.getBoogieTypeForBoogieASTType(astTypeOfPointerComponents1);
+		mTypeHandler.cType2AstType(ignoreLoc1, cTypeOfPointerComponents1);
 
 		final BoogieType heapContentBoogieType = heapDataArray.getArrayContentBoogieType();
 		// should not be necessary, doing just to be safe in case we add heap arrays with more complicated types

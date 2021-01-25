@@ -151,6 +151,20 @@ public class QuantUtil {
 	}
 
 	/**
+	 * Check if a quantified atom is an equality between two variables.
+	 * @param atom the QuantLiteral atom
+	 * @return true if the atom is an equality between two variables, false else.
+	 */
+	public static boolean isVarEq(final QuantLiteral atom) {
+		assert !atom.isNegated();
+		if (atom instanceof QuantEquality) {
+			final QuantEquality eq = (QuantEquality) atom;
+			return eq.getLhs() instanceof TermVariable && eq.getRhs() instanceof TermVariable;
+		}
+		return false;
+	}
+
+	/**
 	 * Check if an affine term contains arithmetic on quantified terms only at top level, i.e., its summands do not
 	 * contain arithmetic on quantified terms.
 	 * 

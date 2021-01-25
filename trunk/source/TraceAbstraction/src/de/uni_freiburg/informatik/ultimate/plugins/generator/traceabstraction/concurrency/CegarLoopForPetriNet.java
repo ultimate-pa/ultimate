@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -86,7 +85,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
@@ -149,7 +147,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 	private final CounterexampleCache<L> mCounterexampleCache;
 
-
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
@@ -157,7 +154,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
 				compositionFactory, transitionClazz);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
-		mCounterexampleCache = new CounterexampleCache<L>();
+		mCounterexampleCache = new CounterexampleCache<>();
 	}
 
 	@Override
@@ -173,16 +170,19 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		}
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			final long start_time = System.currentTimeMillis();
-			mLBE = new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(), cfg,
-					mPref.useLbeInConcurrentAnalysis(), mCompositionFactory);
-			final BoundedPetriNet<L, IPredicate> lbecfg = mLBE.getResult();
+			final PetriNetLargeBlockEncoding<L> lbe =
+					new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(), cfg,
+							mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
+			final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
+			mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
+
 			mAbstraction = lbecfg;
 			final long end_time = System.currentTimeMillis();
 			final long difference = end_time - start_time;
 			mLogger.info("Time needed for LBE in milliseconds: " + difference);
 
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
-					"PetriNetLargeBlockEncoding benchmarks", mLBE.getPetriNetLargeBlockEncodingStatistics()));
+					"PetriNetLargeBlockEncoding benchmarks", lbe.getPetriNetLargeBlockEncodingStatistics()));
 		} else {
 			mAbstraction = cfg;
 		}
@@ -261,14 +261,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
 		}
 		return false;
-	}
-
-	@Override
-	public IProgramExecution<L, Term> getRcfgProgramExecution() {
-		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-			return mLBE.translateExecution(mRcfgProgramExecution);
-		}
-		return super.getRcfgProgramExecution();
 	}
 
 	@Override
