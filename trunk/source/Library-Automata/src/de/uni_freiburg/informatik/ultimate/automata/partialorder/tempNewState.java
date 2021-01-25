@@ -111,11 +111,11 @@ public class tempNewState<L, S, S2> {
 					explored.add(transition);
 					mExploredMap.put(currentSleepSetState, explored);			
 				} else {
-					mVisitor.backtrackState(currentState, false);
+					mVisitor.backtrackState(currentState);
 					mCompletedSet.add(currentSleepSetState);
 				}
 			} else {
-				mVisitor.backtrackState(currentState, false);
+				mVisitor.backtrackState(currentState);
 			}
 
 		}
