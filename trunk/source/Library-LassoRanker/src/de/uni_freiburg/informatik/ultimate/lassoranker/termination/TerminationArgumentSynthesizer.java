@@ -117,7 +117,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			throws IOException {
 		super(lasso, preferences, template.getName() + "Template", services);
 		mSettings = settings;
-		mLogger.info("Termination Analysis Settings:\n" + settings.toString());
+		mLogger.info("Termination Analysis Settings: " + settings.toString());
 		assert !mSettings.getAnalysis().isDisabled();
 		if (mSettings.getNumStrictInvariants() == 0 && mSettings.getNumNonStrictInvariants() == 0) {
 			mLogger.info("Generation of supporting invariants is disabled.");
