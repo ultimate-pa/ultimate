@@ -462,8 +462,9 @@ public class LassoAnalysis {
 		return nta;
 	}
 
-	private NonTerminationAnalysisSettings constructGev0Copy(final INonTerminationAnalysisSettings settings) {
+	private static NonTerminationAnalysisSettings constructGev0Copy(final INonTerminationAnalysisSettings settings) {
 		return new NonTerminationAnalysisSettings(new NonTerminationAnalysisSettings(settings) {
+			private static final long serialVersionUID = 1L;
 
 			@Override
 			public int getNumberOfGevs() {
@@ -512,8 +513,8 @@ public class LassoAnalysis {
 				mLogger.info("Proved termination.");
 				final TerminationArgument ta = tas.getArgument();
 				mLogger.info(ta);
-				final Term[] lexTerm = ta.getRankingFunction().asLexTerm(mMgdScript.getScript());
 				if (mLogger.isDebugEnabled()) {
+					final Term[] lexTerm = ta.getRankingFunction().asLexTerm(mMgdScript.getScript());
 					for (final Term t : lexTerm) {
 						mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
 					}
