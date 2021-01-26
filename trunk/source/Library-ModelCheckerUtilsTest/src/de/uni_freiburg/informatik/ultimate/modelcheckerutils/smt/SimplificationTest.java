@@ -121,15 +121,349 @@ public class SimplificationTest {
 	public void ddaExample6 () {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
 		final String formulaAsString = "(and (distinct x 1) (or (<= x 0) (> x 2) (= x 1)))";
-		runSimplificationTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript);
+		final String expectedResultAsString = "(and (not (= x 1)) (or (<= x 0) (< 2 x)))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
 	}
 
 	@Test
 	public void alternativeRepresentations () {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y"), };
 		final String formulaAsString = "(and (distinct y x) (or (<= x 0) (> x 2) (= x y)))";
-		runSimplificationTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript);
+		final String expectedResultAsString = "(and (not (= x y)) (or (<= x 0) (< 2 x)))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
 	}
+
+	@Test
+	public void distinctAndLess1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (not (= x 7.0)) (< x 7.0))";
+		final String expectedResultAsString = "(< x 7.0)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void distinctAndLess2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (not (= x 7.0)) (< x 8.0))";
+		final String expectedResultAsString = "(and (< x 8.0) (not (= 7.0x)))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void distinctAndLeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (not (= x 7.0)) (<= x 6.0))";
+		final String expectedResultAsString = "(<= x 6.0)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void distinctAndLeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (not (= x 7.0)) (<= x 7.0))";
+		final String expectedResultAsString = "(and (<= x 7.0) (not (= 7.0 x)))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void distinctAndGt1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (not (= x 7.0)) (> x 7.0))";
+		final String expectedResultAsString = "(< 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void distinctAndGt2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (not (= x 7.0)) (> x 8.0))";
+		final String expectedResultAsString = "(< 8.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void distinctAndGeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (not (= x 7.0)) (>= x 8.0))";
+		final String expectedResultAsString = "(<= 8.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void distinctAndGeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (not (= x 7.0)) (>= x 7.0))";
+		final String expectedResultAsString = "(and (not (= 7.0 x)) (<= 7.0 x))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void eqAndLess1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (= x 7.0) (< x 7.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void eqAndLess2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (= x 7.0) (< x 8.0))";
+		final String expectedResultAsString = "(= 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void eqAndLeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (= x 7.0) (<= x 6.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void eqAndLeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (= x 7.0) (<= x 7.0))";
+		final String expectedResultAsString = "(= 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void eqAndGt1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (= x 7.0) (> x 7.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void eqAndGt2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (= x 7.0) (> x 6.0))";
+		final String expectedResultAsString = "(= 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void eqAndGeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (= x 7.0) (>= x 8.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void eqAndGeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (= x 7.0) (>= x 7.0))";
+		final String expectedResultAsString = "(= 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+
+
+
+
+
+	@Test
+	public void geqAndLess1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (>= x 7.0) (< x 7.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void geqAndLess2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (>= x 7.0) (< x 8.0))";
+		final String expectedResultAsString = "(and (< x 8.0) (<= 7.0 x))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void geqAndLeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (>= x 7.0) (<= x 6.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void geqAndLeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (>= x 7.0) (<= x 7.0))";
+		final String expectedResultAsString = "(and (<= x 7.0) (<= 7.0 x))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void geqAndGt1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (>= x 7.0) (> x 7.0))";
+		final String expectedResultAsString = "(< 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void geqAndGt2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (>= x 7.0) (> x 6.0))";
+		final String expectedResultAsString = "(<= 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void geqAndGeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (>= x 7.0) (>= x 6.0))";
+		final String expectedResultAsString = "(<= 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void geqAndGeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (>= x 7.0) (>= x 8.0))";
+		final String expectedResultAsString = "(<= 8.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+
+
+
+	@Test
+	public void greaterAndLess1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (> x 7.0) (< x 7.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void greaterAndLess2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (> x 7.0) (< x 8.0))";
+		final String expectedResultAsString = "(and (< x 8.0) (< 7.0 x))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void greaterAndLeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (> x 7.0) (<= x 7.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void greaterAndLeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (> x 7.0) (<= x 8.0))";
+		final String expectedResultAsString = "(and  (< 7.0 x) (<= x 8.0))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void greaterAndGt1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (> x 7.0) (> x 8.0))";
+		final String expectedResultAsString = "(< 8.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void greaterAndGt2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (> x 7.0) (> x 6.0))";
+		final String expectedResultAsString = "(< 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void greaterAndGeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (> x 7.0) (>= x 7.0))";
+		final String expectedResultAsString = "(< 7.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void greaterAndGeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (> x 7.0) (>= x 8.0))";
+		final String expectedResultAsString = "(<= 8.0 x)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+
+
+
+	@Test
+	public void leqAndLess1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (<= x 7.0) (< x 7.0))";
+		final String expectedResultAsString = "(< x 7.0)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void leqAndLess2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (<= x 7.0) (< x 6.0))";
+		final String expectedResultAsString = "(< x 6.0)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void leqAndLeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (<= x 7.0) (<= x 6.0))";
+		final String expectedResultAsString = "(<= x 6.0)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void leqAndLeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (<= x 7.0) (<= x 8.0))";
+		final String expectedResultAsString = "(<= x 7.0)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void leqAndGt1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (<= x 7.0) (> x 7.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void leqAndGt2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (<= x 7.0) (> x 6.0))";
+		final String expectedResultAsString = "(and (<= x 7.0) (< 6.0 x))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void leqAndGeq1 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (<= x 7.0) (>= x 6.0))";
+		final String expectedResultAsString = "(and (<= x 7.0) (<= 6.0 x))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void leqAndGeq2 () {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
+		final String formulaAsString = "(and (<= x 7.0) (>= x 8.0))";
+		final String expectedResultAsString = "false";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
+	}
+
 
 
 	/**
@@ -168,13 +502,13 @@ public class SimplificationTest {
 		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
 
-		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, nnf, null, services, SimplificationTechnique.POLY_PAC);
+		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, letFree, null, services, SimplificationTechnique.POLY_PAC);
 		final Term result = esr.getSimplifiedTerm();
 		logger.info("Simplified result: " + esr.getSimplifiedTerm());
 		logger.info(esr.buildSizeReductionMessage());
 		if (expectedResultAsString != null) {
 			final Term expectedResultAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString);
-			Assert.assertTrue(result.equals(expectedResultAsTerm));
+			Assert.assertTrue("Not syntactically equivalent to expected result: " + result, result.equals(expectedResultAsTerm));
 		}
 	}
 

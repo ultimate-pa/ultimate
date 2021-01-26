@@ -1,3 +1,4 @@
+// #TestSpec: rt-inconsistent:R1+R2; vacuous:; inconsistent:; results: 4
 Input a is bool
 Input b is bool
 Output out is bool

@@ -115,7 +115,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		procs.addAll(boogieDeclarations.getProcImplementation().keySet());
 		procs.addAll(boogieDeclarations.getProcSpecification().keySet());
 		final SerialProvider serialprovider = new SerialProvider();
-		mCfgSmtToolkit = new CfgSmtToolkit(
+		mCfgSmtToolkit = new CfgSmtToolkit(services,
 				new ModifiableGlobalsTable(
 						mBoogie2smt.getBoogie2SmtSymbolTable().constructProc2ModifiableGlobalsMapping()),
 				mgScript, mBoogie2smt.getBoogie2SmtSymbolTable(), procs,

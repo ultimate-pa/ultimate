@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -924,15 +925,23 @@ public final class SmtUtils {
 	 *         parameters.
 	 */
 	public static boolean isAtomicFormula(final Term term) {
-		if (isTrueLiteral(term) || isFalseLiteral(term) || isConstant(term)) {
-			return true;
+		if (SmtSortUtils.isBoolSort(term.getSort())) {
+			if (isTrueLiteral(term) || isFalseLiteral(term)) {
+				return true;
+			}
+			if ((term instanceof TermVariable) || isConstant(term)) {
+				return true;
+			}
+			if (term instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (NonCoreBooleanSubTermTransformer.isCoreBooleanNonAtom(appTerm)) {
+					return false;
+				} else {
+					return true;
+				}
+			}
 		}
-		if (term instanceof ApplicationTerm) {
-			// Note that this is only correct because we checked for constant terms (i.e.,
-			// unary function symbols) above.
-			return !allParamsAreBool((ApplicationTerm) term);
-		}
-		return term instanceof TermVariable;
+		return false;
 	}
 
 	/**
@@ -1264,6 +1273,31 @@ public final class SmtUtils {
 	public static ApplicationTerm buildNewConstant(final Script script, final String name, final String sortname) {
 		script.declareFun(name, new Sort[0], script.sort(sortname));
 		return (ApplicationTerm) script.term(name);
+	}
+
+	/**
+	 * Auxiliary method for {@link TermTransformer}. The method
+	 * {@link TermTransformer#convertApplicationTerm} constructs new terms that may
+	 * violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}.
+	 * Classes in Ultimate that inherit {@link TermTransformer} should overwrite
+	 * {@link TermTransformer#convertApplicationTerm} by a method that uses this
+	 * method for the construction of new terms.
+	 * See e.g., {@link SubstitutionWithLocalSimplification}.
+	 *
+	 * @param appTerm original ApplicationTerm
+	 * @param newArgs parameters of the transformed ApplicationTerm
+	 */
+	public static Term convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs, final Script script) {
+		final Term result;
+		final Term[] oldArgs = appTerm.getParameters();
+		if (oldArgs == newArgs) {
+			// no argument was changed, we can return the original term
+			result = appTerm;
+		} else {
+			result = SmtUtils.termWithLocalSimplification(script, appTerm.getFunction(),
+					newArgs);
+		}
+		return result;
 	}
 
 	/**

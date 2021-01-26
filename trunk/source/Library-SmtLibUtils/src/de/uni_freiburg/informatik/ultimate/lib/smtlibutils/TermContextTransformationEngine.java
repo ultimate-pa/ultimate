@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -150,7 +151,7 @@ public class TermContextTransformationEngine<C> {
 				final ArrayList<Term> otherParams = new ArrayList<>(Arrays.asList(mResult));
 				otherParams.remove(mNext);
 				final C currentContext = mTermWalker.constructContextForApplicationTerm(super.mContext,
-						mOriginal.getFunction(), otherParams);
+						mOriginal.getFunction(), Arrays.asList(mResult), mNext);
 				final DescendResult res = mTermWalker.convert(currentContext, mResult[mNext]);
 				result = constructTaskForDescendResult(currentContext, res);
 			}
@@ -166,6 +167,20 @@ public class TermContextTransformationEngine<C> {
 			mResult[mNext] = result;
 			mNext++;
 		}
+
+		@Override
+		public String toString() {
+			final StringBuilder builder = new StringBuilder();
+			builder.append("next:");
+			builder.append(mNext);
+			builder.append(" (");
+			builder.append(mOriginal.getFunction().toString());
+			builder.append(Arrays.stream(mResult).map(Term::toStringDirect).collect(Collectors.joining(" ")));
+			builder.append(")");
+			return builder.toString();
+		}
+
+
 	}
 
 	private Task constructTaskForDescendResult(final C currentContext, final DescendResult res) {
@@ -212,6 +227,13 @@ public class TermContextTransformationEngine<C> {
 			mResultSubformula = result;
 		}
 
+		@Override
+		public String toString() {
+			return mOriginal.toStringDirect();
+		}
+
+
+
 	}
 
 	private Task constructTask(final C context, final Term term) {
@@ -230,7 +252,8 @@ public class TermContextTransformationEngine<C> {
 
 	public abstract static class TermWalker<C> {
 
-		abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> otherParams);
+		abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> allParams,
+				int selectedParam);
 
 		abstract boolean applyRepeatedlyUntilNoChange();
 

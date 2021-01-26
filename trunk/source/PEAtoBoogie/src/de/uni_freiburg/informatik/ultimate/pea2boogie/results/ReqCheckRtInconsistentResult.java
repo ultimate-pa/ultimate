@@ -48,14 +48,21 @@ public final class ReqCheckRtInconsistentResult<LOC extends IElement, TE extends
 		mFailurePath = failurePath;
 	}
 
+	public ReqCheckRtInconsistentResult(final LOC element, final String plugin,
+			final IBacktranslationService translatorSequence) {
+		this(element, plugin, translatorSequence, null);
+	}
+
 	@Override
 	public String getLongDescription() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getShortDescription());
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append("We found a FailurePath: ");
-		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append(mFailurePath);
+		if (mFailurePath != null) {
+			sb.append("We found a FailurePath: ");
+			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append(mFailurePath);
+		}
 		return sb.toString();
 	}
 }

@@ -28,16 +28,13 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 
-
 /**
- * Represents an function in the program.
- * Note that we use the notion of Boogie here, where a function is not a
- * procedure but a side-effect free deterministic mapping, i.e., the function
- * always returns the same values for the same input.
- * However, the function does not have to be completely specified, i.e. if we
- * apply a function f to a domain value d the resulting value will always be
- * the same value r but the function definition does not have to specify
- * which concrete value r actually is. 
+ * Represents an function in the program. Note that we use the notion of Boogie here, where a function is not a
+ * procedure but a side-effect free deterministic mapping, i.e., the function always returns the same values for the
+ * same input. However, the function does not have to be completely specified, i.e. if we apply a function f to a domain
+ * value d the resulting value will always be the same value r but the function definition does not have to specify
+ * which concrete value r actually is.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -47,7 +44,7 @@ public interface IProgramFunction extends IProgramSymbol {
 	default String getGloballyUniqueId() {
 		return getFunctionSymbol().getName();
 	}
-	
+
 	/**
 	 * @return the SMT function symbol which represents this function.
 	 */

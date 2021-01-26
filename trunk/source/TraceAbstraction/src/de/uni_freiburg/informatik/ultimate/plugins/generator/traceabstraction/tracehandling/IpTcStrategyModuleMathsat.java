@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
  * Creates external instance of Mathsat using {@link TraceCheckSpWp}.
@@ -75,8 +74,7 @@ public class IpTcStrategyModuleMathsat<LETTER extends IIcfgTransition<?>> extend
 		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
 				.setUseExternalSolver(true, SolverBuilder.COMMAND_MATHSAT, SolverBuilder.LOGIC_MATHSAT)
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, getSolverName());
-		return createExternalManagedScript(solver);
+		return createExternalManagedScript(solverSettings);
 	}
 
 	@Override

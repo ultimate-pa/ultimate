@@ -31,10 +31,10 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 		final SmtFunctionsAndAxioms newSmtSymbols =
 				inputCfgCsToolkit.getSmtFunctionsAndAxioms().addAxiom(additionalAxioms);
 
-		final CfgSmtToolkit newToolkit = new CfgSmtToolkit(inputCfgCsToolkit.getModifiableGlobalsTable(), mgdScript,
-				inputCfgCsToolkit.getSymbolTable(), inputCfgCsToolkit.getProcedures(), inputCfgCsToolkit.getInParams(),
-				inputCfgCsToolkit.getOutParams(), inputCfgCsToolkit.getIcfgEdgeFactory(),
-				inputCfgCsToolkit.getConcurrencyInformation(), newSmtSymbols);
+		final CfgSmtToolkit newToolkit = new CfgSmtToolkit(inputCfgCsToolkit.getServices(),
+				inputCfgCsToolkit.getModifiableGlobalsTable(), mgdScript, inputCfgCsToolkit.getSymbolTable(),
+				inputCfgCsToolkit.getProcedures(), inputCfgCsToolkit.getInParams(), inputCfgCsToolkit.getOutParams(),
+				inputCfgCsToolkit.getIcfgEdgeFactory(), inputCfgCsToolkit.getConcurrencyInformation(), newSmtSymbols);
 
 		// make a copy of the input Icfg
 		// TODO: Seems really expensive
