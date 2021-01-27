@@ -324,7 +324,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final List<TransitionPreprocessor> transitionPreprocessors = new ArrayList<>();
 		transitionPreprocessors.add(new RewriteIte());
 		transitionPreprocessors.add(new SimplifyPreprocessor(services, SimplificationTechnique.SIMPLIFY_QUICK));
-		transitionPreprocessors.add(new ModuloNeighborTransformation(services, true));
+		transitionPreprocessors.add(new ModuloNeighborTransformation(services));
 		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 
 		final ITransformulaTransformer transformer =
