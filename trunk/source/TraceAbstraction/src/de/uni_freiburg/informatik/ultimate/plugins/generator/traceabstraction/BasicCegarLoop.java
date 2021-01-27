@@ -1156,7 +1156,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		assert !petriFloydHoare.isEmpty();
 
-		final OwickiGriesConstruction<IcfgLocation, IPredicate, L> construction =
+		final OwickiGriesConstruction<IPredicate, L> construction =
 				new OwickiGriesConstruction<>(mServices, mCsToolkit, mPetriNet, petriFloydHoare);
 		// TODO: simplify
 		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
