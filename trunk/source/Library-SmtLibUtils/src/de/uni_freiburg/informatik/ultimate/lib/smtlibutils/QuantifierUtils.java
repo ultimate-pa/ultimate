@@ -29,12 +29,14 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -420,5 +422,12 @@ public class QuantifierUtils {
 
 	public static Term flattenQuantifiers(final Script script, final QuantifiedFormula qf) {
 		return SmtUtils.quantifier(script, qf.getQuantifier(), Arrays.asList(qf.getVariables()), qf.getSubformula());
+	}
+
+	@FunctionalInterface
+	public interface IQuantifierEliminator {
+		public Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
+				final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
+				final Set<TermVariable> bannedForDivCapture, final Term assumption, final Term inputTerm);
 	}
 }

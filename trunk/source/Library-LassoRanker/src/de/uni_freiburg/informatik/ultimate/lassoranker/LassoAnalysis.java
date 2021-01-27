@@ -235,6 +235,7 @@ public class LassoAnalysis {
 
 	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the preprocessor on the stem and loop formula.
+	 *
 	 * @param loop
 	 *            a transition formula corresponding to the lasso's loop
 	 * @param symbols
@@ -254,8 +255,9 @@ public class LassoAnalysis {
 	 */
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final IIcfgSymbolTable symbolTable,
 			final UnmodifiableTransFormula loop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
-			final SmtFunctionsAndAxioms symbols, final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
+			final SmtFunctionsAndAxioms symbols, final LassoRankerPreferences preferences,
+			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
 		this(csToolkit, null, loop, modifiableGlobalsAtHonda, symbols, preferences, services, simplificationTechnique,
 				xnfConversionTechnique);
 	}
@@ -328,11 +330,9 @@ public class LassoAnalysis {
 						new RewriteUserDefinedTypes(lassoBuilder.getReplacementVarFactory(), mMgdScript)),
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteEquality()),
 				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
-				new StemAndLoopPreprocessor(mMgdScript,
-						new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
+				new StemAndLoopPreprocessor(mMgdScript, new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
 				new StemAndLoopPreprocessor(mMgdScript, new DNF(mServices, mXnfConversionTechnique)),
-				new StemAndLoopPreprocessor(mMgdScript,
-						new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
+				new StemAndLoopPreprocessor(mMgdScript, new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteTrueFalse()),
 				new StemAndLoopPreprocessor(mMgdScript, new RemoveNegation()),
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteStrictInequalities()), };
@@ -462,8 +462,9 @@ public class LassoAnalysis {
 		return nta;
 	}
 
-	private NonTerminationAnalysisSettings constructGev0Copy(final INonTerminationAnalysisSettings settings) {
+	private static NonTerminationAnalysisSettings constructGev0Copy(final INonTerminationAnalysisSettings settings) {
 		return new NonTerminationAnalysisSettings(new NonTerminationAnalysisSettings(settings) {
+			private static final long serialVersionUID = 1L;
 
 			@Override
 			public int getNumberOfGevs() {
@@ -487,8 +488,9 @@ public class LassoAnalysis {
 			throws SMTLIBException, TermException, IOException {
 		// ignore stem
 		mLogger.info("Using template '" + template.getName() + "'.");
-		mLogger.debug(template);
-
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(template);
+		}
 		for (final Lasso lasso : mLassos) {
 			// It suffices to prove termination for one component
 			final long startTime = System.nanoTime();
@@ -504,15 +506,18 @@ public class LassoAnalysis {
 							lasso.getStemDisjuncts(), lasso.getLoopDisjuncts(), template.getName(),
 							template.getDegree(), tas.getNumSIs(), tas.getNumMotzkin(), endTime - startTime);
 			mLassoTerminationAnalysisBenchmarks.add(tab);
-			mLogger.debug(benchmarkScriptMessage(constraintSat, template));
-
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(benchmarkScriptMessage(constraintSat, template));
+			}
 			if (constraintSat == LBool.SAT) {
 				mLogger.info("Proved termination.");
 				final TerminationArgument ta = tas.getArgument();
 				mLogger.info(ta);
-				final Term[] lexTerm = ta.getRankingFunction().asLexTerm(mMgdScript.getScript());
-				for (final Term t : lexTerm) {
-					mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
+				if (mLogger.isDebugEnabled()) {
+					final Term[] lexTerm = ta.getRankingFunction().asLexTerm(mMgdScript.getScript());
+					for (final Term t : lexTerm) {
+						mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
+					}
 				}
 				tas.close();
 				return ta;

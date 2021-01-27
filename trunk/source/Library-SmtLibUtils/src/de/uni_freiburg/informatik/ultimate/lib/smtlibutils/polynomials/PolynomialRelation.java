@@ -465,6 +465,23 @@ public class PolynomialRelation implements IBinaryRelation {
 		return mPolynomialTerm.isVariable(var);
 	}
 
+	public PolynomialRelation negate(final Script script) {
+		return new PolynomialRelation(script, mPolynomialTerm, mRelationSymbol.negate());
+	}
+
+	public PolynomialRelation mul(final Script script, final Rational r) {
+		final RelationSymbol resultRelationSymbol = ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(r,
+				mPolynomialTerm.getSort()) ? mRelationSymbol.swapParameters() : mRelationSymbol;
+		return new PolynomialRelation(script,
+				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(mPolynomialTerm, r),
+				resultRelationSymbol);
+	}
+
+	@Override
+	public String toString() {
+		return mOriginalTerm.toString();
+	}
+
 	public static PolynomialRelation convert(final Script script, final Term term) {
 		return convert(script, term, TransformInequality.NO_TRANFORMATION);
 	}

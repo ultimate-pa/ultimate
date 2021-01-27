@@ -35,12 +35,9 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Workaround that will be fixed in the next days.
- * 
- * Use keywords in filename to decide correctness of SV-COMP reachability benchmarks.
+ * Use Yaml file to decide correctness of SV-COMP benchmarks.
  *
- * @author heizmann@informatik.uni-freiburg.de
- *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class SvcompReachTestResultDecider extends SafetyCheckTestResultDecider {
 
@@ -48,25 +45,19 @@ public class SvcompReachTestResultDecider extends SafetyCheckTestResultDecider {
 	 *
 	 * @param ultimateRunDefinition
 	 *
-	 * @param unknownIsJUnitSuccess
-	 *            if true the TestResult UNKNOWN is a success for JUnit, if
-	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 * @param unknownIsJUnitSuccess if true the TestResult UNKNOWN is a success for
+	 *                              JUnit, if false, the TestResult UNKNOWN is a
+	 *                              failure for JUnit.
 	 */
-	public SvcompReachTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
+	public SvcompReachTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
-//	@Override
-//	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-//		return new KeywordBasedExpectedResultFinder<>(
-//				TestUtil.constructFilenameKeywordMap_SvcompReach(), null, null);
-//	}
-
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		final NestedMap2<String, String, SafetyCheckerOverallResult> map = TestUtil.constructPropertyMapSvcompSafety(
-				TestUtil.SVCOMP_PROP_NOOVERFLOW, TestUtil.SVCOMP_PROP_UNREACHCALL, TestUtil.SVCOMP_PROP_VALIDMEMCLEANUP,
-				TestUtil.SVCOMP_PROP_VALIDMEMSAFETY);
+		final NestedMap2<String, String, SafetyCheckerOverallResult> map = TestUtil
+				.constructPropertyMapSvcompSafety(TestUtil.SVCOMP_PROP_UNREACHCALL);
 		return new YamlBasedExpectedResultFinder<SafetyCheckerOverallResult>(map);
 	}
 

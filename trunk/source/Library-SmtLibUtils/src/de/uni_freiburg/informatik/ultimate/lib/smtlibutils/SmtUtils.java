@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -113,7 +114,7 @@ public final class SmtUtils {
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
+		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE, POLY_PAC
 	}
 
 	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
@@ -169,6 +170,9 @@ public final class SmtUtils {
 				break;
 			case NONE:
 				return formula;
+			case POLY_PAC:
+				simplified = PolyPacSimplificationTermWalker.simplify(script.getScript(), formula);
+				break;
 			default:
 				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
 			}
@@ -921,15 +925,23 @@ public final class SmtUtils {
 	 *         parameters.
 	 */
 	public static boolean isAtomicFormula(final Term term) {
-		if (isTrueLiteral(term) || isFalseLiteral(term) || isConstant(term)) {
-			return true;
+		if (SmtSortUtils.isBoolSort(term.getSort())) {
+			if (isTrueLiteral(term) || isFalseLiteral(term)) {
+				return true;
+			}
+			if ((term instanceof TermVariable) || isConstant(term)) {
+				return true;
+			}
+			if (term instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (NonCoreBooleanSubTermTransformer.isCoreBooleanNonAtom(appTerm)) {
+					return false;
+				} else {
+					return true;
+				}
+			}
 		}
-		if (term instanceof ApplicationTerm) {
-			// Note that this is only correct because we checked for constant terms (i.e.,
-			// unary function symbols) above.
-			return !allParamsAreBool((ApplicationTerm) term);
-		}
-		return term instanceof TermVariable;
+		return false;
 	}
 
 	/**
@@ -1261,6 +1273,31 @@ public final class SmtUtils {
 	public static ApplicationTerm buildNewConstant(final Script script, final String name, final String sortname) {
 		script.declareFun(name, new Sort[0], script.sort(sortname));
 		return (ApplicationTerm) script.term(name);
+	}
+
+	/**
+	 * Auxiliary method for {@link TermTransformer}. The method
+	 * {@link TermTransformer#convertApplicationTerm} constructs new terms that may
+	 * violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}.
+	 * Classes in Ultimate that inherit {@link TermTransformer} should overwrite
+	 * {@link TermTransformer#convertApplicationTerm} by a method that uses this
+	 * method for the construction of new terms.
+	 * See e.g., {@link SubstitutionWithLocalSimplification}.
+	 *
+	 * @param appTerm original ApplicationTerm
+	 * @param newArgs parameters of the transformed ApplicationTerm
+	 */
+	public static Term convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs, final Script script) {
+		final Term result;
+		final Term[] oldArgs = appTerm.getParameters();
+		if (oldArgs == newArgs) {
+			// no argument was changed, we can return the original term
+			result = appTerm;
+		} else {
+			result = SmtUtils.termWithLocalSimplification(script, appTerm.getFunction(),
+					newArgs);
+		}
+		return result;
 	}
 
 	/**
@@ -2281,8 +2318,37 @@ public final class SmtUtils {
 	 *         was able to prove that both formulas are not equivalent, and LBool.UNKNOWN otherwise.
 	 */
 	public static LBool checkEquivalence(final Term formula1, final Term formula2, final Script script) {
-		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
+		final Term notEq = script.term("distinct", formula1, formula2);
 		return Util.checkSat(script, notEq);
+	}
+
+
+	public static void checkLogicalEquivalenceForDebugging(final Script script, final Term result, final Term input,
+			final Class<?> checkedClass, final boolean tolerateUnknown) {
+		script.echo(new QuotedObject(String.format("Start correctness check for %s.", checkedClass.getSimpleName())));
+		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
+		script.echo(new QuotedObject(
+				String.format("Finished correctness check for %s. Result: " + lbool, checkedClass.getSimpleName())));
+		final String errorMessage;
+		switch (lbool) {
+		case SAT:
+			errorMessage = String.format("%s: Not equivalent to expected result: %s Input: %s",
+					checkedClass.getSimpleName(), result, input);
+			break;
+		case UNKNOWN:
+			errorMessage = String.format(
+					"%s: Insufficient ressources for checking equivalence to expected result: %s Input: %s",
+					checkedClass.getSimpleName(), result, input);
+			break;
+		case UNSAT:
+			errorMessage = null;
+			break;
+		default:
+			throw new AssertionError("unknown value " + lbool);
+		}
+		if (lbool == LBool.SAT || (!tolerateUnknown && lbool == LBool.UNKNOWN)) {
+			throw new AssertionError(errorMessage);
+		}
 	}
 
 	/**

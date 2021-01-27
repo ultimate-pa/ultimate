@@ -102,7 +102,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
@@ -431,7 +430,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								procedureRoot.toString().substring(0, 5)),
 						errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
 
-				ManagedScript mgdScriptTracechecks;
+				final ManagedScript mgdScriptTracechecks;
 				if (mGlobalSettings.isUseSeparateSolverForTracechecks()) {
 					final SolverMode solverMode = mGlobalSettings.getChooseSeparateSolverForTracechecks();
 					final String commandExternalSolver = mGlobalSettings.getSeparateSolverForTracechecksCommand();
@@ -441,11 +440,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							.setSolverMode(solverMode).setUseFakeIncrementalScript(fakeNonIncrementalScript)
 							.setUseExternalSolver(!commandExternalSolver.isEmpty(), commandExternalSolver,
 									mGlobalSettings.getSeparateSolverForTracechecksTheory());
-					final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings,
-							"TraceCheck_Iteration" + iterationsCount);
 
-					mgdScriptTracechecks = new ManagedScript(mServices, tcSolver);
-					mOriginalRoot.getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
+					mgdScriptTracechecks = mOriginalRoot.getCfgSmtToolkit().createFreshManagedScript(solverSettings,
+							"TraceCheck_Iteration" + iterationsCount);
 				} else {
 					mgdScriptTracechecks = mCsToolkit.getManagedScript();
 				}

@@ -448,7 +448,12 @@ public class ThreadInstanceAdder {
 
 	private static String generateThreadInstanceId(final int forkNumber, final String procedureName,
 			final int threadInstanceNumber, final int threadInstanceMax) {
-		return procedureName + "Thread" + threadInstanceNumber + "of" +  threadInstanceMax + "ForFork" + forkNumber;
+		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + forkNumber;
+	}
+
+	private static String generateThreadInstanceId(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork,
+			final String procedureName, final int threadInstanceNumber, final int threadInstanceMax) {
+		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + fork.hashCode();
 	}
 
 	private static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId,
@@ -499,10 +504,10 @@ public class ThreadInstanceAdder {
 		newSymbolTable.finishConstruction();
 		final ConcurrencyInformation concurrencyInformation = new ConcurrencyInformation(threadInstanceMap,
 				inUseErrorNodeMap, joinTransitions);
-		return new CfgSmtToolkit(new ModifiableGlobalsTable(proc2Globals), cfgSmtToolkit.getManagedScript(),
-				newSymbolTable, cfgSmtToolkit.getProcedures(), cfgSmtToolkit.getInParams(),
-				cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(), concurrencyInformation,
-				cfgSmtToolkit.getSmtFunctionsAndAxioms());
+		return new CfgSmtToolkit(mServices, new ModifiableGlobalsTable(proc2Globals),
+				cfgSmtToolkit.getManagedScript(), newSymbolTable, cfgSmtToolkit.getProcedures(),
+				cfgSmtToolkit.getInParams(), cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(),
+				concurrencyInformation, cfgSmtToolkit.getSmtFunctionsAndAxioms());
 	}
 
 	private static void addVar(final IProgramNonOldVar var, final DefaultIcfgSymbolTable newSymbolTable,

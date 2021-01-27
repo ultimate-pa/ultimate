@@ -2,7 +2,7 @@
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
@@ -34,39 +34,38 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-
 /**
  * Static class for pretty-printing SMT formulae
- * 
- * @author Jan Leike 
+ *
+ * @author Jan Leike
  * @author Matthias Heizmann
  */
 public class SMTPrettyPrinter {
-	private static final String s_indentation = "    ";
-	private static final String[] s_infix_functions =
-		{"+", "-", "*", "/", "=", ">=", "<=", ">", "<"};
-	
+	private static final String INDENT = "    ";
+	private static final String[] INFIX_FUNCTIONS = { "+", "-", "*", "/", "=", ">=", "<=", ">", "<" };
+
 	private final Term mTerm;
-	
+
 	public SMTPrettyPrinter(final Term term) {
 		mTerm = term;
 	}
-	
+
 	private static void indent(final StringBuilder sb, final int indentation) {
 		for (int i = 0; i < indentation; ++i) {
-			sb.append(s_indentation);
+			sb.append(INDENT);
 		}
 	}
-	
+
 	/**
 	 * Convert an SMT term into a more human readable format
-	 * 
-	 * @param term an SMT term
+	 *
+	 * @param term
+	 *            an SMT term
 	 * @return a human-readable representation of the term
 	 */
 	private static String print(final Term term, final int indentation) {
-		assert(indentation >= 0);
-		
+		assert (indentation >= 0);
+
 		final StringBuilder sb = new StringBuilder();
 		if (term instanceof ConstantTerm) {
 			return term.toString();
@@ -75,7 +74,7 @@ public class SMTPrettyPrinter {
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appt = (ApplicationTerm) term;
 			final String fname = appt.getFunction().getName();
-			
+
 			if (appt.getParameters().length == 0) {
 				return fname;
 			}
@@ -89,11 +88,11 @@ public class SMTPrettyPrinter {
 				sb.append(")");
 				return sb.toString();
 			}
-			
+
 			// Recursively convert parameters
 			sb.append("(");
 			boolean infix = false;
-			for (final String infix_fname : s_infix_functions) {
+			for (final String infix_fname : INFIX_FUNCTIONS) {
 				if (fname.equals(infix_fname)) {
 					infix = true; // write the function symbol in infix notation
 				}
@@ -101,7 +100,7 @@ public class SMTPrettyPrinter {
 			if (appt.getParameters().length == 1) {
 				sb.append(fname);
 				sb.append(" ");
-				sb.append(print(appt.getParameters()[0],0));
+				sb.append(print(appt.getParameters()[0], 0));
 				sb.append(")");
 				return sb.toString();
 			} else if (!infix) {
@@ -139,11 +138,11 @@ public class SMTPrettyPrinter {
 			}
 			sb.append(print(annot.getSubterm(), indentation));
 		} else {
-			assert(false); // Not implemented
+			// Not implemented
+			assert false;
 		}
 		return sb.toString();
 	}
-	
 
 	@Override
 	public String toString() {

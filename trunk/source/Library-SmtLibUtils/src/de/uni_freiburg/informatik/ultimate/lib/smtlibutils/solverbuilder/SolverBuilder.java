@@ -95,7 +95,7 @@ public final class SolverBuilder {
 	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	public static final String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
 
-	public static final String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --incremental --print-success --lang smt --rewrite-divk";
+	public static final String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --incremental --print-success --lang smt";
 	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
 
 	// 20161214 Matthias: MathSAT does not support timeouts
@@ -212,7 +212,7 @@ public final class SolverBuilder {
 
 		setSolverModeDependentOptions(solverSettings, script);
 
-		final String advertising = "SMT script generated on " + CoreUtil.getIsoUtcTimestamp()
+		final String advertising = "SMT script generated on " + CoreUtil.getIsoUtcTimestampWithUtcOffset()
 				+ " by Ultimate (https://ultimate.informatik.uni-freiburg.de/)";
 
 		script.setInfo(":source", advertising);

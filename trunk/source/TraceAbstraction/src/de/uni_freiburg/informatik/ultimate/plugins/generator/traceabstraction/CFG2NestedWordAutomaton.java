@@ -155,7 +155,6 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		return predicateProvider;
 	}
 
-
 	private static Function<IcfgLocation, IPredicate> constructDebugPredicateProvider() {
 		final SmtFreePredicateFactory pf = new SmtFreePredicateFactory();
 		return x -> pf.newDebugPredicate(x.toString());
@@ -233,9 +232,11 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					} else if (edge instanceof IIcfgInternalTransition<?>) {
 						nwa.addInternalTransition(state, letterProvider.apply(edge), succState);
 					} else if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
-						throw new UnsupportedOperationException("analysis for sequential programs does not support fork/join");
+						throw new UnsupportedOperationException(
+								"analysis for sequential programs does not support fork/join");
 					} else if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
-						throw new UnsupportedOperationException("analysis for sequential programs does not support fork/join");
+						throw new UnsupportedOperationException(
+								"analysis for sequential programs does not support fork/join");
 					} else {
 						throw new UnsupportedOperationException("unsupported edge " + edge.getClass().getSimpleName());
 					}
@@ -258,8 +259,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 
 		// construct the net
-		final BoundedPetriNet<LETTER, IPredicate> net = new BoundedPetriNet<>(new AutomataLibraryServices(services),
-				vpAlphabet.getInternalAlphabet(), false);
+		final BoundedPetriNet<LETTER, IPredicate> net =
+				new BoundedPetriNet<>(new AutomataLibraryServices(services), vpAlphabet.getInternalAlphabet(), false);
 		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
 		{
 			// add places
@@ -275,7 +276,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<IPredicate>> fork2notinUseState = new HashMap<>();
+		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<IPredicate>> fork2notinUseState =
+				new HashMap<>();
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<IPredicate>> fork2inUseState = new HashMap<>();
 		final Map<String, IPredicate> threadInstance2notinUseState = new HashMap<>();
 		final Map<String, IPredicate> threadInstance2inUseState = new HashMap<>();
@@ -291,22 +293,11 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 				final List<IPredicate> notinUseStates = new ArrayList<>();
 				final List<IPredicate> inUseStates = new ArrayList<>();
 				for (final ThreadInstance ti : threadInstances) {
-					IPredicate threadNotInUsePredicate;
-					{
-						// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
-						final String threadNotInUseString = ti.getThreadInstanceName() + "NotInUse";
-						threadNotInUsePredicate = predicateFactory.newPredicate(trueTerm);
-					}
-					IPredicate threadInUsePredicate;
-					{
-						// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
-						final String threadInUseString = ti.getThreadInstanceName() + "InUse";
-						threadInUsePredicate = predicateFactory.newPredicate(trueTerm);
-					}
-					threadInstance2notinUseState.put(ti.getThreadInstanceName(), threadNotInUsePredicate);
-					threadInstance2inUseState.put(ti.getThreadInstanceName(), threadInUsePredicate);
-					net.addPlace(threadNotInUsePredicate, true, false);
-					net.addPlace(threadInUsePredicate, false, false);
+					final String threadInstanceId = ti.getThreadInstanceName();
+					final IPredicate threadNotInUsePredicate = threadInstance2notinUseState.computeIfAbsent(
+							threadInstanceId, x -> createThreadNotInUsePredicate(x, net, predicateFactory, trueTerm));
+					final IPredicate threadInUsePredicate = threadInstance2inUseState.computeIfAbsent(threadInstanceId,
+							x -> createThreadInUsePredicate(x, net, predicateFactory, trueTerm));
 					notinUseStates.add(threadNotInUsePredicate);
 					inUseStates.add(threadInUsePredicate);
 				}
@@ -406,6 +397,26 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 		return net;
+	}
+
+	private static <LETTER> IPredicate createThreadNotInUsePredicate(final String threadInstanceId,
+			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory,
+			final Term predicateTerm) {
+		// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
+		final String threadNotInUseString = threadInstanceId + "NotInUse";
+		final IPredicate threadNotInUsePredicate = predicateFactory.newPredicate(predicateTerm);
+		net.addPlace(threadNotInUsePredicate, true, false);
+		return threadNotInUsePredicate;
+	}
+
+	private static <LETTER> IPredicate createThreadInUsePredicate(final String threadInstanceId,
+			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory,
+			final Term predicateTerm) {
+		// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
+		final String threadInUseString = threadInstanceId + "InUse";
+		final IPredicate threadInUsePredicate = predicateFactory.newPredicate(predicateTerm);
+		net.addPlace(threadInUsePredicate, false, false);
+		return threadInUsePredicate;
 	}
 
 	private static int getThreadInstanceNumber(final IIcfgForkTransitionThreadCurrent<?> current,

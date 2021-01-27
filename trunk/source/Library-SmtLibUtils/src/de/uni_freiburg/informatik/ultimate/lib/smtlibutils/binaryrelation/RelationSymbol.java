@@ -270,10 +270,10 @@ public enum RelationSymbol {
 			result = SmtUtils.bvult(script, lhs, rhs);
 			break;
 		case BVUGE:
-			result = SmtUtils.bvule(script, lhs, rhs);
+			result = SmtUtils.bvule(script, rhs, lhs);
 			break;
 		case BVUGT:
-			result = SmtUtils.bvult(script, lhs, rhs);
+			result = SmtUtils.bvult(script, rhs, lhs);
 			break;
 		case BVSLE:
 			result = SmtUtils.bvsle(script, lhs, rhs);
@@ -282,10 +282,10 @@ public enum RelationSymbol {
 			result = SmtUtils.bvslt(script, lhs, rhs);
 			break;
 		case BVSGE:
-			result = SmtUtils.bvsle(script, lhs, rhs);
+			result = SmtUtils.bvsle(script, rhs, lhs);
 			break;
 		case BVSGT:
-			result = SmtUtils.bvslt(script, lhs, rhs);
+			result = SmtUtils.bvslt(script, rhs, lhs);
 			break;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);

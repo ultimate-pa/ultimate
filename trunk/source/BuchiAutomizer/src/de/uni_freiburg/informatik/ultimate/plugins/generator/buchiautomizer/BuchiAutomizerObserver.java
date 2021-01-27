@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -83,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -233,12 +235,26 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(reportRes);
 		} else if (result == Result.UNKNOWN) {
 			final NestedLassoRun<?, IPredicate> counterexample = bcl.getCounterexample();
+			final Map<String, ILocation> overapprox = bcl.lassoWasOverapproximated();
 			final StringBuilder longDescr = new StringBuilder();
-			longDescr.append("Buchi Automizer is unable to decide " + whatToProve + " for the following lasso. ");
-			longDescr.append(System.getProperty("line.separator"));
+			if (overapprox.isEmpty()) {
+				longDescr.append("Buchi Automizer is unable to decide " + whatToProve + " for the following lasso. ");
+			} else {
+				longDescr.append("Buchi Automizer cannot decide " + whatToProve
+						+ " for the following lasso because it contains the following overapproximations. ");
+				longDescr.append(CoreUtil.getPlatformLineSeparator());
+				longDescr.append("Overapproximations");
+				longDescr.append(CoreUtil.getPlatformLineSeparator());
+				for (final Entry<String, ILocation> oa : overapprox.entrySet()) {
+					longDescr.append(String.format("%s (Reason %s)", oa.getValue(), oa.getKey()));
+				}
+				longDescr.append(CoreUtil.getPlatformLineSeparator());
+				longDescr.append("Lasso");
+			}
+			longDescr.append(CoreUtil.getPlatformLineSeparator());
 			longDescr.append("Stem: ");
 			longDescr.append(counterexample.getStem().getWord());
-			longDescr.append(System.getProperty("line.separator"));
+			longDescr.append(CoreUtil.getPlatformLineSeparator());
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());
 			final IResult reportRes =

@@ -46,16 +46,9 @@ public class SubstitutionWithLocalSimplification extends Substitution {
 
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-		final Term result;
-		final Term[] oldArgs = appTerm.getParameters();
-		if (oldArgs == newArgs) {
-			// no argument was changed, we can return the original term
-			result = appTerm;
-		} else {
-			result = SmtUtils.termWithLocalSimplification(mMgdScript.getScript(), appTerm.getFunction(),
-					newArgs);
-		}
-		setResult(result);
+		setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mMgdScript.getScript()));
 	}
+
+
 
 }

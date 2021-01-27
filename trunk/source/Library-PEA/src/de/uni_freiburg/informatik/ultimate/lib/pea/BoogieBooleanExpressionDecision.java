@@ -240,7 +240,13 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 				if (mIgnoredIds.contains(id)) {
 					return expr;
 				}
-				return new IdentifierExpression(expr.getLocation(), id.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + "'"));
+				if (id.startsWith("'")) {
+					// if this is an old variable ('P), priming removes the leading "'"
+					return new IdentifierExpression(expr.getLocation(), id.replaceAll("'" + "([a-zA-Z_])(\\w*)", "$1$2"));
+				} else {
+					return new IdentifierExpression(expr.getLocation(), id.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + "'"));
+				}
+				
 			}
 			return super.processExpression(expr);
 		}

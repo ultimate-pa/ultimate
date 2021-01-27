@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IcfgTransformer library.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 /**
  * Replace e.g., (x % 256) == y by the following disjunction (0 <= x && x < 256) && x == y || (-256 <= x && x < 0) && (x
  * + 256) == y || (256 <= x && x < 256 + 256) && (x - 256) == y || (x < -256 || 256 + 256 <= x) && (x % 256) == y
- * 
+ *
  * @author Matthias Heizmann
  */
 public class ModuloNeighborTransformation extends TransitionPreprocessor {
@@ -72,7 +72,6 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 
 	private final IUltimateServiceProvider mServices;
 
-	private final boolean mUseNeibors;
 	private static final boolean APPLY_ONLY_TO_TYPICAL_WRAPAROUD_CONSTANTS = true;
 	private static final BigInteger BITLENGTH8_VALUE = BigInteger.valueOf(256);
 	private static final BigInteger BITLENGTH16_VALUE = BigInteger.valueOf(65536);
@@ -80,13 +79,9 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	private static final BigInteger BITLENGTH64_VALUE = new BigInteger("9223372036854775808");
 	private static final BigInteger BITLENGTH128_VALUE = new BigInteger("340282366920938463463374607431768211456");
 
-	public ModuloNeighborTransformation(final IUltimateServiceProvider services, final boolean useNeibors) {
+	public ModuloNeighborTransformation(final IUltimateServiceProvider services) {
 		super();
 		mServices = services;
-		if (!useNeibors) {
-			throw new UnsupportedOperationException("not yet implemented");
-		}
-		mUseNeibors = useNeibors;
 	}
 
 	@Override

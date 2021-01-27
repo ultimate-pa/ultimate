@@ -75,7 +75,7 @@ public class QuantAnnotation implements IAnnotation {
 		mSubs = subs.toArray(new Term[subs.size()]);
 		mInstClauseTerm = instTerm;
 		mOrigin = origin;
-		mSource = qClause.getSource();
+		mSource = qClause.getQuantSource();
 		mProofTracker = qClause.getQuantTheory().getClausifier().getTracker();
 	}
 
