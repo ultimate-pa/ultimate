@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -63,73 +62,74 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * TODO
+ * Constructs an Owicki/Gries annotation for a Petri program from a Floyd/Hoare annotation of the reachability graph of
+ * the Petri net, by introducing a boolean ghost variable for each place in the Petri net.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
- *
  * @param <PLACE>
+ *            The type of places in the Petri program
+ * @param <LETTER>
+ *            The type of statements in the Petri program
  */
-public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
-    
-	private final IPetriNet<LETTER, PLACE> mNet;
-	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
+public class OwickiGriesConstruction<PLACE, LETTER> {
 
-	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final BasicPredicateFactory mFactory;
-	private final ILogger mLogger;
+
+	private final IPetriNet<LETTER, PLACE> mNet;
+	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
 	private final DefaultIcfgSymbolTable mSymbolTable;
-	private final static SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final static XnfConversionTechnique mXnfConversionTechnique =
+
+	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	// Variables for Annotation construction
 	private final Map<PLACE, IProgramVar> mGhostVariables;
-	private final Map<PLACE, IPredicate> mFormulaMappingD;
-	private final Map<IProgramVar, Term> mGhostInitAssignment;
-	private final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
+	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IPetriNet<LETTER, PLACE> net, final Map<Marking<LETTER, PLACE>, IPredicate> floydHoare) {
-		mNet = net;
-		mFloydHoareAnnotation = floydHoare;
-		mScript = csToolkit.getManagedScript().getScript();
-		mManagedScript = csToolkit.getManagedScript();
-		mSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
-		mGhostVariables = getGhostVariables();
-		mFormulaMappingD = getFormulaMapping();
-		mAssignmentMapping = getAssignmentMapping();
-		mGhostInitAssignment = getGhostInitAssignment();
+		mManagedScript = csToolkit.getManagedScript();
+		mScript = mManagedScript.getScript();
 
-		mAnnotation = new OwickiGriesAnnotation<>(mFormulaMappingD, mAssignmentMapping, new HashSet<>(mGhostVariables.values()),
-				mGhostInitAssignment, mNet, mSymbolTable);
+		mNet = net;
+		mFloydHoareAnnotation = floydHoare;
+		mSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
+		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
+
+		mGhostVariables = getGhostVariables();
+		final Map<PLACE, IPredicate> formulaMapping = getFormulaMapping();
+		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
+		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
+
+		mAnnotation = new OwickiGriesAnnotation<>(formulaMapping, assignmentMapping,
+				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, mNet, mSymbolTable);
 	}
-	
+
 	/**
-	 * Predicate: disjunction of Markings predicate. Markings predicate: Conjunction of All GhostVariable and FH
-	 * predicate.
+	 * Constructs the mapping from places to formulas. A place is mapped to a disjunction of marking predicates, where
+	 * each marking predicate is a conjunction of ghost variables and a Floyd/Hoare predicate.
 	 *
-	 * @return a Map with a predicate for each place in Net.
+	 * @return a map with a predicate for each place in the Petri net
 	 */
-	public Map<PLACE, IPredicate> getFormulaMapping() {
+	private Map<PLACE, IPredicate> getFormulaMapping() {
 		final Map<PLACE, IPredicate> mapping = new HashMap<>();
+
+		final Set<Marking<LETTER, PLACE>> reachableMarkings = mFloydHoareAnnotation.keySet();
 		for (final PLACE place : mNet.getPlaces()) {
-			final Set<Term> clauses = new HashSet<>();
-			mFloydHoareAnnotation.forEach((marking, formula) -> {
-				if (marking.contains(place)) {
-					clauses.add(getMarkingPredicate(place, marking));
-				}
-			});
+			final Set<Term> clauses = reachableMarkings.stream().filter(m -> m.contains(place))
+					.map(this::getMarkingPredicate).collect(Collectors.toSet());
 			final Term disjunction = SmtUtils.or(mScript, clauses);
 			mapping.put(place, mFactory.newPredicate(disjunction));
 		}
+
 		return mapping;
 	}
 
@@ -138,40 +138,17 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 * @param marking
 	 * @return Predicate with conjunction of Ghost variables and predicate of marking
 	 */
-	private Term getMarkingPredicate(final PLACE place, final Marking<LETTER, PLACE> marking) {
+	private Term getMarkingPredicate(final Marking<LETTER, PLACE> marking) {
 		final Set<Term> terms = new HashSet<>();
 		for (final PLACE otherPlace : marking) {
 			final Term ghost = mGhostVariables.get(otherPlace).getTerm();
 			terms.add(ghost);
 		}
-		terms.addAll(getCopredMarking(marking, place));
+		terms.addAll(getAllNotMarking(marking));
 		terms.add(mFloydHoareAnnotation.get(marking).getFormula());
 		return SmtUtils.and(mScript, terms);
 	}
-	
-	/**
-	 *
-	 * @param marking
-	 * @param placef: place to which the formula will be assigned
-	 * @return Formula MethodC:Predicate with GhostVariables of all co-predecesor places.
-	 */
-	private Set<Term> getCopredMarking(final Marking<LETTER, PLACE> marking, final PLACE placef) {
-		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
-		final Set<PLACE> notMarking = getCopred(placef, markPlaces);
-		final Set<Term> predicates = new HashSet<>();
-		for (final PLACE place : notMarking) {
-			final Term ghost = mGhostVariables.get(place).getTerm();
-			predicates.add(SmtUtils.not(mScript, ghost));
-		}
-		return predicates;
-	}
-	
-	private Set<PLACE> getCopred(PLACE place, Set<PLACE> markPlaces){
-		final Set<PLACE> places = new HashSet<>();
-		for (final ITransition <LETTER, PLACE> transition : mNet.getSuccessors(place)){
-			places.addAll(DataStructureUtils.difference(mNet.getPredecessors(transition), markPlaces));		
-		}return places;
-	}
+
 	/**
 	 *
 	 * @param marking
@@ -197,11 +174,11 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
 		final Set<Marking<LETTER, PLACE>> markings = mFloydHoareAnnotation.keySet();
 		final Set<PLACE> notInMarking = new HashSet<>();
-		for(final Marking<LETTER, PLACE> otherMarking : markings) {
-			notInMarking.addAll(getSupPlaces(otherMarking,markPlaces));
+		for (final Marking<LETTER, PLACE> otherMarking : markings) {
+			notInMarking.addAll(getSupPlaces(otherMarking, markPlaces));
 		}
 		final Set<Term> predicates = new HashSet<>();
-		for(final PLACE place: notInMarking) {
+		for (final PLACE place : notInMarking) {
 			final Term ghost = mGhostVariables.get(place).getTerm();
 			predicates.add(SmtUtils.not(mScript, ghost));
 		}
@@ -212,13 +189,13 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 		Set<PLACE> subPlaces = new HashSet<>();
 		final Set<PLACE> otherPlaces = otherMarking.stream().collect(Collectors.toSet());
 		if (otherPlaces.containsAll(markPlaces)) {
-			subPlaces = DataStructureUtils.difference(otherPlaces, markPlaces);		
+			subPlaces = DataStructureUtils.difference(otherPlaces, markPlaces);
 		}
 		return subPlaces;
 	}
 
 	/**
-	 * @return Map of GhostVariables to Places
+	 * @return map of places to ghost variables
 	 */
 	private Map<PLACE, IProgramVar> getGhostVariables() {
 		final Map<PLACE, IProgramVar> ghostVars = new HashMap<>();
@@ -227,8 +204,9 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 		mManagedScript.lock(this);
 		try {
 			for (final PLACE place : places) {
+				// TODO (Dominik 2021-01-27) Name ghost variables by place for easier debugging
 				final TermVariable tVar =
-						mManagedScript.constructFreshTermVariable("np_" + i, SmtSortUtils.getBoolSort(mManagedScript));
+						mManagedScript.constructFreshTermVariable("np" + i, SmtSortUtils.getBoolSort(mManagedScript));
 				final IProgramVar pVar = ProgramVarUtils.constructGlobalProgramVarPair(tVar.getName(),
 						SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
 				mSymbolTable.add(pVar);
@@ -242,18 +220,16 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	}
 
 	/**
-	 * @return set of Initial value assignment of all GhostVariables.
-	 *
+	 * @return initial value assignment of all ghost variables.
 	 */
 	private Map<IProgramVar, Term> getGhostInitAssignment() {
 		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
-		//final Set<IProgramVar> initGhostVariables = new HashSet<>();
-		for(PLACE place: mNet.getInitialPlaces()) {
+		for (final PLACE place : mNet.getInitialPlaces()) {
 			initAssignments.put(mGhostVariables.get(place), mScript.term("true"));
 		}
-		final Set<IProgramVar> notInitGhostVariables = DataStructureUtils.difference
-				(new HashSet<>(mGhostVariables.values()), initAssignments.keySet());
-		for(IProgramVar variable: notInitGhostVariables) {
+		final Set<IProgramVar> notInitGhostVariables =
+				DataStructureUtils.difference(new HashSet<>(mGhostVariables.values()), initAssignments.keySet());
+		for (final IProgramVar variable : notInitGhostVariables) {
 			initAssignments.put(variable, mScript.term("false"));
 		}
 		return initAssignments;
@@ -276,7 +252,7 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 */
 	private Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
 		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
-		for(ITransition<LETTER,PLACE> transition: mNet.getTransitions()) {
+		for (final ITransition<LETTER, PLACE> transition : mNet.getTransitions()) {
 			assignmentMapping.put(transition, getTransitionAssignment(transition));
 		}
 		return assignmentMapping;
@@ -290,10 +266,10 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	 */
 	private UnmodifiableTransFormula getTransitionAssignment(final ITransition<LETTER, PLACE> transition) {
 		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		for(PLACE place: mNet.getPredecessors(transition)) {
-			assignments.add(getGhostAssignment(Collections.nCopies(1,  mGhostVariables.get(place)), "false"));
+		for (final PLACE place : mNet.getPredecessors(transition)) {
+			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "false"));
 		}
-		for(PLACE place: mNet.getSuccessors(transition)) {
+		for (final PLACE place : mNet.getSuccessors(transition)) {
 			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "true"));
 		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false, false,
@@ -307,9 +283,9 @@ public class OwickiGriesConstruction<LOC extends IcfgLocation, PLACE, LETTER> {
 	public HashRelation<ITransition<LETTER, PLACE>, PLACE> getCoMarkedPlaces() {
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> relation = new HashRelation<>();
 		for (final ITransition<LETTER, PLACE> transition : mNet.getTransitions()) {
-			final Set<PLACE> predecessors = mNet.getPredecessors(transition);			
+			final Set<PLACE> predecessors = mNet.getPredecessors(transition);
 			final Set<Marking<LETTER, PLACE>> enabledMarkings = mFloydHoareAnnotation.keySet().stream()
-					.filter(marking -> marking.containsAll(predecessors)).collect(Collectors.toSet());		
+					.filter(marking -> marking.containsAll(predecessors)).collect(Collectors.toSet());
 			for (final Marking<LETTER, PLACE> marking : enabledMarkings) {
 				for (final PLACE place : marking) {
 					// places that are not predecessors of transition

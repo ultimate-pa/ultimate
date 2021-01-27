@@ -48,18 +48,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicI
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * TODO
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Miriam Lagunes (miri am.lagunes@students.uni-freiburg.de)
+ * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
  * @param <LETTER>
  * @param <PLACE>
@@ -95,11 +94,11 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		mTransitions = mAnnotation.getPetriNet().getTransitions();
 
 		mIsInductive = checkInductivity();
-		mIsInterferenceFree = checkInterference(); 
-		mIsProgramSafe = getCfgSafety(); 
+		mIsInterferenceFree = checkInterference();
+		mIsProgramSafe = getCfgSafety();
 	}
 
-	private boolean checkInductivity() {		
+	private boolean checkInductivity() {
 		for (final ITransition<LETTER, PLACE> transition : mTransitions) {
 			if (!getTransitionInductivity(transition)) {
 				return false;
@@ -115,13 +114,13 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		}
 		final IPredicate precondition = getConjunctionPredicate(predecessors);
 		final IPredicate postcondition = getConjunctionPredicate(mAnnotation.getPetriNet().getSuccessors(Transition));
-		return mHoareTripleChecker.checkInternal(precondition, getTransitionSeqAction(Transition), postcondition) 
-			   == Validity.VALID;
+		return mHoareTripleChecker.checkInternal(precondition, getTransitionSeqAction(Transition),
+				postcondition) == Validity.VALID;
 	}
 
 	private IPredicate getConjunctionPredicate(final Set<PLACE> places) {
 		final Collection<IPredicate> predicates = new HashSet<>();
-		for (PLACE place : places) {
+		for (final PLACE place : places) {
 			predicates.add(getPlacePredicate(place));
 		}
 		return mPredicateFactory.and(predicates);
@@ -152,8 +151,8 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 				getConjunctionPredicate(mAnnotation.getPetriNet().getPredecessors(Transition));
 		final IInternalAction action = getTransitionSeqAction(Transition);
 		final Set<PLACE> coMarked = getComarkedPlaces(Transition);
-		for(final PLACE place: coMarked) {
-			if(!getInterferenceFreeTriple(predecessorsPred, action, place)) {
+		for (final PLACE place : coMarked) {
+			if (!getInterferenceFreeTriple(predecessorsPred, action, place)) {
 				return false;
 			}
 		}
@@ -176,45 +175,45 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		final List<IPredicate> predicate = Arrays.asList(Pred, placePred);
 		return mHoareTripleChecker.checkInternal(mPredicateFactory.and(predicate), Action, placePred) == Validity.VALID;
 	}
-	
-	//TODO:find better name
-	private boolean getCfgSafety() {		
+
+	// TODO:find better name
+	private boolean getCfgSafety() {
 		if (!getInitImplication() || !getAcceptFormula()) {
 			return false;
-		}		
-		return true;
-	}
-	
-	private boolean getInitImplication() {
-		IPredicate initFormula = getInitFormula();
-		MonolithicImplicationChecker checker = new MonolithicImplicationChecker(mServices, mManagedScript);		
-		for(final PLACE place: mAnnotation.getPetriNet().getInitialPlaces()) {
-			if(Validity.VALID != checker.checkImplication(initFormula, false, getPlacePredicate(place), false))
-			{
-				return false;
-			}			
 		}
 		return true;
 	}
-	
+
+	private boolean getInitImplication() {
+		final IPredicate initFormula = getInitFormula();
+		final MonolithicImplicationChecker checker = new MonolithicImplicationChecker(mServices, mManagedScript);
+		for (final PLACE place : mAnnotation.getPetriNet().getInitialPlaces()) {
+			if (Validity.VALID != checker.checkImplication(initFormula, false, getPlacePredicate(place), false)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private IPredicate getInitFormula() {
 		final List<IPredicate> terms = new ArrayList<>();
-		for (final IProgramVar var: mAnnotation.getGhostAssignment().keySet()) {
-			terms.add(mPredicateFactory.newPredicate(SmtUtils.binaryEquality(mScript, var.getTerm(),
-					 mAnnotation.getGhostAssignment().get(var))));			
+		for (final IProgramVar var : mAnnotation.getGhostAssignment().keySet()) {
+			terms.add(mPredicateFactory.newPredicate(
+					SmtUtils.binaryEquality(mScript, var.getTerm(), mAnnotation.getGhostAssignment().get(var))));
 		}
 		return mPredicateFactory.and(terms);
 	}
-	
+
 	private boolean getAcceptFormula() {
-		for (final PLACE place: mAnnotation.getPetriNet().getAcceptingPlaces()) {	
-			//TODO: Ask about this or checkSatEquivalence
-			if(LBool.UNSAT != SmtUtils.checkSatTerm(mScript,getPlacePredicate(place).getFormula())) {
+		for (final PLACE place : mAnnotation.getPetriNet().getAcceptingPlaces()) {
+			// TODO: Ask about this or checkSatEquivalence
+			if (LBool.UNSAT != SmtUtils.checkSatTerm(mScript, getPlacePredicate(place).getFormula())) {
 				return false;
-			};
+			}
 		}
 		return true;
 	}
+
 	public boolean isValid() {
 		return mIsInductive && mIsInterferenceFree && mIsProgramSafe;
 	}

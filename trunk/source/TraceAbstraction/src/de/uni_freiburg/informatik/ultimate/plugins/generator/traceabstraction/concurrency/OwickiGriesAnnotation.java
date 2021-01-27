@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -35,81 +36,81 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
- * TODO
+ * An Owicki/Gries annotation of a Petri program. Serves as proof of the program's correctness.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
  * @param <LETTER>
+ *            The type of program statements
  * @param <PLACE>
+ *            The type of places in the Petri program
  */
 public class OwickiGriesAnnotation<LETTER, PLACE> {
 
-	// Petri net
+	/**
+	 * The annotated Petri program.
+	 */
 	private final IPetriNet<LETTER, PLACE> mPetriNet;
 
 	/**
-	 * Omega: maps Predicate -> Place
+	 * A symbol table containing both the program symbols and the ghost variables in the annotation.
+	 */
+	private final IIcfgSymbolTable mSymbolTable;
+
+	/**
+	 * "omega" - maps a place to a predicate that holds whenever the place has a token.
 	 */
 	private final Map<PLACE, IPredicate> mFormulaMapping;
 
 	/**
-	 * Gamma: maps GhostAssignment -> transition
+	 * "gamma" - annotates transitions with assignments of ghost variables.
 	 */
 	private final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
 
-	private final IIcfgSymbolTable mSymbolTable;
-
 	/**
-	 * VGhost: maps Ghost Variables to set
+	 * Set of ghost variables used by the annotation.
 	 */
-	// TODO: Map or Set? Map might be only needed for Construction
 	private final Set<IProgramVar> mGhostVariables;
 
 	/**
-	 * rho(VGhost): set of predicate value -> GhostVariables
+	 * Initial assignment of ghost variables.
 	 */
-	// protected Map<ITransition<LETTER,PLACE>,LETTER> mGhostAssignment;
 	private final Map<IProgramVar, Term> mGhostInitAssignment;
 
 	/**
-	 * Constructor
+	 * Creates a new Owicki/Gries annotation.
 	 *
-	 * @param FormulaMapping
-	 * @param mAssignmentMapping2
-	 * @param GhostVariables
-	 * @param GhostInitAssignment
+	 * @param formulaMapping
+	 *            The mapping from places to formulas.
+	 * @param assignmentMapping
+	 *            The annotation of transitions with ghost assignments.
+	 * @param ghostVariables
+	 *            The set of ghost variables used by the annotation.
+	 * @param ghostInitAssignment
+	 *            The initial assignment of ghost variables.
 	 * @param net
+	 *            The Petri program that is annotated.
+	 * @param symbolTable
+	 *            A symbol table for the annotation.
 	 */
-	public OwickiGriesAnnotation(final Map<PLACE, IPredicate> FormulaMapping,
-		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> AssignmentMapping,
-		final Set<IProgramVar> GhostVariables, 
-		final Map<IProgramVar, Term> GhostInitAssignment,
-		final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable) {
-		mFormulaMapping = FormulaMapping;
-		mAssignmentMapping = AssignmentMapping;
-		mGhostVariables = GhostVariables;
-		mGhostInitAssignment = GhostInitAssignment;
+	public OwickiGriesAnnotation(final Map<PLACE, IPredicate> formulaMapping,
+			final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping,
+			final Set<IProgramVar> ghostVariables, final Map<IProgramVar, Term> ghostInitAssignment,
+			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable) {
+
+		assert ghostInitAssignment.keySet().stream()
+				.allMatch(ghostVariables::contains) : "Initial value only allowed for ghost variables";
+
+		mFormulaMapping = formulaMapping;
+		mAssignmentMapping = assignmentMapping;
+		mGhostVariables = ghostVariables;
+		mGhostInitAssignment = ghostInitAssignment;
 		mPetriNet = net;
 		mSymbolTable = symbolTable;
-	}
-
-	public Map<PLACE, IPredicate> getFormulaMapping() {
-		return mFormulaMapping;
-	}
-
-	public Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
-		return mAssignmentMapping;
-	}
-
-	public Set<IProgramVar> GhostVariables() {
-		return mGhostVariables;
-	}
-
-	public Map<IProgramVar, Term> getGhostAssignment() {
-		return mGhostInitAssignment;
 	}
 
 	public IPetriNet<LETTER, PLACE> getPetriNet() {
@@ -120,10 +121,30 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		return mSymbolTable;
 	}
 
-	// TODO: define OGAnnotation Size
-	public int getSize() {
-		// ...
-		return 0;
+	public Map<PLACE, IPredicate> getFormulaMapping() {
+		return mFormulaMapping;
 	}
 
+	public Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
+		return mAssignmentMapping;
+	}
+
+	public Set<IProgramVar> getGhostVariables() {
+		return mGhostVariables;
+	}
+
+	public Map<IProgramVar, Term> getGhostAssignment() {
+		return mGhostInitAssignment;
+	}
+
+	public int getSize() {
+		final DAGSize sizeComputation = new DAGSize();
+		final int initSize = mGhostInitAssignment.entrySet().stream()
+				.collect(Collectors.summingInt(x -> sizeComputation.size(x.getValue())));
+		final int formulaSize = mFormulaMapping.entrySet().stream()
+				.collect(Collectors.summingInt(x -> sizeComputation.size(x.getValue().getFormula())));
+		final int assignSize = mAssignmentMapping.entrySet().stream()
+				.collect(Collectors.summingInt(x -> sizeComputation.size(x.getValue().getFormula())));
+		return initSize + formulaSize + assignSize;
+	}
 }

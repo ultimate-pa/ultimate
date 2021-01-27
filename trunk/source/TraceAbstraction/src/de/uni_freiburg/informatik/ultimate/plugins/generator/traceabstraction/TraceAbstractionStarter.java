@@ -144,9 +144,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mTransitionClazz = transitionClazz;
 		mCompositionFactory = compositionFactory;
-		// if (icfg.isSequential()) {
 		mFloydHoareAutomataFromOtherErrorLocations = new ArrayList<>();
-		// if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		// if (icfg.isSequential()) {
 		runCegarLoops(icfg, witnessAutomaton, rawFloydHoareAutomataFromFile);
 		// } else {
 		// final IcfgPetrifier icfgPetrifier =
