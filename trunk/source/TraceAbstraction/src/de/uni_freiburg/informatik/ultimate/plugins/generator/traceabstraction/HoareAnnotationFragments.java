@@ -286,11 +286,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	}
 
 	private IPredicate getProgramPoint(final IPredicate pred) {
-		final IPredicate pp = mPred2ProgPoint.get(pred);
-		if (pp == null) {
-			return pred;
-		}
-		return pp;
+		return mPred2ProgPoint.getOrDefault(pred, pred);
 	}
 
 	void addContextEntryPair(final IPredicate context, final IPredicate entry) {
