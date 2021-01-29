@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -107,23 +108,38 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	@Override
 	public boolean contains(final IPredicate state, final L a, final L b) {
-		final long startTime = System.nanoTime();
 		final IPredicate context = mConditional ? state : null;
-		final LBool subset = performInclusionCheck(context, a, b);
+		if (context instanceof IMLPredicate) {
+			// Locations will be ignored. However, using predicates with the same formula but different locations will
+			// negatively affect cache efficiency. Hence output a warning message.
+			mLogger.warn("Predicates with locations should not be used for independence.");
+		}
 
+		final long startTime = System.nanoTime();
+		final LBool subset = performInclusionCheck(context, a, b);
 		final LBool result;
-		if (mSymmetric) {
+		if (mSymmetric && subset != LBool.SAT) {
 			final LBool superset = performInclusionCheck(context, b, a);
 			if (subset == LBool.UNSAT && superset == LBool.UNSAT) {
 				result = LBool.UNSAT;
-			} else if (subset == LBool.UNKNOWN || superset == LBool.UNKNOWN) {
-				result = LBool.UNKNOWN;
-			} else {
+			} else if (superset == LBool.SAT) {
 				result = LBool.SAT;
+			} else {
+				result = LBool.UNKNOWN;
 			}
 		} else {
 			result = subset;
 		}
+		final long checkTime = System.nanoTime() - startTime;
+		mComputationTimeNano += checkTime;
+
+		mLogger.debug("Independence Inclusion Check Time: %d ms", checkTime / 1_000_000);
+		if (checkTime > 1_000_000_000) {
+			// For queries that take more than 1s, report details.
+			mLogger.warn("Expensive independence query (%d ms) for statements %s and %s under condition %s",
+					checkTime / 1_000_000, a, b, context);
+		}
+
 		switch (result) {
 		case SAT:
 			mNegativeQueries++;
@@ -135,18 +151,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			mPositiveQueries++;
 			break;
 		default:
-			throw new AssertionError();
+			throw new AssertionError("Unexpected inclusion check result: " + result);
 		}
-		final long checkTime = System.nanoTime() - startTime;
-		mComputationTimeNano += checkTime;
-
-		mLogger.debug("Independence Inclusion Check Time: %d ms", checkTime / 1000000);
-		if (checkTime > 1000000000) {
-			// for more than 1s, report details
-			mLogger.warn("Expensive independence query (%d ms) for statements %s and %s under condition %s",
-					checkTime / 1000000, a, b, context);
-		}
-
 		return result == LBool.UNSAT;
 	}
 
