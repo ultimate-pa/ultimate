@@ -117,7 +117,7 @@ public class LoopPreprocessorTransformulaTransformer {
 	public static UnmodifiableTransFormula moduloTransformation(final ModifiableTransFormula loopRelation,
 			final ManagedScript managedScript, final ReplacementVarFactory replacementVarFactory,
 			final IUltimateServiceProvider services) {
-		final ModuloNeighborTransformation modNeighborTransformer = new ModuloNeighborTransformation(services);
+		final ModuloNeighborTransformation modNeighborTransformer = new ModuloNeighborTransformation(services, true);
 		ModifiableTransFormula modTfTransformed;
 		try {
 			modTfTransformed = modNeighborTransformer.process(managedScript, loopRelation);
