@@ -26,10 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
@@ -54,35 +52,12 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	@Override
 	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb,
 			final List<Term> allParams, final int selectedParam) {
-		return buildCriticalConstraintForApplicationTerm(mScript, context, symb, allParams, selectedParam);
-	}
-
-	public static Term buildCriticalConstraintForApplicationTerm(final Script script, final Term parentContext,
-			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
-		final List<Term> otherParams = new ArrayList<>(allParams);
-		otherParams.remove(selectedParam);
-		Term result;
-		if (symb.getName().equals("and")) {
-			result = SmtUtils.and(script, otherParams);
-		} else if (symb.getName().equals("or")) {
-			final List<Term> otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(script, x))
-					.collect(Collectors.toList());
-			result = SmtUtils.and(script, otherParamsNegated);
-		} else {
-			throw new AssertionError("only conjunction and disjunction are supported");
-		}
-		result = SmtUtils.and(script, result, parentContext);
-		return result;
+		return Context.buildCriticalConstraintForConDis(mScript, context, symb, allParams, selectedParam);
 	}
 
 	@Override
 	Term constructContextForQuantifiedFormula(final Term context, final int quant, final TermVariable[] vars) {
-		return buildCriticalContraintForQuantifiedFormula(mScript, context, vars);
-	}
-
-	public static Term buildCriticalContraintForQuantifiedFormula(final Script script, final Term context,
-			final TermVariable[] vars) {
-		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, Arrays.asList(vars), context);
+		return Context.buildCriticalContraintForQuantifiedFormula(mScript, context, Arrays.asList(vars));
 	}
 
 	@Override

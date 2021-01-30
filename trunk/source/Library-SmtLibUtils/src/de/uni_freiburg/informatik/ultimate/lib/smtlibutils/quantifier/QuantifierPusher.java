@@ -42,8 +42,8 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PolyPacSimplificationTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils.IQuantifierEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -247,8 +247,8 @@ public class QuantifierPusher extends TermTransformer {
 		final Set<TermVariable> resBannedForDivCapture = new HashSet<>();
 		resBannedForDivCapture.addAll(Arrays.asList(quantifiedFormula.getVariables()));
 		resBannedForDivCapture.addAll(bannedForDivCapture);
-		final Term criticalConstraint = PolyPacSimplificationTermWalker.buildCriticalContraintForQuantifiedFormula(
-				mgdScript.getScript(), context, quantifiedFormula.getVariables());
+		final Term criticalConstraint = Context.buildCriticalContraintForQuantifiedFormula(
+				mgdScript.getScript(), context, Arrays.asList(quantifiedFormula.getVariables()));
 		final Term subFormulaPushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
 				resBannedForDivCapture, criticalConstraint, quantifiedFormula.getSubformula());
 		final Term res = SmtUtils.quantifier(mgdScript.getScript(), quantifiedFormula.getQuantifier(),
@@ -455,8 +455,8 @@ public class QuantifierPusher extends TermTransformer {
 					return correspondingFinite;
 				}
 				final Set<TermVariable> boundInRecursiveCall = et.getBoundByAncestors();
-				final Term criticalConstraint = PolyPacSimplificationTermWalker
-						.buildCriticalConstraintForApplicationTerm(mgdScript.getScript(), et.getContext(),
+				final Term criticalConstraint = Context
+						.buildCriticalConstraintForConDis(mgdScript.getScript(), et.getContext(),
 								((ApplicationTerm) et.getTerm()).getFunction(), Arrays.asList(dualFiniteParams),
 								i);
 				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
@@ -489,8 +489,8 @@ public class QuantifierPusher extends TermTransformer {
 		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
 		for (int i = 0; i < dualFiniteParams.length; i++) {
 			if (dualFiniteParams[i] instanceof QuantifiedFormula) {
-				final Term criticalConstraint = PolyPacSimplificationTermWalker
-						.buildCriticalConstraintForApplicationTerm(mgdScript.getScript(), inputEt.getContext(),
+				final Term criticalConstraint = Context
+						.buildCriticalConstraintForConDis(mgdScript.getScript(), inputEt.getContext(),
 								((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams),
 								i);
 				dualFiniteParams[i] = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
@@ -586,21 +586,8 @@ public class QuantifierPusher extends TermTransformer {
 			final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
 					new HashSet<>(minionEliminatees), dualFiniteJunction);
 			final Set<TermVariable> boundInRecursiveCall = et.getBannedForDivCapture();
-			final Term criticalConstraint;
-			{
-				final List<Term> additionalConjunction = new ArrayList<>();
-				if (et.getQuantifier() == QuantifiedFormula.EXISTS) {
-					additionalConjunction.addAll(finiteParamsWithoutEliminatee);
-				} else if (et.getQuantifier() == QuantifiedFormula.FORALL) {
-					additionalConjunction.addAll(finiteParamsWithoutEliminatee.stream()
-							.map(x -> SmtUtils.not(mgdScript.getScript(), x)).collect(Collectors.toList()));
-				} else {
-					throw new AssertionError("unknown quantifier " + et.getQuantifier());
-				}
-				additionalConjunction.add(et.getContext());
-				criticalConstraint = SmtUtils.and(mgdScript.getScript(), additionalConjunction);
-
-			}
+			final Term criticalConstraint = Context.buildCriticalConstraintForConDis(mgdScript.getScript(),
+					et.getContext(), ((ApplicationTerm) et.getTerm()).getFunction(), finiteParamsWithoutEliminatee);
 			Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
 					boundInRecursiveCall, criticalConstraint, quantified);
 			if (pushed instanceof QuantifiedFormula) {
