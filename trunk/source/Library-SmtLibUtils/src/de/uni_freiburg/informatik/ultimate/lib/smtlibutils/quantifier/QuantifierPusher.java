@@ -596,7 +596,7 @@ public class QuantifierPusher extends TermTransformer {
 			context = context.constructChildContextForConDis(mgdScript.getScript(),
 					((ApplicationTerm) et.getTerm()).getFunction(), finiteParamsWithoutEliminatee);
 			Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
-					context.getBoundInContext(), context.getCriticalConstraint(), quantified);
+					context.getBoundByAncestors(), context.getCriticalConstraint(), quantified);
 			if (pushed instanceof QuantifiedFormula) {
 				final QuantifiedFormula qf = (QuantifiedFormula) pushed;
 				for (final TermVariable var : Arrays.asList(qf.getVariables())) {

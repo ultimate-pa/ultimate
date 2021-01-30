@@ -42,63 +42,65 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * While considering a subformula φ of a formula. The <i>context</i> provides
- * some information about siblings and ancestors of φ. The <i>context</i>
- * consists of a <i>critical constraint</i> and a set of variables called
- * <i>bound in context</i>. The critical constraint is explained in "Small
- * Formulas for Large Programms: On-Line Constraint Simplification in Scalable
- * Static Analysis" by Isil Dillig, Thomas Dillig and Alex Aiken.
- * The bound-in-context variables contains all variables that are bound
- * in {@link QuantifiedFormula}s that are ancestors of φ.
+ * some information about siblings and ancestors of φ. The <i>critical
+ * constraint</i> is explained in "Small Formulas for Large Programms: On-Line
+ * Constraint Simplification in Scalable Static Analysis" by Isil Dillig, Thomas
+ * Dillig and Alex Aiken.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class Context {
 	private final Term mCriticalConstraint;
-	private final Set<TermVariable> mBoundInContext;
+	/**
+	 * Contains the variables that are bound in {@link QuantifiedFormula}s that are
+	 * ancestors of this context's subformula.
+	 */
+	private final Set<TermVariable> mBoundByAncestors;
 
 	public Context(final Script script) {
 		super();
 		mCriticalConstraint = script.term("true");
-		mBoundInContext = Collections.emptySet();
+		mBoundByAncestors = Collections.emptySet();
 	}
 
-	public Context(final Term criticalConstraint, final Set<TermVariable> boundInContext) {
+	public Context(final Term criticalConstraint, final Set<TermVariable> boundByAncestors) {
 		super();
 		Objects.requireNonNull(criticalConstraint);
-		Objects.requireNonNull(boundInContext);
+		Objects.requireNonNull(boundByAncestors);
 		mCriticalConstraint = criticalConstraint;
-		mBoundInContext = boundInContext;
+		mBoundByAncestors = boundByAncestors;
 	}
 
 	public Term getCriticalConstraint() {
 		return mCriticalConstraint;
 	}
-	public Set<TermVariable> getBoundInContext() {
-		return Collections.unmodifiableSet(mBoundInContext);
+
+	public Set<TermVariable> getBoundByAncestors() {
+		return Collections.unmodifiableSet(mBoundByAncestors);
 	}
 
 	public Context constructChildContextForQuantifiedFormula(final Script script,
 			final List<TermVariable> quantifiedVars) {
 		final Term criticalConstraint = buildCriticalContraintForQuantifiedFormula(script, mCriticalConstraint,
 				quantifiedVars);
-		final Set<TermVariable> boundInContext = new HashSet<>(mBoundInContext);
-		boundInContext.addAll(quantifiedVars);
-		return new Context(criticalConstraint, boundInContext);
+		final Set<TermVariable> boundByAncestors = new HashSet<>(mBoundByAncestors);
+		boundByAncestors.addAll(quantifiedVars);
+		return new Context(criticalConstraint, boundByAncestors);
 	}
 
 	public Context constructChildContextForConDis(final Script script, final FunctionSymbol symb,
 			final List<Term> allParams, final int selectedParam) {
 		final Term criticalConstraint = buildCriticalConstraintForConDis(script, mCriticalConstraint, symb, allParams,
 				selectedParam);
-		return new Context(criticalConstraint, mBoundInContext);
+		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
 	public Context constructChildContextForConDis(final Script script, final FunctionSymbol symb,
 			final List<Term> otherParams) {
 		final Term criticalConstraint = buildCriticalConstraintForConDis(script, mCriticalConstraint, symb,
 				otherParams);
-		return new Context(criticalConstraint, mBoundInContext);
+		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
 	public static Term buildCriticalContraintForQuantifiedFormula(final Script script, final Term context,
@@ -128,7 +130,5 @@ public class Context {
 		result = SmtUtils.and(script, result, parentContext);
 		return result;
 	}
-
-
 
 }
