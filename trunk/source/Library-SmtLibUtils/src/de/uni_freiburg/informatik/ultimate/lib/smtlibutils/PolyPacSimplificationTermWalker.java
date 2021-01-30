@@ -56,8 +56,8 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	Term constructContextForQuantifiedFormula(final Term context, final int quant, final TermVariable[] vars) {
-		return Context.buildCriticalContraintForQuantifiedFormula(mScript, context, Arrays.asList(vars));
+	Term constructContextForQuantifiedFormula(final Term context, final int quant, final List<TermVariable> vars) {
+		return Context.buildCriticalContraintForQuantifiedFormula(mScript, context, vars);
 	}
 
 	@Override

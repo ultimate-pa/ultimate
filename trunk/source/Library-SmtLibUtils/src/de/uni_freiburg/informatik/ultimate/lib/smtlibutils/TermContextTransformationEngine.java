@@ -215,7 +215,7 @@ public class TermContextTransformationEngine<C> {
 				result = new AscendResultTask(super.mContext, res);
 			} else {
 				final C currentContext = mTermWalker.constructContextForQuantifiedFormula(super.mContext,
-						mOriginal.getQuantifier(), mOriginal.getVariables());
+						mOriginal.getQuantifier(), Arrays.asList(mOriginal.getVariables()));
 				final DescendResult res = mTermWalker.convert(currentContext, mOriginal.getSubformula());
 				result = constructTaskForDescendResult(currentContext, res);
 			}
@@ -257,7 +257,7 @@ public class TermContextTransformationEngine<C> {
 
 		abstract boolean applyRepeatedlyUntilNoChange();
 
-		abstract C constructContextForQuantifiedFormula(C context, int quant, TermVariable[] vars);
+		abstract C constructContextForQuantifiedFormula(C context, int quant, List<TermVariable> vars);
 
 		abstract DescendResult convert(final C context, final Term term);
 
