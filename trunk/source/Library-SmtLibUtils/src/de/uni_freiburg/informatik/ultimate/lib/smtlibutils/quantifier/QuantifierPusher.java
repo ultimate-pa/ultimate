@@ -585,11 +585,11 @@ public class QuantifierPusher extends TermTransformer {
 			// FIXME: Bin other eliminatees in context.
 			final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
 					new HashSet<>(minionEliminatees), dualFiniteJunction);
-			final Set<TermVariable> boundInRecursiveCall = et.getBannedForDivCapture();
-			final Term criticalConstraint = Context.buildCriticalConstraintForConDis(mgdScript.getScript(),
-					et.getContext(), ((ApplicationTerm) et.getTerm()).getFunction(), finiteParamsWithoutEliminatee);
+			final Context parentContext = new Context(et.getContext(), et.getBannedForDivCapture());
+			final Context context = parentContext.constructChildContextForConDis(mgdScript.getScript(),
+					((ApplicationTerm) et.getTerm()).getFunction(), finiteParamsWithoutEliminatee);
 			Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
-					boundInRecursiveCall, criticalConstraint, quantified);
+					context.getBoundInContext(), context.getCriticalConstraint(), quantified);
 			if (pushed instanceof QuantifiedFormula) {
 				final QuantifiedFormula qf = (QuantifiedFormula) pushed;
 				for (final TermVariable var : Arrays.asList(qf.getVariables())) {

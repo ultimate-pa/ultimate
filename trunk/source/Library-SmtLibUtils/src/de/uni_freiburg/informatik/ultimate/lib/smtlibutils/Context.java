@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -69,11 +70,35 @@ public class Context {
 		mCriticalConstraint = criticalConstraint;
 		mBoundInContext = boundInContext;
 	}
+
 	public Term getCriticalConstraint() {
 		return mCriticalConstraint;
 	}
 	public Set<TermVariable> getBoundInContext() {
 		return Collections.unmodifiableSet(mBoundInContext);
+	}
+
+	public Context constructChildContextForQuantifiedFormula(final Script script,
+			final List<TermVariable> quantifiedVars, final Term subformula) {
+		final Term criticalConstraint = buildCriticalContraintForQuantifiedFormula(script, mCriticalConstraint,
+				quantifiedVars);
+		final Set<TermVariable> boundInContext = new HashSet<>(mBoundInContext);
+		boundInContext.addAll(quantifiedVars);
+		return new Context(criticalConstraint, boundInContext);
+	}
+
+	public Context constructChildContextForConDis(final Script script, final FunctionSymbol symb,
+			final List<Term> allParams, final int selectedParam) {
+		final Term criticalConstraint = buildCriticalConstraintForConDis(script, mCriticalConstraint, symb, allParams,
+				selectedParam);
+		return new Context(criticalConstraint, mBoundInContext);
+	}
+
+	public Context constructChildContextForConDis(final Script script, final FunctionSymbol symb,
+			final List<Term> otherParams) {
+		final Term criticalConstraint = buildCriticalConstraintForConDis(script, mCriticalConstraint, symb,
+				otherParams);
+		return new Context(criticalConstraint, mBoundInContext);
 	}
 
 	public static Term buildCriticalContraintForQuantifiedFormula(final Script script, final Term context,
