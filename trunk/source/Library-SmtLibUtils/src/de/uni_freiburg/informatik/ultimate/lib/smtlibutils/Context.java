@@ -79,7 +79,7 @@ public class Context {
 	}
 
 	public Context constructChildContextForQuantifiedFormula(final Script script,
-			final List<TermVariable> quantifiedVars, final Term subformula) {
+			final List<TermVariable> quantifiedVars) {
 		final Term criticalConstraint = buildCriticalContraintForQuantifiedFormula(script, mCriticalConstraint,
 				quantifiedVars);
 		final Set<TermVariable> boundInContext = new HashSet<>(mBoundInContext);
