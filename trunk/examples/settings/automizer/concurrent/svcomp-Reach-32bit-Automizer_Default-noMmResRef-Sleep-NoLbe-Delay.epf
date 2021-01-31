@@ -51,8 +51,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PARTIAL_ORDER_FA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Lazy\ Petri-NFA\ conversion=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Large\ block\ encoding\ in\ concurrent\ analysis=OFF
-# TODO (Dominik 2020-12-17) Minimization disabled for evaluation only. Should be turned back on!
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Minimization\ of\ abstraction=NONE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Partial\ Order\ Reduction\ in\ concurrent\ analysis=SLEEP_DELAY_SET
 
 
