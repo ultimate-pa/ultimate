@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -221,10 +222,6 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 * Implements a condition normalizer for {@link SemanticIndependenceRelation}. See
 	 * {@link DefaultIndependenceCache.IConditionNormalizer} for details.
 	 *
-	 * Note that using this normalizer is only sound if all conditions are either consistent or syntactically equals to
-	 * "false". Other inconsistent conditions can lead to trivial independence (under the inconsistent condition) to be
-	 * cached as non-conditional independence.
-	 *
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 	 *
 	 * @param <L>
@@ -232,6 +229,21 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 */
 	public static final class ConditionNormalizer<L extends IAction>
 			implements DefaultIndependenceCache.IConditionNormalizer<IPredicate, L> {
+
+		private final Predicate<IPredicate> mIsInconsistent;
+
+		/**
+		 * Creates a new normalizer.
+		 *
+		 * @param isInconsistent
+		 *            A function that is used to test if a given predicate is inconsistent (equivalent to false). This
+		 *            must return true for all inconsistent predicates this normalizer is used on, in order to ensure
+		 *            soundness. It may over-approximate inconsistency, i.e., also return true for some consistent
+		 *            predicates -- this affects efficiency but not soundness.
+		 */
+		public ConditionNormalizer(final Predicate<IPredicate> isInconsistent) {
+			mIsInconsistent = isInconsistent;
+		}
 
 		@Override
 		public Object normalize(final IPredicate state, final L a, final L b) {
@@ -243,17 +255,13 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 							b.getTransformula().getInVars().keySet().stream())
 					.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 			final boolean isRelevant = Arrays.stream(condition.getFreeVars()).anyMatch(inputVars::contains);
-			if (!isRelevant && isConsistent(state)) {
+			if (!isRelevant && !mIsInconsistent.test(state)) {
 				// Fall back to independence without condition.
 				return null;
 			}
 
 			// Identify condition by formula rather than predicate.
 			return condition;
-		}
-
-		private static boolean isConsistent(final IPredicate state) {
-			return !"false".equals(state.getFormula().toString());
 		}
 	}
 }

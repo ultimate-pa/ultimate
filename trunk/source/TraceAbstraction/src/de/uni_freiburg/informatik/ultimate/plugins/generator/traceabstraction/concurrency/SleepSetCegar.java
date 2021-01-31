@@ -94,7 +94,13 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		mSleepSetMode = mPref.getSleepSetMode();
 		mFactory = new InformationStorageFactory();
 		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, SleepSetCegar::isFalseState);
-		mIndependenceCache = new DefaultIndependenceCache<>(new SemanticIndependenceRelation.ConditionNormalizer<>());
+
+		// Note: Soundness of this normalizer depends on the fact that all inconsistent predicates are syntactically
+		// equal to "false". Here, this is achieved by usage of the DistributingIndependenceRelation below: The only
+		// predicates we use are the original interpolants (i.e., not conjunctions of them), where we assume this
+		// condition holds.
+		mIndependenceCache = new DefaultIndependenceCache<>(
+				new SemanticIndependenceRelation.ConditionNormalizer<>(SleepSetCegar::isFalseState));
 	}
 
 	@Override
