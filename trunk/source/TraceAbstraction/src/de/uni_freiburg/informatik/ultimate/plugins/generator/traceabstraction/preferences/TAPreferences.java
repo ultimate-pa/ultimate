@@ -79,7 +79,6 @@ public final class TAPreferences {
 	private final boolean mHeuristicEmptinessCheck;
 	private final AStarHeuristic mHeuristicEmptinessCheckAStarHeuristic;
 	private final Integer mHeuristicEmptinessCheckAStarHeuristicRandomSeed;
-	private final boolean mRemoveDeadEnds;
 	private final ScoringMethod mHeuristicEmptinessCheckSmtFeatureScoringMethod;
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
@@ -183,7 +182,6 @@ public final class TAPreferences {
 		mMcrInterpolantMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_INTERPOLANT_METHOD,
 				McrInterpolantMethod.class);
 
-		mRemoveDeadEnds = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_REMOVE_DEAD_ENDS);
 	}
 
 	/**
@@ -436,10 +434,6 @@ public final class TAPreferences {
 
 	public Integer getHeuristicEmptinessCheckAStarHeuristicRandomSeed() {
 		return mHeuristicEmptinessCheckAStarHeuristicRandomSeed;
-	}
-
-	public boolean getRemoveDeadEnds() {
-		return mRemoveDeadEnds;
 	}
 
 	public boolean useSMTFeatureExtraction() {

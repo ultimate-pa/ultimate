@@ -276,9 +276,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED =
 			"Defines which seed is used for RANDOM_HALF and RANDOM_FULL heuristic";
 
-	public static final String LABEL_REMOVE_DEAD_ENDS = "Remove dead ends from automaton";
-	public static final boolean DEF_REMOVE_DEAD_ENDS = true;
-
 	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
 	public static final boolean DEF_SMT_FEATURE_EXTRACTION = false;
 	public static final String DESC_SMT_FEATURE_EXTRACTION = "We Extract SMT features during analysis and dump them.";
@@ -490,7 +487,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						PreferenceType.Combo, ScoringMethod.values()),
-				new UltimatePreferenceItem<>(LABEL_REMOVE_DEAD_ENDS, DEF_REMOVE_DEAD_ENDS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
 						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
