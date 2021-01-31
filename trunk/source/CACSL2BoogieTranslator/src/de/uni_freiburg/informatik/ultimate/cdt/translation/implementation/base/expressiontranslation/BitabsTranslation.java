@@ -602,10 +602,10 @@ public class BitabsTranslation {
 
 				AssumeStatement assume_then = new AssumeStatement(loc, formula_neg);
 				AssumeStatement assume_else = new AssumeStatement(loc, formula_pos);
-				AssumeStatement assume_neg = new AssumeStatement(loc, com_neg);
+	//			AssumeStatement assume_neg = new AssumeStatement(loc, com_neg);
 //				IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assume_else }, new Statement[] { ifstmt1 });
 				IfStatement ifstmt_com = new IfStatement(loc, com_pos, new Statement[] { assume_then },
-						new Statement[] { assume_neg, assume_else });
+						new Statement[] { assume_else });
 				builder.addStatement(ifstmt_com);
 				return builder.build();
 
