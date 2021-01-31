@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -218,7 +219,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	/**
 	 * Implements a condition normalizer for {@link SemanticIndependenceRelation}. See
-	 * {@link CachedIndependenceRelation.IConditionNormalizer} for details.
+	 * {@link DefaultIndependenceCache.IConditionNormalizer} for details.
 	 *
 	 * Note that using this normalizer is only sound if all conditions are either consistent or syntactically equals to
 	 * "false". Other inconsistent conditions can lead to trivial independence (under the inconsistent condition) to be
@@ -230,7 +231,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 *            The type of actions of the independence relation.
 	 */
 	public static final class ConditionNormalizer<L extends IAction>
-			implements CachedIndependenceRelation.IConditionNormalizer<IPredicate, L> {
+			implements DefaultIndependenceCache.IConditionNormalizer<IPredicate, L> {
 
 		@Override
 		public Object normalize(final IPredicate state, final L a, final L b) {

@@ -40,8 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.Cache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
@@ -81,7 +82,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 
 	private ISleepSetOrder<IPredicate, L> mSleepSetOrder;
 	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations = new ArrayList<>();
-	private final CachedIndependenceRelation.Cache<IPredicate, L> mIndependenceCache;
+	private final IIndependenceCache<IPredicate, L> mIndependenceCache;
 
 	public SleepSetCegar(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -93,7 +94,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		mSleepSetMode = mPref.getSleepSetMode();
 		mFactory = new InformationStorageFactory();
 		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, SleepSetCegar::isFalseState);
-		mIndependenceCache = new Cache<>(new SemanticIndependenceRelation.ConditionNormalizer<>());
+		mIndependenceCache = new DefaultIndependenceCache<>(new SemanticIndependenceRelation.ConditionNormalizer<>());
 	}
 
 	@Override

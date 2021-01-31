@@ -26,12 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * An independence relation that caches the result of an underlying relation. To be used with computation-intensive
@@ -48,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S, L> {
 
 	private final IIndependenceRelation<S, L> mUnderlying;
-	private final Cache<S, L> mCache;
+	private final IIndependenceCache<S, L> mCache;
 
 	/**
 	 * Create a new cache for the given relation.
@@ -57,7 +52,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 *            The underlying relation that will be queried and whose results will be cached.
 	 */
 	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
-		this(underlying, new Cache<>(null));
+		this(underlying, new DefaultIndependenceCache<>(null));
 	}
 
 	/**
@@ -70,7 +65,8 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 *            cached information across instances. Use with care as it allows potentially unsound mixing of
 	 *            different relations through a shared cache.
 	 */
-	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying, final Cache<S, L> cache) {
+	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying,
+			final IIndependenceCache<S, L> cache) {
 		mUnderlying = underlying;
 		mCache = cache;
 	}
@@ -78,7 +74,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	/**
 	 * @return The cache instance used to store and retrieve independence information.
 	 */
-	public Cache<S, L> getCache() {
+	public IIndependenceCache<S, L> getCache() {
 		return mCache;
 	}
 
@@ -137,21 +133,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 * @param <L>
 	 *            The type of letters
 	 */
-	public static class Cache<S, L> {
-		private final Map<Object, HashRelation<L, L>> mPositiveCache = new HashMap<>();
-		private final Map<Object, HashRelation<L, L>> mNegativeCache = new HashMap<>();
-		private final IConditionNormalizer<S, L> mNormalizer;
-
-		/**
-		 * Create a cache.
-		 *
-		 * @param normalizer
-		 *            Can be used to improve caching efficiency. See {@link IConditionNormalizer} for details.
-		 */
-		public Cache(final IConditionNormalizer<S, L> normalizer) {
-			mNormalizer = normalizer;
-		}
-
+	public interface IIndependenceCache<S, L> {
 		/**
 		 * Determine if the cache contains certain independence information.
 		 *
@@ -164,20 +146,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 * @return SAT if the letters are known to be independent (possibly under the given condition), UNSAT if they
 		 *         are known to be dependent, and UNKNOWN otherwise.
 		 */
-		public LBool contains(final S condition, final L a, final L b) {
-			final Object key = normalize(condition, a, b);
-			final HashRelation<L, L> positive = mPositiveCache.get(key);
-			if (positive != null && positive.containsPair(a, b)) {
-				return LBool.SAT;
-			}
-
-			final HashRelation<L, L> negative = mNegativeCache.get(key);
-			if (negative != null && negative.containsPair(a, b)) {
-				return LBool.UNSAT;
-			}
-
-			return LBool.UNKNOWN;
-		}
+		LBool contains(S condition, L a, L b);
 
 		/**
 		 * Remove all independence and dependence information involving a given letter.
@@ -185,16 +154,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 * @param a
 		 *            The letter whose information shall be removed.
 		 */
-		public void remove(final L a) {
-			for (final HashRelation<L, L> relation : mPositiveCache.values()) {
-				relation.removeDomainElement(a);
-				relation.removeRangeElement(a);
-			}
-			for (final HashRelation<L, L> relation : mNegativeCache.values()) {
-				relation.removeDomainElement(a);
-				relation.removeRangeElement(a);
-			}
-		}
+		void remove(L a);
 
 		/**
 		 * Add information to the cache.
@@ -208,26 +168,17 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 * @param independent
 		 *            Whether or not the given letters are independent
 		 */
-		public void cacheResult(final S condition, final L a, final L b, final boolean independent) {
-			final Object key = normalize(condition, a, b);
-			final Map<Object, HashRelation<L, L>> cache = independent ? mPositiveCache : mNegativeCache;
-			final HashRelation<L, L> row = cache.computeIfAbsent(key, x -> new HashRelation<>());
-			row.addPair(a, b);
-		}
+		void cacheResult(S condition, L a, L b, boolean independent);
 
 		/**
 		 * @return The number of dependent pairs of letters in the cache, across all conditions (if any).
 		 */
-		public int getNegativeCacheSize() {
-			return mNegativeCache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
-		}
+		int getNegativeCacheSize();
 
 		/**
 		 * @return The number of all independent pairs of letters in the cache, across all conditions (if any).
 		 */
-		public int getPositiveCacheSize() {
-			return mPositiveCache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
-		}
+		int getPositiveCacheSize();
 
 		/**
 		 * Merges cached independencies for two letters into a combined letter. If both are independent from some third
@@ -244,65 +195,6 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 * @param ab
 		 *            The combination (e.g. sequential composition) of the previous two letters.
 		 */
-		public void mergeIndependencies(final L a, final L b, final L ab) {
-			for (final HashRelation<L, L> relation : mPositiveCache.values()) {
-				// (a, c) + (b, c) -> (ab, c)
-				for (final L c : relation.getImage(a)) {
-					if (relation.containsPair(b, c)) {
-						relation.addPair(ab, c);
-					}
-				}
-				// (c, a) + (c, b) -> (c, ab)
-				for (final L c : relation.getDomain()) {
-					if (relation.containsPair(c, a) && relation.containsPair(c, b)) {
-						relation.addPair(c, ab);
-					}
-				}
-			}
-		}
-
-		private Object normalize(final S condition, final L a, final L b) {
-			if (condition == null) {
-				return null;
-			}
-			if (mNormalizer == null) {
-				return condition;
-			}
-			return mNormalizer.normalize(condition, a, b);
-		}
-	}
-
-	/**
-	 * An interface used to improve caching for conditional independence relations where some different conditions
-	 * induce the same independence between letters.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <S>
-	 *            The type of conditions (states) that induce independence.
-	 * @param <L>
-	 *            The type of letters whose independence is tracked.
-	 */
-	public interface IConditionNormalizer<S, L> {
-		/**
-		 * Used to identify conditions which are equivalent with respect to independence of the given letters. This
-		 * method must satisfy the following contract:
-		 *
-		 * For all letters a, b and conditions s1, s2, if normalize(s1, a, b) == normalize(s2, a, b), then a and b are
-		 * independent in s1 iff they are independent in s2. Furthermore, null should be returned only if independence
-		 * in the given context holds iff independence without context holds.
-		 *
-		 * In order to have performance benefit, implementations of this method should be significantly more efficient
-		 * than the relation for which they are being used.
-		 *
-		 * @param state
-		 *            A condition to be normalized
-		 * @param a
-		 *            The first letter
-		 * @param b
-		 *            The second letter
-		 * @return An arbitrary value satisfying the contract above.
-		 */
-		Object normalize(S state, L a, L b);
+		void mergeIndependencies(L a, L b, L ab);
 	}
 }
