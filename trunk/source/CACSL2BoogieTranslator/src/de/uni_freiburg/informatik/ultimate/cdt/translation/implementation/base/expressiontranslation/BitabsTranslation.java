@@ -301,26 +301,39 @@ public class BitabsTranslation {
 			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		final String funcname = "shiftRight";
 		Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "-1");
-
+		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
 		Expression literal_31 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "31");
-		Expression left_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left,
-				literal_31);
-		Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right,
-				literal_31);
-
+		Expression literal_63 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "63");
+		
+		
+//		Expression left_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left,
+//				literal_31);
+		Expression right_cmp_31 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_31);		 
+		Expression right_cmp_63 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right,literal_63);		 
+		Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_cmp_31,right_cmp_63);
+		 
 		// left/right operand is positive and right/left operand is 31
 		Expression left_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, left,
 				literal_0);
-		Expression right_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, right,
-				literal_0);
+//		Expression right_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, right,
+//				literal_0);
 		Expression left_cond_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
 				left_pos, right_cmp);
-		Expression right_cond_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-				left_cmp, right_pos);
-		Expression cond_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
-				left_cond_pos, right_cond_pos);
+//		Expression right_cond_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+//				left_cmp, right_pos);
+//		Expression cond_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
+//				left_cond_pos, right_cond_pos);
 
+			
+		
+		if (right instanceof IntegerLiteral) {
+			String valueLeft = ((IntegerLiteral) right).getValue();
+			if (valueLeft.equals("31") || valueLeft.equals("63")) {
+				Expression signExpr = ExpressionFactory.constructIfThenElseExpression(loc, left_pos, literal_0, literal_1);
+				return signExpr ;
+				} 
+		}  
+		
 		final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
 		Expression func;
 		if (shiftRightLiteralValue != null) {
@@ -332,22 +345,22 @@ public class BitabsTranslation {
 			func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 		}
-		Expression pos_ite = ExpressionFactory.constructIfThenElseExpression(loc, cond_pos, literal_0, func);
+		Expression pos_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_cond_pos, literal_0, func);
 
 		// shiftRight on an negative number is unconventional, but according to the
 		// evaluation from gcc compiler, a>>31 would results in -1
 		Expression left_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, left,
 				literal_0);
-		Expression right_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, right,
-				literal_0);
+//		Expression right_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, right,
+//				literal_0);
 		Expression left_cond_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
 				left_neg, right_cmp);
-		Expression right_cond_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-				left_cmp, right_neg);
-		Expression cond_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
-				left_cond_neg, right_cond_neg);
+//		Expression right_cond_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+//				left_cmp, right_neg);
+//		Expression cond_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
+//				left_cond_neg, right_cond_neg);
 
-		Expression shiftRight = ExpressionFactory.constructIfThenElseExpression(loc, cond_neg, literal_1, pos_ite);
+		Expression shiftRight = ExpressionFactory.constructIfThenElseExpression(loc, left_cond_neg, literal_1, pos_ite);
 		return shiftRight;
 
 	}
@@ -384,6 +397,11 @@ public class BitabsTranslation {
 				right_cmp1, right_cmp0);
 		Expression left_right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
 				left_size1, right_size1);
+		
+		//Thinking about in binary world, when it comes to bit 0 or 1
+		
+		
+		
 
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
