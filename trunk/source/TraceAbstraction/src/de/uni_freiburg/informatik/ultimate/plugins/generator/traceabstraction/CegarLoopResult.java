@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetCegar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -232,11 +232,11 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 					}
 				}
 					break;
-				case SLEEP_SET_FA:
+				case PARTIAL_ORDER_FA:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 						throw new UnsupportedOperationException("Reuse with sleep set-based analysis");
 					}
-					result = new SleepSetCegar<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+					result = new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
 							transitionClazz);
 					break;

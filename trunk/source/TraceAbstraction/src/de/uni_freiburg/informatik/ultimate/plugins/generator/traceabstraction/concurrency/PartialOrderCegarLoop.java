@@ -71,8 +71,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pe
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 
-public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
-	private final SleepSetMode mSleepSetMode;
+/**
+ * A CEGAR loop for concurrent programs, based on finite automata, which uses Partial Order Reduction (POR) in every
+ * iteration to improve efficiency.
+ *
+ * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of statements in the program.
+ */
+public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final SleepSetVisitorSearch<L, IPredicate> mVisitor;
 
@@ -84,23 +94,23 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations = new ArrayList<>();
 	private final IIndependenceCache<IPredicate, L> mIndependenceCache;
 
-	public SleepSetCegar(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
-		mSleepSetMode = mPref.getSleepSetMode();
+		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
-		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, SleepSetCegar::isFalseState);
+		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
 
 		// Note: Soundness of this normalizer depends on the fact that all inconsistent predicates are syntactically
 		// equal to "false". Here, this is achieved by usage of the DistributingIndependenceRelation below: The only
 		// predicates we use are the original interpolants (i.e., not conjunctions of them), where we assume this
 		// condition holds.
 		mIndependenceCache = new DefaultIndependenceCache<>(
-				new SemanticIndependenceRelation.ConditionNormalizer<>(SleepSetCegar::isFalseState));
+				new SemanticIndependenceRelation.ConditionNormalizer<>(PartialOrderCegarLoop::isFalseState));
 	}
 
 	@Override
@@ -111,10 +121,10 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 						.getVpAlphabet().getInternalAlphabet());
 	}
 
-	// Turn off one-shot sleepset reduction before initial iteration.
+	// Turn off one-shot partial order reduction before initial iteration.
 	@Override
-	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computeSleepSetReduction(final SleepSetMode mode,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
+			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
 		return input;
 	}
 
@@ -123,7 +133,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 
-		// TODO (Dominik 2020-12-17): Use settings to determine enhancement, re-using code in BasicCegarLoop
+		// TODO (Dominik 2020-12-17) Use settings to determine enhancement, re-using code in BasicCegarLoop
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia =
 				constructInterpolantAutomatonForOnDemandEnhancement(mInterpolAutomaton, predicateUnifier, htc,
 						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);
@@ -134,7 +144,7 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
 
-		// TODO really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
+		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
 
@@ -157,10 +167,15 @@ public class SleepSetCegar<L extends IIcfgTransition<?>> extends BasicCegarLoop<
 		mIndependenceRelations.add(newIndependence);
 		final IIndependenceRelation<IPredicate, L> indep = new DistributingIndependenceRelation(mIndependenceRelations);
 
-		if (mSleepSetMode == SleepSetMode.DELAY_SET) {
+		switch (mPartialOrderMode) {
+		case SLEEP_DELAY_SET:
 			new SleepSetDelayReduction<>(abstraction, indep, mSleepSetOrder, mVisitor);
-		} else if (mSleepSetMode == SleepSetMode.NEW_STATES) {
+			break;
+		case SLEEP_NEW_STATES:
 			new SleepSetNewStateReduction<>(abstraction, indep, mSleepSetOrder, mSleepSetStateFactory, mVisitor);
+			break;
+		default:
+			throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);
 		}
 
 		mCounterexample = mVisitor.constructRun();

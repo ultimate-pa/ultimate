@@ -48,12 +48,12 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopsAndPotentialCycles
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=SLEEP_SET_FA
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PARTIAL_ORDER_FA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Lazy\ Petri-NFA\ conversion=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Large\ block\ encoding\ in\ concurrent\ analysis=OFF
 # TODO (Dominik 2020-12-17) Minimization disabled for evaluation only. Should be turned back on!
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Minimization\ of\ abstraction=NONE
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Sleep\ set\ reduction\ in\ concurrent\ analysis=DELAY_SET
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Partial\ Order\ Reduction\ in\ concurrent\ analysis=SLEEP_DELAY_SET
 
 
 #Thu Oct 29 23:01:13 CET 2015

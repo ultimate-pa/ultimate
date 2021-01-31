@@ -211,24 +211,25 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	/**
-	 * Indicates a kind of sleep set reduction.
+	 * Indicates a kind of partial order reduction.
 	 *
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 	 */
-	public enum SleepSetMode {
+	public enum PartialOrderMode {
 		/**
-		 * No sleep set reduction is performed.
+		 * No partial order reduction is performed.
 		 */
 		NONE,
 		/**
-		 * Delay sets are used to handle loops, and the reduced automaton is a sub-structure of the input.
+		 * Sleep set partial order reduction. Delay sets are used to handle loops, and the reduced automaton is a
+		 * sub-structure of the input.
 		 */
-		DELAY_SET,
+		SLEEP_DELAY_SET,
 		/**
-		 * Unrolling and splitting is performed to achieve a minimal reduction (in terms of the language). This
-		 * duplicates states of the input automaton.
+		 * Sleep set partial order reduction. Unrolling and splitting is performed to achieve a minimal reduction (in
+		 * terms of the language). This duplicates states of the input automaton.
 		 */
-		NEW_STATES
+		SLEEP_NEW_STATES
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
@@ -412,7 +413,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 							"Petrification does not provide enough thread instances for " + proc);
 				}
 			}
-			mAbstraction = computeSleepSetReduction(mPref.getSleepSetMode(), automaton);
+			mAbstraction = computePartialOrderReduction(mPref.getPartialOrderMode(), automaton);
 		}
 
 		if (mComputeHoareAnnotation
@@ -431,9 +432,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 	}
 
-	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computeSleepSetReduction(final SleepSetMode mode,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
-		if (mode == SleepSetMode.NONE) {
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
+			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+		if (mode == PartialOrderMode.NONE) {
 			return input;
 		}
 
@@ -449,14 +450,14 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		final long reductionStart = System.currentTimeMillis();
 
 		switch (mode) {
-		case DELAY_SET:
+		case SLEEP_DELAY_SET:
 			new SleepSetDelayReduction<>(input, indep, order, automatonConstructor);
 			break;
-		case NEW_STATES:
+		case SLEEP_NEW_STATES:
 			new SleepSetNewStateReduction<>(input, indep, order, mSleepSetStateFactory, automatonConstructor);
 			break;
 		default:
-			throw new UnsupportedOperationException("Unknown sleep set mode: " + mode);
+			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
 		}
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =
 				automatonConstructor.getReductionAutomaton();
