@@ -188,7 +188,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	}
 
 	@Override
-	protected LBool do_synthesis() {
+	protected LBool doSynthesis() {
 		assert mSettings.getNumberOfGevs() >= 0;
 		final String sort = mIntegerMode ? SmtSortUtils.INT_SORT : SmtSortUtils.REAL_SORT;
 
@@ -230,7 +230,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (mIsSat == LBool.SAT) {
 			mArgument = extractArgument(vars_init, vars_honda, vars_gevs, lambdas, nus);
 		} else if (mIsSat == LBool.UNKNOWN) {
-			mScript.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
+			mScript.echo(new QuotedObject(ArgumentSynthesizer.SOLVER_UNKNOWN_MESSAGE));
 		}
 		return mIsSat;
 	}

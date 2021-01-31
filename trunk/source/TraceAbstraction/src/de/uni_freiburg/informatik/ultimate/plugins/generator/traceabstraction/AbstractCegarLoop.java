@@ -369,8 +369,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 	}
 
 	public final Result iterate() {
-		final Result result = iterateInternal();
-		return result;
+		return iterateInternal();
 	}
 
 	private Result iterateInternal() {

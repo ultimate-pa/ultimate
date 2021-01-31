@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InterpolatingTraceCheckPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
@@ -160,12 +159,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 		}
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
 			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier);
-			final String solverId = solverSettings.getBaseNameOfDumpedScript();
-			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, solverId);
-
-			final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
-			mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
-			return mgdScriptTc;
+			mPrefs.getCfgSmtToolkit().createFreshManagedScript(solverSettings);
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
 	}

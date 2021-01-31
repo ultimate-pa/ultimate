@@ -40,10 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -56,11 +52,16 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -100,6 +101,18 @@ public class QuantifierEliminationTest {
 
 	public static Sort getBitvectorSort8(final Script script) {
 		return SmtSortUtils.getBitvectorSort(script, 8);
+	}
+
+	public static Sort getBitvectorSort32(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, 32);
+	}
+
+	public static Sort getArrayBv32Bv1Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort1(script));
+	}
+
+	public static Sort getIntBoolArray(final Script script) {
+		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getBoolSort(script));
 	}
 
 	public static Sort constructIntIntArray(final Script script) {
@@ -422,7 +435,7 @@ public class QuantifierEliminationTest {
 		final DeclarableFunctionSymbol additionalFunction = DeclarableFunctionSymbol.createFromString(mScript,
 				"~initToZeroAtPointerBaseAddress~int", functionDefinitionAsString, paramIds, paramSorts, resultSort);
 		additionalFunction.defineOrDeclare(mScript);
-		final SmtFunctionsAndAxioms smtSymbols = new SmtFunctionsAndAxioms(mScript);
+		final SmtFunctionsAndAxioms smtSymbols = new SmtFunctionsAndAxioms(mMgdScript);
 
 		mScript.declareFun("b", new Sort[0], arrayFromIntToIntToInt);
 		mScript.declareFun("j", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
@@ -621,7 +634,7 @@ public class QuantifierEliminationTest {
 		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
 		csvWriter.reportEliminationBegin(formulaAsTerm);
-		final Term result = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(nnf);
+		final Term result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
 		logger.info("Result: " + result);
 		if (LOG_SIMPLIFICATION_POSSIBILITY) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, null, services,
@@ -642,7 +655,9 @@ public class QuantifierEliminationTest {
 	private static void checkLogicalEquivalence(final Script script, final Term result,
 			final String expectedResultAsString) {
 		final Term expectedResultAsTerm = TermParseUtils.parseTerm(script, expectedResultAsString);
+		script.echo(new QuotedObject("Start correctness check for quantifier elimination."));
 		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResultAsTerm, script);
+		script.echo(new QuotedObject("Finished correctness check for quantifier elimination. Result: " + lbool));
 		final String errorMessage;
 		switch (lbool) {
 		case SAT:
@@ -674,7 +689,15 @@ public class QuantifierEliminationTest {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "kOuter", "iOuter", "kInner", "iInner", "v") };
 		final String formulaAsString = "(forall ((a (Array Int (Array Int Int)))) (or (not (= (select (select (store a kOuter (store (select a kOuter) kInner v)) iOuter) iInner) 7)) (not (= iOuter kOuter))))";
 		final String expectedResultAsString = "(and (or (not (= iOuter kOuter)) (= iInner kInner)) (or (not (= iOuter kOuter)) (not (= v 7))))";
-		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void contextInauguration() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "k", "i", "x", "y") };
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= k i) (or (= (+ 0 (select a k)) (+ x (select a i))) (= (+ 1 (select a k)) (+ y (select a i))))))";
+		final String expectedResultAsString = "(and (= i k) (or (= y 1) (= x 0)))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -802,12 +825,75 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
+	public void arrayEliminationRushingMountaineer01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
+		};
+		final String formulaAsString = "(exists ((|v_#valid_16| (Array (_ BitVec 32) (_ BitVec 1))) (|#t~string2.base| (_ BitVec 32))) (= (store (store (store |v_#valid_16| (_ bv0 32) (_ bv0 1)) |#t~string2.base| (_ bv1 1)) |~#a~0.base| (_ bv1 1)) |#valid|))";
+		final String expectedResult = "(and (exists ((|#t~string2.base| (_ BitVec 32))) (and (= (_ bv1 1) (select |#valid| |#t~string2.base|)) (or (= (_ bv0 32) |#t~string2.base|) (= (_ bv0 1) (select |#valid| (_ bv0 32))) (= (_ bv0 32) |~#a~0.base|)))) (= (_ bv1 1) (select |#valid| |~#a~0.base|)))";
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayEliminationRushingMountaineer01Reduced() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "a"),
+		};
+		final String formulaAsString = "(exists ((ax (Array (_ BitVec 32) (_ BitVec 1))) (kx (_ BitVec 32))) (= (store (store ax (_ bv0 32) (_ bv0 1)) kx (_ bv1 1)) a))";
+		final String expectedResult = "(exists ((kx (_ BitVec 32))) (and (= (select a kx) (_ bv1 1)) (or (= kx (_ bv0 32)) (= (select a (_ bv0 32)) (_ bv0 1)))))";
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, !true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayEliminationRushingMountaineer02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
+		};
+		final String formulaAsString = "(exists ((|v_#valid_34| (Array (_ BitVec 32) (_ BitVec 1))) (|#t~string0.base| (_ BitVec 32)) (|#t~string3.base| (_ BitVec 32)) (|#t~string6.base| (_ BitVec 32)) (|#t~string9.base| (_ BitVec 32)) (|#t~string12.base| (_ BitVec 32)) (|#t~string15.base| (_ BitVec 32))) (= (store (store (store (store (store (store (store |v_#valid_34| (_ bv0 32) (_ bv0 1)) |#t~string0.base| (_ bv1 1)) |#t~string3.base| (_ bv1 1)) |#t~string6.base| (_ bv1 1)) |#t~string9.base| (_ bv1 1)) |#t~string12.base| (_ bv1 1)) |#t~string15.base| (_ bv1 1)) |#valid|))";
+		final String expectedResult = formulaAsString;
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayEliminationRushingMountaineer03() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~x0~0.base"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
+		};
+		final String formulaAsString = "(exists ((|v_#valid_64| (Array (_ BitVec 32) (_ BitVec 1))) (|main_#t~malloc1.base| (_ BitVec 32)) (|main_#t~malloc2.base| (_ BitVec 32)) (|main_#t~malloc3.base| (_ BitVec 32))) (and (= (store (store (store (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base| (_ bv1 1)) |main_#t~malloc2.base| (_ bv1 1)) |main_#t~malloc3.base| (_ bv1 1)) |#valid|) (= (select (store (store (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base| (_ bv1 1)) |main_#t~malloc2.base| (_ bv1 1)) |main_#t~malloc3.base|) (_ bv0 1)) (= (_ bv0 1) (select (store |v_#valid_64| main_~x0~0.base (_ bv1 1)) |main_#t~malloc1.base|))))";
+		final String expectedResult = "(and (exists ((|main_#t~malloc1.base| (_ BitVec 32)) (|main_#t~malloc3.base| (_ BitVec 32)) (|main_#t~malloc2.base| (_ BitVec 32))) (and (= (select |#valid| |main_#t~malloc1.base|) (_ bv1 1)) (not (= main_~x0~0.base |main_#t~malloc3.base|)) (= (_ bv1 1) (select |#valid| |main_#t~malloc2.base|)) (not (= |main_#t~malloc3.base| |main_#t~malloc1.base|)) (not (= |main_#t~malloc2.base| |main_#t~malloc3.base|)) (not (= main_~x0~0.base |main_#t~malloc1.base|)) (= (select |#valid| |main_#t~malloc3.base|) (_ bv1 1)))) (= (select |#valid| main_~x0~0.base) (_ bv1 1)))";
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayEliminationFourSeasonsTotalLandscaping() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "nonMain_~src~0.offset"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
+		};
+		final String formulaAsString = "(forall ((|#length| (Array (_ BitVec 32) (_ BitVec 32))) (|nonMain_~src~0.base| (_ BitVec 32))) (or (not (bvule (bvadd nonMain_~src~0.offset (_ bv2 32)) (select |#length| nonMain_~src~0.base))) (bvule nonMain_~src~0.offset (bvadd nonMain_~src~0.offset (_ bv2 32)))))";
+		final String expectedResult = formulaAsString;
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void arrayEliminationBugBolivia() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
 		final String formulaAsString = "(forall ((a1 (Array Int (Array Int Int))) (a2 (Array Int Int)) (a3 (Array Int Int)) (b Int)) (or (= x 0) (forall ((a4 (Array Int Int)) (c Int) (a5 (Array Int Int)) (a6 (Array Int (Array Int Int))) (d Int)) (or (not (= (store a2 c 4) a5)) (not (= d 0)) (not (= (select a3 c) 0)) (not (= (store a3 c 1) a4)) (not (= a6 (store a1 c (store (select a1 c) d 2)))) (= c 0) (not (< b c))))))";
 		final String expectedResult = "(= x 0)";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+	@Test
+	public void arrayTirCaretakersOfHonor() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "end", "i"), };
+		final String formulaAsString = "(and (exists ((a (Array Int Int)) (v_i_9 Int)) (and (<= i (+ v_i_9 1)) (= 42 (select a end)) (<= v_i_9 0) (not (= 42 (select a v_i_9))))) (<= 0 end))";
+		final String expectedResult = "(and (<= i 1) (< i (+ end 1)) (<= 0 end))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	@Test
 	public void applyDistributivity() {
@@ -1047,19 +1133,107 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void bvTirBug05OneStrictRelation() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c") };
-		final String inputSTR = "(exists ((x (_ BitVec 8))) (bvult x c))";
-		final String expectedResult = "(bvult (_ bv0 8) c)";
+	public void bvTirSingleDirectionExistsLowerUnsigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvult x a) (bvugt b x)))";
+		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionExistsLowerSigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvslt x a) (bvsgt b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionExistsUpperUnsigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvugt x a) (bvult b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionExistsUpperSigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvsgt x a) (bvslt b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionForallLowerUnsigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvule x a) (bvuge b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionForallLowerSigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvsle x a) (bvsge b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionForallUpperUnsigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvuge x a) (bvule b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirSingleDirectionForallUpperSigned() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvsge x a) (bvsle b x)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirBugSingleDirectionAndAntiDer() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "c" , "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvult x c) (distinct x b)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void bvTirBug06LimitedDomain() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort1, "c") };
 		final String inputSTR = "(exists ((x (_ BitVec 1)) (y (_ BitVec 1))) (and (not (= x y)) (not (= x c)) (not (= y c))))";
-		final String expectedResult = "false";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirBug07() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~a~0", "main_~b~0") };
+		final String inputSTR = "(forall ((|main_#t~post2| (_ BitVec 32)) (main_~i~0 (_ BitVec 32)) (|v_main_#t~post2_11| (_ BitVec 32)) (|v_main_#t~ret1_14| (_ BitVec 32)) (v_main_~b~0_19 (_ BitVec 32))) (or (bvult v_main_~b~0_19 main_~a~0) (bvult (bvadd (bvneg v_main_~b~0_19) main_~a~0) (_ bv1 32)) (not (bvult main_~i~0 main_~a~0)) (and (or (= |v_main_#t~ret1_14| (_ bv0 32)) (not (= (bvadd v_main_~b~0_19 (_ bv4294967295 32)) main_~b~0))) (or (not (= |v_main_#t~ret1_14| (_ bv0 32))) (not (= v_main_~b~0_19 main_~b~0)) (not (= |main_#t~post2| |v_main_#t~post2_11|))))))";
+		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvTirOffsetBug01() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "a", "b") };
+		final String inputSTR = "(forall ((x (_ BitVec 8))) (or (bvuge x a) (bvule x b)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
+	public void bvTirHospitalized() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "A", "q", "r") };
+		final String inputSTR = "(forall ((B (_ BitVec 32))) (= A (bvadd (bvmul q B) r)))";
+		final String expectedResult = inputSTR;
+		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -1136,6 +1310,20 @@ public class QuantifierEliminationTest {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "c") };
 		final String formulaAsString = "(exists ((x Int) ) (and (<= (* 256 x) 93) (<= (- c 7) (* 256 x))))";
 		runQuantifierPusherTest(funDecls, formulaAsString, "(<= c 7)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void omegaTest02ProgVerifSheet10Ex04Square() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "square_res", "square_odd", "square_li", "square_i") };
+		final String formulaAsString = "(forall ((aux_div_v_square_res_12_49 Int) (aux_mod_v_square_res_12_49 Int) (v_square_i_11 Int)) (or (< (+ (* 2 aux_div_v_square_res_12_49) aux_mod_v_square_res_12_49) (+ square_res (* 2 square_odd))) (not (<= v_square_i_11 (+ square_i 1))) (> 0 aux_mod_v_square_res_12_49) (<= v_square_i_11 aux_div_v_square_res_12_49) (>= aux_mod_v_square_res_12_49 2)))";
+		runQuantifierPusherTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void omegaTest03calloc02() {
+		final FunDecl[] funDecls = { };
+		final String formulaAsString = "(exists ((|v_#Ultimate.meminit_#sizeOfFields_AFTER_CALL_3| Int) (|v_#Ultimate.meminit_#t~loopctr3_20| Int) (|v_#Ultimate.meminit_#t~loopctr3_BEFORE_RETURN_3| Int) (|v_#Ultimate.meminit_#product_AFTER_CALL_3| Int)) (and (<= |v_#Ultimate.meminit_#t~loopctr3_20| 0) (not (< |v_#Ultimate.meminit_#t~loopctr3_BEFORE_RETURN_3| |v_#Ultimate.meminit_#product_AFTER_CALL_3|)) (<= 12 |v_#Ultimate.meminit_#product_AFTER_CALL_3|) (<= |v_#Ultimate.meminit_#sizeOfFields_AFTER_CALL_3| 4) (<= |v_#Ultimate.meminit_#t~loopctr3_BEFORE_RETURN_3| (+ (* 2 |v_#Ultimate.meminit_#sizeOfFields_AFTER_CALL_3|) |v_#Ultimate.meminit_#t~loopctr3_20|))))";
+		runQuantifierPusherTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test

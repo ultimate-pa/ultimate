@@ -963,15 +963,25 @@ public class ArrayInterpolator {
 								}
 							}
 
-							// Add the index equality for the first select term (if it is a select)
 							mTail.closeAPath(mHead, boundaryTerm, stepInfo);
 							mTail.openAPath(mHead, boundaryTerm, stepInfo);
+							final TermVariable mixedVar = stepInfo.getMixedVar();
+							if (mixedVar != null) {
+								final Occurrence leftOcc;
+								if (leftSelect != null) {
+									leftOcc = mInterpolator.getOccurrence(leftSelect);
+								} else {
+									assert isConstArray(left) && getValueFromConst(left).equals(leftTerm);
+									leftOcc = mInterpolator.getOccurrence(leftTerm);
+								}
+								// The left select can be A-local although we were on a B-path (and vice versa)
+								mTail.closeAPath(mHead, boundaryTerm, leftOcc);
+								mTail.openAPath(mHead, boundaryTerm, leftOcc);
+							}
+							// Add the index equality for the first select term (if it is a select)
 							if (leftSelect != null) {
 								mTail.addSelectIndexEquality(mHead, leftSelect);
 							}
-							// If the equality is mixed in some partition, we open or close the path at the mixed
-							// variable, storing the mixed equality as boundary term.
-							final TermVariable mixedVar = stepInfo.getMixedVar();
 							if (mixedVar != null) {
 								final Occurrence rightOcc;
 								if (rightSelect != null) {

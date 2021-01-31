@@ -1,0 +1,12 @@
+// #TestSpec: rt-inconsistent:req1; vacuous:; inconsistent:; results: 3
+Input a is bool
+Input b is bool
+Input c is bool
+
+req1: Globally, it is always the case that if "c" holds, then "a" holds after at most "50" time units
+req2: Globally, it is never the case that "a" holds.
+
+// Requirement req1 is rt-inconsistent
+// We found a FailurePath: 
+// INITIAL     a=* c=*
+// [0;50]      a=false c=true

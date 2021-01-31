@@ -32,9 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
  *
@@ -54,12 +58,14 @@ public class CfgSmtToolkit {
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
 	private final ConcurrencyInformation mConcurrencyInformation;
 	private final SmtFunctionsAndAxioms mSmtFunctionsAndAxioms;
+	private final IUltimateServiceProvider mServices;
 
-	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
-			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
+	public CfgSmtToolkit(final IUltimateServiceProvider services, final ModifiableGlobalsTable modifiableGlobalsTable,
+			final ManagedScript managedScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final Map<String, List<ILocalProgramVar>> inParams, final Map<String, List<ILocalProgramVar>> outParams,
 			final IcfgEdgeFactory icfgEdgeFactory, final ConcurrencyInformation concurInfo,
 			final SmtFunctionsAndAxioms smtFunctionsAndAxioms) {
+		mServices = services;
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
@@ -74,6 +80,35 @@ public class CfgSmtToolkit {
 
 	public ManagedScript getManagedScript() {
 		return mManagedScript;
+	}
+
+	/**
+	 * Similar to {@link CfgSmtToolkit#createFreshManagedScript(SolverSettings, String)}, but use a default solver id as
+	 * defined in {@link SolverSettings}.
+	 */
+	public ManagedScript createFreshManagedScript(final SolverSettings solverSettings) {
+		return createFreshManagedScript(solverSettings, solverSettings.getBaseNameOfDumpedScript());
+	}
+
+	/**
+	 * Create a new {@link ManagedScript} instance by using {@link SolverBuilder} and transfer all symbols of this
+	 * {@link CfgSmtToolkit} to the new script.
+	 *
+	 * @param solverSettings
+	 *            The settings for the new script.
+	 * @param solverId
+	 *            The ID of the new script instance.
+	 * @return A new {@link ManagedScript} where all symbols and axioms are already defined.
+	 */
+	public ManagedScript createFreshManagedScript(final SolverSettings solverSettings, final String solverId) {
+		final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, solverId);
+		final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
+		getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
+		return mgdScriptTc;
+	}
+
+	public IUltimateServiceProvider getServices() {
+		return mServices;
 	}
 
 	public ModifiableGlobalsTable getModifiableGlobalsTable() {

@@ -34,8 +34,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -116,6 +119,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnn
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -163,13 +167,19 @@ public class StandardFunctionHandler {
 
 	private final CExpressionTranslator mCEpressionTranslator;
 
-	public StandardFunctionHandler(final Map<String, IASTNode> functionTable, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final INameHandler nameHandler, final ExpressionTranslation expressionTranslation,
-			final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ProcedureManager procedureManager, final CTranslationResultReporter reporter,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final LocationFactory locationFactory,
-			final ITypeHandler typeHandler, final CExpressionTranslator cEpressionTranslator) {
+	private final ILogger mLogger;
+
+	private final Set<String> mOverwrittenFunctionNames;
+
+	public StandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
+			final CTranslationResultReporter reporter, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
+			final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
+			final LocationFactory locationFactory, final ITypeHandler typeHandler,
+			final CExpressionTranslator cEpressionTranslator) {
+		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeAndOffsetComputer;
@@ -186,6 +196,7 @@ public class StandardFunctionHandler {
 		mTypeHandler = typeHandler;
 		mCEpressionTranslator = cEpressionTranslator;
 		mFunctionModels = getFunctionModels();
+		mOverwrittenFunctionNames = getOverwrittenFunctionNames(settings);
 	}
 
 	/**
@@ -211,12 +222,28 @@ public class StandardFunctionHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				return null;
+				if (mOverwrittenFunctionNames.contains(transformedName)) {
+					mLogger.warn(String.format(
+							"Function %s is already implemented but we override the implementation for the call at %s",
+							transformedName, node.getFileLocation()));
+				} else {
+					return null;
+				}
 			}
 			final ILocation loc = getLoc(main, node);
 			return functionModel.handleFunction(main, node, loc, name);
 		}
 		return null;
+	}
+
+	private static Set<String> getOverwrittenFunctionNames(final TranslationSettings settings) {
+		if (!settings.isSvcompMode()) {
+			return Collections.emptySet();
+		}
+
+		final Set<String> rtr = new HashSet<>();
+		rtr.add("reach_error");
+		return rtr;
 	}
 
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
@@ -467,7 +494,9 @@ public class StandardFunctionHandler {
 
 		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
-		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
+		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc, name));
+		fill(map, "reach_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc, name));
+
 		fill(map, "__VERIFIER_assume", this::handleVerifierAssume);
 
 		fill(map, "__VERIFIER_nondet_bool",
@@ -1339,22 +1368,13 @@ public class StandardFunctionHandler {
 		for (final IASTInitializerClause argument : arguments) {
 			argDispatchResults.add((ExpressionResult) main.dispatch(argument));
 		}
-		return new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults)
-				.addStatement(createReachabilityAssert(loc)).build();
-	}
 
-	private Result handleAssert(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
-
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 4, name, arguments);
-
-		final List<ExpressionResult> argDispatchResults = new ArrayList<>();
-		for (final IASTInitializerClause argument : arguments) {
-			argDispatchResults.add((ExpressionResult) main.dispatch(argument));
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
+		if (mSettings.isSvcompMode()) {
+			final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
+			return erb.addStatement(new AssumeStatement(loc, falseLiteral)).build();
 		}
-		return new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults)
-				.addStatement(createReachabilityAssert(loc)).build();
+		return erb.addStatement(createReachabilityAssert(loc, name)).build();
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1921,8 +1941,8 @@ public class StandardFunctionHandler {
 	}
 
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc) {
-		final Statement st = createReachabilityAssert(loc);
+			final ILocation loc, final String name) {
+		final Statement st = createReachabilityAssert(loc, name);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
@@ -1931,7 +1951,7 @@ public class StandardFunctionHandler {
 	 * settings. If we want to check reachability, an assert false will be generated. If not, (e.g., if we only want to
 	 * check memsafety), an assume false will be generated.
 	 */
-	private Statement createReachabilityAssert(final ILocation loc) {
+	private Statement createReachabilityAssert(final ILocation loc, final String functionName) {
 		final boolean checkSvcompErrorfunction = mSettings.checkSvcompErrorFunction();
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
@@ -1950,16 +1970,22 @@ public class StandardFunctionHandler {
 		// https://github.com/sosy-lab/sv-benchmarks/pull/1001
 		final Check check;
 		if (checkSvcompErrorfunction) {
+			final Function<Spec, String> funPosMessage =
+					s -> s == Spec.ERROR_FUNCTION ? "call to " + functionName + " is unreachable"
+							: Check.getDefaultPositiveMessage(s);
+			final Function<Spec, String> funNegMessage =
+					s -> s == Spec.ERROR_FUNCTION ? "a call to " + functionName + " is reachable"
+							: Check.getDefaultNegativeMessage(s);
 			if (checkMemoryleakInMain) {
-				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK));
+				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK), funPosMessage, funNegMessage);
 			} else {
-				check = new Check(Spec.ERROR_FUNCTION);
+				check = new Check(Spec.ERROR_FUNCTION, funPosMessage, funNegMessage);
 			}
 		} else {
 			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
 		}
-		final Statement st = new AssertStatement(loc, new NamedAttribute[] {
-				new NamedAttribute(loc, "reach", new Expression[] { new StringLiteral(loc, check.toString()) }) },
+		final Statement st = new AssertStatement(loc, new NamedAttribute[] { new NamedAttribute(loc, "reach",
+				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },
 				falseLiteral);
 		check.annotate(st);
 		if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {

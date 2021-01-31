@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.bies
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration.LoopAccelerationOptions;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.mohr.IcfgLoopTransformerMohr;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer.DealingWithArraysTypes;
@@ -166,6 +167,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyLoopAccelerationEx(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_BIESENBACH:
 			return applyLoopAccelerationBiesenbach(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case LOOP_ACCELERATION_JORDAN:
+			return applyLoopAccelerationJordan(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_MOHR:
 			return applyLoopAccelerationMohr(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_WOELFING:
@@ -270,6 +273,15 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 				.getEnum(IcfgTransformationPreferences.LABEL_LA_BB_MODE, LoopAccelerationOptions.class);
 		return new IcfgLoopAcceleration<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "IcfgDuplicate",
 				transformer, backtranslationTracker, mServices, options).getResult();
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationJordan(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
+				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
+		return new JordanLoopAcceleration<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "IcfgDuplicate",
+				transformer, backtranslationTracker, mServices).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationFastUPR(

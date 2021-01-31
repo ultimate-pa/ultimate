@@ -12,27 +12,23 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MultiDimensionalSelectOverStoreEliminationUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
 /**
  * IInterpolantProvider using sp or wp. For better interpolants, we abstract all variables away, that are not read
@@ -45,50 +41,30 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final IHoareTripleChecker mHtc;
 	private final ArrayIndexEqualityManager mAiem;
+	private final ManagedScript mManagedScript;
+	private final IUltimateServiceProvider mServices;
+	private final IPredicateUnifier mPredicateUnifier;
 
-	protected final ManagedScript mManagedScript;
-	protected final IUltimateServiceProvider mServices;
-	protected final IPredicateUnifier mPredicateUnifier;
 	protected final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
+	protected final Script mScript;
 
 	public SpWpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IPredicateUnifier predicateUnifier,
-			final IHoareTripleChecker htc) {
+			final XnfConversionTechnique xnfConversionTechnique, final IPredicateUnifier predicateUnifier) {
 		mManagedScript = managedScript;
+		mScript = managedScript.getScript();
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mPredicateUnifier = predicateUnifier;
-		mHtc = htc;
 		mPredicateTransformer =
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 		// ArrayIndexEqualityManager to eliminate stores with true as context (i.e. without any known equalities)
-		mAiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(),
-				mManagedScript.getScript().term("true"), QuantifiedFormula.EXISTS, mLogger, mManagedScript);
+		mAiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(), mScript.term("true"),
+				QuantifiedFormula.EXISTS, mLogger, mManagedScript);
 		mAiem.unlockSolver();
-	}
-
-	private static <STATE> List<STATE> revTopSort(final INestedWordAutomaton<?, STATE> automaton,
-			final Map<STATE, ?> stateMap) {
-		final Map<STATE, Set<STATE>> successors = new HashMap<>();
-		for (final STATE state : automaton.getStates()) {
-			if (stateMap.containsKey(state)) {
-				continue;
-			}
-			final Set<STATE> succs = new HashSet<>();
-			for (final var edge : automaton.internalSuccessors(state)) {
-				final STATE succ = edge.getSucc();
-				if (!stateMap.containsKey(succ)) {
-					succs.add(succ);
-				}
-			}
-			successors.put(state, succs);
-		}
-		return new TopologicalSorter<>(successors::get).reversedTopologicalOrdering(successors.keySet()).get();
 	}
 
 	@Override
@@ -102,7 +78,7 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 			ipVars.addAll(vars);
 			liveIpVariables.put(entry.getKey(), vars);
 		}
-		final List<STATE> order = revTopSort(automaton, states2Predicates);
+		final List<STATE> order = McrUtils.reversedTopologicalOrdering(automaton, states2Predicates::containsKey);
 		for (final STATE state : order) {
 			final Set<TermVariable> vars = new HashSet<>();
 			for (final var edge : automaton.internalSuccessors(state)) {
@@ -117,32 +93,33 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		}
 		// Caluculate sp/wp for all states in the given order
 		for (final STATE state : order) {
-			Term term = calculateTerm(automaton, state, states2Predicates, liveIpVariables.get(state));
-			if (!QuantifierUtils.isQuantifierFree(term)) {
-				term = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, term,
-						mSimplificationTechnique, mXnfConversionTechnique);
-				if (!QuantifierUtils.isQuantifierFree(term)) {
-					continue;
-				}
+			final Term term = calculateTerm(automaton, state, states2Predicates);
+			final IPredicate predicate = getPredicateWithAbstraction(term, liveIpVariables.get(state));
+			if (predicate != null) {
+				states2Predicates.put(state, predicate);
 			}
-			// Eliminate all stores (using case distinction on index equalities)
-			final var stores = MultiDimensionalSelectOverNestedStore
-					.extractMultiDimensionalSelectOverStores(mManagedScript.getScript(), term);
-			for (final var m : stores) {
-				term = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, term, m);
-			}
-			states2Predicates.put(state, mPredicateUnifier.getOrConstructPredicate(term));
 		}
 	}
 
-	protected boolean isValidHoareTriple(final IPredicate pred, final LETTER action, final IPredicate succ) {
-		final var validity = mHtc.checkInternal(pred, (IInternalAction) action, succ);
-		mHtc.releaseLock();
-		return validity == Validity.VALID;
+	private IPredicate getPredicateWithAbstraction(final Term term, final Set<TermVariable> importantVars) {
+		Term result = McrUtils.abstractVariables(term, importantVars, getQuantifier(), mManagedScript, mServices,
+				mLogger, mSimplificationTechnique, mXnfConversionTechnique);
+		if (!QuantifierUtils.isQuantifierFree(result)) {
+			return null;
+		}
+		// Eliminate all stores (using case distinction on index equalities)
+		final var stores =
+				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(mScript, result);
+		for (final var m : stores) {
+			result = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, result, m);
+		}
+		return mPredicateUnifier.getOrConstructPredicate(result);
 	}
 
 	protected abstract <STATE> Term calculateTerm(final INestedWordAutomaton<LETTER, STATE> automaton, STATE state,
-			Map<STATE, IPredicate> stateMap, Set<TermVariable> importantVars);
+			Map<STATE, IPredicate> stateMap);
 
 	protected abstract boolean useReversedOrder();
+
+	protected abstract int getQuantifier();
 }

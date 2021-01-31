@@ -261,8 +261,8 @@ public class ProcedureManager {
 
 			final Specification[] newSpecWithExtraEnsuresClauses;
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
-					&& (mSettings.checkAllocationPurity() || (mSettings.getCheckedMethod().equals(SFO.EMPTY)
-							|| mSettings.getCheckedMethod().equals(procedureName))
+					&& (mSettings.checkAllocationPurity() || (mSettings.getEntryMethod().equals(SFO.EMPTY)
+							|| mSettings.getEntryMethod().equals(procedureName))
 							&& mSettings.checkMemoryLeakInMain())) {
 				// add a specification to check for memory leaks
 

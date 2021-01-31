@@ -466,6 +466,9 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
             run = runs[os.path.basename(f.logfile)]
             msg_detail += f'\n{" ":<8} {format_number(run.walltime, 2):>8}s {f.logfile}'
             msg_detail += f'\n{" ":<18} {"Call:":<8} {f.call}'
+            if r.category() not in interesting_strings:
+                print(f"{r.category()} not in interesting_strings")
+                continue
             mc = interesting_strings[r.category()]
             if mc.delta_debug:
                 desc = "--deltadebugger.result.short.description.prefix" if mc.delta_debug_short else "--deltadebugger.result.long.description.prefix"
@@ -627,7 +630,10 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
             yml = elem.attrib["name"]
             base_yml = ntpath.basename(yml)
             logfile_basename = "{}.{}.log".format(tool_name, base_yml)
-            rtr[logfile_basename] = Run(elem, logfile_basename)
+            try:
+                rtr[logfile_basename] = Run(elem, logfile_basename)
+            except ValueError as ve:
+                print(f"Could not create Run from {logfile_basename}: {ve}")
 
     return rtr, True
 

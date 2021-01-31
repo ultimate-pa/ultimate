@@ -2,23 +2,27 @@ package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
 public class McrUtils {
 	private McrUtils() {
@@ -29,34 +33,45 @@ public class McrUtils {
 	}
 
 	public static Term abstractVariables(final Term term, final Set<TermVariable> varsToKeep, final int quantifier,
-			final ManagedScript managedScript, final IUltimateServiceProvider services) {
-		final Term withoutIte = new IteRemover(managedScript).transform(term);
-		final Term nnf = new NnfTransformer(managedScript, services, QuantifierHandling.KEEP).transform(withoutIte);
-		final List<TermVariable> quantifiedVars =
-				Arrays.stream(nnf.getFreeVars()).filter(x -> !varsToKeep.contains(x)).collect(Collectors.toList());
-		final Term quantified = SmtUtils.quantifier(managedScript.getScript(), quantifier, quantifiedVars, nnf);
-		// TODO: What to use as PqeTechnique?
-		return new QuantifierPusher(managedScript, services, false, PqeTechniques.ONLY_DER).transform(quantified);
-	}
-
-	public static Term replaceQuantifiers(final Term term, final Term replacement) {
-		return new SubstituteQuantifiers(replacement).transform(term);
-	}
-
-	static class SubstituteQuantifiers extends TermTransformer {
-		private final Term mReplacement;
-
-		SubstituteQuantifiers(final Term replacement) {
-			mReplacement = replacement;
+			final ManagedScript managedScript, final IUltimateServiceProvider services, final ILogger logger,
+			final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
+		final Term eliminated = PartialQuantifierElimination.tryToEliminate(services, logger, managedScript, term,
+				simplificationTechnique, xnfConversionTechnique);
+		final Term normalForm;
+		switch (quantifier) {
+		case QuantifiedFormula.EXISTS:
+			normalForm = SmtUtils.toDnf(services, managedScript, eliminated, xnfConversionTechnique);
+			break;
+		case QuantifiedFormula.FORALL:
+			normalForm = SmtUtils.toCnf(services, managedScript, eliminated, xnfConversionTechnique);
+			break;
+		default:
+			throw new AssertionError("Invalid Quantifier!");
 		}
+		final List<TermVariable> quantifiedVars = Arrays.stream(normalForm.getFreeVars())
+				.filter(x -> !varsToKeep.contains(x)).collect(Collectors.toList());
+		final Term quantified = SmtUtils.quantifier(managedScript.getScript(), quantifier, quantifiedVars, normalForm);
+		return PartialQuantifierElimination.tryToEliminate(services, logger, managedScript, quantified,
+				simplificationTechnique, xnfConversionTechnique);
+	}
 
-		@Override
-		protected void convert(final Term term) {
-			if (term instanceof QuantifiedFormula) {
-				setResult(mReplacement);
-			} else {
-				super.convert(term);
+	public static <STATE> List<STATE> reversedTopologicalOrdering(final INestedWordAutomaton<?, STATE> automaton,
+			final Predicate<STATE> ignoreState) {
+		final Map<STATE, Set<STATE>> successors = new HashMap<>();
+		for (final STATE state : automaton.getStates()) {
+			if (ignoreState.test(state)) {
+				continue;
 			}
+			final Set<STATE> succs = new HashSet<>();
+			for (final var edge : automaton.internalSuccessors(state)) {
+				final STATE succ = edge.getSucc();
+				if (!ignoreState.test(succ)) {
+					succs.add(succ);
+				}
+			}
+			successors.put(state, succs);
 		}
+		return new TopologicalSorter<>(successors::get).reversedTopologicalOrdering(successors.keySet()).get();
 	}
 }

@@ -21,13 +21,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
+// TODO: Current approach has bad performance. Other approach?
 public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements IInterpolantProvider<LETTER> {
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
@@ -244,7 +245,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<TermVariable> varsToKeep) {
 		final Term substituted = new SubstitutionWithLocalSimplification(mManagedScript, mapping).transform(term);
 		final Term abstracted = McrUtils.abstractVariables(substituted, varsToKeep, QuantifiedFormula.EXISTS,
-				mManagedScript, mServices);
+				mManagedScript, mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
 		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, abstracted,
 				mSimplificationTechnique, mXnfConversionTechnique);
 	}

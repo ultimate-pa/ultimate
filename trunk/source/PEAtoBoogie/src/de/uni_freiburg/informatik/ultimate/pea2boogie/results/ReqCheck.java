@@ -85,11 +85,11 @@ public class ReqCheck extends Check {
 	}
 
 	private static String getCustomPositiveMessage(final Spec spec, final String[] reqIds, final String[] peaNames) {
-		return getRequirementTexts(reqIds, peaNames) + " " + getPositiveMessage(spec);
+		return getRequirementTexts(reqIds, peaNames) + " " + getDefaultPositiveMessage(spec);
 	}
 
 	private static String getCustomNegativeMessage(final Spec spec, final String[] reqIds, final String[] peaNames) {
-		return getRequirementTexts(reqIds, peaNames) + " " + getNegativeMessage(spec);
+		return getRequirementTexts(reqIds, peaNames) + " " + getDefaultNegativeMessage(spec);
 	}
 
 	private static String getRequirementTexts(final String[] reqIds, final String[] peaNames) {

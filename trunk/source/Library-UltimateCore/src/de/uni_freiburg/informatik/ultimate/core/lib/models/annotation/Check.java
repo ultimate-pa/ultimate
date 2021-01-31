@@ -173,10 +173,10 @@ public class Check extends ModernAnnotations {
 	}
 
 	public Check(final Set<Spec> newSpec) {
-		this(newSpec, Check::getPositiveMessage, Check::getNegativeMessage);
+		this(newSpec, Check::getDefaultPositiveMessage, Check::getDefaultNegativeMessage);
 	}
 
-	protected Check(final Set<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
+	public Check(final Set<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
 			final Function<Spec, String> funNegativeMessageProvider) {
 		assert !newSpec.isEmpty();
 		mSpec = newSpec;
@@ -210,7 +210,7 @@ public class Check extends ModernAnnotations {
 		return sb.toString();
 	}
 
-	protected static String getPositiveMessage(final Spec spec) {
+	public static String getDefaultPositiveMessage(final Spec spec) {
 		switch (spec) {
 		case ARRAY_INDEX:
 			return "array index is always in bounds";
@@ -237,7 +237,7 @@ public class Check extends ModernAnnotations {
 		case ILLEGAL_POINTER_ARITHMETIC:
 			return "pointer arithmetic is always legal";
 		case ERROR_FUNCTION:
-			return "call of __VERIFIER_error() unreachable";
+			return "call to the error function is unreachable";
 		case WITNESS_INVARIANT:
 			return "invariant of correctness witness holds";
 		case UNKNOWN:
@@ -261,7 +261,7 @@ public class Check extends ModernAnnotations {
 		}
 	}
 
-	protected static String getNegativeMessage(final Spec spec) {
+	public static String getDefaultNegativeMessage(final Spec spec) {
 		switch (spec) {
 		case ARRAY_INDEX:
 			return "array index can be out of bounds";
@@ -288,7 +288,7 @@ public class Check extends ModernAnnotations {
 		case ILLEGAL_POINTER_ARITHMETIC:
 			return "comparison of incompatible pointers";
 		case ERROR_FUNCTION:
-			return "a call of __VERIFIER_error() is reachable";
+			return "a call to the error function is reachable";
 		case WITNESS_INVARIANT:
 			return "invariant of correctness witness can be violated";
 		case UNKNOWN:

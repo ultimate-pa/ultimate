@@ -431,11 +431,7 @@ def create_callargs(callargs, arguments):
 
 def flatten(l):
     for el in l:
-        if (
-            isinstance(el, list)
-            and not isinstance(el, basestring)
-            and not isinstance(el, (str, bytes))
-        ):
+        if isinstance(el, list) and not isinstance(el, (str, bytes)):
             for sub in flatten(el):
                 yield sub
         else:
