@@ -44,14 +44,13 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * On-the-fly construction of a finite Automaton from a Petri Net.
  * 
- * @author Marcel
+ * @author Marcel Ebbinghaus
  *
  * @param <L>
  * 		letter
@@ -78,6 +77,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	 * @param operand
 	 * 		Petri Net
 	 * @throws PetriNetNot1SafeException
+	 * 		Petri Net has to be 1Safe
 	 */
 	public LazyPetriNet2FiniteAutomaton(
 			final IPetriNet2FiniteAutomatonStateFactory<S> factory,

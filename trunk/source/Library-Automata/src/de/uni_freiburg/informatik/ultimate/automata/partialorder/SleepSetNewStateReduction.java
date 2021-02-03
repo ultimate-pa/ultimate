@@ -43,6 +43,18 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Implementation of the Sleep Set Reduction with new states.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ * 		letter
+ * @param <S>
+ * 		state
+ * @param <S2>
+ * 		sleep set state
+ */
 public class SleepSetNewStateReduction<L, S, S2> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
@@ -56,6 +68,20 @@ public class SleepSetNewStateReduction<L, S, S2> {
 	private final IPartialOrderVisitor<L, S> mVisitor;
 	private boolean mExit;
 
+	/**
+	 * Constructor of the Sleep Set Reduction with new states.
+	 * 
+	 * @param operand
+	 * 		deterministic finite automaton
+	 * @param independenceRelation
+	 * 		the independence relation used for reduction purposes
+	 * @param sleepSetOrder
+	 * 		order for transition handling
+	 * @param stateFactory
+	 * 		state factory
+	 * @param visitor
+	 * 		the visitor class used for the reduction
+	 */
 	public SleepSetNewStateReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
 			final ISleepSetStateFactory<L, S, S2> stateFactory, final IPartialOrderVisitor<L, S> visitor) {
@@ -108,9 +134,7 @@ public class SleepSetNewStateReduction<L, S, S2> {
 					mVisitor.backtrackState(currentState);
 					mStateStack.pop();
 				}
-			}
-			
-			else {
+			} else {
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
 			}

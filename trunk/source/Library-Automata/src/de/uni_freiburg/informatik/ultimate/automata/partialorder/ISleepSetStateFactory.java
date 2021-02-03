@@ -32,9 +32,36 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Interface for the stateFactory for sleep sets.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L> letter
+ * @param <S1> state
+ * @param <S2> sleep set state
+ */
 public interface ISleepSetStateFactory<L, S1, S2> extends IEmptyStackStateFactory<S2> {
+	/**
+	 * Method to create the sleep set state according to a given state and sleep set.
+	 * 
+	 * @param state
+	 * 		The given state
+	 * @param sleepset
+	 * 		The given sleep set
+	 * @return
+	 * 		The corresponding sleep set state
+	 */
 	S2 createSleepSetState(S1 state, Set<L> sleepset);
 
+	/**
+	 * Default implementation of the interface, which represents the sleep set state as a pair.
+	 * 
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param <L> letter
+	 * @param <S1> state
+	 */
 	public static class DefaultSleepSetStateFactory<L, S1> implements ISleepSetStateFactory<L, S1, Pair<S1, Set<L>>> {
 		@Override
 		public Pair<S1, Set<L>> createEmptyStackState() {

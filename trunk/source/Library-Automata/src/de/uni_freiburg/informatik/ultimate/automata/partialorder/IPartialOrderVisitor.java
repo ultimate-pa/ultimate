@@ -27,17 +27,69 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-// TODO Document methods, and especially precise meaning of return values.
+/**
+ * Interface for the Visitor Class for Partial Order Reductions
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ * 		letter
+ * @param <S>
+ * 		state
+ */
 public interface IPartialOrderVisitor<L, S> {
+	/**
+	 * Method to discover a given transition.
+	 * 
+	 * @param source
+	 * 		source state of the given transition
+	 * @param letter
+	 * 		letter of the given transition
+	 * @param target
+	 * 		target of the given transition
+	 * @return
+	 * 		return value can be used to detect and react to certain circumstances
+	 * 		(for instance by returning true if the target should not be visited)
+	 */
 	boolean discoverTransition(S source, L letter, S target);
 
+	/**
+	 * Method to backtrack a given state.
+	 * 
+	 * @param state
+	 * 		state to backtrack
+	 */
 	void backtrackState(S state);
 
 	// TODO (Dominik 2021-01-24) Medium-term we should try to get rid of this method, as "delaying" states is an
 	// implementation detail of SleepSetDelayReduction that should not exposed to visitors.
+	/**
+	 * Method to delay a given state.
+	 * 
+	 * @param state
+	 * 		state to delay
+	 */
 	void delayState(S state);
 
+	/**
+	 * Method to add a given state as a start state.
+	 * 
+	 * @param state
+	 * 		state to add as a start state
+	 * @return
+	 * 		return value can be used to detect and react to certain circumstances
+	 * 		(for instance by returning true if the visitor was searching for the given state)
+	 */
 	boolean addStartState(S state);
 
+	/**
+	 * Method to discover a given state.
+	 * 
+	 * @param state
+	 * 		state to discover
+	 * @return
+	 * 		return value can be used to detect and react to certain circumstances
+	 * 		(for instance by returning true if the visitor was searching for the given state)
+	 */
 	boolean discoverState(S state);
 }

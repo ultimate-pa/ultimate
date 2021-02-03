@@ -32,11 +32,31 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
+/**
+ * Visitor Class for the Sleep Set Reduction, which constructs the reduced automaton.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ * 		letter
+ * @param <S>
+ * 		state
+ */
 public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final NestedWordAutomaton<L, S> mReductionAutomaton;
 
+	/**
+	 * Constructor for the Sleep Set Reduction Visitor constructing the reduced automaton.
+	 * 
+	 * @param operand
+	 * 		automaton
+	 * @param services
+	 * 		services
+	 * @param stateFactory
+	 * 		state factory
+	 */
 	public SleepSetVisitorAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final AutomataLibraryServices services, final IEmptyStackStateFactory<S> stateFactory) {
 		mOperand = operand;

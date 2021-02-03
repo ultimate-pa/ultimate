@@ -49,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- *            letter type
+ * 		letter
  * @param <S>
- *            state type
+ * 		state
  */
 public class SleepSetDelayReduction<L, S> {
 
@@ -70,16 +70,17 @@ public class SleepSetDelayReduction<L, S> {
 	 * Constructor for POR with Sleep Sets and Delay Set
 	 *
 	 * @param operand
-	 *            deterministic finite automaton
+	 * 		deterministic finite automaton
 	 * @param independenceRelation
-	 *            the underlying independence relation
+	 * 		the independence relation used for reduction purposes
 	 * @param sleepSetOrder
-	 *            order of transitions for further branchings
+	 * 		order for transition handling
 	 * @param services
-	 *            ultimate services
+	 * 		ultimate services
 	 * @param stateFactory
-	 *            state factory
-	 *
+	 * 		state factory
+	 * @param visitor
+	 * 		the visitor class used for the reduction
 	 */
 	public SleepSetDelayReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
@@ -157,11 +158,6 @@ public class SleepSetDelayReduction<L, S> {
 					mStateStack.pop();
 				}	
 			}
-/*
-			if (successorTransitionList.isEmpty()) {
-				mVisitor.backtrackState(currentState);
-				mStateStack.pop();
-			}*/
 
 			// sort successorTransitionList according to the given order
 			final Comparator<L> order = mOrder.getOrder(currentState);

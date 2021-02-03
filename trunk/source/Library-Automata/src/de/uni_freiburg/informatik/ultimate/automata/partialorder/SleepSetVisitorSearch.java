@@ -34,10 +34,19 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
+/**
+ * Visitor Class for the Sleep Set Reduction, which searches for an error state while reducing.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ * 		letter
+ * @param <S>
+ * 		state
+ */
 public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	private Set<S> mDeadEndSet;
 	private  ArrayDeque<ArrayList<L>> mLetterStack;
@@ -49,8 +58,16 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	private final Function<S, Boolean> mIsHopelessState;
 	private S mStartState;
 	
+	/**
+	 * Constructor for the Sleep Set Reduction Visitor searching for an error trace.
+	 * 
+	 * @param isGoalState
+	 * 		function to determine whether a state is a goal state
+	 * @param isHopelessState
+	 * 		function to determine whether a state is a hopeless state
+	 */
 	public SleepSetVisitorSearch(Function<S, Boolean> isGoalState, Function<S, Boolean> isHopelessState) {
-		mDeadEndSet = new HashSet<S>();
+		mDeadEndSet = new HashSet<>();
 		mLetterStack = new ArrayDeque<>();
 		mStateStack = new ArrayDeque<>();
 		mAcceptingTransitionSequence = new ArrayList<>();
@@ -90,8 +107,10 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 				mLetterStack.peek().remove(0);
 				mStateStack.peek().remove(0);
 			} catch (IndexOutOfBoundsException e) {
-				System.out.print("Size of LetterStack is: " + mLetterStack.size() + " and size of StateStack is: " + mStateStack.size());
-				System.out.print("Size of LetterStack entry is: " + mLetterStack.peek().size() + " and size of StateStack entry is: " + mStateStack.peek().size());
+				System.out.print("Size of LetterStack is: " + mLetterStack.size() +
+						" and size of StateStack is: " + mStateStack.size());
+				System.out.print("Size of LetterStack entry is: " + mLetterStack.peek().size()
+						+ " and size of StateStack entry is: " + mStateStack.peek().size());
 			}
 		}
 	}
@@ -136,7 +155,6 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 			mAcceptingWord = mAcceptingWord.concatenate(tempWord);
 		}
 		final NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
-		System.out.print("Size of Word is: " + acceptingNestedWord.length() + " and size of Sequence is : " + mAcceptingStateSequence.size());
 		return new NestedRun<>(acceptingNestedWord, mAcceptingStateSequence);
 	}
 	
