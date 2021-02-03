@@ -72,6 +72,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	/**
+	 * Checks if banned variable occurs in div. Ignores if variable got div captured
+	 * by transformation or occured in div before. <br />
+	 * TODO 20210131 Matthias: Might be helpful for debugging. Remove after a few
+	 * years if transformation is error-free.
+	 */
+	private static final boolean DO_OLD_DIV_CAPTURE_CHECK = false;
+
+	/**
 	 * @see constructor
 	 */
 	private final boolean mExpensiveEliminations;
@@ -419,7 +427,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			default:
 				throw new AssertionError("unknon value " + mIntricateOperations);
 			}
-			if (SolveForSubjectUtils.isVariableDivCaptured(mcsbr, bannedForDivCapture)) {
+			if (DO_OLD_DIV_CAPTURE_CHECK && SolveForSubjectUtils.isVariableDivCaptured(mcsbr, bannedForDivCapture)) {
 				throw new AssertionError("variable got div captured");
 			}
 			if (eachCaseHasDerRelationSymbol(mcsbr, quantifier)) {
