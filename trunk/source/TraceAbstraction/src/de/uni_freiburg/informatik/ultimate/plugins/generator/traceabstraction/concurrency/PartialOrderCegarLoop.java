@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -67,9 +68,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 
 /**
  * A CEGAR loop for concurrent programs, based on finite automata, which uses Partial Order Reduction (POR) in every
@@ -93,6 +94,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private ISleepSetOrder<IPredicate, L> mSleepSetOrder;
 	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations = new ArrayList<>();
 	private final IIndependenceCache<IPredicate, L> mIndependenceCache;
+
+	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -130,16 +133,22 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
+		// Compute the enhanced interpolant automaton
 		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
+				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
+		if (ia instanceof AbstractInterpolantAutomaton<?>) {
+			final AbstractInterpolantAutomaton<L> aia = (AbstractInterpolantAutomaton<L>) ia;
+			aia.switchToReadonlyMode();
+			mAbstractItpAutomata.add(aia);
+		}
 
-		// TODO (Dominik 2020-12-17) Use settings to determine enhancement, re-using code in BasicCegarLoop
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia =
-				constructInterpolantAutomatonForOnDemandEnhancement(mInterpolAutomaton, predicateUnifier, htc,
-						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);
+		// Automaton must be total and deterministic
 		final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, mStateFactoryForRefinement, true);
 		assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
 
+		// Actual refinement step
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
@@ -167,6 +176,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mIndependenceRelations.add(newIndependence);
 		final IIndependenceRelation<IPredicate, L> indep = new DistributingIndependenceRelation(mIndependenceRelations);
 
+		switchToOnDemandConstructionMode();
 		switch (mPartialOrderMode) {
 		case SLEEP_DELAY_SET:
 			new SleepSetDelayReduction<>(abstraction, indep, mSleepSetOrder, mVisitor);
@@ -177,15 +187,22 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);
 		}
-
 		mCounterexample = mVisitor.constructRun();
-		if (mCounterexample == null) {
-			return true;
-		}
+		switchToReadonlyMode();
 
-		mLogger.info("Size of mCounterexample is: " + mCounterexample.getLength());
-		mLogger.info(mCounterexample.getStateSequence());
-		return false;
+		return mCounterexample == null;
+	}
+
+	private void switchToOnDemandConstructionMode() {
+		for (final AbstractInterpolantAutomaton<L> aut : mAbstractItpAutomata) {
+			aut.switchToOnDemandConstructionMode();
+		}
+	}
+
+	private void switchToReadonlyMode() {
+		for (final AbstractInterpolantAutomaton<L> aut : mAbstractItpAutomata) {
+			aut.switchToReadonlyMode();
+		}
 	}
 
 	private Boolean isGoalState(final IPredicate state) {

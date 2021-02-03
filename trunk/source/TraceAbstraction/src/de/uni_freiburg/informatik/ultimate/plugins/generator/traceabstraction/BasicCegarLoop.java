@@ -749,16 +749,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
-			if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
-				subtrahend = subtrahendBeforeEnhancement;
-			} else {
-				final AbstractInterpolantAutomaton<L> ia = constructInterpolantAutomatonForOnDemandEnhancement(
-						subtrahendBeforeEnhancement, predicateUnifier, htc, enhanceMode);
-				subtrahend = ia;
-				if (mStoreFloydHoareAutomata) {
-					mFloydHoareAutomata.add(new Pair<>(ia, predicateUnifier));
-				}
-			}
+			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
 		}
 
 		// TODO: HTC and predicateunifier statistics are saved in the following method, but it seems better to save them
@@ -774,6 +765,23 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 				(NestedWord<L>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
+	}
+
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> enhanceInterpolantAutomaton(
+			final InterpolantAutomatonEnhancement enhanceMode, final IPredicateUnifier predicateUnifier,
+			final IHoareTripleChecker htc, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
+		if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+			subtrahend = interpolantAutomaton;
+		} else {
+			final AbstractInterpolantAutomaton<L> ia = constructInterpolantAutomatonForOnDemandEnhancement(
+					interpolantAutomaton, predicateUnifier, htc, enhanceMode);
+			subtrahend = ia;
+			if (mStoreFloydHoareAutomata) {
+				mFloydHoareAutomata.add(new Pair<>(ia, predicateUnifier));
+			}
+		}
+		return subtrahend;
 	}
 
 	/**
