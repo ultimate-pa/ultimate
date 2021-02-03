@@ -28,68 +28,68 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 /**
- * Interface for the Visitor Class for Partial Order Reductions
- * 
+ * Interface for visitors used in DFS-based Partial Order Reductions on finite automata.
+ *
  * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
- * 		letter
+ *            The type of letters in the finite automaton.
  * @param <S>
- * 		state
+ *            The type of states in the automaton.
  */
 public interface IPartialOrderVisitor<L, S> {
 	/**
-	 * Method to discover a given transition.
-	 * 
-	 * @param source
-	 * 		source state of the given transition
-	 * @param letter
-	 * 		letter of the given transition
-	 * @param target
-	 * 		target of the given transition
-	 * @return
-	 * 		return value can be used to detect and react to certain circumstances
-	 * 		(for instance by returning true if the target should not be visited)
-	 */
-	boolean discoverTransition(S source, L letter, S target);
-
-	/**
-	 * Method to backtrack a given state.
-	 * 
+	 * Called when the DFS begins its search at an initial state of the automaton.
+	 *
 	 * @param state
-	 * 		state to backtrack
-	 */
-	void backtrackState(S state);
-
-	// TODO (Dominik 2021-01-24) Medium-term we should try to get rid of this method, as "delaying" states is an
-	// implementation detail of SleepSetDelayReduction that should not exposed to visitors.
-	/**
-	 * Method to delay a given state.
-	 * 
-	 * @param state
-	 * 		state to delay
-	 */
-	void delayState(S state);
-
-	/**
-	 * Method to add a given state as a start state.
-	 * 
-	 * @param state
-	 * 		state to add as a start state
-	 * @return
-	 * 		return value can be used to detect and react to certain circumstances
-	 * 		(for instance by returning true if the visitor was searching for the given state)
+	 *            initial state where the DFS starts
+	 * @return true to indicate that the POR-search should be aborted, false otherwise.
 	 */
 	boolean addStartState(S state);
 
 	/**
-	 * Method to discover a given state.
-	 * 
+	 * Called when a transition is discovered.
+	 *
+	 * @param source
+	 *            source state of the discovered transition
+	 * @param letter
+	 *            letter of the discovered transition
+	 * @param target
+	 *            target of the discovered transition
+	 * @return true to indicate that the discovered transition should be pruned, i.e., that the target state should not
+	 *         be visited by the DFS (through this transition). Otherwise, return false.
+	 */
+	boolean discoverTransition(S source, L letter, S target);
+
+	/**
+	 * Called when a state is discovered.
+	 *
+	 * Note: At the moment, a state may be discovered and backtracked multiple times during the search.
+	 *
 	 * @param state
-	 * 		state to discover
-	 * @return
-	 * 		return value can be used to detect and react to certain circumstances
-	 * 		(for instance by returning true if the visitor was searching for the given state)
+	 *            state that is discovered
+	 * @return true to indicate that the POR-search should be aborted, false otherwise.
 	 */
 	boolean discoverState(S state);
+
+	/**
+	 * Called when a state is backtracked.
+	 *
+	 * Note: At the moment, a state may be discovered and backtracked multiple times during the search.
+	 *
+	 * @param state
+	 *            state that is backtracked
+	 */
+	void backtrackState(S state);
+
+	/**
+	 * Called when a state is "delayed". This is specific to the "delay set" variant of Partial Order Reduction.
+	 *
+	 * @param state
+	 *            state that is delayed
+	 */
+	// TODO (Dominik 2021-01-24) We should try to get rid of this method, as "delaying" states is an
+	// implementation detail of SleepSetDelayReduction that should not be exposed to visitors.
+	void delayState(S state);
 }
