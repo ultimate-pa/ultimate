@@ -98,7 +98,12 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			} catch (final SMTLIBException e) {
 				throw new AssertionError(e);
 			} catch (final ElimStorePlainException e) {
-				throw new AssertionError(e);
+				if (e.getMessage().equals(ElimStorePlainException.NON_TOP_LEVEL_DER)
+						|| e.getMessage().equals(ElimStorePlainException.CAPTURED_INDEX)) {
+					res = null;
+				} else {
+					throw new AssertionError(e);
+				}
 			}
 			if (res != null) {
 				if (Arrays.asList(res.getTerm().getFreeVars()).contains(eliminatee)) {

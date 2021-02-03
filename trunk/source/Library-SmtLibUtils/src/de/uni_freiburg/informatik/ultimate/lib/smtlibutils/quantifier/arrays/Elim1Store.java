@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskWithContext;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -169,11 +170,8 @@ public class Elim1Store {
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 	}
 
-	public EliminationTaskWithContext elim1(final EliminationTaskWithContext input) {
+	public EliminationTaskWithContext elim1(final EliminationTaskWithContext input) throws ElimStorePlainException {
 		final Term inputTerm = input.getTerm();
-		if (!QuantifierUtils.isQuantifierFree(inputTerm)) {
-			throw new AssertionError("Alternating quantifiers not yet supported");
-		}
 		if (input.getEliminatees().size() != 1) {
 			throw new IllegalArgumentException("Can only eliminate one variable");
 		}
@@ -335,6 +333,12 @@ public class Elim1Store {
 				.transform(intermediateTerm);
 //		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
 //				indexMapping, substitutionMapping, indexEqualityInformation);
+		if (Arrays.asList(transformedTerm.getFreeVars()).contains(eliminatee)) {
+			if (QuantifierUtils.isQuantifierFree(inputTerm)) {
+				throw new AssertionError("Unexpected substitution problem.");
+			}
+			throw new ElimStorePlain.ElimStorePlainException(ElimStorePlainException.CAPTURED_INDEX);
+		}
 		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, transformedTerm,
 				singleCaseTerm);
 		if (!doubleCaseJuncts.isEmpty()) {

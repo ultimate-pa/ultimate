@@ -315,9 +315,6 @@ public class ElimStorePlain {
 		} else {
 			eliminatee = eTask.getEliminatees().iterator().next();
 		}
-		if (!QuantifierUtils.isQuantifierFree(eTask.getTerm())) {
-			throw new ElimStorePlainException("Alternating quantifiers not yet supported");
-		}
 		final Term polarizedContext = QuantifierUtils.negateIfUniversal(services, mgdScript,
 				eTask.getQuantifier(), eTask.getContext());
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), eTask.getTerm(), eliminatee);
@@ -782,6 +779,8 @@ public class ElimStorePlain {
 
 	public static class ElimStorePlainException extends Exception {
 		private static final long serialVersionUID = 7719170889993834143L;
+		public static final String NON_TOP_LEVEL_DER = "DER that is not on top-level";
+		public static final String CAPTURED_INDEX = "Subterm of an index is captued by an inner quantifier";
 		private final String mMessage;
 		private final TermVariable mEliminatee;
 
@@ -790,6 +789,13 @@ public class ElimStorePlain {
 			mEliminatee = null;
 			mMessage = message;
 		}
+
+		@Override
+		public String getMessage() {
+			return mMessage;
+		}
+
+
 	}
 
 }
