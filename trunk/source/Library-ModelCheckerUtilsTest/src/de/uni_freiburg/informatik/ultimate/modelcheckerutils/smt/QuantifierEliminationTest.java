@@ -582,7 +582,7 @@ public class QuantifierEliminationTest {
 	 * @deprecated use instead method with argument "FunDecl[] funDecls"
 	 */
 	@Deprecated
-	static void runQuantifierEliminationTest(final String eliminationInputAsString, final String expectedResultAsString,
+	private static void runQuantifierEliminationTest(final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
@@ -624,7 +624,7 @@ public class QuantifierEliminationTest {
 	 * @deprecated use instead method with argument "FunDecl[] funDecls"
 	 */
 	@Deprecated
-	static void runQuantifierPusherTest(final String eliminationInputAsString, final String expectedResultAsString,
+	private static void runQuantifierPusherTest(final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
