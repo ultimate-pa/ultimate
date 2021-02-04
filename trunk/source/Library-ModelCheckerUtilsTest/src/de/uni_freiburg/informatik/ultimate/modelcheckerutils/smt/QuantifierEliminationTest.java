@@ -111,6 +111,19 @@ public class QuantifierEliminationTest {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort1(script));
 	}
 
+	public static Sort getArrayBv32Bv8Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort8(script));
+	}
+
+	public static Sort getArrayBv32Bv32Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort32(script));
+	}
+
+	public static Sort getArrayBv32Bv32Bv32Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getArrayBv32Bv32Sort(script));
+	}
+
+
 	public static Sort getIntBoolArray(final Script script) {
 		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getBoolSort(script));
 	}
