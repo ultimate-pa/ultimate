@@ -309,6 +309,9 @@ public class ElimStorePlain {
 	public static EliminationTaskWithContext applyComplexEliminationRules(final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript, final EliminationTaskWithContext eTask)
 			throws ElimStorePlainException {
+		if (!QuantifierUtils.isQuantifierFree(eTask.getTerm())) {
+			throw new AssertionError("Alternating quantifiers not yet supported");
+		}
 		final TermVariable eliminatee;
 		if (eTask.getEliminatees().size() != 1) {
 			throw new AssertionError("need exactly one eliminatee");
