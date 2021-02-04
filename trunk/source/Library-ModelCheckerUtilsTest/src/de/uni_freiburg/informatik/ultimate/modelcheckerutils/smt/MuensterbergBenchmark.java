@@ -545,4 +545,14 @@ public class MuensterbergBenchmark {
 		QuantifierEliminationTest.runQuantifierPusherTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void fridgeDivCapture() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "main_p"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "main_a"),
+			};
+		final String formulaAsString = "(exists ((v_main_a_13 (Array Int Int)) (main_q Int)) (and (= main_a (store v_main_a_13 main_p (mod (+ (select v_main_a_13 main_q) (div (select v_main_a_13 main_p) 2)) 4294967296))) (< (select v_main_a_13 main_p) 4294967296) (<= 0 (select v_main_a_13 main_p)) (or (and (= (mod (+ (* (select v_main_a_13 main_p) 4294967295) 1500) 4294967296) 0) (= main_q main_p)) (and (<= 500 (+ (* 4294967296 (div (+ (* (select v_main_a_13 main_p) (- 1)) (select v_main_a_13 main_q) 500) 4294967296)) (select v_main_a_13 main_p))) (= (mod (+ (* (select v_main_a_13 main_p) 4294967295) (select v_main_a_13 main_q) 500) 4294967296) 0) (<= (+ (* 4294967296 (div (+ (* (select v_main_a_13 main_p) (- 1)) (select v_main_a_13 main_q) 500) 4294967296)) (select v_main_a_13 main_p)) 1200)))))";
+		QuantifierEliminationTest.runQuantifierPusherTest(funDecls, formulaAsString, null, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 }
