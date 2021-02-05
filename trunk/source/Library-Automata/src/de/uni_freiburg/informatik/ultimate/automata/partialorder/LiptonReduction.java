@@ -2,7 +2,8 @@
  * Copyright (C) 2019 Elisabeth Schanno
  * Copyright (C) 2019 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2019 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2021 Dennis Wölfing
+ * Copyright (C) 2019-2021 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -238,103 +239,83 @@ public class LiptonReduction<L, P> {
 	/**
 	 * Performs the sequence rule on the Petri net.
 	 *
-	 * @param services
-	 *            A {@link AutomataLibraryServices} instance.
 	 * @param petriNet
 	 *            The Petri net on which the sequence rule should be performed.
 	 * @return new Petri net, where the sequence rule has been performed.
 	 */
 	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet) {
-		final Collection<ITransition<L, P>> transitions = petriNet.getTransitions();
+		final Set<P> places = petriNet.getPlaces();
 
 		final Set<ITransition<L, P>> obsoleteTransitions = new HashSet<>();
 		final Set<ITransition<L, P>> composedTransitions = new HashSet<>();
 		final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions = new HashSet<>();
 
-		for (final ITransition<L, P> t1 : transitions) {
-			if (composedTransitions.contains(t1)) {
+		for (final P place : places) {
+			final Set<ITransition<L, P>> incomingTransitions = petriNet.getPredecessors(place);
+			final Set<ITransition<L, P>> outgoingTransitions = petriNet.getSuccessors(place);
+
+			if (incomingTransitions.isEmpty() || outgoingTransitions.isEmpty()) {
 				continue;
 			}
 
-			final Set<P> t1PostSet = petriNet.getSuccessors(t1);
-			final Set<P> t1PreSet = petriNet.getPredecessors(t1);
-
-			if (t1PostSet.size() != 1) {
-				// TODO: this isn't relevant for Y-V, is it?
+			if (incomingTransitions.size() != 1 && outgoingTransitions.size() != 1) {
 				continue;
 			}
 
-			final P prePlace = t1PreSet.iterator().next();
-			final P postPlace = t1PostSet.iterator().next();
+			final boolean isYv = incomingTransitions.size() != 1;
 
-			// Y to V check
-			if (petriNet.getSuccessors(prePlace).size() == 1 && petriNet.getPredecessors(prePlace).size() > 1) {
+			final Set<ITransition<L, P>> composedHere = new HashSet<>();
+			boolean completeComposition = true;
 
-				boolean completeComposition = true;
-				boolean composed = false;
-
-				for (final ITransition<L, P> t2 : petriNet.getPredecessors(prePlace)) {
-					final boolean canCompose =
-							!composedTransitions.contains(t2) && sequenceRuleCheck(t2, t1, prePlace, petriNet);
-					completeComposition = completeComposition && canCompose;
-
-					if (canCompose) {
-						final L composedLetter = mCompositionFactory.composeSequential(t2.getSymbol(), t1.getSymbol());
-
-						// create new element of the sequentialCompositionStack.
-						pendingCompositions.add(new Triple<>(composedLetter, t2, t1));
-						composedTransitions.add(t1);
-						composedTransitions.add(t2);
-						obsoleteTransitions.add(t2);
-						composed = true;
-
-						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
-							mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.TrivialYvCompositions);
-						} else {
-							mStatistics
-									.reportComposition(LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions);
-						}
-					}
-				}
-				if (completeComposition && composed) {
-					obsoleteTransitions.add(t1);
+			for (final ITransition<L, P> t1 : incomingTransitions) {
+				if (composedTransitions.contains(t1) || petriNet.getSuccessors(t1).size() != 1
+						|| petriNet.getPredecessors(t1).contains(place)) {
+					completeComposition = false;
+					continue;
 				}
 
-			} else if (petriNet.getPredecessors(postPlace).size() == 1) {
-
-				boolean completeComposition = true;
-				boolean composed = false;
-
-				for (final ITransition<L, P> t2 : petriNet.getSuccessors(postPlace)) {
+				for (final ITransition<L, P> t2 : outgoingTransitions) {
 					final boolean canCompose =
-							!composedTransitions.contains(t2) && sequenceRuleCheck(t1, t2, postPlace, petriNet);
+							!composedTransitions.contains(t2) && sequenceRuleCheck(t1, t2, place, petriNet);
 					completeComposition = completeComposition && canCompose;
 
 					if (canCompose) {
 						final L composedLetter = mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
-
+						mLogger.debug("Composing " + t1.toString() + " and " + t2.toString());
 						// create new element of the sequentialCompositionStack.
 						pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
-						composedTransitions.add(t1);
-						composedTransitions.add(t2);
-						obsoleteTransitions.add(t2);
-						composed = true;
-
-						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
-							mStatistics.reportComposition(
-									LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions);
+						composedHere.add(t1);
+						composedHere.add(t2);
+						if (isYv) {
+							obsoleteTransitions.add(t1);
 						} else {
-							mStatistics.reportComposition(
-									LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions);
+							obsoleteTransitions.add(t2);
 						}
+
+						LiptonReductionStatisticsDefinitions stat;
+						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
+							stat = isYv ? LiptonReductionStatisticsDefinitions.TrivialYvCompositions
+									: LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions;
+						} else {
+							stat = isYv ? LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions
+									: LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions;
+						}
+						mStatistics.reportComposition(stat);
 					}
-				}
-				if (completeComposition && composed) {
-					obsoleteTransitions.add(t1);
 				}
 			}
 
+			if (completeComposition) {
+				if (isYv) {
+					obsoleteTransitions.addAll(outgoingTransitions);
+				} else {
+					obsoleteTransitions.addAll(incomingTransitions);
+				}
+			}
+
+			composedTransitions.addAll(composedHere);
 		}
+
 		final BoundedPetriNet<L, P> newNet =
 				copyPetriNetWithModification(petriNet, pendingCompositions, obsoleteTransitions);
 
