@@ -107,13 +107,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
 		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
-
-		// Note: Soundness of this normalizer depends on the fact that all inconsistent predicates are syntactically
-		// equal to "false". Here, this is achieved by usage of the DistributingIndependenceRelation below: The only
-		// predicates we use are the original interpolants (i.e., not conjunctions of them), where we assume this
-		// condition holds.
-		mIndependenceCache = new DefaultIndependenceCache<>(
-				new SemanticIndependenceRelation.ConditionNormalizer<>(PartialOrderCegarLoop::isFalseState));
+		mIndependenceCache = new DefaultIndependenceCache<>();
 	}
 
 	@Override
@@ -162,18 +156,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 
-		final IIndependenceRelation<IPredicate, L> newIndependence;
-		if (mIteration == 0) {
-			newIndependence = new CachedIndependenceRelation<>(
-					new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
-							new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true))),
-					mIndependenceCache);
-		} else {
-			newIndependence = new CachedIndependenceRelation<>(
-					new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), true, true),
-					mIndependenceCache);
-		}
-		mIndependenceRelations.add(newIndependence);
+		mIndependenceRelations.add(constructIndependenceRelation());
 		final IIndependenceRelation<IPredicate, L> indep = new DistributingIndependenceRelation(mIndependenceRelations);
 
 		switchToOnDemandConstructionMode();
@@ -191,6 +174,36 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		switchToReadonlyMode();
 
 		return mCounterexample == null;
+	}
+
+	private IIndependenceRelation<IPredicate, L> constructIndependenceRelation() {
+		final boolean conditional = mIteration > 0;
+
+		// TODO (Dominik 2021-02-04) Switch to non-symmetric independence
+		final IIndependenceRelation<IPredicate, L> semanticRelation =
+				new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), conditional, true);
+
+		final IIndependenceRelation<IPredicate, L> basicRelation;
+		if (conditional) {
+			basicRelation = semanticRelation;
+		} else {
+			// For non-conditional independence, add syntactic check to improve performance
+			basicRelation = new UnionIndependenceRelation<>(
+					Arrays.asList(new SyntacticIndependenceRelation<>(), semanticRelation));
+		}
+
+		final IIndependenceRelation<IPredicate, L> cachedRelation =
+				new CachedIndependenceRelation<>(basicRelation, mIndependenceCache);
+		if (conditional) {
+			// For conditional relation, add condition eliminator to get rid of useless conditions.
+			// Note: Soundness of this wrapper depends on the fact that all inconsistent predicates are syntactically
+			// equal to "false". Here, this is achieved by usage of the DistributingIndependenceRelation below: The only
+			// predicates we use are the original interpolants (i.e., not conjunctions of them), where we assume this
+			// condition holds.
+			return new SemanticIndependenceRelation.ConditionEliminator<>(cachedRelation,
+					PartialOrderCegarLoop::isFalseState);
+		}
+		return cachedRelation;
 	}
 
 	private void switchToOnDemandConstructionMode() {

@@ -52,7 +52,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 *            The underlying relation that will be queried and whose results will be cached.
 	 */
 	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
-		this(underlying, new DefaultIndependenceCache<>(null));
+		this(underlying, new DefaultIndependenceCache<>());
 	}
 
 	/**

@@ -46,20 +46,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> {
 
-	private final Map<Object, HashRelation<L, L>> mPositiveCache = new HashMap<>();
-	private final Map<Object, HashRelation<L, L>> mNegativeCache = new HashMap<>();
-	private final DefaultIndependenceCache.IConditionNormalizer<S, L> mNormalizer;
-
-	/**
-	 * Create a cache.
-	 *
-	 * @param normalizer
-	 *            Can be used to improve caching efficiency. See {@link DefaultIndependenceCache.IConditionNormalizer}
-	 *            for details.
-	 */
-	public DefaultIndependenceCache(final DefaultIndependenceCache.IConditionNormalizer<S, L> normalizer) {
-		mNormalizer = normalizer;
-	}
+	private final Map<S, HashRelation<L, L>> mPositiveCache = new HashMap<>();
+	private final Map<S, HashRelation<L, L>> mNegativeCache = new HashMap<>();
 
 	@Override
 	public LBool contains(final S condition, final L a, final L b) {
@@ -68,14 +56,12 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 			return LBool.SAT;
 		}
 
-		final Object key = normalize(condition, a, b);
-
-		final HashRelation<L, L> positive = mPositiveCache.get(key);
+		final HashRelation<L, L> positive = mPositiveCache.get(condition);
 		if (positive != null && positive.containsPair(a, b)) {
 			return LBool.SAT;
 		}
 
-		final HashRelation<L, L> negative = mNegativeCache.get(key);
+		final HashRelation<L, L> negative = mNegativeCache.get(condition);
 		if (negative != null && negative.containsPair(a, b)) {
 			return LBool.UNSAT;
 		}
@@ -97,9 +83,8 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 
 	@Override
 	public void cacheResult(final S condition, final L a, final L b, final boolean independent) {
-		final Object key = normalize(condition, a, b);
-		final Map<Object, HashRelation<L, L>> cache = independent ? mPositiveCache : mNegativeCache;
-		final HashRelation<L, L> row = cache.computeIfAbsent(key, x -> new HashRelation<>());
+		final Map<S, HashRelation<L, L>> cache = independent ? mPositiveCache : mNegativeCache;
+		final HashRelation<L, L> row = cache.computeIfAbsent(condition, x -> new HashRelation<>());
 		row.addPair(a, b);
 	}
 
@@ -129,49 +114,5 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 				}
 			}
 		}
-	}
-
-	private Object normalize(final S condition, final L a, final L b) {
-		if (condition == null) {
-			return null;
-		}
-		if (mNormalizer == null) {
-			return condition;
-		}
-		return mNormalizer.normalize(condition, a, b);
-	}
-
-	/**
-	 * An interface used to improve caching for conditional independence relations where some different conditions
-	 * induce the same independence between letters.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <S>
-	 *            The type of conditions (states) that induce independence.
-	 * @param <L>
-	 *            The type of letters whose independence is tracked.
-	 */
-	public interface IConditionNormalizer<S, L> {
-		/**
-		 * Used to identify conditions which are equivalent with respect to independence of the given letters. This
-		 * method must satisfy the following contract:
-		 *
-		 * For all letters a, b and conditions s1, s2, if normalize(s1, a, b) == normalize(s2, a, b), then a and b are
-		 * independent in s1 iff they are independent in s2. Furthermore, null should be returned only if independence
-		 * in the given context holds iff independence without context holds.
-		 *
-		 * In order to have performance benefit, implementations of this method should be significantly more efficient
-		 * than the relation for which they are being used.
-		 *
-		 * @param state
-		 *            A condition to be normalized
-		 * @param a
-		 *            The first letter
-		 * @param b
-		 *            The second letter
-		 * @return An arbitrary value satisfying the contract above.
-		 */
-		Object normalize(S state, L a, L b);
 	}
 }

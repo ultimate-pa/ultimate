@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -58,6 +57,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * It is recommended to wrap this relation in a {@link CachedIndependenceRelation} for better performance.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters whose independence is checked.
  */
 
 public class SemanticIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
@@ -66,8 +68,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final ManagedScript mManagedScript;
 	private final ILogger mLogger;
 
-	private final static SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final static XnfConversionTechnique mXnfConversionTechnique =
+	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final boolean mConditional;
@@ -219,49 +221,74 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	/**
-	 * Implements a condition normalizer for {@link SemanticIndependenceRelation}. See
-	 * {@link DefaultIndependenceCache.IConditionNormalizer} for details.
+	 * An independence relation that can be used as a wrapper around conditional instances of
+	 * {@link SemanticIndependenceRelation}. It eliminates useless conditions, leading to simpler SMT queries. If the
+	 * results of the {@link SemanticIndependenceRelation} are cached, this wrapper should instead wrap the
+	 * {@link CachedIndependenceRelation}, in order to also improve caching efficiency.
+	 *
+	 * A condition is deemed useless for the independence of statements a and b, if the condition is consistent
+	 * (satisfiable), but does not contain any free variable that is read by either a or b.
 	 *
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 	 *
 	 * @param <L>
-	 *            The type of actions of the independence relation.
+	 *            The type of letters being cached.
 	 */
-	public static final class ConditionNormalizer<L extends IAction>
-			implements DefaultIndependenceCache.IConditionNormalizer<IPredicate, L> {
+	public static final class ConditionEliminator<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
 
+		private final IIndependenceRelation<IPredicate, L> mUnderlying;
 		private final Predicate<IPredicate> mIsInconsistent;
 
 		/**
-		 * Creates a new normalizer.
+		 * Creates a new wrapper around a given independence relation.
 		 *
+		 * @param underlying
+		 *            The underlying independence relation to which queries will be delegated (after possibly
+		 *            eliminating the condition). This relation should be able to handle null as condition.
 		 * @param isInconsistent
-		 *            A function that is used to test if a given predicate is inconsistent (equivalent to false). This
-		 *            must return true for all inconsistent predicates this normalizer is used on, in order to ensure
-		 *            soundness. It may over-approximate inconsistency, i.e., also return true for some consistent
-		 *            predicates -- this affects efficiency but not soundness.
+		 *            An inconsistency test to be used for conditions given to this relation. To truly gain efficiency,
+		 *            this test should be very efficient. It must return true for all inconsistent conditions this
+		 *            relation is used on, in order to ensure soundness. It may over-approximate inconsistency, i.e.,
+		 *            also return true for some consistent predicates -- this affects efficiency but not soundness.
 		 */
-		public ConditionNormalizer(final Predicate<IPredicate> isInconsistent) {
+		public ConditionEliminator(final IIndependenceRelation<IPredicate, L> underlying,
+				final Predicate<IPredicate> isInconsistent) {
+			assert underlying.isConditional() : "Condition elimination for non-conditional relations is useless";
+			mUnderlying = underlying;
 			mIsInconsistent = isInconsistent;
 		}
 
 		@Override
-		public Object normalize(final IPredicate state, final L a, final L b) {
-			final Term condition = state.getFormula();
+		public boolean isSymmetric() {
+			return mUnderlying.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlying.isConditional();
+		}
+
+		@Override
+		public boolean contains(final IPredicate state, final L a, final L b) {
+			return mUnderlying.contains(normalize(state, a, b), a, b);
+		}
+
+		private IPredicate normalize(final IPredicate condition, final L a, final L b) {
+			final Term formula = condition.getFormula();
 
 			// Syntactically determine if condition is possibly relevant to independence.
 			final Set<TermVariable> inputVars = Stream
 					.concat(a.getTransformula().getInVars().keySet().stream(),
 							b.getTransformula().getInVars().keySet().stream())
 					.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-			final boolean isRelevant = Arrays.stream(condition.getFreeVars()).anyMatch(inputVars::contains);
-			if (!isRelevant && !mIsInconsistent.test(state)) {
+			final boolean isRelevant = Arrays.stream(formula.getFreeVars()).anyMatch(inputVars::contains);
+			if (!isRelevant && !mIsInconsistent.test(condition)) {
 				// Fall back to independence without condition.
 				return null;
 			}
 
-			// Identify condition by formula rather than predicate.
 			return condition;
 		}
+
 	}
 }
