@@ -27,15 +27,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaCacheBookkeeping;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -49,13 +52,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * On-the-fly construction of a finite Automaton from a Petri Net.
- * 
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- * 		letter
+ *            The type of letters in the Petri net
  * @param <S>
- * 		state
+ *            The type of places in the Petri net, and also the type of states in the resulting finite automaton.
  */
 public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
@@ -63,30 +66,31 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
 	private final Map<Marking<L, S>, S> mMarking2State = new HashMap<>();
 	private final Map<S, Marking<L, S>> mState2Marking = new HashMap<>();
-	private Set<S> mInitialStates;
-	private VpAlphabet<L> mAlphabet;
-	private S mEmptyStackState;
-	
+
+	private final NwaCacheBookkeeping<L, S> mCacheBookkeeping = new NwaCacheBookkeeping<>();
+	private final NestedWordAutomatonCache<L, S> mCache;
+
 	/**
-	 * Constructor
-	 * 
+	 * Creates a new instance for a given net.
+	 *
 	 * @param factory
-	 * 		state factory
-	 * @param emptyStackStateFactory
-	 * 		state factory for empty stack
+	 *            state factory used to create automaton states
 	 * @param operand
-	 * 		Petri Net
+	 *            Petri Net that is converted to a finite automaton
+	 * @param services
+	 *            Automata library services object
+	 *
 	 * @throws PetriNetNot1SafeException
-	 * 		Petri Net has to be 1Safe
+	 *             Petri Net has to be 1Safe
 	 */
-	public LazyPetriNet2FiniteAutomaton(
-			final IPetriNet2FiniteAutomatonStateFactory<S> factory,
-			final IPetriNet<L, S> operand) throws PetriNetNot1SafeException{
+	public LazyPetriNet2FiniteAutomaton(final IPetriNet2FiniteAutomatonStateFactory<S> factory,
+			final IPetriNet<L, S> operand, final AutomataLibraryServices services) throws PetriNetNot1SafeException {
 		mOperand = operand;
 		mStateFactory = factory;
-		mEmptyStackState = factory.createEmptyStackState();
+		mCache = new NestedWordAutomatonCache<>(services, new VpAlphabet<>(mOperand.getAlphabet()), factory);
 	}
 
+	@Deprecated
 	@Override
 	public IStateFactory<S> getStateFactory() {
 		return mStateFactory;
@@ -94,55 +98,40 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
-		if (mAlphabet == null) {
-			mAlphabet = new VpAlphabet<L>(mOperand.getAlphabet());
-		}
-		return mAlphabet;
+		return mCache.getVpAlphabet();
 	}
 
 	@Override
 	public S getEmptyStackState() {
-		return mEmptyStackState;
+		return mCache.getEmptyStackState();
 	}
 
 	@Override
 	public Iterable<S> getInitialStates() {
-		if (mInitialStates == null) {
-			mInitialStates = constructInitialState();
-		}
-		return mInitialStates;
+		return Arrays.asList(getOrConstructState(new Marking<>(mOperand.getInitialPlaces())));
 	}
 
-	private Set<S> constructInitialState() {
-		final Set<S> initialStates = new HashSet<>();
-		final S init = getOrConstructState(new Marking<L,S>(mOperand.getInitialPlaces()));
-		initialStates.add(init);
-		return initialStates;
-	}
-
-	private S getOrConstructState(Marking<L,S> marking) {
-		S state = mMarking2State.get(marking);
-		if (state == null) {
-			state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
-			mMarking2State.put(marking, state);
+	private S getOrConstructState(final Marking<L, S> marking) {
+		return mMarking2State.computeIfAbsent(marking, x -> {
+			final S state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
 			mState2Marking.put(state, marking);
-		}
-		return state;
-		
+
+			final boolean isInitial = new Marking<>(mOperand.getInitialPlaces()).equals(marking);
+			final boolean isFinal = mOperand.isAccepting(marking);
+			mCache.addState(isInitial, isFinal, state);
+
+			return state;
+		});
 	}
 
 	@Override
 	public boolean isInitial(final S state) {
-		Set<S> initialPlaces = mOperand.getInitialPlaces();
-		if (mState2Marking.get(state).containsAll(initialPlaces)){
-			return true;
-		}
-		return false;
+		return mCache.isInitial(state);
 	}
 
 	@Override
 	public boolean isFinal(final S state) {
-		return mOperand.isAccepting(mState2Marking.get(state));
+		return mCache.isFinal(state);
 	}
 
 	@Override
@@ -156,51 +145,50 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
-		final Marking<L,S> marking = mState2Marking.get(state);
-		final Collection<OutgoingInternalTransition<L, S>> result = new ArrayList<>();
-		final Set<ITransition<L, S>> outgoing = getOutgoingNetTransitions(marking);
-		for (final ITransition<L, S> transition : outgoing) {
-			if (transition.getSymbol() == letter && marking.isTransitionEnabled(transition, mOperand)) {
-				Marking<L, S> succMarking;
-				try {
-					succMarking = marking.fireTransition(transition, mOperand);
-					final S succState = getOrConstructState(succMarking);
-					result.add(new OutgoingInternalTransition<>(letter, succState));
-				} catch (PetriNetNot1SafeException e) {
-					throw new IllegalArgumentException("Petri net must be 1-safe!", e);
-				}
-			}
-		}
-		return result;
+	public Set<L> lettersInternal(final S state) {
+		return getOutgoingNetTransitions(mState2Marking.get(state)).map(ITransition::getSymbol)
+				.collect(Collectors.toSet());
 	}
-	
+
+	@Override
+	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
+		if (!mCacheBookkeeping.isCachedInternal(state, letter)) {
+			computeOutgoingTransitions(state, letter);
+		}
+		return mCache.internalSuccessors(state, letter);
+	}
+
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state) {
-		final Marking<L,S> marking = mState2Marking.get(state);
-		final Collection<OutgoingInternalTransition<L, S>> result = new ArrayList<>();
-		final Set<ITransition<L, S>> outgoing = getOutgoingNetTransitions(marking);
-		for (final ITransition<L, S> transition : outgoing) {
-			if (marking.isTransitionEnabled(transition, mOperand)) {
-				Marking<L, S> succMarking;
-				try {
-					succMarking = marking.fireTransition(transition, mOperand);
-					final S succState = getOrConstructState(succMarking);
-					result.add(new OutgoingInternalTransition<>(transition.getSymbol(), succState));
-				} catch (PetriNetNot1SafeException e) {
-					throw new IllegalArgumentException("Petri net must be 1-safe!", e);
-				}
+		for (final L letter : lettersInternal(state)) {
+			if (!mCacheBookkeeping.isCachedInternal(state, letter)) {
+				computeOutgoingTransitions(state, letter);
 			}
 		}
-		return result;
+		return mCache.internalSuccessors(state);
 	}
-	
-	private Set<ITransition<L, S>> getOutgoingNetTransitions(final Marking<L, S> marking) {
-		final Set<ITransition<L, S>> transitions = new HashSet<>();
-		for (final S place : marking) {
-			transitions.addAll(mOperand.getSuccessors(place));
+
+	private void computeOutgoingTransitions(final S state, final L letter) {
+		final Marking<L, S> marking = mState2Marking.get(state);
+		getOutgoingNetTransitions(marking).filter(t -> t.getSymbol().equals(letter)).distinct()
+				.forEach(t -> createAutomatonTransition(state, marking, t));
+	}
+
+	private void createAutomatonTransition(final S state, final Marking<L, S> marking,
+			final ITransition<L, S> transition) {
+		try {
+			final Marking<L, S> succMarking = marking.fireTransition(transition, mOperand);
+			final S succState = getOrConstructState(succMarking);
+			mCache.addInternalTransition(state, transition.getSymbol(), succState);
+			mCacheBookkeeping.reportCachedInternal(state, transition.getSymbol());
+		} catch (final PetriNetNot1SafeException e) {
+			throw new IllegalArgumentException("Petri net must be 1-safe!", e);
 		}
-		return transitions;
+	}
+
+	private Stream<ITransition<L, S>> getOutgoingNetTransitions(final Marking<L, S> marking) {
+		return marking.stream().flatMap(place -> mOperand.getSuccessors(place).stream())
+				.filter(t -> marking.isTransitionEnabled(t, mOperand));
 	}
 
 	@Override
@@ -212,5 +200,4 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
 		return Collections.emptySet();
 	}
-
 }
