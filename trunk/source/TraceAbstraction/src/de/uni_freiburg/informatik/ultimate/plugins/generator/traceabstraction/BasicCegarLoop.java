@@ -396,7 +396,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 			if (mPref.useLazyPetri2NFAConversion()) {
-				automaton = new LazyPetriNet2FiniteAutomaton<>(mStateFactoryForRefinement, net);
+				automaton = new LazyPetriNet2FiniteAutomaton<>(mStateFactoryForRefinement, net,
+						new AutomataLibraryServices(mServices));
 			} else {
 				try {
 					automaton = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
