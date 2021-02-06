@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -131,13 +132,14 @@ public final class SmtUtils {
 		// Prevent instantiation of this utility class
 	}
 
-	public static Term simplify(final ManagedScript mgScript, final Term formula,
+	public static Term simplify(final ManagedScript mgdScript, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
-		return simplify(mgScript, formula, null, services, simplificationTechnique);
+		return simplify(mgdScript, formula, mgdScript.getScript().term("true"), services, simplificationTechnique);
 	}
 
 	public static Term simplify(final ManagedScript mgScript, final Term formula, final Term context,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		Objects.requireNonNull(context);
 		final ILogger logger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
