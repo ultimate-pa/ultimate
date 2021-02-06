@@ -593,8 +593,8 @@ public class QuantifierEliminationTest {
 		SmtUtils.simplifyWithStatistics(mgdScript, result, null, services, SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
 		if (LOG_SIMPLIFICATION_POSSIBILITY) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, null, services,
-					SimplificationTechnique.SIMPLIFY_DDA);
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
+					SimplificationTechnique.SIMPLIFY_QUICK);
 			logger.info("Simplified result: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
 		}
