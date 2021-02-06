@@ -134,12 +134,12 @@ public class QuantifierPusher extends TermTransformer {
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final Set<TermVariable> bannedForDivCapture, final Term inputTerm) {
 		final ExtendedSimplificationResult esr1 =
-				SmtUtils.simplifyWithStatistics(script, inputTerm, null, services, SimplificationTechnique.POLY_PAC);
+				SmtUtils.simplifyWithStatistics(script, inputTerm, services, SimplificationTechnique.POLY_PAC);
 		services.getLoggingService().getLogger(QuantifierPusher.class).warn(esr1.buildSizeReductionMessage());
 		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
 				bannedForDivCapture).transform(esr1.getSimplifiedTerm());
 		final ExtendedSimplificationResult esr2 =
-				SmtUtils.simplifyWithStatistics(script, result, null, services, SimplificationTechnique.POLY_PAC);
+				SmtUtils.simplifyWithStatistics(script, result, services, SimplificationTechnique.POLY_PAC);
 		services.getLoggingService().getLogger(QuantifierPusher.class)
 				.warn(esr1.buildSizeReductionMessage() + " " + new DAGSize().treesize(esr1.getSimplifiedTerm()));
 		if (DEBUG_CHECK_RESULT) {
@@ -725,7 +725,7 @@ public class QuantifierPusher extends TermTransformer {
 				+ QuantifierUtils.getNameOfDualJuncts(quantifier));
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(), quantifier,
 				resultOuterParams);
-		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, null, services,
+		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
 				SimplificationTechnique.SIMPLIFY_QUICK);
 		logger.info(esr.buildSizeReductionMessage());
 		return result;
