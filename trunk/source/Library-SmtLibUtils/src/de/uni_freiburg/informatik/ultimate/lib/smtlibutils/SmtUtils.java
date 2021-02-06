@@ -172,7 +172,7 @@ public final class SmtUtils {
 			case NONE:
 				return formula;
 			case POLY_PAC:
-				simplified = PolyPacSimplificationTermWalker.simplify(script.getScript(), formula);
+				simplified = PolyPacSimplificationTermWalker.simplify(script.getScript(), context, formula);
 				break;
 			default:
 				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
