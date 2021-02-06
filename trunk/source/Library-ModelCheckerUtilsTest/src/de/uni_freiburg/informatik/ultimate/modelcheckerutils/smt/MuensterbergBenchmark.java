@@ -40,13 +40,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
@@ -386,6 +382,9 @@ public class MuensterbergBenchmark {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, null, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * around 150s elimination time
+	 */
 	@Test
 	public void LazycseqOctaveOfEaster_IntegerOnly() {
 		final FunDecl[] funDecls = new FunDecl[] {
