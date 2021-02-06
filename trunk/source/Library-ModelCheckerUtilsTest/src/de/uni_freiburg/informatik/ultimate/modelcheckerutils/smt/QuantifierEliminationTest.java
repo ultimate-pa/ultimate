@@ -594,7 +594,7 @@ public class QuantifierEliminationTest {
 		logger.info("Result: " + result);
 		if (LOG_SIMPLIFICATION_POSSIBILITY) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
-					SimplificationTechnique.SIMPLIFY_QUICK);
+					SimplificationTechnique.SIMPLIFY_DDA);
 			logger.info("Simplified result: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
 		}
@@ -635,7 +635,7 @@ public class QuantifierEliminationTest {
 		final Term result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
 		logger.info("Result: " + result);
 		if (LOG_SIMPLIFICATION_POSSIBILITY) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, null, services,
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
 					SimplificationTechnique.SIMPLIFY_DDA);
 			logger.info("Simplified result: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
