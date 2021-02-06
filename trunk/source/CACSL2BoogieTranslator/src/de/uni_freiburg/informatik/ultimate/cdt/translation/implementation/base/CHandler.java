@@ -707,13 +707,15 @@ public class CHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
 		final ExpressionResult rightOperand = (ExpressionResult) main.dispatch(node.getOperand2());
+		//@CL, with binary expression, we check bitwise operator first
+		boolean isBit = BitabsTranslation.containBitwise(node.getOperand2());
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
 			
 			//@Cyrus, debug. In this case we only transform with and-rule: r= a&b => r<=b, r<=a, they are positive, 
 			// and rhs is a bitwise binary expression.
-			boolean isBit = BitabsTranslation.containBitwise(node.getOperand2());
-			System.out.println("left hand side expression in assignment: "+ leftOperand.getLrValue().toString());
+			
+			mLogger.debug("left hand side expression in assignment: "+ leftOperand.getLrValue().toString());
 			if (isBit & (node.getOperand1() instanceof IASTIdExpression)) {
 				return BitabsTranslation.abstractAssgin(this, mProcedureManager, mDeclarations, mExpressionTranslation, mNameHandler, mAuxVarInfoBuilder,
 						mSymbolTable, mExprResultTransformer, main, mLocationFactory, node);
@@ -738,9 +740,17 @@ public class CHandler {
 		case IASTBinaryExpression.op_greaterThan:
 		case IASTBinaryExpression.op_lessEqual:
 		case IASTBinaryExpression.op_lessThan: {
-			final ExpressionResult rl = mExprResultTransformer.switchToRValue(leftOperand, loc, node);
-			final ExpressionResult rr = mExprResultTransformer.switchToRValue(rightOperand, loc, node);
-			return mCExpressionTranslator.handleRelationalOperators(loc, node.getOperator(), rl, rr);
+		/*
+		 * if (isBit & (node.getOperand1() instanceof IASTIdExpression)) {
+		 * System.out.println("---get bitwise in realational operators: "+node.toString(
+		 * )); return BitabsTranslation.abstractRelational(this, mProcedureManager,
+		 * mDeclarations, mExpressionTranslation, mNameHandler, mAuxVarInfoBuilder,
+		 * mSymbolTable, mExprResultTransformer, main, mLocationFactory, node); } else {
+		 */
+				final ExpressionResult rl = mExprResultTransformer.switchToRValue(leftOperand, loc, node);
+				final ExpressionResult rr = mExprResultTransformer.switchToRValue(rightOperand, loc, node);
+				return mCExpressionTranslator.handleRelationalOperators(loc, node.getOperator(), rl, rr);
+		//	}
 		}
 
 		case IASTBinaryExpression.op_logicalAnd:

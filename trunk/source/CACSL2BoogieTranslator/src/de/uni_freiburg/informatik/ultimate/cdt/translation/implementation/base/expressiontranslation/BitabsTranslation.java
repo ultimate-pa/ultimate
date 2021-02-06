@@ -178,7 +178,7 @@ public class BitabsTranslation {
 				  
 		if (left instanceof IntegerLiteral) {
 			String valueLeft = ((IntegerLiteral) left).getValue();
-			System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
+//			System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
 			if (valueLeft.equals("1")) {
 				return right;
 			} else if (valueLeft.equals("0")) {
@@ -449,7 +449,7 @@ public class BitabsTranslation {
 
 			IASTBinaryExpression rhs_bit = getBitwiseBinary((IASTBinaryExpression) node.getOperand2());
 			boolean bit_op = BitabsTranslation.isBitwiseOperator(rhs_bit.getOperator());
-			System.out.println("----Is the binary operator a bitwise operator? " + bit_op);
+//			System.out.println("----Is the binary operator a bitwise operator? " + bit_op);
 			// make sure the bitiwse operator is right after the assignment operator in the
 			// expression, if not, it would be treated as a normal binary expression.
 			if (bit_op) {
