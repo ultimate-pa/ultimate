@@ -748,37 +748,28 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void nestedStoresTest() {
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
-				SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("i", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("j", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("k", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("vi", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("vj", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("vk", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("b", new Sort[0], intintArraySort);
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "j", "k", "vi", "vj", "vk"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			};
 		final String formulaAsString =
 				"(exists ((a (Array Int Int))) (and (= (select a k) vk) (= (store (store a i vi) j vj) b)))";
 		final String expectedResultAsString =
 				"(let ((.cse2 (= vk (select b k))) (.cse0 (= vi (select b i))) (.cse3 (= i j)) (.cse1 (= vj (select b j))) (.cse4 (= j k))) (or (and .cse0 .cse1 .cse2) (and .cse3 .cse1 .cse2) (and (= i k) .cse0 .cse1) (and .cse0 .cse1 .cse4) (and .cse3 .cse1 .cse4)))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void varStillThere02() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		final Sort intintintArraySort =
-				SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
-		mScript.declareFun("nonMain_~dstPlusTwo~0.base", new Sort[0], intSort);
-		mScript.declareFun("nonMain_~dstPlusTwo~0.offset", new Sort[0], intSort);
-		mScript.declareFun("#memory_int", new Sort[0], intintintArraySort);
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "nonMain_~dstPlusTwo~0.base", "nonMain_~dstPlusTwo~0.offset"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntIntArray, "#memory_int"),
+			};
 		final String formulaAsString =
 				"(exists ((|v_#memory_int_BEFORE_CALL_2| (Array Int (Array Int Int))) (|v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| Int) (|v_#Ultimate.C_memcpy_#t~loopctr6_8| Int) (v_prenex_1 Int) (|v_#Ultimate.C_memcpy_#t~loopctr6_9| Int) (|#Ultimate.C_memcpy_#t~mem7| Int)) (and (<= |v_#Ultimate.C_memcpy_#t~loopctr6_8| 0) (<= (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| 2) nonMain_~dstPlusTwo~0.offset) (= (select (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base) nonMain_~dstPlusTwo~0.offset) 23) (= |#memory_int| (store |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base) (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| |v_#Ultimate.C_memcpy_#t~loopctr6_8|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| |v_#Ultimate.C_memcpy_#t~loopctr6_9|) |#Ultimate.C_memcpy_#t~mem7|))) (<= |v_#Ultimate.C_memcpy_#t~loopctr6_9| (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| 1))))";
 		final String expectedResultAsString =
 				"(= 23 (select (select |#memory_int| nonMain_~dstPlusTwo~0.base) nonMain_~dstPlusTwo~0.offset))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	/**
