@@ -146,7 +146,8 @@ public final class SmtUtils {
 			logger.info(String.format("Current caller to simplify is %s",
 					ReflectionUtil.getCallerClassName(3).getSimpleName()));
 		}
-		if (context != null && simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA) {
+		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
+				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
 		}
@@ -219,11 +220,17 @@ public final class SmtUtils {
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
+			final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique) {
+		return simplifyWithStatistics(script, formula, script.term(null, "true"), services, simplificationTechnique);
+	}
+
+	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
 			final Term context, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
 		final long sizeBefore = new DAGSize().treesize(formula);
-		final Term simplified = simplify(script, formula, services, simplificationTechnique);
+		final Term simplified = simplify(script, formula, context, services, simplificationTechnique);
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		return new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter,
