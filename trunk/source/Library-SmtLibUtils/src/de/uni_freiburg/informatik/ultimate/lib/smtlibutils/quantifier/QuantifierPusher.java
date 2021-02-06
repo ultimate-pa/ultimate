@@ -89,6 +89,10 @@ public class QuantifierPusher extends TermTransformer {
 		 * Same as {@link #ALL_LOCAL}, except that we do not use UPD.
 		 */
 		NO_UPD,
+		/**
+		 * Include also elimination techniques that need to know the context of subterms.
+		 */
+		ALL
 	}
 
 	public enum FormulaClassification {
@@ -103,7 +107,6 @@ public class QuantifierPusher extends TermTransformer {
 	private static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
 
 	private static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
-	private static final boolean ARRAY_ELIMINATION = false;
 	private static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
@@ -906,25 +909,27 @@ public class QuantifierPusher extends TermTransformer {
 			final PqeTechniques pqeTechniques, final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		final List<DualJunctionQuantifierElimination> elimtechniques = new ArrayList<>();
 		switch (pqeTechniques) {
+		case ALL:
+			new DualJunctionQeAdapter2014(mgdScript, services, null);
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			elimtechniques.add(new DualJunctionSaa(mgdScript, services, true));
+			break;
 		case ALL_LOCAL:
 			new DualJunctionQeAdapter2014(mgdScript, services, null);
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
-			// elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
-			// new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
-			if (ARRAY_ELIMINATION) {
-				elimtechniques.add(new DualJunctionSaa(mgdScript, services, true));
-			}
 			break;
 		case NO_UPD:
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
-			// elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
-			// new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
 			break;
 		case ONLY_DER:
