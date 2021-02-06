@@ -166,7 +166,8 @@ public final class SmtUtils {
 				simplified = new SimplifyBdd(services, script).transformWithImplications(formula);
 				break;
 			case SIMPLIFY_DDA:
-				simplified = new SimplifyDDAWithTimeout(script.getScript(), services).getSimplifiedTerm(formula);
+				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
+						.getSimplifiedTerm(formula);
 				break;
 			case SIMPLIFY_QUICK:
 				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
