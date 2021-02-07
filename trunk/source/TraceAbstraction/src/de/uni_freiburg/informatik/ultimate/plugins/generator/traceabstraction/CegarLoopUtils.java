@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNetWithRepeatedLiptonReduction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -158,8 +159,13 @@ public class CegarLoopUtils {
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 						throw new UnsupportedOperationException("Reuse with Petri net-based analysis");
 					}
-					result = new CegarLoopForPetriNet<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							services, compositionFactory, transitionClazz);
+					if (taPrefs.useRepeatedLipton()) {
+						result = new CegarLoopForPetriNetWithRepeatedLiptonReduction<>(name, root, csToolkit,
+								predicateFactory, taPrefs, errorLocs, services, compositionFactory, transitionClazz);
+					} else {
+						result = new CegarLoopForPetriNet<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+								services, compositionFactory, transitionClazz);
+					}
 				}
 					break;
 				default:

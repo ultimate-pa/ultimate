@@ -91,6 +91,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_LBE_CONCURRENCY = "Large block encoding in concurrent analysis";
 	private static final PetriNetLbe DEF_LBE_CONCURRENCY = PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK;
 
+	public static final String LABEL_REPEATED_LIPTON = "Apply repeated Lipton Reduction";
+	private static final boolean DEF_REPEATED_LIPTON = false;
+
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
 
@@ -441,6 +444,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Combo,
 						PetriNetLbe.values()),
+				new UltimatePreferenceItem<>(LABEL_REPEATED_LIPTON, DEF_REPEATED_LIPTON, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,

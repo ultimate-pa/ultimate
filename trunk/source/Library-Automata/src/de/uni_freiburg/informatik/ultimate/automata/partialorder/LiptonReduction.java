@@ -268,8 +268,7 @@ public class LiptonReduction<L, P> {
 			boolean completeComposition = true;
 
 			for (final ITransition<L, P> t1 : incomingTransitions) {
-				if (composedTransitions.contains(t1) || petriNet.getSuccessors(t1).size() != 1
-						|| petriNet.getPredecessors(t1).contains(place)) {
+				if (composedTransitions.contains(t1) || petriNet.getPredecessors(t1).contains(place)) {
 					completeComposition = false;
 					continue;
 				}
@@ -384,11 +383,23 @@ public class LiptonReduction<L, P> {
 
 		final boolean composable =
 				mCompositionFactory.isComposable(t1.getSymbol()) && mCompositionFactory.isComposable(t2.getSymbol());
-		final boolean structurallyCorrect =
-				petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(place);
-		final boolean moverProperties = isRightMover(t1) || isLeftMover(t2);
 
-		return composable && structurallyCorrect && moverProperties;
+		boolean mover = false;
+		if (isRightMover(t1)) {
+			final Set<P> post1 = new HashSet<>(petriNet.getSuccessors(t1));
+			post1.remove(place);
+			mover = petriNet.getPredecessors(t1).containsAll(post1);
+		}
+		if (!mover && isLeftMover(t2)) {
+			final Set<P> pre2 = new HashSet<>(petriNet.getPredecessors(t2));
+			pre2.remove(place);
+			mover = pre2.isEmpty();
+			// mover = petriNet.getSuccessors(t2).containsAll(pre2);
+		}
+
+		final boolean structurallyCorrect = !petriNet.getSuccessors(t2).contains(place);
+
+		return composable && structurallyCorrect && mover;
 	}
 
 	/**
@@ -409,8 +420,16 @@ public class LiptonReduction<L, P> {
 
 		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> triplet : pendingCompositions) {
 			petriNet.getAlphabet().add(triplet.getFirst());
-			petriNet.addTransition(triplet.getFirst(), petriNet.getPredecessors(triplet.getSecond()),
-					petriNet.getSuccessors(triplet.getThird()));
+
+			final Set<P> pre = new HashSet<>(petriNet.getPredecessors(triplet.getThird()));
+			pre.removeAll(petriNet.getSuccessors(triplet.getSecond()));
+			pre.addAll(petriNet.getPredecessors(triplet.getSecond()));
+
+			final Set<P> post = new HashSet<>(petriNet.getSuccessors(triplet.getSecond()));
+			post.removeAll(petriNet.getPredecessors(triplet.getThird()));
+			post.addAll(petriNet.getSuccessors(triplet.getThird()));
+
+			petriNet.addTransition(triplet.getFirst(), pre, post);
 		}
 
 		final Set<ITransition<L, P>> transitionsToKeep = new HashSet<>(petriNet.getTransitions());

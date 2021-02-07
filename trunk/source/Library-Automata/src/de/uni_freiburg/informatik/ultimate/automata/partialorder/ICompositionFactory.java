@@ -54,4 +54,13 @@ public interface ICompositionFactory<L> {
 	 *            A non-empty list of letters
 	 */
 	L composeParallel(List<L> letters);
+
+	/**
+	 * Creates a new letter as a copy of the given letter.
+	 *
+	 * @param letter
+	 *            A letter.
+	 * @return A new unused letter.
+	 */
+	L copyLetter(L letter);
 }

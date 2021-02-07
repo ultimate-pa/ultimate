@@ -281,12 +281,47 @@ public class IcfgEdgeBuilder {
 		return constructInternalTransition(oldTransition, source, target, tf);
 	}
 
+	/**
+	 * Constructs a new internal transition.
+	 *
+	 * @param oldTransition
+	 *            A transition to copy annotations from.
+	 * @param source
+	 *            The source of the transition.
+	 * @param target
+	 *            The target of the transition.
+	 * @param tf
+	 *            The transformula of the transition.
+	 * @return A newly created transition.
+	 */
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final UnmodifiableTransFormula tf) {
+		return constructInternalTransition(oldTransition, source, target, tf, true);
+	}
+
+	/**
+	 * Constructs a new internal transition.
+	 *
+	 * @param oldTransition
+	 *            A transition to copy annotations from.
+	 * @param source
+	 *            The source of the transition.
+	 * @param target
+	 *            The target of the transition.
+	 * @param tf
+	 *            The transformula of the transition.
+	 * @param connect
+	 *            true if the new transition should be connected to its source and target locations.
+	 * @return A newly created transition.
+	 */
+	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final UnmodifiableTransFormula tf, final boolean connect) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
+		if (connect) {
+			source.addOutgoing(rtr);
+			target.addIncoming(rtr);
+		}
 		ModelUtils.copyAnnotations(oldTransition, rtr);
 		return rtr;
 	}

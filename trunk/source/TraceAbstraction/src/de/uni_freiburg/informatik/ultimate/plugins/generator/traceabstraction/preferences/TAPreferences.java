@@ -348,6 +348,13 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY, PetriNetLbe.class);
 	}
 
+	/**
+	 * @return true if Lipton Reduction should be applied repeatedly.
+	 */
+	public boolean useRepeatedLipton() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_REPEATED_LIPTON);
+	}
+
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_SIMPLIFICATION_TECHNIQUE,
 				SimplificationTechnique.class);

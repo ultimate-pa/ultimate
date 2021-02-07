@@ -125,4 +125,10 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	public Map<IcfgEdge, TermVariable> getBranchEncoders() {
 		return mBranchEncoders;
 	}
+
+	@Override
+	public IcfgEdge copyLetter(final IcfgEdge letter) {
+		return mEdgeBuilder.constructInternalTransition(letter, letter.getSource(), letter.getTarget(),
+				letter.getTransformula(), false);
+	}
 }

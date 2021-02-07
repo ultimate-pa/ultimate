@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2018 University of Freiburg
+ * Copyright (C) 2021 Dennis Wölfing
+ * Copyright (C) 2018-2021 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -28,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -44,10 +46,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -66,7 +70,8 @@ public final class PetriNetUtils {
 	}
 
 	public static <LETTER, PLACE> boolean similarPredecessorPlaces(
-			final Collection<ITransition<LETTER, PLACE>> transitions, final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
+			final Collection<ITransition<LETTER, PLACE>> transitions,
+			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
 		if (transitions.isEmpty()) {
 			return true;
 		} else {
@@ -82,36 +87,39 @@ public final class PetriNetUtils {
 	}
 
 	/**
-	 * Checks equivalent of two Petri nets.
-	 * Two Petri nets are equivalent iff they accept the same language.
+	 * Checks equivalent of two Petri nets. Two Petri nets are equivalent iff they accept the same language.
 	 * <p>
 	 * This is a naive implementation and may be very slow.
 	 *
-	 * @param net1 Petri net
-	 * @param net2 Petri net
+	 * @param net1
+	 *            Petri net
+	 * @param net2
+	 *            Petri net
 	 * @return net1 and net2 accept the same language
-	 * @throws AutomataLibraryException The operation was canceled
+	 * @throws AutomataLibraryException
+	 *             The operation was canceled
 	 */
-	public static <LETTER, PLACE, CRSF extends
-			IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
-			boolean isEquivalent( final AutomataLibraryServices services, final CRSF stateFactory,
-			final IPetriNet<LETTER, PLACE> net1, final IPetriNet<LETTER, PLACE> net2) throws AutomataLibraryException {
+	public static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+			boolean isEquivalent(final AutomataLibraryServices services, final CRSF stateFactory,
+					final IPetriNet<LETTER, PLACE> net1, final IPetriNet<LETTER, PLACE> net2)
+					throws AutomataLibraryException {
 		return new IsEquivalent<>(services, stateFactory, netToNwa(services, stateFactory, net1),
 				netToNwa(services, stateFactory, net2)).getResult();
 	}
 
-	private static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE>> INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(
-			final AutomataLibraryServices mServices, final CRSF stateFactory, final IPetriNet<LETTER, PLACE> net)
-			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+	private static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE>>
+			INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(final AutomataLibraryServices mServices,
+					final CRSF stateFactory, final IPetriNet<LETTER, PLACE> net)
+					throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
 	}
 
 	/**
-	 * List hash codes of Petri net's internal objects. Useful for detecting
-	 * nondeterminism. Should only be used for debugging.
+	 * List hash codes of Petri net's internal objects. Useful for detecting nondeterminism. Should only be used for
+	 * debugging.
 	 */
-	public static <LETTER, PLACE> String printHashCodesOfInternalDataStructures(
-			final BoundedPetriNet<LETTER, PLACE> net) {
+	public static <LETTER, PLACE> String
+			printHashCodesOfInternalDataStructures(final BoundedPetriNet<LETTER, PLACE> net) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("HashCodes of PetriNet data structures ");
 		sb.append(System.lineSeparator());
@@ -134,18 +142,21 @@ public final class PetriNetUtils {
 	/**
 	 * Uses finite automata to check if the result of our Petri net difference operations is correct.
 	 */
-	public static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>> boolean doDifferenceLanguageCheck(
-			final AutomataLibraryServices services, final CRSF stateFactory, final BoundedPetriNet<LETTER, PLACE> minuend,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahend, final BoundedPetriNet<LETTER, PLACE> result)
-			throws PetriNetNot1SafeException, AutomataOperationCanceledException, AutomataLibraryException {
-		final AutomatonWithImplicitSelfloops<LETTER, PLACE> subtrahendWithSelfloopsInAcceptingStates = new AutomatonWithImplicitSelfloops<>(
-				services, subtrahend, subtrahend.getAlphabet(), subtrahend::isFinal);
-		final INestedWordAutomaton<LETTER, PLACE> op1AsNwa = (new PetriNet2FiniteAutomaton<>(services, stateFactory,
-				minuend)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> rcResult = (new DifferenceDD<>(services,
-				stateFactory, op1AsNwa, subtrahendWithSelfloopsInAcceptingStates)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> resultAsNwa = (new PetriNet2FiniteAutomaton<>(
-				services, stateFactory, result)).getResult();
+	public static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+			boolean doDifferenceLanguageCheck(final AutomataLibraryServices services, final CRSF stateFactory,
+					final BoundedPetriNet<LETTER, PLACE> minuend, final INestedWordAutomaton<LETTER, PLACE> subtrahend,
+					final BoundedPetriNet<LETTER, PLACE> result)
+					throws PetriNetNot1SafeException, AutomataOperationCanceledException, AutomataLibraryException {
+		final AutomatonWithImplicitSelfloops<LETTER, PLACE> subtrahendWithSelfloopsInAcceptingStates =
+				new AutomatonWithImplicitSelfloops<>(services, subtrahend, subtrahend.getAlphabet(),
+						subtrahend::isFinal);
+		final INestedWordAutomaton<LETTER, PLACE> op1AsNwa =
+				(new PetriNet2FiniteAutomaton<>(services, stateFactory, minuend)).getResult();
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> rcResult =
+				(new DifferenceDD<>(services, stateFactory, op1AsNwa, subtrahendWithSelfloopsInAcceptingStates))
+						.getResult();
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> resultAsNwa =
+				(new PetriNet2FiniteAutomaton<>(services, stateFactory, result)).getResult();
 
 		final IsIncluded<LETTER, PLACE> isSubset = new IsIncluded<>(services, stateFactory, resultAsNwa, rcResult);
 		if (!isSubset.getResult()) {
@@ -161,7 +172,6 @@ public final class PetriNetUtils {
 		}
 		return isSubset.getResult() && isSuperset.getResult();
 	}
-
 
 	public static <PLACE> String generateStatesAndPlacesDisjointErrorMessage(final PLACE state) {
 		return "Currently, we require that states of the automaton are disjoint from places of Petri net. Please rename: "
@@ -181,12 +191,12 @@ public final class PetriNetUtils {
 		return result;
 	}
 
-	public static <LETTER, PLACE> Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> mergePlaces(
-			final IPetriNet<LETTER, PLACE> net, final Map<PLACE, PLACE> map) {
+	public static <LETTER, PLACE> Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>>
+			mergePlaces(final IPetriNet<LETTER, PLACE> net, final Map<PLACE, PLACE> map) {
 		final Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> result = new HashMap<>();
 		for (final ITransition<LETTER, PLACE> oldT : net.getTransitions()) {
-			final Set<PLACE> predecessors = net.getPredecessors(oldT).stream().map(map::get)
-					.collect(Collectors.toSet());
+			final Set<PLACE> predecessors =
+					net.getPredecessors(oldT).stream().map(map::get).collect(Collectors.toSet());
 			final Set<PLACE> successors = net.getSuccessors(oldT).stream().map(map::get).collect(Collectors.toSet());
 			final Transition<LETTER, PLACE> newT = new Transition<>(oldT.getSymbol(), predecessors, successors, 0);
 			result.put(oldT, newT);
@@ -226,5 +236,54 @@ public final class PetriNetUtils {
 		return result;
 	}
 
+	/**
+	 * Creates a Petri net where each transition has a unique letter.
+	 *
+	 * @param <LETTER>
+	 *            The type of letters labelling the transitions.
+	 * @param <PLACE>
+	 *            The type of places.
+	 * @param services
+	 *            A {@link AutomataLibraryServices} instance.
+	 * @param petriNet
+	 *            The Petri net.
+	 * @param compositionFactory
+	 *            A {@link ICompositionFactory} instance.
+	 * @param oldToNewTransitions
+	 *            A map in which a mapping from replaced transitions to their replacement will be stored.
+	 * @return A new Petri net equivalent to the given one with each transition having a unique letter.
+	 */
+	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> createPetriNetWithUniqueLetters(
+			final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> petriNet,
+			final ICompositionFactory<LETTER> compositionFactory,
+			final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> oldToNewTransitions) {
+		// Make a copy so we don't modify the given petri net.
+		final BoundedPetriNet<LETTER, PLACE> net = CopySubnet.copy(services, petriNet,
+				new HashSet<>(petriNet.getTransitions()), petriNet.getAlphabet(), true);
 
+		final Set<LETTER> lettersSeen = new HashSet<>();
+		final Set<ITransition<LETTER, PLACE>> replacedTransitions = new HashSet<>();
+
+		for (final ITransition<LETTER, PLACE> t : net.getTransitions()) {
+			final LETTER letter = t.getSymbol();
+			if (lettersSeen.contains(letter)) {
+				replacedTransitions.add(t);
+			} else {
+				lettersSeen.add(letter);
+			}
+		}
+
+		for (final ITransition<LETTER, PLACE> t : replacedTransitions) {
+			final LETTER newLetter = compositionFactory.copyLetter(t.getSymbol());
+			net.getAlphabet().add(newLetter);
+			final ITransition<LETTER, PLACE> t2 =
+					net.addTransition(newLetter, net.getPredecessors(t), net.getSuccessors(t));
+			oldToNewTransitions.put(t, t2);
+		}
+
+		final Set<ITransition<LETTER, PLACE>> transitionsToKeep = new HashSet<>(net.getTransitions());
+		transitionsToKeep.removeAll(replacedTransitions);
+
+		return CopySubnet.copy(services, net, transitionsToKeep, net.getAlphabet(), true);
+	}
 }

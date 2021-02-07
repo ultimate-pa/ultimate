@@ -169,20 +169,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(cfg));
 		}
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-			final long start_time = System.currentTimeMillis();
-			final PetriNetLargeBlockEncoding<L> lbe =
-					new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(), cfg,
-							mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
-			final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
-			mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
-
-			mAbstraction = lbecfg;
-			final long end_time = System.currentTimeMillis();
-			final long difference = end_time - start_time;
-			mLogger.info("Time needed for LBE in milliseconds: " + difference);
-
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
-					"PetriNetLargeBlockEncoding benchmarks", lbe.getPetriNetLargeBlockEncodingStatistics()));
+			applyLargeBlockEncoding(cfg);
 		} else {
 			mAbstraction = cfg;
 		}
@@ -192,6 +179,23 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
 		}
+	}
+
+	protected void applyLargeBlockEncoding(final BoundedPetriNet<L, IPredicate> cfg)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final long start_time = System.currentTimeMillis();
+		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(),
+				cfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
+		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
+		mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
+
+		mAbstraction = lbecfg;
+		final long end_time = System.currentTimeMillis();
+		final long difference = end_time - start_time;
+		mLogger.info("Time needed for LBE in milliseconds: " + difference);
+
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
+				"PetriNetLargeBlockEncoding benchmarks", lbe.getPetriNetLargeBlockEncodingStatistics()));
 	}
 
 	private BoundedPetriNet<L, IPredicate> constructPetriNetWithoutDeadTransitions()

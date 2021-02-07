@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,8 +41,10 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFac
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -83,6 +86,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private final BlockEncodingBacktranslator mBacktranslator;
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics =
 			new PetriNetLargeBlockEncodingStatisticsGenerator();
+	private final Map<ITransition<L, IPredicate>, ITransition<L, IPredicate>> mReplacedTransitions;
 
 	/**
 	 * Performs Large Block Encoding on the given Petri net.
@@ -132,10 +136,15 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			throw new AssertionError("unknown value " + petriNetLbeSettings);
 		}
 
+		mReplacedTransitions = new HashMap<>();
+
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 		try {
-			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(new AutomataLibraryServices(services),
-					petriNet, compositionFactory, moverCheck);
+			final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
+			final BoundedPetriNet<L, IPredicate> net = PetriNetUtils.createPetriNetWithUniqueLetters(automataServices,
+					petriNet, compositionFactory, mReplacedTransitions);
+			final LiptonReduction<L, IPredicate> lipton =
+					new LiptonReduction<>(automataServices, net, compositionFactory, moverCheck);
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
 
@@ -164,6 +173,13 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final LiptonReduction<L, IPredicate> reduction, final IPLBECompositionFactory<L> compositionFactory) {
 		final BlockEncodingBacktranslator translator =
 				new BlockEncodingBacktranslator((Class<IIcfgTransition<IcfgLocation>>) clazz, Term.class, mLogger);
+
+		for (final Map.Entry<ITransition<L, IPredicate>, ITransition<L, IPredicate>> entry : mReplacedTransitions
+				.entrySet()) {
+			final L originalEdge = entry.getKey().getSymbol();
+			final L newEdge = entry.getValue().getSymbol();
+			translator.mapEdges((IIcfgTransition<IcfgLocation>) newEdge, (IIcfgTransition<IcfgLocation>) originalEdge);
+		}
 
 		for (final Map.Entry<L, List<L>> seq : reduction.getSequentialCompositions().entrySet()) {
 			final L newEdge = seq.getKey();
