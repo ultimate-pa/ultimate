@@ -81,6 +81,8 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-Backfolding.epf",
 			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe-Backfolding.epf",
 			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-Dbo.epf",
+			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbe.epf",
+			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedVariableLbe.epf",
 	};
 
 	/**
