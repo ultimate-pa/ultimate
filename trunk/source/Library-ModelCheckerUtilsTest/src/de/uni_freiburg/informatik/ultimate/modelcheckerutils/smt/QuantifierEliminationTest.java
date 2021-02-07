@@ -567,6 +567,19 @@ public class QuantifierEliminationTest {
 		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void selectOverStoreTest04HiddenValueInformation() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getBoolSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			};
+		final String formulaAsString =
+				"(exists ((a (Array Int Int))) (and (or (not (= (select (store a k v) i) 7)) B) (= v 7)))";
+		final String expectedResultAsString = "(and (= v 7) (or B (not (= i k))))";
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	static void runQuantifierEliminationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
