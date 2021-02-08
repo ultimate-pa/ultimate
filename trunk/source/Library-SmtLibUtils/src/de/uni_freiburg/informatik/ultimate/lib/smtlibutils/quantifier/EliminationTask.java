@@ -54,7 +54,7 @@ public class EliminationTask extends EliminationTaskSimple {
 	}
 
 	public EliminationTask(final QuantifiedFormula quantifiedFormula, final Context context) {
-		super(quantifiedFormula);
+		super(quantifiedFormula, context.getBoundByAncestors());
 		mContext = context;
 	}
 
