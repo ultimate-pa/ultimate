@@ -823,22 +823,16 @@ public class QuantifierPusher extends TermTransformer {
 		EliminationTask currentEt = inputEt;
 		int iterations = 0;
 		do {
-			final EliminationResult er = tryToEliminateOne(currentEt, elimtechniques);
+			final EliminationResult er = tryToEliminateOne(services, currentEt, elimtechniques);
 			successInLastIteration = (er != null);
 			if (er != null) {
-				// if (!er.getNewEliminatees().isEmpty()) {
-				// final String test = SmtTestGenerationUtils.generateStringForTestfile2(inputEt.toTerm(mScript));
-				// final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
-				// logger.info(test);
-				//// throw new UnsupportedOperationException("not yet implemented: auxiliary eliminatees \n" + test);
-				// }
-				if (QuantifierUtils.isCorrespondingFiniteJunction(inputEt.getQuantifier(),
-						er.getEliminationTask().getTerm())) {
-					return er.integrateNewEliminatees().toTerm(mgdScript.getScript());
-				}
 				currentEt = er.integrateNewEliminatees();
 				if (!currentEt.getBoundByAncestors().equals(inputEt.getBoundByAncestors())) {
 					throw new AssertionError("Illegal modification of banned variables.");
+				}
+				if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
+						currentEt.getTerm())) {
+					return currentEt.toTerm(mgdScript.getScript());
 				}
 			}
 			iterations++;
