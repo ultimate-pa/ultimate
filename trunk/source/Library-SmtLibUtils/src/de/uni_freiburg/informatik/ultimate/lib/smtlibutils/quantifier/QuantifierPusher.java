@@ -861,11 +861,15 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-	private static EliminationResult tryToEliminateOne(final EliminationTask currentEt,
-			final List<DualJunctionQuantifierElimination> elimtechniques) {
+	private static EliminationResult tryToEliminateOne(final IUltimateServiceProvider services,
+			final EliminationTask currentEt, final List<DualJunctionQuantifierElimination> elimtechniques) {
 		for (final DualJunctionQuantifierElimination djqe : elimtechniques) {
 			final EliminationResult er = djqe.tryToEliminate(currentEt);
 			if (er != null) {
+				if (er.getEliminationTask().getEliminatees().equals(currentEt.getEliminatees())) {
+					services.getLoggingService().getLogger(QuantifierPusher.class).warn(
+							"no eliminatee completely removed, nonetheless the elimination was considered successful");
+				}
 				return er;
 			}
 		}
