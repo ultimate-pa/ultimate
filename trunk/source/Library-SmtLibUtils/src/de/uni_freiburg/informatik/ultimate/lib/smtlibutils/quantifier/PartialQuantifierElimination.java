@@ -290,9 +290,9 @@ public class PartialQuantifierElimination {
 		}
 		if (USE_AQE) {
 
-			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
-			final EliminationTask esp = new ArrayQuantifierEliminationMain(mgdScript, services, simplificationTechnique)
-					.elimAllRec(new EliminationTask(quantifier, eliminatees, result));
+			final EliminationTaskSimple inputEliminationTask = new EliminationTaskSimple(quantifier, eliminatees, result);
+			final EliminationTaskSimple esp = new ArrayQuantifierEliminationMain(mgdScript, services, simplificationTechnique)
+					.elimAllRec(new EliminationTaskSimple(quantifier, eliminatees, result));
 
 			assert validateEquivalence(script, inputEliminationTask, esp, logger, "SDD") : "Array QEs incorrect. Esp: "
 					+ esp + " Input:" + inputEliminationTask;
@@ -302,9 +302,9 @@ public class PartialQuantifierElimination {
 		}
 		if (USE_SSD) {
 			final long startTime = System.currentTimeMillis();
-			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
-			final EliminationTask esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
-					.startRecursiveElimination(new EliminationTask(quantifier, eliminatees, result));
+			final EliminationTaskSimple inputEliminationTask = new EliminationTaskSimple(quantifier, eliminatees, result);
+			final EliminationTaskSimple esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
+					.startRecursiveElimination(new EliminationTaskSimple(quantifier, eliminatees, result));
 			assert !mgdScript.isLocked() : "Solver still locked";
 			final long duration = System.currentTimeMillis() - startTime;
 			if (duration > 10_000) {
@@ -318,8 +318,8 @@ public class PartialQuantifierElimination {
 				final int quantifierNegated = (quantifier * -1) + 1;
 				final Term negatedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.CRASH)
 						.transform(SmtUtils.not(mgdScript.getScript(), result));
-				final EliminationTask espNegated = new ElimStorePlain(mgdScript, services, simplificationTechnique)
-						.elimAll(new EliminationTask(quantifierNegated, eliminatees, negatedInput));
+				final EliminationTaskSimple espNegated = new ElimStorePlain(mgdScript, services, simplificationTechnique)
+						.elimAll(new EliminationTaskSimple(quantifierNegated, eliminatees, negatedInput));
 				espNegated.toString();
 				if (esp.getEliminatees().size() != espNegated.getEliminatees().size()) {
 					throw new AssertionError("different number of auxVars: esp " + esp.getEliminatees().size()
@@ -327,7 +327,7 @@ public class PartialQuantifierElimination {
 				}
 			}
 			if (DEBUG_EXTENDED_RESULT_CHECK) {
-				final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services,
+				final EliminationTaskSimple sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services,
 						logger, simplificationTechnique, script, result);
 				assert validateEquivalence(script, sosResult, esp, logger, "SDD") : "Array QEs differ. Esp: " + esp
 						+ " Sos:" + sosResult;
@@ -353,7 +353,7 @@ public class PartialQuantifierElimination {
 		final boolean sosChangedTerm;
 		// apply Store Over Select
 		if (USE_SOS) {
-			final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services, logger,
+			final EliminationTaskSimple sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services, logger,
 					simplificationTechnique, script, result);
 			eliminatees.retainAll(sosResult.getEliminatees());
 			eliminatees.addAll(sosResult.getEliminatees());
@@ -397,9 +397,9 @@ public class PartialQuantifierElimination {
 		return result;
 	}
 
-	private static boolean validateEquivalence(final Script script, final EliminationTask inputEliminationTask,
-			final EliminationTask esp, final ILogger logger, final String name) {
-		final LBool sat = EliminationTask.areDistinct(script, esp, inputEliminationTask);
+	private static boolean validateEquivalence(final Script script, final EliminationTaskSimple inputEliminationTask,
+			final EliminationTaskSimple esp, final ILogger logger, final String name) {
+		final LBool sat = EliminationTaskSimple.areDistinct(script, esp, inputEliminationTask);
 		if (sat == LBool.UNKNOWN) {
 			logger.warn("Trying to double check " + name + " result, but SMT solver's response was UNKNOWN.");
 			logger.warn("Input elimination task: " + inputEliminationTask);
@@ -446,7 +446,7 @@ public class PartialQuantifierElimination {
 		return termAfterUPD;
 	}
 
-	private static EliminationTask applyStoreOverSelect(final ManagedScript mgdScript, final int quantifier,
+	private static EliminationTaskSimple applyStoreOverSelect(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique, final Script script, final Term resultOld) {
 		final Set<TermVariable> remainingAndNewAfterSOS = new HashSet<>();
@@ -459,7 +459,7 @@ public class PartialQuantifierElimination {
 			remainingAndNewAfterSOS.addAll(eliminateesSOS);
 		}
 		final Term termAfterSOS = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, newParams);
-		return new EliminationTask(quantifier, remainingAndNewAfterSOS, termAfterSOS);
+		return new EliminationTaskSimple(quantifier, remainingAndNewAfterSOS, termAfterSOS);
 	}
 
 	private static Term applyUsr(final ManagedScript mgdScript, final int quantifier,

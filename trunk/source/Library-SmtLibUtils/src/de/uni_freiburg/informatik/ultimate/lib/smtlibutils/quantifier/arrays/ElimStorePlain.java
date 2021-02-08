@@ -60,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskWithContext;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -151,20 +151,20 @@ public class ElimStorePlain {
 	 * @throws ElimStorePlainException
 	 *
 	 */
-	public EliminationTask elimAll(final EliminationTask eTask) {
+	public EliminationTaskSimple elimAll(final EliminationTaskSimple eTask) {
 		try {
 
-			final Stack<EliminationTask> taskStack = new Stack<>();
+			final Stack<EliminationTaskSimple> taskStack = new Stack<>();
 			final ArrayList<Term> resultDisjuncts = new ArrayList<>();
 			final Set<TermVariable> resultEliminatees = new LinkedHashSet<>();
 			{
-				final EliminationTask eliminationTask = new EliminationTask(eTask.getQuantifier(),
+				final EliminationTaskSimple eliminationTask = new EliminationTaskSimple(eTask.getQuantifier(),
 						eTask.getEliminatees(), eTask.getTerm());
 				pushTaskOnStack(eliminationTask, taskStack);
 			}
 			int numberOfRounds = 0;
 			while (!taskStack.isEmpty()) {
-				final EliminationTask currentETask = taskStack.pop();
+				final EliminationTaskSimple currentETask = taskStack.pop();
 				final TreeHashRelation<Integer, TermVariable> tr = classifyEliminatees(currentETask.getEliminatees());
 
 				final LinkedHashSet<TermVariable> arrayEliminatees = getArrayTvSmallDimensionsFirst(tr);
@@ -180,16 +180,16 @@ public class ElimStorePlain {
 						thisIterationEliminatee = it.next();
 						it.remove();
 					}
-					final EliminationTaskWithContext etwc = new EliminationTaskWithContext(currentETask.getQuantifier(),
+					final EliminationTaskPlain etwc = new EliminationTaskPlain(currentETask.getQuantifier(),
 							Collections.singleton(thisIterationEliminatee), currentETask.getTerm(), null);
-					final EliminationTask ssdElimRes = new Elim1Store(mMgdScript, mServices, eTask.getQuantifier())
+					final EliminationTaskSimple ssdElimRes = new Elim1Store(mMgdScript, mServices, eTask.getQuantifier())
 							.elim1(etwc);
 					arrayEliminatees.addAll(ssdElimRes.getEliminatees());
 					// also add non-array eliminatees
 					arrayEliminatees.addAll(tr.getImage(0));
-					final EliminationTaskWithContext eliminationTask1 = new EliminationTaskWithContext(
+					final EliminationTaskPlain eliminationTask1 = new EliminationTaskPlain(
 							ssdElimRes.getQuantifier(), arrayEliminatees, ssdElimRes.getTerm(), null);
-					final EliminationTaskWithContext eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
+					final EliminationTaskPlain eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
 							eliminationTask1, PqeTechniques.ALL_LOCAL);
 					if (mLogger.isInfoEnabled()) {
 						mLogger.info("Start of round: " + printVarInfo(tr) + " End of round: "
@@ -209,14 +209,14 @@ public class ElimStorePlain {
 			mLogger.info("Needed " + numberOfRounds + " rounds to eliminate " + eTask.getEliminatees().size()
 					+ " variables, produced " + resultDisjuncts.size() + " xjuncts");
 			// return term and variables that we could not eliminate
-			return new EliminationTask(eTask.getQuantifier(), resultEliminatees,
+			return new EliminationTaskSimple(eTask.getQuantifier(), resultEliminatees,
 					QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(), eTask.getQuantifier(),
 							resultDisjuncts));
 		} catch (final ElimStorePlainException e) {
 			if (THROW_ELIMINATION_EXCEPTIONS) {
 				throw new UnsupportedOperationException(e);
 			} else {
-				return new EliminationTask(eTask.getQuantifier(), new HashSet<>(eTask.getEliminatees()),
+				return new EliminationTaskSimple(eTask.getQuantifier(), new HashSet<>(eTask.getEliminatees()),
 						eTask.getTerm());
 			}
 		}
@@ -227,7 +227,7 @@ public class ElimStorePlain {
 	 * suitable for recursive calls.
 	 * @throws ElimStorePlainException
 	 */
-	public EliminationTask startRecursiveElimination(final EliminationTask eTask) {
+	public EliminationTaskSimple startRecursiveElimination(final EliminationTaskSimple eTask) {
 		final TreeHashRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
 		if (tr.isEmpty() || (tr.getDomain().size() == 1 && tr.getDomain().contains(0))) {
 			// return immediately if we do not have quantified arrays.
@@ -237,9 +237,9 @@ public class ElimStorePlain {
 		final long inputSize = new DAGSize().treesize(eTask.getTerm());
 		// Initially, the context is "true" (context is independent quantifier)
 		final Term initialContext = mMgdScript.getScript().term("true");
-		EliminationTask result;
+		EliminationTaskSimple result;
 		try {
-			result = doElimAllRec(new EliminationTaskWithContext(eTask.getQuantifier(),
+			result = doElimAllRec(new EliminationTaskPlain(eTask.getQuantifier(),
 					eTask.getEliminatees(), eTask.getTerm(), initialContext));
 			final long outputSize = new DAGSize().treesize(result.getTerm());
 			// TODO 2019-02-20 Matthias: If implementation is more matured then show this
@@ -253,13 +253,13 @@ public class ElimStorePlain {
 				throw new UnsupportedOperationException(e);
 			} else {
 				assert !mMgdScript.isLocked() : "Solver still locked";
-				return new EliminationTask(eTask.getQuantifier(), new HashSet<>(eTask.getEliminatees()), eTask.getTerm());
+				return new EliminationTaskSimple(eTask.getQuantifier(), new HashSet<>(eTask.getEliminatees()), eTask.getTerm());
 			}
 		}
 	}
 
 
-	private EliminationTaskWithContext doElimOneRec(final EliminationTaskWithContext eTask) throws ElimStorePlainException {
+	private EliminationTaskPlain doElimOneRec(final EliminationTaskPlain eTask) throws ElimStorePlainException {
 		if (QuantifierUtils.getXjunctsOuter(eTask.getQuantifier(),eTask.getTerm()).length != 1) {
 			throw new AssertionError("Input not split");
 		}
@@ -280,34 +280,34 @@ public class ElimStorePlain {
 		final Term additionalContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(),
 				split.getSecond());
 		final Term totalContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), additionalContext);
-		final EliminationTaskWithContext resultOfRecursiveCall;
+		final EliminationTaskPlain resultOfRecursiveCall;
 		if (split.getFirst().length != 1) {
 //			throw new AssertionError("new split possibility");
-			resultOfRecursiveCall = eliminateOne(new EliminationTaskWithContext(eTask.getQuantifier(),
+			resultOfRecursiveCall = eliminateOne(new EliminationTaskPlain(eTask.getQuantifier(),
 					eTask.getEliminatees(), QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(),
 							eTask.getQuantifier(), split.getFirst()),
 					totalContext));
 		} else {
 			assert split.getFirst().length == 1;
-			final EliminationTaskWithContext revisedInput = new EliminationTaskWithContext(eTask.getQuantifier(),
+			final EliminationTaskPlain revisedInput = new EliminationTaskPlain(eTask.getQuantifier(),
 					eTask.getEliminatees(), split.getFirst()[0], totalContext);
 			// final EliminationTaskWithContext revisedInput = new
 			// EliminationTaskWithContext(eTask.getQuantifier(),
 			// eTask.getEliminatees(), eTask.getTerm(), totalContext);
 
-			final EliminationTaskWithContext ssdElimRes = applyComplexEliminationRules(mServices, mLogger, mMgdScript, revisedInput);
-			final EliminationTaskWithContext eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
+			final EliminationTaskPlain ssdElimRes = applyComplexEliminationRules(mServices, mLogger, mMgdScript, revisedInput);
+			final EliminationTaskPlain eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
 					ssdElimRes, PqeTechniques.ALL_LOCAL);
 			resultOfRecursiveCall = doElimAllRec(eliminationTask2);
 		}
 		final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
 				eTask.getQuantifier(), resultOfRecursiveCall.getTerm(), split.getSecond());
-		return new EliminationTaskWithContext(resultOfRecursiveCall.getQuantifier(),
+		return new EliminationTaskPlain(resultOfRecursiveCall.getQuantifier(),
 				resultOfRecursiveCall.getEliminatees(), resultTerm, eTask.getContext());
 	}
 
-	public static EliminationTaskWithContext applyComplexEliminationRules(final IUltimateServiceProvider services,
-			final ILogger logger, final ManagedScript mgdScript, final EliminationTaskWithContext eTask)
+	public static EliminationTaskPlain applyComplexEliminationRules(final IUltimateServiceProvider services,
+			final ILogger logger, final ManagedScript mgdScript, final EliminationTaskPlain eTask)
 			throws ElimStorePlainException {
 		if (!QuantifierUtils.isQuantifierFree(eTask.getTerm())) {
 			throw new AssertionError("Alternating quantifiers not yet supported");
@@ -349,15 +349,15 @@ public class ElimStorePlain {
 			termAfterDerPreprocessing = de.getResult();
 			if (de.introducedDerPossibility()) {
 				// do DER
-				final EliminationTaskWithContext afterDer = ElimStorePlain.applyNonSddEliminations(services,
-						mgdScript, new EliminationTaskWithContext(eTask.getQuantifier(),
+				final EliminationTaskPlain afterDer = ElimStorePlain.applyNonSddEliminations(services,
+						mgdScript, new EliminationTaskPlain(eTask.getQuantifier(),
 								Collections.singleton(eliminatee), termAfterDerPreprocessing, eTask.getContext()),
 						PqeTechniques.ONLY_DER);
 				if (!afterDer.getEliminatees().isEmpty()) {
 					throw new AssertionError(" unsuccessful DER");
 				}
 				newAuxVars.addAll(afterDer.getEliminatees());
-				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, afterDer.getTerm(),
+				return new EliminationTaskPlain(eTask.getQuantifier(), newAuxVars, afterDer.getTerm(),
 						eTask.getContext());
 			} else {
 				aoaAfterDerPreprocessing = new ArrayOccurrenceAnalysis(mgdScript.getScript(), termAfterDerPreprocessing, eliminatee);
@@ -378,7 +378,7 @@ public class ElimStorePlain {
 			newAuxVars.addAll(aadk.getNewAuxVars());
 			aoaAfterAntiDerPreprocessing = new ArrayOccurrenceAnalysis(mgdScript.getScript(), termAfterAntiDerPreprocessing, eliminatee);
 			if (!varOccurs(eliminatee, termAfterAntiDerPreprocessing)) {
-				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars, termAfterAntiDerPreprocessing,
+				return new EliminationTaskPlain(eTask.getQuantifier(), newAuxVars, termAfterAntiDerPreprocessing,
 						eTask.getContext());
 			}
 		}
@@ -398,7 +398,7 @@ public class ElimStorePlain {
 			sosAoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), sosTerm, eliminatee);
 			if(!varOccurs(eliminatee, replacedInNnf) || RETURN_AFTER_SOS) {
 				aiem.unlockSolver();
-				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars,
+				return new EliminationTaskPlain(eTask.getQuantifier(), newAuxVars,
 						replacedInNnf, eTask.getContext());
 			}
 		}
@@ -407,16 +407,16 @@ public class ElimStorePlain {
 		final ArrayOccurrenceAnalysis aoaAfterSos = sosAoa;
 
 
-		final EliminationTaskWithContext eTaskForStoreElimination = new EliminationTaskWithContext(
+		final EliminationTaskPlain eTaskForStoreElimination = new EliminationTaskPlain(
 				eTask.getQuantifier(), Collections.singleton(eliminatee), termAfterSos,
 				eTask.getContext());
-		final EliminationTaskWithContext resOfStoreElimination = new Elim1Store(mgdScript, services,
+		final EliminationTaskPlain resOfStoreElimination = new Elim1Store(mgdScript, services,
 				eTask.getQuantifier()).elim1(eTaskForStoreElimination);
 		// if (res.getEliminatees().contains(eliminatee)) {
 		// throw new AssertionError("elimination failed");
 		// }
 		newAuxVars.addAll(resOfStoreElimination.getEliminatees());
-		final EliminationTaskWithContext eliminationResult = new EliminationTaskWithContext(eTask.getQuantifier(),
+		final EliminationTaskPlain eliminationResult = new EliminationTaskPlain(eTask.getQuantifier(),
 				newAuxVars, resOfStoreElimination.getTerm(), eTask.getContext());
 		return eliminationResult;
 	}
@@ -425,7 +425,7 @@ public class ElimStorePlain {
 		return Arrays.stream(term.getFreeVars()).anyMatch(x -> (x == var));
 	}
 
-	private EliminationTaskWithContext doElimAllRec(final EliminationTaskWithContext eTask)
+	private EliminationTaskPlain doElimAllRec(final EliminationTaskPlain eTask)
 			throws ElimStorePlainException {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
@@ -486,15 +486,15 @@ public class ElimStorePlain {
 							final Term equals = SmtUtils.binaryEquality(mMgdScript.getScript(), effectiveIndex1, effectiveIndex2);
 							final Term distinct = Elim1Store.notWith1StepPush(mMgdScript.getScript(), equals);
 							final Term posContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), equals);
-							final EliminationTaskWithContext posTask = new EliminationTaskWithContext(eTask.getQuantifier(), eTask.getEliminatees(), effectiveTerm, posContext);
-							final EliminationTaskWithContext posRes = doElimAllRec(posTask);
+							final EliminationTaskPlain posTask = new EliminationTaskPlain(eTask.getQuantifier(), eTask.getEliminatees(), effectiveTerm, posContext);
+							final EliminationTaskPlain posRes = doElimAllRec(posTask);
 							final Term posResTermPostprocessed = QuantifierUtils.applyDualFiniteConnective(
 									mMgdScript.getScript(), eTask.getQuantifier(), posRes.getTerm(), QuantifierUtils
 											.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(), equals));
 
 							final Term negContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), distinct);
-							final EliminationTaskWithContext negTask = new EliminationTaskWithContext(eTask.getQuantifier(), eTask.getEliminatees(), effectiveTerm, negContext);
-							final EliminationTaskWithContext negRes = doElimAllRec(negTask);
+							final EliminationTaskPlain negTask = new EliminationTaskPlain(eTask.getQuantifier(), eTask.getEliminatees(), effectiveTerm, negContext);
+							final EliminationTaskPlain negRes = doElimAllRec(negTask);
 							final Term negResTermPostprocessed = QuantifierUtils.applyDualFiniteConnective(
 									mMgdScript.getScript(), eTask.getQuantifier(), negRes.getTerm(), QuantifierUtils
 											.negateIfUniversal(mServices, mMgdScript, eTask.getQuantifier(), distinct));
@@ -503,21 +503,21 @@ public class ElimStorePlain {
 							resEliminatees.addAll(caseSplitEliminatees);
 							final Term resTerm = QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(),
 									eTask.getQuantifier(), posResTermPostprocessed, negResTermPostprocessed);
-							final EliminationTaskWithContext result = new EliminationTaskWithContext(
+							final EliminationTaskPlain result = new EliminationTaskPlain(
 									eTask.getQuantifier(), resEliminatees, resTerm, eTask.getContext());
-							final EliminationTaskWithContext finalResult = applyNonSddEliminations(mServices, mMgdScript, result, PqeTechniques.ALL_LOCAL);
+							final EliminationTaskPlain finalResult = applyNonSddEliminations(mServices, mMgdScript, result, PqeTechniques.ALL_LOCAL);
 							return finalResult;
 						}
 
 					}
 					for (final Entry<Integer, TermVariable> entry : costs.getCost2Eliminatee()) {
 						// split term
-						final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
+						final EliminationTaskPlain eTaskForVar = new EliminationTaskPlain(eTask.getQuantifier(),
 								Collections.singleton(entry.getValue()), currentTerm, eTask.getContext());
 						if(eTaskForVar.getEliminatees().isEmpty()) {
 							mLogger.info("Eliminatee " + entry.getValue() + " vanished before elimination");
 						} else {
-							final EliminationTask res = eliminateOne(eTaskForVar);
+							final EliminationTaskSimple res = eliminateOne(eTaskForVar);
 							currentTerm = res.getTerm();
 							newElimnatees.addAll(res.getEliminatees());
 						}
@@ -525,12 +525,12 @@ public class ElimStorePlain {
 				} else {
 					for (final TermVariable eliminatee : tr.getImage(dim)) {
 						// split term
-						final EliminationTaskWithContext eTaskForVar = new EliminationTaskWithContext(eTask.getQuantifier(),
+						final EliminationTaskPlain eTaskForVar = new EliminationTaskPlain(eTask.getQuantifier(),
 								Collections.singleton(eliminatee), currentTerm, eTask.getContext());
 						if(eTaskForVar.getEliminatees().isEmpty()) {
 							mLogger.info("Eliminatee " + eliminatee + " vanished before elimination");
 						} else {
-							final EliminationTask res = eliminateOne(eTaskForVar);
+							final EliminationTaskSimple res = eliminateOne(eTaskForVar);
 							currentTerm = res.getTerm();
 							newElimnatees.addAll(res.getEliminatees());
 						}
@@ -542,9 +542,9 @@ public class ElimStorePlain {
 		}
 		final Set<TermVariable> resultingEliminatees = new LinkedHashSet<>(newElimnatees);
 		resultingEliminatees.addAll(eTask.getEliminatees());
-		final EliminationTaskWithContext preliminaryResult = new EliminationTaskWithContext(eTask.getQuantifier(),
+		final EliminationTaskPlain preliminaryResult = new EliminationTaskPlain(eTask.getQuantifier(),
 				resultingEliminatees, currentTerm, null);
-		final EliminationTaskWithContext finalResult = applyNonSddEliminations(mServices, mMgdScript, preliminaryResult,
+		final EliminationTaskPlain finalResult = applyNonSddEliminations(mServices, mMgdScript, preliminaryResult,
 				PqeTechniques.ALL_LOCAL);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start of recursive call " + thisRecursiveCallNumber + ": " + printVarInfo(tr)
@@ -556,7 +556,7 @@ public class ElimStorePlain {
 		return finalResult;
 	}
 
-	private ArrayIndexBasedCostEstimation computeCostEstimation(final EliminationTaskWithContext eTask,
+	private ArrayIndexBasedCostEstimation computeCostEstimation(final EliminationTaskPlain eTask,
 			final Set<TermVariable> eliminatees) throws AssertionError {
 		final int quantifier = eTask.getQuantifier();
 		final Term polarizedContext;
@@ -576,7 +576,7 @@ public class ElimStorePlain {
 		return costs;
 	}
 
-	private EliminationTaskWithContext eliminateOne(final EliminationTaskWithContext eTaskForVar) throws ElimStorePlainException {
+	private EliminationTaskPlain eliminateOne(final EliminationTaskPlain eTaskForVar) throws ElimStorePlainException {
 		final TermVariable eliminatee = eTaskForVar.getEliminatees().iterator().next();
 		final Set<TermVariable> newElimnateesForVar = new LinkedHashSet<>();
 		final Term[] correspondingJunctiveNormalForm;
@@ -604,8 +604,8 @@ public class ElimStorePlain {
 				} else {
 					context = parentContext;
 				}
-				final EliminationTask res = doElimOneRec(
-						new EliminationTaskWithContext(eTaskForVar.getQuantifier(),
+				final EliminationTaskSimple res = doElimOneRec(
+						new EliminationTaskPlain(eTaskForVar.getQuantifier(),
 								Collections.singleton(eliminatee), correspondingJunct, context));
 				newElimnateesForVar.addAll(res.getEliminatees());
 				resultingCorrespondingJuncts[i] = res.getTerm();
@@ -627,7 +627,7 @@ public class ElimStorePlain {
 				mSimplificationTechnique);
 		mLogger.info(esr.buildSizeReductionMessage());
 		final Term simplifiedResult = esr.getSimplifiedTerm();
-		final EliminationTaskWithContext res = new EliminationTaskWithContext(eTaskForVar.getQuantifier(),
+		final EliminationTaskPlain res = new EliminationTaskPlain(eTaskForVar.getQuantifier(),
 				newElimnateesForVar, simplifiedResult, eTaskForVar.getContext());
 		return res;
 	}
@@ -694,20 +694,20 @@ public class ElimStorePlain {
 		return sb.toString();
 	}
 
-	private void pushTaskOnStack(final EliminationTask eTask, final Stack<EliminationTask> taskStack) {
+	private void pushTaskOnStack(final EliminationTaskSimple eTask, final Stack<EliminationTaskSimple> taskStack) {
 		final Term term = eTask.getTerm();
 		final Term[] disjuncts = QuantifierUtils.getXjunctsOuter(eTask.getQuantifier(), term);
 		if (disjuncts.length == 1) {
 			taskStack.push(eTask);
 		} else {
 			for (final Term disjunct : disjuncts) {
-				taskStack.push(new EliminationTask(eTask.getQuantifier(), eTask.getEliminatees(), disjunct));
+				taskStack.push(new EliminationTaskSimple(eTask.getQuantifier(), eTask.getEliminatees(), disjunct));
 			}
 		}
 	}
 
-	public static EliminationTaskWithContext applyNonSddEliminations(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final EliminationTaskWithContext eTask, final PqeTechniques techniques)
+	public static EliminationTaskPlain applyNonSddEliminations(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final EliminationTaskPlain eTask, final PqeTechniques techniques)
 			throws ElimStorePlainException {
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), eTask.getQuantifier(),
 				eTask.getEliminatees(), eTask.getTerm());
@@ -731,7 +731,7 @@ public class ElimStorePlain {
 		} else {
 			throw new AssertionError();
 		}
-		return new EliminationTaskWithContext(eTask.getQuantifier(), eliminatees1, matrix, eTask.getContext());
+		return new EliminationTaskPlain(eTask.getQuantifier(), eliminatees1, matrix, eTask.getContext());
 	}
 
 	private LinkedHashSet<TermVariable> getArrayTvSmallDimensionsFirst(final TreeHashRelation<Integer, TermVariable> tr) {

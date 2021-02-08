@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -227,8 +228,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	 */
 	private EliminationResult tryToEliminateOne(final IDerHelper<?> derHelper, final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt,
-					inputEt.getBannedForDivCapture());
+			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt);
 			if (er != null) {
 				return er;
 			}
@@ -321,8 +321,10 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				final Term term, Set<TermVariable> bannedForDivCapture);
 
 		private EliminationResult tryToEliminateSbr(final ManagedScript mgdScript, final TermVariable eliminatee,
-				final EliminationTask et, final Set<TermVariable> bannedForDivCapture) {
+				final EliminationTask et) {
 			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+			final Set<TermVariable> bannedForDivCapture = new HashSet<>(et.getEliminatees());
+			bannedForDivCapture.addAll(et.getContext().getBoundByAncestors());
 			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript.getScript(), et.getQuantifier(), eliminatee,
 					dualJuncts, bannedForDivCapture);
 			if (pair == null) {

@@ -31,32 +31,37 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 
 /**
-
+ * Special Elimination Task for {@link ElimStorePlain}.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @deprecated {@link ElimStorePlain} is outdated and only kept to compare old
+ *             and new quantifier elimination for arrays.
  *
  */
-public class EliminationTaskWithContext extends EliminationTask {
+@Deprecated
+public class EliminationTaskPlain extends EliminationTaskSimple {
 	private final Term mContext;
 
-	public EliminationTaskWithContext(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
+	public EliminationTaskPlain(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
 			final Set<TermVariable> bannedForDivCapture, final Term context) {
 		super(quantifier, eliminatees, term, bannedForDivCapture);
 		mContext = context;
 	}
 
-	public EliminationTaskWithContext(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
+	public EliminationTaskPlain(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
 			final Term context) {
 		super(quantifier, eliminatees, term);
 		mContext = context;
 	}
 
-	public EliminationTaskWithContext(final QuantifiedFormula quantifiedFormula,
+	public EliminationTaskPlain(final QuantifiedFormula quantifiedFormula,
 			final Set<TermVariable> bannedForDivCapture, final Term context) {
 		super(quantifiedFormula, bannedForDivCapture);
 		mContext = context;
@@ -69,13 +74,13 @@ public class EliminationTaskWithContext extends EliminationTask {
 
 
 	@Override
-	public EliminationTaskWithContext integrateNewEliminatees(final Set<TermVariable> additionalEliminatees) {
+	public EliminationTaskPlain integrateNewEliminatees(final Set<TermVariable> additionalEliminatees) {
 		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
 				getTerm());
 		final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(getEliminatees());
 		final boolean modified = resultEliminatees.addAll(additionalOccuringEliminatees);
 		if (modified) {
-			return new EliminationTaskWithContext(getQuantifier(), resultEliminatees, getTerm(), getBoundByAncestors(),
+			return new EliminationTaskPlain(getQuantifier(), resultEliminatees, getTerm(), getBoundByAncestors(),
 					mContext);
 		} else {
 			return this;
@@ -83,13 +88,13 @@ public class EliminationTaskWithContext extends EliminationTask {
 	}
 
 	@Override
-	public EliminationTaskWithContext update(final Set<TermVariable> newEliminatees, final Term term) {
-		return new EliminationTaskWithContext(getQuantifier(), newEliminatees, term, getBoundByAncestors(), mContext);
+	public EliminationTaskPlain update(final Set<TermVariable> newEliminatees, final Term term) {
+		return new EliminationTaskPlain(getQuantifier(), newEliminatees, term, getBoundByAncestors(), mContext);
 	}
 
 	@Override
-	public EliminationTaskWithContext update(final Term term) {
-		return new EliminationTaskWithContext(getQuantifier(), getEliminatees(), term, getBoundByAncestors(), mContext);
+	public EliminationTaskPlain update(final Term term) {
+		return new EliminationTaskPlain(getQuantifier(), getEliminatees(), term, getBoundByAncestors(), mContext);
 	}
 
 }
