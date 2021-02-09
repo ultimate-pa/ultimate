@@ -52,11 +52,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -110,6 +110,19 @@ public class QuantifierEliminationTest {
 	public static Sort getArrayBv32Bv1Sort(final Script script) {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort1(script));
 	}
+
+	public static Sort getArrayBv32Bv8Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort8(script));
+	}
+
+	public static Sort getArrayBv32Bv32Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort32(script));
+	}
+
+	public static Sort getArrayBv32Bv32Bv32Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getArrayBv32Bv32Sort(script));
+	}
+
 
 	public static Sort getIntBoolArray(final Script script) {
 		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getBoolSort(script));
@@ -508,65 +521,63 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void critConsReform01() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
-		mScript.declareFun("memPtr", new Sort[0], intintArraySort);
-		mScript.declareFun("p2", new Sort[0], intSort);
-		mScript.declareFun("b", new Sort[0], intSort);
-		mScript.declareFun("p1", new Sort[0], intSort);
-		mScript.declareFun("a", new Sort[0], intSort);
-		mScript.declareFun("v_DerPreprocessor_1", new Sort[0], intSort);
-		mScript.declareFun("v_DerPreprocessor_3", new Sort[0], intSort);
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "p2", "b", "p1", "a", "v_DerPreprocessor_1", "v_DerPreprocessor_3"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "memPtr"),
+			};
 		final String formulaAsString =
 				"(= (select (store (store (store (store memPtr p2 b) p1 b) a v_DerPreprocessor_1) b v_DerPreprocessor_3) p1) b)";
 		final String expectedResultAsString =
 				"(= (select (store (store (store (store memPtr p2 b) p1 b) a v_DerPreprocessor_1) b v_DerPreprocessor_3) p1) b)";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void selectOverStoreTest01() {
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
-				SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("b", new Sort[0], intintArraySort);
-		mScript.declareFun("i", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("k", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("v", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			};
 		final String formulaAsString =
 				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (not (= i k))))";
 		final String expectedResultAsString = "(or (not (= v 7)) (not (= i k)))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void selectOverStoreTest02() {
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
-				SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("b", new Sort[0], intintArraySort);
-		mScript.declareFun("i", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("k", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("v", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= (select (store a k v) i) 7) (= i k)))";
 		final String expectedResultAsString = "(and (= v 7) (= i k))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void selectOverStoreTest03() {
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
-				SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("b", new Sort[0], intintArraySort);
-		mScript.declareFun("i", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("k", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("v", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			};
 		final String formulaAsString =
 				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (= i k)))";
 		final String expectedResultAsString = "(= i k)";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void selectOverStoreTest04HiddenValueInformation() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getBoolSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			};
+		final String formulaAsString =
+				"(exists ((a (Array Int Int))) (and (or (not (= (select (store a k v) i) 7)) B) (= v 7)))";
+		final String expectedResultAsString = "(and (= v 7) (or B (not (= i k))))";
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	static void runQuantifierEliminationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
@@ -584,7 +595,7 @@ public class QuantifierEliminationTest {
 	 * @deprecated use instead method with argument "FunDecl[] funDecls"
 	 */
 	@Deprecated
-	static void runQuantifierEliminationTest(final String eliminationInputAsString, final String expectedResultAsString,
+	private static void runQuantifierEliminationTest(final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
@@ -592,10 +603,9 @@ public class QuantifierEliminationTest {
 		csvWriter.reportEliminationBegin(letFree);
 		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, letFree,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		SmtUtils.simplifyWithStatistics(mgdScript, result, null, services, SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
 		if (LOG_SIMPLIFICATION_POSSIBILITY) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, null, services,
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
 					SimplificationTechnique.SIMPLIFY_DDA);
 			logger.info("Simplified result: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
@@ -626,7 +636,7 @@ public class QuantifierEliminationTest {
 	 * @deprecated use instead method with argument "FunDecl[] funDecls"
 	 */
 	@Deprecated
-	static void runQuantifierPusherTest(final String eliminationInputAsString, final String expectedResultAsString,
+	private static void runQuantifierPusherTest(final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
@@ -637,7 +647,7 @@ public class QuantifierEliminationTest {
 		final Term result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
 		logger.info("Result: " + result);
 		if (LOG_SIMPLIFICATION_POSSIBILITY) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, null, services,
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
 					SimplificationTechnique.SIMPLIFY_DDA);
 			logger.info("Simplified result: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
@@ -702,34 +712,27 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void antiDerPreprocessing() {
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
-				SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("b", new Sort[0], intintArraySort);
-		mScript.declareFun("k", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("v", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k", "v"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (not (= a b)) (= (store b k v) a)))";
 		final String expectedResultAsString = "(not (= v (select b k)))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void derPreprocessingBug() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
-		final Sort intintintArraySort =
-				SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
-		mScript.declareFun("main_~#p~0.offset", new Sort[0], intSort);
-		mScript.declareFun("#memory_$Pointer$.base", new Sort[0], intintintArraySort);
-		mScript.declareFun("#valid", new Sort[0], intintArraySort);
-		mScript.declareFun("main_#t~mem1.base", new Sort[0], intSort);
-		mScript.declareFun("main_~#p~0.base", new Sort[0], intSort);
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "main_~#p~0.offset", "main_#t~mem1.base", "main_~#p~0.base"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "#valid"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntIntArray, "#memory_$Pointer$.base"),
+			};
 		final String formulaAsString =
 				"(forall ((|v_#memory_$Pointer$.base_14| (Array Int (Array Int Int))) (|main_#t~mem1.offset| Int)) (or (not (= |v_#memory_$Pointer$.base_14| (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) (select (select |v_#memory_$Pointer$.base_14| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28)))))) (= 1 (select |#valid| (select (select |v_#memory_$Pointer$.base_14| |main_~#p~0.base|) |main_~#p~0.offset|)))))";
 		final String expectedResultAsString =
 				"(forall ((|main_#t~mem1.offset| Int) (v_DerPreprocessor_2 Int)) (= 1 (select |#valid| (select (select (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) v_DerPreprocessor_2)) |main_~#p~0.base|) |main_~#p~0.offset|))))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -757,37 +760,28 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void nestedStoresTest() {
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
-				SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("i", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("j", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("k", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("vi", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("vj", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("vk", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("b", new Sort[0], intintArraySort);
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "j", "k", "vi", "vj", "vk"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			};
 		final String formulaAsString =
 				"(exists ((a (Array Int Int))) (and (= (select a k) vk) (= (store (store a i vi) j vj) b)))";
 		final String expectedResultAsString =
 				"(let ((.cse2 (= vk (select b k))) (.cse0 (= vi (select b i))) (.cse3 (= i j)) (.cse1 (= vj (select b j))) (.cse4 (= j k))) (or (and .cse0 .cse1 .cse2) (and .cse3 .cse1 .cse2) (and (= i k) .cse0 .cse1) (and .cse0 .cse1 .cse4) (and .cse3 .cse1 .cse4)))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void varStillThere02() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		final Sort intintintArraySort =
-				SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
-		mScript.declareFun("nonMain_~dstPlusTwo~0.base", new Sort[0], intSort);
-		mScript.declareFun("nonMain_~dstPlusTwo~0.offset", new Sort[0], intSort);
-		mScript.declareFun("#memory_int", new Sort[0], intintintArraySort);
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "nonMain_~dstPlusTwo~0.base", "nonMain_~dstPlusTwo~0.offset"),
+				new FunDecl(QuantifierEliminationTest::constructIntIntIntArray, "#memory_int"),
+			};
 		final String formulaAsString =
 				"(exists ((|v_#memory_int_BEFORE_CALL_2| (Array Int (Array Int Int))) (|v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| Int) (|v_#Ultimate.C_memcpy_#t~loopctr6_8| Int) (v_prenex_1 Int) (|v_#Ultimate.C_memcpy_#t~loopctr6_9| Int) (|#Ultimate.C_memcpy_#t~mem7| Int)) (and (<= |v_#Ultimate.C_memcpy_#t~loopctr6_8| 0) (<= (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| 2) nonMain_~dstPlusTwo~0.offset) (= (select (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base) nonMain_~dstPlusTwo~0.offset) 23) (= |#memory_int| (store |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base) (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| |v_#Ultimate.C_memcpy_#t~loopctr6_8|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| |v_#Ultimate.C_memcpy_#t~loopctr6_9|) |#Ultimate.C_memcpy_#t~mem7|))) (<= |v_#Ultimate.C_memcpy_#t~loopctr6_9| (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| 1))))";
 		final String expectedResultAsString =
 				"(= 23 (select (select |#memory_int| nonMain_~dstPlusTwo~0.base) nonMain_~dstPlusTwo~0.offset))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
-				mCsvWriter);
+		runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	/**
@@ -892,6 +886,24 @@ public class QuantifierEliminationTest {
 		final String formulaAsString = "(and (exists ((a (Array Int Int)) (v_i_9 Int)) (and (<= i (+ v_i_9 1)) (= 42 (select a end)) (<= v_i_9 0) (not (= 42 (select a v_i_9))))) (<= 0 end))";
 		final String expectedResult = "(and (<= i 1) (< i (+ end 1)) (<= 0 end))";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayInnerDerPossibilityNotRepruducible() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "main_a", "v_arrayElimArr_1"),
+				new FunDecl(SmtSortUtils::getIntSort, "main_y", "main_x", "i", "end"), };
+		final String formulaAsString = "(exists ((v_arrayElimArr_2 (Array Int Int))) (and (or (and (= main_a v_arrayElimArr_2) (not (= main_y main_x))) (and (= main_y main_x) (= main_a v_arrayElimArr_1))) (or (= main_y main_x) (= (select v_arrayElimArr_2 main_x) 1)) (= (select v_arrayElimArr_1 main_y) 0) (or (not (= main_y main_x)) (= (+ (select v_arrayElimArr_2 main_y) 1) 0)) (< main_y main_x) (= (select v_arrayElimArr_2 main_y) 999) (or (= (select v_arrayElimArr_1 main_x) 0) (not (= main_y main_x))) (or (= (select v_arrayElimArr_2 main_y) (select v_arrayElimArr_2 main_x)) (not (= main_y main_x))) (or (= (select v_arrayElimArr_1 main_x) 1) (= main_y main_x))))";
+		final String expectedResult = "(and (= (select v_arrayElimArr_1 main_x) 1) (= (select v_arrayElimArr_1 main_y) 0) (< main_y main_x) (= (select main_a main_x) 1) (= 999 (select main_a main_y)))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayQuantifierAlternation() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "x"), };
+		final String formulaAsString = "(exists ((a (Array Int Int))) (forall ((k Int)) (and (= (select a k) x) (= (select a i) 23))))";
+		final String expectedResult = formulaAsString;
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
@@ -1227,7 +1239,7 @@ public class QuantifierEliminationTest {
 		final String expectedResult = inputSTR;
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void bvTirHospitalized() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "A", "q", "r") };

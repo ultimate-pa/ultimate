@@ -64,7 +64,7 @@ public abstract class DualJunctionQuantifierElimination {
 
 	/**
 	 * Try to remove {@link TermVariable}s specified by the input
-	 * {@link EliminationTask}. If nothing can be removed, the method must return
+	 * {@link EliminationTaskSimple}. If nothing can be removed, the method must return
 	 * null. If some eliminatee was removed return as soon as the intermediate
 	 * result becomes a correspondingJunction
 	 * <p>

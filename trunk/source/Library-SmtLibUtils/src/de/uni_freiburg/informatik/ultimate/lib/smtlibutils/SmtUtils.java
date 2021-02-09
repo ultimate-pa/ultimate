@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -131,13 +132,14 @@ public final class SmtUtils {
 		// Prevent instantiation of this utility class
 	}
 
-	public static Term simplify(final ManagedScript mgScript, final Term formula,
+	public static Term simplify(final ManagedScript mgdScript, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
-		return simplify(mgScript, formula, null, services, simplificationTechnique);
+		return simplify(mgdScript, formula, mgdScript.getScript().term("true"), services, simplificationTechnique);
 	}
 
 	public static Term simplify(final ManagedScript mgScript, final Term formula, final Term context,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		Objects.requireNonNull(context);
 		final ILogger logger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
@@ -146,7 +148,8 @@ public final class SmtUtils {
 			logger.info(String.format("Current caller to simplify is %s",
 					ReflectionUtil.getCallerClassName(3).getSimpleName()));
 		}
-		if (context != null && simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA) {
+		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
+				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
 		}
@@ -163,7 +166,8 @@ public final class SmtUtils {
 				simplified = new SimplifyBdd(services, script).transformWithImplications(formula);
 				break;
 			case SIMPLIFY_DDA:
-				simplified = new SimplifyDDAWithTimeout(script.getScript(), services).getSimplifiedTerm(formula);
+				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
+						.getSimplifiedTerm(formula);
 				break;
 			case SIMPLIFY_QUICK:
 				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
@@ -171,7 +175,7 @@ public final class SmtUtils {
 			case NONE:
 				return formula;
 			case POLY_PAC:
-				simplified = PolyPacSimplificationTermWalker.simplify(script.getScript(), formula);
+				simplified = PolyPacSimplificationTermWalker.simplify(script.getScript(), context, formula);
 				break;
 			default:
 				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
@@ -219,11 +223,17 @@ public final class SmtUtils {
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
+			final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique) {
+		return simplifyWithStatistics(script, formula, script.term(null, "true"), services, simplificationTechnique);
+	}
+
+	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
 			final Term context, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
 		final long sizeBefore = new DAGSize().treesize(formula);
-		final Term simplified = simplify(script, formula, services, simplificationTechnique);
+		final Term simplified = simplify(script, formula, context, services, simplificationTechnique);
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		return new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter,

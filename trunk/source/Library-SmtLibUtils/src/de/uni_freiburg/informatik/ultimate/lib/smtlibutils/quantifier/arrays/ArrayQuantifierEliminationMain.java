@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.NestedArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -102,13 +102,13 @@ public class ArrayQuantifierEliminationMain {
 	 * eliminates quantified arrays in every recursion. quantifier can change during
 	 * recursion.
 	 */
-	public EliminationTask elimAllRec(final EliminationTask eTask) {
+	public EliminationTaskSimple elimAllRec(final EliminationTaskSimple eTask) {
 		mEliminatees.addAll(eTask.getEliminatees());
 		mLogger.info("ArrayQuantifierEliminationMain: ");
 		mLogger.debug("Recursion:" + mRecursiveCallCounter + " Eliminatees: " + mEliminatees);
 		mRecursiveCallCounter += 1;
 		mLogger.debug("Term: " + eTask.getTerm());
-		EliminationTask recTask = eTask;
+		EliminationTaskSimple recTask = eTask;
 
 		recTask = elimQuantifiedArray(recTask);
 
@@ -139,7 +139,7 @@ public class ArrayQuantifierEliminationMain {
 	 * recursive call of elimAllRec. PNF needed for quantifier alternations
 	 * SmtUtils.simplify in every recursion
 	 */
-	private EliminationTask recursivCall(final EliminationTask eTask, final Term quantifiedTerm) {
+	private EliminationTaskSimple recursivCall(final EliminationTaskSimple eTask, final Term quantifiedTerm) {
 
 		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(quantifiedTerm);
 		final Term pushed = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
@@ -152,28 +152,28 @@ public class ArrayQuantifierEliminationMain {
 			final Set<TermVariable> eliminatees = new HashSet<>(qv.getVariables());
 			if (!eliminatees.equals(eTask.getEliminatees())) {
 				matrix = SmtUtils.simplify(mMgdScript, matrix, mServices, mSimplificationTechnique);
-				EliminationTask recResult = new EliminationTask(qv.getQuantifier(), eliminatees, matrix);
+				EliminationTaskSimple recResult = new EliminationTaskSimple(qv.getQuantifier(), eliminatees, matrix);
 				recResult = elimAllRec(recResult);
 				matrix = recResult.getTerm();
 				matrix = SmtUtils.quantifier(mMgdScript.getScript(), qv.getQuantifier(), eliminatees, matrix);
 				matrix = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ONLY_DER, matrix);
 			}
 		}
-		return new EliminationTask(eTask.getQuantifier(), mEliminatees, matrix);
+		return new EliminationTaskSimple(eTask.getQuantifier(), mEliminatees, matrix);
 
 	}
 
 	/*
 	 * eliminates quantified arrays possible optimization: Array selection
 	 */
-	private EliminationTask elimQuantifiedArray(EliminationTask recTask) {
+	private EliminationTaskSimple elimQuantifiedArray(EliminationTaskSimple recTask) {
 		if (recTask.getTerm() instanceof ApplicationTerm) {
 			mTVER = calcThreeValuedEquiRel(recTask);
 			for (final TermVariable array : recTask.getEliminatees()) {
 				Term taskTerm = recTask.getTerm();
 				taskTerm = selectOverStore(taskTerm, array);
 				taskTerm = storeOverStore(taskTerm, array);
-				recTask = new EliminationTask(recTask.getQuantifier(), mEliminatees, taskTerm);
+				recTask = new EliminationTaskSimple(recTask.getQuantifier(), mEliminatees, taskTerm);
 				recTask = elimStores(recTask, array);
 			}
 		}
@@ -305,7 +305,7 @@ public class ArrayQuantifierEliminationMain {
 	 * stores all equalities of an conjunction in a ThreeValuedEquivalenceRelation
 	 */
 
-	private ThreeValuedEquivalenceRelation<Term> calcThreeValuedEquiRel(final EliminationTask eTask) {
+	private ThreeValuedEquivalenceRelation<Term> calcThreeValuedEquiRel(final EliminationTaskSimple eTask) {
 		final ApplicationTerm appterm = (ApplicationTerm) eTask.getTerm();
 		final ThreeValuedEquivalenceRelation<Term> tVER = new ThreeValuedEquivalenceRelation<>();
 		if (SmtUtils.isFunctionApplication(eTask.getTerm(), "and")) {
@@ -381,7 +381,7 @@ public class ArrayQuantifierEliminationMain {
 	/*
 	 * tries to eliminate the array "eliminate" by substitution.
 	 */
-	public EliminationTask elimArrayBySelects(final Term eTerm, final TermVariable eliminate, final int quantifier) {
+	public EliminationTaskSimple elimArrayBySelects(final Term eTerm, final TermVariable eliminate, final int quantifier) {
 
 		// Get select terms
 		final Set<ApplicationTerm> selectterms = new ApplicationTermFinder("select", false).findMatchingSubterms(eTerm);
@@ -423,13 +423,13 @@ public class ArrayQuantifierEliminationMain {
 			newTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, newTerm2, newTerm);
 			neweliminatees.add(eliminate); // add remaining eliminate
 			mNewValueEliminatees.addAll(neweliminatees);
-			return new EliminationTask(quantifier, neweliminatees, newTerm);
+			return new EliminationTaskSimple(quantifier, neweliminatees, newTerm);
 		}
 
 		final Set<TermVariable> oldeliminatees = new HashSet<>();
 		oldeliminatees.add(eliminate);
 		mEliminatees.addAll(oldeliminatees);
-		return new EliminationTask(quantifier, oldeliminatees, eTerm);
+		return new EliminationTaskSimple(quantifier, oldeliminatees, eTerm);
 	}
 
 	private Term elimStoreEQ(final TermVariable newindexvar, final TermVariable newarrayvar,
@@ -483,7 +483,7 @@ public class ArrayQuantifierEliminationMain {
 	 * equalities.
 	 */
 
-	private EliminationTask elimStores(final EliminationTask eTask, final TermVariable qarray) {
+	private EliminationTaskSimple elimStores(final EliminationTaskSimple eTask, final TermVariable qarray) {
 		final Set<ApplicationTerm> storeterms = new ApplicationTermFinder("store", false)
 				.findMatchingSubterms(eTask.getTerm());
 
@@ -515,7 +515,7 @@ public class ArrayQuantifierEliminationMain {
 			}
 		}
 		// eliminiate qarray in newterm
-		final EliminationTask newETask = elimArrayBySelects(newterm, qarray, eTask.getQuantifier());
+		final EliminationTaskSimple newETask = elimArrayBySelects(newterm, qarray, eTask.getQuantifier());
 		mNewIndexEliminatees.addAll(neweliminatees2);
 		return newETask;
 	}
