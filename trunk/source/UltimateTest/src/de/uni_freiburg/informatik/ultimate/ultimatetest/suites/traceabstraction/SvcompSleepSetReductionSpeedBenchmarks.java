@@ -36,7 +36,13 @@ public class SvcompSleepSetReductionSpeedBenchmarks extends AbstractTraceAbstrac
 			"examples/svcomp/pthread-wmm/mix047_pso.opt.i",
 			"examples/svcomp/pthread-wmm/mix040_tso.opt.i",
 			"examples/svcomp/pthread-wmm/mix030_power.opt.i",
-			//"examples/svcomp/pthread/triangular-longer-1.i" // has other (Z3?) problems; TODO debug later
+
+			"examples/svcomp/pthread-wmm/safe005_power.opt.i",
+			"examples/svcomp/pthread-wmm/safe005_rmo.oepc.i",
+			"examples/svcomp/pthread-wmm/safe005_rmo.opt.i",
+
+			// TODO has other (Z3?) problems; debug later
+			//"examples/svcomp/pthread/triangular-longer-1.i"
 	};
 
 
