@@ -150,7 +150,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 			// sort successorTransitionList according to the given order
 			successorTransitionList.sort(mOrder.getOrder(currentState));
 			final Set<L> explored = new HashSet<>();
-			final ArrayList<R> successorStateList = new ArrayList<>();
+			final ArrayDeque<R> successorStateList = new ArrayDeque<>(successorTransitionList.size());
 
 			// TODO (Dominik 2021-01-24) Consider pre-computing independence between different outgoing transitions,
 			// and between outgoing transitions and sleep set members, at an earlier point. The background is that
@@ -177,14 +177,11 @@ public class SleepSetNewStateReduction<L, S, R> {
 					return;
 				}
 				if (!prune) {
-					successorStateList.add(succSleepSetState);
+					successorStateList.addFirst(succSleepSetState);
 				}
 				explored.add(currentLetter);
 			}
-			Collections.reverse(successorStateList);
-			for (final R succSleepSetState : successorStateList) {
-				mStateStack.push(succSleepSetState);
-			}
+			mStateStack.addAll(successorStateList);
 		}
 	}
 

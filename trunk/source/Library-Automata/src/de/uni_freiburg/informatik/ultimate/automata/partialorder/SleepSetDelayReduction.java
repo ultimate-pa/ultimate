@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -166,7 +165,7 @@ public class SleepSetDelayReduction<L, S> {
 			final Comparator<L> order = mOrder.getOrder(currentState);
 			successorTransitionList.sort(order);
 			final Set<L> explored = new HashSet<>();
-			final ArrayList<S> successorStateList = new ArrayList<>();
+			final Deque<S> successorStateList = new ArrayDeque<>(successorTransitionList.size());
 
 			for (final L currentLetter : successorTransitionList) {
 				final var currentTransition = getOnly(mOperand.internalSuccessors(currentState, currentLetter),
@@ -196,14 +195,11 @@ public class SleepSetDelayReduction<L, S> {
 					}
 				} else {
 					mSleepSetMap.put(succState, succSleepSet);
-					successorStateList.add(succState);
+					successorStateList.addFirst(succState);
 				}
 				explored.add(currentLetter);
 			}
-			Collections.reverse(successorStateList);
-			for (final S succState : successorStateList) {
-				mStateStack.push(succState);
-			}
+			mStateStack.addAll(successorStateList);
 
 		}
 
