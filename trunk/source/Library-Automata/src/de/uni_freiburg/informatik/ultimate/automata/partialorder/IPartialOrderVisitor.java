@@ -44,9 +44,8 @@ public interface IPartialOrderVisitor<L, S> {
 	 *
 	 * @param state
 	 *            initial state where the DFS starts
-	 * @return true to indicate that the POR-search should be aborted, false otherwise.
 	 */
-	boolean addStartState(S state);
+	void addStartState(S state);
 
 	/**
 	 * Called when a transition is discovered.
@@ -69,14 +68,15 @@ public interface IPartialOrderVisitor<L, S> {
 	 *
 	 * @param state
 	 *            state that is discovered
-	 * @return true to indicate that the POR-search should be aborted, false otherwise.
+	 * @return true to indicate that outgoing transitions of the state should be pruned, i.e., that the successor states
+	 *         should not be visited by the DFS (from this state). Otherwise, return false.
 	 */
 	boolean discoverState(S state);
 
 	/**
 	 * Called when a state is backtracked.
 	 *
-	 * Note: At the moment, a state may be discovered and backtracked multiple times during the search.
+	 * Note: A state may be discovered and backtracked multiple times during the search.
 	 *
 	 * @param state
 	 *            state that is backtracked
@@ -92,4 +92,11 @@ public interface IPartialOrderVisitor<L, S> {
 	// TODO (Dominik 2021-01-24) We should try to get rid of this method, as "delaying" states is an
 	// implementation detail of SleepSetDelayReduction that should not be exposed to visitors.
 	void delayState(S state);
+
+	/**
+	 * Used to indicate that the visitor is finished and further traversal of the automaton is not needed.
+	 *
+	 * @return true if the search should be (completely) aborted, false otherwise.
+	 */
+	boolean isFinished();
 }

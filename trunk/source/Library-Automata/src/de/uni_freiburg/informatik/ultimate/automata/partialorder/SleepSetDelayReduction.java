@@ -65,9 +65,6 @@ public class SleepSetDelayReduction<L, S> {
 	private final ArrayDeque<S> mStateStack = new ArrayDeque<>();
 	private final HashMap<S, Deque<Set<L>>> mDelaySetMap = new HashMap<>();
 
-	// TODO make local var
-	private boolean mExit;
-
 	/**
 	 * Constructor for POR with Sleep Sets and Delay Set
 	 *
@@ -97,8 +94,7 @@ public class SleepSetDelayReduction<L, S> {
 		final S startState = getOneAndOnly(operand.getInitialStates(), "initial state");
 		mSleepSetMap.put(startState, new HashSet<>());
 		mStateStack.push(startState);
-		mExit = mVisitor.addStartState(startState);
-
+		mVisitor.addStartState(startState);
 		search();
 	}
 
@@ -121,7 +117,7 @@ public class SleepSetDelayReduction<L, S> {
 	}
 
 	private void search() {
-		while (!mExit && !mStateStack.isEmpty()) {
+		while (!mVisitor.isFinished() && !mStateStack.isEmpty()) {
 
 			final S currentState = mStateStack.peek();
 			Set<L> currentSleepSet = mSleepSetMap.get(currentState);
@@ -130,9 +126,12 @@ public class SleepSetDelayReduction<L, S> {
 
 			if (pruned == null) {
 				// state not visited yet
-				final boolean stop = mVisitor.discoverState(currentState);
-				mPrunedMap.put(currentState, mSleepSetMap.get(currentState));
-				if (!stop) {
+				mPrunedMap.put(currentState, currentSleepSet);
+				final boolean prune = mVisitor.discoverState(currentState);
+				if (mVisitor.isFinished()) {
+					return;
+				}
+				if (!prune) {
 					successorTransitionList.addAll(
 							DataStructureUtils.difference(mOperand.lettersInternal(currentState), currentSleepSet));
 				} else {
@@ -147,8 +146,11 @@ public class SleepSetDelayReduction<L, S> {
 				mSleepSetMap.put(currentState, currentSleepSet);
 				mPrunedMap.put(currentState, currentSleepSet);
 			} else {
-				final boolean stop = mVisitor.discoverState(currentState);
-				if (!stop) {
+				final boolean prune = mVisitor.discoverState(currentState);
+				if (mVisitor.isFinished()) {
+					return;
+				}
+				if (!prune) {
 					successorTransitionList.addAll(DataStructureUtils.difference(pruned, currentSleepSet));
 					currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
 					mSleepSetMap.put(currentState, currentSleepSet);
@@ -166,32 +168,37 @@ public class SleepSetDelayReduction<L, S> {
 			final Set<L> explored = new HashSet<>();
 			final ArrayList<S> successorStateList = new ArrayList<>();
 
-			for (final L letterTransition : successorTransitionList) {
-				final var currentTransition = getOnly(mOperand.internalSuccessors(currentState, letterTransition),
+			for (final L currentLetter : successorTransitionList) {
+				final var currentTransition = getOnly(mOperand.internalSuccessors(currentState, currentLetter),
 						"Automaton must be deterministic");
 				if (currentTransition == null) {
 					continue;
 				}
 
 				final S succState = currentTransition.getSucc();
+				final boolean prune = mVisitor.discoverTransition(currentState, currentLetter, succState);
+				if (mVisitor.isFinished()) {
+					return;
+				}
+				if (prune) {
+					explored.add(currentLetter);
+					continue;
+				}
+
 				final Set<L> succSleepSet = DataStructureUtils.union(currentSleepSet, explored).stream()
-						.filter(l -> mIndependenceRelation.contains(currentState, letterTransition, l))
-						.collect(Collectors.toCollection(HashSet::new));
-
-				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
-
-				if (!mExit && mStateStack.contains(succState)) {
+						.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
+						.collect(Collectors.toCollection(HashSet::new)); // TODO .toSet()? // TODO factor out
+				if (mStateStack.contains(succState)) {
 					enterDelaySet(currentState, succSleepSet);
 					mVisitor.delayState(currentState);
+					if (mVisitor.isFinished()) {
+						return;
+					}
 				} else {
 					mSleepSetMap.put(succState, succSleepSet);
 					successorStateList.add(succState);
 				}
-				explored.add(letterTransition);
-
-				if (mExit) {
-					break;
-				}
+				explored.add(currentLetter);
 			}
 			Collections.reverse(successorStateList);
 			for (final S succState : successorStateList) {

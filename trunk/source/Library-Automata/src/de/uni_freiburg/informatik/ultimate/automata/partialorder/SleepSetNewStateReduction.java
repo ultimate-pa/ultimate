@@ -30,152 +30,164 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Implementation of the Sleep Set Reduction with new states.
- * 
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- * 		letter
+ *            letter
  * @param <S>
- * 		state
+ *            state
  * @param <S2>
- * 		sleep set state
+ *            sleep set state
  */
-public class SleepSetNewStateReduction<L, S, S2> {
+public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
 
-	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
-	private final Set<S> mStartStateSet;
-	private final Set<S2> mVisitedSet;
-	private final ArrayDeque<S2> mStateStack;
-	private final HashMap<S2, Pair<S, Set<L>>> mStateMap;
+	private final ISleepSetStateFactory<L, S, S2> mStateFactory;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
-	private final ISleepSetStateFactory<L, S, S2> mStateFactory;
-	private final IPartialOrderVisitor<L, S> mVisitor;
-	private boolean mExit;
+	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
+	private final IPartialOrderVisitor<L, S> mVisitor; // TODO should use S2
+
+	private final Set<S2> mVisitedSet = new HashSet<>();
+	private final ArrayDeque<S2> mStateStack = new ArrayDeque<>();
+	private final HashMap<S2, Pair<S, Set<L>>> mStateMap = new HashMap<>(); // TODO split into 2 maps
 
 	/**
 	 * Constructor of the Sleep Set Reduction with new states.
-	 * 
+	 *
 	 * @param operand
-	 * 		deterministic finite automaton
+	 *            deterministic finite automaton
 	 * @param independenceRelation
-	 * 		the independence relation used for reduction purposes
+	 *            the independence relation used for reduction purposes
 	 * @param sleepSetOrder
-	 * 		order for transition handling
+	 *            order for transition handling
 	 * @param stateFactory
-	 * 		state factory
+	 *            state factory
 	 * @param visitor
-	 * 		the visitor class used for the reduction
+	 *            the visitor class used for the reduction
 	 */
 	public SleepSetNewStateReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
 			final ISleepSetStateFactory<L, S, S2> stateFactory, final IPartialOrderVisitor<L, S> visitor) {
-		mStateFactory = stateFactory;
-		mOperand = operand;
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
-		mStartStateSet = CoreUtil.constructHashSet(operand.getInitialStates());
-		assert (mStartStateSet.size() == 1) : "Only one initial state allowed";
-
-		mVisitedSet = new HashSet<>();
-		mStateStack = new ArrayDeque<>();
-		mStateMap = new HashMap<>();
-		mVisitor = visitor;
-		mExit = false;
-		for (final S startState : mStartStateSet) {
-			final Set<L> emptySet = new HashSet<>();
-			final Pair<S, Set<L>> startStatePair = new Pair<>(startState, emptySet);
-			final S2 newStartState = stateFactory.createSleepSetState(startState, emptySet);
-			mExit = mVisitor.addStartState(startState);
-			mStateStack.push(newStartState);
-			mStateMap.put(newStartState, startStatePair);
-
-		}
+		mStateFactory = stateFactory;
 		mOrder = sleepSetOrder;
 		mIndependenceRelation = independenceRelation;
+		mOperand = operand;
+		mVisitor = visitor;
+
+		final S startState = getOneAndOnly(operand.getInitialStates(), "initial state");
+		final S2 newStartState = getSleepSetState(startState, Collections.emptySet());
+		mVisitor.addStartState(startState);
+		mStateStack.push(newStartState);
 		search();
 	}
 
-	private void search() {
+	// TODO eliminate duplication
+	private static <E> E getOneAndOnly(final Iterable<E> elements, final String thing) {
+		final Iterator<E> iterator = elements.iterator();
+		assert iterator.hasNext() : "Must have at least one " + thing;
+		final E elem = iterator.next();
+		assert !iterator.hasNext() : "Only one " + thing + " allowed";
+		return elem;
+	}
 
-		while (!mExit && !mStateStack.isEmpty()) {
+	// TODO eliminate duplication
+	private static <E> E getOnly(final Iterable<E> elements, final String errMsg) {
+		final Iterator<E> iterator = elements.iterator();
+		if (!iterator.hasNext()) {
+			return null;
+		}
+		final E elem = iterator.next();
+		assert !iterator.hasNext() : errMsg;
+		return elem;
+	}
+
+	private void search() {
+		while (!mVisitor.isFinished() && !mStateStack.isEmpty()) {
 
 			final S2 currentSleepSetState = mStateStack.peek();
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
 			final S currentState = mStateMap.get(currentSleepSetState).getFirst();
 			final Set<L> currentSleepSet = mStateMap.get(currentSleepSetState).getSecond();
 
+			// If state not visited with this sleep set, determine transitions to explore.
 			if (!mVisitedSet.contains(currentSleepSetState)) {
-				// state not visited with this sleep set
-				boolean stop = mVisitor.discoverState(currentState);
 				mVisitedSet.add(currentSleepSetState);
-				if (!stop) {
-					for (final OutgoingInternalTransition<L, S> transition : mOperand.internalSuccessors(currentState)) {
-						if (!currentSleepSet.contains(transition.getLetter())) {
-							successorTransitionList.add(transition.getLetter());
-						}
-					}
-				} else {
-					mVisitor.backtrackState(currentState);
-					mStateStack.pop();
+				final boolean prune = mVisitor.discoverState(currentState);
+				if (mVisitor.isFinished()) {
+					return;
 				}
-			} else {
+				if (!prune) {
+					successorTransitionList.addAll(
+							DataStructureUtils.difference(mOperand.lettersInternal(currentState), currentSleepSet));
+				}
+			}
+
+			// If all transitions have been explored or pruned (or there were none), backtrack.
+			if (successorTransitionList.isEmpty()) {
 				mVisitor.backtrackState(currentState);
 				mStateStack.pop();
+				continue;
 			}
 
 			// sort successorTransitionList according to the given order
-			final Comparator<L> order = mOrder.getOrder(currentState);
-			successorTransitionList.sort(order);
+			successorTransitionList.sort(mOrder.getOrder(currentState));
 			final Set<L> explored = new HashSet<>();
 			final ArrayList<S2> successorStateList = new ArrayList<>();
 
-			for (final L letterTransition : successorTransitionList) {
-				final var successors = mOperand.internalSuccessors(currentState, letterTransition).iterator();
-				if (!successors.hasNext()) {
+			// TODO (Dominik 2021-01-24) Consider pre-computing independence between different outgoing transitions,
+			// and between outgoing transitions and sleep set members, at an earlier point. The background is that
+			// in the usage of this class in SleepSetCegar, there is competition for a ManagedScript between the
+			// (interpolant) automaton and the independence checks. The fewer batches of independence checks, the
+			// fewer times the ManagedScript need change lock ownership.
+
+			for (final L currentLetter : successorTransitionList) {
+				final var currentTransition = getOnly(mOperand.internalSuccessors(currentState, currentLetter),
+						"Automaton must be deterministic");
+				if (currentTransition == null) {
 					continue;
 				}
-				final var currentTransition = successors.next();
-				assert !successors.hasNext() : "Automaton must be deterministic";
 
 				final S succState = currentTransition.getSucc();
-				// TODO (Dominik 2021-01-24) Consider pre-computing independence between different outgoing transitions,
-				// and between outgoing transitions and sleep set members, at an earlier point. The background is that
-				// in the usage of this class in SleepSetCegar, there is competition for a ManagedScript between the
-				// (interpolant) automaton and the independence checks. The fewer batches of independence checks, the
-				// fewer times the ManagedScript need change lock ownership.
 				final Set<L> succSleepSet = DataStructureUtils.union(currentSleepSet, explored).stream()
-						.filter(l -> mIndependenceRelation.contains(currentState, letterTransition, l))
+						.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
 						.collect(Collectors.toCollection(HashSet::new));
-				final S2 succSleepSetState = mStateFactory.createSleepSetState(succState, succSleepSet);
-				mStateMap.put(succSleepSetState, new Pair<>(succState, succSleepSet));
-				mExit = mVisitor.discoverTransition(currentState, letterTransition, succState);
-				successorStateList.add(succSleepSetState);
-				explored.add(letterTransition);
-				
-				if (mExit) {
-					break;
+				final S2 succSleepSetState = getSleepSetState(succState, succSleepSet);
+
+				final boolean prune = mVisitor.discoverTransition(currentState, currentLetter, succState);
+				if (mVisitor.isFinished()) {
+					return;
 				}
+				if (!prune) {
+					successorStateList.add(succSleepSetState);
+				}
+				explored.add(currentLetter);
 			}
 			Collections.reverse(successorStateList);
 			for (final S2 succSleepSetState : successorStateList) {
 				mStateStack.push(succSleepSetState);
 			}
 		}
+	}
+
+	private S2 getSleepSetState(final S state, final Set<L> sleepset) {
+		final S2 newState = mStateFactory.createSleepSetState(state, sleepset);
+		mStateMap.put(newState, new Pair<>(state, sleepset));
+		return newState;
 	}
 }

@@ -31,7 +31,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -39,34 +39,35 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
 /**
  * Visitor Class for the Sleep Set Reduction, which searches for an error state while reducing.
- * 
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- * 		letter
+ *            letter
  * @param <S>
- * 		state
+ *            state
  */
 public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
-	private Set<S> mDeadEndSet;
-	private  ArrayDeque<ArrayList<L>> mLetterStack;
-	private  ArrayDeque<ArrayList<S>> mStateStack;
-	private  ArrayList<L> mAcceptingTransitionSequence;
+	private final Set<S> mDeadEndSet;
+	private ArrayDeque<ArrayList<L>> mLetterStack;
+	private ArrayDeque<ArrayList<S>> mStateStack;
+	private ArrayList<L> mAcceptingTransitionSequence;
 	private Word<L> mAcceptingWord;
-	private  ArrayList<S> mAcceptingStateSequence;
-	private final Function<S, Boolean> mIsGoalState;
-	private final Function<S, Boolean> mIsHopelessState;
+	private ArrayList<S> mAcceptingStateSequence;
+	private final Predicate<S> mIsGoalState;
+	private final Predicate<S> mIsHopelessState;
 	private S mStartState;
-	
+	private boolean mFound;
+
 	/**
 	 * Constructor for the Sleep Set Reduction Visitor searching for an error trace.
-	 * 
+	 *
 	 * @param isGoalState
-	 * 		function to determine whether a state is a goal state
+	 *            function to determine whether a state is a goal state
 	 * @param isHopelessState
-	 * 		function to determine whether a state is a hopeless state
+	 *            function to identify "hopeless" states, i.e., states from which a goal state can not be reached
 	 */
-	public SleepSetVisitorSearch(Function<S, Boolean> isGoalState, Function<S, Boolean> isHopelessState) {
+	public SleepSetVisitorSearch(final Predicate<S> isGoalState, final Predicate<S> isHopelessState) {
 		mDeadEndSet = new HashSet<>();
 		mLetterStack = new ArrayDeque<>();
 		mStateStack = new ArrayDeque<>();
@@ -80,24 +81,30 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	@Override
 	public boolean discoverState(final S state) {
 		if (!state.equals(mStartState) && !mStateStack.peek().isEmpty()) {
-			mLetterStack.push(new ArrayList<L>());
-			mStateStack.push(new ArrayList<S>());
+			mLetterStack.push(new ArrayList<>());
+			mStateStack.push(new ArrayList<>());
 		}
-		return isDeadEndState(state) || mIsHopelessState.apply(state);
+		// prune successors of dead ends or hopeless states
+		return isDeadEndState(state) || mIsHopelessState.test(state);
 	}
 
 	@Override
 	public boolean discoverTransition(final S source, final L letter, final S target) {
+		assert !mFound : "Search must not continue after target state found";
+
 		// push letter onto Stack
 		mLetterStack.peek().add(letter);
 		mStateStack.peek().add(target);
-		return mIsGoalState.apply(target);
+		mFound = mIsGoalState.test(target);
+
+		// no pruning of transitions
+		return false;
 	}
 
 	@Override
 	public void backtrackState(final S state) {
 		// pop state's list and remove letter leading to state from predecessor's list
-		//mDeadEndSet.add(state); //enable this line to enable DeadEndDetection (currently not working!)
+		// mDeadEndSet.add(state); //enable this line to enable DeadEndDetection (currently not working!)
 		if (mStateStack.peek().isEmpty()) {
 			mLetterStack.pop();
 			mStateStack.pop();
@@ -106,15 +113,15 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 			try {
 				mLetterStack.peek().remove(0);
 				mStateStack.peek().remove(0);
-			} catch (IndexOutOfBoundsException e) {
-				System.out.print("Size of LetterStack is: " + mLetterStack.size() +
-						" and size of StateStack is: " + mStateStack.size());
+			} catch (final IndexOutOfBoundsException e) {
+				System.out.print("Size of LetterStack is: " + mLetterStack.size() + " and size of StateStack is: "
+						+ mStateStack.size());
 				System.out.print("Size of LetterStack entry is: " + mLetterStack.peek().size()
 						+ " and size of StateStack entry is: " + mStateStack.peek().size());
 			}
 		}
 	}
-	
+
 	@Override
 	public void delayState(final S state) {
 		mLetterStack.peek().remove(mLetterStack.peek().size() - 1);
@@ -122,24 +129,23 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	}
 
 	public NestedRun<L, S> constructRun() {
-		
-		//problem: initial == final
-		if (mIsGoalState.apply(mStartState)) {
+
+		// problem: initial == final
+		if (mIsGoalState.test(mStartState)) {
 			mAcceptingStateSequence.add(mStartState);
 			final NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
 			return new NestedRun<>(acceptingNestedWord, mAcceptingStateSequence);
-		}
-		else if (mStateStack.isEmpty()) {
+		} else if (mStateStack.isEmpty()) {
 			return null;
 		}
-		
+
 		ArrayList<L> currentTransitionList = mLetterStack.pop();
 		L currentTransition = currentTransitionList.get(currentTransitionList.size() - 1);
 		mAcceptingTransitionSequence.add(0, currentTransition);
 		ArrayList<S> currentStateList = mStateStack.pop();
 		S currentState = currentStateList.get(currentStateList.size() - 1);
 		mAcceptingStateSequence.add(0, currentState);
-		
+
 		while (!mStateStack.isEmpty()) {
 			currentTransitionList = mLetterStack.pop();
 			currentTransition = currentTransitionList.get(0);
@@ -157,32 +163,36 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 		final NestedWord<L> acceptingNestedWord = NestedWord.nestedWord(mAcceptingWord);
 		return new NestedRun<>(acceptingNestedWord, mAcceptingStateSequence);
 	}
-	
 
 	@Override
-	public boolean addStartState(final S state) {
+	public void addStartState(final S state) {
 		reset();
 		mStartState = state;
-		mLetterStack.push(new ArrayList<L>());
-		mStateStack.push(new ArrayList<S>());
-		return mIsGoalState.apply(state);
-		// do nothing
+		mLetterStack.push(new ArrayList<>());
+		mStateStack.push(new ArrayList<>());
+		mFound = mIsGoalState.test(state);
 	}
-	
+
+	@Override
+	public boolean isFinished() {
+		return mFound;
+	}
+
 	private void reset() {
 		mLetterStack = new ArrayDeque<>();
 		mStateStack = new ArrayDeque<>();
 		mAcceptingTransitionSequence = new ArrayList<>();
 		mAcceptingStateSequence = new ArrayList<>();
 		mAcceptingWord = new Word<>();
+		mFound = false;
 	}
-	
-	public boolean isDeadEndState(S state) {
-	// TODO (Dominik 2021-01-24) Consider moving dead-end optimization to subclass
+
+	public boolean isDeadEndState(final S state) {
+		// TODO (Dominik 2021-01-24) Consider moving dead-end optimization to subclass
 		return mDeadEndSet.contains(state);
 	}
-	
-	public void addDeadEndState(S state) {
+
+	public void addDeadEndState(final S state) {
 		mDeadEndSet.add(state);
 	}
 }

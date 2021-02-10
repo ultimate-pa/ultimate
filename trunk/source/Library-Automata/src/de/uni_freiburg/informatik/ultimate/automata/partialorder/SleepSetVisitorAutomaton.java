@@ -34,13 +34,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 
 /**
  * Visitor Class for the Sleep Set Reduction, which constructs the reduced automaton.
- * 
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- * 		letter
+ *            letter
  * @param <S>
- * 		state
+ *            state
  */
 public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S> {
 
@@ -49,13 +49,13 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 
 	/**
 	 * Constructor for the Sleep Set Reduction Visitor constructing the reduced automaton.
-	 * 
+	 *
 	 * @param operand
-	 * 		automaton
+	 *            automaton
 	 * @param services
-	 * 		services
+	 *            services
 	 * @param stateFactory
-	 * 		state factory
+	 *            state factory
 	 */
 	public SleepSetVisitorAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final AutomataLibraryServices services, final IEmptyStackStateFactory<S> stateFactory) {
@@ -73,7 +73,7 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 	public boolean discoverTransition(final S source, final L letter, final S target) {
 		// add succState to the automaton
 		if (!mReductionAutomaton.contains(target)) {
-			mReductionAutomaton.addState(false, mOperand.isFinal(target), target);
+			mReductionAutomaton.addState(mOperand.isInitial(target), mOperand.isFinal(target), target);
 		}
 		// add transition from currentState to succState to the automaton
 		mReductionAutomaton.addInternalTransition(source, letter, target);
@@ -90,16 +90,17 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 	}
 
 	@Override
-	public boolean addStartState(final S state) {
+	public void addStartState(final S state) {
 		mReductionAutomaton.addState(true, mOperand.isFinal(state), state);
-		return false;
-
 	}
 
 	@Override
-	public void delayState(S state) {
+	public void delayState(final S state) {
 		// do nothing
-		
 	}
 
+	@Override
+	public boolean isFinished() {
+		return false;
+	}
 }
