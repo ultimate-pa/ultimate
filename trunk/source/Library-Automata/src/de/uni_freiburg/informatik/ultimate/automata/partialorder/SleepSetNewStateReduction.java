@@ -33,37 +33,39 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Implementation of the Sleep Set Reduction with new states.
+ * Implementation of the Sleep Set Reduction with new states. This variant explores a reduction automaton that partially
+ * unfolds and unrolls the input automaton, in order to guarantee a reduction that is minimal (in terms of the accepted
+ * language).
  *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- *            letter
+ *            The type of letters of the input automaton.
  * @param <S>
- *            state
- * @param <S2>
- *            sleep set state
+ *            The type of states of the input automaton.
+ * @param <R>
+ *            The type of states of the reduced automaton that is built on-the-fly.
  */
-public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
-
-	private final ISleepSetStateFactory<L, S, S2> mStateFactory;
+public class SleepSetNewStateReduction<L, S, R> {
+	private final ISleepSetStateFactory<L, S, R> mStateFactory;
 	private final ISleepSetOrder<S, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
-	private final IPartialOrderVisitor<L, S> mVisitor; // TODO should use S2
+	private final IPartialOrderVisitor<L, R> mVisitor;
 
-	private final Set<S2> mVisitedSet = new HashSet<>();
-	private final ArrayDeque<S2> mStateStack = new ArrayDeque<>();
-	private final HashMap<S2, Pair<S, Set<L>>> mStateMap = new HashMap<>(); // TODO split into 2 maps
+	private final Set<R> mVisitedSet = new HashSet<>();
+	private final ArrayDeque<R> mStateStack = new ArrayDeque<>();
+	private final Map<R, Set<L>> mSleepMap = new HashMap<>();
+	private final Map<R, S> mStateMap = new HashMap<>();
 
 	/**
 	 * Constructor of the Sleep Set Reduction with new states.
@@ -81,7 +83,7 @@ public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
 	 */
 	public SleepSetNewStateReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
-			final ISleepSetStateFactory<L, S, S2> stateFactory, final IPartialOrderVisitor<L, S> visitor) {
+			final ISleepSetStateFactory<L, S, R> stateFactory, final IPartialOrderVisitor<L, R> visitor) {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
 		mStateFactory = stateFactory;
@@ -91,8 +93,8 @@ public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
 		mVisitor = visitor;
 
 		final S startState = getOneAndOnly(operand.getInitialStates(), "initial state");
-		final S2 newStartState = getSleepSetState(startState, Collections.emptySet());
-		mVisitor.addStartState(startState);
+		final R newStartState = getSleepSetState(startState, Collections.emptySet());
+		mVisitor.addStartState(newStartState);
 		mStateStack.push(newStartState);
 		search();
 	}
@@ -120,15 +122,15 @@ public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
 	private void search() {
 		while (!mVisitor.isFinished() && !mStateStack.isEmpty()) {
 
-			final S2 currentSleepSetState = mStateStack.peek();
+			final R currentSleepSetState = mStateStack.peek();
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
-			final S currentState = mStateMap.get(currentSleepSetState).getFirst();
-			final Set<L> currentSleepSet = mStateMap.get(currentSleepSetState).getSecond();
+			final S currentState = mStateMap.get(currentSleepSetState);
+			final Set<L> currentSleepSet = mSleepMap.get(currentSleepSetState);
 
 			// If state not visited with this sleep set, determine transitions to explore.
 			if (!mVisitedSet.contains(currentSleepSetState)) {
 				mVisitedSet.add(currentSleepSetState);
-				final boolean prune = mVisitor.discoverState(currentState);
+				final boolean prune = mVisitor.discoverState(currentSleepSetState);
 				if (mVisitor.isFinished()) {
 					return;
 				}
@@ -140,7 +142,7 @@ public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
 
 			// If all transitions have been explored or pruned (or there were none), backtrack.
 			if (successorTransitionList.isEmpty()) {
-				mVisitor.backtrackState(currentState);
+				mVisitor.backtrackState(currentSleepSetState);
 				mStateStack.pop();
 				continue;
 			}
@@ -148,7 +150,7 @@ public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
 			// sort successorTransitionList according to the given order
 			successorTransitionList.sort(mOrder.getOrder(currentState));
 			final Set<L> explored = new HashSet<>();
-			final ArrayList<S2> successorStateList = new ArrayList<>();
+			final ArrayList<R> successorStateList = new ArrayList<>();
 
 			// TODO (Dominik 2021-01-24) Consider pre-computing independence between different outgoing transitions,
 			// and between outgoing transitions and sleep set members, at an earlier point. The background is that
@@ -167,9 +169,10 @@ public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
 				final Set<L> succSleepSet = DataStructureUtils.union(currentSleepSet, explored).stream()
 						.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
 						.collect(Collectors.toCollection(HashSet::new));
-				final S2 succSleepSetState = getSleepSetState(succState, succSleepSet);
+				final R succSleepSetState = getSleepSetState(succState, succSleepSet);
 
-				final boolean prune = mVisitor.discoverTransition(currentState, currentLetter, succState);
+				final boolean prune =
+						mVisitor.discoverTransition(currentSleepSetState, currentLetter, succSleepSetState);
 				if (mVisitor.isFinished()) {
 					return;
 				}
@@ -179,15 +182,16 @@ public class SleepSetNewStateReduction<L, S, S2> { // TODO rename S2
 				explored.add(currentLetter);
 			}
 			Collections.reverse(successorStateList);
-			for (final S2 succSleepSetState : successorStateList) {
+			for (final R succSleepSetState : successorStateList) {
 				mStateStack.push(succSleepSetState);
 			}
 		}
 	}
 
-	private S2 getSleepSetState(final S state, final Set<L> sleepset) {
-		final S2 newState = mStateFactory.createSleepSetState(state, sleepset);
-		mStateMap.put(newState, new Pair<>(state, sleepset));
+	private R getSleepSetState(final S state, final Set<L> sleepset) {
+		final R newState = mStateFactory.createSleepSetState(state, sleepset);
+		mStateMap.put(newState, state);
+		mSleepMap.put(newState, sleepset);
 		return newState;
 	}
 }
