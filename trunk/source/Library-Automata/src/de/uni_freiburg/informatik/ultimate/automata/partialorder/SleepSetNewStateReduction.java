@@ -181,7 +181,9 @@ public class SleepSetNewStateReduction<L, S, R> {
 				}
 				explored.add(currentLetter);
 			}
-			mStateStack.addAll(successorStateList);
+			for (final R succState : successorStateList) {
+				mStateStack.push(succState);
+			}
 		}
 	}
 
