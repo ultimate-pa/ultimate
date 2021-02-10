@@ -110,15 +110,8 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 			mStateStack.pop();
 		}
 		if (!mLetterStack.isEmpty()) {
-			try {
-				mLetterStack.peek().remove(0);
-				mStateStack.peek().remove(0);
-			} catch (final IndexOutOfBoundsException e) {
-				System.out.print("Size of LetterStack is: " + mLetterStack.size() + " and size of StateStack is: "
-						+ mStateStack.size());
-				System.out.print("Size of LetterStack entry is: " + mLetterStack.peek().size()
-						+ " and size of StateStack entry is: " + mStateStack.peek().size());
-			}
+			mLetterStack.peek().remove(0);
+			mStateStack.peek().remove(0);
 		}
 	}
 
