@@ -48,7 +48,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
  *            state
  */
 public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
-	private final Set<S> mDeadEndSet;
+	private final Set<S> mDeadEndSet = new HashSet<>();
+	private final boolean mDeadStateOptimization;
+
 	private ArrayDeque<ArrayList<L>> mLetterStack;
 	private ArrayDeque<ArrayList<S>> mStateStack;
 	private ArrayList<L> mAcceptingTransitionSequence;
@@ -66,9 +68,12 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	 *            function to determine whether a state is a goal state
 	 * @param isHopelessState
 	 *            function to identify "hopeless" states, i.e., states from which a goal state can not be reached
+	 * @param deadStateOptimization
+	 *            whether or not to use the "dead" state optimization -- this can affect soundness
 	 */
-	public SleepSetVisitorSearch(final Predicate<S> isGoalState, final Predicate<S> isHopelessState) {
-		mDeadEndSet = new HashSet<>();
+	public SleepSetVisitorSearch(final Predicate<S> isGoalState, final Predicate<S> isHopelessState,
+			final boolean deadStateOptimization) {
+		mDeadStateOptimization = deadStateOptimization;
 		mLetterStack = new ArrayDeque<>();
 		mStateStack = new ArrayDeque<>();
 		mAcceptingTransitionSequence = new ArrayList<>();
@@ -104,7 +109,7 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	@Override
 	public void backtrackState(final S state) {
 		// pop state's list and remove letter leading to state from predecessor's list
-		// mDeadEndSet.add(state); //enable this line to enable DeadEndDetection (currently not working!)
+		mDeadEndSet.add(state);
 		if (mStateStack.peek().isEmpty()) {
 			mLetterStack.pop();
 			mStateStack.pop();
@@ -182,10 +187,12 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 
 	public boolean isDeadEndState(final S state) {
 		// TODO (Dominik 2021-01-24) Consider moving dead-end optimization to subclass
-		return mDeadEndSet.contains(state);
+		return mDeadStateOptimization && mDeadEndSet.contains(state);
 	}
 
 	public void addDeadEndState(final S state) {
-		mDeadEndSet.add(state);
+		if (mDeadStateOptimization) {
+			mDeadEndSet.add(state);
+		}
 	}
 }

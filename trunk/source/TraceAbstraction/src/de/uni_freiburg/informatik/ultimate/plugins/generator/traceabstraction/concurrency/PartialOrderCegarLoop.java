@@ -106,8 +106,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				services, compositionFactory, transitionClazz);
 		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
-		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
+		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState,
+				supportsDeadStateOptimization(mPartialOrderMode));
 		mIndependenceCache = new DefaultIndependenceCache<>();
+	}
+
+	private static final boolean supportsDeadStateOptimization(final PartialOrderMode mode) {
+		// At the moment, only SLEEP_NEW_STATES supports this optimization.
+		return mode == PartialOrderMode.SLEEP_NEW_STATES;
 	}
 
 	@Override
