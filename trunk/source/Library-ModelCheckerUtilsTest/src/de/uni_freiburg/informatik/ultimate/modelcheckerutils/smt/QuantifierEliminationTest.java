@@ -588,6 +588,31 @@ public class QuantifierEliminationTest {
 		runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void commutingStoresExists() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
+		final String inputSTR = "(exists ((arr (Array Int Int))) (not (= (store (store arr i 2) j 3) (store (store arr j 3) i 2))))";
+		final String expectedResult = "(= i j)";
+		runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void storeComparisonExistsAntider() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
+		final String inputSTR = "(exists ((arr (Array Int Int))) (not (= (store arr i 42) (store arr j 42))))";
+		final String expectedResult = "(distinct i j)";
+		runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void storeComparisonExistsDer() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
+		final String inputSTR = "(exists ((arr (Array Int Int))) (= (store arr i 42) (store arr j 23)))";
+		final String expectedResult = "(= i j)";
+		runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 	static void runQuantifierEliminationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
