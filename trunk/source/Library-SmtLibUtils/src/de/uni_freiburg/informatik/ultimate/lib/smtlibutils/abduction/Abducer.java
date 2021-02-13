@@ -42,6 +42,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
+/**
+ * Performs logical abduction. That is, given a premise phi and a conclusion psi, such that the implication "phi -> psi"
+ * is NOT valid, attempts to find a formula phi' such that the implication "phi /\ phi' -> psi" is valid, and
+ * furthermore "phi /\ phi'" is satisfiable (ruling out trivial solutions such as false). The returned phi' should be as
+ * simple and as logically weak as possible.
+ *
+ * Based on the algorithm presented in the 2013 Interpolation Workshop presentation by Isil Dillig
+ * <https://www.cs.utexas.edu/~isil/interpolation-workshop.pdf>.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ */
 public class Abducer {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -49,15 +61,49 @@ public class Abducer {
 	private final ToIntFunction<TermVariable> mCost;
 	private final Set<TermVariable> mForbiddenVars;
 
+	/**
+	 * Creates a new abducer.
+	 *
+	 * @param services
+	 *            Ultimate services, used in quantifier elimination
+	 * @param script
+	 *            Script instance, used for satisfiability checks and quantifier elimination
+	 */
 	public Abducer(final IUltimateServiceProvider services, final ManagedScript script) {
 		this(services, script, Collections.emptySet());
 	}
 
+	/**
+	 * Creates a new abducer that restricts the variables that can be used in the resulting formula.
+	 *
+	 * @param services
+	 *            Ultimate services, used in quantifier elimination
+	 * @param script
+	 *            Script instance, used for satisfiability checks and quantifier elimination
+	 * @param forbiddenVars
+	 *            A set of variables that may not be used in the resulting formula (phi' in the description above). Note
+	 *            that this restricts the problem and may lead to no solution being found.
+	 */
 	public Abducer(final IUltimateServiceProvider services, final ManagedScript script,
 			final Set<TermVariable> forbiddenVars) {
 		this(services, script, x -> 1, forbiddenVars);
 	}
 
+	/**
+	 * Creates a new abducer that restricts the variables that can be used in the resulting formula, and assigns a cost
+	 * (to be minimized) to used variables.
+	 *
+	 * @param services
+	 *            Ultimate services, used in quantifier elimination
+	 * @param script
+	 *            Script instance, used for satisfiability checks and quantifier elimination
+	 * @param cost
+	 *            A cost function that assigns a cost to each variable. The computation minimizes the sum cost of all
+	 *            free variables in the solution.
+	 * @param forbiddenVars
+	 *            A set of variables that may not be used in the resulting formula (phi' in the description above). Note
+	 *            that this restricts the problem and may lead to no solution being found.
+	 */
 	public Abducer(final IUltimateServiceProvider services, final ManagedScript script,
 			final ToIntFunction<TermVariable> cost, final Set<TermVariable> forbiddenVars) {
 		mServices = services;
@@ -67,11 +113,21 @@ public class Abducer {
 		mForbiddenVars = forbiddenVars;
 	}
 
+	/**
+	 * Computes the solution to a given abduction problem.
+	 *
+	 * @param premise
+	 *            The premise of an invalid implication (phi in the description above)
+	 * @param conclusion
+	 *            The conclusion of an invalid implication (psi in the description above)
+	 * @return the problem solution, if one exists (psi in the description above). Null otherwise.
+	 */
 	public Term abduce(final Term premise, final Term conclusion) {
 		final Term implication = SmtUtils.implies(mScript.getScript(), premise, conclusion);
 		final Term quantifiedImplication = tryEliminateForall(mForbiddenVars, implication);
 
-		final LBool sat = SmtUtils.checkSatTerm(mScript.getScript(), quantifiedImplication);
+		final LBool sat = SmtUtils.checkSatTerm(mScript.getScript(),
+				SmtUtils.and(mScript.getScript(), premise, quantifiedImplication));
 		if (sat != LBool.SAT) {
 			return null;
 		}
@@ -94,8 +150,10 @@ public class Abducer {
 	}
 
 	private boolean checkResult(final Term premise, final Term conclusion, final Term abductor) {
-		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(),
+		final LBool impl = SmtUtils.checkSatTerm(mScript.getScript(),
 				SmtUtils.and(mScript.getScript(), premise, abductor, SmtUtils.not(mScript.getScript(), conclusion)));
-		return result != LBool.SAT;
+		final LBool cons =
+				SmtUtils.checkSatTerm(mScript.getScript(), SmtUtils.and(mScript.getScript(), premise, abductor));
+		return impl != LBool.SAT && cons != LBool.UNSAT;
 	}
 }

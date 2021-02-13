@@ -46,6 +46,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
+/**
+ * Computes a maximum universal set for a given formula phi, i.e., a subset X of phi's free variables, such that
+ * "\forall X. phi" is satisfiable, and such that X maximizes a cost function.
+ *
+ * Based on the paper "Minimum Satisfying Assignments for SMT" by Isil Dillig, Thomas Dillig, Kenneth L. McMillan and
+ * Alex Aiken (CAV 2012).
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public class MaximumUniversalSetComputation {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -54,10 +63,26 @@ public class MaximumUniversalSetComputation {
 	private final ToIntFunction<TermVariable> mCost;
 	private final Term mContext;
 
-	private Set<TermVariable> mPartialMus;
-	private Term mQuantifiedMusFormula;
-	private int mMusCost;
+	private Set<TermVariable> mUniversalSet;
+	private Term mQuantifiedUniversalFormula;
+	private int mUniversalSetCost;
 
+	/**
+	 * Run a new maximum universal set computation.
+	 *
+	 * @param services
+	 *            Ultimate services (for logging and quantifier elimination)
+	 * @param mgdScript
+	 *            A script that is used to check satisfiability, and for quantifier elimination
+	 * @param phi
+	 *            The formula whose maximum universal set is computed. Must be satisfiable.
+	 * @param context
+	 *            An optional context formula (set to null if not needed). If given, the universal set X that is
+	 *            computed must be such that "context /\ \forall X. phi" is satisfiable.
+	 * @param cost
+	 *            A function that assigns a cost to each variable in the term. This will be maximized by the computed
+	 *            universal set.
+	 */
 	public MaximumUniversalSetComputation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term phi, final Term context, final ToIntFunction<TermVariable> cost) {
 		mServices = services;
@@ -71,30 +96,46 @@ public class MaximumUniversalSetComputation {
 		computeMUS(phi, variables, 0, varCost, 0);
 	}
 
+	/**
+	 * Get the variables in the universal set.
+	 *
+	 * @return the set X, as described above
+	 */
 	public Set<TermVariable> getVariables() {
-		return mPartialMus;
+		return mUniversalSet;
 	}
 
+	/**
+	 * A satisfiable formula equivalent to "\forall X. phi". Simplification and partial quantifier elimination may have
+	 * been applied.
+	 *
+	 * @return the universally-quantified input formula
+	 */
 	public Term getQuantifiedFormula() {
-		return mQuantifiedMusFormula;
+		return mQuantifiedUniversalFormula;
 	}
 
+	/**
+	 * The cost of the computed maximum universal set.
+	 *
+	 * @return the sum of the cost of all variables in the set
+	 */
 	public int getCost() {
-		return mMusCost;
+		return mUniversalSetCost;
 	}
 
 	private void computeMUS(final Term phi, final TermVariable[] variables, final int minVar, final int varCost,
 			int lowerBound) {
 		if (minVar >= variables.length || varCost <= lowerBound) {
 			// No more variables, or bound cannot be improved.
-			mPartialMus = new HashSet<>();
-			mQuantifiedMusFormula = phi;
-			mMusCost = 0;
+			mUniversalSet = new HashSet<>();
+			mQuantifiedUniversalFormula = phi;
+			mUniversalSetCost = 0;
 			return;
 		}
 
-		// Initialization: assume no variables in MUS, no additional quantification of formula
-		Set<TermVariable> bestMUS = new HashSet<>();
+		// Initialization: assume no variables in maximum universal set; no additional quantification of formula
+		Set<TermVariable> bestUniversalSet = new HashSet<>();
 		Term bestFormula = phi;
 		int bestCost = 0;
 
@@ -102,33 +143,39 @@ public class MaximumUniversalSetComputation {
 		final TermVariable x = variables[minVar];
 		final int xCost = mCost.applyAsInt(x);
 		final Term quantifiedPhi = tryEliminateUniversal(x, phi);
-		final LBool includeX = SmtUtils.checkSatTerm(mMgdScript.getScript(),
-				SmtUtils.and(mMgdScript.getScript(), mContext, quantifiedPhi));
+		final LBool includeX = SmtUtils.checkSatTerm(mMgdScript.getScript(), getWithContext(quantifiedPhi));
 
 		if (includeX == LBool.SAT) {
-			// If x can be added, compute remaining MUS after adding x
+			// If x can be added, compute remaining maximum universal set after adding x
 			computeMUS(quantifiedPhi, variables, minVar + 1, varCost - xCost, lowerBound - xCost);
-			if (mMusCost + xCost > lowerBound) {
-				bestMUS = mPartialMus;
-				bestMUS.add(x);
-				bestFormula = mQuantifiedMusFormula;
-				bestCost = mMusCost + xCost;
+			if (mUniversalSetCost + xCost > lowerBound) {
+				bestUniversalSet = mUniversalSet;
+				bestUniversalSet.add(x);
+				bestFormula = mQuantifiedUniversalFormula;
+				bestCost = mUniversalSetCost + xCost;
 				lowerBound = bestCost;
 			}
 		}
 
-		// In either case, compute MUS without x
+		// In either case, compute maximum universal set without x
 		computeMUS(phi, variables, minVar + 1, varCost - xCost, lowerBound);
-		if (mMusCost > lowerBound) {
-			bestMUS = mPartialMus;
-			bestFormula = mQuantifiedMusFormula;
-			bestCost = mMusCost;
+		if (mUniversalSetCost > lowerBound) {
+			bestUniversalSet = mUniversalSet;
+			bestFormula = mQuantifiedUniversalFormula;
+			bestCost = mUniversalSetCost;
 		}
 
 		// Determine result
-		mPartialMus = bestMUS;
-		mQuantifiedMusFormula = bestFormula;
-		mMusCost = bestCost;
+		mUniversalSet = bestUniversalSet;
+		mQuantifiedUniversalFormula = bestFormula;
+		mUniversalSetCost = bestCost;
+	}
+
+	private Term getWithContext(final Term formula) {
+		if (mContext == null) {
+			return formula;
+		}
+		return SmtUtils.and(mMgdScript.getScript(), mContext, formula);
 	}
 
 	private Term tryEliminateUniversal(final TermVariable x, final Term phi) {
