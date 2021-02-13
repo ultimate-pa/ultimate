@@ -136,11 +136,11 @@ public class Abducer {
 				new MaximumUniversalSetComputation(mServices, mScript, quantifiedImplication, premise, mCost)
 						.getVariables();
 		final Term unsimplified = tryEliminateForall(msu, quantifiedImplication);
-		final Term abductor =
+		final Term solution =
 				SmtUtils.simplify(mScript, unsimplified, premise, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 
-		assert checkResult(premise, conclusion, abductor) : "Abduction failed";
-		return abductor;
+		assert checkResult(premise, conclusion, solution) : "Abduction failed";
+		return solution;
 	}
 
 	private Term tryEliminateForall(final Set<TermVariable> vars, final Term formula) {
@@ -149,11 +149,17 @@ public class Abducer {
 				QuantifiedFormula.FORALL, vars, formula);
 	}
 
-	private boolean checkResult(final Term premise, final Term conclusion, final Term abductor) {
+	private boolean checkResult(final Term premise, final Term conclusion, final Term solution) {
 		final LBool impl = SmtUtils.checkSatTerm(mScript.getScript(),
-				SmtUtils.and(mScript.getScript(), premise, abductor, SmtUtils.not(mScript.getScript(), conclusion)));
+				SmtUtils.and(mScript.getScript(), premise, solution, SmtUtils.not(mScript.getScript(), conclusion)));
+		assert impl != LBool.SAT : "Abduction failed: premise " + premise + " and solution " + solution
+				+ " do not imply conclusion " + conclusion;
+
 		final LBool cons =
-				SmtUtils.checkSatTerm(mScript.getScript(), SmtUtils.and(mScript.getScript(), premise, abductor));
+				SmtUtils.checkSatTerm(mScript.getScript(), SmtUtils.and(mScript.getScript(), premise, solution));
+		assert cons != LBool.UNSAT : "Abduction failed: premise " + premise + " and solution " + solution
+				+ " are inconsistent";
+
 		return impl != LBool.SAT && cons != LBool.UNSAT;
 	}
 }
