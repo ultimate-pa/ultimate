@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
@@ -303,21 +302,22 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		}
 
 		private IPredicate normalize(final IPredicate condition, final L a, final L b) {
-			final Term formula = condition.getFormula();
-
 			// Syntactically determine if condition is possibly relevant to independence.
-			final Set<TermVariable> inputVars = Stream
-					.concat(a.getTransformula().getInVars().keySet().stream(),
-							b.getTransformula().getInVars().keySet().stream())
-					.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-			final boolean isRelevant = Arrays.stream(formula.getFreeVars()).anyMatch(inputVars::contains);
-			if (!isRelevant && !mIsInconsistent.test(condition)) {
-				// Fall back to independence without condition.
-				return null;
-			}
+			final Set<TermVariable> relevantVars = getRelevantVariables(a, b);
+			final boolean isRelevant =
+					Arrays.stream(condition.getFormula().getFreeVars()).anyMatch(relevantVars::contains);
 
-			return condition;
+			if (isRelevant || mIsInconsistent.test(condition)) {
+				return condition;
+			}
+			// If condition irrelevant, fall back to independence without condition.
+			return null;
 		}
 
+		private Set<TermVariable> getRelevantVariables(final L a, final L b) {
+			final Stream<IProgramVar> readA = a.getTransformula().getInVars().keySet().stream();
+			final Stream<IProgramVar> readB = b.getTransformula().getInVars().keySet().stream();
+			return Stream.concat(readA, readB).map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		}
 	}
 }
