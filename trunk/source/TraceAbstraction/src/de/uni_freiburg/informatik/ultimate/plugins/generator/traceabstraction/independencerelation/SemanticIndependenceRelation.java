@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -42,8 +44,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -81,6 +85,14 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private long mUnknownQueries;
 	private long mComputationTimeNano;
 
+	private final Map<IProgramVarOrConst, IProgramVarOrConst> mTransferCache = new HashMap<>();
+	private final TermTransferrer mTransferrer;
+
+	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final boolean conditional, final boolean symmetric) {
+		this(services, mgdScript, conditional, symmetric, null);
+	}
+
 	/**
 	 * Create a new variant of the semantic independence relation.
 	 *
@@ -92,10 +104,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 *            checked, which subsumes full commutativity.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final boolean conditional, final boolean symmetric) {
+			final boolean conditional, final boolean symmetric, final TermTransferrer transferrer) {
 		mServices = services;
 		mManagedScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mTransferrer = transferrer;
 
 		mConditional = conditional;
 		mSymmetric = symmetric;
@@ -121,10 +134,14 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		}
 
 		final long startTime = System.nanoTime();
-		final LBool subset = performInclusionCheck(context, a, b);
+
+		final UnmodifiableTransFormula tfA = getTransFormula(a);
+		final UnmodifiableTransFormula tfB = getTransFormula(b);
+
+		final LBool subset = performInclusionCheck(context, tfA, tfB);
 		final LBool result;
 		if (mSymmetric && subset != LBool.SAT) {
-			final LBool superset = performInclusionCheck(context, b, a);
+			final LBool superset = performInclusionCheck(context, tfB, tfA);
 			if (subset == LBool.UNSAT && superset == LBool.UNSAT) {
 				result = LBool.UNSAT;
 			} else if (superset == LBool.SAT) {
@@ -161,7 +178,20 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		return result == LBool.UNSAT;
 	}
 
-	private final LBool performInclusionCheck(final IPredicate context, final L a, final L b) {
+	private UnmodifiableTransFormula getTransFormula(final L a) {
+		return getTransFormula(a.getTransformula());
+	}
+
+	private UnmodifiableTransFormula getTransFormula(final UnmodifiableTransFormula tf) {
+		if (mTransferrer == null) {
+			return tf;
+		}
+		return TransFormulaBuilder.transferTransformula(mTransferrer, mManagedScript, mTransferCache, tf)
+				.getTransformula();
+	}
+
+	private final LBool performInclusionCheck(final IPredicate context, final UnmodifiableTransFormula a,
+			final UnmodifiableTransFormula b) {
 		if (context != null && SmtUtils.isFalseLiteral(context.getFormula())) {
 			return LBool.UNSAT;
 		}
@@ -178,15 +208,13 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			}
 		}
 
-		UnmodifiableTransFormula transFormula1 = compose(a.getTransformula(), b.getTransformula());
-		final UnmodifiableTransFormula transFormula2 = compose(b.getTransformula(), a.getTransformula());
+		UnmodifiableTransFormula transFormula1 = compose(a, b);
+		final UnmodifiableTransFormula transFormula2 = compose(b, a);
 
 		if (context != null) {
-			// TODO: This represents conjunction with guard (precondition) as composition
-			// with assume. Is this a good way?
 			final UnmodifiableTransFormula guard =
 					TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
-			transFormula1 = compose(guard, transFormula1);
+			transFormula1 = compose(getTransFormula(guard), transFormula1);
 		}
 		return TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
 	}

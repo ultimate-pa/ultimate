@@ -63,8 +63,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
@@ -95,6 +101,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private ISleepSetOrder<IPredicate, L> mSleepSetOrder;
 	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations = new ArrayList<>();
 	private final IIndependenceCache<IPredicate, L> mIndependenceCache;
+	private final ManagedScript mIndependenceScript;
+	private final TermTransferrer mIndependenceTransferrer;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
@@ -109,7 +117,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mFactory = new InformationStorageFactory();
 		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState,
 				supportsDeadStateOptimization(mPartialOrderMode));
+
 		mIndependenceCache = new DefaultIndependenceCache<>();
+		mIndependenceScript = constructIndependenceScript();
+		mIndependenceTransferrer =
+				new TermTransferrer(csToolkit.getManagedScript().getScript(), mIndependenceScript.getScript());
 	}
 
 	private static final boolean supportsDeadStateOptimization(final PartialOrderMode mode) {
@@ -187,8 +199,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final boolean conditional = mIteration > 0;
 
 		// TODO (Dominik 2021-02-04) Switch to non-symmetric independence
-		final IIndependenceRelation<IPredicate, L> semanticRelation =
-				new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), conditional, true);
+		final IIndependenceRelation<IPredicate, L> semanticRelation = new SemanticIndependenceRelation<>(mServices,
+				mIndependenceScript, conditional, true, mIndependenceTransferrer);
 
 		final IIndependenceRelation<IPredicate, L> basicRelation;
 		if (conditional) {
@@ -246,6 +258,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private IPredicate[] getConjuncts(final IPredicate conjunction) {
 		return mPredicateConjuncts.getOrDefault(conjunction, new IPredicate[] { conjunction });
+	}
+
+	private ManagedScript constructIndependenceScript() {
+		final SolverSettings settings =
+				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
+						.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_TIMEOUT, SolverBuilder.LOGIC_Z3);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, settings, "SemanticIndependence");
+		return new ManagedScript(mServices, solver);
 	}
 
 	private final class DistributingIndependenceRelation implements IIndependenceRelation<IPredicate, L> {
