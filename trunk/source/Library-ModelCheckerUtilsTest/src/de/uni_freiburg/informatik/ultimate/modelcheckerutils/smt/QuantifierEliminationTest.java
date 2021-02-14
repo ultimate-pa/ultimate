@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl.SortCon
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
-//@formatter:off
+
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -123,16 +123,15 @@ public class QuantifierEliminationTest {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getArrayBv32Bv32Sort(script));
 	}
 
-
-	public static Sort getIntBoolArray(final Script script) {
+	public static Sort getArrayIntBoolSort(final Script script) {
 		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getBoolSort(script));
 	}
 
-	public static Sort constructIntIntArray(final Script script) {
+	public static Sort getArrayIntIntSort(final Script script) {
 		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script));
 	}
 
-	public static Sort constructIntIntIntArray(final Script script) {
+	public static Sort getArrayIntIntIntSort(final Script script) {
 		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script),
 				SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script)));
 	}
@@ -196,10 +195,12 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(checkSatRes == LBool.SAT);
 	}
 
+	//@formatter:off
+
 	@Test
 	public void varStilThereBug() {
 		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(QuantifierEliminationTest::constructIntIntArray, "v_#valid_207", "#valid", "old(#valid)"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_#valid_207", "#valid", "old(#valid)"),
 		};
 		final String formulaAsString = "(forall ((|v_old(#valid)_88| (Array Int Int)) (|v_old(#valid)_88| (Array Int Int)) (|v_old(#valid)_88| (Array Int Int))) (or (not (and (forall ((v_probe3_6_~p~9.base_40 Int) (v_probe3_6_~p~9.base_40 Int)) (or (= |v_old(#valid)_88| (store |v_#valid_207| v_probe3_6_~p~9.base_40 0)) (= v_probe3_6_~p~9.base_40 0) (not (= (select |v_#valid_207| v_probe3_6_~p~9.base_40) 0)))) (= |old(#valid)| |v_#valid_207|))) (= |#valid| |v_old(#valid)_88|)))";
 		final String expextedResultAsString = null;
@@ -209,7 +210,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void otherArrayBug() {
 		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			new FunDecl(SmtSortUtils::getIntSort, "i"),
 		};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= (select a i) (select b 0)) (= (select a 0) (select b 1))))";
@@ -274,8 +275,8 @@ public class QuantifierEliminationTest {
 	@Test
 	public void plrTest6() {
 		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(QuantifierEliminationTest::constructIntIntIntArray, "B", "F", "oldB"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "A", "C", "D", "E", "oldC", "oldA"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "B", "F", "oldB"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "A", "C", "D", "E", "oldC", "oldA"),
 		};
 		final String formulaAsString = "(forall ((v_idx_7 Int) (v_idx_8 Int) (v_idx_9 Int) (v_idx_12 Int) (v_idx_3 Int) (v_idx_10 Int) (v_idx_4 Int) (v_idx_11 Int) (v_idx_5 Int) (v_idx_6 Int) (v_idx_1 Int) (v_idx_2 Int)) (exists ((v_v_9_1 Int) (v_v_10_1 (Array Int Int)) (v_v_11_1 Int) (v_v_8_1 (Array Int Int)) (v_v_0_1 Int) (v_v_1_1 Int) (v_v_2_1 Int) (v_v_3_1 (Array Int Int)) (v_v_4_1 Int) (v_v_5_1 Int) (v_v_6_1 Int) (v_v_7_1 Int)) (and (= v_v_1_1 (select A v_idx_7)) (= v_v_0_1 (select D v_idx_4)) (= v_v_8_1 (select B v_idx_5)) (= (select F v_idx_9) v_v_3_1) (= v_v_11_1 (select v_v_10_1 v_idx_1)) (= (select v_v_3_1 v_idx_10) v_v_4_1) (= v_v_5_1 (select E v_idx_12)) (= v_v_7_1 (select oldC v_idx_3)) (= v_v_9_1 (select v_v_8_1 v_idx_11)) (= v_v_6_1 (select C v_idx_2)) (= v_v_10_1 (select oldB v_idx_6)) (= (select oldA v_idx_8) v_v_2_1))))";
 		final String expextedResultAsString = "true";
@@ -523,7 +524,7 @@ public class QuantifierEliminationTest {
 	public void critConsReform01() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "p2", "b", "p1", "a", "v_DerPreprocessor_1", "v_DerPreprocessor_3"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "memPtr"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "memPtr"),
 			};
 		final String formulaAsString =
 				"(= (select (store (store (store (store memPtr p2 b) p1 b) a v_DerPreprocessor_1) b v_DerPreprocessor_3) p1) b)";
@@ -536,7 +537,7 @@ public class QuantifierEliminationTest {
 	public void selectOverStoreTest01() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
 		final String formulaAsString =
 				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (not (= i k))))";
@@ -548,7 +549,7 @@ public class QuantifierEliminationTest {
 	public void selectOverStoreTest02() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= (select (store a k v) i) 7) (= i k)))";
 		final String expectedResultAsString = "(and (= v 7) (= i k))";
@@ -559,7 +560,7 @@ public class QuantifierEliminationTest {
 	public void selectOverStoreTest03() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
 		final String formulaAsString =
 				"(forall ((a (Array Int Int))) (or (not (= (select (store a k v) i) 7)) (= i k)))";
@@ -572,7 +573,7 @@ public class QuantifierEliminationTest {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getBoolSort, "B"),
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
 		final String formulaAsString =
 				"(exists ((a (Array Int Int))) (and (or (not (= (select (store a k v) i) 7)) B) (= v 7)))";
@@ -753,7 +754,7 @@ public class QuantifierEliminationTest {
 	public void antiDerPreprocessing() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "k", "v"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (not (= a b)) (= (store b k v) a)))";
 		final String expectedResultAsString = "(not (= v (select b k)))";
@@ -764,8 +765,8 @@ public class QuantifierEliminationTest {
 	public void derPreprocessingBug() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "main_~#p~0.offset", "main_#t~mem1.base", "main_~#p~0.base"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "#valid"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntIntArray, "#memory_$Pointer$.base"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
 			};
 		final String formulaAsString =
 				"(forall ((|v_#memory_$Pointer$.base_14| (Array Int (Array Int Int))) (|main_#t~mem1.offset| Int)) (or (not (= |v_#memory_$Pointer$.base_14| (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) (select (select |v_#memory_$Pointer$.base_14| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28)))))) (= 1 (select |#valid| (select (select |v_#memory_$Pointer$.base_14| |main_~#p~0.base|) |main_~#p~0.offset|)))))";
@@ -801,7 +802,7 @@ public class QuantifierEliminationTest {
 	public void nestedStoresTest() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "j", "k", "vi", "vj", "vk"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
 		final String formulaAsString =
 				"(exists ((a (Array Int Int))) (and (= (select a k) vk) (= (store (store a i vi) j vj) b)))";
@@ -814,7 +815,7 @@ public class QuantifierEliminationTest {
 	public void varStillThere02() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "nonMain_~dstPlusTwo~0.base", "nonMain_~dstPlusTwo~0.offset"),
-				new FunDecl(QuantifierEliminationTest::constructIntIntIntArray, "#memory_int"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 			};
 		final String formulaAsString =
 				"(exists ((|v_#memory_int_BEFORE_CALL_2| (Array Int (Array Int Int))) (|v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| Int) (|v_#Ultimate.C_memcpy_#t~loopctr6_8| Int) (v_prenex_1 Int) (|v_#Ultimate.C_memcpy_#t~loopctr6_9| Int) (|#Ultimate.C_memcpy_#t~mem7| Int)) (and (<= |v_#Ultimate.C_memcpy_#t~loopctr6_8| 0) (<= (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| 2) nonMain_~dstPlusTwo~0.offset) (= (select (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base) nonMain_~dstPlusTwo~0.offset) 23) (= |#memory_int| (store |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dstPlusTwo~0.base) (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| |v_#Ultimate.C_memcpy_#t~loopctr6_8|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_dest.offset_AFTER_CALL_4| |v_#Ultimate.C_memcpy_#t~loopctr6_9|) |#Ultimate.C_memcpy_#t~mem7|))) (<= |v_#Ultimate.C_memcpy_#t~loopctr6_9| (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| 1))))";
@@ -930,7 +931,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void arrayInnerDerPossibilityNotRepruducible() {
 		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(QuantifierEliminationTest::constructIntIntArray, "main_a", "v_arrayElimArr_1"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "main_a", "v_arrayElimArr_1"),
 				new FunDecl(SmtSortUtils::getIntSort, "main_y", "main_x", "i", "end"), };
 		final String formulaAsString = "(exists ((v_arrayElimArr_2 (Array Int Int))) (and (or (and (= main_a v_arrayElimArr_2) (not (= main_y main_x))) (and (= main_y main_x) (= main_a v_arrayElimArr_1))) (or (= main_y main_x) (= (select v_arrayElimArr_2 main_x) 1)) (= (select v_arrayElimArr_1 main_y) 0) (or (not (= main_y main_x)) (= (+ (select v_arrayElimArr_2 main_y) 1) 0)) (< main_y main_x) (= (select v_arrayElimArr_2 main_y) 999) (or (= (select v_arrayElimArr_1 main_x) 0) (not (= main_y main_x))) (or (= (select v_arrayElimArr_2 main_y) (select v_arrayElimArr_2 main_x)) (not (= main_y main_x))) (or (= (select v_arrayElimArr_1 main_x) 1) (= main_y main_x))))";
 		final String expectedResult = "(and (= (select v_arrayElimArr_1 main_x) 1) (= (select v_arrayElimArr_1 main_y) 0) (< main_y main_x) (= (select main_a main_x) 1) (= 999 (select main_a main_y)))";
@@ -986,7 +987,7 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void derBitvectorFail01() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBv32, "~g~0", "main_~a~0") };
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~g~0", "main_~a~0") };
 		final String inputSTR = "(forall ((v_~g~0_24 (_ BitVec 32))) (or (not (= ~g~0 (bvadd v_~g~0_24 (_ bv4294967295 32)))) (= (bvadd main_~a~0 (_ bv1 32)) v_~g~0_24)))";
 		final String expectedResult = "(= (bvadd main_~a~0 (_ bv1 32)) (bvadd ~g~0 (_ bv1 32)))";
 		runQuantifierPusherTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
