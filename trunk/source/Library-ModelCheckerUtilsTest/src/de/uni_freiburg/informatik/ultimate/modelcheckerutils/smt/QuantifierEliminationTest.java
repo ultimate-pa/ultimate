@@ -1532,6 +1532,38 @@ public class QuantifierEliminationTest {
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void choirNightTrezor04Triathlon2() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
+		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)  (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (+ (* 4294967296 diva) moda) 0)))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon3() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
+		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)  (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (+ (* 4294967296 diva) moda) 0)))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, formulaAsString, !true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon4() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
+		final String formulaAsString = "(forall ((diva Int) (aux_mod_moda_42 Int) (aux_div_moda_42 Int)) (or (> 0 aux_mod_moda_42) (<= aux_mod_moda_42 1) (<= (+ (* 4294967295 b) 4294967296) (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42))) (>= aux_mod_moda_42 4294967296) (<= (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42)) (+ (* 4294967295 b) (mod i 4294967296))) (< (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42)) (* 4294967295 b))))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, formulaAsString, !true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon5() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "b"), };
+		final String formulaAsString = "(forall ((x Int)) (<= (+ (* 7 b) 8) (* 8 x))))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, formulaAsString, !true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	@Deprecated
 	private Term elim(final Term quantFormula) {
 		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantFormula,
