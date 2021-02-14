@@ -84,7 +84,7 @@ public class QuantifierEliminationTest {
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
-	private static final boolean LOG_SIMPLIFICATION_POSSIBILITY = false;
+	private static final boolean CHECK_SIMPLIFICATION_POSSIBILITY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
@@ -637,11 +637,14 @@ public class QuantifierEliminationTest {
 		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, letFree,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		logger.info("Result: " + result);
-		if (LOG_SIMPLIFICATION_POSSIBILITY) {
+		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
 					SimplificationTechnique.SIMPLIFY_DDA);
 			logger.info("Simplified result: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
+			if (esr.getReductionOfTreeSize() > 0) {
+				throw new AssertionError("Reduction " + esr.getReductionOfTreeSize());
+			}
 		}
 		if (checkResultIsQuantifierFree) {
 			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
@@ -679,11 +682,14 @@ public class QuantifierEliminationTest {
 		csvWriter.reportEliminationBegin(formulaAsTerm);
 		final Term result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
 		logger.info("Result: " + result);
-		if (LOG_SIMPLIFICATION_POSSIBILITY) {
+		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
 					SimplificationTechnique.SIMPLIFY_DDA);
 			logger.info("Simplified result: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
+			if (esr.getReductionOfTreeSize() > 0) {
+				throw new AssertionError("Reduction " + esr.getReductionOfTreeSize());
+			}
 		}
 		if (checkResultIsQuantifierFree) {
 			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
