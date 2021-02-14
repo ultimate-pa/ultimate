@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -239,8 +240,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	}
 
 	private static Boolean isFalseState(final IPredicate state) {
-		// TODO (Dominik 2020-12-09): Below is a hack. Replace by a better solution.
-		return state.getFormula().toString().equals("false");
+		// We assume here that all inconsistent interpolant predicates are syntactically equal to "false".
+		return SmtUtils.isFalseLiteral(state.getFormula());
 	}
 
 	private IPredicate[] getConjuncts(final IPredicate conjunction) {

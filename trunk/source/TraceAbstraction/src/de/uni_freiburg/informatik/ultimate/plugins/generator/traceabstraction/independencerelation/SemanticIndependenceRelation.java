@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -161,7 +162,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	private final LBool performInclusionCheck(final IPredicate context, final L a, final L b) {
-		if (context != null && "false".equals(context.getFormula().toString())) {
+		if (context != null && SmtUtils.isFalseLiteral(context.getFormula())) {
 			return LBool.UNSAT;
 		}
 
