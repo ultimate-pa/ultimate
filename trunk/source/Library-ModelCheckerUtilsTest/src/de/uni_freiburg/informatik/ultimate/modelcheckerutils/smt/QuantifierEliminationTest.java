@@ -50,13 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimp
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -298,51 +293,6 @@ public class QuantifierEliminationTest {
 	}
 
 
-	static void runQuantifierPusherTest(final FunDecl[] funDecls, final String eliminationInputAsString,
-			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
-			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
-			final QuantifierEliminationTestCsvWriter csvWriter) {
-		for (final FunDecl funDecl : funDecls) {
-			funDecl.declareFuns(mgdScript.getScript());
-		}
-		runQuantifierPusherTest(eliminationInputAsString, expectedResultAsString, checkResultIsQuantifierFree,
-				services, logger, mgdScript, csvWriter);
-	}
-
-	/**
-	 * @deprecated use instead method with argument "FunDecl[] funDecls"
-	 */
-	@Deprecated
-	private static void runQuantifierPusherTest(final String eliminationInputAsString, final String expectedResultAsString,
-			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
-		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
-		csvWriter.reportEliminationBegin(formulaAsTerm);
-		final Term result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
-		logger.info("Result: " + result);
-		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
-					SimplificationTechnique.SIMPLIFY_DDA);
-			logger.info("Simplified result: " + esr.getSimplifiedTerm());
-			logger.info(esr.buildSizeReductionMessage());
-			if (esr.getReductionOfTreeSize() > 0) {
-				throw new AssertionError("Reduction " + esr.getReductionOfTreeSize());
-			}
-		}
-		if (checkResultIsQuantifierFree) {
-			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
-			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
-		}
-		if (expectedResultAsString != null) {
-			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);
-		}
-		csvWriter.reportEliminationSuccess(result);
-	}
-
-
 	private static void checkLogicalEquivalence(final Script script, final Term result,
 			final String expectedResultAsString) {
 		final Term expectedResultAsTerm = TermParseUtils.parseTerm(script, expectedResultAsString);
@@ -389,11 +339,6 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(mdns.getDimension() == 2);
 	}
 
-
-
-
-
-
 	@Deprecated
 	private Term elim(final Term quantFormula) {
 		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantFormula,
@@ -402,4 +347,3 @@ public class QuantifierEliminationTest {
 
 
 }
-//@formatter:on
