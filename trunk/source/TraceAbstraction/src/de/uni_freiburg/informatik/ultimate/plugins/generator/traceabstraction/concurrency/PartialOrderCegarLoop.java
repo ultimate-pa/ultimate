@@ -197,10 +197,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private IIndependenceRelation<IPredicate, L> constructIndependenceRelation() {
 		final boolean conditional = mIteration > 0;
-
-		// TODO (Dominik 2021-02-04) Switch to non-symmetric independence
 		final IIndependenceRelation<IPredicate, L> semanticRelation = new SemanticIndependenceRelation<>(mServices,
-				mIndependenceScript, conditional, true, mIndependenceTransferrer);
+				mIndependenceScript, conditional, false, mIndependenceTransferrer);
 
 		final IIndependenceRelation<IPredicate, L> basicRelation;
 		if (conditional) {
