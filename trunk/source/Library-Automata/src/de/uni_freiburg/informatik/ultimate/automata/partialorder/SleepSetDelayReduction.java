@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -184,9 +185,9 @@ public class SleepSetDelayReduction<L, S> {
 					continue;
 				}
 
-				final Set<L> succSleepSet = DataStructureUtils.union(currentSleepSet, explored).stream()
+				final Set<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
 						.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
-						.collect(Collectors.toCollection(HashSet::new)); // TODO .toSet()? // TODO factor out
+						.collect(Collectors.toSet()); // TODO factor out
 				if (mStateStack.contains(succState)) {
 					enterDelaySet(currentState, succSleepSet);
 					mVisitor.delayState(currentState);
