@@ -395,7 +395,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			}
 
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
-			if (mPref.useLazyPetri2NFAConversion()) {
+			if (mPref.getPartialOrderMode() != PartialOrderMode.NONE) {
+				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
 				automaton = new LazyPetriNet2FiniteAutomaton<>(mStateFactoryForRefinement, net,
 						new AutomataLibraryServices(mServices));
 			} else {
