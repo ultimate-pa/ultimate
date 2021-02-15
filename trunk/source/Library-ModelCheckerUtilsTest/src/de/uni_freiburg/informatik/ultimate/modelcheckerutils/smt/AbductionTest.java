@@ -74,7 +74,7 @@ public class AbductionTest {
 
 	@Test
 	public void noSolution() {
-		final Term premise = TermParseUtils.parseTerm(mMgdScript.getScript(), "false");
+		final Term premise = TermParseUtils.parseTerm(mScript, "false");
 		final Term conclusion = parseWithVariables("(>= x 0)", "(x Int)");
 		runAbductionTest(premise, conclusion, null);
 	}
@@ -102,6 +102,16 @@ public class AbductionTest {
 		final Term expected = parseWithVariables("(>= (+ x0 y0) 0)", "(x0 Int)", "(y0 Int)");
 		final TermVariable outVar = mScript.variable("x1", mScript.sort("Int"));
 		runAbductionTest(premise, conclusion, Collections.singleton(outVar), expected);
+	}
+
+	@Test
+	public void commutingStores() {
+		final Term premise = parseWithVariables("(= arr2 (store (store arr0 i 2) j 3))", "(i Int)", "(j Int)",
+				"(arr0 (Array Int Int))", "(arr2 (Array Int Int))");
+		final Term conclusion = parseWithVariables("(= arr2 (store (store arr0 j 3) i 2))", "(i Int)", "(j Int)",
+				"(arr0 (Array Int Int))", "(arr2 (Array Int Int))");
+		final Term expected = parseWithVariables("(distinct i j)", "(i Int)", "(j Int)");
+		runAbductionTest(premise, conclusion, expected);
 	}
 
 	private void runAbductionTest(final Term premise, final Term conclusion, final Term expected) {
