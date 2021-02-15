@@ -502,7 +502,7 @@ public class SimplificationTest {
 		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
 
-		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, letFree, null, services, SimplificationTechnique.POLY_PAC);
+		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, letFree, services, SimplificationTechnique.POLY_PAC);
 		final Term result = esr.getSimplifiedTerm();
 		logger.info("Simplified result: " + esr.getSimplifiedTerm());
 		logger.info(esr.buildSizeReductionMessage());

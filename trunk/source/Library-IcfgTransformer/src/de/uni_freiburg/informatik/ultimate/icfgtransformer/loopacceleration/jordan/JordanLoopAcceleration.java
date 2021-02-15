@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
+import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -44,8 +46,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * @author Miriam Herzig
@@ -96,10 +101,109 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				TransFormulaUtils.computeGuard(loopTransFormula, mMgdScript, mServices, mLogger);
 		mLogger.info("Guard: " + guardTf);
 		final SimultaneousUpdate su = new SimultaneousUpdate(loopTransFormula, mMgdScript);
+		
+		
+		final HashMap<TermVariable, Integer> varMatrixIndex = determineMatrixIndices(su);
+		final int n = varMatrixIndex.size() + 1;
+		
+		// Initialize update matrix with identity matrix (every variable assigned to itself).
+		final QuadraticMatrix updateMatrix = QuadraticMatrix.identityMatrix(n);
+		
 		for (final Entry<IProgramVar, Term> update : su.getUpdatedVars().entrySet()) {
 			final IPolynomialTerm polyRhs =
 			(IPolynomialTerm) new PolynomialTermTransformer(mMgdScript.getScript()).transform(update.getValue());
+			
+			fillMatrixRow(updateMatrix, varMatrixIndex, polyRhs, update.getKey());
 		}
+		
+		final QuadraticMatrix jordanUpdate = updateMatrix.jordanMatrix();
+		final RationalMatrix modalUpdate = QuadraticMatrix.modalMatrix(updateMatrix, jordanUpdate);
+		final RationalMatrix inverseModalUpdate = RationalMatrix.inverse(modalUpdate);
+	}
+	
+	/**Go through terms, get all variables and create a hash map varMatrixIndex with variables as key and corresponding
+	 * matrix index as value to save which column corresponds to which variable
+	 * and which row corresponds to which update.
+	 * @param su SimultaneousUpdate to process
+	 * @return HashMap varMatrixIndex mapping variables to indices
+	 */
+	private static HashMap<TermVariable, Integer> determineMatrixIndices(final SimultaneousUpdate su) {
+		HashMap<TermVariable, Integer> varMatrixIndex = new HashMap<TermVariable, Integer>();
+		int i = -1;
+		for (IProgramVar updatedVar : su.getUpdatedVars().keySet()) {
+			if (!varMatrixIndex.containsKey(updatedVar.getTermVariable())) {
+				i = i + 1;
+				// add all updated variables.
+				varMatrixIndex.put(updatedVar.getTermVariable(), i);
+			}	
+			// add all not updated variables.
+			TermVariable[] variables = su.getUpdatedVars().get(updatedVar).getFreeVars();
+			for (TermVariable var : variables) {
+				if (!varMatrixIndex.containsKey(var)) {
+					i = i + 1;
+					varMatrixIndex.put(var, i);
+				}
+			}
+		}
+		return varMatrixIndex;
+	}
+	
+	/**
+	 * Fills the row corresponding to variable of the updateMatrix where variable is updated with polyRhs.
+	 * @param updateMatrix matrix to fill
+	 * @param varMatrixIndex HashMap containing variables and corresponding matrix indices
+	 * @param polyRhs processed update polynomial
+	 * @param variable that is updated with polynomial
+	 */
+	private static void fillMatrixRow(QuadraticMatrix updateMatrix, final HashMap<TermVariable, Integer> varMatrixIndex,
+			final IPolynomialTerm polyRhs, final IProgramVar variable) {
+		
+		final int n = updateMatrix.mDimension - 1;
+		updateMatrix.mEntries[n][n] = BigInteger.valueOf(1);
+		// Set diagonal entry to 0 for case variable assignment does not depend on variable itself
+		// (matrix was initialized as identity matrix).
+		updateMatrix.mEntries[varMatrixIndex.get(variable.getTermVariable())]
+				[varMatrixIndex.get(variable.getTermVariable())] = BigInteger.valueOf(0);
+		
+		// Fill row.
+		for (TermVariable termVar : varMatrixIndex.keySet()) {
+			updateMatrix.mEntries[varMatrixIndex.get(variable.getTermVariable())][varMatrixIndex.get(termVar)] =
+					determineCoefficient(polyRhs, termVar);
+			updateMatrix.mEntries[varMatrixIndex.get(variable.getTermVariable())][n] = determineConstant(polyRhs);
+		}
+	}
+	
+	/**
+	 * @param polyRhs
+	 * @param termVar
+	 * @return coefficient of termVar in the polynomial polyRhs.
+	 */
+	private static BigInteger determineCoefficient(final IPolynomialTerm polyRhs, final TermVariable termVar) {
+		for (Monomial monom : polyRhs.getMonomial2Coefficient().keySet()) {
+			if (!(monom.isLinear())) {
+				throw new AssertionError("Some term is not linear.");
+			}
+			if (monom.getSingleVariable().equals(termVar)) {
+				Rational coefficient = polyRhs.getMonomial2Coefficient().get(monom);
+				if (!(coefficient.denominator().equals(BigInteger.valueOf(1)))) {
+					throw new AssertionError("Some coefficient is not integral.");
+				}
+				return coefficient.numerator();
+			}
+		}
+		return BigInteger.valueOf(0);
+	}
+	
+	/**
+	 * @param polyRhs
+	 * @return constant term of polynomial polyRhs.
+	 */
+	private static BigInteger determineConstant(final IPolynomialTerm polyRhs) {
+		final Rational constant = polyRhs.getConstant();
+		if (!(constant.denominator().equals(BigInteger.valueOf(1)))) {
+			throw new AssertionError("Constant in some term is not integral.");
+		}
+		return constant.numerator();
 	}
 
 	@Override

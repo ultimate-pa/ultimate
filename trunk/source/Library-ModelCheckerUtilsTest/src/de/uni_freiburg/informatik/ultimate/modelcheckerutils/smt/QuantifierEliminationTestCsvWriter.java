@@ -67,7 +67,7 @@ public class QuantifierEliminationTestCsvWriter {
 	}
 
 	public void reportEliminationBegin(final Term eliminationInput) {
-		final String testId = ReflectionUtil.getCallerMethodName(4);
+		final String testId = ReflectionUtil.getCallerMethodName(5);
 		if (mCurrentEliminationData == null) {
 			mCurrentEliminationData = new String[4];
 			mCurrentEliminationData[0] = testId;
@@ -94,7 +94,7 @@ public class QuantifierEliminationTestCsvWriter {
 	}
 
 	public void reportEliminationSuccess(final Term eliminationOutput) {
-		final String testId = ReflectionUtil.getCallerMethodName(4);
+		final String testId = ReflectionUtil.getCallerMethodName(5);
 		if (testId.equals(mCurrentEliminationData[0])) {
 			final long treesize = new DAGSize().treesize(eliminationOutput);
 			assert mCurrentEliminationData[2] == null;

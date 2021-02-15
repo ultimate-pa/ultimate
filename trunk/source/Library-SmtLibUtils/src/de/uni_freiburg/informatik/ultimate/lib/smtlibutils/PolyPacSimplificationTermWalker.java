@@ -96,6 +96,12 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		return result;
 	}
 
+	public static Term simplify(final Script script, final Term context, final Term term) {
+		final Term result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(script),
+				context, term);
+		return result;
+	}
+
 	@Override
 	Term constructResultForQuantifiedFormula(final Term context, final QuantifiedFormula originalQuantifiedFormula,
 			final Term resultSubformula) {
