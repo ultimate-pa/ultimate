@@ -114,6 +114,16 @@ public class AbductionTest {
 		runAbductionTest(premise, conclusion, expected);
 	}
 
+	@Test
+	public void commutingStores2() {
+		final Term premise = parseWithVariables("(= arr2 (store (store arr0 i (+ i 1)) j 3))", "(i Int)", "(j Int)",
+				"(arr0 (Array Int Int))", "(arr2 (Array Int Int))");
+		final Term conclusion = parseWithVariables("(= arr2 (store (store arr0 j 3) i (+ i 1)))", "(i Int)", "(j Int)",
+				"(arr0 (Array Int Int))", "(arr2 (Array Int Int))");
+		final Term expected = parseWithVariables("(or (distinct i j) (= i 2))", "(i Int)", "(j Int)");
+		runAbductionTest(premise, conclusion, expected);
+	}
+
 	private void runAbductionTest(final Term premise, final Term conclusion, final Term expected) {
 		runAbductionTest(premise, conclusion, Collections.emptySet(), expected);
 	}
