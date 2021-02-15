@@ -129,6 +129,35 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return mode == PartialOrderMode.SLEEP_NEW_STATES;
 	}
 
+	private static class ThreadSeparatingIndependenceRelation<S, L extends IIcfgTransition<?>>
+			implements IIndependenceRelation<S, L> {
+
+		private final IIndependenceRelation<S, L> mUnderlying;
+
+		public ThreadSeparatingIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
+			mUnderlying = underlying;
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlying.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlying.isConditional();
+		}
+
+		@Override
+		public boolean contains(final S state, final L a, final L b) {
+			return !fromSameThread(a, b) && mUnderlying.contains(state, a, b);
+		}
+
+		private boolean fromSameThread(final L a, final L b) {
+			return a.getPrecedingProcedure() == b.getPrecedingProcedure();
+		}
+	}
+
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
@@ -220,7 +249,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			return new SemanticIndependenceRelation.ConditionEliminator<>(cachedRelation,
 					PartialOrderCegarLoop::isFalseState);
 		}
-		return cachedRelation;
+		return new ThreadSeparatingIndependenceRelation<>(cachedRelation);
 	}
 
 	private void switchToOnDemandConstructionMode() {
