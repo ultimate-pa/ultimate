@@ -51,6 +51,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * Based on the algorithm presented in the 2013 Interpolation Workshop presentation by Isil Dillig
  * <https://www.cs.utexas.edu/~isil/interpolation-workshop.pdf>.
  *
+ * As a slight extension, this class can also generate predicates phi' such that phi' implies the logical equivalence
+ * "phi <-> psi", rather than only the implication "phi -> psi". A solution phi' is consistent with both phi and psi.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  */
@@ -123,24 +126,41 @@ public class Abducer {
 	 * @return the problem solution, if one exists (psi in the description above). Null otherwise.
 	 */
 	public Term abduce(final Term premise, final Term conclusion) {
-		final Term implication = SmtUtils.implies(mScript.getScript(), premise, conclusion);
-		final Term quantifiedImplication = tryEliminateForall(mForbiddenVars, implication);
+		final Term solution =
+				solveAbductionProblem(SmtUtils.implies(mScript.getScript(), premise, conclusion), premise);
+		assert checkResult(premise, conclusion, solution, false) : "Abduction failed";
+		return solution;
+	}
+
+	/**
+	 * Computes the solution to a given equivalence-abduction problem.
+	 *
+	 * @param lhs
+	 *            The left-hand side of an invalid equivalence
+	 * @param rhs
+	 *            The right-hand side of an invalid equivalence
+	 * @return a formula psi that entails equivalence of the input formulae, and is consistent with both of them. Null
+	 *         if no such formula exists.
+	 */
+	public Term abduceEquivalence(final Term lhs, final Term rhs) {
+		final Term solution = solveAbductionProblem(SmtUtils.binaryBooleanEquality(mScript.getScript(), lhs, rhs), lhs);
+		assert checkResult(lhs, rhs, solution, true) : "Abduction failed";
+		return solution;
+	}
+
+	private Term solveAbductionProblem(final Term formula, final Term invariant) {
+		final Term quantifiedFormula = tryEliminateForall(mForbiddenVars, formula);
 
 		final LBool sat = SmtUtils.checkSatTerm(mScript.getScript(),
-				SmtUtils.and(mScript.getScript(), premise, quantifiedImplication));
+				SmtUtils.and(mScript.getScript(), invariant, quantifiedFormula));
 		if (sat != LBool.SAT) {
 			return null;
 		}
 
-		final Set<TermVariable> msu =
-				new MaximumUniversalSetComputation(mServices, mScript, quantifiedImplication, premise, mCost)
-						.getVariables();
-		final Term unsimplified = tryEliminateForall(msu, quantifiedImplication);
-		final Term solution =
-				SmtUtils.simplify(mScript, unsimplified, premise, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-
-		assert checkResult(premise, conclusion, solution) : "Abduction failed";
-		return solution;
+		final Term unsimplified =
+				new MaximumUniversalSetComputation(mServices, mScript, quantifiedFormula, invariant, mCost)
+						.getQuantifiedFormula();
+		return SmtUtils.simplify(mScript, unsimplified, invariant, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
 	private Term tryEliminateForall(final Set<TermVariable> vars, final Term formula) {
@@ -149,17 +169,28 @@ public class Abducer {
 				QuantifiedFormula.FORALL, vars, formula);
 	}
 
-	private boolean checkResult(final Term premise, final Term conclusion, final Term solution) {
-		final LBool impl = SmtUtils.checkSatTerm(mScript.getScript(),
-				SmtUtils.and(mScript.getScript(), premise, solution, SmtUtils.not(mScript.getScript(), conclusion)));
-		assert impl != LBool.SAT : "Abduction failed: premise " + premise + " and solution " + solution
-				+ " do not imply conclusion " + conclusion;
+	private boolean checkResult(final Term lhs, final Term rhs, final Term solution, final boolean equiv) {
+		if (solution == null) {
+			// nothing to check
+			return true;
+		}
 
-		final LBool cons =
-				SmtUtils.checkSatTerm(mScript.getScript(), SmtUtils.and(mScript.getScript(), premise, solution));
-		assert cons != LBool.UNSAT : "Abduction failed: premise " + premise + " and solution " + solution
-				+ " are inconsistent";
+		final LBool suff;
+		if (equiv) {
+			suff = SmtUtils.checkSatTerm(mScript.getScript(), SmtUtils.and(mScript.getScript(), solution,
+					SmtUtils.binaryBooleanNotEquals(mScript.getScript(), lhs, rhs)));
+			assert suff != LBool.SAT : "Abduction failed: solution " + solution + " does not imply equivalence of "
+					+ lhs + " and " + rhs;
+		} else {
+			suff = SmtUtils.checkSatTerm(mScript.getScript(),
+					SmtUtils.and(mScript.getScript(), lhs, solution, SmtUtils.not(mScript.getScript(), rhs)));
+			assert suff != LBool.SAT : "Abduction failed: premise " + lhs + " and solution " + solution
+					+ " do not imply conclusion " + rhs;
+		}
 
-		return impl != LBool.SAT && cons != LBool.UNSAT;
+		final LBool cons = SmtUtils.checkSatTerm(mScript.getScript(), SmtUtils.and(mScript.getScript(), lhs, solution));
+		assert cons != LBool.UNSAT : "Abduction failed: LHS " + lhs + " and solution " + solution + " are inconsistent";
+
+		return suff != LBool.SAT && cons != LBool.UNSAT;
 	}
 }

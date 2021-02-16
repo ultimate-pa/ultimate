@@ -104,7 +104,7 @@ public class SemanticIndependenceConditionGeneratorTest {
 		setupArrayStack();
 
 		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript,
-				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable));
+				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
 	}
 
 	@After

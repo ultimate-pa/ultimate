@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Generates conditions under which given transitions commute semantically (in the sense of non-symmetric, conditional
+ * Generates conditions under which given transitions commute semantically (in the sense of conditional
  * {@link SemanticIndependenceRelation} instances). Uses abduction (see {@link Abducer}) to generate such conditions.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -62,6 +62,7 @@ public class SemanticIndependenceConditionGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final BasicPredicateFactory mFactory;
+	private final boolean mSymmetric;
 
 	private static final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
@@ -76,13 +77,17 @@ public class SemanticIndependenceConditionGenerator {
 	 *            A script that is used for name management, satisfiability checking and quantifier elimination.
 	 * @param factory
 	 *            A factory that is used to create {@link IPredicate} instances representing the conditions
+	 * @param symmetric
+	 *            Whether to generate conditions that are strong enough for symmetric independence (otherwise conditions
+	 *            might only be strong enough for non-symmetric independence).
 	 */
 	public SemanticIndependenceConditionGenerator(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final BasicPredicateFactory factory) {
+			final ManagedScript mgdScript, final BasicPredicateFactory factory, final boolean symmetric) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(SemanticIndependenceConditionGenerator.class);
 		mMgdScript = mgdScript;
 		mFactory = factory;
+		mSymmetric = symmetric;
 	}
 
 	/**
@@ -113,9 +118,9 @@ public class SemanticIndependenceConditionGenerator {
 	 */
 	public IPredicate generateCondition(final IPredicate context, final UnmodifiableTransFormula a,
 			final UnmodifiableTransFormula b) {
-		// Generate both compositions, possibly adding a guard to ab
+		// Generate both compositions, possibly adding a guard where applicable
 		final UnmodifiableTransFormula ab = withGuard(context, compose(a, b));
-		final UnmodifiableTransFormula ba = compose(b, a);
+		final UnmodifiableTransFormula ba = withGuard(mSymmetric ? context : null, compose(b, a));
 
 		// Make sure both compositions don't contain free auxiliary variables, and refer to the same in/out variables
 		final TransFormulaUnification unification = new TransFormulaUnification(mMgdScript, ab, ba);
@@ -125,7 +130,12 @@ public class SemanticIndependenceConditionGenerator {
 		// Generate a condition that induces commutativity, and does not refer to (pure) output variables
 		final Set<TermVariable> forbidden = new HashSet<>(unification.getOutVars().values());
 		forbidden.removeAll(unification.getInVars().values());
-		final Term condition = new Abducer(mServices, mMgdScript, forbidden).abduce(lhsFormula, rhsFormula);
+		final Term condition;
+		if (mSymmetric) {
+			condition = new Abducer(mServices, mMgdScript, forbidden).abduceEquivalence(lhsFormula, rhsFormula);
+		} else {
+			condition = new Abducer(mServices, mMgdScript, forbidden).abduce(lhsFormula, rhsFormula);
+		}
 		if (condition == null) {
 			return null;
 		}
