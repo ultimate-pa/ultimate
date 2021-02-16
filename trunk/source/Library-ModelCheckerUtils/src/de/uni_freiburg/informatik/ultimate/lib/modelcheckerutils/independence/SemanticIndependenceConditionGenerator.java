@@ -122,8 +122,9 @@ public class SemanticIndependenceConditionGenerator {
 		final Term lhsFormula = quantify(unification.getAuxVars(), unification.getUnifiedFormula(ab));
 		final Term rhsFormula = quantify(unification.getAuxVars(), unification.getUnifiedFormula(ba));
 
-		// Generate a condition that induces commutativity
+		// Generate a condition that induces commutativity, and does not refer to (pure) output variables
 		final Set<TermVariable> forbidden = new HashSet<>(unification.getOutVars().values());
+		forbidden.removeAll(unification.getInVars().values());
 		final Term condition = new Abducer(mServices, mMgdScript, forbidden).abduce(lhsFormula, rhsFormula);
 		if (condition == null) {
 			return null;
