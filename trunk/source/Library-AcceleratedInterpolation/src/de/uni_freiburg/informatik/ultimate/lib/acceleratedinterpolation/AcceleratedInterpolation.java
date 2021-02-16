@@ -167,8 +167,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	 */
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier,
-			final IRun<L, IPredicate> counterexample, final Class<L> transitionClazz,
-			final AccelerationMethod accelerationMethod) {
+			final IRun<L, IPredicate> counterexample, final Class<L> transitionClazz, final String accelerationMethod) {
 		mLogger = logger;
 		mScript = script;
 		mTransitionClazz = transitionClazz;
@@ -190,8 +189,16 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		mInterpolants[mCounterexample.size() - 1] = mPredUnifier.getFalsePredicate();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
-		mAccelerationMethod = accelerationMethod;
-
+		switch (accelerationMethod) {
+		case "FAST_UPR":
+			mAccelerationMethod = AcceleratedInterpolation.AccelerationMethod.FAST_UPR;
+			break;
+		case "WERNER_OVERAPPROX":
+			mAccelerationMethod = AcceleratedInterpolation.AccelerationMethod.OVERAPPROXIMATION_WERNER;
+			break;
+		default:
+			mAccelerationMethod = AcceleratedInterpolation.AccelerationMethod.NONE;
+		}
 		mAccelerator = new Accelerator<>(mLogger, mScript, mServices, mSymbolTable);
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
 		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, 1, mIcfg);
@@ -262,8 +269,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				new LoopPreprocessorFastUPR<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 						mIcfg.getCfgSmtToolkit());
 		if (!mNestedLoops.isEmpty()) {
-			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered =
-					new HashMap<>(mNestedLoops);
+			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered = new HashMap<>(mNestedLoops);
 			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
 				if (nestedLoop.getValue() == null) {
 					mNestedLoops.remove(nestedLoop.getKey());
