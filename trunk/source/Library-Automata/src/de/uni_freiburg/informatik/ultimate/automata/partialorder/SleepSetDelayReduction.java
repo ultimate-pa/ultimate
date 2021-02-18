@@ -200,8 +200,9 @@ public class SleepSetDelayReduction<L, S> {
 				}
 				explored.add(currentLetter);
 			}
-			mStateStack.addAll(successorStateList);
-
+			for (final S succState : successorStateList) {
+				mStateStack.push(succState);
+			}
 		}
 
 	}
