@@ -300,7 +300,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, this setting defines which partitioning strategy is used.";
 
 	public static final String LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE =
-			"Loop acceleration method that is used by accelerated interpolation.";
+			"Loop acceleration method that is used by accelerated interpolation";
 	public static final AcceleratedInterpolationLoopAccelerationTechnique DEF_LOOPACCELERATION_TECHNIQUE =
 			AcceleratedInterpolationLoopAccelerationTechnique.FAST_UPR;
 	public static final String DESC_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE = "Set the loop acceleration technique.";

@@ -27,44 +27,29 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRCore;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.Backbone;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.Loop;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.LoopAcceleratorLite;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
  *         {@link AcceleratedInterpolation}
  */
-public class Accelerator<LETTER extends IIcfgTransition<?>> {
+public class AcceleratorFastUPR implements IAccelerator {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private boolean mFoundAcceleration;
 	private final IIcfgSymbolTable mSymbolTable;
 
-	public Accelerator(final ILogger logger, final ManagedScript managedScript, final IUltimateServiceProvider services,
-			final IIcfgSymbolTable symbolTable) {
+	public AcceleratorFastUPR(final ILogger logger, final ManagedScript managedScript,
+			final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable) {
 		mLogger = logger;
 		mScript = managedScript;
 		mServices = services;
@@ -80,29 +65,8 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 	 * @param accelerationMethod
 	 * @return
 	 */
-	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop, final IcfgLocation loopHead,
-			final AcceleratedInterpolation.AccelerationMethod accelerationMethod) {
-		switch (accelerationMethod) {
-		case NONE:
-			break;
-		case FAST_UPR:
-			return fastUprAcceleration(loop);
-		case OVERAPPROXIMATION_WERNER:
-			return overapproximationWernerAcceleration(loop, loopHead);
-		case UNDERAPPROXIMATION:
-			mLogger.warn("Not implmented yet");
-			throw new UnsupportedOperationException();
-		}
-		return loop;
-	}
-
-	/**
-	 * Accelerate a loop using FastUPR
-	 *
-	 * @param loop
-	 * @return
-	 */
-	private UnmodifiableTransFormula fastUprAcceleration(final UnmodifiableTransFormula loop) {
+	@Override
+	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop, final IcfgLocation loopHead) {
 		UnmodifiableTransFormula acceleratedLoop;
 		try {
 			mLogger.debug("Accelerating Loop using FastUPR");
@@ -122,44 +86,7 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private UnmodifiableTransFormula overapproximationWernerAcceleration(final UnmodifiableTransFormula loopTf,
-			final IcfgLocation loopHead) {
-		final Loop loop = new Loop(loopHead, mScript);
-		loop.setFormula(loopTf);
-		final Backbone backbone = new Backbone(loopTf);
-		final Deque<Backbone> backbones = new ArrayDeque<>();
-		backbones.add(backbone);
-		loop.setBackbones(backbones);
-
-		loop.addExitCondition(loopTf);
-
-		final UnmodifiableTransFormula guard = TransFormulaUtils.computeGuard(loopTf, mScript, mServices, mLogger);
-		loop.setCondition(guard.getFormula());
-
-		final LoopAcceleratorLite lite = new LoopAcceleratorLite(mScript, mServices, mLogger, mSymbolTable);
-		UnmodifiableTransFormula wernerAcceleration = lite.summarizeLoop(loop);
-
-		final Term wernerAccelerationTerm = SmtUtils.quantifier(mScript.getScript(), QuantifiedFormula.EXISTS,
-				wernerAcceleration.getAuxVars(), wernerAcceleration.getFormula());
-
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(wernerAcceleration.getInVars(),
-				wernerAcceleration.getOutVars(), true, null, true, null, true);
-		tfb.setFormula(wernerAccelerationTerm);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		wernerAcceleration = tfb.finishConstruction(mScript);
-		mFoundAcceleration = true;
-		mLogger.debug("Quantified Werner Acceleration");
-		return wernerAcceleration;
-	}
-
-	private void underApproxAcceleration(final Map<IcfgLocation, List<LETTER>> loops) {
-		throw new UnsupportedOperationException("There is no such acceleration method yet");
-	}
-
-	private void overApproxAcceleration(final Map<IcfgLocation, List<LETTER>> loops) {
-		throw new UnsupportedOperationException("There is no such acceleration method yet");
-	}
-
+	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
 	}

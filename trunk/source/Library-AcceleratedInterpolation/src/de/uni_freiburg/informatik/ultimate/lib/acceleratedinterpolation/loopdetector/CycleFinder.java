@@ -43,24 +43,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class provides some static oeprations for finding
  *         loops. {@link AcceleratedInterpolation}
  */
-public class CycleFinder {
+public class CycleFinder<LOC extends IcfgLocation> {
 
 	public CycleFinder() {
 	}
 
 	/**
 	 * Searches for cycles in a given trace.
-	 * 
+	 *
 	 * @param traceOfLocations
 	 * @return
 	 */
-	public Map<IcfgLocation, List<Integer>> getCyclesInTrace(final List<IcfgLocation> traceOfLocations) {
-		final Set<IcfgLocation> possLoopHeads = new HashSet<>();
-		final Map<IcfgLocation, Integer> locFirstSeen = new HashMap<>();
-		final Map<IcfgLocation, List<Integer>> loopHeads = new HashMap<>();
+	public Map<LOC, List<Integer>> getCyclesInTrace(final List<LOC> traceOfLocations) {
+		final Set<LOC> possLoopHeads = new HashSet<>();
+		final Map<LOC, Integer> locFirstSeen = new HashMap<>();
+		final Map<LOC, List<Integer>> loopHeads = new HashMap<>();
 
 		int i = 0;
-		for (final IcfgLocation loc : traceOfLocations) {
+		for (final LOC loc : traceOfLocations) {
 			if (loopHeads.containsKey(loc)) {
 				final List<Integer> old = loopHeads.get(loc);
 				old.add(i);
@@ -91,7 +91,7 @@ public class CycleFinder {
 	 *
 	 * @return body of the loop
 	 */
-	public <LETTER extends IIcfgTransition<?>> List<LETTER> getCyclesInTraceNaive(final IcfgLocation loopHead,
+	public <LETTER extends IIcfgTransition<?>> List<LETTER> getCyclesInTraceNaive(final LOC loopHead,
 			final List<LETTER> trace) {
 		int start = 0;
 		int end = 0;
@@ -116,13 +116,13 @@ public class CycleFinder {
 	 * @param trace
 	 * @return
 	 */
-	public <LETTER extends IIcfgTransition<?>> List<IcfgLocation> statementsToLocations(final List<LETTER> trace) {
-		final List<IcfgLocation> traceLocations = new ArrayList<>();
+	public <LETTER extends IIcfgTransition<?>> List<LOC> statementsToLocations(final List<LETTER> trace) {
+		final List<LOC> traceLocations = new ArrayList<>();
 
 		for (final LETTER stm : trace) {
-			traceLocations.add(stm.getSource());
+			traceLocations.add((LOC) stm.getSource());
 		}
-		traceLocations.add(trace.get(trace.size() - 1).getTarget());
+		traceLocations.add((LOC) trace.get(trace.size() - 1).getTarget());
 		return traceLocations;
 	}
 }
