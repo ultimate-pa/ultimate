@@ -101,7 +101,7 @@ public class AbductionTest {
 		final Term conclusion = parseWithVariables("(>= x1 0)", "(x1 Int)");
 		final Term expected = parseWithVariables("(>= (+ x0 y0) 0)", "(x0 Int)", "(y0 Int)");
 		final TermVariable outVar = mScript.variable("x1", mScript.sort("Int"));
-		runAbductionTest(premise, conclusion, Collections.singleton(outVar), expected);
+		runAbductionTest(premise, conclusion, Collections.singleton(outVar), expected, false);
 	}
 
 	@Test
@@ -124,13 +124,26 @@ public class AbductionTest {
 		runAbductionTest(premise, conclusion, expected);
 	}
 
+	@Test
+	public void equivalenceEquality() {
+		final Term lhs = parseWithVariables("(and (= x 0) (= x y))", "(x Int)", "(y Int)");
+		final Term rhs = parseWithVariables("(= y 0)", "(y Int)");
+		final Term expected = parseWithVariables("(= x 0)", "(x Int)", "(y Int)");
+		runAbductionTest(lhs, rhs, Collections.emptySet(), expected, true);
+	}
+
 	private void runAbductionTest(final Term premise, final Term conclusion, final Term expected) {
-		runAbductionTest(premise, conclusion, Collections.emptySet(), expected);
+		runAbductionTest(premise, conclusion, Collections.emptySet(), expected, false);
 	}
 
 	private void runAbductionTest(final Term premise, final Term conclusion, final Set<TermVariable> forbidden,
-			final Term expected) {
-		final Term result = new Abducer(mServices, mMgdScript, forbidden).abduce(premise, conclusion);
+			final Term expected, final boolean equiv) {
+		final Term result;
+		if (equiv) {
+			result = new Abducer(mServices, mMgdScript, forbidden).abduceEquivalence(premise, conclusion);
+		} else {
+			result = new Abducer(mServices, mMgdScript, forbidden).abduce(premise, conclusion);
+		}
 		if (expected == null) {
 			assert result == null : "Unexpectedly found solution to abduction problem: " + result;
 		} else {

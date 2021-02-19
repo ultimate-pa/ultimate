@@ -143,7 +143,9 @@ public class Abducer {
 	 *         if no such formula exists.
 	 */
 	public Term abduceEquivalence(final Term lhs, final Term rhs) {
-		final Term solution = solveAbductionProblem(SmtUtils.binaryBooleanEquality(mScript.getScript(), lhs, rhs), lhs);
+		final Term formula = SmtUtils.binaryBooleanEquality(mScript.getScript(), lhs, rhs);
+		final Term invariant = SmtUtils.or(mScript.getScript(), lhs, rhs);
+		final Term solution = solveAbductionProblem(formula, invariant);
 		assert checkResult(lhs, rhs, solution, true) : "Abduction failed";
 		return solution;
 	}
