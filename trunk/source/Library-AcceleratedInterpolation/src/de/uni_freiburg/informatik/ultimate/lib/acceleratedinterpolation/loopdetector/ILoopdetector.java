@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -40,23 +39,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * @author Jonas Werner <wernerj@informatik.uni-freiburg.de>
  *
- * @param <L>
+ * @param <LOC>
  *            Location Types,
- * @param <T>
+ * @param <LETTER>
  *            Transition types
  */
-public interface ILoopdetector<L, T> {
+public interface ILoopdetector<LOC, LETTER> {
 
 	/**
 	 * Return loops as a map from location to possible loop paths.
 	 *
 	 * @return
 	 */
-	Map<L, Set<List<T>>> getLoops();
+	Map<LOC, Set<List<LETTER>>> getLoops();
 
-	Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> getLoopsTf();
+	Map<LOC, Set<List<UnmodifiableTransFormula>>> getLoopsTf();
 
-	Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> getNestedLoopsTf();
+	Map<LOC, Set<List<UnmodifiableTransFormula>>> getNestedLoopsTf();
 
 	/**
 	 * Return final transitions of a loop, e.g. transitions that return to the main program. Again as a location
@@ -64,7 +63,7 @@ public interface ILoopdetector<L, T> {
 	 *
 	 * @return
 	 */
-	Map<L, T> getLoopExitTransitions();
+	Map<LOC, LETTER> getLoopExitTransitions();
 
 	/**
 	 * Return the size of a loop as an integer pari. The first integer is the first occurence of the loop head, the last
@@ -72,20 +71,20 @@ public interface ILoopdetector<L, T> {
 	 *
 	 * @return
 	 */
-	Map<L, Pair<Integer, Integer>> getLoopSize();
+	Map<LOC, Pair<Integer, Integer>> getLoopSize();
 
 	/**
 	 * Maps a nesting loop head to a nested loophead
 	 *
 	 * @return
 	 */
-	Map<L, L> getNestingRelation();
+	Map<LOC, LOC> getNestingRelation();
 
 	/**
 	 * Map of Loops that are nested
 	 *
 	 * @return
 	 */
-	Map<L, Set<List<T>>> getNestedLoops();
+	Map<LOC, Set<List<LETTER>>> getNestedLoops();
 
 }

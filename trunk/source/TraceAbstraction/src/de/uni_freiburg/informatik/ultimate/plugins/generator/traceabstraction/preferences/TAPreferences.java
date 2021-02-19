@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AcceleratedInterpolationLoopAccelerationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
@@ -83,6 +84,7 @@ public final class TAPreferences {
 	private final String mSMTFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
 	private final McrInterpolantMethod mMcrInterpolantMethod;
+	private final AcceleratedInterpolationLoopAccelerationTechnique mLoopAccelerationTechnique;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -179,6 +181,9 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
 		mMcrInterpolantMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_INTERPOLANT_METHOD,
 				McrInterpolantMethod.class);
+		mLoopAccelerationTechnique =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
+						AcceleratedInterpolationLoopAccelerationTechnique.class);
 
 	}
 
@@ -392,6 +397,11 @@ public final class TAPreferences {
 
 	public boolean hasLimitAnalysisTime() {
 		return mLimitAnalysisTime > 0;
+	}
+
+	public AcceleratedInterpolationLoopAccelerationTechnique getLoopAccelerationTechnique() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
+				AcceleratedInterpolationLoopAccelerationTechnique.class);
 	}
 
 	/**

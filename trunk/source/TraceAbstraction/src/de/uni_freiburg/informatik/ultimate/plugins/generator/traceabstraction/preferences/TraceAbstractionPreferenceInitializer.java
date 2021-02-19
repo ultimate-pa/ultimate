@@ -303,6 +303,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
 			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, this setting defines which partitioning strategy is used.";
 
+	public static final String LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE =
+			"Loop acceleration method that is used by accelerated interpolation";
+	public static final AcceleratedInterpolationLoopAccelerationTechnique DEF_LOOPACCELERATION_TECHNIQUE =
+			AcceleratedInterpolationLoopAccelerationTechnique.FAST_UPR;
+	public static final String DESC_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE = "Set the loop acceleration technique.";
+
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
 			"Assert CodeBlocks Term Scoring Heuristic number of partitions";
 	public static final Integer DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
@@ -484,6 +490,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						PreferenceType.Combo, ScoringMethod.values()),
+				new UltimatePreferenceItem<>(LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
+						DEF_LOOPACCELERATION_TECHNIQUE, PreferenceType.Combo,
+						AcceleratedInterpolationLoopAccelerationTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
 						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
@@ -743,5 +752,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum McrInterpolantMethod {
 		WP, SP
+	}
+
+	public enum AcceleratedInterpolationLoopAccelerationTechnique {
+		FAST_UPR, WERNER_OVERAPPROX
 	}
 }
