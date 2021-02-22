@@ -74,6 +74,11 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof Summary);
 	}
 
+	@Override
+	public boolean isComposable(final IcfgEdge t1, final IcfgEdge t2) {
+		return isComposable(t1) && isComposable(t2) && t1.getTarget() == t2.getSource();
+	}
+
 	private boolean isComposable(final List<IcfgEdge> transitions) {
 		return transitions.stream().allMatch(this::isComposable);
 	}

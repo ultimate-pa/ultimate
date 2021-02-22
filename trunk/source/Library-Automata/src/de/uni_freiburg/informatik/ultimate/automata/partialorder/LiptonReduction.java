@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -45,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -74,6 +78,7 @@ public class LiptonReduction<L, P> {
 	private final ICompositionFactory<L> mCompositionFactory;
 	private final IIndependenceRelation<?, L> mMoverCheck;
 
+	private final BranchingProcess<L, P> mBranchingProcess;
 	private final CoenabledRelation<L> mCoEnabledRelation;
 	private final Map<L, List<L>> mSequentialCompositions = new HashMap<>();
 	private final Map<L, Set<L>> mChoiceCompositions = new HashMap<>();
@@ -111,7 +116,8 @@ public class LiptonReduction<L, P> {
 		mLogger.info("Starting Lipton reduction on Petri net that " + petriNet.sizeInformation());
 
 		try {
-			mCoEnabledRelation = CoenabledRelation.fromPetriNet(mServices, petriNet);
+			mBranchingProcess = new FinitePrefix<>(mServices, petriNet).getResult();
+			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
 
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
 			mLogger.info("Number of co-enabled transitions " + coEnabledRelationSize);
@@ -380,26 +386,75 @@ public class LiptonReduction<L, P> {
 	 */
 	private boolean sequenceRuleCheck(final ITransition<L, P> t1, final ITransition<L, P> t2, final P place,
 			final BoundedPetriNet<L, P> petriNet) {
-
-		final boolean composable =
-				mCompositionFactory.isComposable(t1.getSymbol()) && mCompositionFactory.isComposable(t2.getSymbol());
-
-		boolean mover = false;
-		if (isRightMover(t1)) {
-			final Set<P> post1 = new HashSet<>(petriNet.getSuccessors(t1));
-			post1.remove(place);
-			mover = petriNet.getPredecessors(t1).containsAll(post1);
+		final boolean composable = mCompositionFactory.isComposable(t1.getSymbol(), t2.getSymbol());
+		if (!composable) {
+			return false;
 		}
-		if (!mover && isLeftMover(t2)) {
-			final Set<P> pre2 = new HashSet<>(petriNet.getPredecessors(t2));
-			pre2.remove(place);
-			mover = pre2.isEmpty();
-			// mover = petriNet.getSuccessors(t2).containsAll(pre2);
+		final boolean structurallyCorrect =
+				!petriNet.getSuccessors(t2).contains(place) && checkForEventsInBetween(t1, t2);
+		if (!structurallyCorrect) {
+			return false;
+		}
+		return isRightMover(t1, t2) || isLeftMover(t2, t1);
+	}
+
+	private boolean checkForEventsInBetween(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+		final Set<Event<L, P>> ignoredEvents = new HashSet<>();
+
+		final Set<Event<L, P>> t1Events;
+		if (mSequentialCompositions.containsKey(t1.getSymbol())) {
+			final List<L> originalLetters = mSequentialCompositions.get(t1.getSymbol());
+			t1Events = mBranchingProcess.getEvents(originalLetters.get(0));
+			ignoredEvents.addAll(originalLetters.stream().flatMap(l -> mBranchingProcess.getEvents(l).stream())
+					.collect(Collectors.toList()));
+		} else if (mChoiceCompositions.containsKey(t1.getSymbol())) {
+			// Skip this case for now
+			return false;
+		} else {
+			t1Events = mBranchingProcess.getEvents(t1.getSymbol());
+			ignoredEvents.addAll(t1Events);
 		}
 
-		final boolean structurallyCorrect = !petriNet.getSuccessors(t2).contains(place);
+		final Set<Event<L, P>> t2Events;
+		if (mSequentialCompositions.containsKey(t2.getSymbol())) {
+			final List<L> originalLetters = mSequentialCompositions.get(t2.getSymbol());
+			t2Events = mBranchingProcess.getEvents(originalLetters.get(originalLetters.size() - 1));
+			ignoredEvents.addAll(originalLetters.stream().flatMap(l -> mBranchingProcess.getEvents(l).stream())
+					.collect(Collectors.toList()));
+		} else if (mChoiceCompositions.containsKey(t2.getSymbol())) {
+			// Skip this case for now
+			return false;
+		} else {
+			t2Events = mBranchingProcess.getEvents(t2.getSymbol());
+			ignoredEvents.addAll(t2Events);
+		}
 
-		return composable && structurallyCorrect && mover;
+		assert !t1Events.isEmpty();
+		assert !t2Events.isEmpty();
+
+		for (final Event<L, P> e1 : t1Events) {
+			for (final Event<L, P> e2 : t2Events) {
+				if (containsEventInBetween(e1, e2, ignoredEvents)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	private boolean containsEventInBetween(final Event<L, P> e1, final Event<L, P> e2,
+			final Set<Event<L, P>> ignoredEvents) {
+		for (final Event<L, P> e3 : e2.getLocalConfiguration()) {
+			if (ignoredEvents.contains(e3)) {
+				continue;
+			}
+			if (e3.getLocalConfiguration().contains(e1)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -446,10 +501,11 @@ public class LiptonReduction<L, P> {
 	 *            A transition of the Petri Net.
 	 * @return true iff t1 is left mover.
 	 */
-	private boolean isLeftMover(final ITransition<L, P> t1) {
-		final Set<L> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
+	private boolean isLeftMover(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+		final Set<L> coEnabledTransitions = new HashSet<>(mCoEnabledRelation.getImage(t1.getSymbol()));
+		coEnabledTransitions.addAll(mCoEnabledRelation.getImage(t2.getSymbol()));
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
+		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t3, t1.getSymbol()));
 	}
 
 	/**
@@ -459,10 +515,11 @@ public class LiptonReduction<L, P> {
 	 *            A transition of the Petri Net.
 	 * @return true iff t1 is right mover.
 	 */
-	private boolean isRightMover(final ITransition<L, P> t1) {
-		final Set<L> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
+	private boolean isRightMover(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+		final Set<L> coEnabledTransitions = new HashSet<>(mCoEnabledRelation.getImage(t1.getSymbol()));
+		coEnabledTransitions.addAll(mCoEnabledRelation.getImage(t2.getSymbol()));
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
+		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t1.getSymbol(), t3));
 	}
 
 	public BoundedPetriNet<L, P> getResult() {

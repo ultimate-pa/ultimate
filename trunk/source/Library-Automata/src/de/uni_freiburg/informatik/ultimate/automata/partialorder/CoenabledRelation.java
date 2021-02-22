@@ -75,13 +75,25 @@ public final class CoenabledRelation<LETTER> {
 	 */
 	public static <PLACE, LETTER> CoenabledRelation<LETTER> fromPetriNet(final AutomataLibraryServices services,
 			final IPetriNet<LETTER, PLACE> petriNet)
-					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final BranchingProcess<LETTER, PLACE> bp = new FinitePrefix<>(services, petriNet).getResult();
+		return fromBranchingProcess(bp);
+	}
+
+	/**
+	 * Creates a new instance by computing the relation from the given branching process.
+	 *
+	 * @param bp
+	 *            The branching process of a Petri net.
+	 * @return A new relation computed from the branching process.
+	 */
+	public static <PLACE, LETTER> CoenabledRelation<LETTER>
+			fromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
 		return new CoenabledRelation<>(computeFromBranchingProcess(bp));
 	}
 
 	private static <PLACE, LETTER> HashRelation<LETTER, LETTER>
-	computeFromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
+			computeFromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
 		final HashRelation<LETTER, LETTER> hashRelation = new HashRelation<>();
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 		final Collection<Event<LETTER, PLACE>> events = bp.getEvents();

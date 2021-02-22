@@ -237,7 +237,7 @@ public final class PetriNetUtils {
 	}
 
 	/**
-	 * Creates a Petri net where each transition has a unique letter.
+	 * Creates a Petri net where each composable transition has a unique letter.
 	 *
 	 * @param <LETTER>
 	 *            The type of letters labelling the transitions.
@@ -251,7 +251,7 @@ public final class PetriNetUtils {
 	 *            A {@link ICompositionFactory} instance.
 	 * @param oldToNewTransitions
 	 *            A map in which a mapping from replaced transitions to their replacement will be stored.
-	 * @return A new Petri net equivalent to the given one with each transition having a unique letter.
+	 * @return A new Petri net equivalent to the given one with each composable transition having a unique letter.
 	 */
 	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> createPetriNetWithUniqueLetters(
 			final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> petriNet,
@@ -268,7 +268,7 @@ public final class PetriNetUtils {
 			final LETTER letter = t.getSymbol();
 			if (lettersSeen.contains(letter)) {
 				replacedTransitions.add(t);
-			} else {
+			} else if (compositionFactory.isComposable(letter)) {
 				lettersSeen.add(letter);
 			}
 		}
