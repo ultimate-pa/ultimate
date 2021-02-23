@@ -72,7 +72,8 @@ def translate_clause(clause, globals, max_thread, indent):
     if kind == 'var':
         return ("", translate_var(args), [], max_thread)
     elif kind == 'declare':
-        return (indent + translate_declare(args), {}, [], max_thread)
+        assert len(args) >= 2, "'declare' with unexpected arguments: %r" % args
+        return translate_declare(args[0], args[1:], globals, max_thread, indent)
     elif kind == 'assume':
         assert len(args) == 1
         return (indent + translate_assume(args[0], globals), {}, [], max_thread)
@@ -141,9 +142,11 @@ def translate_var(args):
         type = (typeindices, basetype)
     return { name: type for name in names }
 
-def translate_declare(args):
-    vars = translate_var(args)
-    return "\n".join([print_decl(d[0], d[1]) for d in vars.items()])
+def translate_declare(var, body, globals, max_thread, indent):
+    decls = translate_var(var)
+    (code, glob, meth, max_thread) = translate_seq(body, globals, max_thread, indent)
+    new_code = "\n".join([ indent + print_decl(d[0], d[1]) for d in decls.items()]) + code
+    return (new_code, glob, meth, max_thread)
 
 def translate_assume(formula, globals):
     return "assume %s;\n" % translate_expr(formula, globals)
