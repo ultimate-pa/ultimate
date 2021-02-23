@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -231,6 +232,40 @@ public class ReflectionUtil {
 		final ClassLoader loader = getClassLoader(clazz);
 		final URL url = loader.getResource(name);
 		return tryConvertUrlToFile(loader, url, resourceConverter);
+	}
+
+	public static List<Field> instanceFields(final Object obj) {
+		if (obj == null) {
+			return Collections.emptyList();
+		}
+		Class<? extends Object> clazz = obj.getClass();
+		final List<Field> fields = new ArrayList<>();
+		while (clazz.getSuperclass() != null) {
+			// we don't want to process Object
+			fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+			clazz = clazz.getSuperclass();
+		}
+		return fields;
+	}
+
+	public static String instanceFieldsToString(final Object obj) {
+		if (obj == null) {
+			return "NULL";
+		}
+		final List<Field> fields = instanceFields(obj);
+		return fields.stream().map(a -> fieldToString(obj, a)).collect(Collectors.joining(","));
+	}
+
+	public static String fieldToString(final Object obj, final Field f) {
+		String val;
+		try {
+			val = String.valueOf(f.get(obj));
+		} catch (final IllegalArgumentException e) {
+			val = "IArE";
+		} catch (final IllegalAccessException e) {
+			val = "IAcE";
+		}
+		return String.format("%s=%s", f.getName(), val);
 	}
 
 	/**
