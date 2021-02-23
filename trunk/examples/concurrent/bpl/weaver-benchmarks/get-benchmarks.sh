@@ -1,22 +1,23 @@
 #!/bin/bash
 
-DIR=$(realpath $(dirname "$0"))
-
 set -e
 
+DIR=$(realpath $(dirname "$0"))
+cd "$DIR"
+
 # Clone repo with original benchmarks
-git clone https://github.com/weaver-verifier/weaver.git "$DIR/weaver"
+git clone https://github.com/weaver-verifier/weaver.git weaver
 
 echo -n "Translating benchmarks"
-for file in $(find "$DIR/weaver/examples" -type f -name '*.wvr')
+for file in $(find "weaver/examples" -type f -name '*.wvr')
 do
-  outfile="$DIR/generated/${file#"$DIR/weaver/examples/"}.bpl"
+  outfile="generated/${file#"weaver/examples/"}.bpl"
   outdir=$(dirname "$outfile")
   mkdir -p "$outdir"
 
-  python3 "$DIR/translate-weaver-benchmark.py3" "$file" "$outfile"
+  python3 "translate-weaver-benchmark.py3" "$file" "$outfile"
   echo -n "."
 done
 echo -e "\nDONE."
 
-rm -rf "$DIR/weaver"
+rm -rf "weaver"
