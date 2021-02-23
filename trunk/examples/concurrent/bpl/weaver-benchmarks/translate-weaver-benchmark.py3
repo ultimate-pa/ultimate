@@ -217,9 +217,11 @@ def translate_if(cond, then_branch, else_branch, globals, max_thread, indent):
     return (code, {**then_glob, **else_glob}, then_meth + else_meth, max_thread)
 
 def translate_alt(branches, globals, max_thread, indent):
+    assert len(branches) > 1, "Conditional should have at least 2 branches"
     (bodies, new_globals, methods, max_thread) = translate_each_clause(branches, globals, max_thread, indent + "  ")
-    connective = ("%s}\n%selse if (*) {\n" % (indent, indent))
-    code = indent + "if (*) {\n" + connective.join(bodies) + indent + "}\n"
+    connective = "%s}\n%selse if (*) {\n" % (indent, indent)
+    lastconnective = "%s}\n%selse {\n" % (indent, indent)
+    code = indent + "if (*) {\n" + connective.join(bodies[:-1]) + lastconnective + bodies[-1] + indent + "}\n"
     return (code, new_globals, methods, max_thread)
 
 def translate_expr(expr, globals):
