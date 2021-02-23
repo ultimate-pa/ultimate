@@ -466,6 +466,16 @@ public class CoreUtil {
 		return sb.toString();
 	}
 
+	/**
+	 * Add file separator if last symbol is not already file separator.
+	 */
+	public static String addFileSeparator(final String string) {
+		if (string.endsWith(System.getProperty("file.separator"))) {
+			return string;
+		}
+		return string + System.getProperty("file.separator");
+	}
+
 	public static String getCurrentDateTimeAsString() {
 		return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(Calendar.getInstance().getTime());
 	}

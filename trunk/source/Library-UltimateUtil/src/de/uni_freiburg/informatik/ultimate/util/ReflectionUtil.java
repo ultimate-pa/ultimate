@@ -248,17 +248,23 @@ public class ReflectionUtil {
 		return fields;
 	}
 
+	/**
+	 * Return a string of the form "name=value, " for all variables and their values from the instance represented by
+	 * obj, excluding fields of the {@link Object} type itself, and fields whose name starts with $.
+	 */
 	public static String instanceFieldsToString(final Object obj) {
 		if (obj == null) {
 			return "NULL";
 		}
 		final List<Field> fields = instanceFields(obj);
-		return fields.stream().map(a -> fieldToString(obj, a)).collect(Collectors.joining(","));
+		return fields.stream().filter(a -> !a.getName().startsWith("$")).map(a -> fieldToString(obj, a))
+				.collect(Collectors.joining(", "));
 	}
 
 	public static String fieldToString(final Object obj, final Field f) {
 		String val;
 		try {
+			f.setAccessible(true);
 			val = String.valueOf(f.get(obj));
 		} catch (final IllegalArgumentException e) {
 			val = "IArE";
