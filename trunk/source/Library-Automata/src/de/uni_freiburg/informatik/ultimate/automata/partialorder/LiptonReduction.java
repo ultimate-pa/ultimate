@@ -395,7 +395,7 @@ public class LiptonReduction<L, P> {
 		if (!structurallyCorrect) {
 			return false;
 		}
-		return isRightMover(t1, t2) || isLeftMover(t2, t1);
+		return performMoverCheck(t1, t2);
 	}
 
 	private boolean checkForEventsInBetween(final ITransition<L, P> t1, final ITransition<L, P> t2) {
@@ -494,16 +494,34 @@ public class LiptonReduction<L, P> {
 		return CopySubnet.copy(mServices, petriNet, transitionsToKeep, petriNet.getAlphabet(), true);
 	}
 
+	private boolean performMoverCheck(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+		final Set<L> coEnabled1 = mCoEnabledRelation.getImage(t1.getSymbol());
+		final Set<L> coEnabled2 = mCoEnabledRelation.getImage(t2.getSymbol());
+
+		final boolean all1 = coEnabled1.containsAll(coEnabled2);
+		final boolean all2 = coEnabled2.containsAll(coEnabled1);
+
+		if (all1 && !all2) {
+			return isRightMover(t1, coEnabled1);
+		} else if (!all1 && all2) {
+			return isLeftMover(t2, coEnabled2);
+		} else if (all1) {
+			return isRightMover(t1, coEnabled1) || isLeftMover(t2, coEnabled2);
+		} else {
+			return false;
+		}
+	}
+
 	/**
 	 * Checks if a Transition t1 is a left mover with regard to all its co-enabled transitions.
 	 *
 	 * @param t1
 	 *            A transition of the Petri Net.
+	 * @param coEnabledTransitions
+	 *            A set of co-enabled transitions.
 	 * @return true iff t1 is left mover.
 	 */
-	private boolean isLeftMover(final ITransition<L, P> t1, final ITransition<L, P> t2) {
-		final Set<L> coEnabledTransitions = new HashSet<>(mCoEnabledRelation.getImage(t1.getSymbol()));
-		coEnabledTransitions.addAll(mCoEnabledRelation.getImage(t2.getSymbol()));
+	private boolean isLeftMover(final ITransition<L, P> t1, final Set<L> coEnabledTransitions) {
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t3, t1.getSymbol()));
 	}
@@ -513,11 +531,11 @@ public class LiptonReduction<L, P> {
 	 *
 	 * @param t1
 	 *            A transition of the Petri Net.
+	 * @param coEnabledTransitions
+	 *            A set of co-enabled transitions.
 	 * @return true iff t1 is right mover.
 	 */
-	private boolean isRightMover(final ITransition<L, P> t1, final ITransition<L, P> t2) {
-		final Set<L> coEnabledTransitions = new HashSet<>(mCoEnabledRelation.getImage(t1.getSymbol()));
-		coEnabledTransitions.addAll(mCoEnabledRelation.getImage(t2.getSymbol()));
+	private boolean isRightMover(final ITransition<L, P> t1, final Set<L> coEnabledTransitions) {
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t1.getSymbol(), t3));
 	}
