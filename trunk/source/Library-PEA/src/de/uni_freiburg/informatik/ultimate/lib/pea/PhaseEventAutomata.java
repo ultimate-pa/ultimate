@@ -136,11 +136,11 @@ public class PhaseEventAutomata implements Comparable<Object> {
 				while (j.hasNext()) {
 					final Transition t2 = (Transition) j.next();
 
-					final CDD guard = t1.guard.and(t2.guard);
+					final CDD guard = t1.getGuard().and(t2.getGuard());
 					if (guard == CDD.FALSE) {
 						continue;
 					}
-					final CDD sinv = t1.dest.stateInv.and(t2.dest.stateInv);
+					final CDD sinv = t1.getDest().stateInv.and(t2.getDest().stateInv);
 					// This leads to a serious bug -
 					// if (sinv.and(guard) == CDD.FALSE)
 					if (sinv == CDD.FALSE) {
@@ -150,22 +150,22 @@ public class PhaseEventAutomata implements Comparable<Object> {
 						// TODO: Overapproximating for BoogieDecisions because constants will become primed
 						continue;
 					}
-					final CDD cinv = t1.dest.clockInv.and(t2.dest.clockInv);
-					final String[] resets = new String[t1.resets.length + t2.resets.length];
-					System.arraycopy(t1.resets, 0, resets, 0, t1.resets.length);
-					System.arraycopy(t2.resets, 0, resets, t1.resets.length, t2.resets.length);
+					final CDD cinv = t1.getDest().clockInv.and(t2.getDest().clockInv);
+					final String[] resets = new String[t1.getResets().length + t2.getResets().length];
+					System.arraycopy(t1.getResets(), 0, resets, 0, t1.getResets().length);
+					System.arraycopy(t2.getResets(), 0, resets, t1.getResets().length, t2.getResets().length);
 					final Set<String> stoppedClocks =
-							new SimpleSet<>(t1.dest.stoppedClocks.size() + t2.dest.stoppedClocks.size());
-					stoppedClocks.addAll(t1.dest.stoppedClocks);
-					stoppedClocks.addAll(t2.dest.stoppedClocks);
+							new SimpleSet<>(t1.getDest().stoppedClocks.size() + t2.getDest().stoppedClocks.size());
+					stoppedClocks.addAll(t1.getDest().stoppedClocks);
+					stoppedClocks.addAll(t2.getDest().stoppedClocks);
 
-					final String newname = t1.dest.getName() + TIMES + t2.dest.getName();
+					final String newname = t1.getDest().getName() + TIMES + t2.getDest().getName();
 					Phase p = newPhases.get(newname);
 
 					if (p == null) {
 						p = new Phase(newname, sinv, cinv, stoppedClocks);
 						newPhases.put(newname, p);
-						todo.add(new TodoEntry(t1.dest, t2.dest, p));
+						todo.add(new TodoEntry(t1.getDest(), t2.getDest(), p));
 					}
 					entry.p.addTransition(p, guard, resets);
 				}
