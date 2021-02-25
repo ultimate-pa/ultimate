@@ -87,13 +87,13 @@ public class ReqParser implements ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		final List<PatternType> rawPatterns = new ArrayList<>();
+		final List<PatternType<?>> rawPatterns = new ArrayList<>();
 		for (final File file : files) {
 			final String filePath = file.getAbsolutePath();
 			mLogger.info("Parsing file " + filePath);
 			try {
-				final List<PatternType> pattern = parseFile(filePath);
-				final List<PatternType> nonNullPatterns =
+				final List<PatternType<?>> pattern = parseFile(filePath);
+				final List<PatternType<?>> nonNullPatterns =
 						pattern.stream().filter(Objects::nonNull).collect(Collectors.toList());
 				if (nonNullPatterns.size() != pattern.size()) {
 					mReporter.unexpectedParserFailure(filePath);
@@ -109,26 +109,26 @@ public class ReqParser implements ISource {
 			return null;
 		}
 		logPatternSize(rawPatterns, "in total");
-		final List<PatternType> unifiedPatterns = unify(rawPatterns);
+		final List<PatternType<?>> unifiedPatterns = unify(rawPatterns);
 		logPatternSize(unifiedPatterns, "after unification");
 
 		return new ObjectContainer<>(unifiedPatterns);
 	}
 
-	private List<PatternType> parseFile(final String reqFileName) throws Exception {
+	private List<PatternType<?>> parseFile(final String reqFileName) throws Exception {
 		final FileInputStream fis = new FileInputStream(reqFileName);
 		try {
 			final de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser parser =
 					new de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser(mServices, mLogger, fis, reqFileName);
 			final Symbol goal = parser.parse();
-			final PatternType[] patterns = (PatternType[]) goal.value;
+			final PatternType<?>[] patterns = (PatternType[]) goal.value;
 			return Arrays.asList(patterns);
 		} finally {
 			fis.close();
 		}
 	}
 
-	private void logPatternSize(final List<PatternType> patterns, final String suffix) {
+	private void logPatternSize(final List<PatternType<?>> patterns, final String suffix) {
 		final long patternWithId = patterns.stream().filter(a -> !(a instanceof InitializationPattern)).count();
 		if (suffix == null) {
 			mLogger.info(String.format("%s requirements (%s non-initialization)", patterns.size(), patternWithId));
@@ -138,20 +138,20 @@ public class ReqParser implements ISource {
 		}
 	}
 
-	private List<PatternType> unify(final List<PatternType> patterns) {
-		final List<PatternType> rtr = new ArrayList<>();
+	private List<PatternType<?>> unify(final List<PatternType<?>> patterns) {
+		final List<PatternType<?>> rtr = new ArrayList<>();
 		final List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
 				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
 		final UnionFind<InitializationPattern> uf = createUnionFind(init);
 		checkTypeConflicts(uf.getAllRepresentatives());
 		rtr.addAll(merge(uf));
 
-		final List<PatternType> reqs = patterns.stream().filter(a -> a != null && !(a instanceof InitializationPattern))
-				.collect(Collectors.toList());
+		final List<PatternType<?>> reqs = patterns.stream()
+				.filter(a -> a != null && !(a instanceof InitializationPattern)).collect(Collectors.toList());
 		if (reqs.isEmpty()) {
 			return rtr;
 		}
-		final UnionFind<PatternType> ufreq = createUnionFind(reqs);
+		final UnionFind<PatternType<?>> ufreq = createUnionFind(reqs);
 		rtr.addAll(merge(ufreq));
 
 		return rtr;
@@ -172,9 +172,9 @@ public class ReqParser implements ISource {
 		}
 	}
 
-	private List<PatternType> merge(final UnionFind<? extends PatternType> ufreq) {
-		final List<PatternType> rtr = new ArrayList<>();
-		for (final Set<? extends PatternType> eqclass : ufreq.getAllEquivalenceClasses()) {
+	private List<PatternType<?>> merge(final UnionFind<? extends PatternType<?>> ufreq) {
+		final List<PatternType<?>> rtr = new ArrayList<>();
+		for (final Set<? extends PatternType<?>> eqclass : ufreq.getAllEquivalenceClasses()) {
 			if (eqclass.size() == 1) {
 				rtr.addAll(eqclass);
 				continue;
@@ -188,12 +188,12 @@ public class ReqParser implements ISource {
 	/**
 	 * Create a new pattern from a set of patterns by concatenating their ids.
 	 */
-	private static PatternType merge(final Set<? extends PatternType> eqclass) {
+	private static PatternType<?> merge(final Set<? extends PatternType<?>> eqclass) {
 		assert eqclass != null && eqclass.size() > 1;
 		final StringBuilder newName = new StringBuilder();
-		final Iterator<? extends PatternType> iter = eqclass.iterator();
+		final Iterator<? extends PatternType<?>> iter = eqclass.iterator();
 
-		PatternType current = iter.next();
+		PatternType<?> current = iter.next();
 		final Class<?> last = current.getClass();
 		newName.append(current.getId());
 		while (iter.hasNext()) {
@@ -206,7 +206,7 @@ public class ReqParser implements ISource {
 		return current.rename(newName.toString());
 	}
 
-	private <T extends PatternType> UnionFind<T> createUnionFind(final List<T> patterns) {
+	private <T extends PatternType<?>> UnionFind<T> createUnionFind(final List<T> patterns) {
 		final UnionFind<T> uf = new UnionFind<>();
 		for (final T pattern : patterns) {
 			final T rep = uf.findAndConstructEquivalenceClassIfNeeded(pattern);
