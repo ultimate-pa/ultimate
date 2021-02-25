@@ -136,15 +136,15 @@ public class QuantifierPusher extends TermTransformer {
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final Set<TermVariable> bannedForDivCapture, final Term inputTerm) {
+		final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
 		final ExtendedSimplificationResult esr1 =
 				SmtUtils.simplifyWithStatistics(script, inputTerm, services, SimplificationTechnique.POLY_PAC);
-		services.getLoggingService().getLogger(QuantifierPusher.class).warn(esr1.buildSizeReductionMessage());
+		logger.info(esr1.buildSizeReductionMessage());
 		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
 				bannedForDivCapture).transform(esr1.getSimplifiedTerm());
 		final ExtendedSimplificationResult esr2 =
 				SmtUtils.simplifyWithStatistics(script, result, services, SimplificationTechnique.POLY_PAC);
-		services.getLoggingService().getLogger(QuantifierPusher.class)
-				.warn(esr1.buildSizeReductionMessage() + " " + new DAGSize().treesize(esr1.getSimplifiedTerm()));
+		logger.info(esr2.buildSizeReductionMessage() + " " + new DAGSize().treesize(esr2.getSimplifiedTerm()));
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
 			SmtUtils.checkLogicalEquivalenceForDebugging(script.getScript(), result, inputTerm, QuantifierPusher.class,
