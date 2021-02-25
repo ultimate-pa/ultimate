@@ -185,17 +185,26 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	}
 
+	/**
+	 * The type of Large Block Encoding to be applied to Petri nets.
+	 */
 	public enum PetriNetLbe {
-
+		/** Do not apply Large Block Encoding. */
 		OFF,
 		/**
-		 * TODO: documentation
+		 * Apply Large Block Encoding based on the formulas of the transitions.
 		 */
 		SEMANTIC_BASED_MOVER_CHECK,
 		/**
-		 * TODO: documentation
+		 * Apply Large Block Encoding based on which variables are accessed in a transition. Faster than the semantic
+		 * check but might miss some opportunities.
 		 */
 		VARIABLE_BASED_MOVER_CHECK,
+		/**
+		 * Like SEMANTIC_BASED_MOVER_CHECK, but taking into account the predicates added by Trace Abstraction steps.
+		 * Only useful when repeated Lipton Reduction is enabled.
+		 */
+		SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES,
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
@@ -345,9 +354,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			final BoundedPetriNet<L, IPredicate> net;
 			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-				final PetriNetLargeBlockEncoding<L> lbe =
-						new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(), petrifiedCfg,
-								mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
+				final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(mServices,
+						mIcfg.getCfgSmtToolkit(), petrifiedCfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory,
+						mPredicateFactory, mTransitionClazz);
 				final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 				mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
 				net = lbecfg;

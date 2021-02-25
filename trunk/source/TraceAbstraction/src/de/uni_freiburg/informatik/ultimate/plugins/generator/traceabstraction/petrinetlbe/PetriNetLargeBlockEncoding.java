@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndepende
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionWithPredicates;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -100,6 +102,11 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 *            The Petri net on which the large block encoding should be performed.
 	 * @param petriNetLbeSettings
 	 *            Determines the independence relation to be used.
+	 * @param compositionFactory
+	 *            A composition factory for the letters of the Petri net.
+	 * @param predicateFactory
+	 *            A predicate factory for predicates of the control flow graph.
+	 * @param clazz
 	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
@@ -108,8 +115,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> clazz)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final IPLBECompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
+			final Class<L> clazz) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
@@ -121,6 +128,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		case OFF:
 			throw new IllegalArgumentException("do not call LBE if you don't want to use it");
 		case SEMANTIC_BASED_MOVER_CHECK:
+		case SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES:
 			mLogger.info("Petri net LBE is using semantic-based independence relation.");
 			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, false, false);
 			final IIndependenceRelation<IPredicate, L> unionCheck =
@@ -143,8 +151,14 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
 			final BoundedPetriNet<L, IPredicate> net = PetriNetUtils.createPetriNetWithUniqueLetters(automataServices,
 					petriNet, compositionFactory, mReplacedTransitions);
-			final LiptonReduction<L, IPredicate> lipton =
-					new LiptonReduction<>(automataServices, net, compositionFactory, moverCheck);
+			final LiptonReduction<L, IPredicate> lipton;
+			if (petriNetLbeSettings == PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES) {
+				lipton = new LiptonReductionWithPredicates<>(services, net, compositionFactory, moverCheck,
+						predicateFactory);
+			} else {
+				lipton = new LiptonReduction<>(automataServices, net, compositionFactory, moverCheck);
+			}
+			lipton.performReduction();
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
 

@@ -185,7 +185,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final long start_time = System.currentTimeMillis();
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(),
-				cfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
+				cfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mPredicateFactory, mTransitionClazz);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 		mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
 

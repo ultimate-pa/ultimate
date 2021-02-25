@@ -76,15 +76,16 @@ public class LiptonReduction<L, P> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final ICompositionFactory<L> mCompositionFactory;
-	private final IIndependenceRelation<?, L> mMoverCheck;
+	protected final IIndependenceRelation<P, L> mMoverCheck;
 
-	private final BranchingProcess<L, P> mBranchingProcess;
-	private final CoenabledRelation<L> mCoEnabledRelation;
+	private BranchingProcess<L, P> mBranchingProcess;
+	protected CoenabledRelation<L> mCoEnabledRelation;
 	private final Map<L, List<L>> mSequentialCompositions = new HashMap<>();
 	private final Map<L, Set<L>> mChoiceCompositions = new HashMap<>();
 
-	private final BoundedPetriNet<L, P> mResult;
-	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
+	private final BoundedPetriNet<L, P> mPetriNet;
+	private BoundedPetriNet<L, P> mResult;
+	protected final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -97,26 +98,31 @@ public class LiptonReduction<L, P> {
 	 *            An {@link ICompositionFactory} capable of performing compositions for the given alphabet.
 	 * @param independenceRelation
 	 *            The independence relation used for mover checks.
-	 *
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled.
-	 * @throws PetriNetNot1SafeException
-	 *             if Petri Net is not 1-safe.
 	 */
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
-			final ICompositionFactory<L> compositionFactory, final IIndependenceRelation<?, L> independenceRelation)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final ICompositionFactory<L> compositionFactory, final IIndependenceRelation<P, L> independenceRelation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mCompositionFactory = compositionFactory;
 		mMoverCheck = independenceRelation;
+		mPetriNet = petriNet;
+	}
 
+	/**
+	 * Performs the Lipton Reduction. Needs to be called once before using any other functions.
+	 *
+	 * @throws PetriNetNot1SafeException
+	 *             if Petri Net is not 1-safe.
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled.
+	 */
+	public void performReduction() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		mStatistics.start(LiptonReductionStatisticsDefinitions.ReductionTime);
-		mStatistics.collectInitialStatistics(petriNet);
-		mLogger.info("Starting Lipton reduction on Petri net that " + petriNet.sizeInformation());
+		mStatistics.collectInitialStatistics(mPetriNet);
+		mLogger.info("Starting Lipton reduction on Petri net that " + mPetriNet.sizeInformation());
 
 		try {
-			mBranchingProcess = new FinitePrefix<>(mServices, petriNet).getResult();
+			mBranchingProcess = new FinitePrefix<>(mServices, mPetriNet).getResult();
 			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
 
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
@@ -124,8 +130,8 @@ public class LiptonReduction<L, P> {
 			mStatistics.setCoEnabledTransitionPairs(coEnabledRelationSize);
 
 			BoundedPetriNet<L, P> resultLastIteration;
-			BoundedPetriNet<L, P> resultCurrentIteration = CopySubnet.copy(services, petriNet,
-					new HashSet<>(petriNet.getTransitions()), petriNet.getAlphabet(), true);
+			BoundedPetriNet<L, P> resultCurrentIteration = CopySubnet.copy(mServices, mPetriNet,
+					new HashSet<>(mPetriNet.getTransitions()), mPetriNet.getAlphabet(), true);
 			do {
 				mStatistics.reportFixpointIteration();
 				resultLastIteration = resultCurrentIteration;
@@ -140,11 +146,11 @@ public class LiptonReduction<L, P> {
 			mLogger.info("Total number of compositions: "
 					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.TotalNumberOfCompositions));
 		} catch (final AutomataOperationCanceledException aoce) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
+			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(mPetriNet));
 			aoce.addRunningTaskInfo(runningTaskInfo);
 			throw aoce;
 		} catch (final ToolchainCanceledException tce) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
+			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(mPetriNet));
 			tce.addRunningTaskInfo(runningTaskInfo);
 			throw tce;
 		} finally {
@@ -152,7 +158,6 @@ public class LiptonReduction<L, P> {
 		}
 
 		mStatistics.collectFinalStatistics(mResult);
-
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<L, P> petriNet) {
@@ -395,7 +400,7 @@ public class LiptonReduction<L, P> {
 		if (!structurallyCorrect) {
 			return false;
 		}
-		return performMoverCheck(t1, t2);
+		return performMoverCheck(petriNet, t1, t2);
 	}
 
 	private boolean checkForEventsInBetween(final ITransition<L, P> t1, final ITransition<L, P> t2) {
@@ -494,7 +499,8 @@ public class LiptonReduction<L, P> {
 		return CopySubnet.copy(mServices, petriNet, transitionsToKeep, petriNet.getAlphabet(), true);
 	}
 
-	private boolean performMoverCheck(final ITransition<L, P> t1, final ITransition<L, P> t2) {
+	private boolean performMoverCheck(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t1,
+			final ITransition<L, P> t2) {
 		final Set<L> coEnabled1 = mCoEnabledRelation.getImage(t1.getSymbol());
 		final Set<L> coEnabled2 = mCoEnabledRelation.getImage(t2.getSymbol());
 
@@ -502,11 +508,11 @@ public class LiptonReduction<L, P> {
 		final boolean all2 = coEnabled2.containsAll(coEnabled1);
 
 		if (all1 && !all2) {
-			return isRightMover(t1, coEnabled1);
+			return isRightMover(petriNet, t1, coEnabled1);
 		} else if (!all1 && all2) {
-			return isLeftMover(t2, coEnabled2);
+			return isLeftMover(petriNet, t2, coEnabled2);
 		} else if (all1) {
-			return isRightMover(t1, coEnabled1) || isLeftMover(t2, coEnabled2);
+			return isRightMover(petriNet, t1, coEnabled1) || isLeftMover(petriNet, t2, coEnabled2);
 		} else {
 			return false;
 		}
@@ -515,13 +521,16 @@ public class LiptonReduction<L, P> {
 	/**
 	 * Checks if a Transition t1 is a left mover with regard to all its co-enabled transitions.
 	 *
+	 * @param petriNet
+	 *            The Petri net.
 	 * @param t1
 	 *            A transition of the Petri Net.
 	 * @param coEnabledTransitions
 	 *            A set of co-enabled transitions.
 	 * @return true iff t1 is left mover.
 	 */
-	private boolean isLeftMover(final ITransition<L, P> t1, final Set<L> coEnabledTransitions) {
+	protected boolean isLeftMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t1,
+			final Set<L> coEnabledTransitions) {
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t3, t1.getSymbol()));
 	}
@@ -529,13 +538,16 @@ public class LiptonReduction<L, P> {
 	/**
 	 * Checks if a Transition is a right mover with regard to all its co-enabled transitions.
 	 *
+	 * @param petriNet
+	 *            The Petri net.
 	 * @param t1
 	 *            A transition of the Petri Net.
 	 * @param coEnabledTransitions
 	 *            A set of co-enabled transitions.
 	 * @return true iff t1 is right mover.
 	 */
-	private boolean isRightMover(final ITransition<L, P> t1, final Set<L> coEnabledTransitions) {
+	protected boolean isRightMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t1,
+			final Set<L> coEnabledTransitions) {
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t1.getSymbol(), t3));
 	}
