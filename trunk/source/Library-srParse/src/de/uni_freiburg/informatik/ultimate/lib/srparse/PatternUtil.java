@@ -66,14 +66,15 @@ public final class PatternUtil {
 	 *            {@link PatternScopeNotImplemented} when their {@link PatternType#transformToPea(ILogger, Map)} method
 	 *            is called.
 	 */
-	public static Pair<List<? extends PatternType<?>>, Map<String, Integer>>
+	public static Pair<List<? extends PatternType<?>>, Durations>
 			createAllPatterns(final boolean withoutNotImplemented) {
 		// first, create some observables and durartions
 		final int count = 10;
 		int duration = 5;
 		final CDD[] patternObs = new CDD[count];
 		final String[] durations = new String[count];
-		final Map<String, Integer> duration2bounds = Collections.emptyMap();
+
+		final Durations duration2bounds = new Durations(PatternUtil::dummyConsumer);
 
 		for (int i = 0; i < count; ++i) {
 			patternObs[i] = BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16));
@@ -138,6 +139,10 @@ public final class PatternUtil {
 		}
 
 		return new Pair<>(patterns, duration2bounds);
+	}
+
+	private static void dummyConsumer(final String a) {
+		// do nothing
 	}
 
 	private static final class ClassNameComparator implements Comparator<Object> {

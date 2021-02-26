@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * TODO: explain pattern
@@ -68,7 +69,7 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 
 	public InitializationPattern(final String ident, final String type, final VariableCategory visibility,
 			final Expression expr) {
-		super(null, ident, null, null);
+		super(null, ident, null, null, null);
 		mType = type;
 		mVisibility = visibility;
 		mExpression = expr;
@@ -76,7 +77,7 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 
 	@Override
 	public InitializationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
+			final List<Rational> durations, final List<String> durationNames) {
 		throw new UnsupportedOperationException();
 	}
 

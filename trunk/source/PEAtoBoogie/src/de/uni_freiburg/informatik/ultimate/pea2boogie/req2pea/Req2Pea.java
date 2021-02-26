@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -89,7 +90,7 @@ public class Req2Pea implements IReq2Pea {
 			final List<CDD> cdds =
 					req.getCdds().stream().map(e -> new CDDTransformer().transform(e)).collect(Collectors.toList());
 
-			requirements.set(i, req.create(scope, req.getId(), cdds, req.getDuration()));
+			requirements.set(i, req.create(scope, req.getId(), cdds, req.getDurations(), req.getDurationNames()));
 		}
 
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
@@ -97,8 +98,8 @@ public class Req2Pea implements IReq2Pea {
 		for (final InitializationPattern pattern : init) {
 			builder.addInitPattern(pattern);
 		}
-		final Map<String, Integer> id2bounds = builder.getId2Bounds();
-		mPattern2Peas = generatePeas(requirements, id2bounds);
+		final Durations durations = builder.getDurations();
+		mPattern2Peas = generatePeas(requirements, durations);
 
 		for (final ReqPeas reqpea : mPattern2Peas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
@@ -130,7 +131,7 @@ public class Req2Pea implements IReq2Pea {
 		return mSymbolTable;
 	}
 
-	private List<ReqPeas> generatePeas(final List<PatternType<?>> patterns, final Map<String, Integer> id2bounds) {
+	private List<ReqPeas> generatePeas(final List<PatternType<?>> patterns, final Durations durations) {
 		final Map<PatternType<?>, ReqPeas> req2automata = new LinkedHashMap<>();
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
@@ -143,7 +144,7 @@ public class Req2Pea implements IReq2Pea {
 					mLogger.info("Transforming " + pat.getId());
 				}
 				counter.compute(pat.getClass(), (a, b) -> b == null ? 1 : b + 1);
-				pea = pat.transformToPea(mLogger, id2bounds);
+				pea = pat.transformToPea(mLogger, durations);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
 				mResultUtil.transformationError(pat, reason);

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that if "R" holds and is succeeded by "S", then "T" previously held
@@ -47,14 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class PrecedenceChain12Pattern extends PatternType<PrecedenceChain12Pattern> {
 
 	public PrecedenceChain12Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public PrecedenceChain12Pattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new PrecedenceChain12Pattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -114,11 +109,6 @@ public class PrecedenceChain12Pattern extends PatternType<PrecedenceChain12Patte
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" previously held");
 		return sb.toString();
-	}
-
-	@Override
-	public PrecedenceChain12Pattern rename(final String newName) {
-		return new PrecedenceChain12Pattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

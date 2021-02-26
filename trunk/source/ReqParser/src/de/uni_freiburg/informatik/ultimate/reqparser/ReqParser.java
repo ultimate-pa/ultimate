@@ -119,7 +119,7 @@ public class ReqParser implements ISource {
 		final FileInputStream fis = new FileInputStream(reqFileName);
 		try {
 			final de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser parser =
-					new de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser(mServices, mLogger, fis, reqFileName);
+					new de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser(mLogger, fis, reqFileName);
 			final Symbol goal = parser.parse();
 			final PatternType<?>[] patterns = (PatternType[]) goal.value;
 			return Arrays.asList(patterns);
