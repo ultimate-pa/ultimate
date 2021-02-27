@@ -36,18 +36,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -65,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -75,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -87,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.EpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
@@ -139,11 +136,12 @@ public class RtInconcistencyConditionGenerator {
 	private final Substitution mConstInliner;
 
 	private final ILogger mPQELogger;
+	private final EpsilonTransformer mEpsilonTransformer;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable, final List<ReqPeas> reqPeas,
-			final BoogieDeclarations boogieDeclarations, final boolean separateInvariantHandling)
-			throws InvariantInfeasibleException {
+			final BoogieDeclarations boogieDeclarations, final EpsilonTransformer epsilonTransformer,
+			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mReqSymboltable = symboltable;
 		mServices = services;
 		mLogger = logger;
@@ -172,6 +170,7 @@ public class RtInconcistencyConditionGenerator {
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
+		mEpsilonTransformer = epsilonTransformer;
 		final Map<Term, Term> constToValue = createConst2Value(mScript, mReqSymboltable, mBoogie2Smt);
 		mConstInliner = new Substitution(mScript, constToValue);
 
@@ -191,30 +190,15 @@ public class RtInconcistencyConditionGenerator {
 		final Map<Term, Term> rtr = new HashMap<>();
 		for (final Entry<String, Expression> constEntry : constToValue.entrySet()) {
 			final BoogieConst programConst = boogieConsts.get(constEntry.getKey());
-			final Term value = literalToTerm(script, constEntry.getValue());
-			rtr.put(programConst.getTerm(), value);
+			final Optional<Term> value = LiteralUtils.toTerm(constEntry.getValue(), script);
+			if (value.isPresent()) {
+				rtr.put(programConst.getTerm(), value.get());
+			} else {
+				throw new IllegalArgumentException(BoogiePrettyPrinter.print(constEntry.getValue()) + " is no literal");
+			}
 		}
 
 		return rtr;
-	}
-
-	private static Term literalToTerm(final Script script, final Expression expr) {
-		if (expr instanceof RealLiteral) {
-			return SmtUtils.toRational(((RealLiteral) expr).getValue()).toTerm(SmtSortUtils.getRealSort(script));
-		} else if (expr instanceof IntegerLiteral) {
-			return SmtUtils.toRational(((IntegerLiteral) expr).getValue()).toTerm(SmtSortUtils.getIntSort(script));
-		} else if (expr instanceof BooleanLiteral) {
-			if (((BooleanLiteral) expr).getValue()) {
-				return script.term("true");
-			}
-			return script.term("false");
-		} else if (expr instanceof UnaryExpression) {
-			final UnaryExpression uexpr = (UnaryExpression) expr;
-			if (uexpr.getOperator() == Operator.ARITHNEGATIVE) {
-				return SmtUtils.neg(script, literalToTerm(script, uexpr.getExpr()));
-			}
-		}
-		throw new IllegalArgumentException(BoogiePrettyPrinter.print(expr) + " is no literal");
 	}
 
 	/**
@@ -399,12 +383,16 @@ public class RtInconcistencyConditionGenerator {
 		final List<Term> inner = new ArrayList<>();
 		for (final Transition trans : phase.getTransitions()) {
 			final Term guardTerm = mCddToSmt.toSmt(trans.getGuard());
+			final Term transformedGuardTerm = mEpsilonTransformer.transform(mScript, guardTerm);
+			if (guardTerm != transformedGuardTerm) {
+				mLogger.info("Transformed guard term %s to %s", guardTerm, transformedGuardTerm);
+			}
 			final CDD cddPrimedStInv = trans.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars());
 			final CDD cddStrictInv =
 					new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets());
 			final Term primedStInv = mCddToSmt.toSmt(cddPrimedStInv);
 			final Term strictInv = mCddToSmt.toSmt(cddStrictInv);
-			inner.add(SmtUtils.and(mScript, guardTerm, primedStInv, strictInv));
+			inner.add(SmtUtils.and(mScript, transformedGuardTerm, primedStInv, strictInv));
 		}
 		return SmtUtils.or(mScript, inner);
 	}

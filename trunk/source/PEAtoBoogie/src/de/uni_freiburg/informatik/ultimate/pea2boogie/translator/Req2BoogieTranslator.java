@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -105,6 +106,7 @@ public class Req2BoogieTranslator {
 
 	private final IReqSymbolTable mSymboltable;
 	private IReq2PeaAnnotator mReqCheckAnnotator;
+	private final EpsilonTransformer mEpsilonTransformer;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType<?>> patterns) {
@@ -136,6 +138,7 @@ public class Req2BoogieTranslator {
 			mUnit = null;
 			mReqPeas = null;
 			mSymboltable = null;
+			mEpsilonTransformer = null;
 			return;
 		}
 
@@ -154,13 +157,14 @@ public class Req2BoogieTranslator {
 			mUnit = null;
 			mReqPeas = null;
 			mSymboltable = null;
+			mEpsilonTransformer = null;
 			return;
 		}
 
 		mReqPeas = req2pea.getReqPeas();
 		mSymboltable = req2pea.getSymboltable();
 		mReqCheckAnnotator = req2pea.getAnnotator();
-
+		mEpsilonTransformer = new EpsilonTransformer(req2pea.getDurations().computeEpsilon());
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
 
@@ -423,8 +427,14 @@ public class Req2BoogieTranslator {
 		final List<Statement> smtList = new ArrayList<>();
 		final CDD guardCdd = transition.getGuard();
 		if (guardCdd != CDD.TRUE) {
-			final Expression expr = new CDDTranslator().toBoogie(guardCdd, bl);
-			final AssumeStatement assumeGuard = new AssumeStatement(bl, mNormalFormTransformer.toNnf(expr));
+			final Expression guardExpr = new CDDTranslator().toBoogie(guardCdd, bl);
+			final Expression transformedGuardExpression = mEpsilonTransformer.transform(guardExpr);
+			if (guardExpr != transformedGuardExpression) {
+				mLogger.info("Replaced guard expression %s with %s", BoogiePrettyPrinter.print(guardExpr),
+						BoogiePrettyPrinter.print(transformedGuardExpression));
+			}
+			final AssumeStatement assumeGuard =
+					new AssumeStatement(bl, mNormalFormTransformer.toNnf(transformedGuardExpression));
 			smtList.add(assumeGuard);
 		}
 
@@ -448,16 +458,16 @@ public class Req2BoogieTranslator {
 		return smtList.toArray(new Statement[smtList.size()]);
 	}
 
-	private Statement generateTransitionsFromPhase(final PhaseEventAutomata automaton, final String pcName, final Phase phase,
-			final BoogieLocation bl) {
+	private Statement generateTransitionsFromPhase(final PhaseEventAutomata automaton, final String pcName,
+			final Phase phase, final BoogieLocation bl) {
 
 		final Statement[] statements = new Statement[phase.getTransitions().size()];
 		final Statement[] emptyArray = new Statement[0];
 		final WildcardExpression wce = new WildcardExpression(bl);
 		final List<Transition> transitions = phase.getTransitions();
 		for (int i = 0; i < transitions.size(); i++) {
-			statements[i] =
-					new IfStatement(bl, wce, generateTransitionFromPeaTransition(automaton, pcName, transitions.get(i), bl), emptyArray);
+			statements[i] = new IfStatement(bl, wce,
+					generateTransitionFromPeaTransition(automaton, pcName, transitions.get(i), bl), emptyArray);
 		}
 		return joinInnerIfSmts(statements, bl);
 	}
@@ -493,7 +503,8 @@ public class Req2BoogieTranslator {
 		final Statement[] emptyArray = new Statement[0];
 		for (int i = 0; i < phases.length; i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
-			final Statement[] outerIfBodySmt = new Statement[] { generateTransitionsFromPhase(automaton, pcName, phases[i], bl) };
+			final Statement[] outerIfBodySmt =
+					new Statement[] { generateTransitionsFromPhase(automaton, pcName, phases[i], bl) };
 			statements[i] = new IfStatement(bl, ifCon, outerIfBodySmt, emptyArray);
 		}
 		return joinIfSmts(statements, bl);

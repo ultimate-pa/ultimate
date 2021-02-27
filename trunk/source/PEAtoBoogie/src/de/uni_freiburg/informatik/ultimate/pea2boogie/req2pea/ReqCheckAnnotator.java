@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
@@ -69,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.EpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
@@ -98,8 +100,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private final IReqSymbolTable mSymbolTable;
 	private final List<ReqPeas> mReqPeas;
 
+	private final EpsilonTransformer mEpsilonTransformer;
+
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
-			final IReqSymbolTable symbolTable) {
+			final IReqSymbolTable symbolTable, final Durations durations) {
 		mLogger = logger;
 		mServices = services;
 		mSymbolTable = symbolTable;
@@ -108,6 +112,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
+		mEpsilonTransformer = new EpsilonTransformer(durations.computeEpsilon());
 	}
 
 	@Override
@@ -142,7 +147,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			if (mCombinationNum >= 1) {
 				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
 				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymbolTable,
-						mReqPeas, boogieDeclarations, mSeparateInvariantHandling);
+						mReqPeas, boogieDeclarations, mEpsilonTransformer, mSeparateInvariantHandling);
 			} else {
 				rticGenerator = null;
 			}

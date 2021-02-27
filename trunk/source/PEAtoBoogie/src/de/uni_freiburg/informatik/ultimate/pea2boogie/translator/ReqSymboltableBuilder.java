@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -100,8 +99,6 @@ public class ReqSymboltableBuilder {
 
 	private final UnionFind<String> mEquivalences;
 
-	private final Durations mDurations;
-
 	public ReqSymboltableBuilder(final ILogger logger) {
 		mLogger = logger;
 		mId2Errors = new LinkedHashRelation<>();
@@ -122,7 +119,6 @@ public class ReqSymboltableBuilder {
 		mInputVars = new LinkedHashSet<>();
 		mOutputVars = new LinkedHashSet<>();
 		mEquivalences = new UnionFind<>();
-		mDurations = new Durations(a -> addError(a, new ErrorInfo(ErrorType.SYNTAX_ERROR, null, a)));
 		mBuiltinFunctions = generateBuildinFuntions();
 
 	}
@@ -139,7 +135,6 @@ public class ReqSymboltableBuilder {
 		case CONST:
 			addVar(name, type, initPattern, mConstVars);
 			mConst2Value.put(name, initPattern.getExpression());
-			mDurations.addInitPattern(initPattern);
 			break;
 		case IN:
 			mInputVars.add(name);
@@ -212,10 +207,6 @@ public class ReqSymboltableBuilder {
 		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mHistoryVars,
 				mConstVars, mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value, mInputVars, mOutputVars,
 				mBuiltinFunctions, mEquivalences);
-	}
-
-	public Durations getDurations() {
-		return mDurations;
 	}
 
 	public Set<String> getConstIds() {
