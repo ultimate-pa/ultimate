@@ -61,6 +61,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSub
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStore3;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify.SimplifyDDAWithTimeout;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify.SimplifyQuick;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -95,8 +97,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class SmtUtils {
 
-	private final static String[] EMPTY_INDICES = new String[0];
-	private final static BigInteger[] EMPTY_INDICES_BI = new BigInteger[0];
+	private static final String[] EMPTY_INDICES = new String[0];
+	private static final BigInteger[] EMPTY_INDICES_BI = new BigInteger[0];
 
 	private static final String ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT = "unknown enum constant ";
 	private static final String ERROR_MSG_UNKNOWN_SORT = "unknown sort ";
@@ -223,8 +225,7 @@ public final class SmtUtils {
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
-			final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique) {
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		return simplifyWithStatistics(script, formula, script.term(null, "true"), services, simplificationTechnique);
 	}
 
@@ -616,7 +617,7 @@ public final class SmtUtils {
 	public static Term unaryNumericMinus(final Script script, final Term operand) {
 		if (operand instanceof ConstantTerm) {
 			final ConstantTerm ct = (ConstantTerm) operand;
-			final Rational value = convertConstantTermToRational(ct);
+			final Rational value = toRational(ct);
 			return value.negate().toTerm(operand.getSort());
 		} else if (operand instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) operand;
@@ -749,8 +750,8 @@ public final class SmtUtils {
 		}
 		final ConstantTerm lhsConst = (ConstantTerm) lhs;
 		final ConstantTerm rhsConst = (ConstantTerm) rhs;
-		final Rational lhsValue = convertConstantTermToRational(lhsConst);
-		final Rational rhsValue = convertConstantTermToRational(rhsConst);
+		final Rational lhsValue = toRational(lhsConst);
+		final Rational rhsValue = toRational(rhsConst);
 		if (!lhsValue.getClass().isAssignableFrom(rhsValue.getClass())
 				&& rhsValue.getClass().isAssignableFrom(lhs.getClass())) {
 			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
@@ -1286,26 +1287,26 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Auxiliary method for {@link TermTransformer}. The method
-	 * {@link TermTransformer#convertApplicationTerm} constructs new terms that may
-	 * violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}.
-	 * Classes in Ultimate that inherit {@link TermTransformer} should overwrite
-	 * {@link TermTransformer#convertApplicationTerm} by a method that uses this
-	 * method for the construction of new terms.
-	 * See e.g., {@link SubstitutionWithLocalSimplification}.
+	 * Auxiliary method for {@link TermTransformer}. The method {@link TermTransformer#convertApplicationTerm}
+	 * constructs new terms that may violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}. Classes in
+	 * Ultimate that inherit {@link TermTransformer} should overwrite {@link TermTransformer#convertApplicationTerm} by
+	 * a method that uses this method for the construction of new terms. See e.g.,
+	 * {@link SubstitutionWithLocalSimplification}.
 	 *
-	 * @param appTerm original ApplicationTerm
-	 * @param newArgs parameters of the transformed ApplicationTerm
+	 * @param appTerm
+	 *            original ApplicationTerm
+	 * @param newArgs
+	 *            parameters of the transformed ApplicationTerm
 	 */
-	public static Term convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs, final Script script) {
+	public static Term convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs,
+			final Script script) {
 		final Term result;
 		final Term[] oldArgs = appTerm.getParameters();
 		if (oldArgs == newArgs) {
 			// no argument was changed, we can return the original term
 			result = appTerm;
 		} else {
-			result = SmtUtils.termWithLocalSimplification(script, appTerm.getFunction(),
-					newArgs);
+			result = SmtUtils.termWithLocalSimplification(script, appTerm.getFunction(), newArgs);
 		}
 		return result;
 	}
@@ -1564,8 +1565,8 @@ public final class SmtUtils {
 	public static Term div(final Script script, final Term dividend, final Term divisor) {
 		if (dividend instanceof ConstantTerm && dividend.getSort().isNumericSort() && divisor instanceof ConstantTerm
 				&& divisor.getSort().isNumericSort()) {
-			final Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) dividend);
-			final Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) divisor);
+			final Rational dividentAsRational = toRational((ConstantTerm) dividend);
+			final Rational divisorAsRational = toRational((ConstantTerm) divisor);
 			final Rational quotientAsRational = dividentAsRational.div(divisorAsRational);
 			Rational result;
 			if (divisorAsRational.isNegative()) {
@@ -1580,7 +1581,7 @@ public final class SmtUtils {
 
 	public static Term abs(final Script script, final Term operand) {
 		if (operand instanceof ConstantTerm && SmtSortUtils.isIntSort(operand.getSort())) {
-			final Rational operandAsRational = convertConstantTermToRational((ConstantTerm) operand);
+			final Rational operandAsRational = toRational((ConstantTerm) operand);
 			return operandAsRational.abs().toTerm(operand.getSort());
 		} else {
 			return script.term("abs", operand);
@@ -1881,7 +1882,7 @@ public final class SmtUtils {
 			}
 		} else if (SmtSortUtils.isNumericSort(term.getSort())) {
 			if (term instanceof ConstantTerm) {
-				result = SmtUtils.convertConstantTermToRational((ConstantTerm) term);
+				result = SmtUtils.toRational((ConstantTerm) term);
 			} else {
 				result = null;
 			}
@@ -1951,7 +1952,7 @@ public final class SmtUtils {
 	 * @throws UnsupportedOperationException
 	 *             if ConstantTerm cannot converted to Rational
 	 */
-	public static Rational convertConstantTermToRational(final ConstantTerm constTerm) {
+	public static Rational toRational(final ConstantTerm constTerm) {
 		assert SmtSortUtils.isNumericSort(constTerm.getSort());
 		final Object value = constTerm.getValue();
 		if (SmtSortUtils.isIntSort(constTerm.getSort())) {
@@ -2332,7 +2333,6 @@ public final class SmtUtils {
 		return Util.checkSat(script, notEq);
 	}
 
-
 	public static void checkLogicalEquivalenceForDebugging(final Script script, final Term result, final Term input,
 			final Class<?> checkedClass, final boolean tolerateUnknown) {
 		script.echo(new QuotedObject(String.format("Start correctness check for %s.", checkedClass.getSimpleName())));
@@ -2462,6 +2462,28 @@ public final class SmtUtils {
 			rat = Rational.valueOf(num, denom);
 		}
 		return rat;
+	}
+
+	/**
+	 * Associative extension of {@link #gcd(Rational, Rational)}.
+	 */
+	public static Rational gcd(final Collection<Rational> rationals) {
+		if (rationals.isEmpty()) {
+			throw new IllegalArgumentException("Need at least one rational");
+		}
+		return rationals.stream().reduce((a, b) -> gcd(a, b)).get();
+	}
+
+	/**
+	 * Compute the greatest common divisor of two rationals with
+	 *
+	 * gcd( (a/b), (c/d) ) = gcd(a*d,c*b) / b * d
+	 */
+	public static Rational gcd(final Rational r1, final Rational r2) {
+		final BigInteger numerator =
+				Rational.gcd(r1.numerator().multiply(r2.denominator()), r2.numerator().multiply(r1.denominator()));
+		final BigInteger denominator = r1.denominator().multiply(r2.denominator());
+		return Rational.valueOf(numerator, denominator);
 	}
 
 	public static Set<FunctionSymbol> extractNonTheoryFunctionSymbols(final Term term) {
@@ -2594,12 +2616,11 @@ public final class SmtUtils {
 	public static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
 		if (number.equals(Rational.MONE)) {
 			return true;
-		} else {
-			final int vecSize = SmtSortUtils.getBitvectorLength(bvSort);
-			final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
-			final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
-			return number.equals(rationalMinusOne);
 		}
+		final int vecSize = SmtSortUtils.getBitvectorLength(bvSort);
+		final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
+		final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
+		return number.equals(rationalMinusOne);
 	}
 
 	public BigInteger computeSmallestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
@@ -2609,7 +2630,5 @@ public final class SmtUtils {
 	public BigInteger computeLargestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
 		return null;
 	}
-
-
 
 }

@@ -138,7 +138,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 		final Set<Term> results = mSubTermFinder.findMatchingSubterms(t);
 		for (final Term constTerm : results) {
 			if (constTerm instanceof ConstantTerm) {
-				final Rational rat = SmtUtils.convertConstantTermToRational((ConstantTerm) constTerm);
+				final Rational rat = SmtUtils.toRational((ConstantTerm) constTerm);
 				mNumberLiterals.add(new BigDecimal(rat.numerator()).divide(new BigDecimal(rat.denominator())));
 			}
 		}
