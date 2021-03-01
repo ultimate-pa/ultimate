@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -57,8 +58,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -186,12 +189,23 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
 		final IIndependenceRelation<Set<IPredicate>, L> multiConditionCheck;
 		if (petriNetLbeSettings == PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES) {
-			multiConditionCheck = new ConditionTransformingIndependenceRelation<>(unionCheck, predicateFactory::and);
+			multiConditionCheck = new ConditionTransformingIndependenceRelation<>(unionCheck,
+					s -> combinePredicates(s, predicateFactory));
 		} else {
 			multiConditionCheck = ConditionTransformingIndependenceRelation.unconditional(unionCheck);
 		}
 
 		return new CachedIndependenceRelation<>(multiConditionCheck);
+	}
+
+	private static IPredicate combinePredicates(final Set<IPredicate> predicates, final BasicPredicateFactory factory) {
+		final Set<IPredicate> relevant = predicates.stream()
+				.filter(p -> !(p instanceof DebugPredicate) && !SmtUtils.isTrueLiteral(p.getFormula()))
+				.collect(Collectors.toSet());
+		if (relevant.isEmpty()) {
+			return null;
+		}
+		return factory.and(relevant);
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<L, IPredicate> petriNet) {
