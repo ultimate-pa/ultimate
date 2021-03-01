@@ -76,7 +76,7 @@ public class LiptonReduction<L, P> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final ICompositionFactory<L> mCompositionFactory;
-	protected final IIndependenceRelation<P, L> mMoverCheck;
+	protected final IIndependenceRelation<Set<P>, L> mMoverCheck;
 
 	private BranchingProcess<L, P> mBranchingProcess;
 	protected CoenabledRelation<L> mCoEnabledRelation;
@@ -100,7 +100,8 @@ public class LiptonReduction<L, P> {
 	 *            The independence relation used for mover checks.
 	 */
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
-			final ICompositionFactory<L> compositionFactory, final IIndependenceRelation<P, L> independenceRelation) {
+			final ICompositionFactory<L> compositionFactory,
+			final IIndependenceRelation<Set<P>, L> independenceRelation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mCompositionFactory = compositionFactory;
@@ -529,9 +530,10 @@ public class LiptonReduction<L, P> {
 	 *            A set of co-enabled transitions.
 	 * @return true iff t1 is left mover.
 	 */
-	protected boolean isLeftMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t1,
+	private boolean isLeftMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t1,
 			final Set<L> coEnabledTransitions) {
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
+		// TODO: The mover check currently only accepts a predicate for the first transition.
 		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t3, t1.getSymbol()));
 	}
 
@@ -546,10 +548,11 @@ public class LiptonReduction<L, P> {
 	 *            A set of co-enabled transitions.
 	 * @return true iff t1 is right mover.
 	 */
-	protected boolean isRightMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t1,
+	private boolean isRightMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t1,
 			final Set<L> coEnabledTransitions) {
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t1.getSymbol(), t3));
+		final Set<P> preconditions = petriNet.getPredecessors(t1);
+		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(preconditions, t1.getSymbol(), t3));
 	}
 
 	public BoundedPetriNet<L, P> getResult() {
