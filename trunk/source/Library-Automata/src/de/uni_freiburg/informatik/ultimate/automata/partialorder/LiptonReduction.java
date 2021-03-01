@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -257,12 +258,17 @@ public class LiptonReduction<L, P> {
 	 */
 	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet) {
 		final Set<P> places = petriNet.getPlaces();
+		final Set<P> initialPlaces = petriNet.getInitialPlaces();
 
 		final Set<ITransition<L, P>> obsoleteTransitions = new HashSet<>();
 		final Set<ITransition<L, P>> composedTransitions = new HashSet<>();
 		final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions = new HashSet<>();
 
 		for (final P place : places) {
+			if (initialPlaces.contains(place)) {
+				continue;
+			}
+
 			final Set<ITransition<L, P>> incomingTransitions = petriNet.getPredecessors(place);
 			final Set<ITransition<L, P>> outgoingTransitions = petriNet.getSuccessors(place);
 
@@ -291,10 +297,20 @@ public class LiptonReduction<L, P> {
 					completeComposition = completeComposition && canCompose;
 
 					if (canCompose) {
-						final L composedLetter = mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
-						mLogger.debug("Composing " + t1.toString() + " and " + t2.toString());
-						// create new element of the sequentialCompositionStack.
-						pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
+						final Set<P> pre2 = new HashSet<>(petriNet.getPredecessors(t2));
+						pre2.removeAll(petriNet.getSuccessors(t1));
+						final Set<P> post1 = new HashSet<>(petriNet.getSuccessors(t1));
+						post1.removeAll(petriNet.getPredecessors(t2));
+
+						if (Collections.disjoint(petriNet.getPredecessors(t1), pre2)
+								&& Collections.disjoint(petriNet.getSuccessors(t2), post1)) {
+							final L composedLetter =
+									mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
+							mLogger.debug("Composing " + t1 + " and " + t2);
+							pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
+						} else {
+							mLogger.debug("Discarding composition of " + t1 + " and " + t2 + ".");
+						}
 						composedHere.add(t1);
 						composedHere.add(t2);
 						if (isYv) {
