@@ -389,7 +389,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				net = lbecfg;
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
-								lbe.getPetriNetLargeBlockEncodingStatistics()));
+								lbe.getStatistics()));
 			} else {
 				net = petrifiedCfg;
 			}

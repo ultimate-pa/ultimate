@@ -182,7 +182,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			mLogger.info("Time needed for LBE in milliseconds: " + difference);
 
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
-					"PetriNetLargeBlockEncoding benchmarks", lbe.getPetriNetLargeBlockEncodingStatistics()));
+					"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 		} else {
 			mAbstraction = cfg;
 		}
