@@ -26,8 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.function.Supplier;
+
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Counter;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 
 /**
  * Collects statistics for independence relations. Implementors of {@link IIndependenceRelation} can use this class to
@@ -41,101 +45,55 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  */
 public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataProvider {
 
-	public static final String TOTAL_QUERIES = "Total Queries";
-	public static final String POSITIVE_QUERIES = "Positive Queries";
-	public static final String POSITIVE_CONDITIONAL_QUERIES = "Positive Conditional Queries";
-	public static final String POSITIVE_UNCONDITIONAL_QUERIES = "Positive Unconditional Queries";
-	public static final String NEGATIVE_QUERIES = "Negative Queries";
-	public static final String UNKNOWN_QUERIES = "Unknown Queries";
+	public static final String INDEPENDENCE_QUERIES = "Independence Queries";
 
-	private int mPositiveConditionalQueries;
-	private int mPositiveUnconditionalQueries;
-	private int mNegativeConditionalQueries;
-	private int mNegativeUnconditionalQueries;
-	private int mUnknownConditionalQueries;
-	private int mUnknownUnconditionalQueries;
+	private final Counter mQueryCounter = new Counter();
+
 
 	/**
 	 * Create a new instance to collect data, with the default data fields.
 	 */
 	public IndependenceStatisticsDataProvider() {
-		declare(TOTAL_QUERIES, this::getTotalQueries, KeyType.COUNTER);
-		declare(POSITIVE_QUERIES, this::getPositiveQueries, KeyType.COUNTER);
-		declare(POSITIVE_CONDITIONAL_QUERIES, this::getPositiveConditionalQueries, KeyType.COUNTER);
-		declare(POSITIVE_UNCONDITIONAL_QUERIES, this::getPositiveUnconditionalQueries, KeyType.COUNTER);
-		declare(NEGATIVE_QUERIES, this::getNegativeQueries, KeyType.COUNTER);
-		declare(UNKNOWN_QUERIES, this::getUnknownQueries, KeyType.COUNTER);
+		declareCounter(INDEPENDENCE_QUERIES, () -> mQueryCounter);
 	}
 
-	public int getTotalQueries() {
-		return getPositiveQueries() + getNegativeQueries() + getUnknownQueries();
+	protected final void declareCounter(final String key, final Supplier<Counter> getter) {
+		declare(key, getter::get, (x, y) -> Counter.sum((Counter) x, (Counter) y),
+				(k, data) -> PrettyPrint.keyColonData(k, ((Counter) data).print(Object::toString)));
 	}
 
-	public int getPositiveQueries() {
-		return getPositiveConditionalQueries() + getPositiveUnconditionalQueries();
+	public Counter getQueries() {
+		return mQueryCounter;
 	}
 
-	public int getPositiveConditionalQueries() {
-		return mPositiveConditionalQueries;
+	@Deprecated
+	public long getPositiveQueries() {
+		return mQueryCounter.getPositive();
 	}
 
-	public int getPositiveUnconditionalQueries() {
-		return mPositiveUnconditionalQueries;
+	@Deprecated
+	public long getNegativeQueries() {
+		return mQueryCounter.getNegative();
 	}
 
-	public int getNegativeQueries() {
-		return getNegativeConditionalQueries() + getNegativeUnconditionalQueries();
-	}
-
-	public int getNegativeConditionalQueries() {
-		return mNegativeConditionalQueries;
-	}
-
-	public int getNegativeUnconditionalQueries() {
-		return mNegativeUnconditionalQueries;
-	}
-
-	public int getUnknownQueries() {
-		return getUnknownConditionalQueries() + getUnknownUnconditionalQueries();
-	}
-
-	public int getUnknownConditionalQueries() {
-		return mUnknownConditionalQueries;
-	}
-
-	public int getUnknownUnconditionalQueries() {
-		return mUnknownUnconditionalQueries;
+	@Deprecated
+	public long getUnknownQueries() {
+		return mQueryCounter.getUnknown();
 	}
 
 	public void reportQuery(final boolean positive, final boolean conditional) {
-		if (positive) {
-			reportPositiveQuery(conditional);
-		} else {
-			reportNegativeQuery(conditional);
-		}
+		mQueryCounter.increment(positive, conditional);
 	}
 
 	public void reportPositiveQuery(final boolean conditional) {
-		if (conditional) {
-			mPositiveConditionalQueries++;
-		} else {
-			mPositiveUnconditionalQueries++;
-		}
+		mQueryCounter.increment(true, conditional);
 	}
 
 	public void reportNegativeQuery(final boolean conditional) {
-		if (conditional) {
-			mNegativeConditionalQueries++;
-		} else {
-			mNegativeUnconditionalQueries++;
-		}
+		mQueryCounter.increment(false, conditional);
 	}
 
 	public void reportUnknownQuery(final boolean conditional) {
-		if (conditional) {
-			mUnknownConditionalQueries++;
-		} else {
-			mUnknownUnconditionalQueries++;
-		}
+		mQueryCounter.incrementUnknown(conditional);
 	}
 }

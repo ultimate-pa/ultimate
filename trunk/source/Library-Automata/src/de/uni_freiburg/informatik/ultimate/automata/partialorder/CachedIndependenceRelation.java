@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Counter;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -98,8 +99,10 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 		final LBool cached = mCache.contains(condition, a, b);
 		if (cached == LBool.SAT) {
+			mStatistics.reportPositiveCachedQuery(condition != null);
 			return true;
 		} else if (cached == LBool.UNSAT) {
+			mStatistics.reportNegativeCachedQuery(condition != null);
 			return false;
 		}
 
@@ -114,7 +117,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 		final boolean result = mUnderlying.contains(condition, a, b);
 		mCache.cacheResult(condition, a, b, result);
-		mStatistics.reportQuery(result, condition != null);
+		mStatistics.reportUncachedQuery(result, condition != null);
 		return result;
 	}
 
@@ -134,12 +137,31 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	}
 
 	private class CachedIndependenceStatisticsProvider extends IndependenceStatisticsDataProvider {
+		public static final String CACHE_QUERIES = "Cache Queries";
 		public static final String UNDERLYING_STATISTICS = "Statistics on cached relation";
 		public static final String CACHE_STATISTICS = "Statistics on independence cache";
 
+		private final Counter mCacheQueries = new Counter();
+
 		public CachedIndependenceStatisticsProvider() {
+			declareCounter(CACHE_QUERIES, () -> mCacheQueries);
 			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 			forward(CACHE_STATISTICS, mCache::getStatistics);
+		}
+
+		public void reportPositiveCachedQuery(final boolean conditional) {
+			reportPositiveQuery(conditional);
+			mCacheQueries.increment(true, conditional);
+		}
+
+		public void reportNegativeCachedQuery(final boolean conditional) {
+			reportNegativeQuery(conditional);
+			mCacheQueries.increment(false, conditional);
+		}
+
+		public void reportUncachedQuery(final boolean result, final boolean conditional) {
+			reportQuery(result, conditional);
+			mCacheQueries.incrementUnknown(conditional);
 		}
 	}
 
