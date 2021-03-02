@@ -34,10 +34,12 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * An independence relation that can be used as a wrapper around conditional instances of
@@ -57,6 +59,7 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 
 	private final IIndependenceRelation<IPredicate, L> mUnderlying;
 	private final Predicate<IPredicate> mIsInconsistent;
+	private final EliminatorStatistics mStatistics = new EliminatorStatistics();
 
 	/**
 	 * Creates a new wrapper around a given independence relation.
@@ -89,18 +92,22 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 
 	@Override
 	public boolean contains(final IPredicate state, final L a, final L b) {
-		return mUnderlying.contains(normalize(state, a, b), a, b);
+		final IPredicate condition = state == null ? null : normalize(state, a, b);
+		final boolean result = mUnderlying.contains(condition, a, b);
+		mStatistics.reportQuery(result, condition != null);
+		return result;
 	}
 
 	private IPredicate normalize(final IPredicate condition, final L a, final L b) {
 		// Syntactically determine if condition is possibly relevant to independence.
 		final Set<TermVariable> relevantVars = getRelevantVariables(a, b);
 		final boolean isRelevant = Arrays.stream(condition.getFormula().getFreeVars()).anyMatch(relevantVars::contains);
-
 		if (isRelevant || mIsInconsistent.test(condition)) {
 			return condition;
 		}
+
 		// If condition irrelevant, fall back to independence without condition.
+		mStatistics.reportEliminatedCondition();
 		return null;
 	}
 
@@ -108,5 +115,21 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 		final Stream<IProgramVar> readA = a.getTransformula().getInVars().keySet().stream();
 		final Stream<IProgramVar> readB = b.getTransformula().getInVars().keySet().stream();
 		return Stream.concat(readA, readB).map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+	}
+
+	private class EliminatorStatistics extends IndependenceStatisticsDataProvider {
+		public static final String ELIMINATED_CONDITIONS = "Eliminated conditions";
+		public static final String UNDERLYING_STATISTICS = "Statistics of underlying relation";
+
+		private int mEliminatedConditions;
+
+		public EliminatorStatistics() {
+			declare(ELIMINATED_CONDITIONS, () -> mEliminatedConditions, KeyType.COUNTER);
+			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
+		}
+
+		public void reportEliminatedCondition() {
+			mEliminatedConditions++;
+		}
 	}
 }
