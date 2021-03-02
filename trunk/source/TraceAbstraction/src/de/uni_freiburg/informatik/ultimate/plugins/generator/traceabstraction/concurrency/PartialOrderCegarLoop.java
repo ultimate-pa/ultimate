@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticConditionEliminator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.ThreadSeparatingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -128,35 +129,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private static final boolean supportsDeadStateOptimization(final PartialOrderMode mode) {
 		// At the moment, only SLEEP_NEW_STATES supports this optimization.
 		return mode == PartialOrderMode.SLEEP_NEW_STATES;
-	}
-
-	private static class ThreadSeparatingIndependenceRelation<S, L extends IIcfgTransition<?>>
-			implements IIndependenceRelation<S, L> {
-
-		private final IIndependenceRelation<S, L> mUnderlying;
-
-		public ThreadSeparatingIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
-			mUnderlying = underlying;
-		}
-
-		@Override
-		public boolean isSymmetric() {
-			return mUnderlying.isSymmetric();
-		}
-
-		@Override
-		public boolean isConditional() {
-			return mUnderlying.isConditional();
-		}
-
-		@Override
-		public boolean contains(final S state, final L a, final L b) {
-			return !fromSameThread(a, b) && mUnderlying.contains(state, a, b);
-		}
-
-		private boolean fromSameThread(final L a, final L b) {
-			return a.getPrecedingProcedure() == b.getPrecedingProcedure();
-		}
 	}
 
 	@Override
