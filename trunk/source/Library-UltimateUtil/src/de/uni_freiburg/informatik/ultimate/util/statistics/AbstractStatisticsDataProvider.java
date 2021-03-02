@@ -26,12 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * A base class for statistics providers. Subclasses can easily declare new data fields. A corresponding
@@ -40,9 +45,9 @@ import java.util.function.Supplier;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public abstract class AbstractStatisticsDataProvider implements IStatisticsDataProvider {
-
-	private final Map<String, Supplier<Object>> mSuppliers = new HashMap<>();
-	private final Map<String, KeyType> mTypes = new HashMap<>();
+	private final Map<String, Supplier<Object>> mSuppliers = new LinkedHashMap<>();
+	private final Map<String, BinaryOperator<Object>> mAggregators = new HashMap<>();
+	private final Map<String, BiFunction<String, Object, String>> mPrinters = new HashMap<>();
 	private final BenchmarkType mBenchmarkType = new BenchmarkType();
 
 	/**
@@ -56,26 +61,36 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 	 *            The type of data (including aggregation and printing)
 	 */
 	protected final void declare(final String key, final Supplier<Object> getter, final KeyType type) {
+		declare(key, getter, type::aggregate, type::prettyPrint);
+	}
+
+	protected final void declare(final String key, final Supplier<Object> getter,
+			final BinaryOperator<Object> aggregator, final BiFunction<String, Object, String> printer) {
 		assert !mSuppliers.containsKey(key);
 		assert getter != null;
-		assert type != null;
+		assert aggregator != null;
+		assert printer != null;
 		mSuppliers.put(key, getter);
-		mTypes.put(key, type);
+		mAggregators.put(key, aggregator);
+		mPrinters.put(key, printer);
 	}
 
 	protected final void forward(final String key, final Supplier<IStatisticsDataProvider> statistics) {
-		forwardAll(key, Arrays.asList(statistics), Supplier::get);
+		declare(key, () -> toStatisticsData(statistics.get()), Aggregate::statisticsDataAggregate,
+				PrettyPrint::keyColonData);
 	}
 
 	protected final <T> void forwardAll(final String key, final Iterable<T> elems,
-			final Function<T, IStatisticsDataProvider> statistics) {
-		declare(key, () -> {
-			final StatisticsData data = new StatisticsData();
-			for (final T x : elems) {
-				data.aggregateBenchmarkData(statistics.apply(x));
-			}
-			return data;
-		}, KeyType.STATISTICS_DATA);
+			final Function<T, IStatisticsDataProvider> getStatistics) {
+		declare(key, () -> StreamSupport.stream(elems.spliterator(), false).map(getStatistics)
+				.map(AbstractStatisticsDataProvider::toStatisticsData).collect(Collectors.toCollection(ArrayList::new)),
+				Aggregate::appendList, PrettyPrint.list(PrettyPrint::keyColonData, Object::toString));
+	}
+
+	private static StatisticsData toStatisticsData(final IStatisticsDataProvider statistics) {
+		final StatisticsData data = new StatisticsData();
+		data.aggregateBenchmarkData(statistics);
+		return data;
 	}
 
 	@Override
@@ -101,11 +116,11 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 
 		@Override
 		public Object aggregate(final String key, final Object value1, final Object value2) {
-			final KeyType type = mTypes.get(key);
-			if (type == null) {
+			final BinaryOperator<Object> aggregator = mAggregators.get(key);
+			if (aggregator == null) {
 				throw new IllegalArgumentException("Unknown key '" + key + "'");
 			}
-			return type.aggregate(value1, value2);
+			return aggregator.apply(value1, value2);
 		}
 
 		@Override
@@ -115,8 +130,8 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 			for (final String key : getKeys()) {
 				sb.append(delimiter);
 				final Object value = benchmarkData.getValue(key);
-				final KeyType type = mTypes.get(key);
-				sb.append(type.prettyPrint(key, value));
+				final BiFunction<String, Object, String> printer = mPrinters.get(key);
+				sb.append(printer.apply(key, value));
 				delimiter = ", ";
 			}
 			return sb.toString();

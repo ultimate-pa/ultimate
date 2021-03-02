@@ -55,8 +55,7 @@ public enum KeyType {
 	COUNTER(Integer.class, Aggregate::intAdd, PrettyPrint::keyColonData),
 	RATIO(Double.class, Aggregate::doubleAdd, PrettyPrint::keyColonData),
 	TIMER(Long.class, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),
-	MAX_TIMER(Long.class, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),
-	STATISTICS_DATA(StatisticsData.class, Aggregate::statisticsDataAggregate, PrettyPrint::keyColonData),;
+	MAX_TIMER(Long.class, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),;
 
 	private final Class<?> mDataType;
 	private final BinaryOperator<Object> mAggregate;
