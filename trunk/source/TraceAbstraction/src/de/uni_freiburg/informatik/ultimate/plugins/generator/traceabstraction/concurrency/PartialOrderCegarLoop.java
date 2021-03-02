@@ -234,15 +234,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		final IIndependenceRelation<IPredicate, L> cachedRelation =
 				new CachedIndependenceRelation<>(basicRelation, mIndependenceCache);
+		final IIndependenceRelation<IPredicate, L> conditionalRelation;
 		if (conditional) {
 			// For conditional relation, add condition eliminator to get rid of useless conditions.
 			// Note: Soundness of this wrapper depends on the fact that all inconsistent predicates are syntactically
 			// equal to "false". Here, this is achieved by usage of DistributingIndependenceRelation: The only
 			// predicates we use as conditions are the original interpolants (i.e., not conjunctions of them), where we
 			// assume this constraint holds.
-			return new SemanticConditionEliminator<>(cachedRelation, PartialOrderCegarLoop::isFalseState);
+			conditionalRelation =
+					new SemanticConditionEliminator<>(cachedRelation, PartialOrderCegarLoop::isFalseState);
+		} else {
+			conditionalRelation = cachedRelation;
 		}
-		return new ThreadSeparatingIndependenceRelation<>(cachedRelation);
+		return new ThreadSeparatingIndependenceRelation<>(conditionalRelation);
 	}
 
 	private void switchToOnDemandConstructionMode() {
