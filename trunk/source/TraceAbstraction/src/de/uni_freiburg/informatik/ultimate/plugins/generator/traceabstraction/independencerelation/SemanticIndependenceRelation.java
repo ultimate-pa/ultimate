@@ -29,10 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
@@ -44,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -54,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -238,78 +232,5 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	@Deprecated
 	public long getComputationTimeNano() {
 		return mStatistics.getTotalTime();
-	}
-
-	/**
-	 * An independence relation that can be used as a wrapper around conditional instances of
-	 * {@link SemanticIndependenceRelation}. It eliminates useless conditions, leading to simpler SMT queries. If the
-	 * results of the {@link SemanticIndependenceRelation} are cached, this wrapper should instead wrap the
-	 * {@link CachedIndependenceRelation}, in order to also improve caching efficiency.
-	 *
-	 * A condition is deemed useless for the independence of statements a and b, if the condition is consistent
-	 * (satisfiable), but does not contain any free variable that is read by either a or b.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <L>
-	 *            The type of letters being cached.
-	 */
-	public static final class ConditionEliminator<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
-
-		private final IIndependenceRelation<IPredicate, L> mUnderlying;
-		private final Predicate<IPredicate> mIsInconsistent;
-
-		/**
-		 * Creates a new wrapper around a given independence relation.
-		 *
-		 * @param underlying
-		 *            The underlying independence relation to which queries will be delegated (after possibly
-		 *            eliminating the condition). This relation should be able to handle null as condition.
-		 * @param isInconsistent
-		 *            An inconsistency test to be used for conditions given to this relation. To truly gain efficiency,
-		 *            this test should be very efficient. It must return true for all inconsistent conditions this
-		 *            relation is used on, in order to ensure soundness. It may over-approximate inconsistency, i.e.,
-		 *            also return true for some consistent predicates -- this affects efficiency but not soundness.
-		 */
-		public ConditionEliminator(final IIndependenceRelation<IPredicate, L> underlying,
-				final Predicate<IPredicate> isInconsistent) {
-			assert underlying.isConditional() : "Condition elimination for non-conditional relations is useless";
-			mUnderlying = underlying;
-			mIsInconsistent = isInconsistent;
-		}
-
-		@Override
-		public boolean isSymmetric() {
-			return mUnderlying.isSymmetric();
-		}
-
-		@Override
-		public boolean isConditional() {
-			return mUnderlying.isConditional();
-		}
-
-		@Override
-		public boolean contains(final IPredicate state, final L a, final L b) {
-			return mUnderlying.contains(normalize(state, a, b), a, b);
-		}
-
-		private IPredicate normalize(final IPredicate condition, final L a, final L b) {
-			// Syntactically determine if condition is possibly relevant to independence.
-			final Set<TermVariable> relevantVars = getRelevantVariables(a, b);
-			final boolean isRelevant =
-					Arrays.stream(condition.getFormula().getFreeVars()).anyMatch(relevantVars::contains);
-
-			if (isRelevant || mIsInconsistent.test(condition)) {
-				return condition;
-			}
-			// If condition irrelevant, fall back to independence without condition.
-			return null;
-		}
-
-		private Set<TermVariable> getRelevantVariables(final L a, final L b) {
-			final Stream<IProgramVar> readA = a.getTransformula().getInVars().keySet().stream();
-			final Stream<IProgramVar> readB = b.getTransformula().getInVars().keySet().stream();
-			return Stream.concat(readA, readB).map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-		}
 	}
 }

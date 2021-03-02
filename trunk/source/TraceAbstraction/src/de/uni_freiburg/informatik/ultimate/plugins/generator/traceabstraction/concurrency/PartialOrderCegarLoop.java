@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticConditionEliminator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -246,8 +247,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			// equal to "false". Here, this is achieved by usage of the DistributingIndependenceRelation below: The only
 			// predicates we use are the original interpolants (i.e., not conjunctions of them), where we assume this
 			// condition holds.
-			return new SemanticIndependenceRelation.ConditionEliminator<>(cachedRelation,
-					PartialOrderCegarLoop::isFalseState);
+			return new SemanticConditionEliminator<>(cachedRelation, PartialOrderCegarLoop::isFalseState);
 		}
 		return new ThreadSeparatingIndependenceRelation<>(cachedRelation);
 	}
