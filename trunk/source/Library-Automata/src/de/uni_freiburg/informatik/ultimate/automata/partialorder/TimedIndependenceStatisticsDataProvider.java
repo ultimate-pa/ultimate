@@ -66,11 +66,8 @@ public class TimedIndependenceStatisticsDataProvider extends IndependenceStatist
 
 	@Override
 	public void reportQuery(final boolean positive, final boolean conditional) {
-		if (positive) {
-			reportPositiveQuery(conditional);
-		} else {
-			reportNegativeQuery(conditional);
-		}
+		mTimer.stop(positive, conditional);
+		super.reportQuery(positive, conditional);
 	}
 
 	public void reportQuery(final LBool result, final boolean conditional) {
@@ -89,20 +86,20 @@ public class TimedIndependenceStatisticsDataProvider extends IndependenceStatist
 
 	@Override
 	public void reportPositiveQuery(final boolean conditional) {
-		reportPositiveQuery(conditional);
 		mTimer.stop(true, conditional);
+		super.reportPositiveQuery(conditional);
 	}
 
 	@Override
 	public void reportNegativeQuery(final boolean conditional) {
-		reportNegativeQuery(conditional);
 		mTimer.stop(false, conditional);
+		super.reportNegativeQuery(conditional);
 	}
 
 	@Override
 	public void reportUnknownQuery(final boolean conditional) {
-		reportUnknownQuery(conditional);
 		mTimer.stopUnknown(conditional);
+		super.reportUnknownQuery(conditional);
 	}
 
 	public long getTotalTime() {
