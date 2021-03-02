@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
@@ -97,6 +98,11 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 		final boolean result = mUnderlying.contains(condition, a, b);
 		mStatistics.reportQuery(result, condition != null);
 		return result;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 
 	private IPredicate normalize(final IPredicate condition, final L a, final L b) {
