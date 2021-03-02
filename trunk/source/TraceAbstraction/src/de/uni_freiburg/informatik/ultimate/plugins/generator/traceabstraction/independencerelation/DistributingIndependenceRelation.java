@@ -31,7 +31,9 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 
 /**
  * An independence relation that allows splitting a condition into multiple parts and proxying requests for each part to
@@ -75,6 +77,7 @@ public class DistributingIndependenceRelation<S, L> implements IIndependenceRela
 		final S[] conjuncts = mDistribution.apply(state);
 		assert conjuncts.length == mRelations.size();
 		for (int i = 0; i < mRelations.size(); ++i) {
+			mStatistics.reportQueriedIndex(i);
 			if (mRelations.get(i).contains(conjuncts[i], a, b)) {
 				mStatistics.reportPositiveQuery(state != null);
 				return true;
@@ -90,11 +93,21 @@ public class DistributingIndependenceRelation<S, L> implements IIndependenceRela
 	}
 
 	private class DistributingStatistics extends IndependenceStatisticsDataProvider {
+		public static final String MAX_QUERIED_INDEX = "Maximal queried relation";
 		public static final String UNDERLYING_STATISTICS = "Statistics for underlying relations";
+
+		private int mMaxQueriedIndex = -1;
 
 		public DistributingStatistics() {
 			super(DistributingIndependenceRelation.class);
+			declare(MAX_QUERIED_INDEX, () -> mMaxQueriedIndex, Aggregate::intMax, PrettyPrint::keyColonData);
 			forwardAll(UNDERLYING_STATISTICS, mRelations, IIndependenceRelation::getStatistics);
+		}
+
+		private void reportQueriedIndex(final int index) {
+			if (mMaxQueriedIndex < index) {
+				mMaxQueriedIndex = index;
+			}
 		}
 	}
 }
