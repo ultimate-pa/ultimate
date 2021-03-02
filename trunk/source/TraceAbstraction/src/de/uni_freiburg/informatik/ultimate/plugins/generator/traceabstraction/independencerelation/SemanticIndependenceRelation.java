@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.TimedIndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * An independence relation that implements an SMT-based inclusion or equality check on the semantics.
@@ -79,10 +81,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final boolean mConditional;
 	private final boolean mSymmetric;
 
-	private long mPositiveQueries;
-	private long mNegativeQueries;
-	private long mUnknownQueries;
-	private long mComputationTimeNano;
+	private final TimedIndependenceStatisticsDataProvider mStatistics = new TimedIndependenceStatisticsDataProvider();
 
 	private final Map<IProgramVarOrConst, IProgramVarOrConst> mTransferCache = new HashMap<>();
 	private final TermTransferrer mTransferrer;
@@ -152,7 +151,6 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			result = subset;
 		}
 		final long checkTime = System.nanoTime() - startTime;
-		mComputationTimeNano += checkTime;
 
 		mLogger.debug("Independence Inclusion Check Time: %d ms", checkTime / 1_000_000);
 		if (checkTime > 1_000_000_000) {
@@ -161,19 +159,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 					checkTime / 1_000_000, a, b, context);
 		}
 
-		switch (result) {
-		case SAT:
-			mNegativeQueries++;
-			break;
-		case UNKNOWN:
-			mUnknownQueries++;
-			break;
-		case UNSAT:
-			mPositiveQueries++;
-			break;
-		default:
-			throw new AssertionError("Unexpected inclusion check result: " + result);
-		}
+		mStatistics.reportQuery(result, checkTime, context != null);
 		return result == LBool.UNSAT;
 	}
 
@@ -196,11 +182,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		}
 
 		if (mManagedScript.isLocked()) {
-			final long releaseStart = System.currentTimeMillis();
 			mLogger.warn("Requesting ManagedScript unlock before implication check");
 			final boolean unlocked = mManagedScript.requestLockRelease();
-			final long releaseEnd = System.currentTimeMillis();
-			mLogger.debug("Script Release Time: " + (releaseEnd - releaseStart) + "ms");
 			if (!unlocked) {
 				mLogger.warn("Failed to unlock ManagedScript. Unable to check independence, returning UNKNOWN.");
 				return LBool.UNKNOWN;
@@ -232,20 +215,29 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 				Arrays.asList(first, second));
 	}
 
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	@Deprecated
 	public long getPositiveQueries() {
-		return mPositiveQueries;
+		return mStatistics.getPositiveQueries();
 	}
 
+	@Deprecated
 	public long getNegativeQueries() {
-		return mNegativeQueries;
+		return mStatistics.getNegativeQueries();
 	}
 
+	@Deprecated
 	public long getUnknownQueries() {
-		return mUnknownQueries;
+		return mStatistics.getUnknownQueries();
 	}
 
+	@Deprecated
 	public long getComputationTimeNano() {
-		return mComputationTimeNano;
+		return mStatistics.getTotalTime();
 	}
 
 	/**
