@@ -28,15 +28,24 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+
 /**
- * An independence relation that represents the union of several independence
- * relations. This can in particular be used to combine an efficient but
- * incomplete check with a more computation-intensive check.
- * 
+ * An independence relation that represents the union of several independence relations. This can in particular be used
+ * to combine an efficient but incomplete check with a more computation-intensive complete check.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <STATE>
+ *            The type of conditions (or "states") the relation depends on (if any of the underlying relations does)
+ * @param <L>
+ *            The type of letters whose independence is being tracked
  */
 public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelation<STATE, L> {
 
+	private final UnionStatisticsProvider mStatistics = new UnionStatisticsProvider();
 	private final Collection<IIndependenceRelation<STATE, L>> mRelations;
 	private final boolean mSymmetric;
 	private final boolean mConditional;
@@ -59,6 +68,29 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 
 	@Override
 	public boolean contains(final STATE state, final L a, final L b) {
-		return mRelations.stream().anyMatch(r -> r.contains(state, a, b));
+		final boolean result = mRelations.stream().anyMatch(r -> r.contains(state, a, b));
+		mStatistics.reportQuery(result, state != null);
+		return result;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private class UnionStatisticsProvider extends IndependenceStatisticsDataProvider {
+		public static final String UNDERLYING_STATISTICS = "Underlying independence statistics";
+
+		public UnionStatisticsProvider() {
+			declare(UNDERLYING_STATISTICS, this::getUnderlyingStatistics, KeyType.STATISTICS_DATA);
+		}
+
+		private StatisticsData getUnderlyingStatistics() {
+			final StatisticsData data = new StatisticsData();
+			for (final IIndependenceRelation<STATE, L> rel : mRelations) {
+				data.aggregateBenchmarkData(rel.getStatistics());
+			}
+			return data;
+		}
 	}
 }
