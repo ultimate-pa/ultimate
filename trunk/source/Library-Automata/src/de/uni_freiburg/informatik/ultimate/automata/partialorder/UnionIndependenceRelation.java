@@ -81,6 +81,7 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 		public static final String UNDERLYING_STATISTICS = "Underlying independence statistics";
 
 		public UnionStatisticsProvider() {
+			super(UnionIndependenceRelation.class);
 			forwardAll(UNDERLYING_STATISTICS, mRelations, IIndependenceRelation::getStatistics);
 		}
 	}

@@ -49,12 +49,15 @@ public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataPr
 
 	private final Counter mQueryCounter = new Counter();
 
-
 	/**
 	 * Create a new instance to collect data, with the default data fields.
+	 *
+	 * @param clazz
+	 *            The type of independence relation for which statistics are collected. This is used as a prefix for key
+	 *            names in order to distinguish data for different, possibly nested relations.
 	 */
-	public IndependenceStatisticsDataProvider() {
-		declareCounter(INDEPENDENCE_QUERIES, () -> mQueryCounter);
+	public IndependenceStatisticsDataProvider(final Class<?> clazz) {
+		declareCounter(clazz.getSimpleName() + "." + INDEPENDENCE_QUERIES, () -> mQueryCounter);
 	}
 
 	protected final void declareCounter(final String key, final Supplier<Counter> getter) {

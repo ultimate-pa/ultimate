@@ -93,6 +93,7 @@ public class DistributingIndependenceRelation<S, L> implements IIndependenceRela
 		public static final String UNDERLYING_STATISTICS = "Statistics for underlying relations";
 
 		public DistributingStatistics() {
+			super(DistributingIndependenceRelation.class);
 			forwardAll(UNDERLYING_STATISTICS, mRelations, IIndependenceRelation::getStatistics);
 		}
 	}

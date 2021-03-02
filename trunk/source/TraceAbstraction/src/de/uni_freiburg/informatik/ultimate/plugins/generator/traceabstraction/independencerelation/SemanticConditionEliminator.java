@@ -125,6 +125,7 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 		private int mEliminatedConditions;
 
 		public EliminatorStatistics() {
+			super(SemanticConditionEliminator.class);
 			declare(ELIMINATED_CONDITIONS, () -> mEliminatedConditions, KeyType.COUNTER);
 			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 		}

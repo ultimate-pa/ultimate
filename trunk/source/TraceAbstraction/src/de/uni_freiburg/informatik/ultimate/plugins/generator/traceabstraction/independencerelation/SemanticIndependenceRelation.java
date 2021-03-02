@@ -75,7 +75,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final boolean mConditional;
 	private final boolean mSymmetric;
 
-	private final TimedIndependenceStatisticsDataProvider mStatistics = new TimedIndependenceStatisticsDataProvider();
+	private final TimedIndependenceStatisticsDataProvider mStatistics =
+			new TimedIndependenceStatisticsDataProvider(SemanticIndependenceRelation.class);
 
 	private final Map<IProgramVarOrConst, IProgramVarOrConst> mTransferCache = new HashMap<>();
 	private final TermTransferrer mTransferrer;

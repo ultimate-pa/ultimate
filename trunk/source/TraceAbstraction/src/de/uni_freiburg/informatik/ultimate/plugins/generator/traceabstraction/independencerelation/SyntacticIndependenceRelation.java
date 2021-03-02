@@ -41,9 +41,12 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *
  * @param <STATE>
  *            This relation is non-conditional, so this parameter is not used.
+ * @param <L>
+ *            The type of letters whose independence is tracked
  */
 public class SyntacticIndependenceRelation<STATE, L extends IAction> implements IIndependenceRelation<STATE, L> {
-	private final IndependenceStatisticsDataProvider mStatistics = new IndependenceStatisticsDataProvider();
+	private final IndependenceStatisticsDataProvider mStatistics =
+			new IndependenceStatisticsDataProvider(SyntacticIndependenceRelation.class);
 
 	@Override
 	public boolean isSymmetric() {

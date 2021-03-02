@@ -144,6 +144,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		private final Counter mCacheQueries = new Counter();
 
 		public CachedIndependenceStatisticsProvider() {
+			super(CachedIndependenceRelation.class);
 			declareCounter(CACHE_QUERIES, () -> mCacheQueries);
 			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 			forward(CACHE_STATISTICS, mCache::getStatistics);

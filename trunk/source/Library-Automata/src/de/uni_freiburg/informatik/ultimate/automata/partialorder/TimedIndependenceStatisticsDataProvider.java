@@ -45,9 +45,14 @@ public class TimedIndependenceStatisticsDataProvider extends IndependenceStatist
 
 	/**
 	 * Create a new instance with the default fields (number and required time for various kinds of queries).
+	 *
+	 * @param clazz
+	 *            The type of independence relation for which statistics are collected. This is used as a prefix for key
+	 *            names in order to distinguish data for different, possibly nested relations.
 	 */
-	public TimedIndependenceStatisticsDataProvider() {
-		declareTimer(QUERY_TIME, () -> mTimer);
+	public TimedIndependenceStatisticsDataProvider(final Class<?> clazz) {
+		super(clazz);
+		declareTimer(clazz.getSimpleName() + "." + QUERY_TIME, () -> mTimer);
 	}
 
 	protected final void declareTimer(final String key, final Supplier<Timer> getter) {
