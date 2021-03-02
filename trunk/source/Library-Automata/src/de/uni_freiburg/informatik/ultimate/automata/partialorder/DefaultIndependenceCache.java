@@ -55,9 +55,12 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 
 	@Override
 	public LBool contains(final S condition, final L a, final L b) {
-		final HashRelation<L, L> globalPositive = mPositiveCache.get(null);
-		if (globalPositive != null && globalPositive.containsPair(a, b)) {
-			return LBool.SAT;
+		if (condition != null) {
+			// For conditional queries, check unconditional independence first.
+			final HashRelation<L, L> globalPositive = mPositiveCache.get(null);
+			if (globalPositive != null && globalPositive.containsPair(a, b)) {
+				return LBool.SAT;
+			}
 		}
 
 		final HashRelation<L, L> positive = mPositiveCache.get(condition);
