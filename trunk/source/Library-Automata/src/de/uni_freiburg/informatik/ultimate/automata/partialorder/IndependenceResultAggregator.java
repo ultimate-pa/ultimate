@@ -208,4 +208,38 @@ public class IndependenceResultAggregator<T> {
 			return result;
 		}
 	}
+
+	public static class Timer extends IndependenceResultAggregator<Long> {
+		private long mStartTime;
+
+		public Timer() {
+			super(0L, (x, y) -> x + y);
+		}
+
+		public void start() {
+			assert mStartTime == 0L : "Timer already running";
+			mStartTime = System.nanoTime();
+		}
+
+		public void stop(final boolean result, final boolean conditional) {
+			assert mStartTime != 0L : "Timer was not running";
+			final long elapsed = System.nanoTime() - mStartTime;
+			aggregate(elapsed, result, conditional);
+			mStartTime = 0L;
+		}
+
+		public void stopUnknown(final boolean conditional) {
+			assert mStartTime != 0L : "Timer was not running";
+			final long elapsed = System.nanoTime() - mStartTime;
+			aggregateUnknown(elapsed, conditional);
+			mStartTime = 0L;
+		}
+
+		public static Timer sum(final Timer lhs, final Timer rhs) {
+			final Timer result = new Timer();
+			result.aggregate(lhs);
+			result.aggregate(rhs);
+			return result;
+		}
+	}
 }

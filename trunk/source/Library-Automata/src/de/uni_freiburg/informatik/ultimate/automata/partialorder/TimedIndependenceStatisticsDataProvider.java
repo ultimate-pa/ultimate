@@ -1,8 +1,3 @@
-package de.uni_freiburg.informatik.ultimate.automata.partialorder;
-
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
-
 /*
  * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2021 University of Freiburg
@@ -29,6 +24,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
+package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+
+import java.util.function.Supplier;
+
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Timer;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 
 /**
  * Collects statistics for independence relation, in particular the (aggregated) time required for various kinds of
@@ -37,83 +39,68 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class TimedIndependenceStatisticsDataProvider extends IndependenceStatisticsDataProvider {
-	public static final String TOTAL_TIME = "Total query time";
-	public static final String POSITIVE_QUERY_TIME = "Time for positive queries";
-	public static final String POSITIVE_CONDITIONAL_QUERY_TIME = "Time for positive conditional queries";
-	public static final String POSITIVE_UNCONDITIONAL_QUERY_TIME = "Time for positive unconditional queries";
-	public static final String NEGATIVE_QUERY_TIME = "Time for negative queries";
-	public static final String NEGATIVE_CONDITIONAL_QUERY_TIME = "Time for negative conditional queries";
-	public static final String NEGATIVE_UNCONDITIONAL_QUERY_TIME = "Time for negative unconditional queries";
-	public static final String UNKNOWN_QUERY_TIME = "Time for unknown queries";
-	public static final String UNKNOWN_CONDITIONAL_QUERY_TIME = "Time for unknown conditional queries";
-	public static final String UNKNOWN_UNCONDITIONAL_QUERY_TIME = "Time for unknown unconditional queries";
+	public static final String QUERY_TIME = "Query Time";
 
-	private long mPositiveConditionalTime;
-	private long mPositiveUnconditionalTime;
-	private long mNegativeConditionalTime;
-	private long mNegativeUnconditionalTime;
-	private long mUnknownConditionalTime;
-	private long mUnknownUnconditionalTime;
+	private final Timer mTimer = new Timer();
 
 	/**
 	 * Create a new instance with the default fields (number and required time for various kinds of queries).
 	 */
 	public TimedIndependenceStatisticsDataProvider() {
-		declare(TOTAL_TIME, this::getTotalTime, KeyType.TIMER);
-		declare(POSITIVE_QUERY_TIME, () -> mPositiveConditionalTime + mPositiveUnconditionalTime, KeyType.TIMER);
-		declare(POSITIVE_CONDITIONAL_QUERY_TIME, () -> mPositiveConditionalTime, KeyType.TIMER);
-		declare(POSITIVE_UNCONDITIONAL_QUERY_TIME, () -> mPositiveUnconditionalTime, KeyType.TIMER);
-		declare(NEGATIVE_QUERY_TIME, () -> mNegativeConditionalTime + mNegativeUnconditionalTime, KeyType.TIMER);
-		declare(NEGATIVE_CONDITIONAL_QUERY_TIME, () -> mNegativeConditionalTime, KeyType.TIMER);
-		declare(NEGATIVE_UNCONDITIONAL_QUERY_TIME, () -> mNegativeUnconditionalTime, KeyType.TIMER);
-		declare(UNKNOWN_QUERY_TIME, () -> mUnknownConditionalTime + mUnknownUnconditionalTime, KeyType.TIMER);
-		declare(UNKNOWN_CONDITIONAL_QUERY_TIME, () -> mUnknownConditionalTime, KeyType.TIMER);
-		declare(UNKNOWN_UNCONDITIONAL_QUERY_TIME, () -> mUnknownConditionalTime, KeyType.TIMER);
+		declareTimer(QUERY_TIME, () -> mTimer);
 	}
 
-	public void reportQuery(final LBool result, final long time, final boolean conditional) {
+	protected final void declareTimer(final String key, final Supplier<Timer> getter) {
+		declare(key, getter::get, (x, y) -> Timer.sum((Timer) x, (Timer) y), (k, data) -> PrettyPrint
+				.keyColonData(k + " [ms]", ((Timer) data).print(t -> Long.toString(Math.round(t * 1e-6)))));
+	}
+
+	public void startQuery() {
+		mTimer.start();
+	}
+
+	@Override
+	public void reportQuery(final boolean positive, final boolean conditional) {
+		if (positive) {
+			reportPositiveQuery(conditional);
+		} else {
+			reportNegativeQuery(conditional);
+		}
+	}
+
+	public void reportQuery(final LBool result, final boolean conditional) {
 		switch (result) {
 		case UNSAT:
-			reportPositiveQuery(time, conditional);
+			reportPositiveQuery(conditional);
 			break;
 		case SAT:
-			reportNegativeQuery(time, conditional);
+			reportNegativeQuery(conditional);
 			break;
 		case UNKNOWN:
-			reportUnknownQuery(time, conditional);
+			reportUnknownQuery(conditional);
 			break;
 		}
 	}
 
-	public void reportPositiveQuery(final long time, final boolean conditional) {
-		reportNegativeQuery(conditional);
-		if (conditional) {
-			mPositiveConditionalTime += time;
-		} else {
-			mPositiveUnconditionalTime += time;
-		}
+	@Override
+	public void reportPositiveQuery(final boolean conditional) {
+		reportPositiveQuery(conditional);
+		mTimer.stop(true, conditional);
 	}
 
-	public void reportNegativeQuery(final long time, final boolean conditional) {
+	@Override
+	public void reportNegativeQuery(final boolean conditional) {
 		reportNegativeQuery(conditional);
-		if (conditional) {
-			mNegativeConditionalTime += time;
-		} else {
-			mNegativeUnconditionalTime += time;
-		}
+		mTimer.stop(false, conditional);
 	}
 
-	public void reportUnknownQuery(final long time, final boolean conditional) {
+	@Override
+	public void reportUnknownQuery(final boolean conditional) {
 		reportUnknownQuery(conditional);
-		if (conditional) {
-			mUnknownConditionalTime += time;
-		} else {
-			mUnknownUnconditionalTime += time;
-		}
+		mTimer.stopUnknown(conditional);
 	}
 
 	public long getTotalTime() {
-		return mPositiveConditionalTime + mPositiveUnconditionalTime + mNegativeConditionalTime
-				+ mNegativeUnconditionalTime + mUnknownConditionalTime + mUnknownUnconditionalTime;
+		return mTimer.getTotal();
 	}
 }

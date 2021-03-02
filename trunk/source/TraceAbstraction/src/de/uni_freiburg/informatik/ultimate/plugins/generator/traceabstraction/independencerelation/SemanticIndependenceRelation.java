@@ -125,8 +125,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			mLogger.warn("Predicates with locations should not be used for independence.");
 		}
 
-		final long startTime = System.nanoTime();
-
+		mStatistics.startQuery();
 		final UnmodifiableTransFormula tfA = getTransFormula(a);
 		final UnmodifiableTransFormula tfB = getTransFormula(b);
 
@@ -144,16 +143,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		} else {
 			result = subset;
 		}
-		final long checkTime = System.nanoTime() - startTime;
 
-		mLogger.debug("Independence Inclusion Check Time: %d ms", checkTime / 1_000_000);
-		if (checkTime > 1_000_000_000) {
-			// For queries that take more than 1s, report details.
-			mLogger.warn("Expensive independence query (%d ms) for statements %s and %s under condition %s",
-					checkTime / 1_000_000, a, b, context);
-		}
-
-		mStatistics.reportQuery(result, checkTime, context != null);
+		mStatistics.reportQuery(result, context != null);
 		return result == LBool.UNSAT;
 	}
 
