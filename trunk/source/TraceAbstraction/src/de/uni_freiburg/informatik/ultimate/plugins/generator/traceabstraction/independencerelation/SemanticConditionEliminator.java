@@ -59,7 +59,7 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 
 	private final IIndependenceRelation<IPredicate, L> mUnderlying;
 	private final Predicate<IPredicate> mIsInconsistent;
-	private final EliminatorStatistics mStatistics = new EliminatorStatistics();
+	private final EliminatorStatistics mStatistics;
 
 	/**
 	 * Creates a new wrapper around a given independence relation.
@@ -78,6 +78,7 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 		assert underlying.isConditional() : "Condition elimination for non-conditional relations is useless";
 		mUnderlying = underlying;
 		mIsInconsistent = isInconsistent;
+		mStatistics = new EliminatorStatistics();
 	}
 
 	@Override

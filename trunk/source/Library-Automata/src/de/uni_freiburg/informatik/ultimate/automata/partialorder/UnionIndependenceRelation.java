@@ -43,15 +43,16 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelation<STATE, L> {
 
-	private final UnionStatisticsProvider mStatistics = new UnionStatisticsProvider();
 	private final Collection<IIndependenceRelation<STATE, L>> mRelations;
 	private final boolean mSymmetric;
 	private final boolean mConditional;
+	private final UnionStatisticsProvider mStatistics;
 
 	public UnionIndependenceRelation(final Collection<IIndependenceRelation<STATE, L>> relations) {
 		mRelations = relations;
 		mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
 		mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
+		mStatistics = new UnionStatisticsProvider();
 	}
 
 	@Override

@@ -46,7 +46,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 	private final IIndependenceRelation<S, L> mUnderlying;
 	private final IIndependenceCache<S, L> mCache;
-	private final CachedIndependenceStatisticsProvider mStatistics = new CachedIndependenceStatisticsProvider();
+	private final CachedIndependenceStatisticsProvider mStatistics;
 
 	/**
 	 * Create a new cache for the given relation.
@@ -72,6 +72,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 			final IIndependenceCache<S, L> cache) {
 		mUnderlying = underlying;
 		mCache = cache;
+		mStatistics = new CachedIndependenceStatisticsProvider();
 	}
 
 	/**

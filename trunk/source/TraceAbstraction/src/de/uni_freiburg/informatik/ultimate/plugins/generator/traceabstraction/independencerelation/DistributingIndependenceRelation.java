@@ -49,7 +49,7 @@ public class DistributingIndependenceRelation<S, L> implements IIndependenceRela
 	private final Function<S, S[]> mDistribution;
 	private final boolean mSymmetric;
 	private final boolean mConditional;
-	private final DistributingStatistics mStatistics = new DistributingStatistics();
+	private final DistributingStatistics mStatistics;
 
 	public DistributingIndependenceRelation(final List<IIndependenceRelation<S, L>> relations,
 			final Function<S, S[]> distribution) {
@@ -57,6 +57,7 @@ public class DistributingIndependenceRelation<S, L> implements IIndependenceRela
 		mDistribution = distribution;
 		mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
 		mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
+		mStatistics = new DistributingStatistics();
 	}
 
 	@Override
