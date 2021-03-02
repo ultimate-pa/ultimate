@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.DistributingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticConditionEliminator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
@@ -178,7 +179,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 
 		mIndependenceRelations.add(constructIndependenceRelation());
-		final IIndependenceRelation<IPredicate, L> indep = new DistributingIndependenceRelation(mIndependenceRelations);
+		final IIndependenceRelation<IPredicate, L> indep =
+				new DistributingIndependenceRelation<>(mIndependenceRelations, this::getConjuncts);
 
 		switchToOnDemandConstructionMode();
 		switch (mPartialOrderMode) {
@@ -216,9 +218,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		if (conditional) {
 			// For conditional relation, add condition eliminator to get rid of useless conditions.
 			// Note: Soundness of this wrapper depends on the fact that all inconsistent predicates are syntactically
-			// equal to "false". Here, this is achieved by usage of the DistributingIndependenceRelation below: The only
-			// predicates we use are the original interpolants (i.e., not conjunctions of them), where we assume this
-			// condition holds.
+			// equal to "false". Here, this is achieved by usage of DistributingIndependenceRelation: The only
+			// predicates we use as conditions are the original interpolants (i.e., not conjunctions of them), where we
+			// assume this constraint holds.
 			return new SemanticConditionEliminator<>(cachedRelation, PartialOrderCegarLoop::isFalseState);
 		}
 		return new ThreadSeparatingIndependenceRelation<>(cachedRelation);
@@ -265,40 +267,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT + " -t:1000", SolverBuilder.LOGIC_Z3);
 		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, settings, "SemanticIndependence");
 		return new ManagedScript(mServices, solver);
-	}
-
-	private final class DistributingIndependenceRelation implements IIndependenceRelation<IPredicate, L> {
-		private final List<IIndependenceRelation<IPredicate, L>> mRelations;
-		private final boolean mSymmetric;
-		private final boolean mConditional;
-
-		public DistributingIndependenceRelation(final List<IIndependenceRelation<IPredicate, L>> relations) {
-			mRelations = relations;
-			mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
-			mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
-		}
-
-		@Override
-		public boolean isSymmetric() {
-			return mSymmetric;
-		}
-
-		@Override
-		public boolean isConditional() {
-			return mConditional;
-		}
-
-		@Override
-		public boolean contains(final IPredicate state, final L a, final L b) {
-			final IPredicate[] conjuncts = getConjuncts(state);
-			assert conjuncts.length == mRelations.size();
-			for (int i = 0; i < mRelations.size(); ++i) {
-				if (mRelations.get(i).contains(conjuncts[i], a, b)) {
-					return true;
-				}
-			}
-			return false;
-		}
 	}
 
 	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {
