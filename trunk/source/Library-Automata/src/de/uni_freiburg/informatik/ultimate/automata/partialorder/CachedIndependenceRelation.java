@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * An independence relation that caches the result of an underlying relation. To be used with computation-intensive
@@ -139,20 +137,8 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		public static final String CACHE_STATISTICS = "Statistics on independence cache";
 
 		public CachedIndependenceStatisticsProvider() {
-			declare(UNDERLYING_STATISTICS, this::getUnderlyingStatistics, KeyType.STATISTICS_DATA);
-			declare(CACHE_STATISTICS, this::getCacheStatistics, KeyType.STATISTICS_DATA);
-		}
-
-		private StatisticsData getUnderlyingStatistics() {
-			final StatisticsData data = new StatisticsData();
-			data.aggregateBenchmarkData(mUnderlying.getStatistics());
-			return data;
-		}
-
-		private StatisticsData getCacheStatistics() {
-			final StatisticsData data = new StatisticsData();
-			data.aggregateBenchmarkData(mCache.getStatistics());
-			return data;
+			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
+			forward(CACHE_STATISTICS, mCache::getStatistics);
 		}
 	}
 

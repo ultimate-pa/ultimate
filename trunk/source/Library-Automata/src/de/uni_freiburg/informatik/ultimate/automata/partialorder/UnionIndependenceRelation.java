@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * An independence relation that represents the union of several independence relations. This can in particular be used
@@ -82,15 +80,7 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 		public static final String UNDERLYING_STATISTICS = "Underlying independence statistics";
 
 		public UnionStatisticsProvider() {
-			declare(UNDERLYING_STATISTICS, this::getUnderlyingStatistics, KeyType.STATISTICS_DATA);
-		}
-
-		private StatisticsData getUnderlyingStatistics() {
-			final StatisticsData data = new StatisticsData();
-			for (final IIndependenceRelation<STATE, L> rel : mRelations) {
-				data.aggregateBenchmarkData(rel.getStatistics());
-			}
-			return data;
+			forwardAll(UNDERLYING_STATISTICS, mRelations, IIndependenceRelation::getStatistics);
 		}
 	}
 }

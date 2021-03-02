@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -53,12 +55,27 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 	 * @param type
 	 *            The type of data (including aggregation and printing)
 	 */
-	protected void declare(final String key, final Supplier<Object> getter, final KeyType type) {
+	protected final void declare(final String key, final Supplier<Object> getter, final KeyType type) {
 		assert !mSuppliers.containsKey(key);
 		assert getter != null;
 		assert type != null;
 		mSuppliers.put(key, getter);
 		mTypes.put(key, type);
+	}
+
+	protected final void forward(final String key, final Supplier<IStatisticsDataProvider> statistics) {
+		forwardAll(key, Arrays.asList(statistics), Supplier::get);
+	}
+
+	protected final <T> void forwardAll(final String key, final Iterable<T> elems,
+			final Function<T, IStatisticsDataProvider> statistics) {
+		declare(key, () -> {
+			final StatisticsData data = new StatisticsData();
+			for (final T x : elems) {
+				data.aggregateBenchmarkData(statistics.apply(x));
+			}
+			return data;
+		}, KeyType.STATISTICS_DATA);
 	}
 
 	@Override
