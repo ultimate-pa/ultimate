@@ -27,6 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * An independence relation that caches the result of an underlying relation. To be used with computation-intensive
@@ -44,6 +48,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 	private final IIndependenceRelation<S, L> mUnderlying;
 	private final IIndependenceCache<S, L> mCache;
+	private final CachedIndependenceStatisticsProvider mStatistics = new CachedIndependenceStatisticsProvider();
 
 	/**
 	 * Create a new cache for the given relation.
@@ -110,7 +115,13 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 		final boolean result = mUnderlying.contains(condition, a, b);
 		mCache.cacheResult(condition, a, b, result);
+		mStatistics.reportQuery(result, condition != null);
 		return result;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 
 	/**
@@ -121,6 +132,28 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 */
 	public void removeFromCache(final L a) {
 		mCache.remove(a);
+	}
+
+	private class CachedIndependenceStatisticsProvider extends IndependenceStatisticsDataProvider {
+		public static final String UNDERLYING_STATISTICS = "Statistics on cached relation";
+		public static final String CACHE_STATISTICS = "Statistics on independence cache";
+
+		public CachedIndependenceStatisticsProvider() {
+			declare(UNDERLYING_STATISTICS, this::getUnderlyingStatistics, KeyType.STATISTICS_DATA);
+			declare(CACHE_STATISTICS, this::getCacheStatistics, KeyType.STATISTICS_DATA);
+		}
+
+		private StatisticsData getUnderlyingStatistics() {
+			final StatisticsData data = new StatisticsData();
+			data.aggregateBenchmarkData(mUnderlying.getStatistics());
+			return data;
+		}
+
+		private StatisticsData getCacheStatistics() {
+			final StatisticsData data = new StatisticsData();
+			data.aggregateBenchmarkData(mCache.getStatistics());
+			return data;
+		}
 	}
 
 	/**
@@ -173,11 +206,13 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		/**
 		 * @return The number of dependent pairs of letters in the cache, across all conditions (if any).
 		 */
+		@Deprecated
 		int getNegativeCacheSize();
 
 		/**
 		 * @return The number of all independent pairs of letters in the cache, across all conditions (if any).
 		 */
+		@Deprecated
 		int getPositiveCacheSize();
 
 		/**
@@ -196,5 +231,16 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 *            The combination (e.g. sequential composition) of the previous two letters.
 		 */
 		void mergeIndependencies(L a, L b, L ab);
+
+		/**
+		 * An optional method to provide statistics about the cache.
+		 *
+		 * @return implementation-defined statistics
+		 */
+		default IStatisticsDataProvider getStatistics() {
+			return new AbstractStatisticsDataProvider() {
+				// by default, no statistics are collected
+			};
+		}
 	}
 }

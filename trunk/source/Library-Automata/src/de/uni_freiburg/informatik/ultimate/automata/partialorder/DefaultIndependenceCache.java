@@ -33,6 +33,9 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * Default implementation of {@link IIndependenceCache}.
@@ -46,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> {
 
+	private final CacheStatistics mStatistics = new CacheStatistics();
 	private final Map<S, HashRelation<L, L>> mPositiveCache = new HashMap<>();
 	private final Map<S, HashRelation<L, L>> mNegativeCache = new HashMap<>();
 
@@ -89,13 +93,15 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 	}
 
 	@Override
+	@Deprecated
 	public int getNegativeCacheSize() {
-		return mNegativeCache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
+		return mStatistics.getNegativeCacheSize();
 	}
 
 	@Override
+	@Deprecated
 	public int getPositiveCacheSize() {
-		return mPositiveCache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
+		return mStatistics.getPositiveCacheSize();
 	}
 
 	@Override
@@ -113,6 +119,71 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 					relation.addPair(c, ab);
 				}
 			}
+		}
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private final class CacheStatistics extends AbstractStatisticsDataProvider {
+		public static final String TOTAL_CACHE_SIZE = "Total cache size (in pairs)";
+		public static final String POSITIVE_CACHE_SIZE = "Positive cache size";
+		public static final String POSITIVE_CONDITIONAL_CACHE_SIZE = "Positive conditional cache size";
+		public static final String POSITIVE_UNCONDITIONAL_CACHE_SIZE = "Positive unconditional cache size";
+		public static final String NEGATIVE_CACHE_SIZE = "Negative cache size";
+		public static final String NEGATIVE_CONDITIONAL_CACHE_SIZE = "Negative conditional cache size";
+		public static final String NEGATIVE_UNCONDITIONAL_CACHE_SIZE = "Negative unconditional cache size";
+
+		private CacheStatistics() {
+			declare(TOTAL_CACHE_SIZE, this::getTotalSize, KeyType.COUNTER);
+			declare(POSITIVE_CACHE_SIZE, this::getPositiveCacheSize, KeyType.COUNTER);
+			declare(POSITIVE_CONDITIONAL_CACHE_SIZE, this::getPositiveConditionalCacheSize, KeyType.COUNTER);
+			declare(POSITIVE_UNCONDITIONAL_CACHE_SIZE, this::getPositiveUnconditionalCacheSize, KeyType.COUNTER);
+			declare(NEGATIVE_CACHE_SIZE, this::getNegativeCacheSize, KeyType.COUNTER);
+			declare(NEGATIVE_CONDITIONAL_CACHE_SIZE, this::getNegativeConditionalCacheSize, KeyType.COUNTER);
+			declare(NEGATIVE_UNCONDITIONAL_CACHE_SIZE, this::getNegativeUnconditionalCacheSize, KeyType.COUNTER);
+		}
+
+		public int getTotalSize() {
+			return getPositiveCacheSize() + getNegativeCacheSize();
+		}
+
+		public int getPositiveCacheSize() {
+			return getCacheSize(mPositiveCache);
+		}
+
+		public int getPositiveConditionalCacheSize() {
+			return getPositiveCacheSize() - getPositiveUnconditionalCacheSize();
+		}
+
+		public int getPositiveUnconditionalCacheSize() {
+			return getUnconditionalCacheSize(mPositiveCache);
+		}
+
+		public int getNegativeCacheSize() {
+			return getCacheSize(mNegativeCache);
+		}
+
+		public int getNegativeConditionalCacheSize() {
+			return getNegativeCacheSize() - getNegativeUnconditionalCacheSize();
+		}
+
+		public int getNegativeUnconditionalCacheSize() {
+			return getUnconditionalCacheSize(mNegativeCache);
+		}
+
+		private int getCacheSize(final Map<S, HashRelation<L, L>> cache) {
+			return cache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
+		}
+
+		private int getUnconditionalCacheSize(final Map<S, HashRelation<L, L>> cache) {
+			final HashRelation<L, L> row = cache.get(null);
+			if (row == null) {
+				return 0;
+			}
+			return row.size();
 		}
 	}
 }
