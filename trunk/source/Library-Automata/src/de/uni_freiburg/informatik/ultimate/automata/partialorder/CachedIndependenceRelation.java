@@ -109,8 +109,10 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		if (isSymmetric()) {
 			final LBool symCached = mCache.contains(condition, b, a);
 			if (symCached == LBool.SAT) {
+				mStatistics.reportPositiveCachedQuery(condition != null);
 				return true;
 			} else if (symCached == LBool.UNSAT) {
+				mStatistics.reportNegativeCachedQuery(condition != null);
 				return false;
 			}
 		}
