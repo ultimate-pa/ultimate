@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inform
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransformingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
@@ -83,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -100,20 +100,20 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final SleepSetVisitorSearch<L, IPredicate> mVisitor;
+	private ISleepSetOrder<IPredicate, L> mSleepSetOrder;
 
 	// Maps an IPredicate built through refinement rounds to the sequence of conjuncts it was built from.
 	// This is used to distribute an independence query across conjuncts.
 	private final Map<IPredicate, IPredicate[]> mPredicateConjuncts = new HashMap<>();
 
-	private ISleepSetOrder<IPredicate, L> mSleepSetOrder;
-	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations = new ArrayList<>();
-	private final IIndependenceCache<IPredicate, L> mIndependenceCache;
-	private final ManagedScript mIndependenceScript;
-	private final TermTransferrer mIndependenceTransferrer;
+	// The list of independence relations to which independence queries for the different conjuncts of an IPredicate are
+	// distributed. In every iteration, a relation is appended to deal with the additional conjunct.
+	private final List<IIndependenceRelation<IPredicate, L>> mConjunctIndependenceRelations = new ArrayList<>();
+
+	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
+	private final IIndependenceRelation<IPredicate, L> mConditionalRelation;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
-
-	private IStatisticsDataProvider mIndependenceStatistics;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -127,15 +127,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mVisitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState,
 				supportsDeadStateOptimization(mPartialOrderMode));
 
-		mIndependenceCache = new DefaultIndependenceCache<>();
-		mIndependenceScript = constructIndependenceScript();
-		mIndependenceTransferrer =
-				new TermTransferrer(csToolkit.getManagedScript().getScript(), mIndependenceScript.getScript());
-	}
-
-	private static final boolean supportsDeadStateOptimization(final PartialOrderMode mode) {
-		// At the moment, only SLEEP_NEW_STATES supports this optimization.
-		return mode == PartialOrderMode.SLEEP_NEW_STATES;
+		final IIndependenceRelation<IPredicate, L> semanticIndependence = constructSemanticIndependence(csToolkit);
+		final DefaultIndependenceCache<IPredicate, L> independenceCache = new DefaultIndependenceCache<>();
+		mConditionalRelation = constructConditionalIndependence(semanticIndependence, independenceCache);
+		mIndependenceRelation = constructIndependenceRelation(semanticIndependence, independenceCache);
 	}
 
 	@Override
@@ -175,6 +170,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
 
+		// Update independence relation
+		mConjunctIndependenceRelations.add(mConditionalRelation);
+
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
@@ -184,17 +182,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 
-		mIndependenceRelations.add(constructIndependenceRelation());
-		final IIndependenceRelation<IPredicate, L> indep =
-				new DistributingIndependenceRelation<>(mIndependenceRelations, this::getConjuncts);
-
 		switchToOnDemandConstructionMode();
 		switch (mPartialOrderMode) {
 		case SLEEP_DELAY_SET:
-			new SleepSetDelayReduction<>(abstraction, indep, mSleepSetOrder, mVisitor);
+			new SleepSetDelayReduction<>(abstraction, mIndependenceRelation, mSleepSetOrder, mVisitor);
 			break;
 		case SLEEP_NEW_STATES:
-			new SleepSetNewStateReduction<>(abstraction, indep, mSleepSetOrder, mSleepSetStateFactory, mVisitor);
+			new SleepSetNewStateReduction<>(abstraction, mIndependenceRelation, mSleepSetOrder, mSleepSetStateFactory,
+					mVisitor);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);
@@ -202,51 +197,54 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mCounterexample = mVisitor.constructRun();
 		switchToReadonlyMode();
 
-		mIndependenceStatistics = indep.getStatistics();
-
 		return mCounterexample == null;
 	}
 
 	@Override
 	public void finish() {
-		if (mIndependenceStatistics != null) {
-			final StatisticsData data = new StatisticsData();
-			data.aggregateBenchmarkData(mIndependenceStatistics);
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
-		}
+		final StatisticsData data = new StatisticsData();
+		data.aggregateBenchmarkData(mIndependenceRelation.getStatistics());
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
+
 		super.finish();
 	}
 
-	private IIndependenceRelation<IPredicate, L> constructIndependenceRelation() {
-		final boolean conditional = mIteration > 0;
-		final IIndependenceRelation<IPredicate, L> semanticRelation = new SemanticIndependenceRelation<>(mServices,
-				mIndependenceScript, conditional, false, mIndependenceTransferrer);
+	private static final boolean supportsDeadStateOptimization(final PartialOrderMode mode) {
+		// At the moment, only SLEEP_NEW_STATES supports this optimization.
+		return mode == PartialOrderMode.SLEEP_NEW_STATES;
+	}
 
-		final IIndependenceRelation<IPredicate, L> basicRelation;
-		if (conditional) {
-			basicRelation = semanticRelation;
-		} else {
-			// For non-conditional independence, add syntactic check to improve performance
-			basicRelation = new UnionIndependenceRelation<>(
-					Arrays.asList(new SyntacticIndependenceRelation<>(), semanticRelation));
-		}
+	private IIndependenceRelation<IPredicate, L> constructSemanticIndependence(final CfgSmtToolkit csToolkit) {
+		final ManagedScript independenceScript = constructIndependenceScript();
+		final TermTransferrer independenceTransferrer =
+				new TermTransferrer(csToolkit.getManagedScript().getScript(), independenceScript.getScript());
+		return new SemanticIndependenceRelation<>(mServices, independenceScript, true, false, independenceTransferrer);
+	}
 
-		final IIndependenceRelation<IPredicate, L> cachedRelation =
-				new CachedIndependenceRelation<>(basicRelation, mIndependenceCache);
-		final IIndependenceRelation<IPredicate, L> conditionalRelation;
-		if (conditional) {
-			// For conditional relation, add condition eliminator to get rid of useless conditions.
-			// Note: Soundness of this wrapper depends on the fact that all inconsistent predicates are syntactically
-			// equal to "false". Here, this is achieved by usage of DistributingIndependenceRelation: The only
-			// predicates we use as conditions are the original interpolants (i.e., not conjunctions of them), where we
-			// assume this constraint holds.
-			conditionalRelation =
-					new SemanticConditionEliminator<>(cachedRelation, PartialOrderCegarLoop::isFalseState);
-		} else {
-			conditionalRelation = cachedRelation;
-		}
-		return new ThreadSeparatingIndependenceRelation<>(conditionalRelation);
+	private IIndependenceRelation<IPredicate, L> constructConditionalIndependence(
+			final IIndependenceRelation<IPredicate, L> semanticIndependence,
+			final IIndependenceCache<IPredicate, L> independenceCache) {
+		// Note: Soundness of the SemanticConditionEliminator depends on the fact that all inconsistent predicates are
+		// syntactically equal to "false". Here, this is achieved by usage of DistributingIndependenceRelation: The only
+		// predicates we use as conditions are the original interpolants (i.e., not conjunctions of them), where we
+		// assume this constraint holds.
+		return new SemanticConditionEliminator<>(
+				new CachedIndependenceRelation<>(semanticIndependence, independenceCache),
+				PartialOrderCegarLoop::isFalseState);
+	}
+
+	private IIndependenceRelation<IPredicate, L> constructIndependenceRelation(
+			final IIndependenceRelation<IPredicate, L> semanticIndependence,
+			final IIndependenceCache<IPredicate, L> independenceCache) {
+		// Construct unconditional relation
+		final IIndependenceRelation<IPredicate, L> unconditionalRelation = new CachedIndependenceRelation<>(
+				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
+						ConditionTransformingIndependenceRelation.unconditional(semanticIndependence))),
+				independenceCache);
+		mConjunctIndependenceRelations.add(unconditionalRelation);
+		return new ThreadSeparatingIndependenceRelation<>(
+				new DistributingIndependenceRelation<>(mConjunctIndependenceRelations, this::getConjuncts));
 	}
 
 	private void switchToOnDemandConstructionMode() {

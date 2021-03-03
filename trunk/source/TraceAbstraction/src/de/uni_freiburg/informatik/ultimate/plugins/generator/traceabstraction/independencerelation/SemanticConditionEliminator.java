@@ -136,7 +136,7 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 		}
 
-		public void reportEliminatedCondition() {
+		private void reportEliminatedCondition() {
 			mEliminatedConditions++;
 		}
 	}
