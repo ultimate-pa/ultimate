@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.EpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
@@ -100,7 +99,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private final IReqSymbolTable mSymbolTable;
 	private final List<ReqPeas> mReqPeas;
 
-	private final EpsilonTransformer mEpsilonTransformer;
+	private final Durations mDurations;
 
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
 			final IReqSymbolTable symbolTable, final Durations durations) {
@@ -112,7 +111,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
-		mEpsilonTransformer = new EpsilonTransformer(durations.computeEpsilon());
+		mDurations = durations;
+
 	}
 
 	@Override
@@ -147,7 +147,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			if (mCombinationNum >= 1) {
 				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
 				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymbolTable,
-						mReqPeas, boogieDeclarations, mEpsilonTransformer, mSeparateInvariantHandling);
+						mReqPeas, boogieDeclarations, mDurations, mSeparateInvariantHandling);
 			} else {
 				rticGenerator = null;
 			}
@@ -248,7 +248,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		assert automataSet.size() == subset.length;
 		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
 
-		final Expression expr = mRtInconcistencyConditionGenerator.nonDLCGenerator(automata);
+		final Expression expr = mRtInconcistencyConditionGenerator.generateNonDeadlockCondition(automata);
 		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, subset);
 
 		if (expr == null) {

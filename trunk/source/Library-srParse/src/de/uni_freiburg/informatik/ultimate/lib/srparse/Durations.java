@@ -74,7 +74,7 @@ public class Durations {
 			return;
 		}
 		final BoogiePrimitiveType type = BoogiePrimitiveType.toPrimitiveType(init.getType());
-		if (type == BoogieType.TYPE_INT || type == BoogieType.TYPE_REAL) {
+		if (type != BoogieType.TYPE_INT && type != BoogieType.TYPE_REAL) {
 			return;
 		}
 		final Expression expr = init.getExpression();
@@ -114,8 +114,12 @@ public class Durations {
 
 	public Rational computeEpsilon() {
 		if (mEpsilon == null || mKnownNumericValues.size() != mKnownValues) {
-			mEpsilon = SmtUtils.gcd(mKnownNumericValues);
 			mKnownValues = mKnownNumericValues.size();
+			if (mKnownValues == 0) {
+				mEpsilon = Rational.ZERO;
+			} else {
+				mEpsilon = SmtUtils.gcd(mKnownNumericValues).div(Rational.TWO);
+			}
 		}
 		return mEpsilon;
 	}

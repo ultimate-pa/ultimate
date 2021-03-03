@@ -90,9 +90,6 @@ public class Req2Pea implements IReq2Pea {
 			mDurations.addInitPattern(pattern);
 		}
 		reqs.stream().forEach(mDurations::addNonInitPattern);
-
-		mLogger.info("Using epsilon=%s for guard reduction", mDurations.computeEpsilon());
-
 		mPattern2Peas = generatePeas(requirements, mDurations);
 
 		for (final ReqPeas reqpea : mPattern2Peas) {

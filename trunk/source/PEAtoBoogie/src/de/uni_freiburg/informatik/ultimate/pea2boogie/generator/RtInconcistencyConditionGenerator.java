@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
@@ -85,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.EpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -121,8 +123,10 @@ public class RtInconcistencyConditionGenerator {
 	private final boolean mSeparateInvariantHandling;
 	private final CddToSmt mCddToSmt;
 
-	private final Map<Term, Term> mProjectionCache;
-	private final Map<Phase, Term> mPhaseTermCache;
+	private final ConstructionCache<Term, Term> mProjectionCache;
+	private final ConstructionCache<Phase, Term> mPhaseNdcCache;
+	private final ConstructionCache<Transition, Term> mNdcGuardTermCache;
+	private final ConstructionCache<Phase, Term> mNdcStateInvariantCache;
 
 	private int mQuantified;
 	private int mPlain;
@@ -140,7 +144,7 @@ public class RtInconcistencyConditionGenerator {
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable, final List<ReqPeas> reqPeas,
-			final BoogieDeclarations boogieDeclarations, final EpsilonTransformer epsilonTransformer,
+			final BoogieDeclarations boogieDeclarations, final Durations durations,
 			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mReqSymboltable = symboltable;
 		mServices = services;
@@ -159,8 +163,10 @@ public class RtInconcistencyConditionGenerator {
 		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false);
 		mVars = mBoogie2Smt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mSeparateInvariantHandling = separateInvariantHandling;
-		mPhaseTermCache = new HashMap<>();
-		mProjectionCache = new HashMap<>();
+		mPhaseNdcCache = new ConstructionCache<>(this::constructNdcPhase);
+		mProjectionCache = new ConstructionCache<>(this::computeExistentialProjection);
+		mNdcGuardTermCache = new ConstructionCache<>(this::constructNdcGuardTerm);
+		mNdcStateInvariantCache = new ConstructionCache<>(this::constructNdcStateInvariant);
 		mQuantified = 0;
 		mPlain = 0;
 		mBeforeSize = 0;
@@ -170,7 +176,8 @@ public class RtInconcistencyConditionGenerator {
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
-		mEpsilonTransformer = epsilonTransformer;
+		mLogger.info("Using epsilon=%s for rt-consistency checks", SmtUtils.toString(durations.computeEpsilon()));
+		mEpsilonTransformer = new EpsilonTransformer(mScript, durations.computeEpsilon(), mReqSymboltable);
 		final Map<Term, Term> constToValue = createConst2Value(mScript, mReqSymboltable, mBoogie2Smt);
 		mConstInliner = new Substitution(mScript, constToValue);
 
@@ -258,7 +265,32 @@ public class RtInconcistencyConditionGenerator {
 		return SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
 	}
 
-	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
+	/**
+	 * Generates an expression that represents the non-deadlock condition (NDC) for a network of PEAs A, where
+	 *
+	 * <pre>
+	 *   A = A_1 || ··· || A_n and A_i = (P_i, V_i, C_i, E_i, s_i, I_i, P^0_i).
+	 * </pre>
+	 *
+	 * The NDC of A is then
+	 *
+	 * <pre>
+	 *
+	 *   ⋀ (p_1,...,p_n) ∈ P_1 x ... x P_n
+	 *   pc_1 = p_1 ⋀ ... ⋀ pc_n = p_n  =>  ∃  v' . NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n)
+	 * </pre>
+	 *
+	 * The NDC(A_i, p_i) is the non-deadlock condition for PEA A_i and phase p_i:
+	 *
+	 * <pre>
+	 *   ⋁ (p,g,X,p') ∈ E_i
+	 *   g ⋀ s'(p') ⋀ strict(I(p'))[X/0]
+	 * </pre>
+	 *
+	 * <code>strict</code> replaces in I(p') all occurrences of c ≤ t by c < t.
+	 *
+	 */
+	public Expression generateNonDeadlockCondition(final PhaseEventAutomata[] automata) {
 		if (PRINT_PEA_DOT) {
 			mLogger.info("### Printing DOT for Peas ###");
 			for (int i = 0; i < automata.length; ++i) {
@@ -268,28 +300,33 @@ public class RtInconcistencyConditionGenerator {
 			mLogger.info("### Finished printing DOT ###");
 		}
 
-		final int[][] phases = createPhasePairs(automata);
-
-		final List<int[]> phasePermutations = CrossProducts.crossProduct(phases);
+		// create a list of (p_1,...,p_n)
+		final List<int[]> phaseVectors = createPhaseVector(automata);
 		final List<Term> rtInconsistencyChecks = new ArrayList<>();
-		for (final int[] vector : phasePermutations) {
-			assert vector.length == automata.length;
+		for (final int[] phaseVector : phaseVectors) {
+			assert phaseVector.length == automata.length;
 			final List<Term> outer = new ArrayList<>();
 			final List<Term> impliesLHS = new ArrayList<>();
-			for (int j = 0; j < vector.length; j++) {
+			for (int j = 0; j < phaseVector.length; j++) {
 				final PhaseEventAutomata automaton = automata[j];
-				final int phaseIndex = vector[j];
-				final String pcName = mReqSymboltable.getPcName(automaton);
-				impliesLHS.add(genPCCompEQ(pcName, phaseIndex));
-				final Phase phase = automaton.getPhases()[phaseIndex];
-				final Term phaseDisjunction = getPhaseTerm(phase);
-				outer.add(phaseDisjunction);
+				final int phaseIndex = phaseVector[j];
+
+				// collect all pc_i = p_i equalities
+				impliesLHS.add(getPcPhaseEquality(mReqSymboltable.getPcName(automaton), phaseIndex));
+
+				// collect NDC(A_i, p_i)
+				outer.add(mPhaseNdcCache.getOrConstruct(automaton.getPhases()[phaseIndex]));
 			}
 
-			// first, compute rhs without primed invariant
+			// "compute" NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n)
 			final Term checkPrimedRhs = SmtUtils.and(mScript, outer);
+
+			// extension: add primed invariant, i.e., a preprocessed collection of ⋀NDC(A_i, p_i)
+			// for single state PEAs.
 			final Term checkPrimedRhsAndPrimedInvariant = SmtUtils.and(mScript, checkPrimedRhs, mPrimedInvariant);
-			final Term checkRhsAndInvariant = existentiallyProjectEventsAndPrimedVars(checkPrimedRhsAndPrimedInvariant);
+
+			// compute ∃ v' . NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n), i.e., add quantifier and try to remove it
+			final Term checkRhsAndInvariant = mProjectionCache.getOrConstruct(checkPrimedRhsAndPrimedInvariant);
 			if (checkRhsAndInvariant instanceof QuantifiedFormula) {
 				mQuantified++;
 			} else {
@@ -299,6 +336,7 @@ public class RtInconcistencyConditionGenerator {
 				continue;
 			}
 
+			// "compute" pc_1 = p_1 ⋀ ... ⋀ pc_n = p_n
 			final Term rtInconsistencyCheckLhs = SmtUtils.and(mScript, impliesLHS);
 			if (PRINT_INDIVIDUAL_RT_INCONSISTENCY_CHECK) {
 				mLogger.info("%s => %s", rtInconsistencyCheckLhs, checkRhsAndInvariant);
@@ -307,6 +345,7 @@ public class RtInconcistencyConditionGenerator {
 			final Term rtInconsistencyCheck = SmtUtils.implies(mScript, rtInconsistencyCheckLhs, checkRhsAndInvariant);
 			rtInconsistencyChecks.add(rtInconsistencyCheck);
 		}
+
 		if (rtInconsistencyChecks.isEmpty()) {
 			mTrivialConsistent++;
 			return null;
@@ -357,44 +396,38 @@ public class RtInconcistencyConditionGenerator {
 		}
 	}
 
-	private Term getPhaseTerm(final Phase phase) {
-		Term phaseTerm = mPhaseTermCache.get(phase);
-		if (phaseTerm == null) {
-			phaseTerm = generatePhaseLeaveTerm(phase);
-			final Term old = mPhaseTermCache.put(phase, phaseTerm);
-			assert old == null;
-		} else {
-			assert isCacheWorking(phase, phaseTerm) : "Cache fails";
-		}
-		return phaseTerm;
-	}
-
-	private boolean isCacheWorking(final Phase phase, final Term cachedPhaseTerm) {
-		final Term gPhaseTerm = generatePhaseLeaveTerm(phase);
-		if (gPhaseTerm != cachedPhaseTerm) {
-			mLogger.fatal("Cache failed");
-			mLogger.fatal("Cached term:    " + cachedPhaseTerm.toStringDirect());
-			mLogger.fatal("Generated term: " + gPhaseTerm.toStringDirect());
-		}
-		return gPhaseTerm == cachedPhaseTerm;
-	}
-
-	private Term generatePhaseLeaveTerm(final Phase phase) {
+	private Term constructNdcPhase(final Phase phase) {
 		final List<Term> inner = new ArrayList<>();
 		for (final Transition trans : phase.getTransitions()) {
-			final Term guardTerm = mCddToSmt.toSmt(trans.getGuard());
-			final Term transformedGuardTerm = mEpsilonTransformer.transform(mScript, guardTerm);
-			if (guardTerm != transformedGuardTerm) {
-				mLogger.info("Transformed guard term %s to %s", guardTerm, transformedGuardTerm);
-			}
-			final CDD cddPrimedStInv = trans.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars());
-			final CDD cddStrictInv =
-					new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets());
-			final Term primedStInv = mCddToSmt.toSmt(cddPrimedStInv);
-			final Term strictInv = mCddToSmt.toSmt(cddStrictInv);
-			inner.add(SmtUtils.and(mScript, transformedGuardTerm, primedStInv, strictInv));
+			final Phase dest = trans.getDest();
+			final Term guardTerm = mNdcGuardTermCache.getOrConstruct(trans);
+			final Term clockInv = constructNdcClockInvariantTerm(trans, dest);
+			final Term stateInv = mNdcStateInvariantCache.getOrConstruct(dest);
+			inner.add(SmtUtils.and(mScript, guardTerm, stateInv, clockInv));
 		}
 		return SmtUtils.or(mScript, inner);
+	}
+
+	private Term constructNdcGuardTerm(final Transition trans) {
+		return transformAndLog(trans.getGuard(), mEpsilonTransformer::transformGuard, "guard");
+	}
+
+	private Term constructNdcClockInvariantTerm(final Transition trans, final Phase dest) {
+		return transformAndLog(new StrictInvariant().genStrictInv(dest.getClockInvariant(), trans.getResets()),
+				mEpsilonTransformer::transformClockInvariant, "clock invariant");
+	}
+
+	private Term transformAndLog(final CDD org, final Function<Term, Term> funTrans, final String msg) {
+		final Term orgTerm = mCddToSmt.toSmt(org);
+		final Term transTerm = funTrans.apply(orgTerm);
+		if (orgTerm != transTerm) {
+			mLogger.info("Transformed %s %s to %s", msg, orgTerm, transTerm);
+		}
+		return transTerm;
+	}
+
+	private Term constructNdcStateInvariant(final Phase phase) {
+		return mCddToSmt.toSmt(phase.getStateInvariant().prime(mReqSymboltable.getConstVars()));
 	}
 
 	private Term simplifyAndLog(final Term term) {
@@ -472,16 +505,6 @@ public class RtInconcistencyConditionGenerator {
 		return termVar.getTerm();
 	}
 
-	private Term existentiallyProjectEventsAndPrimedVars(final Term term) {
-		final Term cachedResult = mProjectionCache.get(term);
-		if (cachedResult != null) {
-			return cachedResult;
-		}
-		final Term rtr = computeExistentialProjection(term);
-		mProjectionCache.put(term, rtr);
-		return rtr;
-	}
-
 	private Term computeExistentialProjection(final Term term) {
 		final Term inlinedConstsTerm = inlineConsts(term);
 		final Term simplifiedTerm = simplifyAndLog(inlinedConstsTerm);
@@ -538,7 +561,7 @@ public class RtInconcistencyConditionGenerator {
 		final Set<TermVariable> rtr = new HashSet<>();
 		final Set<String> primedVars = mReqSymboltable.getPrimedVars();
 		final Set<String> eventVars = mReqSymboltable.getEventVars();
-		final Set<String> stateVars = (Set<String>) mReqSymboltable.getStateVars();
+		final Set<String> stateVars = mReqSymboltable.getStateVars();
 		for (final TermVariable var : freeVars) {
 			final Expression expr = mBoogie2Smt.getTerm2Expression().translate(var);
 			if (expr instanceof IdentifierExpression) {
@@ -554,7 +577,7 @@ public class RtInconcistencyConditionGenerator {
 		return rtr;
 	}
 
-	private static int[][] createPhasePairs(final PhaseEventAutomata[] automata) {
+	private static List<int[]> createPhaseVector(final PhaseEventAutomata[] automata) {
 		final int[][] phases = new int[automata.length][];
 		for (int i = 0; i < automata.length; i++) {
 			final PhaseEventAutomata automaton = automata[i];
@@ -564,10 +587,10 @@ public class RtInconcistencyConditionGenerator {
 				phases[i][j] = j;
 			}
 		}
-		return phases;
+		return CrossProducts.crossProduct(phases);
 	}
 
-	private Term genPCCompEQ(final String pcName, final int phaseIndex) {
+	private Term getPcPhaseEquality(final String pcName, final int phaseIndex) {
 		return SmtUtils.binaryEquality(mScript, getTermVarTerm(pcName), mScript.numeral(Integer.toString(phaseIndex)));
 	}
 

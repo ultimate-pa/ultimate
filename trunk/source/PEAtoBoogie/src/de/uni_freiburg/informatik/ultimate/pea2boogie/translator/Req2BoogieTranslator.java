@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
@@ -62,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
  */
 public class Req2BoogieTranslator {
 
+	private static final String DOUBLE_ZERO = Double.toString(0.0);
 	private final Unit mUnit;
 	private final List<ReqPeas> mReqPeas;
 	private final BoogieLocation mUnitLocation;
@@ -106,7 +107,6 @@ public class Req2BoogieTranslator {
 
 	private final IReqSymbolTable mSymboltable;
 	private IReq2PeaAnnotator mReqCheckAnnotator;
-	private final EpsilonTransformer mEpsilonTransformer;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType<?>> patterns) {
@@ -138,7 +138,6 @@ public class Req2BoogieTranslator {
 			mUnit = null;
 			mReqPeas = null;
 			mSymboltable = null;
-			mEpsilonTransformer = null;
 			return;
 		}
 
@@ -157,14 +156,12 @@ public class Req2BoogieTranslator {
 			mUnit = null;
 			mReqPeas = null;
 			mSymboltable = null;
-			mEpsilonTransformer = null;
 			return;
 		}
 
 		mReqPeas = req2pea.getReqPeas();
 		mSymboltable = req2pea.getSymboltable();
 		mReqCheckAnnotator = req2pea.getAnnotator();
-		mEpsilonTransformer = new EpsilonTransformer(req2pea.getDurations().computeEpsilon());
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
 
@@ -411,8 +408,8 @@ public class Req2BoogieTranslator {
 		return Collections.singletonList(joinIfSmts(statements.toArray(new Statement[statements.size()]), bl));
 	}
 
-	private static Statement genReset(final String resetVar, final BoogieLocation bl) {
-		final RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
+	private static Statement generateClockResetAssign(final String resetVar, final BoogieLocation bl) {
+		final RealLiteral realLiteral = new RealLiteral(bl, DOUBLE_ZERO);
 		return genAssignmentStmt(bl, resetVar, realLiteral);
 	}
 
@@ -424,38 +421,43 @@ public class Req2BoogieTranslator {
 	private Statement[] generateTransitionFromPeaTransition(final PhaseEventAutomata automaton, final String pcName,
 			final Transition transition, final BoogieLocation bl) {
 
-		final List<Statement> smtList = new ArrayList<>();
-		final CDD guardCdd = transition.getGuard();
-		if (guardCdd != CDD.TRUE) {
-			final Expression guardExpr = new CDDTranslator().toBoogie(guardCdd, bl);
-			final Expression transformedGuardExpression = mEpsilonTransformer.transform(guardExpr);
-			if (guardExpr != transformedGuardExpression) {
-				mLogger.info("Replaced guard expression %s with %s", BoogiePrettyPrinter.print(guardExpr),
-						BoogiePrettyPrinter.print(transformedGuardExpression));
-			}
-			final AssumeStatement assumeGuard =
-					new AssumeStatement(bl, mNormalFormTransformer.toNnf(transformedGuardExpression));
-			smtList.add(assumeGuard);
-		}
+		final List<Statement> stmtList = new ArrayList<>();
+		createAssumeFromTransition(transition, bl).ifPresent(stmtList::add);
+		Arrays.stream(transition.getResets()).map(a -> generateClockResetAssign(a, bl)).forEachOrdered(stmtList::add);
+		final int phaseIndex = getPhaseIndex(transition, automaton.getPhases());
+		assert phaseIndex != -1;
+		stmtList.add(genPCAssign(pcName, phaseIndex, bl));
+		return stmtList.toArray(new Statement[stmtList.size()]);
+	}
 
-		if (transition.getResets().length != 0) {
-			final String[] resets = transition.getResets();
-			for (int i = 0; i < resets.length; i++) {
-				smtList.add(genReset(resets[i], bl));
-			}
-		}
-		final Phase desPhase = transition.getDest();
-		final Phase[] phases = automaton.getPhases();
-		int phaseIndex = -1;
+	/**
+	 * @return the index of the first phase that is the destination phase of the transition or -1
+	 */
+	private static int getPhaseIndex(final Transition transition, final Phase[] phases) {
+		final String desPhaseName = transition.getDest().getName();
 		for (int i = 0; i < phases.length; i++) {
-			if (phases[i].getName().equals(desPhase.getName())) {
-				phaseIndex = i;
+			if (phases[i].getName().equals(desPhaseName)) {
+				return i;
 			}
 		}
+		return -1;
+	}
 
-		smtList.add(genPCAssign(pcName, phaseIndex, bl));
+	private Optional<Statement> createAssumeFromTransition(final Transition transition, final BoogieLocation bl) {
+		final CDD guardCdd = transition.getGuard();
+		if (guardCdd == CDD.TRUE) {
+			return Optional.empty();
+		}
 
-		return smtList.toArray(new Statement[smtList.size()]);
+		final Expression guardExpr = new CDDTranslator().toBoogie(guardCdd, bl);
+		return Optional.of(new AssumeStatement(bl, mNormalFormTransformer.toNnf(guardExpr)));
+
+		// final Expression transformedGuardExpression = mEpsilonTransformer.transform(guardExpr);
+		// if (guardExpr != transformedGuardExpression) {
+		// mLogger.info("Replaced guard expression %s with %s", BoogiePrettyPrinter.print(guardExpr),
+		// BoogiePrettyPrinter.print(transformedGuardExpression));
+		// }
+		// return Optional.of(new AssumeStatement(bl, mNormalFormTransformer.toNnf(transformedGuardExpression)));
 	}
 
 	private Statement generateTransitionsFromPhase(final PhaseEventAutomata automaton, final String pcName,
