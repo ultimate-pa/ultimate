@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * A wrapper independence relation that forwards queries to an underlying relation, unless the two actions are from the
@@ -44,9 +46,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implements IIndependenceRelation<S, L> {
 
 	private final IIndependenceRelation<S, L> mUnderlying;
+	private final SeparatingStatistics mStatistics;
 
 	public ThreadSeparatingIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
 		mUnderlying = underlying;
+		mStatistics = new SeparatingStatistics();
 	}
 
 	@Override
@@ -61,7 +65,13 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 
 	@Override
 	public boolean contains(final S state, final L a, final L b) {
-		return !fromSameThread(a, b) && mUnderlying.contains(state, a, b);
+		if (fromSameThread(a, b)) {
+			mStatistics.reportSameThreadQuery(state != null);
+			return false;
+		}
+		final boolean result = mUnderlying.contains(state, a, b);
+		mStatistics.reportQuery(result, state != null);
+		return result;
 	}
 
 	private boolean fromSameThread(final L a, final L b) {
@@ -70,6 +80,24 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		return mUnderlying.getStatistics();
+		return mStatistics;
+	}
+
+	private class SeparatingStatistics extends IndependenceStatisticsDataProvider {
+		public static final String SAME_THREAD_QUERIES = "Independence queries for same thread";
+		public static final String UNDERLYING_RELATION = "Statistics on underlying relation";
+
+		private int mSameThreadQueries;
+
+		public SeparatingStatistics() {
+			super(ThreadSeparatingIndependenceRelation.class);
+			declare(SAME_THREAD_QUERIES, () -> mSameThreadQueries, KeyType.COUNTER);
+			forward(UNDERLYING_RELATION, mUnderlying::getStatistics);
+		}
+
+		private void reportSameThreadQuery(final boolean conditional) {
+			mSameThreadQueries++;
+			reportNegativeQuery(conditional);
+		}
 	}
 }
