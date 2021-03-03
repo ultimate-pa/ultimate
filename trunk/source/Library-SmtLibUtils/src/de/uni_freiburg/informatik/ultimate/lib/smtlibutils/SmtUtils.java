@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -1826,11 +1827,14 @@ public final class SmtUtils {
 		return null;
 	}
 
-	public static BigDecimal toDecimal(final Rational rational) {
+	/**
+	 * @return A BigDecimal if this rational is representable as a finite BigDecimal, nothing otherwise.
+	 */
+	public static Optional<BigDecimal> toDecimal(final Rational rational) {
 		if (!rational.isRational()) {
-			throw new IllegalArgumentException("rational has to be finite");
+			return Optional.empty();
 		}
-		return new BigDecimal(rational.numerator()).divide(new BigDecimal(rational.denominator()));
+		return Optional.of(new BigDecimal(rational.numerator()).divide(new BigDecimal(rational.denominator())));
 	}
 
 	public static BigInteger toInt(final Rational integralRational) {
@@ -2484,6 +2488,11 @@ public final class SmtUtils {
 				Rational.gcd(r1.numerator().multiply(r2.denominator()), r2.numerator().multiply(r1.denominator()));
 		final BigInteger denominator = r1.denominator().multiply(r2.denominator());
 		return Rational.valueOf(numerator, denominator);
+	}
+
+	public static String toString(final Rational r) {
+		final Optional<BigDecimal> dec = toDecimal(r);
+		return dec.isPresent() ? dec.get().toPlainString() : r.toString();
 	}
 
 	public static Set<FunctionSymbol> extractNonTheoryFunctionSymbols(final Term term) {
