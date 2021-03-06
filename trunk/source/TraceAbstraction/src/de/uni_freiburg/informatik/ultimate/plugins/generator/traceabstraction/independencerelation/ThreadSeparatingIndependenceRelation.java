@@ -85,14 +85,12 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 
 	private class SeparatingStatistics extends IndependenceStatisticsDataProvider {
 		public static final String SAME_THREAD_QUERIES = "Independence queries for same thread";
-		public static final String UNDERLYING_RELATION = "Statistics on underlying relation";
 
 		private int mSameThreadQueries;
 
 		public SeparatingStatistics() {
-			super(ThreadSeparatingIndependenceRelation.class);
+			super(ThreadSeparatingIndependenceRelation.class, mUnderlying);
 			declare(SAME_THREAD_QUERIES, () -> mSameThreadQueries, KeyType.COUNTER);
-			forward(UNDERLYING_RELATION, mUnderlying::getStatistics);
 		}
 
 		private void reportSameThreadQuery(final boolean conditional) {

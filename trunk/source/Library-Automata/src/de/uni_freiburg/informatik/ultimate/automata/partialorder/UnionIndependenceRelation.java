@@ -46,13 +46,13 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 	private final Collection<IIndependenceRelation<STATE, L>> mRelations;
 	private final boolean mSymmetric;
 	private final boolean mConditional;
-	private final UnionStatisticsProvider mStatistics;
+	private final IndependenceStatisticsDataProvider mStatistics;
 
 	public UnionIndependenceRelation(final Collection<IIndependenceRelation<STATE, L>> relations) {
 		mRelations = relations;
 		mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
 		mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
-		mStatistics = new UnionStatisticsProvider();
+		mStatistics = new IndependenceStatisticsDataProvider(UnionIndependenceRelation.class, mRelations);
 	}
 
 	@Override
@@ -75,14 +75,5 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
-	}
-
-	private class UnionStatisticsProvider extends IndependenceStatisticsDataProvider {
-		public static final String UNDERLYING_STATISTICS = "Underlying independence statistics";
-
-		public UnionStatisticsProvider() {
-			super(UnionIndependenceRelation.class);
-			forwardAll(UNDERLYING_STATISTICS, mRelations, IIndependenceRelation::getStatistics);
-		}
 	}
 }

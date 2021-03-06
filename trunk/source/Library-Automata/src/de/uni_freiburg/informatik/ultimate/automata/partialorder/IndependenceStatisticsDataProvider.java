@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataProvider {
 
 	public static final String INDEPENDENCE_QUERIES = "Independence Queries";
+	public static final String UNDERLYING_RELATION = "Statistics on underlying relation";
+	public static final String UNDERLYING_RELATIONS = "Statistics on underlying relations";
 
 	private final Counter mQueryCounter = new Counter();
 
@@ -58,6 +60,41 @@ public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataPr
 	 */
 	public IndependenceStatisticsDataProvider(final Class<?> clazz) {
 		declareCounter(clazz.getSimpleName() + "." + INDEPENDENCE_QUERIES, () -> mQueryCounter);
+	}
+
+	/**
+	 * Create a new instance to collect data, with the default data fields, and forward data on an underlying relation.
+	 *
+	 * @param clazz
+	 *            The type of independence relation for which statistics are collected. This is used as a prefix for key
+	 *            names in order to distinguish data for different, possibly nested relations.
+	 * @param underlying
+	 *            The underlying relation whose statistics shall be forwarded.
+	 */
+	public IndependenceStatisticsDataProvider(final Class<?> clazz, final IIndependenceRelation<?, ?> underlying) {
+		this(clazz);
+		forward(clazz.getSimpleName() + "." + UNDERLYING_RELATION, underlying::getStatistics);
+	}
+
+	/**
+	 * Create a new instance to collect data, with the default data fields, and forward data on underlying relations.
+	 *
+	 * @param <S>
+	 *            The condition type for the underlying relations
+	 * @param <L>
+	 *            The type of letters for the underlying relations
+	 * @param clazz
+	 *            The type of independence relation for which statistics are collected. This is used as a prefix for key
+	 *            names in order to distinguish data for different, possibly nested relations.
+	 * @param underlying
+	 *            The underlying relations whose statistics shall be forwarded. The collection will only be traversed
+	 *            when statistics are retrieved, so it is possible to pass a reference to a modifiable collections.
+	 */
+	public <S, L> IndependenceStatisticsDataProvider(final Class<?> clazz,
+			final Iterable<IIndependenceRelation<S, L>> underlying) {
+		this(clazz);
+		forwardAll(clazz.getSimpleName() + "." + UNDERLYING_RELATIONS, underlying,
+				IIndependenceRelation::getStatistics);
 	}
 
 	protected final void declareCounter(final String key, final Supplier<Counter> getter) {

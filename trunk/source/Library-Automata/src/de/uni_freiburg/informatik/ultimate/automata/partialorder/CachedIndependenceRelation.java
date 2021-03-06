@@ -140,15 +140,13 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 	private class CachedIndependenceStatisticsProvider extends IndependenceStatisticsDataProvider {
 		public static final String CACHE_QUERIES = "Cache Queries";
-		public static final String UNDERLYING_STATISTICS = "Statistics on cached relation";
 		public static final String CACHE_STATISTICS = "Statistics on independence cache";
 
 		private final Counter mCacheQueries = new Counter();
 
 		public CachedIndependenceStatisticsProvider() {
-			super(CachedIndependenceRelation.class);
+			super(CachedIndependenceRelation.class, mUnderlying);
 			declareCounter(CACHE_QUERIES, () -> mCacheQueries);
-			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 			forward(CACHE_STATISTICS, mCache::getStatistics);
 		}
 

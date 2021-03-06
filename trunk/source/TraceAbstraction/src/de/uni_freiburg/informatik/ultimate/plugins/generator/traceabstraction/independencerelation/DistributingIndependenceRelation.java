@@ -94,14 +94,12 @@ public class DistributingIndependenceRelation<S, L> implements IIndependenceRela
 
 	private class DistributingStatistics extends IndependenceStatisticsDataProvider {
 		public static final String MAX_QUERIED_INDEX = "Maximal queried relation";
-		public static final String UNDERLYING_STATISTICS = "Statistics for underlying relations";
 
 		private int mMaxQueriedIndex = -1;
 
 		public DistributingStatistics() {
-			super(DistributingIndependenceRelation.class);
+			super(DistributingIndependenceRelation.class, mRelations);
 			declare(MAX_QUERIED_INDEX, () -> mMaxQueriedIndex, Aggregate::intMax, PrettyPrint::keyColonData);
-			forwardAll(UNDERLYING_STATISTICS, mRelations, IIndependenceRelation::getStatistics);
 		}
 
 		private void reportQueriedIndex(final int index) {

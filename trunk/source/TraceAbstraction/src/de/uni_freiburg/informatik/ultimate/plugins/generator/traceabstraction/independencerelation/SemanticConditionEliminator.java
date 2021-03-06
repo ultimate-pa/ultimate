@@ -126,14 +126,12 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 
 	private class EliminatorStatistics extends IndependenceStatisticsDataProvider {
 		public static final String ELIMINATED_CONDITIONS = "Eliminated conditions";
-		public static final String UNDERLYING_STATISTICS = "Statistics of underlying relation";
 
 		private int mEliminatedConditions;
 
 		public EliminatorStatistics() {
-			super(SemanticConditionEliminator.class);
+			super(SemanticConditionEliminator.class, mUnderlying);
 			declare(ELIMINATED_CONDITIONS, () -> mEliminatedConditions, KeyType.COUNTER);
-			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 		}
 
 		private void reportEliminatedCondition() {
