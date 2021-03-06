@@ -106,21 +106,6 @@ public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataPr
 		return mQueryCounter;
 	}
 
-	@Deprecated
-	public long getPositiveQueries() {
-		return mQueryCounter.getPositive();
-	}
-
-	@Deprecated
-	public long getNegativeQueries() {
-		return mQueryCounter.getNegative();
-	}
-
-	@Deprecated
-	public long getUnknownQueries() {
-		return mQueryCounter.getUnknown();
-	}
-
 	public void reportQuery(final boolean positive, final boolean conditional) {
 		mQueryCounter.increment(positive, conditional);
 	}

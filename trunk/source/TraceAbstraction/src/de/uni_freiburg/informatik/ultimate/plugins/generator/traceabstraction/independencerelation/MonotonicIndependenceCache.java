@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -129,16 +128,6 @@ public class MonotonicIndependenceCache<L> implements IIndependenceCache<IPredic
 		final Set<IPredicate> entry = row.computeIfAbsent(b, x -> new HashSet<>());
 		entry.removeIf(p -> mCoverageChecker.isCovered(state, p) == Validity.VALID);
 		entry.add(state);
-	}
-
-	@Override
-	public int getNegativeCacheSize() {
-		return mNegativeCache.values().stream().collect(Collectors.summingInt(Map::size));
-	}
-
-	@Override
-	public int getPositiveCacheSize() {
-		return mPositiveCache.values().stream().collect(Collectors.summingInt(Map::size));
 	}
 
 	/**

@@ -96,18 +96,6 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 	}
 
 	@Override
-	@Deprecated
-	public int getNegativeCacheSize() {
-		return mStatistics.getNegativeCacheSize();
-	}
-
-	@Override
-	@Deprecated
-	public int getPositiveCacheSize() {
-		return mStatistics.getPositiveCacheSize();
-	}
-
-	@Override
 	public void mergeIndependencies(final L a, final L b, final L ab) {
 		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
 			// (a, c) + (b, c) -> (ab, c)

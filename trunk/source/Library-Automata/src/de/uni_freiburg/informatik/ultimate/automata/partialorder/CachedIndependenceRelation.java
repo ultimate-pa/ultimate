@@ -214,18 +214,6 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		void cacheResult(S condition, L a, L b, boolean independent);
 
 		/**
-		 * @return The number of dependent pairs of letters in the cache, across all conditions (if any).
-		 */
-		@Deprecated
-		int getNegativeCacheSize();
-
-		/**
-		 * @return The number of all independent pairs of letters in the cache, across all conditions (if any).
-		 */
-		@Deprecated
-		int getPositiveCacheSize();
-
-		/**
 		 * Merges cached independencies for two letters into a combined letter. If both are independent from some third
 		 * letter c, the combined letter will be independent from c as well.
 		 *

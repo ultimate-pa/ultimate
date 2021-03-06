@@ -205,24 +205,4 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
-
-	@Deprecated
-	public long getPositiveQueries() {
-		return mStatistics.getPositiveQueries();
-	}
-
-	@Deprecated
-	public long getNegativeQueries() {
-		return mStatistics.getNegativeQueries();
-	}
-
-	@Deprecated
-	public long getUnknownQueries() {
-		return mStatistics.getUnknownQueries();
-	}
-
-	@Deprecated
-	public long getComputationTimeNano() {
-		return mStatistics.getTotalTime();
-	}
 }

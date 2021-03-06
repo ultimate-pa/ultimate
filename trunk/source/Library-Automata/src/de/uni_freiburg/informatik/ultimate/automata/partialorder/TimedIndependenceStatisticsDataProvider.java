@@ -101,8 +101,4 @@ public class TimedIndependenceStatisticsDataProvider extends IndependenceStatist
 		mTimer.stopUnknown(conditional);
 		super.reportUnknownQuery(conditional);
 	}
-
-	public long getTotalTime() {
-		return mTimer.getTotal();
-	}
 }

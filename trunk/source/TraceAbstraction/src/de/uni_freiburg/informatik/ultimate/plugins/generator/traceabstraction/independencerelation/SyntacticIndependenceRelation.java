@@ -79,15 +79,4 @@ public class SyntacticIndependenceRelation<STATE, L extends IAction> implements 
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
-
-	@Deprecated
-	public long getPositiveQueries() {
-		return mStatistics.getPositiveQueries();
-	}
-
-	@Deprecated
-	public long getNegativeQueries() {
-		return mStatistics.getNegativeQueries();
-	}
-
 }
