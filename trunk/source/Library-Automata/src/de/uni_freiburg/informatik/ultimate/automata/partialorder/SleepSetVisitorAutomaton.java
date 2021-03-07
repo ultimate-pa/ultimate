@@ -27,9 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.function.Predicate;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
 /**
@@ -38,29 +41,51 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- *            letter
+ *            The type of letters in the automaton
  * @param <S>
- *            state
+ *            The type of automaton states
  */
 public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S> {
-
-	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
+	private final Predicate<S> mIsInitial;
+	private final Predicate<S> mIsFinal;
 	private final NestedWordAutomaton<L, S> mReductionAutomaton;
 
 	/**
-	 * Constructor for the Sleep Set Reduction Visitor constructing the reduced automaton.
+	 * Create a new visitor instance that constructs a sub-automaton of a given automaton. This can e.g. be used for
+	 * delay reductions.
 	 *
 	 * @param operand
-	 *            automaton
+	 *            The unreduced automaton, used to identify the alphabet, initial and final states
 	 * @param services
-	 *            services
+	 *            Services used in the constructed automaton
 	 * @param stateFactory
-	 *            state factory
+	 *            State factory used by the constructed automaton
 	 */
 	public SleepSetVisitorAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final AutomataLibraryServices services, final IEmptyStackStateFactory<S> stateFactory) {
-		mOperand = operand;
-		mReductionAutomaton = new NestedWordAutomaton<>(services, mOperand.getVpAlphabet(), stateFactory);
+		this(operand::isInitial, operand::isFinal, operand.getVpAlphabet(), services, stateFactory);
+	}
+
+	/**
+	 * Create a new visitor instance.
+	 *
+	 * @param isInitial
+	 *            Used to identify initial states in the constructed automaton
+	 * @param isFinal
+	 *            Used to identify final states in the constructed automaton
+	 * @param alphabet
+	 *            The alphabet of the constructed automaton
+	 * @param services
+	 *            Services used in the constructed automaton
+	 * @param stateFactory
+	 *            State factory used by the constructed automaton
+	 */
+	public SleepSetVisitorAutomaton(final Predicate<S> isInitial, final Predicate<S> isFinal,
+			final VpAlphabet<L> alphabet, final AutomataLibraryServices services,
+			final IEmptyStackStateFactory<S> stateFactory) {
+		mIsInitial = isInitial;
+		mIsFinal = isFinal;
+		mReductionAutomaton = new NestedWordAutomaton<>(services, alphabet, stateFactory);
 	}
 
 	@Override
@@ -73,7 +98,7 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 	public boolean discoverTransition(final S source, final L letter, final S target) {
 		// add succState to the automaton
 		if (!mReductionAutomaton.contains(target)) {
-			mReductionAutomaton.addState(mOperand.isInitial(target), mOperand.isFinal(target), target);
+			mReductionAutomaton.addState(mIsInitial.test(target), mIsFinal.test(target), target);
 		}
 		// add transition from currentState to succState to the automaton
 		mReductionAutomaton.addInternalTransition(source, letter, target);
@@ -91,7 +116,7 @@ public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S
 
 	@Override
 	public void addStartState(final S state) {
-		mReductionAutomaton.addState(true, mOperand.isFinal(state), state);
+		mReductionAutomaton.addState(true, mIsFinal.test(state), state);
 	}
 
 	@Override

@@ -51,6 +51,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mEmptyStack;
 	private final Map<IPredicate, Map<Set<L>, IPredicate>> mKnownStates = new HashMap<>();
+	private final Map<IPredicate, IPredicate> mOriginalStates = new HashMap<>();
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -75,10 +76,25 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		return sleep2State.computeIfAbsent(sleepset, x -> createFreshCopy(state));
 	}
 
+	/**
+	 * Retrieves the original state from which a reduction state was constructed.
+	 *
+	 * @param sleepState
+	 *            The state of the sleep set reduction, as returned by a call to
+	 *            {@link #createSleepSetState(IPredicate, Set)}.
+	 * @return The argument passed to {@link #createSleepSetState(IPredicate, Set)} that returned the given reduction
+	 *         state
+	 */
+	public IPredicate getOriginalState(final IPredicate sleepState) {
+		return mOriginalStates.get(sleepState);
+	}
+
 	private IPredicate createFreshCopy(final IPredicate original) {
 		if (original instanceof IMLPredicate) {
 			final IMLPredicate mlPred = (IMLPredicate) original;
-			return mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());
+			final IMLPredicate copy = mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());
+			mOriginalStates.put(copy, original);
+			return copy;
 		}
 		throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
 	}
