@@ -160,6 +160,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -388,9 +389,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 				mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
 				net = lbecfg;
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
-								lbe.getStatistics()));
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(
+						Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 			} else {
 				net = petrifiedCfg;
 			}
@@ -471,6 +471,11 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		mLogger.warn("Sleep set: input automaton " + input.sizeInformation());
 		mLogger.warn("Sleep set: output automaton " + result.sizeInformation());
+
+		final StatisticsData data = new StatisticsData();
+		data.aggregateBenchmarkData(indep.getStatistics());
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
 
 		return result;
 	}
