@@ -129,6 +129,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.er
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.ThreadSeparatingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -439,9 +440,10 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			return input;
 		}
 
-		final IIndependenceRelation<IPredicate, L> indep = new CachedIndependenceRelation<>(
-				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
-						new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true))));
+		final IIndependenceRelation<IPredicate, L> indep = new ThreadSeparatingIndependenceRelation<>(
+				new CachedIndependenceRelation<>(new UnionIndependenceRelation<>(Arrays.asList(
+						new SyntacticIndependenceRelation<>(),
+						new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true)))));
 		final ISleepSetOrder<IPredicate, L> order =
 				new ConstantSleepSetOrder<>(input.getVpAlphabet().getInternalAlphabet());
 
