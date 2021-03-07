@@ -445,9 +445,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		final ISleepSetOrder<IPredicate, L> order =
 				new ConstantSleepSetOrder<>(input.getVpAlphabet().getInternalAlphabet());
 
-		// TODO Use statistics methods to measure time
-		final long reductionStart = System.currentTimeMillis();
-
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
 		final SleepSetVisitorAutomaton<L, IPredicate> automatonConstructor;
 		switch (mode) {
 		case SLEEP_DELAY_SET:
@@ -467,9 +465,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =
 				automatonConstructor.getReductionAutomaton();
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
 
-		final long reductionEnd = System.currentTimeMillis();
-		mLogger.warn("Sleep Set Reduction Time: " + (reductionEnd - reductionStart) + "ms");
 		mLogger.warn("Sleep set: input automaton " + input.sizeInformation());
 		mLogger.warn("Sleep set: output automaton " + result.sizeInformation());
 
