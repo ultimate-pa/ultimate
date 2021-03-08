@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class to check thread modularity of an icfg using horn clause constraints.
@@ -53,7 +55,7 @@ public class ThreadGeneralization {
 	private final HashRelation<String, IcfgLocation> mErrorLocations;
 
 	private final Map<String, Integer> mNumberOfThreads;
-	private final Collection<String> mDuplicatedThreads;
+	private final Set<String> mDuplicatedThreads;
 	private final Set<String> mInitialProcedures;
 
 	private final List<IProgramVar> mGlobalVariables;
@@ -65,6 +67,8 @@ public class ThreadGeneralization {
 
 	private final LBool mSat;
 
+	private final Map<String, TermVariable> mThreadCounters;
+
 	public ThreadGeneralization(final IIcfg<IcfgLocation> icfg, final Collection<String> duplicatedThreads,
 			final ManagedScript managedScript) {
 		mManagedScript = managedScript;
@@ -72,7 +76,8 @@ public class ThreadGeneralization {
 		mTermTransferrer = new TermTransferrer(cfgSmtToolkit.getManagedScript().getScript(), getScript());
 		mInitialProcedures = icfg.getInitialNodes().stream().map(x -> x.getProcedure()).collect(Collectors.toSet());
 		final ConcurrencyInformation concurrency = cfgSmtToolkit.getConcurrencyInformation();
-		mNumberOfThreads = getThreadCounts(mInitialProcedures, concurrency.getThreadInstanceMap().keySet());
+		final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forks = concurrency.getThreadInstanceMap().keySet();
+		mNumberOfThreads = getThreadCounts(mInitialProcedures, forks);
 		mEntryLocations = icfg.getProcedureEntryNodes();
 		final IIcfgSymbolTable symbolTable = cfgSmtToolkit.getSymbolTable();
 		mGlobalVariables = new ArrayList<>(symbolTable.getGlobals());
@@ -81,8 +86,10 @@ public class ThreadGeneralization {
 					.filter(x -> !mInitialProcedures.contains(x) || mNumberOfThreads.get(x) > 1)
 					.collect(Collectors.toSet());
 		} else {
-			mDuplicatedThreads = duplicatedThreads;
+			mDuplicatedThreads = new HashSet<>(duplicatedThreads);
 		}
+		// TODO: This is a workaround to force 2-thread-modularity. Make this an option?
+		mDuplicatedThreads.forEach(x -> mNumberOfThreads.put(x, mNumberOfThreads.get(x) + 1));
 		final Set<IcfgLocation> inUseErrorLocs = new HashSet<>(concurrency.getInUseErrorNodeMap().values());
 		mErrorLocations = new HashRelation<>();
 		mDimension = mGlobalVariables.size();
@@ -107,17 +114,12 @@ public class ThreadGeneralization {
 			for (int j = 0; j < count; j++) {
 				final int i = j;
 				getFreshLocalVarMap(proc).forEach((k, v) -> mDefaultVarMaps.put(proc, i, k, v));
-				mDefaultLocVars.put(proc, i, constructAuxVar("loc_" + proc));
+				mDefaultLocVars.put(proc, i, constructAuxVar("loc", proc));
 			}
 		}
-		// TODO: This is a workaround to force 2-modularity, maybe we can make this variable.
-		for (final String t : mDuplicatedThreads) {
-			final int n = mNumberOfThreads.get(t);
-			mNumberOfThreads.put(t, n + 1);
-			getFreshLocalVarMap(t).forEach((k, v) -> mDefaultVarMaps.put(t, n, k, v));
-			mDefaultLocVars.put(t, n, constructAuxVar("loc_" + t));
-			mDimension += mLocalVariables.get(t).size() + 1;
-		}
+		mThreadCounters = forks.stream().map(x -> x.getNameOfForkedProcedure())
+				.collect(Collectors.toMap(x -> x, x -> constructAuxVar("count", x)));
+		mDimension += mThreadCounters.size();
 		mSat = mDuplicatedThreads.isEmpty() ? LBool.SAT : checkHornClauses();
 	}
 
@@ -166,8 +168,8 @@ public class ThreadGeneralization {
 		return mManagedScript.getScript();
 	}
 
-	private TermVariable constructAuxVar(final String name) {
-		return mManagedScript.constructFreshTermVariable(name, getIntSort());
+	private TermVariable constructAuxVar(final String prefix, final String basename) {
+		return mManagedScript.constructFreshTermVariable(prefix + "_" + basename, getIntSort());
 	}
 
 	private Sort getIntSort() {
@@ -193,11 +195,16 @@ public class ThreadGeneralization {
 			paramSorts[i++] = mTermTransferrer.transferSort(v.getSort());
 		}
 		for (final Entry<String, Integer> entry : mNumberOfThreads.entrySet()) {
+			final String proc = entry.getKey();
+			// Thread counters, if forked
+			if (mThreadCounters.containsKey(proc)) {
+				paramSorts[i++] = getIntSort();
+			}
 			for (int j = 0; j < entry.getValue(); j++) {
 				// Location
 				paramSorts[i++] = getIntSort();
 				// Local variables
-				for (final IProgramVar v : mLocalVariables.get(entry.getKey())) {
+				for (final IProgramVar v : mLocalVariables.get(proc)) {
 					paramSorts[i++] = mTermTransferrer.transferSort(v.getSort());
 				}
 			}
@@ -209,16 +216,21 @@ public class ThreadGeneralization {
 		return getScript().numeral(BigInteger.valueOf(mLocations.get(procedure).indexOf(loc)));
 	}
 
-	private Term getPredicate(final Map<IProgramVar, TermVariable> globalVarMap,
+	private Term getPredicate(final Map<IProgramVar, ? extends Term> globalVarMap,
 			final NestedMap2<String, Integer, Term> locationMap,
-			final NestedMap3<String, Integer, IProgramVar, Term> localVarMap) {
+			final NestedMap3<String, Integer, IProgramVar, Term> localVarMap, final Map<String, Term> threadCounters) {
 		final Term[] params = new Term[mDimension];
 		int i = 0;
 		for (final IProgramVar v : mGlobalVariables) {
-			params[i++] = mTermTransferrer.transform(globalVarMap.getOrDefault(v, v.getTermVariable()));
+			final Term term = globalVarMap.get(v);
+			params[i++] = mTermTransferrer.transform(term == null ? v.getTerm() : term);
 		}
 		for (final Entry<String, Integer> entry : mNumberOfThreads.entrySet()) {
 			final String proc = entry.getKey();
+			final TermVariable defaultThreadCounter = mThreadCounters.get(proc);
+			if (defaultThreadCounter != null) {
+				params[i++] = threadCounters.getOrDefault(proc, defaultThreadCounter);
+			}
 			for (int j = 0; j < entry.getValue(); j++) {
 				final Term locationVar = locationMap.get(proc, j);
 				params[i++] = locationVar == null ? mDefaultLocVars.get(proc, j) : locationVar;
@@ -242,12 +254,16 @@ public class ThreadGeneralization {
 		final NestedMap2<String, Integer, Term> locationMap = new NestedMap2<>();
 		for (final Entry<String, Integer> entry : mNumberOfThreads.entrySet()) {
 			final String proc = entry.getKey();
+			final Term locTerm = getLocIndexTerm(mEntryLocations.get(proc), proc);
 			for (int i = 0; i < entry.getValue(); i++) {
-				final IcfgLocation loc = i == 0 && mInitialProcedures.contains(proc) ? mEntryLocations.get(proc) : null;
-				locationMap.put(proc, i, getLocIndexTerm(loc, proc));
+				locationMap.put(proc, i, locTerm);
 			}
 		}
-		assertClause(getPredicate(Collections.emptyMap(), locationMap, new NestedMap3<>()));
+		final Term zero = getScript().numeral(BigInteger.ZERO);
+		final Term one = getScript().numeral(BigInteger.ONE);
+		final Map<String, Term> threadCounters = mThreadCounters.keySet().stream()
+				.collect(Collectors.toMap(x -> x, x -> mInitialProcedures.contains(x) ? one : zero));
+		assertClause(getPredicate(Collections.emptyMap(), locationMap, new NestedMap3<>(), threadCounters));
 	}
 
 	private void assertSafetyClauses() {
@@ -257,7 +273,7 @@ public class ThreadGeneralization {
 				final Term errorLocTerm = getLocIndexTerm(e, proc);
 				for (int i = 0; i < entry.getValue(); i++) {
 					final Term predicate = getPredicate(Collections.emptyMap(),
-							constructLocationMap(proc, i, errorLocTerm), new NestedMap3<>());
+							constructLocationMap(proc, i, errorLocTerm), new NestedMap3<>(), Collections.emptyMap());
 					assertClause(predicate, getScript().term("false"));
 				}
 			}
@@ -275,6 +291,29 @@ public class ThreadGeneralization {
 		return null;
 	}
 
+	private Pair<Term, Map<String, Term>> getTransition(final IcfgEdge edge) {
+		Term transition = mTermTransferrer.transform(edge.getTransformula().getFormula());
+		final String thread = edge.getPrecedingProcedure();
+		final Term one = getScript().numeral(BigInteger.ONE);
+		final Map<String, Term> threadCounters = new HashMap<>();
+		if (edge.getSource().equals(mEntryLocations.get(thread))) {
+			final Term threadCounter = mThreadCounters.get(thread);
+			if (threadCounter != null) {
+				final Term positive = SmtUtils.geq(getScript(), threadCounter, one);
+				transition = SmtUtils.and(getScript(), transition, positive);
+				final Term threadCounterDec = SmtUtils.minus(getScript(), threadCounter, one);
+				threadCounters.put(thread, threadCounterDec);
+			}
+		}
+		final String forkedThread = getForkedThread(edge);
+		if (forkedThread != null && threadCounters.remove(forkedThread) == null) {
+			final Term threadCounter = mThreadCounters.get(forkedThread);
+			final Term threadCounterInc = SmtUtils.sum(getScript(), getIntSort(), threadCounter, one);
+			threadCounters.put(forkedThread, threadCounterInc);
+		}
+		return new Pair<>(transition, threadCounters);
+	}
+
 	private static NestedMap2<String, Integer, Term> constructLocationMap(final String proc, final int n,
 			final Term term) {
 		final NestedMap2<String, Integer, Term> result = new NestedMap2<>();
@@ -290,40 +329,22 @@ public class ThreadGeneralization {
 	}
 
 	private void assertInductivity() {
-		final Term negOne = getScript().numeral(BigInteger.ONE.negate());
 		for (final Entry<String, Integer> entry : mNumberOfThreads.entrySet()) {
 			final String proc = entry.getKey();
 			for (final IcfgLocation loc : mLocations.get(proc)) {
 				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 					final UnmodifiableTransFormula tf = edge.getTransformula();
 					final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
+					final Pair<Term, Map<String, Term>> transition = getTransition(edge);
 					for (int i = 0; i < entry.getValue(); i++) {
-						final var localVarMap = constructVarMap(proc, i, inVars);
-						final String forkedThread = getForkedThread(edge);
-						if (forkedThread != null) {
-							for (int j = 0; j < mNumberOfThreads.get(forkedThread); j++) {
-								final NestedMap2<String, Integer, Term> locationMapPre = new NestedMap2<>();
-								locationMapPre.put(proc, i, getLocIndexTerm(loc, proc));
-								locationMapPre.put(forkedThread, j, negOne);
-								final Term prePredicate = getPredicate(inVars, locationMapPre, localVarMap);
-								final NestedMap2<String, Integer, Term> locationMapPost = new NestedMap2<>();
-								locationMapPost.put(proc, i, getLocIndexTerm(edge.getTarget(), proc));
-								locationMapPost.put(forkedThread, j,
-										getLocIndexTerm(mEntryLocations.get(forkedThread), forkedThread));
-								final Term postPredicate =
-										getPredicate(Collections.emptyMap(), locationMapPost, localVarMap);
-								assertClause(prePredicate, postPredicate);
-							}
-						} else {
-							final Term transition = mTermTransferrer.transform(tf.getFormula());
-							final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
-							final Term prePredicate = getPredicate(inVars,
-									constructLocationMap(proc, i, getLocIndexTerm(loc, proc)), localVarMap);
-							final Term postPredicate = getPredicate(outVars,
-									constructLocationMap(proc, i, getLocIndexTerm(edge.getTarget(), proc)),
-									constructVarMap(proc, i, outVars));
-							assertClause(prePredicate, transition, postPredicate);
-						}
+						final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
+						final Term prePredicate =
+								getPredicate(inVars, constructLocationMap(proc, i, getLocIndexTerm(loc, proc)),
+										constructVarMap(proc, i, inVars), Collections.emptyMap());
+						final Term postPredicate = getPredicate(outVars,
+								constructLocationMap(proc, i, getLocIndexTerm(edge.getTarget(), proc)),
+								constructVarMap(proc, i, outVars), transition.getSecond());
+						assertClause(prePredicate, transition.getFirst(), postPredicate);
 					}
 				}
 			}
@@ -335,21 +356,24 @@ public class ThreadGeneralization {
 			for (final IcfgLocation loc : mLocations.get(proc)) {
 				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 					final UnmodifiableTransFormula tf = edge.getTransformula();
+					final Pair<Term, Map<String, Term>> transition = getTransition(edge);
 					if (getForkedThread(edge) != null) {
 						// TODO: Do we need to check this?
 						continue;
 					}
 					final int size = mNumberOfThreads.get(proc);
 					final Term[] terms = new Term[size + 3];
-					terms[0] = getPredicate(tf.getInVars(), new NestedMap2<>(), new NestedMap3<>());
+					terms[0] = getPredicate(tf.getInVars(), new NestedMap2<>(), new NestedMap3<>(),
+							Collections.emptyMap());
 					for (int i = 0; i < size; i++) {
 						terms[i + 1] =
 								getPredicate(tf.getInVars(), constructLocationMap(proc, i, getLocIndexTerm(loc, proc)),
-										constructVarMap(proc, i, tf.getInVars()));
+										constructVarMap(proc, i, tf.getInVars()), Collections.emptyMap());
 
 					}
-					terms[size + 1] = mTermTransferrer.transform(tf.getFormula());
-					terms[size + 2] = getPredicate(tf.getOutVars(), new NestedMap2<>(), new NestedMap3<>());
+					terms[size + 1] = transition.getFirst();
+					terms[size + 2] = getPredicate(tf.getOutVars(), new NestedMap2<>(), new NestedMap3<>(),
+							transition.getSecond());
 					assertClause(terms);
 				}
 			}
