@@ -127,6 +127,7 @@ public class RtInconcistencyConditionGenerator {
 	private final ConstructionCache<Phase, Term> mPhaseNdcCache;
 	private final ConstructionCache<Transition, Term> mNdcGuardTermCache;
 	private final ConstructionCache<Phase, Term> mNdcStateInvariantCache;
+	private final ConstructionCache<Transition, Term> mNdcClockInvariantCache;
 
 	private int mQuantified;
 	private int mPlain;
@@ -167,6 +168,7 @@ public class RtInconcistencyConditionGenerator {
 		mProjectionCache = new ConstructionCache<>(this::computeExistentialProjection);
 		mNdcGuardTermCache = new ConstructionCache<>(this::constructNdcGuardTerm);
 		mNdcStateInvariantCache = new ConstructionCache<>(this::constructNdcStateInvariant);
+		mNdcClockInvariantCache = new ConstructionCache<>(this::constructNdcClockInvariantTerm);
 		mQuantified = 0;
 		mPlain = 0;
 		mBeforeSize = 0;
@@ -401,7 +403,7 @@ public class RtInconcistencyConditionGenerator {
 		for (final Transition trans : phase.getTransitions()) {
 			final Phase dest = trans.getDest();
 			final Term guardTerm = mNdcGuardTermCache.getOrConstruct(trans);
-			final Term clockInv = constructNdcClockInvariantTerm(trans, dest);
+			final Term clockInv = mNdcClockInvariantCache.getOrConstruct(trans);
 			final Term stateInv = mNdcStateInvariantCache.getOrConstruct(dest);
 			inner.add(SmtUtils.and(mScript, guardTerm, stateInv, clockInv));
 		}
@@ -412,8 +414,9 @@ public class RtInconcistencyConditionGenerator {
 		return transformAndLog(trans.getGuard(), mEpsilonTransformer::transformGuard, "guard");
 	}
 
-	private Term constructNdcClockInvariantTerm(final Transition trans, final Phase dest) {
-		return transformAndLog(new StrictInvariant().genStrictInv(dest.getClockInvariant(), trans.getResets()),
+	private Term constructNdcClockInvariantTerm(final Transition trans) {
+		return transformAndLog(
+				new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()),
 				mEpsilonTransformer::transformClockInvariant, "clock invariant");
 	}
 
