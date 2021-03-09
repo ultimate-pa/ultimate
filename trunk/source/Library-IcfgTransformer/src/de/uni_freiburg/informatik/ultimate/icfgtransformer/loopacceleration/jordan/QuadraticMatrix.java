@@ -44,15 +44,15 @@ public class QuadraticMatrix {
 	/**
 	 * mDimension is an integer representing the number of rows/columns of the matrix.
 	 */
-	int mDimension;
+	private int mDimension;
 	/**
 	 * mEntries is an integer array of arrays representing the entries of the matrix.
 	 */
-	BigInteger[][] mEntries = new BigInteger[mDimension][mDimension];
+	private BigInteger[][] mEntries = new BigInteger[mDimension][mDimension];
 	
-	public QuadraticMatrix(BigInteger[][] matrixEntries) {
+	public QuadraticMatrix(final BigInteger[][] matrixEntries) {
 		// Check if given array of arrays is quadratic.
-		int numberOfRows = matrixEntries.length;
+		final int numberOfRows = matrixEntries.length;
 		for (int i=0; i<numberOfRows; i++) {
 			if (numberOfRows != matrixEntries[i].length) {
 				throw new AssertionError("Some matrix is not quadratic");
@@ -73,8 +73,9 @@ public class QuadraticMatrix {
 			for (int j=0; j<n; j++) {
 				if (i==j) {
 					identityEntries[i][j] = BigInteger.valueOf(1);
+				} else {
+					identityEntries[i][j] = BigInteger.valueOf(0);
 				}
-				else { identityEntries[i][j] = BigInteger.valueOf(0); }
 			}
 		}
 		final QuadraticMatrix identity = new QuadraticMatrix(identityEntries);
@@ -97,10 +98,11 @@ public class QuadraticMatrix {
 	}
 	
 	/**
-	 * Copies the matrix M.
-	 * Used to make sure to not change the matrix when applying functions.
+	 * Copies the matrix M. Used to make sure to not change the matrix when applying functions.
+	 * @param matrix
+	 * @return copy of matrix
 	 */
-	private static QuadraticMatrix copyMatrix(final QuadraticMatrix matrix) {
+	public static QuadraticMatrix copyMatrix(final QuadraticMatrix matrix) {
 		final int n = matrix.mDimension;
 		BigInteger[][] copiedEntries = new BigInteger[n][n];
 		for (int i=0; i<n; i++) {
@@ -118,7 +120,7 @@ public class QuadraticMatrix {
 	 * @param matrix2 quadratic matrix
 	 * @return new quadratic matrix sumMatrix = matrix1 + matrix 2
 	 */
-	private static QuadraticMatrix addition(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2) {
+	public static QuadraticMatrix addition(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2) {
 		// Check if both matrices are of the same dimension.
 		if (matrix1.mDimension != matrix2.mDimension) {
 			throw new AssertionError("Some matrices for addition are not of the same dimension.");
@@ -142,7 +144,7 @@ public class QuadraticMatrix {
 	 * @param matrix
 	 * @return new quadratic matrix scMult = a*matrix
 	 */
-	private static QuadraticMatrix scalarMultiplication(final BigInteger a, final QuadraticMatrix matrix) {		
+	public static QuadraticMatrix scalarMultiplication(final BigInteger a, final QuadraticMatrix matrix) {		
 		final int n = matrix.mDimension;
 		BigInteger[][] scMultEntries = new BigInteger[n][n];
 		for (int i=0; i<n; i++) {
@@ -160,7 +162,7 @@ public class QuadraticMatrix {
 	 * @param matrix2 quadratic matrix
 	 * @return new quadratic matrix productMatrix = matrix1 * matrix 2
 	 */
-	private static QuadraticMatrix multiplication(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2) {
+	public static QuadraticMatrix multiplication(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2) {
 		// Check if both matrices have the same dimension.
 		if (matrix1.mDimension != matrix2.mDimension) {
 			throw new AssertionError("Some matrices for multiplication are not of the same dimension");
@@ -184,7 +186,7 @@ public class QuadraticMatrix {
 	 * @param s
 	 * @return new quadratic matrix powerMatrix = matrix^s
 	 */
-	private static QuadraticMatrix power(final QuadraticMatrix matrix, final int s) {
+	public static QuadraticMatrix power(final QuadraticMatrix matrix, final int s) {
 		final int n = matrix.mDimension;
 		if (s == 0) { return identityMatrix(n); }
 		if (s == 1) { return matrix; }
@@ -198,7 +200,7 @@ public class QuadraticMatrix {
 	/**
 	 * Recursice computation of the determinant of a quadratic matrix M using Laplace expansion.
 	 */
-	private BigInteger det() {
+	public BigInteger det() {
 		final int n = mDimension;
 		// Base cases.
 		// 1x1 matrices.
@@ -234,8 +236,9 @@ public class QuadraticMatrix {
 			QuadraticMatrix kMatrix = new QuadraticMatrix(kTmp);
 			if ((n+k-1) % 2 == 0) {
 				det = det.add(mEntries[n-1][k].multiply(kMatrix.det()));
+			} else {
+				det = det.subtract(mEntries[n-1][k].multiply(kMatrix.det()));
 			}
-			else { det = det.subtract(mEntries[n-1][k].multiply(kMatrix.det())); }
 		}
 		return det;
 	}
@@ -264,8 +267,11 @@ public class QuadraticMatrix {
 				}
 			}
 			for (int i=0; i<n; i++) {
-				if (i == k) { lesEntries[i][n] = BigInteger.valueOf(1); }
-				else {lesEntries[i][n] = BigInteger.valueOf(0); }
+				if (i == k) {
+					lesEntries[i][n] = BigInteger.valueOf(1);
+				} else {
+					lesEntries[i][n] = BigInteger.valueOf(0);
+				}
 			}
 			for (int j=0; j<n; j++) {
 				lesEntries[n][j] = BigInteger.valueOf(0);
@@ -285,7 +291,7 @@ public class QuadraticMatrix {
 	 * Checks if -1,0,1 are eigenvalues of the quadratic matrix.
 	 * @return boolean array of size 3 where the i-th entry is true iff i-1 is an eigenvalue of the matrix.
 	 */
-	private boolean[] smallEigenvalues() {
+	public boolean[] smallEigenvalues() {
 		boolean[] eigenvalues = new boolean[3];
 		for (int i=0; i<3; i++) {
 			eigenvalues[i] = false;
@@ -309,7 +315,7 @@ public class QuadraticMatrix {
 	 * @param i row index
 	 * @param j row index
 	 */
-	private void swapRows(final int i, final int j) {
+	public void swapRows(final int i, final int j) {
 		final int n = mDimension;
 		BigInteger[] iRow = new BigInteger[n];
 		for (int k=0; k<n; k++) {
@@ -341,8 +347,7 @@ public class QuadraticMatrix {
 			}
 			if ((nMatrix.mEntries[i_max][k]).equals(BigInteger.valueOf(0))) {
 				k = k + 1;
-			}
-			else {
+			} else {
 				nMatrix.swapRows(h, i_max);
 				for (int i=h+1; i<n; i++) {
 					BigInteger f1 = BigInteger.valueOf(0);
@@ -462,10 +467,11 @@ public class QuadraticMatrix {
 	 * the dimension of ker(matrix-lambda*E) where E is the identity matrix. To compute the dimension of the kernel the
 	 * dimension formula is used.
 	 * The geometric multiplicity corresponds to the number of Jordan blocks for lambda.
+	 * This method also works for eigenvalues not equal to -1,0 or 1.
 	 * @param lambda an eigenvalue
 	 * @return geometric multiplicity of lambda
 	 */
-	private int geometricMultiplicity(final int lambda) {
+	public int geometricMultiplicity(final int lambda) {
 		final int n = mDimension;
 		final QuadraticMatrix identity = identityMatrix(n);
 		final QuadraticMatrix eigenvalueMatrix = addition(this,
@@ -475,10 +481,11 @@ public class QuadraticMatrix {
 	
 	/**
 	 * Computes the number of Jordan blocks for eigenvalue lambda of size s with regard to a quadratic matrix.
+	 * This method also works for integral eigenvalues not equal to -1,0 or 1.
 	 * @param lambda eigenvalue
 	 * @param s
 	 */
-	private int numberOfBlocks(final int lambda, final int s) {
+	public int numberOfBlocks(final int lambda, final int s) {
 		final int n = mDimension;
 		final QuadraticMatrix identity = identityMatrix(n);
 		final QuadraticMatrix eigenvalueMatrix = addition(this,
@@ -489,11 +496,12 @@ public class QuadraticMatrix {
 	}
 	
 	/**
-	 * Creates a Jordan block of size s with eigenvalue lambda
+	 * Creates a Jordan block of size s with eigenvalue lambda.
+	 * This method also works for integral eigenvalues not equal to -1,0 or 1.
 	 * @param lambda eigenvalue
 	 * @param s size of block
 	 */
-	private static QuadraticMatrix createJordanBlock(final int lambda, final int s) {
+	public static QuadraticMatrix createJordanBlock(final int lambda, final int s) {
 		QuadraticMatrix block = zeroMatrix(s);
 		for (int i=0; i<s; i++) {
 			block.mEntries[i][i] = BigInteger.valueOf(lambda);
@@ -506,10 +514,11 @@ public class QuadraticMatrix {
 	
 	/**
 	 * Adds jordan block to quadratic jordan matrix beginning at row start.
+	 * This method also works for integral eigenvalues not equal to -1,0 or 1.
 	 * @param block
 	 * @param start
 	 */
-	private void addJordanBlock(final QuadraticMatrix block, final int start) {
+	public void addJordanBlock(final QuadraticMatrix block, final int start) {
 		if (mDimension < block.mDimension + start) {
 			throw new AssertionError("Block does not fit into Jordan matrix");
 		}
@@ -523,6 +532,7 @@ public class QuadraticMatrix {
 	
 	/**
 	 * Computes the jordan matrix of a given quadratic matrix.
+	 * This method also works for integral eigenvalues not equal to -1,0 or 1, only need to change eigenvalues array.
 	 * @return
 	 */
 	public QuadraticMatrix jordanMatrix() {
@@ -553,18 +563,19 @@ public class QuadraticMatrix {
 			
 		}
 		if (current != n) {
-			throw new AssertionError("There is some eigenvalue with absolute value > 1");
+			throw new AssertionError("There is some eigenvalue not equal to -1,0 or 1");
 		}
 		return jordanMatrix;
 	}
 	
 	
 	/**
+	 * Constructs the matrix representing the les matrix*x=b.
 	 * @param matrix
 	 * @param b
 	 * @return
 	 */
-	private static RationalMatrix les(QuadraticMatrix matrix, Rational[] b) {
+	public static RationalMatrix les(QuadraticMatrix matrix, Rational[] b) {
 		final int n = matrix.mDimension;
 		QuadraticMatrix intLes = QuadraticMatrix.zeroMatrix(n+1);
 		RationalMatrix les = new RationalMatrix(BigInteger.valueOf(1), intLes);
@@ -577,16 +588,17 @@ public class QuadraticMatrix {
 			les.addColumnToMatrix(j, p);
 		}
 		les.addColumnToMatrix(n, b);
-		les.mIntMatrix.mEntries[n][n] = BigInteger.valueOf(1);
+		les.getIntMatrix().mEntries[n][n] = BigInteger.valueOf(1);
 		return les;
 	}
 	
 	/**
+	 * Usual matrix vector multiplication where matrix entries are BigInteger, vector is Rational.
 	 * @param matrix
 	 * @param vector
 	 * @return
 	 */
-	private static Rational[] matrixVectorMultiplication(QuadraticMatrix matrix, Rational[] vector) {
+	public static Rational[] matrixVectorMultiplication(QuadraticMatrix matrix, Rational[] vector) {
 		if (matrix.mDimension != vector.length) {
 			throw new AssertionError("Matrix dimension is not vector length.");
 		}
@@ -608,6 +620,7 @@ public class QuadraticMatrix {
 	 * systems ((matrix - lambda*identity)^s)*p = 0 and checking that ((matrix - lambda*identity)^s-1)*p != 0. Linear
 	 * independence of two generalized eigenvectors for the same block size is guaranteed by adding the other
 	 * generalized eigenvectors to the linear equation system (scalar product 0 implies linear independence).
+	 * This method also works for integral eigenvalues not equal to -1,0 or 1.
 	 * @param matrix
 	 * @param jordanMatrix
 	 * @return modal matrix
@@ -646,7 +659,7 @@ public class QuadraticMatrix {
 					}
 					RationalMatrix lesMatrix = les(power(eigenvalueMatrix, blockSize), zeroVector);
 					ArrayList<Integer> constrainingColumns = columnOrder.get(blockSize);
-					int numberOfConstraints = constrainingColumns.size();
+					final int numberOfConstraints = constrainingColumns.size();
 					ArrayList<Integer> freeChoice = new ArrayList<Integer>();
 					for (int c=1; c<=n; c++) {
 						freeChoice.add(c);
@@ -655,8 +668,8 @@ public class QuadraticMatrix {
 						Rational[][] constraints = new Rational[numberOfConstraints+numberOfBlocks-1][n];
 						for (int i=0; i<numberOfConstraints; i++) {
 							for (int j=0; j<n; j++) {
-								constraints[i][j] = Rational.valueOf(modalMatrix.mIntMatrix.mEntries[j]
-										[constrainingColumns.get(i)], modalMatrix.mDenominator);
+								constraints[i][j] = Rational.valueOf(modalMatrix.getIntMatrix().mEntries[j]
+										[constrainingColumns.get(i)], modalMatrix.getDenominator());
 							}
 						}
 						for (int i=numberOfConstraints; i<numberOfConstraints+numberOfBlocks-1; i++) {
@@ -703,5 +716,17 @@ public class QuadraticMatrix {
 			}
 		}
 		return modalMatrix;
+	}
+	
+	public int getDimension() {
+		return mDimension;
+	}
+	
+	public BigInteger getEntry(int i, int j) {
+		return mEntries[i][j];
+	}
+	
+	public void setEntry(int i, int j, BigInteger value) {
+		mEntries[i][j] = value;
 	}
 }
