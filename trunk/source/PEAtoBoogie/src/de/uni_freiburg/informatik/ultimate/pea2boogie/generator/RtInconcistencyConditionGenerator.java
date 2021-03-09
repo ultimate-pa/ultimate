@@ -299,7 +299,15 @@ public class RtInconcistencyConditionGenerator {
 				final PhaseEventAutomata pea = automata[i];
 				mLogger.info(pea.getName() + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(pea));
 			}
+			if (automata.length < 4) {
+				final Optional<PhaseEventAutomata> prod = Arrays.stream(automata).reduce((a, b) -> a.parallel(b));
+				if (prod.isPresent()) {
+					mLogger.info(
+							"PRODUCT" + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(prod.get()));
+				}
+			}
 			mLogger.info("### Finished printing DOT ###");
+
 		}
 
 		// create a list of (p_1,...,p_n)
