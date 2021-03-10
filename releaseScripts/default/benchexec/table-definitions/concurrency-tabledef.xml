@@ -27,9 +27,9 @@
     <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
 
     <!-- BasicCegarLoop-specific columns -->
-    <column hidden="true" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)s AutomataMinimizationTime</column>
-    <column hidden="true" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)s</column>
-    <column hidden="true" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)s</column>
+    <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
+    <column hidden="true" sourceUnit="ms" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
   </result>
 
   <!-- results for Petri Automizer -->
@@ -49,13 +49,13 @@
     <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
 
     <!-- BasicCegarLoop-specific columns -->
-    <column hidden="true" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)s AutomataMinimizationTime</column>
-    <column hidden="true" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)s</column>
-    <column hidden="true" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)s</column>
+    <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
+    <column hidden="true" sourceUnit="ms" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
 
     <!-- LBE-specific columns -->
     <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
-    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
   </result>
 
   <!-- results for Petri Automizer with Petri net LBE -->
@@ -72,7 +72,7 @@
 
     <!-- LBE-specific columns -->
     <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
-    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
   </result>
 
   <!-- results for Automizer with one-shot Sleep Set POR, using Delay Set variant -->
@@ -88,13 +88,13 @@
     <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
 
     <!-- BasicCegarLoop-specific columns -->
-    <column hidden="true" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)s AutomataMinimizationTime</column>
-    <column hidden="true" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)s</column>
-    <column hidden="true" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)s</column>
+    <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
+    <column hidden="true" sourceUnit="ms" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
 
     <!-- POR-specific columns -->
-    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time">PartialOrderReductionTime: (\d+(\.\d+)?)s</column>
-    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time">CachedIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">CachedIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
   </result>
 
   <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant -->
@@ -110,8 +110,8 @@
     <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
 
     <!-- POR-specific columns -->
-    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time">PartialOrderReductionTime: (\d+(\.\d+)?)s</column>
-    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
     <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]*positive conditional: (\d+),</column>
   </result>
 
@@ -128,8 +128,8 @@
     <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
 
     <!-- POR-specific columns -->
-    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time">PartialOrderReductionTime: (\d+(\.\d+)?)s</column>
-    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
     <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]*positive conditional: (\d+),</column>
   </result>
 
@@ -146,12 +146,12 @@
     <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
 
     <!-- POR-specific columns -->
-    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time">PartialOrderReductionTime: (\d+(\.\d+)?)s</column>
-    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
     <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]*positive conditional: (\d+),</column>
 
     <!-- LBE-specific columns -->
     <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
-    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
   </result>
 </table>
