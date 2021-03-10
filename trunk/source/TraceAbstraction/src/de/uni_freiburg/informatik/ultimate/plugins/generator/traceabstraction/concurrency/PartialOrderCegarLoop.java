@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
@@ -187,13 +188,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		switchToOnDemandConstructionMode();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
 		try {
 			switch (mPartialOrderMode) {
 			case SLEEP_DELAY_SET:
-				new SleepSetDelayReduction<>(abstraction, mIndependenceRelation, mSleepSetOrder, mVisitor);
+				new SleepSetDelayReduction<>(automataServices, abstraction, mIndependenceRelation, mSleepSetOrder,
+						mVisitor);
 				break;
 			case SLEEP_NEW_STATES:
-				new SleepSetNewStateReduction<>(abstraction, mIndependenceRelation, mSleepSetOrder,
+				new SleepSetNewStateReduction<>(automataServices, abstraction, mIndependenceRelation, mSleepSetOrder,
 						mSleepSetStateFactory, mVisitor);
 				break;
 			default:

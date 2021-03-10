@@ -435,7 +435,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
-			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input)
+			throws AutomataOperationCanceledException {
 		if (mode == PartialOrderMode.NONE) {
 			return input;
 		}
@@ -448,19 +449,20 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				new ConstantSleepSetOrder<>(input.getVpAlphabet().getInternalAlphabet());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
 		final SleepSetVisitorAutomaton<L, IPredicate> automatonConstructor;
 		switch (mode) {
 		case SLEEP_DELAY_SET:
-			automatonConstructor = new SleepSetVisitorAutomaton<>(input, new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement);
-			new SleepSetDelayReduction<>(input, indep, order, automatonConstructor);
+			automatonConstructor = new SleepSetVisitorAutomaton<>(input, automataServices, mStateFactoryForRefinement);
+			new SleepSetDelayReduction<>(automataServices, input, indep, order, automatonConstructor);
 			break;
 		case SLEEP_NEW_STATES:
 			automatonConstructor =
 					new SleepSetVisitorAutomaton<>(x -> input.isInitial(mSleepSetStateFactory.getOriginalState(x)),
 							x -> input.isFinal(mSleepSetStateFactory.getOriginalState(x)), input.getVpAlphabet(),
-							new AutomataLibraryServices(mServices), mStateFactoryForRefinement);
-			new SleepSetNewStateReduction<>(input, indep, order, mSleepSetStateFactory, automatonConstructor);
+							automataServices, mStateFactoryForRefinement);
+			new SleepSetNewStateReduction<>(automataServices, input, indep, order, mSleepSetStateFactory,
+					automatonConstructor);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);

@@ -38,6 +38,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -68,6 +70,8 @@ public class SleepSetDelayReduction<L, S> {
 	/**
 	 * Constructor for POR with Sleep Sets and Delay Set
 	 *
+	 * @param services
+	 *            automata library services used e.g. for timeout
 	 * @param operand
 	 *            deterministic finite automaton
 	 * @param independenceRelation
@@ -80,10 +84,13 @@ public class SleepSetDelayReduction<L, S> {
 	 *            state factory
 	 * @param visitor
 	 *            the visitor class used for the reduction
+	 * @throws AutomataOperationCanceledException
+	 *             thrown if the reduction times out
 	 */
-	public SleepSetDelayReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+	public SleepSetDelayReduction(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
-			final IPartialOrderVisitor<L, S> visitor) {
+			final IPartialOrderVisitor<L, S> visitor) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
 		mOrder = sleepSetOrder;
@@ -95,7 +102,7 @@ public class SleepSetDelayReduction<L, S> {
 		mSleepSetMap.put(startState, new HashSet<>());
 		mStateStack.push(startState);
 		mVisitor.addStartState(startState);
-		search();
+		search(services);
 	}
 
 	private static <E> E getOneAndOnly(final Iterable<E> elements, final String thing) {
@@ -116,8 +123,11 @@ public class SleepSetDelayReduction<L, S> {
 		return elem;
 	}
 
-	private void search() {
+	private void search(final AutomataLibraryServices services) throws AutomataOperationCanceledException {
 		while (!mVisitor.isFinished() && !mStateStack.isEmpty()) {
+			if (!services.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 
 			final S currentState = mStateStack.peek();
 			Set<L> currentSleepSet = mSleepSetMap.get(currentState);

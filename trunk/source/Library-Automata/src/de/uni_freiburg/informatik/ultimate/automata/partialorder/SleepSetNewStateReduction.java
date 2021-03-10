@@ -38,6 +38,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -71,6 +73,8 @@ public class SleepSetNewStateReduction<L, S, R> {
 	/**
 	 * Constructor of the Sleep Set Reduction with new states.
 	 *
+	 * @param services
+	 *            automata library services used e.g. for timeout
 	 * @param operand
 	 *            deterministic finite automaton
 	 * @param independenceRelation
@@ -81,10 +85,14 @@ public class SleepSetNewStateReduction<L, S, R> {
 	 *            state factory
 	 * @param visitor
 	 *            the visitor class used for the reduction
+	 * @throws AutomataOperationCanceledException
+	 *             thrown if the reduction times out
 	 */
-	public SleepSetNewStateReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+	public SleepSetNewStateReduction(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
-			final ISleepSetStateFactory<L, S, R> stateFactory, final IPartialOrderVisitor<L, R> visitor) {
+			final ISleepSetStateFactory<L, S, R> stateFactory, final IPartialOrderVisitor<L, R> visitor)
+			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
 		mStateFactory = stateFactory;
@@ -97,7 +105,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 		final R newStartState = getSleepSetState(startState, Collections.emptySet());
 		mVisitor.addStartState(newStartState);
 		mStateStack.push(newStartState);
-		search();
+		search(services);
 	}
 
 	// TODO eliminate duplication
@@ -120,8 +128,11 @@ public class SleepSetNewStateReduction<L, S, R> {
 		return elem;
 	}
 
-	private void search() {
+	private void search(final AutomataLibraryServices services) throws AutomataOperationCanceledException {
 		while (!mVisitor.isFinished() && !mStateStack.isEmpty()) {
+			if (!services.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 
 			final R currentSleepSetState = mStateStack.peek();
 			final ArrayList<L> successorTransitionList = new ArrayList<>();
