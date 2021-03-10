@@ -485,6 +485,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		if (mUseHeuristicEmptinessCheck) {
 			mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction,
 					IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod, mAStarRandomHeuristicSeed)).getNestedRun();
@@ -494,6 +495,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			mCounterexample =
 					new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
 		}
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 
 		if (mCounterexample == null) {
 			return true;
