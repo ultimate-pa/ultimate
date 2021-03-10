@@ -718,6 +718,32 @@ public class QuadraticMatrix {
 		return modalMatrix;
 	}
 	
+	/**
+	 * Check if Jordan decomposition was computed correctly, check
+	 * matrix = modalMatrix * jordanMatrix * inverseModalMatrix.
+	 * @param matrix
+	 * @param modalMatrix
+	 * @param jordanMatrix
+	 * @param inverseModalMatrix
+	 */
+	public static void checkCorrectnessofJordanDecomposition(final QuadraticMatrix matrix,
+			final RationalMatrix modalMatrix, final QuadraticMatrix jordanMatrix,
+			final RationalMatrix inverseModalMatrix) {
+		final QuadraticMatrix decomposition = QuadraticMatrix.multiplication(QuadraticMatrix.multiplication(
+				modalMatrix.getIntMatrix(), jordanMatrix), inverseModalMatrix.getIntMatrix());
+		if (matrix.getDimension() != decomposition.getDimension()) {
+			throw new AssertionError("Mistake in Jordan decomposition!");
+		}
+		final BigInteger denominator = modalMatrix.getDenominator().multiply(inverseModalMatrix.getDenominator());
+		for (int i=0; i<matrix.getDimension(); i++) {
+			for (int j=0; j<matrix.getDimension(); j++) {
+				if (matrix.getEntry(i,j).intValue() != decomposition.getEntry(i,j).divide(denominator).intValue()) {
+					throw new AssertionError("Mistake in Jordan decomposition.");
+				}
+			}
+		}
+	}
+	
 	public int getDimension() {
 		return mDimension;
 	}

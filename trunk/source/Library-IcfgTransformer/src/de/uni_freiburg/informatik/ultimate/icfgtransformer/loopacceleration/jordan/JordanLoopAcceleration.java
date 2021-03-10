@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
@@ -109,46 +110,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			throw new AssertionError("Non-deterministically assigned variable found.");
 		}
 		
-		// HashMap to get matrix index from TermVariable.
-		final HashMap<TermVariable, Integer> varMatrixIndex = determineMatrixIndices(su);
-		final int n = varMatrixIndex.size() + 1;
-		
-		// Initialize update matrix with identity matrix (every variable assigned to itself).
-		final QuadraticMatrix updateMatrix = QuadraticMatrix.identityMatrix(n);
-		
-		// Fill update matrix.
-		for (final Entry<IProgramVar, Term> update : su.getUpdatedVars().entrySet()) {
-			final IPolynomialTerm polyRhs =
-			(IPolynomialTerm) new PolynomialTermTransformer(mMgdScript.getScript()).transform(update.getValue());
-			
-			fillMatrixRow(updateMatrix, varMatrixIndex, polyRhs, update.getKey());
-		}
-		
-		// Compute Jordan decomposition.
-		final QuadraticMatrix jordanUpdate = updateMatrix.jordanMatrix();
-		final RationalMatrix modalUpdate = QuadraticMatrix.modalMatrix(updateMatrix, jordanUpdate);
-		final RationalMatrix inverseModalUpdate = RationalMatrix.inverse(modalUpdate);
-		
-		// Check that Jordan decomposition is correct: A = PJP^-1.
-		checkCorrectnessofJordanDecomposition(updateMatrix, modalUpdate, jordanUpdate, inverseModalUpdate);
-		
-		// TODO: is that right to use this Script?
-		Script script = mMgdScript.getScript();
-		// Use the sort of the first TermVariable (Int).
-		// TODO: find better way for getting sort.
-		Sort sort = ((TermVariable) (varMatrixIndex.keySet().toArray()[0])).getSort();
-		TermVariable it = mMgdScript.variable("it", sort);
-		// Compute matrix that represents closed form.
-		final TermMatrix jordanUpdatePowerNEven = TermMatrix.jordanToJordanPower(updateMatrix, script, it, jordanUpdate, true);
-		final TermMatrix jordanUpdatePowerNOdd = TermMatrix.jordanToJordanPower(updateMatrix, script, it, jordanUpdate, false);
-		final TermMatrix tmpEven = TermMatrix.multiplication(script, TermMatrix.rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePowerNEven);
-		final TermMatrix tmpOdd = TermMatrix.multiplication(script, TermMatrix.rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePowerNOdd);
-		final TermMatrix closedFormEvenMatrix = TermMatrix.multiplication(script, tmpEven, TermMatrix.rationalMatrix2TermMatrix(script, inverseModalUpdate));
-		final TermMatrix closedFormOddMatrix = TermMatrix.multiplication(script, tmpOdd, TermMatrix.rationalMatrix2TermMatrix(script, inverseModalUpdate));
-		
-		// Compute closed form.
-		HashMap<TermVariable, Term> closedFormEven = closedForm(script, closedFormEvenMatrix, varMatrixIndex);
-		HashMap<TermVariable, Term> closedFormOdd = closedForm(script, closedFormOddMatrix, varMatrixIndex);
+		final HashMap<TermVariable, Term> closedFormEven = closedForm(mMgdScript, su, true);
+		final HashMap<TermVariable, Term> closedFormOdd = closedForm(mMgdScript, su, false);
 		
 		// TODO: Closed form to formula.
 	}
@@ -238,23 +201,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		return constant.numerator();
 	}
 	
-	private static void checkCorrectnessofJordanDecomposition(final QuadraticMatrix matrix,
-			final RationalMatrix modalMatrix, final QuadraticMatrix jordanMatrix,
-			final RationalMatrix inverseModalMatrix) {
-		final QuadraticMatrix decomposition = QuadraticMatrix.multiplication(QuadraticMatrix.multiplication(
-				modalMatrix.getIntMatrix(), jordanMatrix), inverseModalMatrix.getIntMatrix());
-		if (matrix.getDimension() != decomposition.getDimension()) {
-			throw new AssertionError("Mistake in Jordan decomposition!");
-		}
-		final BigInteger denominator = modalMatrix.getDenominator().multiply(inverseModalMatrix.getDenominator());
-		for (int i=0; i<matrix.getDimension(); i++) {
-			for (int j=0; j<matrix.getDimension(); j++) {
-				if (matrix.getEntry(i,j).intValue() != decomposition.getEntry(i,j).divide(denominator).intValue()) {
-					throw new AssertionError("Mistake in Jordan decomposition.");
-				}
-			}
-		}
-	}
+	
 	/**
 	 * Computes the closed form, a hashmap mapping a variable to the corresponding closed form term, out of the closed
 	 * form matrix.
@@ -264,8 +211,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @param nEven
 	 * @return hashmap representing closed form.
 	 */
-	private static HashMap<TermVariable, Term> closedForm(final Script script, final TermMatrix closedFormMatrix,
-			final HashMap<TermVariable, Integer> varMatrixIndex) {
+	private static HashMap<TermVariable, Term> matrix2ClosedForm(final Script script, final PolynomialTermMatrix
+			closedFormMatrix, final HashMap<TermVariable, Integer> varMatrixIndex) {
 		// Array to get TermVariable from matrix index.
 		final TermVariable[] updatedVars = new TermVariable[varMatrixIndex.size()];
 		for (TermVariable var : varMatrixIndex.keySet()) {
@@ -279,38 +226,38 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			int current = 0;
 			for (int j=0; j<n-1; j++) {
 				// Ignore if matrix entry is 0.
-				if (TermMatrix.isConstant(closedFormMatrix.getEntry(varIndex,j))) {
-					Rational entryRational = TermMatrix.getRationalValue(script,closedFormMatrix.getEntry(varIndex,j));
+				if (closedFormMatrix.getEntry(varIndex,j).isConstant()) {
+					Rational entryRational = closedFormMatrix.getEntry(varIndex,j).getConstant();
 					if (entryRational.numerator().intValue() == 0) {
 						continue;
 					}
 				}
 				// If matrix entry is 1, only add variable.
-				if (TermMatrix.isConstant(closedFormMatrix.getEntry(varIndex,j))) {
-					Rational entryRational = TermMatrix.getRationalValue(script,closedFormMatrix.getEntry(varIndex,j));
+				if (closedFormMatrix.getEntry(varIndex,j).isConstant()) {
+					Rational entryRational = closedFormMatrix.getEntry(varIndex,j).getConstant();
 					if (entryRational.numerator().intValue() == 1 && entryRational.denominator().intValue() == 1) {
 						summands[current] = updatedVars[j];
 					} else {
-					summands[current] = script.term("*", closedFormMatrix.getEntry(varIndex,j), updatedVars[j]);
+						summands[current] = script.term("*", closedFormMatrix.getEntry(varIndex,j).toTerm(script),
+								updatedVars[j]);
 					}
 				} else {
-					summands[current] = script.term("*", closedFormMatrix.getEntry(varIndex,j), updatedVars[j]);
+					summands[current] = script.term("*", closedFormMatrix.getEntry(varIndex,j).toTerm(script),
+							updatedVars[j]);
 				}
 				current = current + 1;
 			}
 			// Add constant term if it is not zero.
-			if (TermMatrix.isConstant(closedFormMatrix.getEntry(varIndex, n-1))) {
-				Rational entryRational = TermMatrix.getRationalValue(script,closedFormMatrix.getEntry(varIndex, n-1));
+			if (closedFormMatrix.getEntry(varIndex,n-1).isConstant()) {
+				Rational entryRational = closedFormMatrix.getEntry(varIndex,n-1).getConstant();
 				if (entryRational.numerator().intValue() != 0) {
-					summands[current] = closedFormMatrix.getEntry(varIndex, n-1);
+					summands[current] = closedFormMatrix.getEntry(varIndex, n-1).toTerm(script);
 					current = current + 1;
 				}
 			} else {
-				summands[current] = closedFormMatrix.getEntry(varIndex, n-1);
+				summands[current] = closedFormMatrix.getEntry(varIndex, n-1).toTerm(script);
 				current = current + 1;
 			}
-			// summands[current] = closedFormMatrix.getEntry(varIndex, n-1);
-			// current = current + 1;
 			Term sum = script.numeral(BigInteger.ZERO);
 			if (current == 0) {
 				sum = script.numeral(BigInteger.ZERO);
@@ -322,6 +269,55 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			closedForm.put(var, sum);
 		}
 		return closedForm;
+	}
+	
+	/**
+	 * Compute the closed form given the update.
+	 * @param mgdScript
+	 * @param su
+	 * @param nEven
+	 * @return
+	 */
+	private static HashMap<TermVariable,Term> closedForm(ManagedScript mgdScript, SimultaneousUpdate su,
+			boolean nEven) {
+		// HashMap to get matrix index from TermVariable.
+		final HashMap<TermVariable, Integer> varMatrixIndex = determineMatrixIndices(su);
+		final int n = varMatrixIndex.size() + 1;
+				
+		// Initialize update matrix with identity matrix (every variable assigned to itself).
+		final QuadraticMatrix updateMatrix = QuadraticMatrix.identityMatrix(n);
+				
+		// Fill update matrix.
+		for (final Entry<IProgramVar, Term> update : su.getUpdatedVars().entrySet()) {
+			final IPolynomialTerm polyRhs =
+			(IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript()).transform(update.getValue());
+					
+			fillMatrixRow(updateMatrix, varMatrixIndex, polyRhs, update.getKey());
+		}
+				
+		// Compute Jordan decomposition.
+		final QuadraticMatrix jordanUpdate = updateMatrix.jordanMatrix();
+		final RationalMatrix modalUpdate = QuadraticMatrix.modalMatrix(updateMatrix, jordanUpdate);
+		final RationalMatrix inverseModalUpdate = RationalMatrix.inverse(modalUpdate);
+		QuadraticMatrix.checkCorrectnessofJordanDecomposition(updateMatrix, modalUpdate, jordanUpdate,
+				inverseModalUpdate);
+				
+		Script script = mgdScript.getScript();
+		Sort sort = SmtSortUtils.getIntSort(script);
+		TermVariable itHalf = mgdScript.variable("itHalf", sort);
+				
+		// Compute matrix that represents closed form.
+		if (nEven) {
+			final PolynomialTermMatrix closedFormEvenMatrix = PolynomialTermMatrix.closedFormMatrix(mgdScript,
+					updateMatrix, modalUpdate, jordanUpdate, inverseModalUpdate, itHalf, true);
+			HashMap<TermVariable, Term> closedFormEven = matrix2ClosedForm(script, closedFormEvenMatrix, varMatrixIndex);
+			return closedFormEven;
+		} else {
+			final PolynomialTermMatrix closedFormOddMatrix = PolynomialTermMatrix.closedFormMatrix(mgdScript,
+				updateMatrix, modalUpdate, jordanUpdate, inverseModalUpdate, itHalf, false);
+			HashMap<TermVariable, Term> closedFormOdd = matrix2ClosedForm(script, closedFormOddMatrix, varMatrixIndex);
+			return closedFormOdd;
+		}
 	}
 
 	@Override
