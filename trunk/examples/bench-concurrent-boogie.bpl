@@ -1,0 +1,3 @@
+concurrent/bpl/*.bpl
+concurrent/bpl/regression/*.bpl
+concurrent/bpl/regression/showcase/*.bpl
