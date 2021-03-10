@@ -28,23 +28,31 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+
 /**
- * An independence relation that represents the union of several independence
- * relations. This can in particular be used to combine an efficient but
- * incomplete check with a more computation-intensive check.
- * 
+ * An independence relation that represents the union of several independence relations. This can in particular be used
+ * to combine an efficient but incomplete check with a more computation-intensive complete check.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <STATE>
+ *            The type of conditions (or "states") the relation depends on (if any of the underlying relations does)
+ * @param <L>
+ *            The type of letters whose independence is being tracked
  */
 public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelation<STATE, L> {
 
 	private final Collection<IIndependenceRelation<STATE, L>> mRelations;
 	private final boolean mSymmetric;
 	private final boolean mConditional;
+	private final IndependenceStatisticsDataProvider mStatistics;
 
 	public UnionIndependenceRelation(final Collection<IIndependenceRelation<STATE, L>> relations) {
 		mRelations = relations;
 		mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
 		mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
+		mStatistics = new IndependenceStatisticsDataProvider(UnionIndependenceRelation.class, mRelations);
 	}
 
 	@Override
@@ -59,6 +67,13 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 
 	@Override
 	public boolean contains(final STATE state, final L a, final L b) {
-		return mRelations.stream().anyMatch(r -> r.contains(state, a, b));
+		final boolean result = mRelations.stream().anyMatch(r -> r.contains(state, a, b));
+		mStatistics.reportQuery(result, state != null);
+		return result;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 }

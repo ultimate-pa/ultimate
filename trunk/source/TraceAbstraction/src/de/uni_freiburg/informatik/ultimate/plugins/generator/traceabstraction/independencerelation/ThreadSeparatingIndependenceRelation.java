@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -29,54 +29,73 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
- * A simple and efficient syntax-based independence relation. Two actions are independent if all variable accessed by
- * both of them are only read, not written to.
+ * A wrapper independence relation that forwards queries to an underlying relation, unless the two actions are from the
+ * same thread. If they are, then this relation considers them to be dependent.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
- * @param <STATE>
- *            This relation is non-conditional, so this parameter is not used.
+ * @param <S>
+ *            The type of conditions (relevant only for the underlying relation)
  * @param <L>
- *            The type of letters whose independence is tracked
+ *            The type of letters whose independence is tracked.
  */
-public class SyntacticIndependenceRelation<STATE, L extends IAction> implements IIndependenceRelation<STATE, L> {
-	private final IndependenceStatisticsDataProvider mStatistics =
-			new IndependenceStatisticsDataProvider(SyntacticIndependenceRelation.class);
+public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implements IIndependenceRelation<S, L> {
+
+	private final IIndependenceRelation<S, L> mUnderlying;
+	private final SeparatingStatistics mStatistics;
+
+	public ThreadSeparatingIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
+		mUnderlying = underlying;
+		mStatistics = new SeparatingStatistics();
+	}
 
 	@Override
 	public boolean isSymmetric() {
-		return true;
+		return mUnderlying.isSymmetric();
 	}
 
 	@Override
 	public boolean isConditional() {
-		return false;
+		return mUnderlying.isConditional();
 	}
 
 	@Override
-	public boolean contains(final STATE state, final L a, final L b) {
-		final TransFormula tf1 = a.getTransformula();
-		final TransFormula tf2 = b.getTransformula();
-
-		final boolean noWWConflict =
-				DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
-		final boolean noWRConflict =
-				DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getInVars().keySet());
-		final boolean noRWConflict =
-				DataStructureUtils.haveEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars());
-
-		final boolean result = noWWConflict && noWRConflict && noRWConflict;
-		mStatistics.reportQuery(result, false);
+	public boolean contains(final S state, final L a, final L b) {
+		if (fromSameThread(a, b)) {
+			mStatistics.reportSameThreadQuery(state != null);
+			return false;
+		}
+		final boolean result = mUnderlying.contains(state, a, b);
+		mStatistics.reportQuery(result, state != null);
 		return result;
+	}
+
+	private boolean fromSameThread(final L a, final L b) {
+		return a.getPrecedingProcedure() == b.getPrecedingProcedure();
 	}
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
+	}
+
+	private class SeparatingStatistics extends IndependenceStatisticsDataProvider {
+		public static final String SAME_THREAD_QUERIES = "Independence queries for same thread";
+
+		private int mSameThreadQueries;
+
+		public SeparatingStatistics() {
+			super(ThreadSeparatingIndependenceRelation.class, mUnderlying);
+			declare(SAME_THREAD_QUERIES, () -> mSameThreadQueries, KeyType.COUNTER);
+		}
+
+		private void reportSameThreadQuery(final boolean conditional) {
+			mSameThreadQueries++;
+			reportNegativeQuery(conditional);
+		}
 	}
 }
