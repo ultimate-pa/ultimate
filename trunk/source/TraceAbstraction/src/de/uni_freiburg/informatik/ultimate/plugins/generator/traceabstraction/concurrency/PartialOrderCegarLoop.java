@@ -185,22 +185,25 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		switchToOnDemandConstructionMode();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		switch (mPartialOrderMode) {
-		case SLEEP_DELAY_SET:
-			new SleepSetDelayReduction<>(abstraction, mIndependenceRelation, mSleepSetOrder, mVisitor);
-			break;
-		case SLEEP_NEW_STATES:
-			new SleepSetNewStateReduction<>(abstraction, mIndependenceRelation, mSleepSetOrder, mSleepSetStateFactory,
-					mVisitor);
-			break;
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);
-		}
-		mCounterexample = mVisitor.constructRun();
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		switchToReadonlyMode();
+		try {
+			switch (mPartialOrderMode) {
+			case SLEEP_DELAY_SET:
+				new SleepSetDelayReduction<>(abstraction, mIndependenceRelation, mSleepSetOrder, mVisitor);
+				break;
+			case SLEEP_NEW_STATES:
+				new SleepSetNewStateReduction<>(abstraction, mIndependenceRelation, mSleepSetOrder,
+						mSleepSetStateFactory, mVisitor);
+				break;
+			default:
+				throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);
+			}
+			mCounterexample = mVisitor.constructRun();
+			switchToReadonlyMode();
 
-		return mCounterexample == null;
+			return mCounterexample == null;
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+		}
 	}
 
 	@Override
