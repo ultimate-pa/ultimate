@@ -53,6 +53,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
 	private int mTraceHistogramMaximum = 0;
+	private int mInterpolantAutomatonStates = 0;
 
 	@Override
 	public Collection<String> getKeys() {
@@ -120,6 +121,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		}
 	}
 
+	public void reportInterpolantAutomatonStates(final int count) {
+		mInterpolantAutomatonStates += count;
+	}
+
 	@Override
 	public Object getValue(final String key) {
 		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
@@ -160,6 +165,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mTraceHistogramMaximum;
 		case BiggestAbstraction:
 			return mBiggestAbstraction;
+		case InterpolantAutomatonStates:
+			return mInterpolantAutomatonStates;
 		case InterpolantCoveringCapability:
 			return mBCI;
 		case AutomataMinimizationStatistics:

@@ -8,7 +8,7 @@
 
   <!-- Trace Abstraction-specific columns -->
   <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
-  <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
+  <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
   <!-- ======= -->
   <!-- RESULTS -->
@@ -24,7 +24,7 @@
 
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
-    <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
     <!-- BasicCegarLoop-specific columns -->
     <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
@@ -46,7 +46,7 @@
 
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
-    <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
     <!-- BasicCegarLoop-specific columns -->
     <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
@@ -68,7 +68,7 @@
 
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
-    <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
     <!-- LBE-specific columns -->
     <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
@@ -85,7 +85,7 @@
 
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
-    <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
     <!-- BasicCegarLoop-specific columns -->
     <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
@@ -107,7 +107,7 @@
 
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
-    <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
     <!-- POR-specific columns -->
     <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
@@ -125,7 +125,7 @@
 
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
-    <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
     <!-- POR-specific columns -->
     <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
@@ -143,7 +143,7 @@
 
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
-    <column title="proofSize"  displayTitle="# Interpolants">[^\d](\d+) ConstructedInterpolants</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
     <!-- POR-specific columns -->
     <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>

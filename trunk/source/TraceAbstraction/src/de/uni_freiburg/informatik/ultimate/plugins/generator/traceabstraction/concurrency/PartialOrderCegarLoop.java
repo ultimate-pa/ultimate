@@ -160,6 +160,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final AbstractInterpolantAutomaton<L> aia = (AbstractInterpolantAutomaton<L>) ia;
 			aia.switchToReadonlyMode();
 			mAbstractItpAutomata.add(aia);
+		} else {
+			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
 
 		// Automaton must be total and deterministic
@@ -208,6 +210,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	@Override
 	public void finish() {
+		for (final AbstractInterpolantAutomaton<L> ia : mAbstractItpAutomata) {
+			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
+		}
+
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(mIndependenceRelation.getStatistics());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
