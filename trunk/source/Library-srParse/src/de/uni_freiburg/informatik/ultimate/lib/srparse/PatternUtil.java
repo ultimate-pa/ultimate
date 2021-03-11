@@ -113,7 +113,7 @@ public final class PatternUtil {
 			// instantiate it again for real for every scope
 
 			final PatternType<?> dummyInstance =
-					ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null);
+					ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null, null);
 			final int cddCount = dummyInstance.getExpectedCddSize();
 			final int durationCount = dummyInstance.getExpectedDurationSize();
 
@@ -123,7 +123,7 @@ public final class PatternUtil {
 				final List<String> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
 				final PatternType<?> pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
-						"ID_" + String.valueOf(id), currentCdds, currentDurations);
+						"ID_" + String.valueOf(id), currentCdds, currentDurations, null);
 
 				if (withoutNotImplemented) {
 					try {

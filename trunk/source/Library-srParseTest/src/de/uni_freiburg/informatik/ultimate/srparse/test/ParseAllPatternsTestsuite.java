@@ -80,8 +80,14 @@ public class ParseAllPatternsTestsuite {
 
 	@Parameters(name = "{1}")
 	public static Collection<Object[]> data() {
-		return PatternUtil.createAllPatterns(false).getFirst().stream()
-				.map(a -> new Object[] { a, a.getClass().getSimpleName() }).collect(Collectors.toList());
+		return PatternUtil.createAllPatterns(false).getFirst().stream().map(ParseAllPatternsTestsuite::toData)
+				.collect(Collectors.toList());
+	}
+
+	public static Object[] toData(final PatternType<?> pattern) {
+		final String name = String.format("%s_%s", pattern.getClass().getSimpleName(),
+				pattern.getScope().getClass().getSimpleName());
+		return new Object[] { pattern, name };
 	}
 
 }
