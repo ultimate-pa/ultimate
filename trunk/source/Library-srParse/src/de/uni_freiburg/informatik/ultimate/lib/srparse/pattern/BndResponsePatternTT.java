@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at least
@@ -45,14 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class BndResponsePatternTT extends PatternType<BndResponsePatternTT> {
 
 	public BndResponsePatternTT(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndResponsePatternTT create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndResponsePatternTT(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -88,18 +83,13 @@ public class BndResponsePatternTT extends PatternType<BndResponsePatternTT> {
 		sb.append("it is always the case that if \"");
 		sb.append(getCdds().get(1).toBoogieString());
 		sb.append("\" holds for at least \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds afterwards for at least \"");
-		sb.append(getDuration().get(1));
+		sb.append(getDurations().get(1));
 		sb.append("\" time units");
 		return sb.toString();
-	}
-
-	@Override
-	public BndResponsePatternTT rename(final String newName) {
-		return new BndResponsePatternTT(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

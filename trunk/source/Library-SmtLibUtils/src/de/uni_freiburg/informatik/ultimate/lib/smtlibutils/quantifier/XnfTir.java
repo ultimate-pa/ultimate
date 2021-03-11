@@ -165,8 +165,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			throw new AssertionError("unknown quantifier");
 		}
 		assert !Arrays.asList(disjunction.getFreeVars()).contains(eliminatee) : "not eliminated";
-		final ExtendedSimplificationResult simp = SmtUtils.simplifyWithStatistics(mMgdScript, conjunction, null,
-					mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		final ExtendedSimplificationResult simp = SmtUtils.simplifyWithStatistics(mMgdScript, conjunction, mServices,
+				SimplificationTechnique.SIMPLIFY_DDA);
 		disjunction = simp.getSimplifiedTerm();
 
 		final List<Term> resultDisjunctions = Arrays.asList(QuantifierUtils.getCorrespondingFiniteJunction(quantifier, disjunction));

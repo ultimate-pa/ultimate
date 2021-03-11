@@ -219,6 +219,13 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		for (final Entry<String, Level> entry : toolLevels.entrySet()) {
 			rtr.put(getToolLoggerName(entry.getKey()), entry.getValue());
 		}
+
+		// settings for specific classes
+		final Map<String, Level> clazzLevels =
+				getSettingToolSpecificLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_CLAZZ_SPECIFIC);
+		for (final Entry<String, Level> entry : clazzLevels.entrySet()) {
+			rtr.put(getPluginLoggerName(entry.getKey()), entry.getValue());
+		}
 		return rtr;
 	}
 

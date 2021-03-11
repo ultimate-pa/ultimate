@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
@@ -93,6 +94,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_REPEATED_LIPTON = "Apply repeated Lipton Reduction";
 	private static final boolean DEF_REPEATED_LIPTON = false;
+
+	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
+	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
@@ -302,6 +306,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
 			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, this setting defines which partitioning strategy is used.";
 
+	public static final String LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE =
+			"Loop acceleration method that is used by accelerated interpolation";
+	public static final AcceleratedInterpolationLoopAccelerationTechnique DEF_LOOPACCELERATION_TECHNIQUE =
+			AcceleratedInterpolationLoopAccelerationTechnique.FAST_UPR;
+	public static final String DESC_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE = "Set the loop acceleration technique.";
+
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
 			"Assert CodeBlocks Term Scoring Heuristic number of partitions";
 	public static final Integer DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
@@ -445,6 +455,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Combo,
 						PetriNetLbe.values()),
 				new UltimatePreferenceItem<>(LABEL_REPEATED_LIPTON, DEF_REPEATED_LIPTON, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
+						PartialOrderMode.values()),
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,
@@ -482,6 +494,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						PreferenceType.Combo, ScoringMethod.values()),
+				new UltimatePreferenceItem<>(LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
+						DEF_LOOPACCELERATION_TECHNIQUE, PreferenceType.Combo,
+						AcceleratedInterpolationLoopAccelerationTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
 						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
@@ -741,5 +756,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum McrInterpolantMethod {
 		WP, SP
+	}
+
+	public enum AcceleratedInterpolationLoopAccelerationTechnique {
+		FAST_UPR, WERNER_OVERAPPROX
 	}
 }

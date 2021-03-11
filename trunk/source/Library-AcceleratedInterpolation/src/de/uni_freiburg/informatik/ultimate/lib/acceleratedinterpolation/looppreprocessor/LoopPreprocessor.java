@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
  * @param <LETTER>
  *            transition type
  */
-public class LoopPreprocessorFastUPR<L extends IIcfgTransition<?>>
+public class LoopPreprocessor<L extends IIcfgTransition<?>>
 		implements ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> {
 
 	private final ManagedScript mScript;
@@ -80,9 +80,8 @@ public class LoopPreprocessorFastUPR<L extends IIcfgTransition<?>>
 	 * @param script
 	 * @param predUnifier
 	 */
-	public LoopPreprocessorFastUPR(final ILogger logger, final ManagedScript script,
-			final IUltimateServiceProvider services, final IPredicateUnifier predUnifier,
-			final PredicateHelper<L> predHelper, final CfgSmtToolkit toolkit) {
+	public LoopPreprocessor(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
+			final IPredicateUnifier predUnifier, final PredicateHelper<L> predHelper, final CfgSmtToolkit toolkit) {
 		mLogger = logger;
 		mScript = script;
 		// mPredUnifier = predUnifier;

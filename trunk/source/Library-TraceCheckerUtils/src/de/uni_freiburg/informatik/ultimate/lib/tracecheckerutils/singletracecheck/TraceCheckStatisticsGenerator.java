@@ -108,9 +108,9 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 			if (isQuantified) {
 				mQuantifiedInterpolants++;
 			}
-			mSizeOfPredicates += computeLongSumOfIntArray(
-					PredicateUtils.computeDagSizeOfPredicates(interpolants, FormulaSize.TREESIZE));
 		}
+		mSizeOfPredicates +=
+				computeLongSumOfIntArray(PredicateUtils.computeDagSizeOfPredicates(interpolants, FormulaSize.TREESIZE));
 	}
 
 	private static long computeLongSumOfIntArray(final long[] arr) {

@@ -59,12 +59,12 @@ public class ReqParserResultUtil {
 	}
 
 	@SafeVarargs
-	public final <T extends PatternType> void mergedRequirements(final T... reqIds) {
+	public final <T extends PatternType<?>> void mergedRequirements(final T... reqIds) {
 		assert reqIds != null && reqIds.length > 1;
 		mergedRequirements(Arrays.asList(reqIds));
 	}
 
-	public void mergedRequirements(final Collection<? extends PatternType> reqIds) {
+	public void mergedRequirements(final Collection<? extends PatternType<?>> reqIds) {
 		assert reqIds != null && reqIds.size() > 1;
 		final String reqIdStr = reqIds.stream().map(a -> a.getId()).collect(Collectors.joining(", "));
 		final MergedRequirementsResult result = new MergedRequirementsResult(reqIdStr);

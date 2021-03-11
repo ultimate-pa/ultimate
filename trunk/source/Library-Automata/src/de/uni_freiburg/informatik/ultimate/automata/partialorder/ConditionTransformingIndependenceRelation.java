@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+
 /**
  * A wrapper independence relation that applies a transformation on the condition before proxying the call to an
  * underlying relation.
@@ -45,6 +47,7 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	private final IIndependenceRelation<T, L> mUnderlying;
 	private final Function<S, T> mTransformer;
 	private final boolean mConditional;
+	private final IndependenceStatisticsDataProvider mStatistics;
 
 	/**
 	 * Creates a new instance.
@@ -64,6 +67,8 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 		mUnderlying = underlying;
 		mTransformer = transformer;
 		mConditional = conditional;
+		mStatistics =
+				new IndependenceStatisticsDataProvider(ConditionTransformingIndependenceRelation.class, underlying);
 	}
 
 	@Override
@@ -79,7 +84,14 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	@Override
 	public boolean contains(final S state, final L a, final L b) {
 		final T condition = state == null ? null : mTransformer.apply(state);
-		return mUnderlying.contains(condition, a, b);
+		final boolean result = mUnderlying.contains(condition, a, b);
+		mStatistics.reportQuery(result, condition != null);
+		return result;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 
 	/**

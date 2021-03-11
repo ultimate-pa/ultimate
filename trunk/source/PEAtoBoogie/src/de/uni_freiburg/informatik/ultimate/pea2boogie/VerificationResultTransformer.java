@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
@@ -209,7 +210,7 @@ public class VerificationResultTransformer {
 			if (current == Rational.ZERO) {
 				currentStr = "INITIAL";
 			} else {
-				currentStr = "[" + last.toString() + ";" + current.toString() + "]";
+				currentStr = String.format("[%s;%s]", SmtUtils.toString(last), SmtUtils.toString(current));
 			}
 			sb.append(currentStr);
 			appendRepeatedly(sb, " ", maxLength - currentStr.length());

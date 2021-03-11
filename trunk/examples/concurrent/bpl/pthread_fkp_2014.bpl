@@ -21,13 +21,11 @@ modifies s, t;
 procedure ULTIMATE.start() returns()
 modifies s, t;
 {
-  var i : int;
   i := 0;
   s := 0;
   t := 0;
 
   while (*) {
-    fork i thread();
-	i := i + 1;
+    fork 0 thread();
   }
 }

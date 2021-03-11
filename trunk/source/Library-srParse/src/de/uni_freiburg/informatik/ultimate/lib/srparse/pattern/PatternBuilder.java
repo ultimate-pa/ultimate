@@ -32,9 +32,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {@link PatternBuilder} allows us to keep the state of the single patterns mostly immutable and the parser flexible.
@@ -72,14 +76,14 @@ public class PatternBuilder {
 
 		for (final Class<?> clazz : PATTERNS) {
 
-			final PatternTypeConstructor ptc = (a, b, c, d) -> {
+			final PatternTypeConstructor ptc = (a, b, c, d, e) -> {
 				try {
 					return (PatternType<?>) clazz
-							.getConstructor(SrParseScope.class, String.class, List.class, List.class)
-							.newInstance(a, b, c, d);
-				} catch (final Throwable e) {
-					e.printStackTrace();
-					throw new RuntimeException(e);
+							.getConstructor(SrParseScope.class, String.class, List.class, List.class, List.class)
+							.newInstance(a, b, c, d, e);
+				} catch (final Throwable ex) {
+					ex.printStackTrace();
+					throw new RuntimeException(ex);
 				}
 			};
 			CONSTRUCTORS.put((Class<? extends PatternType<?>>) clazz, ptc);
@@ -88,7 +92,8 @@ public class PatternBuilder {
 	}
 
 	private final List<CDD> mCDDs;
-	private final List<String> mDurations;
+	private final List<Rational> mDurations;
+	private final List<String> mDurationNames;
 	private String mId;
 	private Class<? extends PatternType<?>> mClazz;
 	private SrParseScope<?> mScope;
@@ -96,6 +101,7 @@ public class PatternBuilder {
 	public PatternBuilder() {
 		mCDDs = new ArrayList<>();
 		mDurations = new ArrayList<>();
+		mDurationNames = new ArrayList<>();
 	}
 
 	public PatternBuilder addCdd(final CDD... cdds) {
@@ -104,7 +110,22 @@ public class PatternBuilder {
 	}
 
 	public PatternBuilder addDuration(final String... durations) {
-		add(mDurations, durations);
+		if (durations != null && durations.length > 0) {
+			for (int i = 0; i < durations.length; ++i) {
+				final String duration = durations[i];
+				String name;
+				Rational rational;
+				try {
+					rational = SmtUtils.toRational(duration);
+					name = null;
+				} catch (final Exception ex) {
+					rational = null;
+					name = duration;
+				}
+				mDurations.add(rational);
+				mDurationNames.add(name);
+			}
+		}
 		return this;
 	}
 
@@ -131,7 +152,7 @@ public class PatternBuilder {
 		Arrays.stream(elems).forEachOrdered(col::add);
 	}
 
-	public PatternType<?> build() {
+	public PatternType<?> build(final Durations durations) {
 		if (mClazz == null) {
 			throw new IllegalStateException("Type of pattern not yet specified");
 		}
@@ -141,17 +162,37 @@ public class PatternBuilder {
 		if (mScope == null) {
 			throw new IllegalStateException("Scope of pattern not yet specified");
 		}
-		final PatternTypeConstructor constr = CONSTRUCTORS.get(mClazz);
-		if (constr == null) {
-			throw new UnsupportedOperationException("Unknown pattern type " + mClazz);
+		final PatternTypeConstructor constr = getConstructor(mClazz);
+		if (mDurationNames.stream().allMatch(Objects::isNull)) {
+			return constr.construct(mScope, mId, mCDDs, mDurations, null);
 		}
-		return constr.construct(mScope, mId, mCDDs, mDurations);
+
+		for (int i = 0; i < mDurations.size(); ++i) {
+			final Rational dur = mDurations.get(i);
+			if (dur == null) {
+				final String name = mDurationNames.get(i);
+				final Rational propagatedConst = durations.getConstantValue(name);
+				if (propagatedConst == null) {
+					return null;
+				}
+				mDurations.set(i, propagatedConst);
+			}
+		}
+		return constr.construct(mScope, mId, mCDDs, mDurations, mDurationNames);
+	}
+
+	public static PatternTypeConstructor getConstructor(final Class<? extends PatternType<?>> clazz) {
+		final PatternTypeConstructor constr = CONSTRUCTORS.get(clazz);
+		if (constr == null) {
+			throw new UnsupportedOperationException("Unknown pattern type " + clazz);
+		}
+		return constr;
 	}
 
 	@FunctionalInterface
-	private interface PatternTypeConstructor {
+	public interface PatternTypeConstructor {
 		PatternType<?> construct(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-				final List<String> durations);
+				final List<Rational> durations, final List<String> durationNames);
 	}
 
 }

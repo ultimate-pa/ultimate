@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -428,6 +427,6 @@ public class QuantifierUtils {
 	public interface IQuantifierEliminator {
 		public Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 				final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-				final Set<TermVariable> bannedForDivCapture, final Term assumption, final Term inputTerm);
+				final Context context, final Term inputTerm);
 	}
 }

@@ -79,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
  * @author Elisabeth Schanno
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  */
 public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
@@ -89,12 +88,9 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
 	private final BoundedPetriNet<L, IPredicate> mResult;
 	private final BlockEncodingBacktranslator mBacktranslator;
-	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics =
-			new PetriNetLargeBlockEncodingStatisticsGenerator();
-	private final Map<ITransition<L, IPredicate>, ITransition<L, IPredicate>> mReplacedTransitions;
 
-	private IIndependenceRelation<IPredicate, L> mSemanticCheck;
-	private IIndependenceRelation<IPredicate, L> mVariableCheck;
+	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics;
+	private final Map<ITransition<L, IPredicate>, ITransition<L, IPredicate>> mReplacedTransitions;
 
 	/**
 	 * Performs Large Block Encoding on the given Petri net.
@@ -142,11 +138,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			lipton.performReduction();
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
-
-			mStatistics.extractStatistics((SemanticIndependenceRelation<L>) mSemanticCheck);
-			mStatistics.extractStatistics((SyntacticIndependenceRelation<?, L>) mVariableCheck);
-			mStatistics.extractStatistics(moverCheck);
-			mStatistics.addLiptonStatistics(lipton.getStatistics());
+			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
+					moverCheck.getStatistics());
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			aoce.addRunningTaskInfo(runningTaskInfo);
@@ -160,31 +153,32 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
 	private CachedIndependenceRelation<Set<IPredicate>, L> createIndependenceRelation(
 			final PetriNetLbe petriNetLbeSettings, final BasicPredicateFactory predicateFactory) {
+		final IIndependenceRelation<IPredicate, L> semanticCheck;
 		switch (petriNetLbeSettings) {
 		case OFF:
 			throw new IllegalArgumentException("do not call LBE if you don't want to use it");
 		case SEMANTIC_BASED_MOVER_CHECK:
 			mLogger.info("Petri net LBE is using semantic-based independence relation.");
-			mSemanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, false, false);
+			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, false, false);
 			break;
 		case SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES:
 			mLogger.info("Petri net LBE is using conditional semantic-based independence relation.");
-			mSemanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, true, false);
+			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, true, false);
 			break;
 		case VARIABLE_BASED_MOVER_CHECK:
 			mLogger.info("Petri net LBE is using variable-based independence relation.");
-			mSemanticCheck = null;
+			semanticCheck = null;
 			break;
 		default:
 			throw new AssertionError("unknown value " + petriNetLbeSettings);
 		}
 
-		mVariableCheck = new SyntacticIndependenceRelation<>();
+		final IIndependenceRelation<IPredicate, L> variableCheck = new SyntacticIndependenceRelation<>();
 		final IIndependenceRelation<IPredicate, L> unionCheck;
-		if (mSemanticCheck == null) {
-			unionCheck = mVariableCheck;
+		if (semanticCheck == null) {
+			unionCheck = variableCheck;
 		} else {
-			unionCheck = new UnionIndependenceRelation<>(Arrays.asList(mVariableCheck, mSemanticCheck));
+			unionCheck = new UnionIndependenceRelation<>(Arrays.asList(variableCheck, semanticCheck));
 		}
 
 		final IIndependenceRelation<Set<IPredicate>, L> multiConditionCheck;
@@ -253,7 +247,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return mBacktranslator;
 	}
 
-	public PetriNetLargeBlockEncodingBenchmarks getPetriNetLargeBlockEncodingStatistics() {
+	public PetriNetLargeBlockEncodingBenchmarks getStatistics() {
 		return new PetriNetLargeBlockEncodingBenchmarks(mStatistics);
 	}
 

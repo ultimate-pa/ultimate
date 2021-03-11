@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class DualJunctionDer extends DualJunctionQuantifierElimination {
+
+	/**
+	 * Checks if banned variable occurs in div. Ignores if variable got div captured
+	 * by transformation or occured in div before. <br />
+	 * TODO 20210131 Matthias: Might be helpful for debugging. Remove after a few
+	 * years if transformation is error-free.
+	 */
+	private static final boolean DO_OLD_DIV_CAPTURE_CHECK = false;
 
 	/**
 	 * @see constructor
@@ -219,8 +228,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	 */
 	private EliminationResult tryToEliminateOne(final IDerHelper<?> derHelper, final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt,
-					inputEt.getBannedForDivCapture());
+			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt);
 			if (er != null) {
 				return er;
 			}
@@ -313,8 +321,10 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				final Term term, Set<TermVariable> bannedForDivCapture);
 
 		private EliminationResult tryToEliminateSbr(final ManagedScript mgdScript, final TermVariable eliminatee,
-				final EliminationTask et, final Set<TermVariable> bannedForDivCapture) {
+				final EliminationTask et) {
 			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+			final Set<TermVariable> bannedForDivCapture = new HashSet<>(et.getEliminatees());
+			bannedForDivCapture.addAll(et.getContext().getBoundByAncestors());
 			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript.getScript(), et.getQuantifier(), eliminatee,
 					dualJuncts, bannedForDivCapture);
 			if (pair == null) {
@@ -419,7 +429,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			default:
 				throw new AssertionError("unknon value " + mIntricateOperations);
 			}
-			if (SolveForSubjectUtils.isVariableDivCaptured(mcsbr, bannedForDivCapture)) {
+			if (DO_OLD_DIV_CAPTURE_CHECK && SolveForSubjectUtils.isVariableDivCaptured(mcsbr, bannedForDivCapture)) {
 				throw new AssertionError("variable got div captured");
 			}
 			if (eachCaseHasDerRelationSymbol(mcsbr, quantifier)) {
