@@ -1,6 +1,5 @@
 //#Safe
 // Author: Dennis Wölfing
-// Using predicates for Lipton Reduction allows verifying this program much more quickly.
 
 var a : [int]int;
 var i : int;
