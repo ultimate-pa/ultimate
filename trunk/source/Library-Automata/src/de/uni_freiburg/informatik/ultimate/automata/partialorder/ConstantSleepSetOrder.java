@@ -31,20 +31,36 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * An {@link ISleepSetOrder} implementation that maps all states to the same ordering.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <S>
+ *            The type of states used for sleep set reduction
+ * @param <L>
+ *            The type of letters
+ */
 public class ConstantSleepSetOrder<S, L> implements ISleepSetOrder<S, L> {
 
-	private final Map<L, Integer> letter2Index = new HashMap<>();
+	private final Map<L, Integer> mLetter2Index = new HashMap<>();
 
-	@Override
-	public Comparator<L> getOrder(final S state) {
-		return (a, b) -> letter2Index.get(a) - letter2Index.get(b);
-	}
-
+	/**
+	 * Creates a new instance.
+	 *
+	 * @param letters
+	 *            All letters in the alphabet. Letters are ordered the same as in this Iterable.
+	 */
 	public ConstantSleepSetOrder(final Iterable<L> letters) {
 		int i = 0;
 		for (final L letter : letters) {
-			letter2Index.put(letter, i);
+			mLetter2Index.put(letter, i);
 			i++;
 		}
+	}
+
+	@Override
+	public Comparator<L> getOrder(final S state) {
+		return (a, b) -> mLetter2Index.get(a) - mLetter2Index.get(b);
 	}
 }
