@@ -11,7 +11,7 @@
 	</rundefinition>
 
 	<rundefinition name="Automizer FA.Delay">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-Delay.epf</option>
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-Delay.epf</option>
 	</rundefinition>
 
 	<rundefinition name="Automizer FA.SemanticLBE">
