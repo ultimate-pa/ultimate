@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePre
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -547,16 +548,20 @@ public class LiptonReduction<L, P> {
 	 *
 	 * @param petriNet
 	 *            The Petri net.
-	 * @param t1
+	 * @param t2
 	 *            A transition of the Petri Net.
 	 * @param coEnabledTransitions
 	 *            A set of co-enabled transitions.
-	 * @return true iff t1 is left mover.
+	 * @return true iff t2 is left mover.
 	 */
 	private boolean isLeftMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t2,
 			final Set<ITransition<L, P>> coEnabledTransitions) {
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t3 -> mMoverCheck.contains(null, t3.getSymbol(), t2.getSymbol()));
+		final Set<P> preconditions = petriNet.getPredecessors(t2);
+		return coEnabledTransitions.stream()
+				.allMatch(t3 -> mMoverCheck.contains(
+						DataStructureUtils.union(preconditions, petriNet.getPredecessors(t3)), t3.getSymbol(),
+						t2.getSymbol()));
 	}
 
 	/**
@@ -575,7 +580,9 @@ public class LiptonReduction<L, P> {
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		final Set<P> preconditions = petriNet.getPredecessors(t1);
 		return coEnabledTransitions.stream()
-				.allMatch(t3 -> mMoverCheck.contains(preconditions, t1.getSymbol(), t3.getSymbol()));
+				.allMatch(t3 -> mMoverCheck.contains(
+						DataStructureUtils.union(preconditions, petriNet.getPredecessors(t3)), t1.getSymbol(),
+						t3.getSymbol()));
 	}
 
 	public BoundedPetriNet<L, P> getResult() {
