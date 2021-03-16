@@ -16,5 +16,5 @@ Import-Package: javax.servlet,
  org.osgi.service.http,
  org.osgi.util.tracker
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.webinterface
