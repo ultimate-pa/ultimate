@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -160,8 +161,8 @@ public class BitabsTranslation {
 				literal_0);
 
 		
-		  Expression left_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq1, left_eq0); 
-		  Expression right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_eq1, right_eq0);
+		Expression left_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq1, left_eq0); 
+		Expression right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_eq1, right_eq0);
 
 			/*
 			 * Expression cond_left_1 = ExpressionFactory.newBinaryExpression(loc,
@@ -322,8 +323,8 @@ public class BitabsTranslation {
 			
 		
 		if (right instanceof IntegerLiteral) {
-			String valueLeft = ((IntegerLiteral) right).getValue();
-			if (valueLeft.equals("31") || valueLeft.equals("63")) {
+			String valueRight = ((IntegerLiteral) right).getValue();
+			if (valueRight.equals("31") || valueRight.equals("63")) {
 				Expression signExpr = ExpressionFactory.constructIfThenElseExpression(loc, left_pos, literal_0, literal_1);
 				return signExpr ;
 				} 
@@ -414,6 +415,44 @@ public class BitabsTranslation {
 		Expression xor = ExpressionFactory.constructIfThenElseExpression(loc, cond_neq, literal_1, xor_eq);
 		return xor;
 	}
+	
+	
+	/*
+	 * solution: integer eqauls to 0 or 1, complement-logic rule
+	 */
+	public Expression abstractCompl(final ILocation loc, final Expression expr, final CPrimitive type) {
+		final String funcname = "bitwiseComplement";
+		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
+		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
+
+		
+		System.out.println("complement operand express: "+ expr.toString());
+		if (expr instanceof IfThenElseExpression) {
+			IfThenElseExpression ite = (IfThenElseExpression) expr;
+			Expression cond = ite.getCondition();
+			Expression thenPart = ite.getThenPart();
+			Expression elsePart = ite.getElsePart();
+			//ubin already translated into boogie expressions
+			System.out.println("complement operand should be if else express: "+ expr.toString());
+			return ExpressionFactory.constructIfThenElseExpression(loc, cond, elsePart, thenPart);
+			
+//			switch (ubin.getOperator()){
+//			case COMPEQ:
+//				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, left, right);				
+//			case COMPNEQ:	
+//				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, right);				
+//			default: {
+//				return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
+//						mTypeHandler.getBoogieTypeForCType(type));
+//				}
+//			}
+			} else {
+		 
+		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
+				mTypeHandler.getBoogieTypeForCType(type));
+		}
+	}
+	
 
 	public static Result abstractAssgin(CHandler chandler, ProcedureManager mProcedureManager,
 			ArrayList<Declaration> mDeclarations, ExpressionTranslation mExpressionTranslation,

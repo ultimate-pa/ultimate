@@ -249,8 +249,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String funcname = "bitwiseComplement";
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
-		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
-				mTypeHandler.getBoogieTypeForCType(type));
+		//@CL, for bitwise complement translation
+		BitabsTranslation bitAbs = new BitabsTranslation(mTypeSizes, mSettings, mTypeHandler, mSymboltable, mFunctionDeclarations);
+		return bitAbs.abstractCompl(loc, expr, type);
+//		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
+//				mTypeHandler.getBoogieTypeForCType(type));
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
