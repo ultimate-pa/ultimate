@@ -424,17 +424,14 @@ public class BitabsTranslation {
 		final String funcname = "bitwiseComplement";
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
-
-		
-		System.out.println("complement operand express: "+ expr.toString());
+ 
 		if (expr instanceof IfThenElseExpression) {
 			IfThenElseExpression ite = (IfThenElseExpression) expr;
 			Expression cond = ite.getCondition();
 			Expression thenPart = ite.getThenPart();
 			Expression elsePart = ite.getElsePart();
-			//ubin already translated into boogie expressions
-			System.out.println("complement operand should be if else express: "+ expr.toString());
-			return ExpressionFactory.constructIfThenElseExpression(loc, cond, elsePart, thenPart);
+			// operand already translated into boogie
+ 			return ExpressionFactory.constructIfThenElseExpression(loc, cond, elsePart, thenPart);
 			
 //			switch (ubin.getOperator()){
 //			case COMPEQ:
