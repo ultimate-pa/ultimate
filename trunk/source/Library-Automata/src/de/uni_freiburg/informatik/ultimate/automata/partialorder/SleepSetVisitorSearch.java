@@ -188,10 +188,25 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 		mFound = false;
 	}
 
+	/**
+	 * Determines if the given state has been marked as a "dead end", meaning no goal states are reachable from the
+	 * state. This only works if the "dead state" optimization was enabled in the constructor.
+	 *
+	 * @param state
+	 *            The state to analyse
+	 * @return true if the given state was previously explored without finding a goal state, false otherwise
+	 */
 	public boolean isDeadEndState(final S state) {
 		return mDeadStateOptimization && mDeadEndSet.contains(state);
 	}
 
+	/**
+	 * Explicitly mark a state as "dead end". Future explorations will assume that no goal state can be reached from
+	 * this state, and will thus not explore its outgoing edges.
+	 *
+	 * @param state
+	 *            The state that shall be marked as "dead end"
+	 */
 	public void addDeadEndState(final S state) {
 		if (mDeadStateOptimization) {
 			mDeadEndSet.add(state);

@@ -138,29 +138,29 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		mCache.remove(a);
 	}
 
-	private class CachedIndependenceStatisticsProvider extends IndependenceStatisticsDataProvider {
+	private final class CachedIndependenceStatisticsProvider extends IndependenceStatisticsDataProvider {
 		public static final String CACHE_QUERIES = "Cache Queries";
 		public static final String CACHE_STATISTICS = "Statistics on independence cache";
 
 		private final Counter mCacheQueries = new Counter();
 
-		public CachedIndependenceStatisticsProvider() {
+		private CachedIndependenceStatisticsProvider() {
 			super(CachedIndependenceRelation.class, mUnderlying);
 			declareCounter(CACHE_QUERIES, () -> mCacheQueries);
 			forward(CACHE_STATISTICS, mCache::getStatistics);
 		}
 
-		public void reportPositiveCachedQuery(final boolean conditional) {
+		private void reportPositiveCachedQuery(final boolean conditional) {
 			reportPositiveQuery(conditional);
 			mCacheQueries.increment(true, conditional);
 		}
 
-		public void reportNegativeCachedQuery(final boolean conditional) {
+		private void reportNegativeCachedQuery(final boolean conditional) {
 			reportNegativeQuery(conditional);
 			mCacheQueries.increment(false, conditional);
 		}
 
-		public void reportUncachedQuery(final boolean result, final boolean conditional) {
+		private void reportUncachedQuery(final boolean result, final boolean conditional) {
 			reportQuery(result, conditional);
 			mCacheQueries.incrementUnknown(conditional);
 		}
