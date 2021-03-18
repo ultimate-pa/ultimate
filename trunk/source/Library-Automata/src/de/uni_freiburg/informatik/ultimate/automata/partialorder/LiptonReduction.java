@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePre
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -207,8 +208,8 @@ public class LiptonReduction<L, P> {
 				// Check if Pre- and Postset are identical for t1 and t2.
 				if (petriNet.getPredecessors(t1).equals(petriNet.getPredecessors(t2))
 						&& petriNet.getSuccessors(t1).equals(petriNet.getSuccessors(t2))
-						&& mCompositionFactory.isComposable(t1.getSymbol())
-						&& mCompositionFactory.isComposable(t2.getSymbol())) {
+						&& mCompositionFactory.isParallelyComposable(Arrays.asList(t1.getSymbol(), t2.getSymbol()))
+						&& checkBranchEncoders(t1.getSymbol(), t2.getSymbol())) {
 
 					assert mCoEnabledRelation.getImage(t1).equals(mCoEnabledRelation.getImage(t2));
 
@@ -416,12 +417,37 @@ public class LiptonReduction<L, P> {
 		if (!composable) {
 			return false;
 		}
+
+		if (!checkBranchEncoders(t1.getSymbol(), t2.getSymbol())) {
+			return false;
+		}
+
 		final boolean structurallyCorrect =
 				!petriNet.getSuccessors(t2).contains(place) && checkForEventsInBetween(t1, t2);
 		if (!structurallyCorrect) {
 			return false;
 		}
 		return performMoverCheck(petriNet, t1, t2);
+	}
+
+	/**
+	 * Work around a problem that can happen with repeated Lipton reduction: When applying the choice rule, a formula
+	 * with branch encoders is created. Then the Trace Abstraction may cause the composed transition to be duplicated
+	 * with different predicates as pre- or postconditions. If we then compose the two duplicated transitions they will
+	 * both have the same branch encoders and thus the resulting formula will only allow a subset of the original
+	 * traces. To prevent this, we must not compose transitions with the same branch encoders.
+	 *
+	 * @param t1
+	 *            The first letter.
+	 * @param t2
+	 *            The second letter.
+	 * @return false if the branch encoders prevent composition. true otherwise.
+	 */
+	private boolean checkBranchEncoders(final L t1, final L t2) {
+		return !(t1 instanceof IActionWithBranchEncoders && t2 instanceof IActionWithBranchEncoders
+				&& DataStructureUtils.haveNonEmptyIntersection(
+						((IActionWithBranchEncoders) t1).getTransitionFormulaWithBranchEncoders().getBranchEncoders(),
+						((IActionWithBranchEncoders) t2).getTransitionFormulaWithBranchEncoders().getBranchEncoders()));
 	}
 
 	private boolean checkForEventsInBetween(final ITransition<L, P> t1, final ITransition<L, P> t2) {

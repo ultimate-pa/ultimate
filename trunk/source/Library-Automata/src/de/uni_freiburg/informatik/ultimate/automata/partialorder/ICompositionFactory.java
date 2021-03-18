@@ -43,7 +43,7 @@ public interface ICompositionFactory<L> {
 	boolean isComposable(L letter);
 
 	/**
-	 * Determines if composition of the given letters is supported.
+	 * Determines if sequential composition of the given letters is supported.
 	 *
 	 * @param l1
 	 *            The first letter.
@@ -52,6 +52,15 @@ public interface ICompositionFactory<L> {
 	 * @return true if composition is supported.
 	 */
 	boolean isComposable(final L l1, final L l2);
+
+	/**
+	 * Determines if parallel composition of the given letters is supported.
+	 *
+	 * @param letters
+	 *            The letters.
+	 * @return true if composition is supported.
+	 */
+	boolean isParallelyComposable(List<L> letters);
 
 	/**
 	 * Performs the sequential composition of the given letters.

@@ -296,7 +296,7 @@ public class IcfgEdgeBuilder {
 	 */
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final UnmodifiableTransFormula tf) {
-		return constructInternalTransition(oldTransition, source, target, tf, true);
+		return constructInternalTransition(oldTransition, source, target, tf, tf, true);
 	}
 
 	/**
@@ -310,14 +310,18 @@ public class IcfgEdgeBuilder {
 	 *            The target of the transition.
 	 * @param tf
 	 *            The transformula of the transition.
+	 * @param tfWithBranchIndicators
+	 *            The transformula with branch indicators. Can be the same as tf.
 	 * @param connect
 	 *            true if the new transition should be connected to its source and target locations.
 	 * @return A newly created transition.
 	 */
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
-			final IcfgLocation target, final UnmodifiableTransFormula tf, final boolean connect) {
+			final IcfgLocation target, final UnmodifiableTransFormula tf,
+			final UnmodifiableTransFormula tfWithBranchIndicators, final boolean connect) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
-		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
+		final IcfgInternalTransition rtr =
+				mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBranchIndicators);
 		if (connect) {
 			source.addOutgoing(rtr);
 			target.addIncoming(rtr);

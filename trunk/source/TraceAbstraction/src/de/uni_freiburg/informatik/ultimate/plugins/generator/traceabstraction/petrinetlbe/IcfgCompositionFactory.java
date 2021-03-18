@@ -36,10 +36,12 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -81,6 +83,13 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 
 	private boolean isComposable(final List<IcfgEdge> transitions) {
 		return transitions.stream().allMatch(this::isComposable);
+	}
+
+	@Override
+	public boolean isParallelyComposable(final List<IcfgEdge> letters) {
+		final IcfgLocation source = letters.get(0).getSource();
+		final IcfgLocation target = letters.get(0).getTarget();
+		return letters.stream().allMatch(t -> isComposable(t) && t.getSource() == source && t.getTarget() == target);
 	}
 
 	@Override
@@ -133,7 +142,14 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 
 	@Override
 	public IcfgEdge copyLetter(final IcfgEdge letter) {
-		return mEdgeBuilder.constructInternalTransition(letter, letter.getSource(), letter.getTarget(),
-				letter.getTransformula(), false);
+		final UnmodifiableTransFormula tf = letter.getTransformula();
+		UnmodifiableTransFormula tfWithBranchEncoders;
+		if (letter instanceof IActionWithBranchEncoders) {
+			tfWithBranchEncoders = ((IActionWithBranchEncoders) letter).getTransitionFormulaWithBranchEncoders();
+		} else {
+			tfWithBranchEncoders = tf;
+		}
+		return mEdgeBuilder.constructInternalTransition(letter, letter.getSource(), letter.getTarget(), tf,
+				tfWithBranchEncoders, false);
 	}
 }
