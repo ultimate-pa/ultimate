@@ -579,9 +579,9 @@
 				</repository>
 
 				<repository>
-					<id>orbit-R20200831200620</id>
+					<id>orbit-latest-R</id>
 					<layout>p2</layout>
-					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-R20200831200620/</url>
+					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-latest-R/</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -621,7 +621,7 @@
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>true</trimStackTrace>
 							<redirectTestOutputToFile>true</redirectTestOutputToFile>
-							
+
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -631,7 +631,7 @@
 
 							<!-- Use this for global timeouts per class -->
 							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-							
+
 							<includes>
 								<include>**/*.java</include>
 							</includes>
