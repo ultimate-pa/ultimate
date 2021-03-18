@@ -31,8 +31,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.LinearInequality;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.termination.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;

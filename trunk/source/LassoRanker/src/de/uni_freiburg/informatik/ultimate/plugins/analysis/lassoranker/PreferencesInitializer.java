@@ -31,16 +31,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
-import de.uni_freiburg.informatik.ultimate.lassoranker.DefaultLassoRankerPreferences;
-import de.uni_freiburg.informatik.ultimate.lassoranker.ILassoRankerPreferences;
-import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.DefaultNonTerminationAnalysisSettings;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.INonTerminationAnalysisSettings;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.DefaultTerminationAnalysisSettings;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.ITerminationAnalysisSettings;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.AnalysisType;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.DefaultLassoRankerPreferences;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.ILassoRankerPreferences;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.LassoRankerPreferences;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.nontermination.DefaultNonTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.nontermination.INonTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.nontermination.NonTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.termination.DefaultTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.termination.ITerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.termination.TerminationAnalysisSettings;
 
 /**
  * Initializer class for LassoRanker's preferences in Ultimate's GUI

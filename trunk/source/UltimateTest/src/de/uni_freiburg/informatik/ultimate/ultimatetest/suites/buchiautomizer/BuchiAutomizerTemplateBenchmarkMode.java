@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.buchiautomizer;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;

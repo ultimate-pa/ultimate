@@ -60,11 +60,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
-import de.uni_freiburg.informatik.ultimate.lassoranker.NonterminationArgumentStatistics;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetition;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.BacktranslationUtil;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.NonterminationArgumentStatistics;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.nontermination.GeometricNonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.nontermination.InfiniteFixpointRepetition;
+import de.uni_freiburg.informatik.ultimate.lib.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
