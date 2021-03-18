@@ -4,7 +4,7 @@ Bundle-Name: Jung Visualization Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization;singleton:=true
 Bundle-Version: 0.2.1
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
- edu.uci.ics.jung,
+ wrapped.net.sf.jung.jung-visualization,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.gui,
  org.apache.batik.anim,

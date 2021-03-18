@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
-import java.util.function.Function;
+import com.google.common.base.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;

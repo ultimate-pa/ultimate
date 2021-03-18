@@ -41,6 +41,24 @@
 			<version>2.1.1</version>
 			<type>jar</type>
 		</location>
+		<location includeDependencyScope="compile" includeSource="true" missingManifest="generate" type="Maven">
+			<groupId>net.sf.jung</groupId>
+			<artifactId>jung-io</artifactId>
+			<version>2.1.1</version>
+			<type>jar</type>
+		</location>
+		<location includeDependencyScope="compile" includeSource="true" missingManifest="generate" type="Maven">
+			<groupId>net.sf.jung</groupId>
+			<artifactId>jung-api</artifactId>
+			<version>2.1.1</version>
+			<type>jar</type>
+		</location>
+		<location includeDependencyScope="compile" includeSource="true" missingManifest="generate" type="Maven">
+			<groupId>net.sf.jung</groupId>
+			<artifactId>jung-graph-impl</artifactId>
+			<version>2.1.1</version>
+			<type>jar</type>
+		</location>
 	</locations>
 	<includeBundles>
 		<plugin id="com.google.gson.source"/>
@@ -313,5 +331,14 @@
 		<plugin id="javax.xml" version="1.3.4.v201005080400"/>
 		<plugin id="wrapped.net.sf.jung.jung-visualization"/>
 		<plugin id="wrapped.net.sf.jung.jung-visualization.source"/>
+		<plugin id="wrapped.net.sf.jung.jung-io.source"/>
+		<plugin id="wrapped.net.sf.jung.jung-io"/>
+		<plugin id="wrapped.net.sf.jung.jung-api" version="2.1.1"/>
+		<plugin id="wrapped.net.sf.jung.jung-api.source" version="2.1.1"/>
+		<plugin id="com.google.guava" version="19.0.0"/>
+		<plugin id="com.google.guava.source" version="19.0.0"/>
+		<plugin id="wrapped.net.sf.jung.jung-graph-impl"/>
+		<plugin id="wrapped.net.sf.jung.jung-graph-impl.source"/>
+		<plugin id="wrapped.net.sf.jung.jung-api.source" version="2.1.1"/>
 	</includeBundles>
 </target>
