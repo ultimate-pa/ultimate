@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.armc.ARMCWriter.ARMCString;
-
 /**
  * RelationDecision is an extension of BooleanDecision and represents a simple relational statement. Currently (in the
  * context of the PEA toolkit with its export functions to, e.g., ARMC) we support expression with basic arithmetical
@@ -44,9 +42,8 @@ public class RelationDecision extends BooleanDecision {
 		/*
 		 * Constants for supported operators in BooleanDecisions. We use the ARMC strings as default where possible.
 		 */
-		PRIME("'"), LESS(ARMCString.LESS), GREATER(ARMCString.GREATER), LEQ(ARMCString.LEQ), GEQ(ARMCString.GEQ),
-		EQUALS(ARMCString.EQUALS), PLUS(ARMCString.PLUS), MINUS(ARMCString.MINUS), MULT(ARMCString.MULT),
-		DIV(ARMCString.DIV), NEQ("!=");
+		PRIME("'"), LESS("<"), GREATER(">"), LEQ("<="), GEQ(">="), EQUALS("="), PLUS("+"), MINUS("-"), MULT("*"),
+		DIV("/"), NEQ("!=");
 
 		String op;
 

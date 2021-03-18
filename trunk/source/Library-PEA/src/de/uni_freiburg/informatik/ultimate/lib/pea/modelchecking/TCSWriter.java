@@ -43,23 +43,6 @@ public abstract class TCSWriter {
 
 	protected String fileName;
 
-	protected PEA2TCSConverter converter;
-
-	/**
-	 * @return Returns the converter.
-	 */
-	public PEA2TCSConverter getConverter() {
-		return converter;
-	}
-
-	/**
-	 * @param converter
-	 *            The converter to set.
-	 */
-	public void setConverter(final PEA2TCSConverter converter) {
-		this.converter = converter;
-	}
-
 	/**
 	 * @param fileName
 	 */
@@ -76,7 +59,7 @@ public abstract class TCSWriter {
 	/**
 	 * Writes a CDD that represents a conjunction into a specific output format. Therefore it uses abstract methods
 	 * writeAndDelimiter() and writeDecision(), which have to be implemented for every desired output.
-	 * 
+	 *
 	 * @param constraint
 	 *            The CDD constraint that has to be written. The constraint is not allowed to be equal to false. This
 	 *            causes an <code>IllegalArgumentException</code>.
@@ -110,7 +93,7 @@ public abstract class TCSWriter {
 	/**
 	 * Writes an And delimiter to the output file. Abstract method has to be overwritten to match domain specific And
 	 * symbols.
-	 * 
+	 *
 	 * @param writer
 	 *            The and delimiter is written to this writer object.
 	 * @throws IOException
@@ -121,7 +104,7 @@ public abstract class TCSWriter {
 	 * This method writes a decision from a given CDD into an Writer, usually a FileWriter. The exact representation of
 	 * a decision crucially depends on the target format so this method should be implemented for any specific output
 	 * language.
-	 * 
+	 *
 	 * @param decision
 	 *            The decision that shall be written.
 	 * @param child
@@ -133,7 +116,7 @@ public abstract class TCSWriter {
 
 	/**
 	 * TODO JF: comment
-	 * 
+	 *
 	 * @param declarations
 	 * @param variables
 	 * @param globalInvariant

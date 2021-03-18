@@ -26,24 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PEANet;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PEATestAutomaton;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseSet;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
@@ -104,7 +92,6 @@ public class Compiler {
 	private TestForm2MCFormCompiler mcFormCompiler = null;
 	private MCTraceXML2JConverter traceConverter = null;
 	private Trace2PeaCompiler traceCompiler = null;
-	private PEAJ2XMLConverter peaConverter = null;
 
 	private HashMap<Transition, PhaseSet> trans2phases[];
 	private Set<String> syncEvents;
@@ -113,24 +100,23 @@ public class Compiler {
 	 * Initialises the Compiler object. Takes as parameter a string that defines the loggername for the built in log4j
 	 * logger. If the string is empty, the default name <code>Compiler</code> is used. An application using a Compiler
 	 * object has to make sure that the logger is initialised via <code>PropertyConfigurator.configure()</code>.
-	 * 
+	 *
 	 * @param loggerName
 	 * @see ILogger
 	 * @see PropertyConfigurator
 	 */
-	public Compiler(ILogger logger, final String loggerName, final boolean useZDecision) throws Exception {
+	public Compiler(final ILogger logger, final String loggerName, final boolean useZDecision) throws Exception {
 		mLogger = logger;
 		mcFormCompiler = new TestForm2MCFormCompiler();
 		traceConverter = new MCTraceXML2JConverter(useZDecision);
 		traceCompiler = new Trace2PeaCompiler(logger);
-		peaConverter = new PEAJ2XMLConverter();
 		new XMLWriter();
 	}
 
 	/**
 	 * Initialises the Compiler object with the default logger.
 	 */
-	public Compiler(ILogger logger, final boolean useZDecision) throws Exception {
+	public Compiler(final ILogger logger, final boolean useZDecision) throws Exception {
 		this(logger, "", useZDecision);
 	}
 
@@ -143,7 +129,7 @@ public class Compiler {
 
 	/**
 	 * Generates a fresh phase event automata name <code>peaprefix+peaCounter</code> and increments the counter
-	 * 
+	 *
 	 * @return The name
 	 */
 	private String getFreshPEAName() {
@@ -155,7 +141,7 @@ public class Compiler {
 	/**
 	 * Generates a fresh phase event automata net name <code>peaNetprefix+peaNetCounter</code> and increments the
 	 * counter
-	 * 
+	 *
 	 * @return The name
 	 */
 	private String getFreshPEANetName() {
@@ -165,125 +151,8 @@ public class Compiler {
 	}
 
 	/**
-	 * Constructs several phase event automata nets (test automata) from a given test formula.
-	 * <p>
-	 * The transformation is done in several steps:
-	 * <ul>
-	 * <li>The test formula is transformed into a formula in model-checkable form. This mcForm document is stored in the
-	 * xml-file given by <code>mcFile</code>. If this argument is empty the file <i>file </i> <code>_mc.xml</code> will
-	 * be chosen, where <i>file </i> is the file without <code>.xml</code> in the end.
-	 * <p>
-	 * The compilation to model-checkable form generates the following files:
-	 * <ul>
-	 * <li><i>file </i> <code>_bin.xml</code> which contains the file but the tree structure resolved to binary trees.
-	 * <li><i>file </i> <code>_sync.xml</code> which contains the file <i>file </i> <code>_bin.xml</code> with chops
-	 * replaced by sync events
-	 * <li><i>file </i> <code>_nf.xml</code> which contains the file <i>file </i> <code>_sync.xml</code> but converted
-	 * to almost normal form, this means disjunction is the top level operator, followed by conjunction, followed by
-	 * sync events.
-	 * <li><code>mcFile</code> which contains the model-checkable form of <code>file</code>. For every disjunction a new
-	 * <code>mcForm</code> tree is created. The file satisfies <code>pea.modelchecking.schemas.ModelCheckForm.xsd</code>
-	 * .
-	 * </ul>
-	 * <li>Every <code>mcForm</code> in <code>mcFile</code> is converted into an array of <code>MCTrace</code> java
-	 * objects.
-	 * <li>All <code>MCTrace</code> objects are converted into <code>PhaseEventAutomata</code> objects.
-	 * <li>For every <code>mcForm</code> the phase event automata are written into a file <i>peaNetPrefix </i>
-	 * <code>i.xml</code>, where <i>peaNetPrefix </i> is the attribute of the object and <code>i</code> is the index of
-	 * the model-checkable form starting with 0.
-	 * </ul>
-	 * 
-	 * @param file
-	 *            File of the test formula to compile into phase event automata nets. Needs to satisfy
-	 *            <code>pea.modelchecking.schemas.TestForm.xsd</code>.
-	 * @param mcFile
-	 *            XML-file where the model-checkable form of <code>file</code> is stored. Satisfies
-	 *            <code>pea.modelchecking.schemas.ModelCheckForm.xsd</code>.
-	 * @return Returns an ArrayList containing Arrays with all generated test automata. The automata in one Array are
-	 *         considered to run in parallel.
-	 * @throws Exception
-	 *             See exceptions in
-	 *             <ul>
-	 *             <li><code>TestForm2MCFormCompiler</code>, constructor and <code>compile</code> method
-	 *             <li><code>MCTraceXML2JConverter</code>, constructor and <code>convert</code> method
-	 *             <li><code>PEAJ2XMLConverter</code>, constructor
-	 *             <li><code>XMLWriter</code>, <code>writeXMLDocumentToFile</code> method
-	 *             </ul>
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.schemas
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.TestForm2MCFormCompiler
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTraceXML2JConverter
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.PEAJ2XMLConverter
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.XMLWriter
-	 */
-	public ArrayList<PEATestAutomaton[]> compile(final String file, final String mcFile) throws Exception {
-
-		final ArrayList<PEATestAutomaton[]> resultList = new ArrayList<PEATestAutomaton[]>();
-		syncEvents = new HashSet<String>();
-
-		PEATestAutomaton[] peas = null;
-		final String fileParent = new File(file).getParent();
-
-		final long startTime = System.currentTimeMillis();
-
-		final Document document = mcFormCompiler.compile(file, mcFile);
-		final long durNormalForm = System.currentTimeMillis() - startTime;
-
-		final NodeList mcFormNodes = document.getElementsByTagName(XMLTags.MCFORmTAG);
-		final int mcFormsCount = mcFormNodes.getLength();
-		for (int i = 0; i < mcFormsCount; i++) {
-			final MCTrace[] traces = traceConverter.convert((Element) mcFormNodes.item(i));
-			peas = new PEATestAutomaton[traces.length];
-			@SuppressWarnings("unchecked")
-			final HashMap<Transition, PhaseSet> t2p[] = (HashMap<Transition, PhaseSet>[]) new HashMap<?, ?>[traces.length];
-			trans2phases = t2p;
-			for (int j = 0; j < traces.length; j++) {
-				peas[j] = traceCompiler.compile(getFreshPEAName(), traces[j]);
-				trans2phases[j] = traceCompiler.getTrans2Phases(traces[j].getTrace().getPhases());
-				collectSyncEvents(traceCompiler.getEntrySync());
-				collectSyncEvents(traceCompiler.getExitSync());
-			}
-			final String actNetName = getFreshPEANetName();
-			if (parallel) {
-				PEATestAutomaton result = peas[0];
-				for (int k = 1; k < peas.length; k++) {
-					result = result.parallel(peas[k]);
-				}
-				String parallelFile;
-				if (fileParent != null) {
-					parallelFile = fileParent;
-					parallelFile += "/" + actNetName + "_par.xml";
-				} else {
-					parallelFile = actNetName + "_par.xml";
-				}
-				final PEANet temp = new PEANet();
-				temp.addPEA(result);
-				peaConverter.convert(temp, parallelFile);
-			}
-			String peaNetFile = fileParent != null ? fileParent + "/" : "";
-			peaNetFile += actNetName + ".xml";
-
-			final List<PEATestAutomaton> tempList = Arrays.asList(peas);
-			final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(tempList);
-			final PEANet peaNet = new PEANet();
-			peaNet.setPeas(peaList);
-
-			peaConverter.convert(peaNet, peaNetFile);
-			resultList.add(peas);
-		}
-
-		mLogger.info("Duration Compilation NormalForm = " + durNormalForm + "(ms)");
-		final long durPEAs = System.currentTimeMillis() - startTime - durNormalForm;
-		mLogger.info("Duration Compilation PEAS       = " + durPEAs + "(ms)");
-		mLogger.info("Duration Compilation            = " + (durPEAs + durNormalForm) + "(ms)");
-		return resultList;
-	}
-
-	/**
 	 * Collects all events in a given CDD and puts them into the syncEvent member set.
-	 * 
+	 *
 	 * @param events
 	 *            The CDD to be processed.
 	 */
@@ -301,7 +170,7 @@ public class Compiler {
 
 	/**
 	 * Sets the prefix for phase event automata net files.
-	 * 
+	 *
 	 * @param peaNetPrefix
 	 *            The peaNetPrefix to set.
 	 */
@@ -311,7 +180,7 @@ public class Compiler {
 
 	/**
 	 * Sets the prefix for phase event automata in phase event automata nets
-	 * 
+	 *
 	 * @param peaPrefix
 	 *            The peaPrefix to set.
 	 */
@@ -321,7 +190,7 @@ public class Compiler {
 
 	/**
 	 * Sets the parallel argument for the given phase event automata nets
-	 * 
+	 *
 	 * @param parallel
 	 *            The parallel argument.
 	 */
@@ -337,93 +206,17 @@ public class Compiler {
 	}
 
 	/**
-	 * Starts the compiler
-	 * 
-	 * @param args
-	 *            Parameters to start the compiler. The class description tells the use.
-	 */
-	public static void main(final String[] args) {
-		if (args.length < 1) {
-			Compiler.printUse();
-			return;
-		}
-
-		String logConfigFile = Compiler.LOG_CONFIG_FILE;
-		String testFormFile = null;
-		String mcFormFile = "";
-		String pea = "";
-		String peaNet = "";
-		String parallel = "";
-
-		for (int i = 0; i < args.length; i++) {
-			if (args[i].equals(Compiler.LOG_CONFIG_FILE_ARG)) {
-				logConfigFile = args[++i];
-			} else if (args[i].equals(Compiler.TESTFORmFILE_ARG)) {
-				testFormFile = args[++i];
-			} else if (args[i].equals(Compiler.MCFORmFILE_ARG)) {
-				mcFormFile = args[++i];
-			} else if (args[i].equals(Compiler.PEA_ARG)) {
-				pea = args[++i];
-			} else if (args[i].equals(Compiler.PEANET_ARG)) {
-				peaNet = args[++i];
-			} else if (args[i].equals(Compiler.PARALLEL_ARG)) {
-				parallel = args[++i];
-			} else if (args[i].equals(Compiler.HELP_ARG)) {
-				Compiler.printUse();
-				return;
-			} else {
-				Compiler.printUse();
-				return;
-			}
-		}
-
-		Compiler compiler = null;
-		try {
-			compiler = new Compiler(ILogger.getLogger(Compiler.DEFAULT_LOGGER), false);
-		} catch (final Exception e) {
-			System.err.println("Compiler could not be initialised");
-			e.printStackTrace();
-		}
-
-		if (!pea.equals("")) {
-			compiler.setPeaPrefix(pea);
-		}
-		if (!peaNet.equals("")) {
-			compiler.setPeaNetPrefix(peaNet);
-		}
-		if (parallel.equals("true")) {
-			compiler.setParallel(true);
-		}
-
-		if (testFormFile == null) {
-			Compiler.printUse();
-			System.out.println("The test formula argument is missing.");
-			return;
-		} else {
-			try {
-				compiler.compile(testFormFile, mcFormFile);
-
-			} catch (final Exception e) {
-				System.err.println(
-				        "Compilation failed. Please consult " + "log file and error message for further details.");
-				e.printStackTrace();
-				return;
-			}
-		}
-	}
-
-	/**
 	 * Prints a help-text on how to use the compiler
 	 */
 	private static void printUse() {
 		System.out.println("Usage: java Compiler [" + Compiler.TESTFORmFILE_ARG
-		        + " <File of test formula to compile>]\n" + "                     [" + Compiler.MCFORmFILE_ARG
-		        + " <File of compiled formula in model checkable form>]\n" + "                     [" + Compiler.PEA_ARG
-		        + " <Prefix for peas in peaNet files>]\n" + "                     [" + Compiler.PEANET_ARG
-		        + " <Prefix for peaNet files>]\n" + "                     [" + Compiler.PARALLEL_ARG
-		        + " <true, if parallel composition needs to be computed>]\n" + "                     ["
-		        + Compiler.LOG_CONFIG_FILE_ARG + " <Log configuration file>]\n" + "                     ["
-		        + Compiler.HELP_ARG + "]");
+				+ " <File of test formula to compile>]\n" + "                     [" + Compiler.MCFORmFILE_ARG
+				+ " <File of compiled formula in model checkable form>]\n" + "                     [" + Compiler.PEA_ARG
+				+ " <Prefix for peas in peaNet files>]\n" + "                     [" + Compiler.PEANET_ARG
+				+ " <Prefix for peaNet files>]\n" + "                     [" + Compiler.PARALLEL_ARG
+				+ " <true, if parallel composition needs to be computed>]\n" + "                     ["
+				+ Compiler.LOG_CONFIG_FILE_ARG + " <Log configuration file>]\n" + "                     ["
+				+ Compiler.HELP_ARG + "]");
 		System.out.println("Argument " + Compiler.TESTFORmFILE_ARG + " required");
 	}
 }

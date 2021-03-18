@@ -154,7 +154,6 @@ public abstract class Decision<T extends Decision<T>> {
 			ORDER.put(RangeDecision.class, 9);
 			ORDER.put(BooleanDecision.class, 8);
 			ORDER.put(RelationDecision.class, 7);
-			ORDER.put(ZDecision.class, 6);
 			ORDER.put(BoogieBooleanExpressionDecision.class, 5);
 		}
 
