@@ -81,6 +81,7 @@ public class LiptonReduction<L, P> {
 	protected final IIndependenceRelation<Set<P>, L> mMoverCheck;
 
 	private BranchingProcess<L, P> mBranchingProcess;
+	private final Set<Event<L, P>> mCutOffEvents;
 	protected CoenabledRelation<L, P> mCoEnabledRelation;
 	private final Map<L, List<L>> mSequentialCompositions = new HashMap<>();
 	private final Map<L, Set<L>> mChoiceCompositions = new HashMap<>();
@@ -109,6 +110,7 @@ public class LiptonReduction<L, P> {
 		mCompositionFactory = compositionFactory;
 		mMoverCheck = independenceRelation;
 		mPetriNet = petriNet;
+		mCutOffEvents = new HashSet<>();
 	}
 
 	/**
@@ -130,6 +132,8 @@ public class LiptonReduction<L, P> {
 					new HashSet<>(mPetriNet.getTransitions()), mPetriNet.getAlphabet(), true);
 
 			mBranchingProcess = new FinitePrefix<>(mServices, resultCurrentIteration).getResult();
+			mCutOffEvents.addAll(
+					mBranchingProcess.getEvents().stream().filter(Event::isCutoffEvent).collect(Collectors.toSet()));
 			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
 
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
@@ -502,6 +506,17 @@ public class LiptonReduction<L, P> {
 				continue;
 			}
 			if (e3.getLocalConfiguration().contains(e1)) {
+				return true;
+			}
+		}
+
+		// Check cutoff events.
+		for (final Event<L, P> e3 : mCutOffEvents) {
+			final Event<L, P> companion = e3.getCompanion();
+			if (ignoredEvents.contains(e3)) {
+				continue;
+			}
+			if (e2.getLocalConfiguration().contains(companion) && e3.getLocalConfiguration().contains(e1)) {
 				return true;
 			}
 		}
