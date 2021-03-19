@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -46,10 +48,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
@@ -107,7 +109,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		return null;
 	}
 
-	private void accelerateLoop(final UnmodifiableTransFormula loopTransFormula) {
+	private UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loopTransFormula) {
 		final ManagedScript mMgdScript = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
 		final UnmodifiableTransFormula guardTf =
 				TransFormulaUtils.computeGuard(loopTransFormula, mMgdScript, mServices, mLogger);
@@ -121,10 +123,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		try {
 			loopAccelerationFormula = createLoopAccelerationFormulaRestricted(mMgdScript, su, loopTransFormula, guardTf);
 		} catch (AssertionError e) {
-			// TODO: does not work, itHalf, itFinHalf are free variables.
 			loopAccelerationFormula = createLoopAccelerationFormula(mMgdScript, su, loopTransFormula, guardTf);
 		}
-		mLogger.info("Loop Acceleration Formula: " + loopAccelerationFormula);
+		return loopAccelerationFormula;
 	}
 	
 	/**
@@ -240,9 +241,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final int n = closedFormMatrix.getDimension();
 		HashMap<TermVariable, Term> closedForm = new HashMap<>();
 		for (final IProgramVar iVar : su.getUpdatedVars().keySet()) {
-		// for (final TermVariable var : varMatrixIndex.keySet()) {
 			final int varIndex = varMatrixIndex.get(iVar.getTermVariable());
-			// final int varIndex = varMatrixIndex.get(var);
 			Term[] summands = new Term[n];
 			int current = 0;
 			for (int j=0; j<n-1; j++) {
@@ -258,15 +257,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 					Rational entryRational = closedFormMatrix.getEntry(varIndex,j).getConstant();
 					if (entryRational.numerator().intValue() == 1 && entryRational.denominator().intValue() == 1) {
 						summands[current] = inVars.get(termVar2IProgramVar.get(updatedVars[j]));
-						// summands[current] = updatedVars[j];
 					} else {
 						summands[current] = script.term("*", closedFormMatrix.getEntry(varIndex,j).toTerm(script),
-								// updatedVars[j]);
 								inVars.get(termVar2IProgramVar.get(updatedVars[j])));
 					}
 				} else {
 					summands[current] = script.term("*", closedFormMatrix.getEntry(varIndex,j).toTerm(script),
-							// updatedVars[j]);
 							inVars.get(termVar2IProgramVar.get(updatedVars[j])));
 				}
 				current = current + 1;
@@ -290,9 +286,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			} else {
 				sum = script.term("+", Arrays.copyOfRange(summands,0,current));
 			}
-			// closedForm.put(var, sum);
 			closedForm.put(outVars.get(iVar), sum);
-			// closedForm.put(iVar, sum);
 		}
 		return closedForm;
 	}
@@ -420,7 +414,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			Map<IProgramVar, TermVariable> outVars) {
 		if (guardFormula instanceof TermVariable) {
 			if (closedForm.containsKey(outVars.get(inVarsInverted.get(guardFormula)))) {
-			// if (closedForm.containsKey(guardFormula)) {
 				return closedForm.get(outVars.get(inVarsInverted.get(guardFormula)));
 			} else {
 				return guardFormula;
@@ -443,6 +436,19 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	/**
 	 * Create the loop acceleration formula.
 	 * Use this method only if -1 is not an eigenvalue of the update matrix.
+	 * General formula:
+	 * (exists ((itFin Int))
+	 * ((or
+	 * 	(and (= itFin 0) (not (guard)) (x'=x))
+	 * 	(and
+	 * 		(> itFin 0)
+	 * 		(not (guard(closedForm(x, itFin))))
+	 * 		(guard)
+	 * 		(forall ((it Int))
+	 * 			(=>
+	 * 				(and (<= 1 it) (<= it (- itFin 1)))
+	 * 				(guard(closedForm(x,it)))))
+	 * 		((x' = closedForm(x,itFin)))))))
 	 * @param mgdScript
 	 * @param su
 	 * @param loopTransFormula
@@ -476,7 +482,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				xPrimeEqualsXArray[k] = script.term("=", loopTransFormula.getOutVars().get(outVar) , inVars.get(outVar));
 				k = k + 1;
 			} else {
-				// TODO
+				throw new AssertionError("Could not find inVar for every outVar. Term (x'=x) cannot be constructed.");
 			}
 		}
 		final Term xPrimeEqualsX= Util.and(script, xPrimeEqualsXArray);
@@ -498,8 +504,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
 		final Term leftSideOfImpl = Util.and(script, itGreater1, itSmallerItFinM1);
 		final Term implication = Util.implies(script, leftSideOfImpl, guardOfClosedFormIt);
-		final TermVariable[] itArray = {it};
-		final Term fourthConjunct = script.quantifier(1, itArray, implication, null);
+		final Set<TermVariable> itSet = new HashSet<>();
+		itSet.add(it);
+		final Term fourthConjunct = SmtUtils.quantifier(script, 0, itSet, implication);
 		
 		final int numbOfVars = loopTransFormula.getOutVars().size();
 		Term[] closedFormArray = new Term[numbOfVars];
@@ -523,8 +530,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		
 		final Term disjunction = Util.or(script, finalDisjunct1, conjunction);
 		
-		final TermVariable[] itFinArray = {itFin};
-		final Term loopAccelerationTerm = script.quantifier(0, itFinArray, disjunction, null);
+		Set<TermVariable> itFinSet = new HashSet<>();
+		itFinSet.add(itFin);
+		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinSet, disjunction);
 		
 		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(mServices, mgdScript,
 				true, PqeTechniques.ALL, loopAccelerationTerm);
@@ -535,8 +543,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				loopTransFormula.getBranchEncoders(), loopTransFormula.getAuxVars().isEmpty());
 		
 		tfb.setFormula(loopAccelerationFormulaWithoutQuantifiers);
-		// TODO: right infeasibility?
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		tfb.setInfeasibility(loopTransFormula.isInfeasible());
 		
 		UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
 		return loopAccelerationFormula;
@@ -544,12 +551,45 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	
 	/**
 	 * Create the loop acceleration formula. Use this method if -1 is an eigenvalue of the update matrix.
+	 * General formula:
+	 * (exists ((itFinHalf Int))
+	 * (or
+	 * 	// itFin even
+	 * 	(or
+	 * 		(and (= itFinHalf 0) (not (guard)) (x'=x))
+	 * 		(and
+	 * 			(> itFinHalf 0)
+	 * 			(guard)
+	 * 			(not (guard(closedFormEven(x, 2*itFinHalf))))
+	 * 			(forall ((itHalf Int))
+	 * 				(and
+	 * 					(=>
+	 * 						(and (<= 1 itHalf) (<= itHalf (- itFinHalf 1)))
+	 * 						(guard(closedFormEven(x, 2*itHalf))))
+	 * 					(=>
+	 * 						(and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))
+	 * 						(guard(closedFormOdd(x, 2*itHalf+1))))))
+	 * 			(x' = closedFormEven(x,2*itFinHalf))))
+	 * 	
+	 * 	// itFin odd
+	 * 	(and
+	 * 		(guard)
+	 * 		(not (guard(closedFormOdd(x, 2*itFinHalf+1))))
+	 * 		(forall ((itHalf Int))
+	 * 			(and
+	 * 				(=>
+	 * 					(and (<= 1 itHalf) (<= itHalf itFinHalf))
+	 * 					(guard(closedFormEven(x, 2*itHalf))))
+	 * 				(=>
+	 * 					(and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))
+	 * 					(guard(closedFormOdd(x, 2*itHalf+1))))))
+	 * 		(x' = closedFormOdd(x,2*itFinHalf+1)))))
 	 * @param mgdScript
 	 * @param su
 	 * @param loopTransFormula
 	 * @param guardTf
 	 * @return
-	 */
+	 */	
 	private UnmodifiableTransFormula createLoopAccelerationFormula(ManagedScript mgdScript,
 			SimultaneousUpdate su, UnmodifiableTransFormula loopTransFormula, UnmodifiableTransFormula guardTf) {
 		TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
@@ -560,84 +600,91 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
 		
+		// (and (= itFinHalf 0) (not (guard)) (x'=x))
 		final TermVariable itFinHalf = mgdScript.variable("itFinHalf", sort);
-		// tfb.addAuxVar(itFinHalf);
+		final Term itFinHalfEquals0 = script.term("=", itFinHalf, script.numeral(BigInteger.ZERO));
+		final Term notGuard = Util.not(script, guardTf.getFormula());
+		Term[] xPrimeEqualsXArray = new Term[loopTransFormula.getOutVars().size()];
+		int k = 0;
+		for (IProgramVar outVar : loopTransFormula.getOutVars().keySet()) {
+			if (loopTransFormula.getInVars().containsKey(outVar)) {
+				xPrimeEqualsXArray[k] = script.term("=", loopTransFormula.getOutVars().get(outVar),
+						loopTransFormula.getInVars().get(outVar));
+				k = k + 1;
+			} else {
+				throw new AssertionError("Could not find inVar for every outVar. Term (x'=x) cannot be constructed.");
+			}
+		}
+		final Term xPrimeEqualsX= Util.and(script, xPrimeEqualsXArray);
+		final Term firstFinalDisjunctEven = Util.and(script, itFinHalfEquals0, notGuard, xPrimeEqualsX);
 		
-		// Create the subformula guard(cf(x,itFin)) for both closed forms (even and odd).
+		// (> itFinHalf 0)
+		final Term itFinHalfGreater0 = script.term(">", itFinHalf, script.numeral(BigInteger.ZERO));
 		
-		Map<IProgramVar, TermVariable> inVars = loopTransFormula.getInVars();
+		// (not (guard(closedFormEven(x, 2*itFinHalf))))
+		final Map<IProgramVar, TermVariable> inVars = loopTransFormula.getInVars();
 		HashMap<TermVariable, IProgramVar> inVarsInverted = new HashMap<>();
 		for (IProgramVar inVar : inVars.keySet()) {
 			inVarsInverted.put(inVars.get(inVar), inVar);
 		}
 		final HashMap<TermVariable,Term> closedFormEvenItFin = closedForm(mgdScript, su, itFinHalf, true,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars());
-		final Term guardOfClosedFormEven = guardOfClosedForm(script, guardTf.getFormula(), closedFormEvenItFin,
+		final Term guardOfClosedFormEvenItFin = guardOfClosedForm(script, guardTf.getFormula(), closedFormEvenItFin,
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
 		
-		final HashMap<TermVariable,Term> closedFormOddItFin = closedForm(mgdScript, su, itFinHalf, false,
+		final HashMap<TermVariable,Term> closedFormOddItFin = closedForm(mgdScript, su, itFinHalf, true,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars());
-		final Term guardOfClosedFormOdd = guardOfClosedForm(script, guardTf.getFormula(), closedFormOddItFin,
+		final Term guardOfClosedFormOddItFin = guardOfClosedForm(script, guardTf.getFormula(), closedFormOddItFin,
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
 		
-		// first conjunct: not guard(cf(x,itFin)), here:
-		// (itFin mod 2 = 0 and itFin = 2*itFinHalf and not guard(closedFormEven(x, 2*itFinHalf)))
-			// or (itFin mod 2 = 1 and itFin = 2*itFinHalf+1 and not guard(closedFormOdd(x, 2*itFinHalf+1)))
-		final TermVariable itFin = mgdScript.variable("itFin", sort);
-		final Term itFinMod2 = script.term("mod", itFin, script.numeral(BigInteger.TWO));
-		final Term itMod2Equals0 = script.term("=", itFinMod2, script.numeral(BigInteger.ZERO));
-		final Term twoTimesItHalf = script.term("*", script.numeral(BigInteger.TWO), itFinHalf);
-		final Term itFinEqualsTwoTimesItHalf = script.term("=", itFin, twoTimesItHalf);
-		final Term notGuardEven = Util.not(script, guardOfClosedFormEven);
-		final Term disjunct1 = Util.and(script, itMod2Equals0, itFinEqualsTwoTimesItHalf, notGuardEven);
-		
-		final Term itMod2Equals1 = script.term("=", itFinMod2, script.numeral(BigInteger.ONE));
-		final Term twoTimesItHalfPlus1 = script.term("+", twoTimesItHalf, script.numeral(BigInteger.ONE));
-		final Term itFinEqualsTwoTimesItHalfPlus1 = script.term("=", itFin, twoTimesItHalfPlus1);
-		final Term notGuardOdd = Util.not(script, guardOfClosedFormOdd);
-		final Term disjunct2 = Util.and(script, itMod2Equals1, itFinEqualsTwoTimesItHalfPlus1, notGuardOdd);
-		
-		final Term firstConjunct = script.term(">", itFin, script.numeral(BigInteger.ZERO));
-		
-		final Term secondConjunct = Util.or(script, disjunct1, disjunct2);
-		
-		// second conjunct: forall it.(0 <= it and it <= itFin-1) -> ((it mod 2 = 0 and it = 2*itHalf and
-			// guard(closedFormEven(x,2*itHalf))) (it mod 2 = 1 and it = 2*itHalf+1 and guard(closedFormOdd(x,2*itHalf+1)))).
-		final TermVariable it = mgdScript.variable("it", sort);
-		
-		final Term oneSmallerIt = script.term("<=", script.numeral(BigInteger.ONE), it);
-		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
-		final Term leftSideOfImpl = script.term("and", oneSmallerIt, itSmallerItFinM1);
-		
-		final Term itMod2 = script.term("mod", it, script.numeral(BigInteger.TWO));
-		final Term itMod2Is0 = script.term("=", itMod2, script.numeral(BigInteger.ZERO));
+		// ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1)))
 		final TermVariable itHalf = mgdScript.variable("itHalf", sort);
-		// tfb.addAuxVar(itHalf);
-		final Term itIs2ItHalf = script.term("=", it, script.term("*", script.numeral(BigInteger.TWO), itHalf));
+		final Term oneLeqItHalf = script.term("<=", script.numeral(BigInteger.ONE), itHalf);
+		final Term itHalfLeqItFinHalfM1 = script.term("<=", itHalf, script.term("-", itFinHalf, script.numeral(BigInteger.ONE)));
+		final Term forallTerm1Implication1Left = Util.and(script, oneLeqItHalf, itHalfLeqItFinHalfM1);
+		
+		// (guard(closedFormEven(x, 2*itHalf)))
 		final HashMap<TermVariable,Term> closedFormEvenIt = closedForm(mgdScript, su, itHalf, true,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars());
 		final Term guardOfClosedFormEvenIt = guardOfClosedForm(script, guardTf.getFormula(), closedFormEvenIt,
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
-		final Term firstDisjunct = Util.and(script, itMod2Is0, itIs2ItHalf, guardOfClosedFormEvenIt);
 		
-		final Term itMod2Is1 = script.term("=", itMod2, script.numeral(BigInteger.ONE));
-		final Term itIs2ItHalfP1 = script.term("=", it, script.term("+", script.term("*", script.numeral(BigInteger.TWO), itHalf),
-				script.numeral(BigInteger.ONE)));
-		final HashMap<TermVariable,Term> closedFormOddIt = closedForm(mgdScript, su, itHalf, false,
+		// (=> ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1))) (guard(closedFormEven(x, 2*itHalf))))
+		final Term forallTerm1Implication1 = Util.implies(script, forallTerm1Implication1Left, guardOfClosedFormEvenIt);
+		
+		// ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1))))
+		final Term zeroLeqItHalf = script.term("<=", script.numeral(BigInteger.ZERO), itHalf);
+		final Term forallTerm1Implication2Left = Util.and(script, zeroLeqItHalf, itHalfLeqItFinHalfM1);
+		
+		// (guard(closedFormOdd(x, 2*itHalf+1))
+		final HashMap<TermVariable,Term> closedFormOddIt = closedForm(mgdScript, su, itHalf, true,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars());
 		final Term guardOfClosedFormOddIt = guardOfClosedForm(script, guardTf.getFormula(), closedFormOddIt,
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
-		final Term secondDisjunct = Util.and(script, itMod2Is1, itIs2ItHalfP1, guardOfClosedFormOddIt);
 		
-		final Term rightSideOfImpl = Util.or(script, firstDisjunct, secondDisjunct);
-		final Term implication = Util.implies(script, leftSideOfImpl, rightSideOfImpl);
+		// (=> ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))) (guard(closedFormOdd(x, 2*itHalf+1)))))))
+		final Term forallTerm1Implication2 = Util.implies(script, forallTerm1Implication2Left, guardOfClosedFormOddIt);
 		
-		final TermVariable[] itArray = {it};
-		final Term thirdConjunct2 = script.quantifier(1, itArray, implication, null);
-		final Term thirdConjunct = Util.and(script, guardTf.getFormula(), thirdConjunct2);
+		// (and implication1 implication2)
+		final Term forallTermConjunction1 = Util.and(script, forallTerm1Implication1, forallTerm1Implication2);
 		
-		// Third conjunct: (itFin mod 2 = 0 and itFin = 2*itFinHalf and x' = closedFormEven(x, 2*itFinHalf)
-		// or ((itFin mod 2 = 1 and itFin = 2*itFinHalf+1 and x' = closedFormOdd(x, 2*itFinHalf+1)
+		Set<TermVariable> itHalfSet = new HashSet<>();
+		itHalfSet.add(itHalf);
+		final Term forallTerm1 = SmtUtils.quantifier(script, 1, itHalfSet, forallTermConjunction1);
+		
+		// (=> ((and (<= 1 itHalf) (<= itHalf itFinHalf))) (guard(closedFormEven(x, 2*itHalf))))
+		final Term itHalfLeqItFinHalf = script.term("<=", itHalf, itFinHalf);
+		final Term forallTerm2Implication1Left = Util.and(script, oneLeqItHalf, itHalfLeqItFinHalf);
+		
+		final Term forallTerm2Implication1 = Util.implies(script, forallTerm2Implication1Left, guardOfClosedFormEvenIt);
+		
+		// (=> ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))) (guard(closedFormOdd(x, 2*itHalf+1))))))
+		final Term forallTerm2Implication2 = Util.implies(script, forallTerm1Implication2Left, guardOfClosedFormOddIt);
+		
+		final Term forallTermConjunction2 = Util.and(script, forallTerm2Implication1, forallTerm2Implication2);
+		final Term forallTerm2 = SmtUtils.quantifier(script, 1, itHalfSet, forallTermConjunction2);
+		
+		// (x' = closedFormEven(x,2*itFinHalf))
 		final int numbOfVars = loopTransFormula.getOutVars().size();
 		Term[] closedFormArrayEven = new Term[numbOfVars];
 		int j = 0;
@@ -655,6 +702,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		if (closedFormArrayEven.length > 1) {
 			xPrimedEven = Util.and(script,  closedFormArrayEven);
 		}
+		
+		// (x' = closedFormOdd(x,2*itFinHalf+1))
 		Term[] closedFormArrayOdd = new Term[numbOfVars];
 		int i = 0;
 		for (IProgramVar var : loopTransFormula.getOutVars().keySet()) {
@@ -672,42 +721,30 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			xPrimedOdd = Util.and(script,  closedFormArrayOdd);
 		}
 		
-		final Term disjunctN1 = Util.and(script, itMod2Equals0, itFinEqualsTwoTimesItHalf, xPrimedEven);
-		final Term disjunctN2 = Util.and(script, itMod2Equals1, itFinEqualsTwoTimesItHalfPlus1, xPrimedOdd);
+		// (and (not (guardOfClosedFormEvenItFin)) (forallTerm1) (xPrimedEven))
+		final Term innerConjunction1 = Util.and(script, itFinHalfGreater0, guardTf.getFormula(), Util.not(script,
+				guardOfClosedFormEvenItFin), forallTerm1, xPrimedEven);
 		
-		final Term fourthConjunct = Util.or(script, disjunctN1, disjunctN2);
+		// (and (not (guardOfClosedFormOddItFin) (forallTerm2)) (xPrimedOdd))
+		final Term innerConjunction2 = Util.and(script, guardTf.getFormula(), Util.not(script, guardOfClosedFormOddItFin),
+				forallTerm2, xPrimedOdd);
 		
-		final Term conjunction = Util.and(script, firstConjunct, secondConjunct, thirdConjunct, fourthConjunct);
+		final Term middleDisjunction = Util.or(script, firstFinalDisjunctEven, innerConjunction1);
 		
-		final Term itFinis0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
-		final Term notGuard = Util.not(script, guardTf.getFormula());
+		final Term disjunction = Util.or(script, middleDisjunction, innerConjunction2);
 		
-		Term[] xPrimeEqualsXArray = new Term[loopTransFormula.getOutVars().size()];
-		int k = 0;
-		for (IProgramVar outVar : loopTransFormula.getOutVars().keySet()) {
-			if (inVars.containsKey(outVar)) {
-				xPrimeEqualsXArray[k] = script.term("=", loopTransFormula.getOutVars().get(outVar) , inVars.get(outVar));
-				k = k + 1;
-			} else {
-				// TODO
-			}
-		}
-		final Term xPrimeEqualsX= Util.and(script, xPrimeEqualsXArray);
-		final Term finalDisjunct1 = Util.and(script, itFinis0, notGuard, xPrimeEqualsX);
-		
-		final Term finalDisjunction = Util.or(script, finalDisjunct1, conjunction);
-		
-		final TermVariable[] itFinArray = {itFin};
-		final Term loopAccelerationTerm = script.quantifier(0, itFinArray, finalDisjunction, null);
+		Set<TermVariable> itFinHalfSet = new HashSet<>();
+		itFinHalfSet.add(itFinHalf);
+		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinHalfSet, disjunction);
 		
 		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(mServices, mgdScript,
 				true, PqeTechniques.ALL, loopAccelerationTerm);
 		
-		tfb.setFormula(loopAccelerationFormulaWithoutQuantifiers);
-		// TODO: right infeasibility?
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		tfb.setInfeasibility(loopTransFormula.isInfeasible());
 		
+		tfb.setFormula(loopAccelerationFormulaWithoutQuantifiers);
 		UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
+		
 		return loopAccelerationFormula;
 	}
 
