@@ -463,7 +463,7 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
         msg_detail = msg
 
         if runs:
-            fastest = n_min([x for x in results if x.category() == r.category() and x.message() == r.message()],
+            fastest = n_min([x for x in results if x.category() == r.category() and x.message() == r.message() and os.path.basename(x.logfile) in runs],
                             args.fastest_n,
                             key=lambda y: runs[os.path.basename(y.logfile)].walltime)
             for f in fastest:
@@ -524,12 +524,12 @@ def set_unknowns(
     for r in results:
         if r.classification is None:
             basename = ntpath.basename(file)
-            run = runs[basename]
-            if run.is_timeout():
+            run = runs.get(basename,None)
+            if run and run.is_timeout():
                 real_results += [
                     Result(file, (str_benchexec_timeout, "..."), r.call, r.version)
                 ]
-            elif run.is_oom():
+            elif run and run.is_oom():
                 real_results += [
                     Result(file, (str_benchexec_oom, "..."), r.call, r.version)
                 ]
@@ -628,7 +628,11 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
     for xml in list_xml_filepaths(input_dir):
         root = ET.parse(xml).getroot()
         result = root.find(".")
-        name = result.attrib["name"].split(".")
+        name_attr = result.attrib.get("name", None)
+        if not name_attr:
+            print(f"Run in xm file {xml} has no name! Cannot detect toolname, ignoring .xml")
+            continue
+        name = name_attr.split(".")
         tool_name = name[0]
         for elem in root.findall(".//run"):
             # files = elem.attrib["files"]
