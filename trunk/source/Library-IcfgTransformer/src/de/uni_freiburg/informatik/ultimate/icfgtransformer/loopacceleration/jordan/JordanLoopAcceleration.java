@@ -439,11 +439,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * General formula:
 	 * (exists ((itFin Int))
 	 * ((or
-	 * 	(and (= itFin 0) (not (guard)) (x'=x))
+	 * 	(and (= itFin 0) (not (guard(x)) (x'=x))
 	 * 	(and
 	 * 		(> itFin 0)
 	 * 		(not (guard(closedForm(x, itFin))))
-	 * 		(guard)
+	 * 		(guard(x))
 	 * 		(forall ((it Int))
 	 * 			(=>
 	 * 				(and (<= 1 it) (<= it (- itFin 1)))
@@ -495,10 +495,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term notGuardOfCf = Util.not(script, guardOfClosedFormItFin);
 		
 		// (forall ((it Int)) (=> (and (<= 1 it) (<= it (- itFin 1))) (guard(closedForm(x,it)))))
-		final TermVariable it = mgdScript.variable("itFin", sort);
+		final TermVariable it = mgdScript.variable("it", sort);
 		final Term itGreater1 = script.term("<=", script.numeral(BigInteger.ONE), it);
 		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
-		final HashMap<TermVariable,Term> closedFormIt = closedForm(mgdScript, su, itFin,
+		final HashMap<TermVariable,Term> closedFormIt = closedForm(mgdScript, su, it,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars());
 		final Term guardOfClosedFormIt = guardOfClosedForm(script, guardTf.getFormula(), closedFormIt,
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
@@ -506,7 +506,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term implication = Util.implies(script, leftSideOfImpl, guardOfClosedFormIt);
 		final Set<TermVariable> itSet = new HashSet<>();
 		itSet.add(it);
-		final Term fourthConjunct = SmtUtils.quantifier(script, 0, itSet, implication);
+		final Term fourthConjunct = SmtUtils.quantifier(script, 1, itSet, implication);
 		
 		final int numbOfVars = loopTransFormula.getOutVars().size();
 		Term[] closedFormArray = new Term[numbOfVars];
@@ -556,10 +556,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * (or
 	 * 	// itFin even
 	 * 	(or
-	 * 		(and (= itFinHalf 0) (not (guard)) (x'=x))
+	 * 		(and (= itFinHalf 0) (not (guard(x))) (x'=x))
 	 * 		(and
 	 * 			(> itFinHalf 0)
-	 * 			(guard)
+	 * 			(guard(x))
 	 * 			(not (guard(closedFormEven(x, 2*itFinHalf))))
 	 * 			(forall ((itHalf Int))
 	 * 				(and
@@ -573,7 +573,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * 	
 	 * 	// itFin odd
 	 * 	(and
-	 * 		(guard)
+	 * 		(guard(x))
 	 * 		(not (guard(closedFormOdd(x, 2*itFinHalf+1))))
 	 * 		(forall ((itHalf Int))
 	 * 			(and
