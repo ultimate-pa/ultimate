@@ -52,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
@@ -533,11 +535,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		Set<TermVariable> itFinSet = new HashSet<>();
 		itFinSet.add(itFin);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinSet, disjunction);
-		
+		final Term nnf = new NnfTransformer(mgdScript, mServices, QuantifierHandling.KEEP)
+				.transform(loopAccelerationTerm);
 		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(mServices, mgdScript,
-				true, PqeTechniques.ALL, loopAccelerationTerm);
-		
-		TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
+				true, PqeTechniques.ALL, nnf);
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
 				loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
 				loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
 				loopTransFormula.getBranchEncoders(), loopTransFormula.getAuxVars().isEmpty());
@@ -736,10 +739,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		Set<TermVariable> itFinHalfSet = new HashSet<>();
 		itFinHalfSet.add(itFinHalf);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinHalfSet, disjunction);
-		
+		final Term nnf = new NnfTransformer(mgdScript, mServices, QuantifierHandling.KEEP)
+				.transform(loopAccelerationTerm);
 		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(mServices, mgdScript,
-				true, PqeTechniques.ALL, loopAccelerationTerm);
-		
+				true, PqeTechniques.ALL, nnf);
+
 		tfb.setInfeasibility(loopTransFormula.isInfeasible());
 		
 		tfb.setFormula(loopAccelerationFormulaWithoutQuantifiers);
