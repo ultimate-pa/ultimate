@@ -562,6 +562,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	/**
 	 * Create the loop acceleration formula. Use this method if -1 is an eigenvalue of the update matrix.
 	 * General formula:
+	 * <pre>
 	 * (exists ((itFinHalf Int))
 	 * (or
 	 * 	// itFin even
@@ -594,6 +595,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * 					(and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))
 	 * 					(guard(closedFormOdd(x, 2*itHalf+1))))))
 	 * 		(x' = closedFormOdd(x,2*itFinHalf+1)))))
+	 * </pre>
 	 * @param mgdScript
 	 * @param su
 	 * @param loopTransFormula
