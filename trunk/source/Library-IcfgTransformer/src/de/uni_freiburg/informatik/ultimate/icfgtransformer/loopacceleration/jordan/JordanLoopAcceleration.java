@@ -443,6 +443,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * Create the loop acceleration formula.
 	 * Use this method only if -1 is not an eigenvalue of the update matrix.
 	 * General formula:
+	 * <pre>
 	 * (exists ((itFin Int))
 	 * ((or
 	 * 	(and (= itFin 0) (not (guard(x)) (x'=x))
@@ -455,6 +456,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * 				(and (<= 1 it) (<= it (- itFin 1)))
 	 * 				(guard(closedForm(x,it)))))
 	 * 		((x' = closedForm(x,itFin)))))))
+	 * </pre>
 	 * @param mgdScript
 	 * @param su
 	 * @param loopTransFormula
