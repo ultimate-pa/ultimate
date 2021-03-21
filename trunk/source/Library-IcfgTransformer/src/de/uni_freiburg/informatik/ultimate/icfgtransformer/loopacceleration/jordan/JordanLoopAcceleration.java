@@ -106,27 +106,29 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	private IIcfg<OUTLOC> accelerateAll() {
 		final LoopExtraction<INLOC, OUTLOC> loopExtraction = new LoopExtraction<>(mLogger, mOriginalIcfg);
 		for(final SimpleLoop loop : loopExtraction.getLoopTransFormulas()){
-			accelerateLoop(loop.mLoopTransFormula);
+			accelerateLoop(mServices, mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), loop.mLoopTransFormula);
 		}
 		return null;
 	}
 
-	private UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loopTransFormula) {
-		final ManagedScript mMgdScript = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
-		final UnmodifiableTransFormula guardTf =
-				TransFormulaUtils.computeGuard(loopTransFormula, mMgdScript, mServices, mLogger);
-		mLogger.info("Guard: " + guardTf);
-		final SimultaneousUpdate su = new SimultaneousUpdate(loopTransFormula, mMgdScript);
+	public static UnmodifiableTransFormula accelerateLoop(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula) {
+		final ILogger logger = services.getLoggingService().getLogger(JordanLoopAcceleration.class);
+		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services,
+				logger);
+		logger.info("Guard: " + guardTf);
+		final SimultaneousUpdate su = new SimultaneousUpdate(loopTransFormula, mgdScript);
 
-		// Try loop acceleration formula for eigenvalues only 0 and 1 and no terms like 1/2*n*(n-1).
+		// Try loop acceleration formula for eigenvalues only 0 and 1 and no terms like
+		// 1/2*n*(n-1).
 		// If -1 is an eigenvalue or terms like 1/2*n*(n-1) occur, try other formula.
 		// For other formula, quantifier elimination may not work.
 		UnmodifiableTransFormula loopAccelerationFormula;
 		try {
-			loopAccelerationFormula = createLoopAccelerationFormulaRestricted(mMgdScript, su, loopTransFormula,
+			loopAccelerationFormula = createLoopAccelerationFormulaRestricted(services, mgdScript, su, loopTransFormula,
 					guardTf);
 		} catch (final AssertionError e) {
-			loopAccelerationFormula = createLoopAccelerationFormula(mMgdScript, su, loopTransFormula, guardTf);
+			loopAccelerationFormula = createLoopAccelerationFormula(services, mgdScript, su, loopTransFormula, guardTf);
 		}
 		return loopAccelerationFormula;
 	}
@@ -457,14 +459,15 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * 				(guard(closedForm(x,it)))))
 	 * 		((x' = closedForm(x,itFin)))))))
 	 * </pre>
+	 * @param services
 	 * @param mgdScript
 	 * @param su
 	 * @param loopTransFormula
 	 * @param guardTf
 	 * @return
 	 */
-	private UnmodifiableTransFormula createLoopAccelerationFormulaRestricted(final ManagedScript mgdScript,
-			final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
+	private static UnmodifiableTransFormula createLoopAccelerationFormulaRestricted(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
 			final UnmodifiableTransFormula guardTf) {
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
@@ -542,9 +545,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Set<TermVariable> itFinSet = new HashSet<>();
 		itFinSet.add(itFin);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinSet, disjunction);
-		final Term nnf = new NnfTransformer(mgdScript, mServices, QuantifierHandling.KEEP)
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
 				.transform(loopAccelerationTerm);
-		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(mServices, mgdScript,
+		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(services, mgdScript,
 				true, PqeTechniques.ALL, nnf);
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
@@ -596,14 +599,15 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * 					(guard(closedFormOdd(x, 2*itHalf+1))))))
 	 * 		(x' = closedFormOdd(x,2*itFinHalf+1)))))
 	 * </pre>
+	 * @param services
 	 * @param mgdScript
 	 * @param su
 	 * @param loopTransFormula
 	 * @param guardTf
 	 * @return
 	 */
-	private UnmodifiableTransFormula createLoopAccelerationFormula(final ManagedScript mgdScript,
-			final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
+	private static UnmodifiableTransFormula createLoopAccelerationFormula(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
 			final UnmodifiableTransFormula guardTf) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
 				loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
@@ -749,9 +753,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Set<TermVariable> itFinHalfSet = new HashSet<>();
 		itFinHalfSet.add(itFinHalf);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinHalfSet, disjunction);
-		final Term nnf = new NnfTransformer(mgdScript, mServices, QuantifierHandling.KEEP)
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
 				.transform(loopAccelerationTerm);
-		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(mServices, mgdScript,
+		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(services, mgdScript,
 				true, PqeTechniques.ALL, nnf);
 
 		tfb.setInfeasibility(loopTransFormula.isInfeasible());
