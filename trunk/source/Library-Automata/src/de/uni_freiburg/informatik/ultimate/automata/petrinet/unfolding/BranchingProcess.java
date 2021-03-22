@@ -75,7 +75,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
 
 	private final HashRelation<PLACE, Condition<LETTER, PLACE>> mPlace2Conds;
-	private final HashRelation<LETTER, Event<LETTER, PLACE>> mLetter2Events;
+	private final HashRelation<ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> mTransitions2Events;
 
 	/**
 	 * Dummy root event with all initial conditions as successors.
@@ -133,7 +133,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		mNet = net;
 		mOrder = order;
 		mPlace2Conds = new HashRelation<>();
-		mLetter2Events = new HashRelation<>();
+		mTransitions2Events = new HashRelation<>();
 		mConditions = new HashSet<>();
 		mEvents = new HashSet<>();
 		if (useB32Optimization) {
@@ -182,7 +182,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		event.setSerialNumber(mEvents.size());
 		mEvents.add(event);
 		if (event.getTransition() != null) {
-			mLetter2Events.addPair(event.getTransition().getSymbol(), event);
+			mTransitions2Events.addPair(event.getTransition(), event);
 		}
 		if (!mUseFirstbornCutoffCheck && !event.isCutoffEvent()) {
 			mMarkingNonCutoffEventRelation.addPair(event.getMark().hashCode(), event);
@@ -278,14 +278,14 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	}
 
 	/**
-	 * Gets the set of events associated with the given letter.
+	 * Gets the set of events associated with the given transition.
 	 *
-	 * @param letter
-	 *            A letter.
+	 * @param transition
+	 *            A transition.
 	 * @return A set of events.
 	 */
-	public Set<Event<LETTER, PLACE>> getEvents(final LETTER letter) {
-		return Collections.unmodifiableSet(mLetter2Events.getImage(letter));
+	public Set<Event<LETTER, PLACE>> getEvents(final ITransition<LETTER, PLACE> transition) {
+		return Collections.unmodifiableSet(mTransitions2Events.getImage(transition));
 	}
 
 	/**

@@ -83,8 +83,9 @@ public class LiptonReduction<L, P> {
 	private BranchingProcess<L, P> mBranchingProcess;
 	private final Set<Event<L, P>> mCutOffEvents;
 	protected CoenabledRelation<L, P> mCoEnabledRelation;
-	private final Map<L, List<L>> mSequentialCompositions = new HashMap<>();
+	private final Map<L, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
 	private final Map<L, Set<L>> mChoiceCompositions = new HashMap<>();
+	private final Map<ITransition<L, P>, ITransition<L, P>> mNewToOldTransitions;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
 	private BoundedPetriNet<L, P> mResult;
@@ -111,6 +112,7 @@ public class LiptonReduction<L, P> {
 		mMoverCheck = independenceRelation;
 		mPetriNet = petriNet;
 		mCutOffEvents = new HashSet<>();
+		mNewToOldTransitions = new HashMap<>();
 	}
 
 	/**
@@ -358,8 +360,7 @@ public class LiptonReduction<L, P> {
 		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> composition : pendingCompositions) {
 			mCoEnabledRelation.copyRelationships(composition.getSecond(),
 					composedLetters2Transitions.get(composition.getFirst()));
-			updateSequentialCompositions(composition.getFirst(), composition.getSecond().getSymbol(),
-					composition.getThird().getSymbol());
+			updateSequentialCompositions(composition.getFirst(), composition.getSecond(), composition.getThird());
 			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
 		}
@@ -379,24 +380,25 @@ public class LiptonReduction<L, P> {
 	 *
 	 * @param composedLetter
 	 *            The sequentially composed letter.
-	 * @param letter1
-	 *            The first letter that has been sequentially composed.
-	 * @param letter2
-	 *            The second letter that has been sequentially composed.
+	 * @param transition1
+	 *            The first transition that has been sequentially composed.
+	 * @param transition2
+	 *            The second transition that has been sequentially composed.
 	 */
-	private void updateSequentialCompositions(final L composedLetter, final L letter1, final L letter2) {
-		final List<L> combined = new ArrayList<>();
+	private void updateSequentialCompositions(final L composedLetter, final ITransition<L, P> transition1,
+			final ITransition<L, P> transition2) {
+		final List<ITransition<L, P>> combined = new ArrayList<>();
 
-		if (mSequentialCompositions.containsKey(letter1)) {
-			combined.addAll(mSequentialCompositions.get(letter1));
+		if (mSequentialCompositions.containsKey(transition1.getSymbol())) {
+			combined.addAll(mSequentialCompositions.get(transition1.getSymbol()));
 		} else {
-			combined.add(letter1);
+			combined.add(transition1);
 		}
 
-		if (mSequentialCompositions.containsKey(letter2)) {
-			combined.addAll(mSequentialCompositions.get(letter2));
+		if (mSequentialCompositions.containsKey(transition2.getSymbol())) {
+			combined.addAll(mSequentialCompositions.get(transition2.getSymbol()));
 		} else {
-			combined.add(letter2);
+			combined.add(transition2);
 		}
 
 		mSequentialCompositions.put(composedLetter, combined);
@@ -459,29 +461,31 @@ public class LiptonReduction<L, P> {
 
 		final Set<Event<L, P>> t1Events;
 		if (mSequentialCompositions.containsKey(t1.getSymbol())) {
-			final List<L> originalLetters = mSequentialCompositions.get(t1.getSymbol());
-			t1Events = mBranchingProcess.getEvents(originalLetters.get(0));
-			ignoredEvents.addAll(originalLetters.stream().flatMap(l -> mBranchingProcess.getEvents(l).stream())
+			final List<ITransition<L, P>> originalTransitions = mSequentialCompositions.get(t1.getSymbol());
+			final ITransition<L, P> relevantTransition = originalTransitions.get(0);
+			t1Events = mBranchingProcess.getEvents(getOriginalTransition(relevantTransition));
+			ignoredEvents.addAll(originalTransitions.stream().flatMap(t -> mBranchingProcess.getEvents(t).stream())
 					.collect(Collectors.toList()));
 		} else if (mChoiceCompositions.containsKey(t1.getSymbol())) {
 			// Skip this case for now
 			return false;
 		} else {
-			t1Events = mBranchingProcess.getEvents(t1.getSymbol());
+			t1Events = mBranchingProcess.getEvents(getOriginalTransition(t1));
 			ignoredEvents.addAll(t1Events);
 		}
 
 		final Set<Event<L, P>> t2Events;
 		if (mSequentialCompositions.containsKey(t2.getSymbol())) {
-			final List<L> originalLetters = mSequentialCompositions.get(t2.getSymbol());
-			t2Events = mBranchingProcess.getEvents(originalLetters.get(originalLetters.size() - 1));
-			ignoredEvents.addAll(originalLetters.stream().flatMap(l -> mBranchingProcess.getEvents(l).stream())
+			final List<ITransition<L, P>> originalTransitions = mSequentialCompositions.get(t2.getSymbol());
+			final ITransition<L, P> relevantTransition = originalTransitions.get(originalTransitions.size() - 1);
+			t2Events = mBranchingProcess.getEvents(getOriginalTransition(relevantTransition));
+			ignoredEvents.addAll(originalTransitions.stream().flatMap(t -> mBranchingProcess.getEvents(t).stream())
 					.collect(Collectors.toList()));
 		} else if (mChoiceCompositions.containsKey(t2.getSymbol())) {
 			// Skip this case for now
 			return false;
 		} else {
-			t2Events = mBranchingProcess.getEvents(t2.getSymbol());
+			t2Events = mBranchingProcess.getEvents(getOriginalTransition(t2));
 			ignoredEvents.addAll(t2Events);
 		}
 
@@ -497,6 +501,18 @@ public class LiptonReduction<L, P> {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Returns the equivalent transition as originally used in the Petri net for which the Branching Process was
+	 * calculated.
+	 *
+	 * @param t
+	 *            A transition. The transition must not be the result of a composition.
+	 * @return The equivalent transition used in the original Petri net.
+	 */
+	private ITransition<L, P> getOriginalTransition(final ITransition<L, P> t) {
+		return mNewToOldTransitions.getOrDefault(t, t);
 	}
 
 	private boolean containsEventInBetween(final Event<L, P> e1, final Event<L, P> e2,
@@ -561,6 +577,7 @@ public class LiptonReduction<L, P> {
 		final BoundedPetriNet<L, P> newPetriNet = CopySubnet.copy(mServices, petriNet, transitionsToKeep,
 				petriNet.getAlphabet(), true, oldToNewTransitions);
 		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
+		oldToNewTransitions.forEach((oldT, newT) -> mNewToOldTransitions.put(newT, getOriginalTransition(oldT)));
 		letters2Transitions.replaceAll((l, t) -> oldToNewTransitions.get(t));
 		return newPetriNet;
 	}
@@ -631,7 +648,8 @@ public class LiptonReduction<L, P> {
 	}
 
 	public Map<L, List<L>> getSequentialCompositions() {
-		return mSequentialCompositions;
+		return mSequentialCompositions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+				e -> e.getValue().stream().map(ITransition::getSymbol).collect(Collectors.toList())));
 	}
 
 	public Map<L, Set<L>> getChoiceCompositions() {
