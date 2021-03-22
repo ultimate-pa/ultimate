@@ -49,6 +49,9 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	/**
 	 * Method to create the sleep set state according to a given state and sleep set.
 	 *
+	 * Implementations must ensure that states which should be considered equal are indeed equal according to their
+	 * {{@link #equals(Object)} method. In other words, the caller does not cache results of calls to this method.
+	 *
 	 * @param state
 	 *            The given state
 	 * @param sleepset
@@ -58,7 +61,37 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	R createSleepSetState(S state, Set<L> sleepset);
 
 	/**
-	 * Default implementation of the interface, which represents the sleep set state as a pair.
+	 * Simple implementation of the interface, which disregards the sleep set and simply returns the automaton state.
+	 *
+	 * As a result, the reduced automaton will be a sub-automaton of the input automaton, with some transitions removed.
+	 * No unrolling of loops or unfolding of branches is performed. While guaranteeing a small automaton size in terms
+	 * of states, this yields possibly non-minimal reductions (in terms of the language).
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters
+	 * @param <S>
+	 *            The type of states in the original (and in the reduced) automaton.
+	 */
+	public static class NoUnrolling<L, S> implements ISleepSetStateFactory<L, S, S> {
+		@Override
+		public S createEmptyStackState() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public S createSleepSetState(final S state, final Set<L> sleepset) {
+			return state;
+		}
+	}
+
+	/**
+	 * Simple implementation of the interface, which represents the sleep set state as a pair.
+	 *
+	 * Hence the reduced automaton unrolls loops and unfolds branches in the original automaton as far as necessary to
+	 * achieve a minimal reduction (in terms of the language). Of course, this can lead to larger automata in terms of
+	 * states; in the worst case exponentially (in the size of the alphabet) more states.
 	 *
 	 * @author Marcel Ebbinghaus
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -68,7 +101,7 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	 * @param <S>
 	 *            The type of states in the original automaton
 	 */
-	public static class DefaultSleepSetStateFactory<L, S> implements ISleepSetStateFactory<L, S, Pair<S, Set<L>>> {
+	public static class MinimalReduction<L, S> implements ISleepSetStateFactory<L, S, Pair<S, Set<L>>> {
 		@Override
 		public Pair<S, Set<L>> createEmptyStackState() {
 			throw new UnsupportedOperationException();
