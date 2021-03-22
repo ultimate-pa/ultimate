@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * unfolds and unrolls the input automaton, in order to guarantee a reduction that is minimal (in terms of the accepted
  * language).
  *
+ * @deprecated Will be superseded by {@link SleepSetDelayReduction}
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
@@ -58,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @param <R>
  *            The type of states of the reduced automaton that is built on-the-fly.
  */
+@Deprecated(since = "2021-03-22")
 public class SleepSetNewStateReduction<L, S, R> {
 	private final ISleepSetStateFactory<L, S, R> mStateFactory;
 	private final ISleepSetOrder<S, L> mOrder;
