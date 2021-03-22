@@ -77,10 +77,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -100,8 +98,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	public static final String ULTIMATE_INIT = "ULTIMATE.init";
 
 	public static final String ULTIMATE_START = "ULTIMATE.start";
-
-	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -483,7 +479,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(pe, upreasons);
 			return;
-		} else if (isAngelicallySafe(pe)) {
+		}
+		if (isAngelicallySafe(pe)) {
 			mLogger.info("Ignoring angelically safe counterexample");
 			return;
 		}
@@ -571,13 +568,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return last.getTarget();
 	}
 
-	private boolean interpolationModeSwitchNeeded() {
-		final SolverMode solver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
-		return solver == SolverMode.External_PrincessInterpolationMode;
-	}
-
-	public final static class AllErrorsAtOnceDebugIdentifier extends DebugIdentifier {
+	public static final class AllErrorsAtOnceDebugIdentifier extends DebugIdentifier {
 
 		public static final AllErrorsAtOnceDebugIdentifier INSTANCE = new AllErrorsAtOnceDebugIdentifier();
 
