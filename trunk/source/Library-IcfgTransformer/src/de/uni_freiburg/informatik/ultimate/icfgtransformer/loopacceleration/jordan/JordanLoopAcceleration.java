@@ -27,9 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -54,6 +56,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
@@ -63,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -128,6 +134,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		} catch (final AssertionError e) {
 			loopAccelerationFormula = createLoopAccelerationFormula(mMgdScript, su, loopTransFormula, guardTf);
 		}
+		
+		// UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(mMgdScript, su, loopTransFormula, guardTf);
+		
 		return loopAccelerationFormula;
 	}
 
@@ -556,6 +565,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		tfb.setInfeasibility(loopTransFormula.isInfeasible());
 
 		final UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
+		
+		checkPropertiesOfLoopAccelerationFormulaRestricted(mgdScript, loopTransFormula, loopAccelerationFormula, guardTf,
+				xPrimeEqualsX, guardOfClosedFormIt, it);
+		
 		return loopAccelerationFormula;
 	}
 
@@ -644,8 +657,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars());
 		final Term guardOfClosedFormEvenItFin = guardOfClosedForm(script, guardTf.getFormula(), closedFormEvenItFin,
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
-
-		final HashMap<TermVariable,Term> closedFormOddItFin = closedForm(mgdScript, su, itFinHalf, true,
+		
+		final HashMap<TermVariable,Term> closedFormOddItFin = closedForm(mgdScript, su, itFinHalf, false,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars());
 		final Term guardOfClosedFormOddItFin = guardOfClosedForm(script, guardTf.getFormula(), closedFormOddItFin,
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
@@ -670,7 +683,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term forallTerm1Implication2Left = Util.and(script, zeroLeqItHalf, itHalfLeqItFinHalfM1);
 
 		// (guard(closedFormOdd(x, 2*itHalf+1))
-		final HashMap<TermVariable,Term> closedFormOddIt = closedForm(mgdScript, su, itHalf, true,
+		final HashMap<TermVariable,Term> closedFormOddIt = closedForm(mgdScript, su, itHalf, false,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars());
 		final Term guardOfClosedFormOddIt = guardOfClosedForm(script, guardTf.getFormula(), closedFormOddIt,
 				inVars, inVarsInverted, loopTransFormula.getOutVars());
@@ -758,8 +771,142 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		tfb.setFormula(loopAccelerationFormulaWithoutQuantifiers);
 		final UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-
+		
+		checkPropertiesOfLoopAccelerationFormula(mgdScript, loopTransFormula, loopAccelerationFormula,
+				guardTf, xPrimeEqualsX, guardOfClosedFormEvenIt, guardOfClosedFormOddIt, itHalf);
+		
 		return loopAccelerationFormula;
+	}
+	
+	/**
+	 * The resulting acceleration formula describes a subset R* of the reflexive transitive closure given by a formula
+	 * ((x = x' or (exists n, x_1,...,x_n. x R x_1 R x_2 R...R x_n R x')) and not exists x''. x'Rx''). This method tests
+	 * the correctness of the acceleration formula. It checks whether
+	 * {(x,x') | x = x' and not guard(x')}, {(x,x') | loopTransFormula(x,x') and not guard(closedForm(x,1))},
+	 * {(x,x') | sequentialComposition(x,x') and not guard(closedForm(x,2)} are subsets of R*. It also checks whether
+	 * a "havoc" of all assigned variables is a superset of R*.
+	 * @param mgdScript
+	 * @param loopTransFormula
+	 * @param loopAccelerationFormula
+	 * @param guardTf
+	 * @param xPrimeEqualsX
+	 * @param guardOfClosedForm
+	 * @param it
+	 */
+	private void checkPropertiesOfLoopAccelerationFormulaRestricted(ManagedScript mgdScript, UnmodifiableTransFormula loopTransFormula,
+			UnmodifiableTransFormula loopAccelerationFormula, UnmodifiableTransFormula guardTf, Term xPrimeEqualsX,
+			Term guardOfClosedForm, TermVariable it) {
+		final Script script = mgdScript.getScript();
+		// Check reflexivity.
+		// Check: (x = x') and not (guard(x)) and not (loopAccelerationFormula(x,x')) is unsat.
+		final Term notGuard = Util.not(script, guardTf.getFormula());
+		final Term notLoopAccFormula = Util.not(script, loopAccelerationFormula.getFormula());
+		assert Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) == LBool.UNSAT;
+		
+		// Check whether relation itself is subset of reflexive transitive closure.
+		// Check: loopTransFormula(x,x') and not (guard(closedForm(x,1))) and not (loopAccelerationFormula(x,x')) is unsat.
+		final Map<TermVariable, ConstantTerm> substitutionMapping1 = new HashMap<>();
+		substitutionMapping1.put(it, (ConstantTerm) script.numeral(BigInteger.ONE));
+		final Substitution subst1 = new Substitution(script, substitutionMapping1);
+		final Term notGuardOfClosedForm1 = Util.not(script, subst1.transform(guardOfClosedForm));
+		assert Util.checkSat(script, Util.and(script, loopTransFormula.getFormula(), notGuardOfClosedForm1, notLoopAccFormula)) ==
+				LBool.UNSAT;
+		
+		// Check whether sequential composition of relation with itself is subset of reflexive transitive closure.
+		// Check: sequCompo(x,x') and not (guard(closedForm(x,2))) and not (loopAccelerationFormula(x,x')) is unsat.
+		List<UnmodifiableTransFormula> loopTransFormulaList = new ArrayList<>();
+		loopTransFormulaList.add(loopTransFormula);
+		loopTransFormulaList.add(loopTransFormula);
+		
+		UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(mLogger,
+				mServices, mgdScript, true, true, false, XnfConversionTechnique.BDD_BASED, SimplificationTechnique.NONE,
+				loopTransFormulaList);
+		final Map<TermVariable, TermVariable> substitutionMappingSc = new HashMap<>();
+		for (IProgramVar iVar : sequentialComposition.getInVars().keySet()) {
+			substitutionMappingSc.put(sequentialComposition.getInVars().get(iVar), loopAccelerationFormula.getInVars().get(iVar));
+		}
+		for (IProgramVar iVar : sequentialComposition.getOutVars().keySet()) {
+			substitutionMappingSc.put(sequentialComposition.getOutVars().get(iVar), loopAccelerationFormula.getOutVars().get(iVar));
+		}
+		final Substitution substSc = new Substitution(script, substitutionMappingSc);
+		final Term sequentialCompositionSubst = substSc.transform(sequentialComposition.getFormula());
+		final Map<TermVariable, ConstantTerm> substitutionMapping2 = new HashMap<>();
+		substitutionMapping2.put(it, (ConstantTerm) script.numeral(BigInteger.TWO));
+		final Substitution subst2 = new Substitution(script, substitutionMapping2);
+		final Term notGuardOfClosedForm2 = Util.not(script, subst2.transform(guardOfClosedForm));
+		assert Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
+				notLoopAccFormula)) == LBool.UNSAT;
+		
+		// Check whether "havoc" of all variables is superset of reflexive transitive closure.
+		// Check: loopAccelerationFormula(x,x') and (not x = x') and (not guard(x) is unsat.
+		assert Util.checkSat(script, Util.and(script, loopAccelerationFormula.getFormula(), Util.not(script, 
+				xPrimeEqualsX), notGuard)) == LBool.UNSAT;
+	}
+	
+	/**
+	 * The resulting acceleration formula describes a subset R* of the reflexive transitive closure given by a formula
+	 * ((x = x' or (exists n, x_1,...,x_n. x R x_1 R x_2 R...R x_n R x')) and not exists x''. x'Rx''). This method tests
+	 * the correctness of the acceleration formula. It checks whether
+	 * {(x,x') | x = x' and not guard(x')}, {(x,x') | loopTransFormula(x,x') and not guard(closedFormOdd(x,1))},
+	 * {(x,x') | sequentialComposition(x,x') and not guard(closedFormEven(x,2)} are subsets of R*. It also checks whether
+	 * a "havoc" of all assigned variables is a superset of R*.
+	 * @param mgdScript
+	 * @param loopTransFormula
+	 * @param loopAccelerationFormula
+	 * @param guardTf
+	 * @param xPrimeEqualsX
+	 * @param guardOfClosedFormEven
+	 * @param guardOfClosedFormOdd
+	 * @param itHalf
+	 */
+	private void checkPropertiesOfLoopAccelerationFormula(ManagedScript mgdScript, UnmodifiableTransFormula loopTransFormula,
+			UnmodifiableTransFormula loopAccelerationFormula, UnmodifiableTransFormula guardTf, Term xPrimeEqualsX,
+			Term guardOfClosedFormEven, Term guardOfClosedFormOdd, TermVariable itHalf) {
+		final Script script = mgdScript.getScript();
+		// Check reflexivity.
+		// Check: (x = x') and not (guard(x)) and not (loopAccelerationFormula(x,x')) is unsat.
+		final Term notGuard = Util.not(script, guardTf.getFormula());
+		final Term notLoopAccFormula = Util.not(script, loopAccelerationFormula.getFormula());
+		assert Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) == LBool.UNSAT;
+		
+		// Check whether relation itself is subset of reflexive transitive closure.
+		// Check: loopTransFormula(x,x') and not (guard(closedFormEven(x,1))) and not (loopAccelerationFormula(x,x')) is unsat.
+		final Map<TermVariable, ConstantTerm> substitutionMapping1 = new HashMap<>();
+		substitutionMapping1.put(itHalf, (ConstantTerm) script.numeral(BigInteger.ZERO));
+		Substitution subst1 = new Substitution(script, substitutionMapping1);
+		Term notGuardOfClosedForm1 = Util.not(script, subst1.transform(guardOfClosedFormOdd));
+		assert Util.checkSat(script, Util.and(script, loopTransFormula.getFormula(), notGuardOfClosedForm1, notLoopAccFormula)) ==
+				LBool.UNSAT;
+		
+		// Check whether sequential composition of relation with itself is subset of reflexive transitive closure.
+		// Check: sequCompo(x,x') and not (guard(closedForm(x,2))) and not (loopAccelerationFormula(x,x')) is unsat.
+		List<UnmodifiableTransFormula> loopTransFormulaList = new ArrayList<>();
+		loopTransFormulaList.add(loopTransFormula);
+		loopTransFormulaList.add(loopTransFormula);
+				
+		UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(mLogger,
+				mServices, mgdScript, true, true, false, XnfConversionTechnique.BDD_BASED, SimplificationTechnique.NONE,
+				loopTransFormulaList);
+		final Map<TermVariable, TermVariable> substitutionMappingSc = new HashMap<>();
+		for (IProgramVar iVar : sequentialComposition.getInVars().keySet()) {
+			substitutionMappingSc.put(sequentialComposition.getInVars().get(iVar), loopAccelerationFormula.getInVars().get(iVar));
+		}
+		for (IProgramVar iVar : sequentialComposition.getOutVars().keySet()) {
+			substitutionMappingSc.put(sequentialComposition.getOutVars().get(iVar), loopAccelerationFormula.getOutVars().get(iVar));
+		}
+		final Substitution substSc = new Substitution(script, substitutionMappingSc);
+		final Term sequentialCompositionSubst = substSc.transform(sequentialComposition.getFormula());
+		final Map<TermVariable, ConstantTerm> substitutionMapping2 = new HashMap<>();
+		substitutionMapping2.put(itHalf, (ConstantTerm) script.numeral(BigInteger.ONE));
+		final Substitution subst2 = new Substitution(script, substitutionMapping2);
+		final Term notGuardOfClosedForm2 = Util.not(script, subst2.transform(guardOfClosedFormEven));
+		assert Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
+				notLoopAccFormula)) == LBool.UNSAT;
+		
+		// Check whether "havoc" of all variables is superset of reflexive transitive closure.
+		// Check: loopAccelerationFormula(x,x') and (not x = x') and (not guard(x) is unsat.
+		assert Util.checkSat(script, Util.and(script, loopAccelerationFormula.getFormula(), Util.not(script, 
+				xPrimeEqualsX), notGuard)) == LBool.UNSAT;
 	}
 
 	@Override
