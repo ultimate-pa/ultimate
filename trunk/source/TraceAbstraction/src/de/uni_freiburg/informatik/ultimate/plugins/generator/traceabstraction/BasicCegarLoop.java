@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndepende
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorAutomaton;
@@ -246,7 +247,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
-	protected final SleepSetStateFactoryForRefinement<L> mSleepSetStateFactory;
+	protected final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepSetStateFactory;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
@@ -315,7 +316,21 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
 				predicateFactory, computeHoareAnnotation, mHoareAnnotationLocations);
-		mSleepSetStateFactory = new SleepSetStateFactoryForRefinement<>(predicateFactory);
+
+		switch (mPref.getPartialOrderMode()) {
+		case NONE:
+			mSleepSetStateFactory = null;
+			break;
+		case SLEEP_NEW_STATES:
+			mSleepSetStateFactory = new SleepSetStateFactoryForRefinement<>(predicateFactory);
+			break;
+		case SLEEP_DELAY_SET:
+			mSleepSetStateFactory = new ISleepSetStateFactory.NoUnrolling<>();
+			break;
+		default:
+			throw new UnsupportedOperationException("Unsupported POR mode: " + mPref.getPartialOrderMode());
+		}
+
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, computeHoareAnnotation);
 
@@ -454,13 +469,15 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		switch (mode) {
 		case SLEEP_DELAY_SET:
 			automatonConstructor = new SleepSetVisitorAutomaton<>(input, automataServices, mStateFactoryForRefinement);
-			new SleepSetDelayReduction<>(automataServices, input, indep, order, automatonConstructor);
+			new SleepSetDelayReduction<>(automataServices, input, mSleepSetStateFactory, indep, order,
+					automatonConstructor);
 			break;
 		case SLEEP_NEW_STATES:
-			automatonConstructor =
-					new SleepSetVisitorAutomaton<>(x -> input.isInitial(mSleepSetStateFactory.getOriginalState(x)),
-							x -> input.isFinal(mSleepSetStateFactory.getOriginalState(x)), input.getVpAlphabet(),
-							automataServices, mStateFactoryForRefinement);
+			final SleepSetStateFactoryForRefinement<L> factory =
+					(SleepSetStateFactoryForRefinement<L>) mSleepSetStateFactory;
+			automatonConstructor = new SleepSetVisitorAutomaton<>(x -> input.isInitial(factory.getOriginalState(x)),
+					x -> input.isFinal(factory.getOriginalState(x)), input.getVpAlphabet(), automataServices,
+					mStateFactoryForRefinement);
 			new SleepSetNewStateReduction<>(automataServices, input, indep, order, mSleepSetStateFactory,
 					automatonConstructor);
 			break;

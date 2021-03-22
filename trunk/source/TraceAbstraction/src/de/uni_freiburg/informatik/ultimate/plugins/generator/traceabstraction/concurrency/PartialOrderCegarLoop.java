@@ -192,8 +192,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		try {
 			switch (mPartialOrderMode) {
 			case SLEEP_DELAY_SET:
-				new SleepSetDelayReduction<>(automataServices, abstraction, mIndependenceRelation, mSleepSetOrder,
-						mVisitor);
+				new SleepSetDelayReduction<>(automataServices, abstraction, mSleepSetStateFactory,
+						mIndependenceRelation, mSleepSetOrder, mVisitor);
 				break;
 			case SLEEP_NEW_STATES:
 				new SleepSetNewStateReduction<>(automataServices, abstraction, mIndependenceRelation, mSleepSetOrder,
