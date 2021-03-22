@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
@@ -564,13 +565,15 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				.transform(loopAccelerationTerm);
 		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(services, mgdScript, true,
 				PqeTechniques.ALL, nnf);
+		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
+				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
 				loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
 				loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
 				loopTransFormula.getBranchEncoders(), loopTransFormula.getAuxVars().isEmpty());
 
-		tfb.setFormula(loopAccelerationFormulaWithoutQuantifiers);
+		tfb.setFormula(simplified);
 		tfb.setInfeasibility(loopTransFormula.isInfeasible());
 
 		final UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
@@ -779,10 +782,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				.transform(loopAccelerationTerm);
 		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPusher.eliminate(services, mgdScript, true,
 				PqeTechniques.ALL, nnf);
+		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
+				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
 
 		tfb.setInfeasibility(loopTransFormula.isInfeasible());
 
-		tfb.setFormula(loopAccelerationFormulaWithoutQuantifiers);
+		tfb.setFormula(simplified);
 		final UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
 
 		return loopAccelerationFormula;
