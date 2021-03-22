@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2021 Dennis Wölfing
  * Copyright (C) 2018-2021 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
@@ -29,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -46,12 +44,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -234,56 +230,5 @@ public final class PetriNetUtils {
 					entry.getValue().getSuccessors());
 		}
 		return result;
-	}
-
-	/**
-	 * Creates a Petri net where each composable transition has a unique letter.
-	 *
-	 * @param <LETTER>
-	 *            The type of letters labelling the transitions.
-	 * @param <PLACE>
-	 *            The type of places.
-	 * @param services
-	 *            A {@link AutomataLibraryServices} instance.
-	 * @param petriNet
-	 *            The Petri net.
-	 * @param compositionFactory
-	 *            A {@link ICompositionFactory} instance.
-	 * @param oldToNewTransitions
-	 *            A map in which a mapping from replaced transitions to their replacement will be stored.
-	 * @return A new Petri net equivalent to the given one with each composable transition having a unique letter.
-	 */
-	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> createPetriNetWithUniqueLetters(
-			final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> petriNet,
-			final ICompositionFactory<LETTER> compositionFactory,
-			final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> oldToNewTransitions) {
-		// Make a copy so we don't modify the given petri net.
-		final BoundedPetriNet<LETTER, PLACE> net = CopySubnet.copy(services, petriNet,
-				new HashSet<>(petriNet.getTransitions()), petriNet.getAlphabet(), true);
-
-		final Set<LETTER> lettersSeen = new HashSet<>();
-		final Set<ITransition<LETTER, PLACE>> replacedTransitions = new HashSet<>();
-
-		for (final ITransition<LETTER, PLACE> t : net.getTransitions()) {
-			final LETTER letter = t.getSymbol();
-			if (lettersSeen.contains(letter)) {
-				replacedTransitions.add(t);
-			} else if (compositionFactory.isComposable(letter)) {
-				lettersSeen.add(letter);
-			}
-		}
-
-		for (final ITransition<LETTER, PLACE> t : replacedTransitions) {
-			final LETTER newLetter = compositionFactory.copyLetter(t.getSymbol());
-			net.getAlphabet().add(newLetter);
-			final ITransition<LETTER, PLACE> t2 =
-					net.addTransition(newLetter, net.getPredecessors(t), net.getSuccessors(t));
-			oldToNewTransitions.put(t, t2);
-		}
-
-		final Set<ITransition<LETTER, PLACE>> transitionsToKeep = new HashSet<>(net.getTransitions());
-		transitionsToKeep.removeAll(replacedTransitions);
-
-		return CopySubnet.copy(services, net, transitionsToKeep, net.getAlphabet(), true);
 	}
 }

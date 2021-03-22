@@ -419,7 +419,7 @@ public class LiptonReduction<L, P> {
 	 */
 	private boolean sequenceRuleCheck(final ITransition<L, P> t1, final ITransition<L, P> t2, final P place,
 			final BoundedPetriNet<L, P> petriNet) {
-		final boolean composable = mCompositionFactory.isComposable(t1.getSymbol(), t2.getSymbol());
+		final boolean composable = mCompositionFactory.isSequentiallyComposable(t1.getSymbol(), t2.getSymbol());
 		if (!composable) {
 			return false;
 		}

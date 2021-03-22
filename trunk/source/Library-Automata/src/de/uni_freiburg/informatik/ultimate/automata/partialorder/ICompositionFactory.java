@@ -38,11 +38,6 @@ import java.util.List;
  */
 public interface ICompositionFactory<L> {
 	/**
-	 * Determines if the composition of a given letter with others is supported.
-	 */
-	boolean isComposable(L letter);
-
-	/**
 	 * Determines if sequential composition of the given letters is supported.
 	 *
 	 * @param l1
@@ -51,7 +46,7 @@ public interface ICompositionFactory<L> {
 	 *            The second letter.
 	 * @return true if composition is supported.
 	 */
-	boolean isComposable(final L l1, final L l2);
+	boolean isSequentiallyComposable(final L l1, final L l2);
 
 	/**
 	 * Determines if parallel composition of the given letters is supported.
@@ -74,13 +69,4 @@ public interface ICompositionFactory<L> {
 	 *            A non-empty list of letters
 	 */
 	L composeParallel(List<L> letters);
-
-	/**
-	 * Creates a new letter as a copy of the given letter.
-	 *
-	 * @param letter
-	 *            A letter.
-	 * @return A new unused letter.
-	 */
-	L copyLetter(L letter);
 }

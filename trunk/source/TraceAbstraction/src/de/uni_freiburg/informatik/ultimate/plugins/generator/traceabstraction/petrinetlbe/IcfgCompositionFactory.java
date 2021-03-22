@@ -36,12 +36,10 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -71,18 +69,17 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		mBranchEncoders = new HashMap<>();
 	}
 
-	@Override
-	public boolean isComposable(final IcfgEdge transition) {
+	private static boolean isComposable(final IcfgEdge transition) {
 		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof Summary);
 	}
 
-	@Override
-	public boolean isComposable(final IcfgEdge t1, final IcfgEdge t2) {
-		return isComposable(t1) && isComposable(t2) && t1.getTarget() == t2.getSource();
+	private static boolean isComposable(final List<IcfgEdge> transitions) {
+		return transitions.stream().allMatch(IcfgCompositionFactory::isComposable);
 	}
 
-	private boolean isComposable(final List<IcfgEdge> transitions) {
-		return transitions.stream().allMatch(this::isComposable);
+	@Override
+	public boolean isSequentiallyComposable(final IcfgEdge t1, final IcfgEdge t2) {
+		return isComposable(t1) && isComposable(t2) && t1.getTarget() == t2.getSource();
 	}
 
 	@Override
@@ -138,18 +135,5 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	@Override
 	public Map<IcfgEdge, TermVariable> getBranchEncoders() {
 		return mBranchEncoders;
-	}
-
-	@Override
-	public IcfgEdge copyLetter(final IcfgEdge letter) {
-		final UnmodifiableTransFormula tf = letter.getTransformula();
-		UnmodifiableTransFormula tfWithBranchEncoders;
-		if (letter instanceof IActionWithBranchEncoders) {
-			tfWithBranchEncoders = ((IActionWithBranchEncoders) letter).getTransitionFormulaWithBranchEncoders();
-		} else {
-			tfWithBranchEncoders = tf;
-		}
-		return mEdgeBuilder.constructInternalTransition(letter, letter.getSource(), letter.getTarget(), tf,
-				tfWithBranchEncoders, false);
 	}
 }

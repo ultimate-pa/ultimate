@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependen
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -138,10 +137,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 		try {
 			final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
-			final BoundedPetriNet<L, IPredicate> net = PetriNetUtils.createPetriNetWithUniqueLetters(automataServices,
-					petriNet, compositionFactory, mReplacedTransitions);
 			final LiptonReduction<L, IPredicate> lipton =
-					new LiptonReduction<>(automataServices, net, compositionFactory, moverCheck);
+					new LiptonReduction<>(automataServices, petriNet, compositionFactory, moverCheck);
 			lipton.performReduction();
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
