@@ -162,14 +162,20 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		mOverallResult = Result.SAFE;
 		mArtifact = null;
-
+		final IProgressMonitorService progmon = mServices.getProgressMonitorService();
+		final int numberOfErrorLocs = errNodesOfAllProc.size();
 		if (taPrefs.allErrorLocsAtOnce()) {
+			if (taPrefs.hasLimitAnalysisTime()) {
+				progmon.addChildTimer(progmon.getTimer(taPrefs.getLimitAnalysisTime() * 1000 * numberOfErrorLocs));
+			}
 			iterateAllErrorsAtOnce(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, taPrefs, predicateFactory,
 					traceAbstractionBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile,
 					computeHoareAnnotation);
+			reportBenchmark(traceAbstractionBenchmark);
+			if (taPrefs.hasLimitAnalysisTime()) {
+				progmon.removeChildTimer();
+			}
 		} else {
-			final IProgressMonitorService progmon = mServices.getProgressMonitorService();
-			final int numberOfErrorLocs = errNodesOfAllProc.size();
 			int finishedErrorLocs = 1;
 			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
 				final DebugIdentifier name = errorLoc.getDebugIdentifier();
@@ -209,9 +215,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			createInvariantResults(icfg, csToolkit, backTranslatorService);
 			createProcedureContractResults(icfg, backTranslatorService);
 		}
-		if (taPrefs.allErrorLocsAtOnce()) {
-			reportBenchmark(traceAbstractionBenchmark);
-		}
+
 		switch (mOverallResult) {
 		case SAFE:
 		case UNSAFE:
