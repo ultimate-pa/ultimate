@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
@@ -146,6 +147,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	private Set<IPredicate> mProgramPointPlaces;
 
 	private final CounterexampleCache<L> mCounterexampleCache;
+	private IIndependenceCache<?, L> mIndependenceCache;
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -185,8 +187,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final long start_time = System.currentTimeMillis();
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(),
-				cfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mPredicateFactory, mTransitionClazz);
+				cfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mPredicateFactory, mIndependenceCache,
+				mTransitionClazz);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
+		mIndependenceCache = lbe.getIndependenceCache();
 		mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
 
 		mAbstraction = lbecfg;

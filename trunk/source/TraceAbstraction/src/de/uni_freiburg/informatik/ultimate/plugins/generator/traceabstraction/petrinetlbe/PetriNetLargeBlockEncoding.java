@@ -38,7 +38,10 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransformingIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DisjunctiveConditionalIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReduction;
@@ -66,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticConditionEliminator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 
@@ -85,6 +89,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
+	private IIndependenceCache<?, L> mIndependenceCache;
 
 	private final BoundedPetriNet<L, IPredicate> mResult;
 	private final BlockEncodingBacktranslator mBacktranslator;
@@ -118,12 +123,14 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings,
 			final IPLBECompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
-			final Class<L> clazz) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final IIndependenceCache<?, L> independenceCache, final Class<L> clazz)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
+		mIndependenceCache = independenceCache;
 
-		final CachedIndependenceRelation<Set<IPredicate>, L> moverCheck =
+		final IIndependenceRelation<Set<IPredicate>, L> moverCheck =
 				createIndependenceRelation(petriNetLbeSettings, predicateFactory);
 
 		mReplacedTransitions = new HashMap<>();
@@ -151,8 +158,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private CachedIndependenceRelation<Set<IPredicate>, L> createIndependenceRelation(
-			final PetriNetLbe petriNetLbeSettings, final BasicPredicateFactory predicateFactory) {
+	private IIndependenceRelation<Set<IPredicate>, L> createIndependenceRelation(final PetriNetLbe petriNetLbeSettings,
+			final BasicPredicateFactory predicateFactory) {
 		final IIndependenceRelation<IPredicate, L> semanticCheck;
 		switch (petriNetLbeSettings) {
 		case OFF:
@@ -162,6 +169,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, false, false);
 			break;
 		case SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES:
+		case SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES_DISJUNCTIVE:
 			mLogger.info("Petri net LBE is using conditional semantic-based independence relation.");
 			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, true, false);
 			break;
@@ -181,25 +189,66 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			unionCheck = new UnionIndependenceRelation<>(Arrays.asList(variableCheck, semanticCheck));
 		}
 
+		if (petriNetLbeSettings == PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES_DISJUNCTIVE) {
+			// For this variant, it makes more sense to cache results for individual conditions rather than a set.
+			// This way, queries for different sets can share results.
+			final IIndependenceRelation<IPredicate, L> cachedCheck =
+					new CachedIndependenceRelation<>(unionCheck, getOrCreateIndependenceCache());
+
+			// We apply here the optimization that eliminates satisfiable but irrelevant conditions. This usage is only
+			// sound because we assume individual interpolants are unsatisfiable iff they are literally "false".
+			// It is important for performance that this elimination happens outside the caching layer.
+			final IIndependenceRelation<IPredicate, L> eliminatedCheck =
+					new SemanticConditionEliminator<>(cachedCheck, PetriNetLargeBlockEncoding::isFalseState);
+
+			// Lastly, we eliminate useless conditions (i.e. DebugPredicate or "true"; this is different from the work
+			// done by SemanticConditionEliminator above) and then query for each condition separately.
+			return new ConditionTransformingIndependenceRelation<>(
+					new DisjunctiveConditionalIndependenceRelation<>(eliminatedCheck),
+					PetriNetLargeBlockEncoding::eliminateIrrelevantPredicates);
+		}
+
 		final IIndependenceRelation<Set<IPredicate>, L> multiConditionCheck;
 		if (petriNetLbeSettings == PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES) {
+			// It is important that this combination of predicates happens below the caching layer: Each call to
+			// combinePredicates will return a distinct predicate, even for the same input set. Hence caching results
+			// for combined predicates would have little to no effect.
 			multiConditionCheck = new ConditionTransformingIndependenceRelation<>(unionCheck,
 					s -> combinePredicates(s, predicateFactory));
 		} else {
 			multiConditionCheck = ConditionTransformingIndependenceRelation.unconditional(unionCheck);
 		}
+		return new CachedIndependenceRelation<>(multiConditionCheck, getOrCreateIndependenceCache());
+	}
 
-		return new CachedIndependenceRelation<>(multiConditionCheck);
+	private <S> IIndependenceCache<S, L> getOrCreateIndependenceCache() {
+		if (mIndependenceCache == null) {
+			mIndependenceCache = new DefaultIndependenceCache<S, L>();
+		}
+		return (IIndependenceCache<S, L>) mIndependenceCache;
+	}
+
+	public IIndependenceCache<?, L> getIndependenceCache() {
+		return mIndependenceCache;
+	}
+
+	private static Boolean isFalseState(final IPredicate state) {
+		// We assume here that all inconsistent interpolant predicates are syntactically equal to "false".
+		return SmtUtils.isFalseLiteral(state.getFormula());
 	}
 
 	private static IPredicate combinePredicates(final Set<IPredicate> predicates, final BasicPredicateFactory factory) {
-		final Set<IPredicate> relevant = predicates.stream()
-				.filter(p -> !(p instanceof DebugPredicate) && !SmtUtils.isTrueLiteral(p.getFormula()))
-				.collect(Collectors.toSet());
+		final Set<IPredicate> relevant = eliminateIrrelevantPredicates(predicates);
 		if (relevant.isEmpty()) {
 			return null;
 		}
 		return factory.and(relevant);
+	}
+
+	private static Set<IPredicate> eliminateIrrelevantPredicates(final Set<IPredicate> predicates) {
+		return predicates.stream()
+				.filter(p -> !(p instanceof DebugPredicate) && !SmtUtils.isTrueLiteral(p.getFormula()))
+				.collect(Collectors.toSet());
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<L, IPredicate> petriNet) {

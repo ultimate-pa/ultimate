@@ -219,6 +219,11 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		 * Only useful when repeated Lipton Reduction is enabled.
 		 */
 		SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES,
+		/**
+		 * Like SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES, but considers independence under individual predicates
+		 * rather than their conjunction. Only useful when repeated Lipton Reduction is enabled.
+		 */
+		SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES_DISJUNCTIVE,
 	}
 
 	/**
@@ -394,7 +399,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 				final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(mServices,
 						mIcfg.getCfgSmtToolkit(), petrifiedCfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory,
-						mPredicateFactory, mTransitionClazz);
+						mPredicateFactory, null, mTransitionClazz);
 				final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 				mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
 				net = lbecfg;
