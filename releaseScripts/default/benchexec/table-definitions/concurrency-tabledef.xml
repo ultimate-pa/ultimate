@@ -112,7 +112,7 @@
     <!-- POR-specific columns -->
     <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
     <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
-    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]*positive conditional: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
   </result>
 
   <!-- results for Automizer with integrated Sleep Set POR, using New States variant -->
@@ -130,7 +130,7 @@
     <!-- POR-specific columns -->
     <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
     <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
-    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]*positive conditional: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
   </result>
 
   <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant, with one-shot Petri net LBE -->
@@ -148,7 +148,7 @@
     <!-- POR-specific columns -->
     <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
     <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
-    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]*positive conditional: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
 
     <!-- LBE-specific columns -->
     <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>

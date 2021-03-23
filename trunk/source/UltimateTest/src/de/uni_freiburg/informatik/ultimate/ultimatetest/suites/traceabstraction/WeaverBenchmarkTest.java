@@ -59,7 +59,6 @@ public class WeaverBenchmarkTest extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		//return new NoErrorTestResultDecider(urd);
 		return new SvcompReachTestResultDecider(urd, false);
 	}
 

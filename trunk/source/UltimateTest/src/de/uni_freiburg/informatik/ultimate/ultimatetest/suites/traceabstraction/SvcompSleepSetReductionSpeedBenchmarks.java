@@ -56,7 +56,7 @@ public class SvcompSleepSetReductionSpeedBenchmarks extends AbstractTraceAbstrac
 	 */
 	@Override
 	public long getTimeout() {
-		return TIMEOUT * 1000;
+		return TIMEOUT * 1000L;
 	}
 
 	/**

@@ -253,7 +253,7 @@ public class Check extends ModernAnnotations {
 		case CONSISTENCY:
 			return "consistent";
 		case INCOMPLETE:
-			return "incomplete";
+			return "complete";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
 		default:

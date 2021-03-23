@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -52,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.StructExpanderUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -67,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -98,6 +103,14 @@ public class Boogie2SmtSymbolTable
 	public static final String ID_SMTDEFINED = "smtdefined";
 
 	private static final String ID_INDICES = "indices";
+	/**
+	 * Identifier of attribute that indicates that this function defines a const array function.
+	 */
+	private static final String ID_CONST_ARRAY = StructExpanderUtil.ATTRIBUTE_CONST_ARRAY;
+	/**
+	 * Identifier of attribute that indicates the position this function takes in its struct.
+	 */
+	private static final String ID_STRUCTPOS = StructExpanderUtil.ATTRIBUTE_STRUCTPOS;
 
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final ManagedScript mScript;
@@ -310,18 +323,10 @@ public class Boogie2SmtSymbolTable
 		final Map<String, Expression[]> attributes = extractAttributes(funcdecl);
 		final String id = funcdecl.getIdentifier();
 		mBoogieFunction2Attributes.put(id, attributes);
+		final boolean attributeConstArray = checkForAttributeWithoutValue(attributes, ID_CONST_ARRAY);
 		final String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(attributes, ID_BUILTIN);
 		final String smtDefinedBody = checkForAttributeDefinedIdentifier(attributes, ID_SMTDEFINED);
 		final String smtID;
-		if (attributeDefinedIdentifier == null) {
-			smtID = Boogie2SMT.quoteId(id);
-		} else {
-			smtID = attributeDefinedIdentifier;
-			if (smtDefinedBody != null) {
-				throw new ISmtDeclarable.IllegalSmtDeclarableUsageException(
-						id + " has " + ID_SMTDEFINED + " and " + ID_BUILTIN + " attributes");
-			}
-		}
 		int numParams = 0;
 		for (final VarList vl : funcdecl.getInParams()) {
 			final int ids = vl.getIdentifiers().length;
@@ -350,14 +355,74 @@ public class Boogie2SmtSymbolTable
 		}
 		final IBoogieType resultType = funcdecl.getOutParam().getType().getBoogieType();
 		final Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
-		if (attributeDefinedIdentifier == null) {
+
+		if (attributeConstArray) {
+			// Builtin const function needs special handling for struct types.
+			// We create a define fun, that calls the SMT builtin function const with the correct return type
+			// and the correct parameter.
+			smtID = Boogie2SMT.quoteId(id);
+			final String structPos = checkForAttributeDefinedIdentifier(attributes, ID_STRUCTPOS);
+			final int paramPos = structPos == null ? 0 : Integer.parseInt(structPos);
+			if (structPos == null && paramIds.length > 1) {
+				throw new ISmtDeclarable.IllegalSmtDeclarableUsageException(
+						"Internal problem with expanding const-array function: " + id);
+			}
+			if (!(resultType instanceof BoogieArrayType) || ((BoogieArrayType) resultType)
+					.getValueType() != funcdecl.getInParams()[paramPos].getType().getBoogieType()) {
+				throw new ISmtDeclarable.IllegalSmtDeclarableUsageException(
+						"Type mismatch in const-array function: " + id);
+			}
+
+			final TermVariable[] paramTVs = new TermVariable[paramIds.length];
+			for (int i = 0; i < paramTVs.length; i++) {
+				paramTVs[i] = mScript.getScript().variable(paramIds[i], paramSorts[i]);
+			}
+			final Deque<Sort> sortHierarchy = new ArrayDeque<>();
+			Sort sort = resultSort;
+			while (sort != paramSorts[paramPos]) {
+				sortHierarchy.addLast(sort);
+				assert sort.getName().equals("Array");
+				sort = sort.getArguments()[1];
+			}
+			assert sortHierarchy.size() >= 1;
+			Term smtBody = paramTVs[paramPos];
+			while (!sortHierarchy.isEmpty()) {
+				final Sort arraySort = sortHierarchy.removeLast();
+				smtBody = mScript.getScript().term("const", null, arraySort, smtBody);
+			}
+			final DeclarableFunctionSymbol smtFunctionDefinition =
+					DeclarableFunctionSymbol.createFromScriptDefineFun(smtID, paramTVs, resultSort, smtBody);
+			smtFunctionDefinition.defineOrDeclare(mScript.getScript());
+		} else if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
+			smtID = Boogie2SMT.quoteId(id);
 			final DeclarableFunctionSymbol smtFunctionDefinition = DeclarableFunctionSymbol
 					.createFromString(mScript.getScript(), smtID, smtDefinedBody, paramIds, paramSorts, resultSort);
 			smtFunctionDefinition.defineOrDeclare(mScript.getScript());
+		} else {
+			smtID = attributeDefinedIdentifier;
+			if (smtDefinedBody != null) {
+				throw new ISmtDeclarable.IllegalSmtDeclarableUsageException(
+						id + " has " + ID_SMTDEFINED + " and " + ID_BUILTIN + " attributes");
+			}
 		}
 		mBoogieFunction2SmtFunction.put(id, smtID);
 		mSmtFunction2BoogieFunction.put(smtID, id);
+	}
+
+	/**
+	 * Returns true, if there is a NamedAttribute with the given name n and without any values.
+	 */
+	public static boolean checkForAttributeWithoutValue(final Map<String, Expression[]> attributes, final String n) {
+		final Expression[] values = attributes.get(n);
+		if (values == null) {
+			// no such name
+			return false;
+		}
+		if (values.length == 0) {
+			return true;
+		}
+		throw new IllegalArgumentException("Attribute has an argument: " + n);
 	}
 
 	/**

@@ -33,43 +33,49 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Interface for the stateFactory for sleep sets.
- * 
- * @author Marcel Ebbinghaus
+ * Interface for the state factory used by sleep set reduction of a finite automaton.
  *
- * @param <L> letter
- * @param <S1> state
- * @param <S2> sleep set state
+ * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters
+ * @param <S>
+ *            The type of states in the original automaton
+ * @param <R>
+ *            The type of states in the reduced automaton, created from an original state and a sleep set
  */
-public interface ISleepSetStateFactory<L, S1, S2> extends IEmptyStackStateFactory<S2> {
+public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<R> {
 	/**
 	 * Method to create the sleep set state according to a given state and sleep set.
-	 * 
+	 *
 	 * @param state
-	 * 		The given state
+	 *            The given state
 	 * @param sleepset
-	 * 		The given sleep set
-	 * @return
-	 * 		The corresponding sleep set state
+	 *            The given sleep set
+	 * @return The corresponding sleep set state
 	 */
-	S2 createSleepSetState(S1 state, Set<L> sleepset);
+	R createSleepSetState(S state, Set<L> sleepset);
 
 	/**
 	 * Default implementation of the interface, which represents the sleep set state as a pair.
-	 * 
-	 * @author Marcel Ebbinghaus
 	 *
-	 * @param <L> letter
-	 * @param <S1> state
+	 * @author Marcel Ebbinghaus
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters
+	 * @param <S>
+	 *            The type of states in the original automaton
 	 */
-	public static class DefaultSleepSetStateFactory<L, S1> implements ISleepSetStateFactory<L, S1, Pair<S1, Set<L>>> {
+	public static class DefaultSleepSetStateFactory<L, S> implements ISleepSetStateFactory<L, S, Pair<S, Set<L>>> {
 		@Override
-		public Pair<S1, Set<L>> createEmptyStackState() {
+		public Pair<S, Set<L>> createEmptyStackState() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public Pair<S1, Set<L>> createSleepSetState(final S1 state, final Set<L> sleepset) {
+		public Pair<S, Set<L>> createSleepSetState(final S state, final Set<L> sleepset) {
 			return new Pair<>(state, sleepset);
 		}
 	}
