@@ -2,37 +2,57 @@
 <benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 	<option name="--force-no-wrapper" />
 
-	<rundefinition name="Automizer FA">
+	<!--rundefinition name="Automizer FA">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer PN">
+	<!--rundefinition name="Automizer PN">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer FA.Delay">
+	<!--rundefinition name="Automizer FA.Delay">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-Delay.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer FA.SemanticLBE">
+	<!--rundefinition name="Automizer FA.SemanticLBE">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf</option>
+	</rundefinition-->
+
+	<rundefinition name="Automizer PN.VariableLBE">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
 	</rundefinition>
 
 	<rundefinition name="Automizer PN.SemanticLBE">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
 	</rundefinition>
 
-	<rundefinition name="Automizer SLEEP_SET_FA.Delay">
+	<rundefinition name="Automizer PN.RepeatedVariableLbe">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedVariableLbe.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PN.RepeatedSemanticLBE">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbe.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PN.RepeatedSemanticLbeWithPredicates">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithPredicates.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PN.RepeatedSemanticLbeWithDisjunctivePredicates">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithDisjunctivePredicates.epf</option>
+	</rundefinition>
+
+	<!--rundefinition name="Automizer SLEEP_SET_FA.Delay">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-Sleep-NoLbe-Delay.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer SLEEP_SET_FA.NewStates">
+	<!--rundefinition name="Automizer SLEEP_SET_FA.NewStates">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-Sleep-NoLbe-New_States.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer SLEEP_SET_FA.SemanticLbe.Delay">
+	<!--rundefinition name="Automizer SLEEP_SET_FA.SemanticLbe.Delay">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-Sleep-SemanticLbe-Delay.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<tasks name="SVCOMP ConcurrencySafety-Main">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>

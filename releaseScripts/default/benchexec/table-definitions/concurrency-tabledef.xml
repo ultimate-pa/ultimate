@@ -58,8 +58,24 @@
     <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
   </result>
 
-  <!-- results for Petri Automizer with Petri net LBE -->
-  <!-- ============================================== -->
+  <!-- results for Petri Automizer with (syntactic) Petri net LBE -->
+  <!-- ========================================================== -->
+  <result filename="*.results.Automizer PN.VariableLBE.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- LBE-specific columns -->
+    <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
+  </result>
+
+  <!-- results for Petri Automizer with (semantic) Petri net LBE -->
+  <!-- ========================================================= -->
   <result filename="*.results.Automizer PN.SemanticLBE.xml">
     <!-- default columns -->
     <column title="status"/>
@@ -74,6 +90,11 @@
     <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
     <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
   </result>
+
+  <result filename="*.results.Automizer PN.RepeatedVariableLbe.xml" />
+  <result filename="*.results.Automizer PN.RepeatedSemanticLbe.xml" />
+  <result filename="*.results.Automizer PN.RepeatedSemanticLbeWithPredicates.xml" />
+  <result filename="*.results.Automizer PN.RepeatedSemanticLbeWithDisjunctivePredicates.xml" />
 
   <!-- results for Automizer with one-shot Sleep Set POR, using Delay Set variant -->
   <!-- ========================================================================== -->
