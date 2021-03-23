@@ -31,17 +31,17 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -56,6 +56,7 @@ public class CopyingTransformulaTransformer implements ITransformulaTransformer 
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mOldSymbolTable;
+	private final ModifiableGlobalsTable mOldModifiableGlobalsTable;
 
 	/**
 	 * Create an {@link CopyingTransformulaTransformer} instance.
@@ -66,18 +67,15 @@ public class CopyingTransformulaTransformer implements ITransformulaTransformer 
 	 *            A {@link TransFormula} representing a loop body.
 	 * @param managedScript
 	 *            A {@link ManagedScript} instance that can be used to perform SMT operations.
-	 * @param oldSymbolTable
-	 *            An {@link IIcfgSymbolTable} instance that can be used to look up program variables of the loopBody
-	 *            TransFormula.
-	 * @param replacementVarFac
-	 *            The {@link ReplacementVarFactory} instance which can create new (Term-)variables that represent
-	 *            {@link Term}s of the old {@link TransFormula}.
+	 * @param oldToolkit
+	 *            The {@link CfgSmtToolkit} instance of the {@link IIcfg} for which this transformer is used.
 	 */
 	public CopyingTransformulaTransformer(final ILogger logger, final ManagedScript managedScript,
-			final IIcfgSymbolTable oldSymbolTable, final ReplacementVarFactory replacementVarFac) {
+			final CfgSmtToolkit oldToolkit) {
 		mLogger = logger;
 		mManagedScript = Objects.requireNonNull(managedScript);
-		mOldSymbolTable = oldSymbolTable;
+		mOldSymbolTable = oldToolkit.getSymbolTable();
+		mOldModifiableGlobalsTable = oldToolkit.getModifiableGlobalsTable();
 	}
 
 	@Override
@@ -107,8 +105,7 @@ public class CopyingTransformulaTransformer implements ITransformulaTransformer 
 
 	@Override
 	public HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals() {
-		// TODO
-		throw new UnsupportedOperationException("TODO");
+		return mOldModifiableGlobalsTable.getProcToGlobals();
 	}
 
 }

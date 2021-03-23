@@ -67,8 +67,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * A basic IcfgTransformer that applies the {@link CopyingTransformulaTransformer}, i.e., replaces all
- * transformulas of an {@link IIcfg} with a new instance. + First tries for loop acceleration.
+ * A basic IcfgTransformer that applies the {@link CopyingTransformulaTransformer}, i.e., replaces all transformulas of
+ * an {@link IIcfg} with a new instance. + First tries for loop acceleration.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -133,8 +133,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	public WernerLoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer, final IUltimateServiceProvider services,
-			final DealingWithArraysTypes options, final int backboneLimit) {
+			final IUltimateServiceProvider services, final DealingWithArraysTypes options, final int backboneLimit) {
 
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mBackTranslationTracker = backtranslationTracker;
@@ -156,15 +155,12 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mLoopHeads, mScript, mServices, backboneLimit);
 		mLoopBodies = mLoopDetector.getLoopBodies();
 
-		mResult = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier,
-				transformer);
+		mResult = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier);
 	}
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
-			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
-
-		transformer.preprocessIcfg(originalIcfg);
+			final String newIcfgIdentifier) {
 
 		for (final Entry<IcfgLocation, Loop> entry : mLoopBodies.entrySet()) {
 			if (entry.getValue().getPath().isEmpty()) {
@@ -179,8 +175,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, funLocFac,
-				backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(mLogger, funLocFac, backtranslationTracker, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 

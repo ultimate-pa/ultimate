@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.AxiomTransformationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransformulaTransformationResult;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -107,6 +108,14 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private final Collection<IPredicate> mAdditionalAxioms;
 	private boolean mIsFinished;
 	private ILogger mLogger;
+
+	public TransformedIcfgBuilder(final ILogger logger, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final IBacktranslationTracker backtranslationTracker, final IIcfg<INLOC> originalIcfg,
+			final BasicIcfg<OUTLOC> resultIcfg) {
+		this(logger, funLocFac, backtranslationTracker, new CopyingTransformulaTransformer(logger,
+				originalIcfg.getCfgSmtToolkit().getManagedScript(), originalIcfg.getCfgSmtToolkit()), originalIcfg,
+				resultIcfg, Collections.emptySet());
+	}
 
 	/**
 	 * Default constructor of {@link TransformedIcfgBuilder}.
@@ -354,9 +363,9 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 */
 	private void rememberNewVariables(final UnmodifiableTransFormula transformula, final String procedure) {
 
-		transformula.getInVars().entrySet().stream().map(a -> a.getKey()).filter(a -> !oldSymbolTableContains(a))
+		transformula.getInVars().entrySet().stream().map(Entry::getKey).filter(a -> !oldSymbolTableContains(a))
 				.forEach(mNewVars::add);
-		final Iterator<IProgramVar> iter = transformula.getOutVars().entrySet().stream().map(a -> a.getKey())
+		final Iterator<IProgramVar> iter = transformula.getOutVars().entrySet().stream().map(Entry::getKey)
 				.filter(a -> !oldSymbolTableContains(a)).iterator();
 
 		while (iter.hasNext()) {
@@ -516,7 +525,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		}
 
 		final List<Term> newAxiomsClosed =
-				mAdditionalAxioms.stream().map(a -> a.getClosedFormula()).collect(Collectors.toList());
+				mAdditionalAxioms.stream().map(IPredicate::getClosedFormula).collect(Collectors.toList());
 		newAxiomsClosed.add(translationResult.getAxiom().getClosedFormula());
 
 		final Term newAxioms = SmtUtils.and(script.getScript(), newAxiomsClosed);

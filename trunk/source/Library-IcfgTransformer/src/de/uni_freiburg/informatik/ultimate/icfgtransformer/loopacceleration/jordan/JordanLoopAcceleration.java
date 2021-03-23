@@ -42,9 +42,11 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTrack
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.LoopExtraction;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.SimpleLoop;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -84,37 +86,21 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private final ILogger mLogger;
 	private final IIcfg<INLOC> mOriginalIcfg;
-	private final Class<OUTLOC> mOutLocationClass;
-	private final ILocationFactory<INLOC, OUTLOC> mFunLocFac;
-	private final String mNewIcfgIdentifier;
 	private final ITransformulaTransformer mTransformer;
-	private final IBacktranslationTracker mBacktranslationTracker;
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<OUTLOC> mResult;
 
 	public JordanLoopAcceleration(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
-			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services) {
-
-		// Setup
+			final String newIcfgIdentifier, final IBacktranslationTracker backtranslationTracker,
+			final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mOriginalIcfg = originalIcfg;
-		mOutLocationClass = outLocationClass;
-		mFunLocFac = funLocFac;
-		mNewIcfgIdentifier = newIcfgIdentifier;
-		mTransformer = transformer;
-		mBacktranslationTracker = backtranslationTracker;
 		mServices = services;
-		mResult = accelerateAll();
-	}
-
-	private IIcfg<OUTLOC> accelerateAll() {
-		final LoopExtraction<INLOC, OUTLOC> loopExtraction = new LoopExtraction<>(mLogger, mOriginalIcfg);
-		for (final SimpleLoop loop : loopExtraction.getLoopTransFormulas()) {
-			accelerateLoop(mServices, mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), loop.mLoopTransFormula);
-		}
-		return null;
+		mTransformer = new JordanLoopAccelerationTransformer(mLogger,
+				originalIcfg.getCfgSmtToolkit().getManagedScript(), originalIcfg.getCfgSmtToolkit());
+		mResult = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac, backtranslationTracker, outLocationClass,
+				newIcfgIdentifier, mTransformer).getResult();
 	}
 
 	public static UnmodifiableTransFormula accelerateLoop(final IUltimateServiceProvider services,
@@ -974,6 +960,29 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			throw new AssertionError("Havo of all variables is not a superset of the reflexive transitive closure."
 					+ "Something went wrong in computation of loop acceleration formula.");
 		}
+	}
+
+	private final class JordanLoopAccelerationTransformer extends CopyingTransformulaTransformer {
+
+		public JordanLoopAccelerationTransformer(final ILogger logger, final ManagedScript managedScript,
+				final CfgSmtToolkit oldToolkit) {
+			super(logger, managedScript, oldToolkit);
+		}
+
+		@Override
+		public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+				final UnmodifiableTransFormula tf) {
+			if (oldEdge.getSource() == oldEdge.getTarget()) {
+				// self loop, lets accelerate
+				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
+				final UnmodifiableTransFormula transformedTf =
+						accelerateLoop(mServices, mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf);
+				mLogger.info("Accelerated %s with %s", oldTf, transformedTf);
+				return new TransformulaTransformationResult(transformedTf);
+			}
+			return super.transform(oldEdge, tf);
+		}
+
 	}
 
 	@Override

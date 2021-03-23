@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -29,9 +28,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -45,7 +44,6 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 	private final Class<OUTLOC> mOutLocationClass;
 	private final ILocationFactory<INLOC, OUTLOC> mFunLocFac;
 	private final String mNewIcfgIdentifier;
-	private final ITransformulaTransformer mTransformer;
 	private final IBacktranslationTracker mBacktranslationTracker;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgScript;
@@ -53,8 +51,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 	public LoopInsertion(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer, final IBacktranslationTracker backtranslationTracker,
-			final IUltimateServiceProvider services) {
+			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services) {
 
 		// Setup
 		mLogger = logger;
@@ -62,7 +59,6 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 		mOutLocationClass = outLocationClass;
 		mFunLocFac = funLocFac;
 		mNewIcfgIdentifier = newIcfgIdentifier;
-		mTransformer = transformer;
 		mBacktranslationTracker = backtranslationTracker;
 		mServices = services;
 		final CfgSmtToolkit mCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
@@ -174,8 +170,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, mFunLocFac,
-				mBacktranslationTracker, mTransformer, mOriginalIcfg, resultIcfg);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(mLogger, mFunLocFac, mBacktranslationTracker, mOriginalIcfg, resultIcfg);
 		processLocations(mOriginalIcfg.getInitialNodes(), lst, loopHead, loopExits);
 		lst.finish();
 		return resultIcfg;
@@ -246,8 +242,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, mFunLocFac,
-				mBacktranslationTracker, mTransformer, mOriginalIcfg, resultIcfg);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(mLogger, mFunLocFac, mBacktranslationTracker, mOriginalIcfg, resultIcfg);
 		processLocations(mOriginalIcfg.getInitialNodes(), lst, loopHead, loopExits);
 		lst.finish();
 		return resultIcfg;
