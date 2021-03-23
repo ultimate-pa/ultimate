@@ -51,14 +51,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class ExampleLoopAccelerationTransformulaTransformer implements ITransformulaTransformer {
+public class CopyingTransformulaTransformer implements ITransformulaTransformer {
 
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mOldSymbolTable;
 
 	/**
-	 * Create an {@link ExampleLoopAccelerationTransformulaTransformer} instance.
+	 * Create an {@link CopyingTransformulaTransformer} instance.
 	 *
 	 * @param logger
 	 *            A {@link ILogger} instance that is used for debug logging.
@@ -73,7 +73,7 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	 *            The {@link ReplacementVarFactory} instance which can create new (Term-)variables that represent
 	 *            {@link Term}s of the old {@link TransFormula}.
 	 */
-	public ExampleLoopAccelerationTransformulaTransformer(final ILogger logger, final ManagedScript managedScript,
+	public CopyingTransformulaTransformer(final ILogger logger, final ManagedScript managedScript,
 			final IIcfgSymbolTable oldSymbolTable, final ReplacementVarFactory replacementVarFac) {
 		mLogger = logger;
 		mManagedScript = Objects.requireNonNull(managedScript);
@@ -89,7 +89,7 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Performing identity transformation for " + tf);
+			mLogger.debug("Creating copy for " + tf);
 		}
 		return new TransformulaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, tf,
 				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
