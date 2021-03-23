@@ -531,10 +531,12 @@ public class PolynomialTermMatrix {
 					Rational constEven = closedFormEvenMatrix.getEntry(i,j).getConstant();
 					for (Rational coeffEven : closedFormEvenMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
 						if (coeffEven.numerator().intValue() % closedFormEvenMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
+							throw new AssertionError("Non-integer value found. Computation of closed form not"
+									+ "possible.");
 						}
 						if (constEven.numerator().intValue() % closedFormEvenMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
+							throw new AssertionError("Non-integer value found. Computation of closed form not"
+									+ "possible.");
 						}
 					}
 					closedFormEvenMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
@@ -558,10 +560,12 @@ public class PolynomialTermMatrix {
 					Rational constEven = closedFormOddMatrix.getEntry(i,j).getConstant();
 					for (Rational coeffEven : closedFormOddMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
 						if (coeffEven.numerator().intValue() % closedFormOddMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
+							throw new AssertionError("Non-integer value found. Computation of closed form not "
+									+ "possible.");
 						}
 						if (constEven.numerator().intValue() % closedFormOddMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
+							throw new AssertionError("Non-integer value found. Computation of closed form not "
+									+ "possible.");
 						}
 					}
 					closedFormOddMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(

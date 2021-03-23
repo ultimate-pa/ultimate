@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
@@ -132,13 +131,15 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// For other formula, quantifier elimination may not work.
 		UnmodifiableTransFormula loopAccelerationFormula;
 		try {
-			loopAccelerationFormula = createLoopAccelerationFormulaRestricted(services, mgdScript, su, loopTransFormula,
-					guardTf);
+			loopAccelerationFormula = createLoopAccelerationFormulaRestricted(logger, services, mgdScript, su,
+					loopTransFormula, guardTf);
 		} catch (final AssertionError e) {
-			loopAccelerationFormula = createLoopAccelerationFormula(services, mgdScript, su, loopTransFormula, guardTf);
+			loopAccelerationFormula = createLoopAccelerationFormula(logger, services, mgdScript, su, loopTransFormula,
+					guardTf);
 		}
 		
-		// UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(mMgdScript, su, loopTransFormula, guardTf);
+		// UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(logger, services, mgdScript,
+				// su, loopTransFormula, guardTf);
 		
 		return loopAccelerationFormula;
 	}
@@ -490,8 +491,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @return
 	 */
 	private static UnmodifiableTransFormula createLoopAccelerationFormulaRestricted(
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final SimultaneousUpdate su,
-			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf) {
+			final ILogger logger, final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
+			final UnmodifiableTransFormula guardTf) {
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
 		final TermVariable itFin = mgdScript.variable("itFin", sort);
@@ -514,7 +516,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		int k = 0;
 		for (final IProgramVar outVar : loopTransFormula.getOutVars().keySet()) {
 			if (loopTransFormula.getInVars().containsKey(outVar)) {
-				xPrimeEqualsXArray[k] = script.term("=", loopTransFormula.getOutVars().get(outVar), inVars.get(outVar));
+				xPrimeEqualsXArray[k] = script.term("=", loopTransFormula.getOutVars().get(outVar),
+						inVars.get(outVar));
 				k = k + 1;
 			} else {
 				throw new AssertionError("Could not find inVar for every outVar. Term (x'=x) cannot be constructed.");
@@ -587,8 +590,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		final UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
 		
-		checkPropertiesOfLoopAccelerationFormulaRestricted(mgdScript, loopTransFormula, loopAccelerationFormula, guardTf,
-				xPrimeEqualsX, guardOfClosedFormIt, it);
+		checkPropertiesOfLoopAccelerationFormulaRestricted(logger, services, mgdScript, loopTransFormula,
+				loopAccelerationFormula, guardTf, xPrimeEqualsX, guardOfClosedFormIt, it);
 		
 		return loopAccelerationFormula;
 	}
@@ -639,9 +642,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @param guardTf
 	 * @return
 	 */
-	private static UnmodifiableTransFormula createLoopAccelerationFormula(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
-			final UnmodifiableTransFormula guardTf) {
+	private static UnmodifiableTransFormula createLoopAccelerationFormula(final ILogger logger,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript, final SimultaneousUpdate su,
+			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
 				loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
 				loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
@@ -702,7 +705,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		// (=> ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1))) (guard(closedFormEven(x,
 		// 2*itHalf))))
-		final Term forallTerm1Implication1 = Util.implies(script, forallTerm1Implication1Left, guardOfClosedFormEvenIt);
+		final Term forallTerm1Implication1 = Util.implies(script, forallTerm1Implication1Left,
+				guardOfClosedFormEvenIt);
 
 		// ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1))))
 		final Term zeroLeqItHalf = script.term("<=", script.numeral(BigInteger.ZERO), itHalf);
@@ -730,7 +734,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term itHalfLeqItFinHalf = script.term("<=", itHalf, itFinHalf);
 		final Term forallTerm2Implication1Left = Util.and(script, oneLeqItHalf, itHalfLeqItFinHalf);
 
-		final Term forallTerm2Implication1 = Util.implies(script, forallTerm2Implication1Left, guardOfClosedFormEvenIt);
+		final Term forallTerm2Implication1 = Util.implies(script, forallTerm2Implication1Left,
+				guardOfClosedFormEvenIt);
 
 		// (=> ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))) (guard(closedFormOdd(x,
 		// 2*itHalf+1))))))
@@ -803,19 +808,23 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		tfb.setFormula(simplified);
 		final UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
 		
-		checkPropertiesOfLoopAccelerationFormula(mgdScript, loopTransFormula, loopAccelerationFormula,
-				guardTf, xPrimeEqualsX, guardOfClosedFormEvenIt, guardOfClosedFormOddIt, itHalf);
+		checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula,
+				loopAccelerationFormula, guardTf, xPrimeEqualsX, guardOfClosedFormEvenIt, guardOfClosedFormOddIt,
+				itHalf);
 		
 		return loopAccelerationFormula;
 	}
 	
 	/**
-	 * The resulting acceleration formula describes a subset R* of the reflexive transitive closure given by a formula
-	 * ((x = x' or (exists n, x_1,...,x_n. x R x_1 R x_2 R...R x_n R x')) and not exists x''. x'Rx''). This method tests
-	 * the correctness of the acceleration formula. It checks whether
+	 * The resulting acceleration formula describes a subset R* of a reflexive transitive closure:
+	 * ((({expr} x S_V,\mu) \cap [[st]])* \cap (S_V,\mu x {!expr})). This method tests the correctness
+	 * of the acceleration formula. It checks whether
 	 * {(x,x') | x = x' and not guard(x')}, {(x,x') | loopTransFormula(x,x') and not guard(closedForm(x,1))},
-	 * {(x,x') | sequentialComposition(x,x') and not guard(closedForm(x,2)} are subsets of R*. It also checks whether
-	 * a "havoc" of all assigned variables is a superset of R*.
+	 * {(x,x') | sequentialComposition(x,x') and not guard(closedForm(x,2)} are subsets of R*.
+	 * It also checks whether a "havoc" of all assigned variables is a superset of R*.
+	 * 
+	 * @param logger
+	 * @param services
 	 * @param mgdScript
 	 * @param loopTransFormula
 	 * @param loopAccelerationFormula
@@ -824,7 +833,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @param guardOfClosedForm
 	 * @param it
 	 */
-	private void checkPropertiesOfLoopAccelerationFormulaRestricted(ManagedScript mgdScript, UnmodifiableTransFormula loopTransFormula,
+	private static void checkPropertiesOfLoopAccelerationFormulaRestricted(final ILogger logger,
+			IUltimateServiceProvider services, ManagedScript mgdScript, UnmodifiableTransFormula loopTransFormula,
 			UnmodifiableTransFormula loopAccelerationFormula, UnmodifiableTransFormula guardTf, Term xPrimeEqualsX,
 			Term guardOfClosedForm, TermVariable it) {
 		final Script script = mgdScript.getScript();
@@ -832,32 +842,42 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// Check: (x = x') and not (guard(x)) and not (loopAccelerationFormula(x,x')) is unsat.
 		final Term notGuard = Util.not(script, guardTf.getFormula());
 		final Term notLoopAccFormula = Util.not(script, loopAccelerationFormula.getFormula());
-		assert Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) == LBool.UNSAT;
+		if (Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula))
+				!= LBool.UNSAT) {
+			throw new AssertionError("Computed reflexive-transitive closure is not reflexive. Something went wrong"
+					+ "in computation of loop acceleration formula.");
+		}
 		
 		// Check whether relation itself is subset of reflexive transitive closure.
-		// Check: loopTransFormula(x,x') and not (guard(closedForm(x,1))) and not (loopAccelerationFormula(x,x')) is unsat.
+		// Check: loopTransFormula(x,x') and not (guard(closedForm(x,1))) and not (loopAccelerationFormula(x,x'))
+		// is unsat.
 		final Map<TermVariable, ConstantTerm> substitutionMapping1 = new HashMap<>();
 		substitutionMapping1.put(it, (ConstantTerm) script.numeral(BigInteger.ONE));
 		final Substitution subst1 = new Substitution(script, substitutionMapping1);
 		final Term notGuardOfClosedForm1 = Util.not(script, subst1.transform(guardOfClosedForm));
-		assert Util.checkSat(script, Util.and(script, loopTransFormula.getFormula(), notGuardOfClosedForm1, notLoopAccFormula)) ==
-				LBool.UNSAT;
+		if (Util.checkSat(script, Util.and(script, loopTransFormula.getFormula(), notGuardOfClosedForm1,
+				notLoopAccFormula)) != LBool.UNSAT) {
+			throw new AssertionError("Computed reflexive-transitive closure does not contain relation itself."
+					+ "Something went wrong in computation of loop acceleration formula.");
+		}
 		
-		// Check whether sequential composition of relation with itself is subset of reflexive transitive closure.
+		// Check whether sequential composition of relation with itself is subset of reflexive transitive closure
 		// Check: sequCompo(x,x') and not (guard(closedForm(x,2))) and not (loopAccelerationFormula(x,x')) is unsat.
 		List<UnmodifiableTransFormula> loopTransFormulaList = new ArrayList<>();
 		loopTransFormulaList.add(loopTransFormula);
 		loopTransFormulaList.add(loopTransFormula);
 		
-		UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(mLogger,
-				mServices, mgdScript, true, true, false, XnfConversionTechnique.BDD_BASED, SimplificationTechnique.NONE,
+		UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(logger,
+				services, mgdScript, true, true, false, XnfConversionTechnique.BDD_BASED, SimplificationTechnique.NONE,
 				loopTransFormulaList);
 		final Map<TermVariable, TermVariable> substitutionMappingSc = new HashMap<>();
 		for (IProgramVar iVar : sequentialComposition.getInVars().keySet()) {
-			substitutionMappingSc.put(sequentialComposition.getInVars().get(iVar), loopAccelerationFormula.getInVars().get(iVar));
+			substitutionMappingSc.put(sequentialComposition.getInVars().get(iVar),
+					loopAccelerationFormula.getInVars().get(iVar));
 		}
 		for (IProgramVar iVar : sequentialComposition.getOutVars().keySet()) {
-			substitutionMappingSc.put(sequentialComposition.getOutVars().get(iVar), loopAccelerationFormula.getOutVars().get(iVar));
+			substitutionMappingSc.put(sequentialComposition.getOutVars().get(iVar),
+					loopAccelerationFormula.getOutVars().get(iVar));
 		}
 		final Substitution substSc = new Substitution(script, substitutionMappingSc);
 		final Term sequentialCompositionSubst = substSc.transform(sequentialComposition.getFormula());
@@ -865,22 +885,31 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		substitutionMapping2.put(it, (ConstantTerm) script.numeral(BigInteger.TWO));
 		final Substitution subst2 = new Substitution(script, substitutionMapping2);
 		final Term notGuardOfClosedForm2 = Util.not(script, subst2.transform(guardOfClosedForm));
-		assert Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
-				notLoopAccFormula)) == LBool.UNSAT;
+		if (Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
+				notLoopAccFormula)) != LBool.UNSAT) {
+			throw new AssertionError("Computed reflexive-transitive closure does not contain sequential composition of"
+					+ " relation with itself. Something went wrong in computation of loop acceleration formula.");
+		}
 		
 		// Check whether "havoc" of all variables is superset of reflexive transitive closure.
 		// Check: loopAccelerationFormula(x,x') and (not x = x') and (not guard(x) is unsat.
-		assert Util.checkSat(script, Util.and(script, loopAccelerationFormula.getFormula(), Util.not(script, 
-				xPrimeEqualsX), notGuard)) == LBool.UNSAT;
+		if (Util.checkSat(script, Util.and(script, loopAccelerationFormula.getFormula(), Util.not(script, 
+				xPrimeEqualsX), notGuard)) != LBool.UNSAT) {
+			throw new AssertionError("Havo of all variables is not a superset of the reflexive transitive closure."
+					+ "Something went wrong in computation of loop acceleration formula.");
+		}
 	}
 	
 	/**
-	 * The resulting acceleration formula describes a subset R* of the reflexive transitive closure given by a formula
-	 * ((x = x' or (exists n, x_1,...,x_n. x R x_1 R x_2 R...R x_n R x')) and not exists x''. x'Rx''). This method tests
-	 * the correctness of the acceleration formula. It checks whether
-	 * {(x,x') | x = x' and not guard(x')}, {(x,x') | loopTransFormula(x,x') and not guard(closedFormOdd(x,1))},
-	 * {(x,x') | sequentialComposition(x,x') and not guard(closedFormEven(x,2)} are subsets of R*. It also checks whether
-	 * a "havoc" of all assigned variables is a superset of R*.
+	 * The resulting acceleration formula describes a subset R* of a reflexive transitive closure:
+	 * ((({expr} x S_V,\mu) \cap [[st]])* \cap (S_V,\mu x {!expr})). This method tests the correctness
+	 * of the acceleration formula. It checks whether
+	 * {(x,x') | x = x' and not guard(x')}, {(x,x') | loopTransFormula(x,x') and not guard(closedForm(x,1))},
+	 * {(x,x') | sequentialComposition(x,x') and not guard(closedForm(x,2)} are subsets of R*.
+	 * It also checks whether a "havoc" of all assigned variables is a superset of R*.
+	 * 
+	 * @param logger
+	 * @param services
 	 * @param mgdScript
 	 * @param loopTransFormula
 	 * @param loopAccelerationFormula
@@ -890,7 +919,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @param guardOfClosedFormOdd
 	 * @param itHalf
 	 */
-	private void checkPropertiesOfLoopAccelerationFormula(ManagedScript mgdScript, UnmodifiableTransFormula loopTransFormula,
+	private static void checkPropertiesOfLoopAccelerationFormula(final ILogger logger,
+			IUltimateServiceProvider services, ManagedScript mgdScript, UnmodifiableTransFormula loopTransFormula,
 			UnmodifiableTransFormula loopAccelerationFormula, UnmodifiableTransFormula guardTf, Term xPrimeEqualsX,
 			Term guardOfClosedFormEven, Term guardOfClosedFormOdd, TermVariable itHalf) {
 		final Script script = mgdScript.getScript();
@@ -898,16 +928,23 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// Check: (x = x') and not (guard(x)) and not (loopAccelerationFormula(x,x')) is unsat.
 		final Term notGuard = Util.not(script, guardTf.getFormula());
 		final Term notLoopAccFormula = Util.not(script, loopAccelerationFormula.getFormula());
-		assert Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) == LBool.UNSAT;
+		if (Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) != LBool.UNSAT) {
+			throw new AssertionError("Computed reflexive-transitive closure is not reflexive. Something went wrong"
+					+ "in computation of loop acceleration formula");
+		}
 		
 		// Check whether relation itself is subset of reflexive transitive closure.
-		// Check: loopTransFormula(x,x') and not (guard(closedFormEven(x,1))) and not (loopAccelerationFormula(x,x')) is unsat.
+		// Check: loopTransFormula(x,x') and not (guard(closedFormEven(x,1))) and not (loopAccelerationFormula(x,x'))
+		// is unsat.
 		final Map<TermVariable, ConstantTerm> substitutionMapping1 = new HashMap<>();
 		substitutionMapping1.put(itHalf, (ConstantTerm) script.numeral(BigInteger.ZERO));
 		Substitution subst1 = new Substitution(script, substitutionMapping1);
 		Term notGuardOfClosedForm1 = Util.not(script, subst1.transform(guardOfClosedFormOdd));
-		assert Util.checkSat(script, Util.and(script, loopTransFormula.getFormula(), notGuardOfClosedForm1, notLoopAccFormula)) ==
-				LBool.UNSAT;
+		if (Util.checkSat(script, Util.and(script, loopTransFormula.getFormula(), notGuardOfClosedForm1,
+				notLoopAccFormula)) != LBool.UNSAT) {
+			throw new AssertionError("Computed reflexive-transitive closure does not contain relation itself."
+					+ "Something went wrong in computation of loop acceleration formula.");
+		}
 		
 		// Check whether sequential composition of relation with itself is subset of reflexive transitive closure.
 		// Check: sequCompo(x,x') and not (guard(closedForm(x,2))) and not (loopAccelerationFormula(x,x')) is unsat.
@@ -915,15 +952,17 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		loopTransFormulaList.add(loopTransFormula);
 		loopTransFormulaList.add(loopTransFormula);
 				
-		UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(mLogger,
-				mServices, mgdScript, true, true, false, XnfConversionTechnique.BDD_BASED, SimplificationTechnique.NONE,
+		UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(logger,
+				services, mgdScript, true, true, false, XnfConversionTechnique.BDD_BASED, SimplificationTechnique.NONE,
 				loopTransFormulaList);
 		final Map<TermVariable, TermVariable> substitutionMappingSc = new HashMap<>();
 		for (IProgramVar iVar : sequentialComposition.getInVars().keySet()) {
-			substitutionMappingSc.put(sequentialComposition.getInVars().get(iVar), loopAccelerationFormula.getInVars().get(iVar));
+			substitutionMappingSc.put(sequentialComposition.getInVars().get(iVar),
+					loopAccelerationFormula.getInVars().get(iVar));
 		}
 		for (IProgramVar iVar : sequentialComposition.getOutVars().keySet()) {
-			substitutionMappingSc.put(sequentialComposition.getOutVars().get(iVar), loopAccelerationFormula.getOutVars().get(iVar));
+			substitutionMappingSc.put(sequentialComposition.getOutVars().get(iVar),
+					loopAccelerationFormula.getOutVars().get(iVar));
 		}
 		final Substitution substSc = new Substitution(script, substitutionMappingSc);
 		final Term sequentialCompositionSubst = substSc.transform(sequentialComposition.getFormula());
@@ -931,13 +970,19 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		substitutionMapping2.put(itHalf, (ConstantTerm) script.numeral(BigInteger.ONE));
 		final Substitution subst2 = new Substitution(script, substitutionMapping2);
 		final Term notGuardOfClosedForm2 = Util.not(script, subst2.transform(guardOfClosedFormEven));
-		assert Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
-				notLoopAccFormula)) == LBool.UNSAT;
+		if (Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
+				notLoopAccFormula)) != LBool.UNSAT) {
+			throw new AssertionError("Computed reflexive-transitive closure does not contain sequential composition of"
+					+ " relation with itself. Something went wrong in computation of loop acceleration formula.");
+		}
 		
 		// Check whether "havoc" of all variables is superset of reflexive transitive closure.
 		// Check: loopAccelerationFormula(x,x') and (not x = x') and (not guard(x) is unsat.
-		assert Util.checkSat(script, Util.and(script, loopAccelerationFormula.getFormula(), Util.not(script, 
-				xPrimeEqualsX), notGuard)) == LBool.UNSAT;
+		if (Util.checkSat(script, Util.and(script, loopAccelerationFormula.getFormula(), Util.not(script, 
+				xPrimeEqualsX), notGuard)) != LBool.UNSAT) {
+			throw new AssertionError("Havo of all variables is not a superset of the reflexive transitive closure."
+					+ "Something went wrong in computation of loop acceleration formula.");
+		}
 	}
 
 	@Override
