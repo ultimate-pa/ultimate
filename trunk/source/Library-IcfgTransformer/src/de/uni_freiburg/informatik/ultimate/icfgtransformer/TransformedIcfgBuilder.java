@@ -414,13 +414,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			revertedCallGraph.addPair(en.getValue(), en.getKey());
 		}
 
-		final ISuccessorProvider<String> successorProvider = new ISuccessorProvider<>() {
-			@Override
-			public Iterator<String> getSuccessors(final String node) {
-				return revertedCallGraph.getImage(node).iterator();
-			}
-		};
-		final Function<String, Set<IProgramNonOldVar>> procToModGlobals = p -> newModifiedGlobals.getImage(p);
+		final ISuccessorProvider<String> successorProvider = node -> revertedCallGraph.getImage(node).iterator();
+		final Function<String, Set<IProgramNonOldVar>> procToModGlobals = newModifiedGlobals::getImage;
 
 		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		final Map<String, Set<IProgramNonOldVar>> closed =
@@ -439,8 +434,9 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final HashRelation<String, String> result = new HashRelation<>();
 		for (final Entry<String, OUTLOC> en : mResultIcfg.getProcedureEntryNodes().entrySet()) {
 			for (final IcfgEdge callEdge : en.getValue().getIncomingEdges()) {
-				assert callEdge instanceof IcfgCallTransition : "procedure entry node has an incoming edge that is not a call edge: "
-						+ callEdge.getClass();
+				if (!(callEdge instanceof IcfgCallTransition)) {
+					continue;
+				}
 				result.addPair(callEdge.getPrecedingProcedure(), callEdge.getSucceedingProcedure());
 			}
 		}
