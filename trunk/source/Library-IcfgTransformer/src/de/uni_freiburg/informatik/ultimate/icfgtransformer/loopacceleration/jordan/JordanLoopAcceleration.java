@@ -120,6 +120,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			loopAccelerationFormula =
 					createLoopAccelerationFormulaRestricted(logger, services, mgdScript, su, loopTransFormula, guardTf);
 		} catch (final AssertionError e) {
+			// TODO: Do not use AssertionError to signal expected failure condition. Use custom exception class if
+			// necessary, but it would be better to just return an Optional
 			loopAccelerationFormula =
 					createLoopAccelerationFormula(logger, services, mgdScript, su, loopTransFormula, guardTf);
 		}
@@ -340,6 +342,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final QuadraticMatrix jordanUpdate = updateMatrix.jordanMatrix();
 		final RationalMatrix modalUpdate = QuadraticMatrix.modalMatrix(updateMatrix, jordanUpdate);
 		final RationalMatrix inverseModalUpdate = RationalMatrix.inverse(modalUpdate);
+		// TODO: convert to assert for performance
 		QuadraticMatrix.checkCorrectnessofJordanDecomposition(updateMatrix, modalUpdate, jordanUpdate,
 				inverseModalUpdate);
 
@@ -426,6 +429,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final HashMap<TermVariable, Term> closedForm, final Map<IProgramVar, TermVariable> inVars,
 			final HashMap<TermVariable, IProgramVar> inVarsInverted, final Map<IProgramVar, TermVariable> outVars) {
 		if (guardFormula instanceof TermVariable) {
+			// TODO: Use get + null check instead of contains+get
 			if (closedForm.containsKey(outVars.get(inVarsInverted.get(guardFormula)))) {
 				return closedForm.get(outVars.get(inVarsInverted.get(guardFormula)));
 			}
