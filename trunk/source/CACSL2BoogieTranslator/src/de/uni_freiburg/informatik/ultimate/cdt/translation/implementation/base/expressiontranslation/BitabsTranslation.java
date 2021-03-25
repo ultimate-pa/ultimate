@@ -160,23 +160,23 @@ public class BitabsTranslation {
 		Expression rightUnsigned = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, right,
 				literal_0);
 
-		
-		Expression left_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq1, left_eq0); 
-		Expression right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_eq1, right_eq0);
+		Expression left_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq1,
+				left_eq0);
+		Expression right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
+				right_eq1, right_eq0);
 
-			/*
-			 * Expression cond_left_1 = ExpressionFactory.newBinaryExpression(loc,
-			 * BinaryExpression.Operator.LOGICAND, left_eq1, right_size1); Expression
-			 * cond_right_1 =
-			 * ExpressionFactory.newBinaryExpression(loc,BinaryExpression.Operator.LOGICAND,
-			 * left_size1, right_eq1); Expression right_1_ite =
-			 * ExpressionFactory.constructIfThenElseExpression(loc, cond_right_1, left,
-			 * and_0); Expression and_abs =
-			 * ExpressionFactory.constructIfThenElseExpression(loc, cond_left_1, right,
-			 * right_1_ite);
-			 */
-				  
-				  
+		/*
+		 * Expression cond_left_1 = ExpressionFactory.newBinaryExpression(loc,
+		 * BinaryExpression.Operator.LOGICAND, left_eq1, right_size1); Expression
+		 * cond_right_1 =
+		 * ExpressionFactory.newBinaryExpression(loc,BinaryExpression.Operator.LOGICAND,
+		 * left_size1, right_eq1); Expression right_1_ite =
+		 * ExpressionFactory.constructIfThenElseExpression(loc, cond_right_1, left,
+		 * and_0); Expression and_abs =
+		 * ExpressionFactory.constructIfThenElseExpression(loc, cond_left_1, right,
+		 * right_1_ite);
+		 */
+
 		if (left instanceof IntegerLiteral) {
 			String valueLeft = ((IntegerLiteral) left).getValue();
 //			System.out.println("-----Light side constant value:" + valueLeft.equals("1"));
@@ -192,27 +192,48 @@ public class BitabsTranslation {
 			} else if (valueRight.equals("0")) {
 				return right;
 			}
+
+		} else if (isCompareOperator(left) && isCompareOperator(right)) {
+
+			Expression left_neq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, left,
+					literal_0);
+			Expression right_neq0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, right,
+					literal_0);
+			Expression logic_and = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+					left_neq0, right_neq0);
+			//@CL For the type checking, bool to int, we need to constrcut the expression.
+			Expression logic_ite = ExpressionFactory.constructIfThenElseExpression(loc, logic_and, literal_1, literal_0);
+			
+//			final ExpressionResult rl = exprResultTransformer.transformSwitchRexIntToBool(leftOperand, loc, hook);
+//			final ExpressionResult rr = exprResultTransformer.transformSwitchRexIntToBool(rightOperand, loc, hook);
+//			return handleAndOrOperators(loc, node.getOperator(), rl, rr);
+			
+			//@CL ultiamte compares all the expression result with 0 in final step for if condition!
+			// So if the return type is bool, we need to set it back to int.
+			//logic_and.setType(BoogiePrimitiveType.TYPE_INT);
+			
+			return logic_ite;
 		}
 
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 
 		Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq0,
 				right_eq0);
+
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 
-		 
-			// a>0, a&1 <==> a%2
-			Expression leftMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, left,
-					literal2);
-			Expression rightMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, right,
-					literal2);
+		// a>0, a&1 <==> a%2
+		Expression leftMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, left,
+				literal2);
+		Expression rightMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, right,
+				literal2);
 		// case a&0
 		Expression and_mod = ExpressionFactory.constructIfThenElseExpression(loc, right_eq1, leftMod2, func);
 
 		// for the case, a&1, if size(a) is not 1, the result would diverge, this is
-		// actually equal to modular : -2&1=0, 2&1=0, 3&1=1.		 
+		// actually equal to modular : -2&1=0, 2&1=0, 3&1=1.
 
 		Expression condLeft1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_eq1,
 				rightUnsigned);
@@ -242,7 +263,8 @@ public class BitabsTranslation {
 			} else if (valueRight.equals("0")) {
 				return left;
 			}
-		}
+		} 		
+		
 		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
 		Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
@@ -268,19 +290,19 @@ public class BitabsTranslation {
 //		Expression left_right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1, right_size1);
 
 		// a|1 -> a
-		Expression left_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_cmp1,
-				right_size1);
-		Expression right_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1,
-				right_cmp1);
-		Expression either_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_1,
-				right_1);
+		Expression left_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_cmp1, right_size1);
+		Expression right_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1,right_cmp1);
+		Expression either_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_1, right_1);
+		
+		// adding log_or rule here (a|b) == 0, when both operands are 0
+		// Expression both_0 = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, left_cmp0, right_cmp0);		
+		// Expression logic_or = ExpressionFactory.constructIfThenElseExpression(loc, both_0, literal_0, func);
+		
 		Expression or_1 = ExpressionFactory.constructIfThenElseExpression(loc, either_1, literal_1, func);
 
 		// for the case, a|0 = a when a is bloolean or one bit size?
-		Expression left_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_cmp0,
-				right_size1);
-		Expression right_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1,
-				right_cmp0);
+		Expression left_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_cmp0, right_size1);
+		Expression right_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1, right_cmp0);
 
 		Expression left_0_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_0, right, or_1);
 		Expression or_0 = ExpressionFactory.constructIfThenElseExpression(loc, right_0, left, left_0_ite);
@@ -300,14 +322,16 @@ public class BitabsTranslation {
 		Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
 		Expression literal_31 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "31");
 		Expression literal_63 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "63");
-		
-		
+
 //		Expression left_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left,
 //				literal_31);
-		Expression right_cmp_31 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_31);		 
-		Expression right_cmp_63 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right,literal_63);		 
-		Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_cmp_31,right_cmp_63);
-		 
+		Expression right_cmp_31 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right,
+				literal_31);
+		Expression right_cmp_63 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right,
+				literal_63);
+		Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
+				right_cmp_31, right_cmp_63);
+
 		// left/right operand is positive and right/left operand is 31
 		Expression left_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, left,
 				literal_0);
@@ -320,16 +344,15 @@ public class BitabsTranslation {
 //		Expression cond_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
 //				left_cond_pos, right_cond_pos);
 
-			
-		
 		if (right instanceof IntegerLiteral) {
 			String valueRight = ((IntegerLiteral) right).getValue();
 			if (valueRight.equals("31") || valueRight.equals("63")) {
-				Expression signExpr = ExpressionFactory.constructIfThenElseExpression(loc, left_pos, literal_0, literal_1);
-				return signExpr ;
-				} 
-		}  
-		
+				Expression signExpr = ExpressionFactory.constructIfThenElseExpression(loc, left_pos, literal_0,
+						literal_1);
+				return signExpr;
+			}
+		}
+
 		final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
 		Expression func;
 		if (shiftRightLiteralValue != null) {
@@ -393,11 +416,8 @@ public class BitabsTranslation {
 				right_cmp1, right_cmp0);
 		Expression left_right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
 				left_size1, right_size1);
-		
-		//Thinking about in binary world, when it comes to bit 0 or 1
-		
-		
-		
+
+		// Thinking about in binary world, when it comes to bit 0 or 1
 
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
@@ -407,16 +427,22 @@ public class BitabsTranslation {
 		// rule xor-0, for xor-1 rule, not stand, 0111 ^ 0001, negate doesn't work
 		Expression right_ite_0 = ExpressionFactory.constructIfThenElseExpression(loc, right_cmp0, left, func);
 		Expression left_ite_0 = ExpressionFactory.constructIfThenElseExpression(loc, left_cmp0, right, right_ite_0);
-		Expression cond_eq = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-				left_right_size1, left_right_eq);
-		Expression cond_neq = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-				left_right_size1, left_right_neq);
-		Expression xor_eq = ExpressionFactory.constructIfThenElseExpression(loc, cond_eq, literal_0, left_ite_0);
-		Expression xor = ExpressionFactory.constructIfThenElseExpression(loc, cond_neq, literal_1, xor_eq);
+//		Expression cond_eq = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+//				left_right_size1, left_right_eq);
+//		Expression cond_neq = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+//				left_right_size1, left_right_neq);
+		
+		Expression logic_xor = ExpressionFactory.constructIfThenElseExpression(loc, left_right_eq, literal_0, literal_1);
+	
+		
+//		Expression xor_eq = ExpressionFactory.constructIfThenElseExpression(loc, cond_eq, literal_0, left_ite_0);
+//		Expression xor = ExpressionFactory.constructIfThenElseExpression(loc, cond_neq, literal_1, xor_eq);
+//		Expression xor_eq = ExpressionFactory.constructIfThenElseExpression(loc, cond_eq, literal_0, left_ite_0);
+		Expression xor = ExpressionFactory.constructIfThenElseExpression(loc, left_right_size1, logic_xor, left_ite_0);
+				
 		return xor;
 	}
-	
-	
+
 	/*
 	 * solution: integer eqauls to 0 or 1, complement-logic rule
 	 */
@@ -424,15 +450,15 @@ public class BitabsTranslation {
 		final String funcname = "bitwiseComplement";
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
- 
+
 		if (expr instanceof IfThenElseExpression) {
 			IfThenElseExpression ite = (IfThenElseExpression) expr;
 			Expression cond = ite.getCondition();
 			Expression thenPart = ite.getThenPart();
 			Expression elsePart = ite.getElsePart();
 			// operand already translated into boogie
- 			return ExpressionFactory.constructIfThenElseExpression(loc, cond, elsePart, thenPart);
-			
+			return ExpressionFactory.constructIfThenElseExpression(loc, cond, elsePart, thenPart);
+
 //			switch (ubin.getOperator()){
 //			case COMPEQ:
 //				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, left, right);				
@@ -443,13 +469,12 @@ public class BitabsTranslation {
 //						mTypeHandler.getBoogieTypeForCType(type));
 //				}
 //			}
-			} else {
-		 
-		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
-				mTypeHandler.getBoogieTypeForCType(type));
+		} else {
+
+			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
+					mTypeHandler.getBoogieTypeForCType(type));
 		}
 	}
-	
 
 	public static Result abstractAssgin(CHandler chandler, ProcedureManager mProcedureManager,
 			ArrayList<Declaration> mDeclarations, ExpressionTranslation mExpressionTranslation,
@@ -651,7 +676,7 @@ public class BitabsTranslation {
 
 				AssumeStatement assume_then = new AssumeStatement(loc, formula_neg);
 				AssumeStatement assume_else = new AssumeStatement(loc, formula_pos);
-	//			AssumeStatement assume_neg = new AssumeStatement(loc, com_neg);
+				// AssumeStatement assume_neg = new AssumeStatement(loc, com_neg);
 //				IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assume_else }, new Statement[] { ifstmt1 });
 				IfStatement ifstmt_com = new IfStatement(loc, com_pos, new Statement[] { assume_then },
 						new Statement[] { assume_else });
@@ -919,6 +944,16 @@ public class BitabsTranslation {
 		case IASTUnaryExpression.op_tilde:
 			return true;
 		default:
+			return false;
+		}
+	}
+
+	// Based on the heuristics ultimate translations on from comparison to ITE
+	// expressions(an optimization from the Ultimate?)
+	public static boolean isCompareOperator(Expression expr) {
+		if (expr instanceof IfThenElseExpression) {
+			return true;
+		} else {
 			return false;
 		}
 	}
