@@ -214,7 +214,8 @@ public class PolynomialTermMatrix {
 	 * Adds a block to the it-th power of the Jordan matrix. Makes sure that main denominator stays correct and all
 	 * fractions are reduced.
 	 */
-	private void addBlockToJordanPower(final ManagedScript mgdScript, final PolynomialTermMatrix block, final int start) {
+	private void addBlockToJordanPower(final ManagedScript mgdScript, final PolynomialTermMatrix block,
+			final int start) {
 		if (mDimension < block.mDimension + start) {
 			throw new AssertionError("Block does not fit into matrix");
 		}
@@ -285,10 +286,10 @@ public class PolynomialTermMatrix {
 	 * If !restrictedVersionPossible Computes two closed form matrices for the two cases that
 	 * the iteration count is even or odd.
 	 */
-	public static AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> closedFormMatrix(final ManagedScript mgdScript,
-			final QuadraticMatrix updateMatrix, final RationalMatrix modalUpdate, final QuadraticMatrix jordanUpdate,
-			final RationalMatrix inverseModalUpdate, final TermVariable it, final TermVariable itHalf,
-			final boolean itEven, boolean restrictedVersionPossible) {
+	public static AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> closedFormMatrix(
+			final ManagedScript mgdScript, final QuadraticMatrix updateMatrix, final RationalMatrix modalUpdate,
+			final QuadraticMatrix jordanUpdate, final RationalMatrix inverseModalUpdate, final TermVariable it,
+			final TermVariable itHalf, final boolean itEven, boolean restrictedVersionPossible) {
 		final int n = jordanUpdate.getDimension();
 		final Script script = mgdScript.getScript();
 		Sort sort = SmtSortUtils.getIntSort(script);
@@ -309,12 +310,14 @@ public class PolynomialTermMatrix {
 					for (Rational coeff : closedFormMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
 						if (coeff.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
 							restrictedVersionPossible = false;
-							AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> result = new AbstractMap.SimpleEntry<>(null, false);
+							AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> result =
+									new AbstractMap.SimpleEntry<>(null, false);
 							return result;
 						}
 						if (constant.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
 							restrictedVersionPossible = false;
-							AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> result = new AbstractMap.SimpleEntry<>(null, false);
+							AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> result =
+									new AbstractMap.SimpleEntry<>(null, false);
 							return result;
 						}
 					}
@@ -337,10 +340,12 @@ public class PolynomialTermMatrix {
 					Rational constant = closedFormMatrix.getEntry(i,j).getConstant();
 					for (Rational coeff : closedFormMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
 						if (coeff.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
+							throw new AssertionError("Non-integer value found. Computation of closed form not"
+									+ "possible.");
 						}
 						if (constant.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
+							throw new AssertionError("Non-integer value found. Computation of closed form not"
+									+ "possible.");
 						}
 					}
 					closedFormMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
@@ -357,8 +362,8 @@ public class PolynomialTermMatrix {
 	/**
 	 * Multiplication of two PolynomialTermMatrices.
 	 */
-	public static PolynomialTermMatrix multiplication(final ManagedScript mgdScript, final PolynomialTermMatrix matrix1,
-			final PolynomialTermMatrix matrix2) {
+	public static PolynomialTermMatrix multiplication(final ManagedScript mgdScript,
+			final PolynomialTermMatrix matrix1, final PolynomialTermMatrix matrix2) {
 		if (matrix1.mDimension != matrix2.mDimension) {
 			throw new AssertionError("Some matrices for multiplication are not of the same dimension.");
 		}

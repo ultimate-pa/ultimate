@@ -120,8 +120,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		
 		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
 		
-		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormulaRestricted(logger, services,
-				jlasg, mgdScript, su, loopTransFormula, guardTf, true);
+		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormulaRestricted(logger,
+				services, jlasg, mgdScript, su, loopTransFormula, guardTf, true);
 		
 		if (QuantifierUtils.isQuantifierFree(loopAccelerationFormula.getFormula())) {
 			jlasg.reportQuantifierFreeResult();
@@ -332,15 +332,19 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Script script = mgdScript.getScript();
 
 		// Compute matrix that represents closed form.
-		final AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> closedFormMatrix = PolynomialTermMatrix.closedFormMatrix(mgdScript, updateMatrix,
-				modalUpdate, jordanUpdate, inverseModalUpdate, it, itHalf, itEven, restrictedVersionPossible);
+		final AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> closedFormMatrix =
+				PolynomialTermMatrix.closedFormMatrix(mgdScript, updateMatrix, modalUpdate, jordanUpdate,
+						inverseModalUpdate, it, itHalf, itEven, restrictedVersionPossible);
 		if (!closedFormMatrix.getValue()) {
-			AbstractMap.SimpleEntry<HashMap<TermVariable, Term>, Boolean> result = new AbstractMap.SimpleEntry<>(null, false);
+			AbstractMap.SimpleEntry<HashMap<TermVariable, Term>, Boolean> result =
+					new AbstractMap.SimpleEntry<>(null, false);
 			return result;
 		}
-		final HashMap<TermVariable, Term> closedForm = matrix2ClosedForm(script, closedFormMatrix.getKey(), varMatrixIndex, su,
+		final HashMap<TermVariable, Term> closedForm = matrix2ClosedForm(script, closedFormMatrix.getKey(),
+				varMatrixIndex, su,
 				inVars, outVars);
-		AbstractMap.SimpleEntry<HashMap<TermVariable, Term>, Boolean> result = new AbstractMap.SimpleEntry<>(closedForm, true);
+		AbstractMap.SimpleEntry<HashMap<TermVariable, Term>, Boolean> result =
+				new AbstractMap.SimpleEntry<>(closedForm, true);
 		return result;
 	}
 
@@ -448,8 +452,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final TermVariable it = mgdScript.variable("it", sort);
 		final Term itGreater1 = script.term("<=", script.numeral(BigInteger.ONE), it);
 		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
-		final HashMap<TermVariable, Term> closedFormIt = closedForm(mgdScript, su, it, null, loopTransFormula.getInVars(),
-				loopTransFormula.getOutVars(), true, restrictedVersionPossible).getKey();
+		final HashMap<TermVariable, Term> closedFormIt = closedForm(mgdScript, su, it, null,
+				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, restrictedVersionPossible).getKey();
 		final Term guardOfClosedFormIt = guardOfClosedForm(script, guardTf.getFormula(), closedFormIt, inVars,
 				inVarsInverted, loopTransFormula.getOutVars());
 		final Term leftSideOfImpl = Util.and(script, itGreater1, itSmallerItFinM1);
@@ -467,7 +471,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 						closedFormItFin.get(loopTransFormula.getOutVars().get(var)));
 			} else {
 				closedFormArray[j] =
-						script.term("=", loopTransFormula.getOutVars().get(var), loopTransFormula.getInVars().get(var));
+						script.term("=", loopTransFormula.getOutVars().get(var),
+								loopTransFormula.getInVars().get(var));
 			}
 			j = j + 1;
 		}
@@ -627,7 +632,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		// (=> ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1))) (guard(closedFormEven(x,
 		// 2*itHalf))))
-		final Term forallTerm1Implication1 = Util.implies(script, forallTerm1Implication1Left, guardOfClosedFormEvenIt);
+		final Term forallTerm1Implication1 = Util.implies(script, forallTerm1Implication1Left,
+				guardOfClosedFormEvenIt);
 
 		// ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1))))
 		final Term zeroLeqItHalf = script.term("<=", script.numeral(BigInteger.ZERO), itHalf);
@@ -655,7 +661,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term itHalfLeqItFinHalf = script.term("<=", itHalf, itFinHalf);
 		final Term forallTerm2Implication1Left = Util.and(script, oneLeqItHalf, itHalfLeqItFinHalf);
 
-		final Term forallTerm2Implication1 = Util.implies(script, forallTerm2Implication1Left, guardOfClosedFormEvenIt);
+		final Term forallTerm2Implication1 = Util.implies(script, forallTerm2Implication1Left,
+				guardOfClosedFormEvenIt);
 
 		// (=> ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))) (guard(closedFormOdd(x,
 		// 2*itHalf+1))))))
@@ -674,7 +681,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 						closedFormEvenItFin.get(loopTransFormula.getOutVars().get(var)));
 			} else {
 				closedFormArrayEven[j] =
-						script.term("=", loopTransFormula.getOutVars().get(var), loopTransFormula.getInVars().get(var));
+						script.term("=", loopTransFormula.getOutVars().get(var),
+								loopTransFormula.getInVars().get(var));
 			}
 			j = j + 1;
 		}
@@ -692,7 +700,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 						closedFormOddItFin.get(loopTransFormula.getOutVars().get(var)));
 			} else {
 				closedFormArrayOdd[i] =
-						script.term("=", loopTransFormula.getOutVars().get(var), loopTransFormula.getInVars().get(var));
+						script.term("=", loopTransFormula.getOutVars().get(var),
+								loopTransFormula.getInVars().get(var));
 			}
 			i = i + 1;
 		}
@@ -739,39 +748,42 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		assert checkCorrectnessOfQuantifierElimination(logger, script, disjunction, simplified);
 		
 		assert checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula,
-				loopAccelerationFormula, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormEvenIt, guardOfClosedFormOddIt,
-				itHalf, false);
+				loopAccelerationFormula, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormEvenIt,
+				guardOfClosedFormOddIt, itHalf, false);
 		
 		jlasg.reportTwoCaseAcceleration();
 		
 		return loopAccelerationFormula;
 	}
 
-	private static boolean checkCorrectnessOfQuantifierElimination(ILogger logger, Script script, Term quantifiedFormula, Term
-			formulaWithoutQuantifiers) {
+	/**
+	 * Method to check correctness of quantifier elimination.
+	 */
+	private static boolean checkCorrectnessOfQuantifierElimination(final ILogger logger, final Script script,
+			final Term quantifiedFormula, final Term formulaWithoutQuantifiers) {
 		if (Util.checkSat(script, Util.and(script, quantifiedFormula, Util.not(script, formulaWithoutQuantifiers)))
 				== LBool.SAT) {
 			throw new AssertionError("Something went wrong in quantifier elimination.");
-		} else if (Util.checkSat(script, Util.and(script, quantifiedFormula, Util.not(script, formulaWithoutQuantifiers)))
-				== LBool.UNKNOWN) {
+		} else if (Util.checkSat(script, Util.and(script, quantifiedFormula,
+				Util.not(script, formulaWithoutQuantifiers))) == LBool.UNKNOWN) {
 			logger.warn("Unable to prove correctness of quantifier elimination.");
-			// throw new AssertionError("Unable to prove correctness of quantifier elimination.");
 		}
 		if (Util.checkSat(script, Util.and(script, formulaWithoutQuantifiers, Util.not(script, quantifiedFormula)))
 				== LBool.SAT) {
 			throw new AssertionError("Something went wrong in quantifier elimination.");
-		} else if (Util.checkSat(script, Util.and(script, formulaWithoutQuantifiers, Util.not(script, quantifiedFormula)))
-				== LBool.UNKNOWN) {
+		} else if (Util.checkSat(script,
+				Util.and(script, formulaWithoutQuantifiers, Util.not(script, quantifiedFormula))) == LBool.UNKNOWN) {
 			logger.warn("Unable to prove correctness of quantifier elimination.");
-			// throw new AssertionError("Unable to prove correctness of quantifier elimination.");
 		}
 		return true;
 	}
 	/**
 	 * The resulting acceleration formula describes a subset R* of a reflexive transitive closure: ((({expr} x S_V,\mu)
-	 * \cap [[st]])* \cap (S_V,\mu x {!expr})). This method tests the correctness of the acceleration formula. It checks
-	 * whether {(x,x') | x = x' and not guard(x')}, {(x,x') | loopTransFormula(x,x') and not guard(closedForm(x,1))},
-	 * {(x,x') | sequentialComposition(x,x') and not guard(closedForm(x,2)} are subsets of R*. It also checks whether a
+	 * \cap [[st]])* \cap (S_V,\mu x {!expr})). This method tests the correctness of the acceleration formula.
+	 * It checks whether {(x,x') | x = x' and not guard(x')},
+	 * {(x,x') | loopTransFormula(x,x') and not guard(closedForm(x,1))},
+	 * {(x,x') | sequentialComposition(x,x') and not guard(closedForm(x,2)}
+	 * are subsets of R*. It also checks whether a
 	 * "havoc" of all assigned variables is a superset of R*.
 	 */
 	private static boolean checkPropertiesOfLoopAccelerationFormula(final ILogger logger,
