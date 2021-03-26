@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 public class RationalMatrixTest {
 
 	/**
-	 * Tests the function RationalMatrix inverse(final RationalMatrix matrix)
+	 * Tests the function {@link RationalMatrix#inverse(RationalMatrix)}.
 	 */
 	@Test
 	public void testInverse() {
@@ -65,7 +65,7 @@ public class RationalMatrixTest {
 	}
 	
 	/**
-	 * Tests function void addColumnToMatrix(final int j, final Rational[] vector).
+	 * Tests function {@link RationalMatrix#addColumnToMatrix(int, Rational[])}.
 	 */
 	@Test
 	public void testAddColumnToMatrix() {
@@ -106,7 +106,7 @@ public class RationalMatrixTest {
 	}
 	
 	/**
-	 * Tests function void addRowToMatrix(final int i, final Rational[] vector).
+	 * Tests function {@link RationalMatrix#addRowToMatrix(int, Rational[])}.
 	 */
 	@Test
 	public void testAddRowToMatrix() {

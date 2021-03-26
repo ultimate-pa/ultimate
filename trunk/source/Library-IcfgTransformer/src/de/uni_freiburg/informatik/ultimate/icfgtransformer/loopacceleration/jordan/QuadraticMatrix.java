@@ -144,7 +144,7 @@ public class QuadraticMatrix {
 	 * @param matrix
 	 * @return new quadratic matrix scMult = a*matrix
 	 */
-	public static QuadraticMatrix scalarMultiplication(final BigInteger a, final QuadraticMatrix matrix) {		
+	public static QuadraticMatrix scalarMultiplication(final BigInteger a, final QuadraticMatrix matrix) {
 		final int n = matrix.mDimension;
 		BigInteger[][] scMultEntries = new BigInteger[n][n];
 		for (int i=0; i<n; i++) {
@@ -443,7 +443,7 @@ public class QuadraticMatrix {
 	}
 	
 	/**
-	 * Computes the rank of a quadratic matrix computing first the row echelon form using Gaussian elimination and then
+	 * Computes the rank of a quadratic matrix computing the row echelon form first using Gaussian elimination and then
 	 * counting the number of zero rows.
 	 */
 	public int rank() {
@@ -467,7 +467,7 @@ public class QuadraticMatrix {
 	 * the dimension of ker(matrix-lambda*E) where E is the identity matrix. To compute the dimension of the kernel the
 	 * dimension formula is used.
 	 * The geometric multiplicity corresponds to the number of Jordan blocks for lambda.
-	 * This method also works for eigenvalues not equal to -1,0 or 1.
+	 * This method also works for integral eigenvalues not equal to -1,0 or 1.
 	 * @param lambda an eigenvalue
 	 * @return geometric multiplicity of lambda
 	 */
@@ -515,8 +515,6 @@ public class QuadraticMatrix {
 	/**
 	 * Adds jordan block to quadratic jordan matrix beginning at row start.
 	 * This method also works for integral eigenvalues not equal to -1,0 or 1.
-	 * @param block
-	 * @param start
 	 */
 	public void addJordanBlock(final QuadraticMatrix block, final int start) {
 		if (mDimension < block.mDimension + start) {
@@ -533,7 +531,6 @@ public class QuadraticMatrix {
 	/**
 	 * Computes the jordan matrix of a given quadratic matrix.
 	 * This method also works for integral eigenvalues not equal to -1,0 or 1, only need to change eigenvalues array.
-	 * @return
 	 */
 	public QuadraticMatrix jordanMatrix() {
 		final int n = mDimension;
@@ -568,12 +565,8 @@ public class QuadraticMatrix {
 		return jordanMatrix;
 	}
 	
-	
 	/**
 	 * Constructs the matrix representing the les matrix*x=b.
-	 * @param matrix
-	 * @param b
-	 * @return
 	 */
 	public static RationalMatrix les(QuadraticMatrix matrix, Rational[] b) {
 		final int n = matrix.mDimension;
@@ -594,9 +587,6 @@ public class QuadraticMatrix {
 	
 	/**
 	 * Usual matrix vector multiplication where matrix entries are BigInteger, vector is Rational.
-	 * @param matrix
-	 * @param vector
-	 * @return
 	 */
 	public static Rational[] matrixVectorMultiplication(QuadraticMatrix matrix, Rational[] vector) {
 		if (matrix.mDimension != vector.length) {
@@ -726,7 +716,7 @@ public class QuadraticMatrix {
 	 * @param jordanMatrix
 	 * @param inverseModalMatrix
 	 */
-	public static void checkCorrectnessofJordanDecomposition(final QuadraticMatrix matrix,
+	public static boolean checkCorrectnessofJordanDecomposition(final QuadraticMatrix matrix,
 			final RationalMatrix modalMatrix, final QuadraticMatrix jordanMatrix,
 			final RationalMatrix inverseModalMatrix) {
 		final QuadraticMatrix decomposition = QuadraticMatrix.multiplication(QuadraticMatrix.multiplication(
@@ -742,6 +732,7 @@ public class QuadraticMatrix {
 				}
 			}
 		}
+		return true;
 	}
 	
 	public int getDimension() {

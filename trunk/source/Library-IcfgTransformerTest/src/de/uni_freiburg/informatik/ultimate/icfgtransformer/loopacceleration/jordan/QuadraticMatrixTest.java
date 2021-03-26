@@ -45,23 +45,19 @@ public class QuadraticMatrixTest {
 	/**
 	 * Function that checks if two quadratic matrices are identical meaning they are of the same dimension and have
 	 * the same entries.
-	 * @param M1
-	 * @param M2
 	 */
-	static void checkMatrixEquality(QuadraticMatrix M1, QuadraticMatrix M2) {
-		assertEquals(M1.getDimension(), M2.getDimension());
-		int n = M1.getDimension();
+	static void checkMatrixEquality(QuadraticMatrix matrix1, QuadraticMatrix matrix2) {
+		assertEquals(matrix1.getDimension(), matrix2.getDimension());
+		int n = matrix1.getDimension();
 		for (int i=0; i<n; i++) {
 			for (int j=0; j<n; j++) {
-				checkBigIntegerEquality(M1.getEntry(i,j), M2.getEntry(i,j));
+				checkBigIntegerEquality(matrix1.getEntry(i,j), matrix2.getEntry(i,j));
 			}
 		}
 	}
 	
 	/**
 	 * Function that checks if two BigInteger are identical
-	 * @param a
-	 * @param b
 	 */
 	static void checkBigIntegerEquality(BigInteger a, BigInteger b) {
 		assertEquals(a.intValue(), b.intValue());
@@ -69,8 +65,6 @@ public class QuadraticMatrixTest {
 	
 	/**
 	 * Create a random quadratic matrix of dimension n. Used for nontrivial test cases.
-	 * @param n
-	 * @return
 	 */
 	QuadraticMatrix createRandomMatrix(int n) {
 		Random random = new Random(10);
@@ -85,9 +79,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Transform an integer matrix (array of arrays) to a BigInteger QUadraticMatrix.
-	 * @param entries
-	 * @return
+	 * Transform an integer array of arrays to a BigInteger QUadraticMatrix.
 	 */
 	public static QuadraticMatrix intToBigInteger(int[][] entries) {
 		int n = entries.length;
@@ -101,7 +93,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests function QuadraticMatrix identityMatrix(final int n).
+	 * Tests function {@link QuadraticMatrix#identityMatrix(int)}.
 	 */
 	@Test
 	public void testIdentityMatrix() {
@@ -120,7 +112,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests function QuadraticMatrix copyMatrix(final QuadraticMatrix matrix).
+	 * Tests function {@link QuadraticMatrix#copyMatrix(QuadraticMatrix)}.
 	 */
 	@Test
 	public void testCopyMatrix() {
@@ -135,7 +127,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix addition(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2).
+	 * Tests the function {@link QuadraticMatrix#addition(QuadraticMatrix, QuadraticMatrix)}.
 	 */
 	@Test
 	public void testAddition() {
@@ -160,7 +152,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix scalarMultiplication(final BigInteger a, final QuadraticMatrix matrix).
+	 * Tests the function {@link QuadraticMatrix#scalarMultiplication(BigInteger, QuadraticMatrix)}.
 	 */
 	@Test
 	public void testScalarMultiplication() {
@@ -182,7 +174,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix multiplication(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2).
+	 * Tests the function {@link QuadraticMatrix#multiplication(QuadraticMatrix, QuadraticMatrix)}.
 	 */
 	@Test
 	public void testMultiplication() {
@@ -204,7 +196,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix power(final QuadraticMatrix matrix, final int s).
+	 * Tests the function {@link QuadraticMatrix#power(QuadraticMatrix, int)}.
 	 */
 	@Test
 	public void testPower() {
@@ -223,7 +215,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function BigInteger det().
+	 * Tests the function {@link QuadraticMatrix#det()}.
 	 */
 	@Test
 	public void testDet() {
@@ -246,7 +238,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function RationalMatrix inverse(final QuadraticMatrix matrix).
+	 * Tests the function {@link QuadraticMatrix#inverse(QuadraticMatrix)}
 	 */
 	@Test
 	public void testInverse() {
@@ -275,7 +267,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function boolean[] smallEigenvalues().
+	 * Tests the function {@link QuadraticMatrix#smallEigenvalues()}.
 	 */
 	@Test
 	public void testSmallEigenvalues() {
@@ -303,7 +295,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function void swapRows(final int i, final int j).
+	 * Tests the function {@link QuadraticMatrix#swapRows(int, int)}.
 	 */
 	@Test
 	public void testSwapRows() {
@@ -317,7 +309,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix gaussElimination(final QuadraticMatrix matrix).
+	 * Tests the function {@link QuadraticMatrix#gaussElimination(QuadraticMatrix)}.
 	 */
 	@Test
 	public void testGaussElimination() {
@@ -354,7 +346,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function Rational[] backwardSubstitution(final QuadraticMatrix matrix, final int s).
+	 * Tests the function {@link QuadraticMatrix#backwardSubstitution(QuadraticMatrix, int)}.
 	 */
 	@Test
 	public void testBackwardSubstitution() {
@@ -399,7 +391,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function int rank().
+	 * Tests the function {@link QuadraticMatrix#rank()}.
 	 */
 	@Test
 	public void testRank() {
@@ -428,7 +420,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function int geometricMultiplicity(final int lambda).
+	 * Tests the function {@link QuadraticMatrix#geometricMultiplicity(int)}.
 	 */
 	@Test
 	public void testGeometricMultiplicity() {
@@ -449,7 +441,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function int numberOfBlocks(final int lambda, final int s).
+	 * Tests the function {@link QuadraticMatrix#numberOfBlocks(int, int)}.
 	 */
 	@Test
 	public void testNumberOfBlocks() {
@@ -470,7 +462,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix createJordanBlock(final int lambda, final int s).
+	 * Tests the function {@link QuadraticMatrix#createJordanBlock(int, int)}.
 	 */
 	@Test
 	public void testCreateJordanBlock() {
@@ -491,7 +483,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function void addJordanBlock(final QuadraticMatrix block, final int start).
+	 * Tests the function {@link QuadraticMatrix#addJordanBlock(QuadraticMatrix, int)}.
 	 */
 	@Test
 	public void testAddJordanBlock() {
@@ -504,7 +496,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix jordanMatrix().
+	 * Tests the function {@link QuadraticMatrix#jordanMatrix()}.
 	 */
 	@Test
 	public void testJordanMatrix() {
@@ -544,7 +536,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function RationalMatrix les(QuadraticMatrix matrix, Rational[] b).
+	 * Tests the function {@link QuadraticMatrix#les(QuadraticMatrix, Rational[])}.
 	 */
 	@Test
 	public void testLes() {
@@ -563,7 +555,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function Rational[] matrixVectorMultiplication(QuadraticMatrix matrix, Rational[] vector).
+	 * Tests the function {@link QuadraticMatrix#matrixVectorMultiplication(QuadraticMatrix, Rational[])}.
 	 */
 	@Test
 	public void testMatrixVectorMultiplication() {
@@ -586,7 +578,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function RationalMatrix modalMatrix(final QuadraticMatrix matrix, final QuadraticMatrix jordanMatrix).
+	 * Tests the function {@link QuadraticMatrix#modalMatrix(QuadraticMatrix, QuadraticMatrix)}.
 	 */
 	@Test
 	public void testModalMatrix() {

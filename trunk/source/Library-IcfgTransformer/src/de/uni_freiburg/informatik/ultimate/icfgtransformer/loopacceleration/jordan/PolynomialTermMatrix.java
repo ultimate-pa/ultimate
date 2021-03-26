@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
 import java.math.BigInteger;
+import java.util.AbstractMap;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -52,7 +53,7 @@ public class PolynomialTermMatrix {
 	*/
 	private int mDimension;
 	/**
-	 * mEntries is an ApplicationTerm array of arrays representing the entries of the matrix.
+	 * mEntries is an IPolynomialTerm array of arrays representing the entries of the matrix.
 	 */
 	private IPolynomialTerm[][] mEntries;
 	/**
@@ -60,7 +61,7 @@ public class PolynomialTermMatrix {
 	*/
 	private BigInteger mDenominator;
 		
-	public PolynomialTermMatrix(BigInteger denominator, IPolynomialTerm[][] matrixEntries) {
+	public PolynomialTermMatrix(final BigInteger denominator, final IPolynomialTerm[][] matrixEntries) {
 		final int numberOfRows = matrixEntries.length;
 		for (int i=0; i<numberOfRows; i++) {
 			if (numberOfRows != matrixEntries[i].length) {
@@ -73,12 +74,9 @@ public class PolynomialTermMatrix {
 	}
 		
 	/**
-	 * Construct a matrix where all entries are constant polynomial 0.
-	 * @param mgdScript
-	 * @param n
-	 * @return
+	 * Construct a matrix of dimension n where all entries are constant polynomial 0.
 	 */
-	private static PolynomialTermMatrix constantZeroMatrix(ManagedScript mgdScript, int n) {
+	private static PolynomialTermMatrix constantZeroMatrix(final ManagedScript mgdScript, final int n) {
 		Script script = mgdScript.getScript();
 		IPolynomialTerm[][] zeroMatrixEntries = new IPolynomialTerm[n][n];
 		Sort sort = SmtSortUtils.getIntSort(script);
@@ -94,11 +92,8 @@ public class PolynomialTermMatrix {
 	
 	/**
 	 * Takes a RationalMatrix and transforms it to a PolynomialTermMatrix.
-	 * @param script
-	 * @param matrix
-	 * @return
 	 */
-	public static PolynomialTermMatrix rationalMatrix2TermMatrix(Script script, RationalMatrix matrix) {
+	public static PolynomialTermMatrix rationalMatrix2TermMatrix(final Script script, final RationalMatrix matrix) {
 		final int n = matrix.getIntMatrix().getDimension();
 		final Sort sort = SmtSortUtils.getIntSort(script);
 		IPolynomialTerm[][] termMatrixEntries = new IPolynomialTerm[n][n];
@@ -113,186 +108,35 @@ public class PolynomialTermMatrix {
 	}
 	
 	/**
-	 * Construct the term n(n-1)*...*(n-j) which is the numerator of the entries of the n-th power of the
-	 * Jordan matrix. Multiply this term by (k+1)*(k+2)*...*(n-blockSize+1) to make sure that fractions in 
+	 * Construct the term it(it-1)*...*(it-j) which is the numerator of the entries of the it-th power of the
+	 * Jordan matrix. Multiply this term by (k+1)*(k+2)*...*(it-blockSize+1) to make sure that fractions in 
 	 * PolynomialTermMatrix are reduced.
-	 * Use this method only if -1 is not an eigenvalue of the update matrix.
-	 * @param script
-	 * @param it
-	 * @param k
-	 * @param blockSize
-	 * @return
+	 * restrictedVersionPossible is true iff -1 is not an eigenvalue and for eigenvalue 1
+	 * no Jordan block is greater than 2.
+	 * If !restrictedVersionPossible, substitute it = 2*itHalf if itEven, it = 2*itHalf + 1 if !itEven.
 	 */
 	private static IPolynomialTerm binomialCoefficientNumerator(final Script script, final TermVariable it,
-			final int k, final int blockSize) {
+			final TermVariable itHalf, final int k, final int blockSize, final boolean itEven,
+			final boolean restrictedVersionPossible) {
 		final Sort sort = SmtSortUtils.getIntSort(script);
-		IPolynomialTerm var = AffineTerm.constructVariable(it);
-		if (k==0) {
-			return AffineTerm.constructConstant(sort, Rational.valueOf(
-					facultyWithStartValue(1,blockSize-1), BigInteger.ONE));
-		}
-		if (k==1) {
-			return PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.valueOf(
-					facultyWithStartValue(1,blockSize-1), BigInteger.ONE)),var);
-		}
-		IPolynomialTerm facultyFactor = AffineTerm.constructConstant(sort, Rational.valueOf(
-				facultyWithStartValue(k+1,blockSize-1), BigInteger.ONE));
-		IPolynomialTerm varMinusKFaculty = PolynomialTerm.mulPolynomials(facultyFactor,var);
-		for (int i=1; i<k; i++) {
-			IPolynomialTerm constant = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.valueOf(-i),
-					BigInteger.ONE));
-			IPolynomialTerm varMinusConstant = PolynomialTerm.sum(var, constant);
-			varMinusKFaculty = PolynomialTerm.mulPolynomials(varMinusKFaculty, varMinusConstant);
-		}
-		return varMinusKFaculty;
-	}
-	
-	/**
-	 * Create a block of the n-th power of the Jordan matrix of size blockSize for eigenvalue lamda.
-	 * Use this method only if -1 is not an eigenvalue of the update matrix.
-	 * @param mgdScript
-	 * @param it
-	 * @param lambda
-	 * @param blockSize
-	 * @return
-	 */
-	private static PolynomialTermMatrix createBlock(final ManagedScript mgdScript, final TermVariable it,
-			final int lambda, final int blockSize) {
-		final Script script = mgdScript.getScript();
-		PolynomialTermMatrix block = constantZeroMatrix(mgdScript, blockSize);
-		if (lambda == 1) {
-			for (int j=0; j<blockSize; j++) {
-				// first row
-				block.mEntries[0][j] = binomialCoefficientNumerator(script, it, j, blockSize);
-				// all other rows
-				if (j!=0) {
-					for (int i=1; i<blockSize; i++) {
-						block.mEntries[i][j] = block.mEntries[i-1][j-1];
-					}
-				}
-			}
-			block.mDenominator = facultyWithStartValue(1,blockSize-1);
-		}
-		return block;
-	}
-	
-	/**
-	 * Create the n-th power of a Jordan matrix out of the Jordan matrix.
-	 * Use this method only if -1 is not an eigenvalue of the update matrix.
-	 * @param matrix
-	 * @param mgdScript
-	 * @param it
-	 * @param jordan
-	 * @return
-	 */
-	public static PolynomialTermMatrix jordanToJordanPower(QuadraticMatrix matrix, final ManagedScript mgdScript,
-			final TermVariable it, final QuadraticMatrix jordan) {
-		final int n = jordan.getDimension();
-		PolynomialTermMatrix jordanPower = constantZeroMatrix(mgdScript, n);
-		final boolean[] eigenvalues = matrix.smallEigenvalues();
-		if (matrix.smallEigenvalues()[0]) {
-			throw new AssertionError("Do not use this method if -1 is an eigenvalue of the update matrix.");
-		}
-		// for each eigenvalue compute number of Jordan blocks.
-		int current = 0;
-		for (int e=0; e<=1; e++) {
-			if(eigenvalues[e+1]) {
-				final int geomMult = matrix.geometricMultiplicity(e);
-				int[] numberOfBlocks = new int[n+1];
-				int sum = 0;
-				while (sum < geomMult) {
-					for (int sE=1; sE<=n; sE++) {
-						numberOfBlocks[sE] = matrix.numberOfBlocks(e, sE);
-						sum = sum + numberOfBlocks[sE];
-					}
-				}
-				for (int s=1; s<=n; s++) {
-					for (int i=0; i<numberOfBlocks[s]; i++) {
-						final PolynomialTermMatrix block = createBlock(mgdScript, it, e, s);
-						jordanPower.addBlockToJordanPower(mgdScript, block, current);
-						current = current + s;
-					}
-				}
-			}
-		}
-		return jordanPower;
-	}
-	
-	/**
-	 * Method that computes matrix that represents closed form out of the jordan decomposition.
-	 * Computes two closed form matrices for the two cases that the iteration count is even or odd.
-	 * Use this method only if -1 is not an eigenvalue of the update matrix.
-	 * @param mgdScript
-	 * @param updateMatrix
-	 * @param modalUpdate
-	 * @param jordanUpdate
-	 * @param inverseModalUpdate
-	 * @param it
-	 * @return
-	 */
-	public static PolynomialTermMatrix closedFormMatrix(ManagedScript mgdScript, QuadraticMatrix updateMatrix,
-			RationalMatrix modalUpdate, QuadraticMatrix jordanUpdate, RationalMatrix inverseModalUpdate,
-			TermVariable it) {
-		final int n = jordanUpdate.getDimension();
-		final Script script = mgdScript.getScript();
-		Sort sort = it.getSort();
-		final PolynomialTermMatrix jordanUpdatePower = jordanToJordanPower(updateMatrix, mgdScript, it,
-				jordanUpdate);
-		final PolynomialTermMatrix tmp = multiplication(mgdScript,
-				rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePower);
-		final PolynomialTermMatrix closedFormMatrix = multiplication(mgdScript, tmp,
-				rationalMatrix2TermMatrix(script, inverseModalUpdate));
-			
-		IPolynomialTerm denom = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.ONE,
-				closedFormMatrix.getDenominator()));
-		for (int i=0; i<n; i++) {
-			for (int j=0; j<n; j++) {
-				Rational constant = closedFormMatrix.getEntry(i,j).getConstant();
-				for (Rational coefficient : closedFormMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
-					if (coefficient.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
-						throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
-					}
-					if (constant.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
-						throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
-					}
-				}
-				closedFormMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
-						closedFormMatrix.getEntry(i,j), denom));
-			}
-		}
-		closedFormMatrix.mDenominator = BigInteger.ONE;
-		return closedFormMatrix;
-	}
-
-	/**
-	 * Construct the term n(n-1)*...*(n-j) which is the numerator of the entries of the n-th power of the
-	 * Jordan matrix. Multiply this term by (k+1)*(k+2)*...*(n-blockSize+1) to make sure that fractions in 
-	 * PolynomialTermMatrix are reduced.
-	 * Substitute n = 2k if nEven, n = 2k+1 if !nEven.
-	 * @param script
-	 * @param itHalf
-	 * @param k
-	 * @param blockSize
-	 * @param nEven
-	 * @return
-	 */
-	private static IPolynomialTerm binomialCoefficientNumerator(final Script script, final TermVariable itHalf,
-			final int k, final int blockSize, boolean nEven) {
-		final Sort sort = SmtSortUtils.getIntSort(script);
-		IPolynomialTerm var = AffineTerm.constructVariable(itHalf);
-		if (nEven) {
-			var = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
-					AffineTerm.constructVariable(itHalf));
+		IPolynomialTerm var;
+		if (restrictedVersionPossible) {
+			var = AffineTerm.constructVariable(it);
 		} else {
-			var = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
-					AffineTerm.constructVariable(itHalf));
-			var = PolynomialTerm.sum(var, AffineTerm.constructConstant(sort,Rational.ONE));
+			var = AffineTerm.constructVariable(itHalf);
+			if (itEven) {
+				var = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
+						AffineTerm.constructVariable(itHalf));
+			} else {
+				var = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
+						AffineTerm.constructVariable(itHalf));
+				var = PolynomialTerm.sum(var, AffineTerm.constructConstant(sort,Rational.ONE));
+			}
 		}
 		if (k==0) {
 			return AffineTerm.constructConstant(sort, Rational.valueOf(
 					facultyWithStartValue(1,blockSize-1), BigInteger.ONE));
-		}
-		if (k==1) {
+		} else if (k==1) {
 			return PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.valueOf(
 					facultyWithStartValue(1,blockSize-1), BigInteger.ONE)),var);
 		}
@@ -307,12 +151,9 @@ public class PolynomialTermMatrix {
 		}
 		return varMinusKFaculty;
 	}
-	
+		
 	/**
-	 * Compute start*(start+1)*...*k which represents the main denominator of the n-th power of the Jordan matrix.
-	 * @param start
-	 * @param k
-	 * @return
+	 * Compute start*(start+1)*...*k which represents the main denominator of the it-th power of the Jordan matrix.
 	 */
 	private static BigInteger facultyWithStartValue(final int start, final int k) {
 		BigInteger faculty = BigInteger.ONE;
@@ -323,23 +164,19 @@ public class PolynomialTermMatrix {
 	}
 	
 	/**
-	 * Create a block of the n-th power of the Jordan matrix of size blockSize for eigenvalue lamda.
-	 * @param mgdScript
-	 * @param it
-	 * @param lambda
-	 * @param blockSize
-	 * @param nEven
-	 * @return
+	 * Create a block of the it-th power of the Jordan matrix of size blockSize for eigenvalue lamda.
+	 * if !restrictedVersionPossible, it is represented by 2*itHalf if itEven and 2*itHalf+1 if !itEven.
 	 */
 	private static PolynomialTermMatrix createBlock(final ManagedScript mgdScript, final TermVariable it,
-			final int lambda, final int blockSize, final boolean nEven) {
+			final TermVariable itHalf, final int lambda, final int blockSize, final boolean itEven,
+			final boolean restrictedVersionPossible) {
 		final Script script = mgdScript.getScript();
-		final Sort sort = SmtSortUtils.getIntSort(script);
 		PolynomialTermMatrix block = constantZeroMatrix(mgdScript, blockSize);
 		if (lambda == 1) {
 			for (int j=0; j<blockSize; j++) {
 				// first row
-				block.mEntries[0][j] = binomialCoefficientNumerator(script, it, j, blockSize, nEven);
+				block.mEntries[0][j] = binomialCoefficientNumerator(script, it, itHalf, j, blockSize, itEven,
+						restrictedVersionPossible);
 				// all other rows
 				if (j!=0) {
 					for (int i=1; i<blockSize; i++) {
@@ -348,40 +185,23 @@ public class PolynomialTermMatrix {
 				}
 			}
 			block.mDenominator = facultyWithStartValue(1,blockSize-1);
-		}
-		if (lambda == -1) {
-			if (nEven) {
-				for (int j=0; j<blockSize; j++) {
-					// first row
-					if (j % 2 == 0) {
-						block.mEntries[0][j] = binomialCoefficientNumerator(script, it, j, blockSize, true);
-					} else {
-						block.mEntries[0][j] = PolynomialTerm.mulPolynomials(binomialCoefficientNumerator(script, it,
-								j, blockSize, true), AffineTerm.constructConstant(sort, Rational.valueOf(
-										BigInteger.valueOf(-1), BigInteger.ONE)));
-					}
-					// all other rows
-					if (j!=0) {
-						for (int i=j; i<blockSize; i++) {
-							block.mEntries[i][j] = block.mEntries[i-1][j-1];
-						}
-					}
+		} else if (lambda == -1) {
+			final Sort sort = SmtSortUtils.getIntSort(script);
+			for (int j=0; j<blockSize; j++) {
+				// first row
+				if (j % 2 == 0) {
+					block.mEntries[0][j] = binomialCoefficientNumerator(script, it, itHalf, j, blockSize, itEven,
+							restrictedVersionPossible);
+				} else {
+					block.mEntries[0][j] = PolynomialTerm.mulPolynomials(binomialCoefficientNumerator(script, it,
+							itHalf, j, blockSize, itEven, restrictedVersionPossible),
+							AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.valueOf(-1),
+									BigInteger.ONE)));
 				}
-			} else {
-				for (int j=0; j<blockSize; j++) {
-					// first row
-					if (j % 2 != 0) {
-						block.mEntries[0][j] = binomialCoefficientNumerator(script, it, j, blockSize, false);
-					} else {
-						block.mEntries[0][j] = PolynomialTerm.mulPolynomials(binomialCoefficientNumerator(script, it,
-								j, blockSize, false), AffineTerm.constructConstant(sort, Rational.valueOf(
-										BigInteger.valueOf(-1), BigInteger.ONE)));
-					}
-					// all other rows
-					if (j!=0) {
-						for (int i=j; i<blockSize; i++) {
-							block.mEntries[i][j] = block.mEntries[i-1][j-1];
-						}
+				// all other rows
+				if (j!=0) {
+					for (int i=j; i<blockSize; i++) {
+						block.mEntries[i][j] = block.mEntries[i-1][j-1];
 					}
 				}
 			}
@@ -391,13 +211,10 @@ public class PolynomialTermMatrix {
 	}
 	
 	/**
-	 * Add a block to the n-th power of the Jordan matrix. Make sure that main denominator stays correct and all
+	 * Adds a block to the it-th power of the Jordan matrix. Makes sure that main denominator stays correct and all
 	 * fractions are reduced.
-	 * @param mgdScript
-	 * @param block
-	 * @param start
 	 */
-	private void addBlockToJordanPower(ManagedScript mgdScript, final PolynomialTermMatrix block, final int start) {
+	private void addBlockToJordanPower(final ManagedScript mgdScript, final PolynomialTermMatrix block, final int start) {
 		if (mDimension < block.mDimension + start) {
 			throw new AssertionError("Block does not fit into matrix");
 		}
@@ -429,16 +246,11 @@ public class PolynomialTermMatrix {
 	}
 	
 	/**
-	 * Create the n-th power of a Jordan matrix out of the Jordan matrix.
-	 * @param matrix
-	 * @param mgdScript
-	 * @param it
-	 * @param jordan
-	 * @param nEven
-	 * @return
+	 * Create the it-th power of a Jordan matrix out of the Jordan matrix.
 	 */
-	public static PolynomialTermMatrix jordanToJordanPower(QuadraticMatrix matrix, final ManagedScript mgdScript,
-			final TermVariable it, final QuadraticMatrix jordan, boolean nEven) {
+	public static PolynomialTermMatrix jordanToJordanPower(final QuadraticMatrix matrix,
+			final ManagedScript mgdScript, final TermVariable it, final TermVariable itHalf, final boolean itEven,
+			final QuadraticMatrix jordan, final boolean restrictedVersionPossible) {
 		final int n = jordan.getDimension();
 		PolynomialTermMatrix jordanPower = constantZeroMatrix(mgdScript, n);
 		final boolean[] eigenvalues = matrix.smallEigenvalues();
@@ -457,7 +269,8 @@ public class PolynomialTermMatrix {
 				}
 				for (int s=1; s<=n; s++) {
 					for (int i=0; i<numberOfBlocks[s]; i++) {
-						final PolynomialTermMatrix block = createBlock(mgdScript, it, e, s, nEven);
+						final PolynomialTermMatrix block = createBlock(mgdScript, it, itHalf, e, s, itEven,
+								restrictedVersionPossible);
 						jordanPower.addBlockToJordanPower(mgdScript, block, current);
 						current = current + s;
 					}
@@ -468,14 +281,84 @@ public class PolynomialTermMatrix {
 	}
 	
 	/**
-	 * Multiplication of two PolynomialTermMatrices.
-	 * @param mgdScript
-	 * @param matrix1
-	 * @param matrix2
-	 * @return
+	 * Method that computes matrix that represents closed form out of the jordan decomposition.
+	 * If !restrictedVersionPossible Computes two closed form matrices for the two cases that
+	 * the iteration count is even or odd.
 	 */
-	public static PolynomialTermMatrix multiplication(ManagedScript mgdScript, PolynomialTermMatrix matrix1,
-			PolynomialTermMatrix matrix2) {
+	public static AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> closedFormMatrix(final ManagedScript mgdScript,
+			final QuadraticMatrix updateMatrix, final RationalMatrix modalUpdate, final QuadraticMatrix jordanUpdate,
+			final RationalMatrix inverseModalUpdate, final TermVariable it, final TermVariable itHalf,
+			final boolean itEven, boolean restrictedVersionPossible) {
+		final int n = jordanUpdate.getDimension();
+		final Script script = mgdScript.getScript();
+		Sort sort = SmtSortUtils.getIntSort(script);
+		PolynomialTermMatrix closedFormMatrix = constantZeroMatrix(mgdScript, updateMatrix.getDimension());
+		if (restrictedVersionPossible) {
+			PolynomialTermMatrix jordanUpdatePower = jordanToJordanPower(updateMatrix, mgdScript, it, itHalf, itEven,
+					jordanUpdate, restrictedVersionPossible);
+			PolynomialTermMatrix tmp = multiplication(mgdScript,
+					rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePower);
+			closedFormMatrix = multiplication(mgdScript, tmp,
+					rationalMatrix2TermMatrix(script, inverseModalUpdate));
+			IPolynomialTerm denom = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.ONE,
+					closedFormMatrix.getDenominator()));
+		
+			for (int i=0; i<n; i++) {
+				for (int j=0; j<n; j++) {
+					Rational constant = closedFormMatrix.getEntry(i,j).getConstant();
+					for (Rational coeff : closedFormMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
+						if (coeff.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
+							restrictedVersionPossible = false;
+							AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> result = new AbstractMap.SimpleEntry<>(null, false);
+							return result;
+						}
+						if (constant.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
+							restrictedVersionPossible = false;
+							AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> result = new AbstractMap.SimpleEntry<>(null, false);
+							return result;
+						}
+					}
+					closedFormMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
+							closedFormMatrix.getEntry(i,j), denom));
+				}
+			}
+		}
+		if (!restrictedVersionPossible) {
+			PolynomialTermMatrix jordanUpdatePower = jordanToJordanPower(updateMatrix, mgdScript, it, itHalf, itEven,
+					jordanUpdate, restrictedVersionPossible);
+			PolynomialTermMatrix tmp = multiplication(mgdScript,
+					rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePower);
+			closedFormMatrix = multiplication(mgdScript, tmp,
+					rationalMatrix2TermMatrix(script, inverseModalUpdate));
+			IPolynomialTerm denom = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.ONE,
+					closedFormMatrix.getDenominator()));
+			for (int i=0; i<n; i++) {
+				for (int j=0; j<n; j++) {
+					Rational constant = closedFormMatrix.getEntry(i,j).getConstant();
+					for (Rational coeff : closedFormMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
+						if (coeff.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
+							throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
+						}
+						if (constant.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
+							throw new AssertionError("Non-integer value found. Computation of closed form not possible.");
+						}
+					}
+					closedFormMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
+							closedFormMatrix.getEntry(i,j), denom));
+				}
+			}
+		}
+		closedFormMatrix.mDenominator = BigInteger.ONE;
+		AbstractMap.SimpleEntry<PolynomialTermMatrix, Boolean> result =
+				new AbstractMap.SimpleEntry<>(closedFormMatrix, true);
+		return result;
+	}
+	
+	/**
+	 * Multiplication of two PolynomialTermMatrices.
+	 */
+	public static PolynomialTermMatrix multiplication(final ManagedScript mgdScript, final PolynomialTermMatrix matrix1,
+			final PolynomialTermMatrix matrix2) {
 		if (matrix1.mDimension != matrix2.mDimension) {
 			throw new AssertionError("Some matrices for multiplication are not of the same dimension.");
 		}
@@ -497,91 +380,11 @@ public class PolynomialTermMatrix {
 		return product;
 	}
 	
-	/**
-	 * Method that computes matrix that represents closed form out of the jordan decomposition.
-	 * Computes two closed form matrices for the two cases that the iteration count is even or odd.
-	 * They are different if -1 is an eigenvalue.
-	 * @param mgdScript
-	 * @param updateMatrix
-	 * @param modalUpdate
-	 * @param jordanUpdate
-	 * @param inverseModalUpdate
-	 * @param it
-	 * @param nEven
-	 * @return
-	 */
-	public static PolynomialTermMatrix closedFormMatrix(ManagedScript mgdScript, QuadraticMatrix updateMatrix,
-			RationalMatrix modalUpdate, QuadraticMatrix jordanUpdate, RationalMatrix inverseModalUpdate,
-			TermVariable it, boolean nEven) {
-		final int n = jordanUpdate.getDimension();
-		final Script script = mgdScript.getScript();
-		Sort sort = it.getSort();
-		if (nEven) {
-			final PolynomialTermMatrix jordanUpdatePowerNEven = jordanToJordanPower(updateMatrix, mgdScript, it,
-					jordanUpdate, true);
-			final PolynomialTermMatrix tmpEven = multiplication(mgdScript,
-					rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePowerNEven);
-			final PolynomialTermMatrix closedFormEvenMatrix = multiplication(mgdScript, tmpEven,
-					rationalMatrix2TermMatrix(script, inverseModalUpdate));
-			
-			IPolynomialTerm denom = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.ONE,
-					closedFormEvenMatrix.getDenominator()));
-			for (int i=0; i<n; i++) {
-				for (int j=0; j<n; j++) {
-					Rational constEven = closedFormEvenMatrix.getEntry(i,j).getConstant();
-					for (Rational coeffEven : closedFormEvenMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
-						if (coeffEven.numerator().intValue() % closedFormEvenMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not"
-									+ "possible.");
-						}
-						if (constEven.numerator().intValue() % closedFormEvenMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not"
-									+ "possible.");
-						}
-					}
-					closedFormEvenMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
-							closedFormEvenMatrix.getEntry(i,j), denom));
-				}
-			}
-			closedFormEvenMatrix.mDenominator = BigInteger.ONE;
-			return closedFormEvenMatrix;
-		} else {
-			final PolynomialTermMatrix jordanUpdatePowerNOdd = jordanToJordanPower(updateMatrix, mgdScript, it,
-					jordanUpdate, false);
-			final PolynomialTermMatrix tmpOdd = multiplication(mgdScript,
-					rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePowerNOdd);
-			final PolynomialTermMatrix closedFormOddMatrix = multiplication(mgdScript, tmpOdd,
-					rationalMatrix2TermMatrix(script, inverseModalUpdate));
-			
-			IPolynomialTerm denom = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.ONE,
-					closedFormOddMatrix.getDenominator()));
-			for (int i=0; i<n; i++) {
-				for (int j=0; j<n; j++) {
-					Rational constEven = closedFormOddMatrix.getEntry(i,j).getConstant();
-					for (Rational coeffEven : closedFormOddMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
-						if (coeffEven.numerator().intValue() % closedFormOddMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not "
-									+ "possible.");
-						}
-						if (constEven.numerator().intValue() % closedFormOddMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not "
-									+ "possible.");
-						}
-					}
-					closedFormOddMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
-							closedFormOddMatrix.getEntry(i,j), denom));
-				}
-			}
-			closedFormOddMatrix.mDenominator = BigInteger.ONE;
-			return closedFormOddMatrix;
-		}
-	}
-	
-	public IPolynomialTerm getEntry(int i, int j) {
+	public IPolynomialTerm getEntry(final int i, final int j) {
 		return mEntries[i][j];
 	}
 	
-	public void setEntry(int i, int j, IPolynomialTerm value) {
+	public void setEntry(final int i, final int j, final IPolynomialTerm value) {
 		mEntries[i][j] = value;
 	}
 	
