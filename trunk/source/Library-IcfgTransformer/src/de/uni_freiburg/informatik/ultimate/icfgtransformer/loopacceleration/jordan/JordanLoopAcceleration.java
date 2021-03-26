@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -76,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * @author Miriam Herzig
@@ -115,13 +118,21 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		logger.info("Guard: " + guardTf);
 		final SimultaneousUpdate su = new SimultaneousUpdate(loopTransFormula, mgdScript);
 		
-		final UnmodifiableTransFormula loopAccelerationFormula1 = createLoopAccelerationFormulaRestricted(logger, services,
-				mgdScript, su, loopTransFormula, guardTf, true);
+		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
 		
-		final UnmodifiableTransFormula loopAccelerationFormula2 = createLoopAccelerationFormula(logger, services,
-				mgdScript, su, loopTransFormula, guardTf);
+		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormulaRestricted(logger, services,
+				jlasg, mgdScript, su, loopTransFormula, guardTf, true);
 		
-		return loopAccelerationFormula1;
+		if (QuantifierUtils.isQuantifierFree(loopAccelerationFormula.getFormula())) {
+			jlasg.reportQuantifierFreeResult();
+		}
+		final String shortDescrption = "Jordan loop acceleration statistics";
+		final StatisticsData statistics = new StatisticsData();
+		statistics.aggregateBenchmarkData(jlasg);
+		final String id = "IcfgTransformer";
+		services.getResultService().reportResult(id, new StatisticsResult<>(id, shortDescrption, statistics));
+
+		return loopAccelerationFormula;
 	}
 
 
@@ -387,7 +398,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @return
 	 */
 	private static UnmodifiableTransFormula createLoopAccelerationFormulaRestricted(
-			final ILogger logger, final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final ILogger logger, final IUltimateServiceProvider services, 
+			final JordanLoopAccelerationStatisticsGenerator jlasg, final ManagedScript mgdScript,
 			final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
 			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible) {
 		final Script script = mgdScript.getScript();
@@ -404,7 +416,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				closedForm(mgdScript, su, itFin, null, loopTransFormula.getInVars(),
 				loopTransFormula.getOutVars(), true, restrictedVersionPossible);
 		if (!closedFormItFinTuple.getValue()) {
-			return createLoopAccelerationFormula(logger, services, mgdScript, su, loopTransFormula, guardTf);
+			return createLoopAccelerationFormula(logger, services, jlasg, mgdScript, su, loopTransFormula, guardTf);
 		}
 		final HashMap<TermVariable, Term> closedFormItFin = closedFormItFinTuple.getKey();
 		final Term guardOfClosedFormItFin = guardOfClosedForm(script, guardTf.getFormula(), closedFormItFin, inVars,
@@ -500,6 +512,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				loopAccelerationFormula, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormIt,
 				guardOfClosedFormIt, it, true);
 		
+		jlasg.reportOneCaseAcceleration();
+		
 		return loopAccelerationFormula;
 	}
 
@@ -551,7 +565,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @return
 	 */
 	private static UnmodifiableTransFormula createLoopAccelerationFormula(final ILogger logger,
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final SimultaneousUpdate su,
+			final IUltimateServiceProvider services, final JordanLoopAccelerationStatisticsGenerator jlasg,
+			final ManagedScript mgdScript, final SimultaneousUpdate su,
 			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
 				loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
@@ -726,6 +741,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		assert checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula,
 				loopAccelerationFormula, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormEvenIt, guardOfClosedFormOddIt,
 				itHalf, false);
+		
+		jlasg.reportTwoCaseAcceleration();
 		
 		return loopAccelerationFormula;
 	}
