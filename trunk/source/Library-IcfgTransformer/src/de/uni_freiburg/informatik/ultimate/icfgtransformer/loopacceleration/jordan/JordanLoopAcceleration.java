@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -75,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * @author Miriam Herzig
@@ -111,6 +114,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		logger.info("Guard: " + guardTf);
 		final SimultaneousUpdate su = new SimultaneousUpdate(loopTransFormula, mgdScript);
 
+		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
+
 		// Try loop acceleration formula for eigenvalues only 0 and 1 and no terms like
 		// 1/2*n*(n-1).
 		// If -1 is an eigenvalue or terms like 1/2*n*(n-1) occur, try other formula.
@@ -119,15 +124,27 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		try {
 			loopAccelerationFormula =
 					createLoopAccelerationFormulaRestricted(logger, services, mgdScript, su, loopTransFormula, guardTf);
+			jlasg.reportOneCaseAcceleration();
 		} catch (final AssertionError e) {
 			// TODO: Do not use AssertionError to signal expected failure condition. Use custom exception class if
 			// necessary, but it would be better to just return an Optional
 			loopAccelerationFormula =
 					createLoopAccelerationFormula(logger, services, mgdScript, su, loopTransFormula, guardTf);
+			jlasg.reportTwoCaseAcceleration();
 		}
 
 		// UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(logger, services, mgdScript,
 		// su, loopTransFormula, guardTf);
+
+
+		if (QuantifierUtils.isQuantifierFree(loopAccelerationFormula.getFormula())) {
+			jlasg.reportQuantifierFreeResult();
+		}
+		final String shortDescrption = "Jordan loop acceleration statistics";
+		final StatisticsData statistics = new StatisticsData();
+		statistics.aggregateBenchmarkData(jlasg);
+		final String id = "IcfgTransformer";
+		services.getResultService().reportResult(id, new StatisticsResult<>(id, shortDescrption, statistics));
 
 		return loopAccelerationFormula;
 	}
