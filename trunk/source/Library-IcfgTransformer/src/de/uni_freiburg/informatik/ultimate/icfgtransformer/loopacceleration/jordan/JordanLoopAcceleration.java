@@ -833,7 +833,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			substitutionMapping1.put(it, (ConstantTerm) script.numeral(BigInteger.ZERO));
 		}
 		final Substitution subst1 = new Substitution(script, substitutionMapping1);
-		final Term notGuardOfClosedForm1 = Util.not(script, subst1.transform(guardOfClosedFormOdd));
+		final Term guardOfClosedForm1 = subst1.transform(guardOfClosedFormOdd);
+		final Term notGuardOfClosedForm1 = Util.not(script, guardOfClosedForm1);
 		
 		if (Util.checkSat(script, Util.and(script, loopTransFormula.getFormula(), notGuardOfClosedForm1,
 				notLoopAccFormula)) == LBool.UNKNOWN) {
@@ -846,7 +847,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		
 		// Check whether sequential composition of relation with itself is subset of reflexive transitive closure
-		// Check: sequCompo(x,x') and not (guard(closedForm(x,2))) and not (loopAccelerationFormula(x,x')) is unsat.
+		// Check: sequCompo(x,x') and guard(closedForm(x,1) and not (guard(closedForm(x,2)))
+		// and not (loopAccelerationFormula(x,x')) is unsat.
 		List<UnmodifiableTransFormula> loopTransFormulaList = new ArrayList<>();
 		loopTransFormulaList.add(loopTransFormula);
 		loopTransFormulaList.add(loopTransFormula);
@@ -874,12 +876,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term notGuardOfClosedForm2 = Util.not(script, subst2.transform(guardOfClosedFormEven));
 		
 		if (Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
-				notLoopAccFormula)) == LBool.UNKNOWN) {
+				guardOfClosedForm1, notLoopAccFormula)) == LBool.UNKNOWN) {
 			logger.warn("Unable to prove that computed reflexive-transitive closure contains sequential"
 					+ "composition of relation with itself.");
 		}
 		if (Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
-				notLoopAccFormula)) == LBool.SAT) {
+				guardOfClosedForm1, notLoopAccFormula)) == LBool.SAT) {
 			throw new AssertionError("Computed reflexive-transitive closure does not contain sequential composition of"
 					+ " relation with itself. Something went wrong in computation of loop acceleration formula.");
 		}
