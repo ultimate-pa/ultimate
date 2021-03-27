@@ -108,7 +108,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 
 	/**
-	 * TODO: add method comment.
+	 * Loop acceleration for loops with linear updates, where only -1,0,1 are eigenvalues of the update matrix.
 	 */
 	public static UnmodifiableTransFormula accelerateLoop(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula) {
@@ -293,12 +293,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final ManagedScript mgdScript, final SimultaneousUpdate su, final TermVariable it,
 			final TermVariable itHalf, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final boolean itEven,
-			final boolean restrictedVersionPossible) {
-		// TODO: Handle havoced variables.
-		if (!su.getHavocedVars().isEmpty()) {
-			throw new AssertionError("Non-deterministically assigned variable found.");
-		}
-		
+			final boolean restrictedVersionPossible) {		
 		// HashMap to get matrix index from TermVariable.
 		final HashMap<TermVariable, Integer> varMatrixIndex = determineMatrixIndices(su);
 		final int n = varMatrixIndex.size() + 1;
@@ -352,12 +347,15 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * Computes the term guard(closedForm(inVars)).
 	 */
 	private static Term guardOfClosedForm(final Script script, final Term guardFormula,
-			final HashMap<TermVariable, Term> closedForm, final Map<IProgramVar, TermVariable> inVars,
-			final HashMap<TermVariable, IProgramVar> inVarsInverted, final Map<IProgramVar, TermVariable> outVars) {
+			final Set<IProgramVar> havocedVariables, final HashMap<TermVariable, Term> closedForm,
+			final Map<IProgramVar, TermVariable> inVars, final HashMap<TermVariable, IProgramVar> inVarsInverted,
+			final Map<IProgramVar, TermVariable> outVars) {
 		if (guardFormula instanceof TermVariable) {
 			// TODO: Use get + null check instead of contains+get
 			if (closedForm.containsKey(outVars.get(inVarsInverted.get(guardFormula)))) {
 				return closedForm.get(outVars.get(inVarsInverted.get(guardFormula)));
+			} else if (havocedVariables.contains(inVarsInverted.get(guardFormula))) {
+				return outVars.get(inVarsInverted.get(guardFormula));
 			}
 			return guardFormula;
 		}
@@ -368,7 +366,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term[] paramReplaced = new Term[size];
 		for (int i = 0; i < size; i++) {
 			paramReplaced[i] = guardOfClosedForm(script, ((ApplicationTerm) guardFormula).getParameters()[i],
-					closedForm, inVars, inVarsInverted, outVars);
+					havocedVariables, closedForm, inVars, inVarsInverted, outVars);
 		}
 		return script.term(((ApplicationTerm) guardFormula).getFunction().getName(), paramReplaced);
 	}
@@ -423,8 +421,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			return createLoopAccelerationFormula(logger, services, jlasg, mgdScript, su, loopTransFormula, guardTf);
 		}
 		final HashMap<TermVariable, Term> closedFormItFin = closedFormItFinTuple.getKey();
-		final Term guardOfClosedFormItFin = guardOfClosedForm(script, guardTf.getFormula(), closedFormItFin, inVars,
-				inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormItFin = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
+				closedFormItFin, inVars, inVarsInverted, loopTransFormula.getOutVars());
 
 		// (and (= itFin 0) (not (guard)) (x'=x))
 		final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
@@ -454,8 +452,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
 		final HashMap<TermVariable, Term> closedFormIt = closedForm(mgdScript, su, it, null,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, restrictedVersionPossible).getKey();
-		final Term guardOfClosedFormIt = guardOfClosedForm(script, guardTf.getFormula(), closedFormIt, inVars,
-				inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormIt = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
+				closedFormIt, inVars, inVarsInverted, loopTransFormula.getOutVars());
 		final Term leftSideOfImpl = Util.and(script, itGreater1, itSmallerItFinM1);
 		final Term implication = Util.implies(script, leftSideOfImpl, guardOfClosedFormIt);
 		final Set<TermVariable> itSet = new HashSet<>();
@@ -469,20 +467,26 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			if (closedFormItFin.containsKey(loopTransFormula.getOutVars().get(var))) {
 				closedFormArray[j] = script.term("=", loopTransFormula.getOutVars().get(var),
 						closedFormItFin.get(loopTransFormula.getOutVars().get(var)));
-			} else {
+				j = j + 1;
+			} else if (!su.getHavocedVars().contains(var)) {
 				closedFormArray[j] =
 						script.term("=", loopTransFormula.getOutVars().get(var),
 								loopTransFormula.getInVars().get(var));
+				j = j + 1;
 			}
-			j = j + 1;
 		}
-		Term xPrimed = closedFormArray[0];
-		if (closedFormArray.length > 1) {
-			xPrimed = Util.and(script, closedFormArray);
+		Term xPrimed;
+		Term conjunction;
+		if (j == 0) {
+			conjunction = Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct);
+		} else if (j==1) {
+			xPrimed = closedFormArray[0];
+			conjunction = Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct, xPrimed);
+		} else {
+			xPrimed = Util.and(script, Arrays.copyOfRange(closedFormArray, 0, j));
+			conjunction =
+					Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct, xPrimed);
 		}
-
-		final Term conjunction =
-				Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct, xPrimed);
 
 		final Term disjunction = Util.or(script, finalDisjunct1, conjunction);
 
@@ -493,8 +497,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
 				.transform(disjunction);
-		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services, mgdScript, true,
-				PqeTechniques.ALL, nnf);
+		final Term loopAccelerationFormulaWithoutQuantifiers =
+				QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, nnf);
 		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
 				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
 
@@ -609,13 +613,13 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		final HashMap<TermVariable, Term> closedFormEvenItFin = closedForm(mgdScript, su, null, itFinHalf,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, false).getKey();
-		final Term guardOfClosedFormEvenItFin = guardOfClosedForm(script, guardTf.getFormula(), closedFormEvenItFin,
-				inVars, inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormEvenItFin = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
+				closedFormEvenItFin, inVars, inVarsInverted, loopTransFormula.getOutVars());
 		
 		final HashMap<TermVariable, Term> closedFormOddItFin = closedForm(mgdScript, su, null, itFinHalf,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), false, false).getKey();
-		final Term guardOfClosedFormOddItFin = guardOfClosedForm(script, guardTf.getFormula(), closedFormOddItFin,
-				inVars, inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormOddItFin = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
+				closedFormOddItFin, inVars, inVarsInverted, loopTransFormula.getOutVars());
 
 		// ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1)))
 		final TermVariable itHalf = mgdScript.variable("itHalf", sort);
@@ -627,8 +631,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// (guard(closedFormEven(x, 2*itHalf)))
 		final HashMap<TermVariable, Term> closedFormEvenIt = closedForm(mgdScript, su, null, itHalf,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, false).getKey();
-		final Term guardOfClosedFormEvenIt = guardOfClosedForm(script, guardTf.getFormula(), closedFormEvenIt, inVars,
-				inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormEvenIt = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
+				closedFormEvenIt, inVars, inVarsInverted, loopTransFormula.getOutVars());
 
 		// (=> ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1))) (guard(closedFormEven(x,
 		// 2*itHalf))))
@@ -642,8 +646,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// (guard(closedFormOdd(x, 2*itHalf+1))
 		final HashMap<TermVariable, Term> closedFormOddIt = closedForm(mgdScript, su, null, itHalf,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), false, false).getKey();
-		final Term guardOfClosedFormOddIt = guardOfClosedForm(script, guardTf.getFormula(), closedFormOddIt, inVars,
-				inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormOddIt = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
+				closedFormOddIt, inVars, inVarsInverted, loopTransFormula.getOutVars());
 
 		// (=> ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))) (guard(closedFormOdd(x,
 		// 2*itHalf+1)))))))
@@ -732,8 +736,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
 				.transform(disjunction);
-		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services, mgdScript, true,
-				PqeTechniques.ALL, nnf);
+		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services, mgdScript,
+				true, PqeTechniques.ALL, nnf);
 		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
 				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
 
@@ -796,8 +800,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
 				.transform(loopAccelerationTerm);
-		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services, mgdScript, true,
-				PqeTechniques.ALL, nnf);
+		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services, mgdScript,
+				true, PqeTechniques.ALL, nnf);
 		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
 				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
 		
