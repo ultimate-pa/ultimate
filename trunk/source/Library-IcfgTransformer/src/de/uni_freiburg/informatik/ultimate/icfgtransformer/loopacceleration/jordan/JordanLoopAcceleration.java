@@ -347,15 +347,15 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * Computes the term guard(closedForm(inVars)).
 	 */
 	private static Term guardOfClosedForm(final Script script, final Term guardFormula,
-			final Set<IProgramVar> havocedVariables, final HashMap<TermVariable, Term> closedForm,
-			final Map<IProgramVar, TermVariable> inVars, final HashMap<TermVariable, IProgramVar> inVarsInverted,
-			final Map<IProgramVar, TermVariable> outVars) {
+			final HashMap<TermVariable, Term> closedForm, final Map<IProgramVar, TermVariable> inVars,
+			final HashMap<TermVariable, IProgramVar> inVarsInverted, final Map<IProgramVar, TermVariable> outVars,
+			final HashMap<IProgramVar, TermVariable> havocVars) {
 		if (guardFormula instanceof TermVariable) {
 			// TODO: Use get + null check instead of contains+get
 			if (closedForm.containsKey(outVars.get(inVarsInverted.get(guardFormula)))) {
 				return closedForm.get(outVars.get(inVarsInverted.get(guardFormula)));
-			} else if (havocedVariables.contains(inVarsInverted.get(guardFormula))) {
-				return outVars.get(inVarsInverted.get(guardFormula));
+			} else if (havocVars.containsKey(inVarsInverted.get(guardFormula))) {
+				return havocVars.get(inVarsInverted.get(guardFormula));
 			}
 			return guardFormula;
 		}
@@ -366,7 +366,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term[] paramReplaced = new Term[size];
 		for (int i = 0; i < size; i++) {
 			paramReplaced[i] = guardOfClosedForm(script, ((ApplicationTerm) guardFormula).getParameters()[i],
-					havocedVariables, closedForm, inVars, inVarsInverted, outVars);
+					closedForm, inVars, inVarsInverted, outVars, havocVars);
 		}
 		return script.term(((ApplicationTerm) guardFormula).getFunction().getName(), paramReplaced);
 	}
@@ -421,8 +421,14 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			return createLoopAccelerationFormula(logger, services, jlasg, mgdScript, su, loopTransFormula, guardTf);
 		}
 		final HashMap<TermVariable, Term> closedFormItFin = closedFormItFinTuple.getKey();
-		final Term guardOfClosedFormItFin = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
-				closedFormItFin, inVars, inVarsInverted, loopTransFormula.getOutVars());
+		final HashMap<IProgramVar, TermVariable> havocVars = new HashMap<>();
+		for (IProgramVar havocVar : su.getHavocedVars()) {
+			havocVars.put(havocVar, mgdScript.variable(havocVar.getTermVariable().getName() + "_h", sort));
+		}
+		Set<TermVariable> havocVarSet = new HashSet<>(havocVars.values());
+		final Term guardOfClosedFormItFinTmp = guardOfClosedForm(script, guardTf.getFormula(),
+				closedFormItFin, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
+		final Term guardOfClosedFormItFin = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormItFinTmp);
 
 		// (and (= itFin 0) (not (guard)) (x'=x))
 		final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
@@ -452,8 +458,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
 		final HashMap<TermVariable, Term> closedFormIt = closedForm(mgdScript, su, it, null,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, restrictedVersionPossible).getKey();
-		final Term guardOfClosedFormIt = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
-				closedFormIt, inVars, inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormItTmp = guardOfClosedForm(script, guardTf.getFormula(),
+				closedFormIt, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
+		final Term guardOfClosedFormIt = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormItTmp);
 		final Term leftSideOfImpl = Util.and(script, itGreater1, itSmallerItFinM1);
 		final Term implication = Util.implies(script, leftSideOfImpl, guardOfClosedFormIt);
 		final Set<TermVariable> itSet = new HashSet<>();
@@ -611,15 +618,26 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		for (final IProgramVar inVar : inVars.keySet()) {
 			inVarsInverted.put(inVars.get(inVar), inVar);
 		}
+		
+		final HashMap<IProgramVar, TermVariable> havocVars = new HashMap<>();
+		for (IProgramVar havocVar : su.getHavocedVars()) {
+			havocVars.put(havocVar, mgdScript.variable(havocVar.getTermVariable().getName() + "_h", sort));
+		}
+		Set<TermVariable> havocVarSet = new HashSet<>(havocVars.values());
+		
 		final HashMap<TermVariable, Term> closedFormEvenItFin = closedForm(mgdScript, su, null, itFinHalf,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, false).getKey();
-		final Term guardOfClosedFormEvenItFin = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
-				closedFormEvenItFin, inVars, inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormEvenItFinTmp = guardOfClosedForm(script, guardTf.getFormula(),
+				closedFormEvenItFin, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
+		final Term guardOfClosedFormEvenItFin =
+				SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormEvenItFinTmp);
 		
 		final HashMap<TermVariable, Term> closedFormOddItFin = closedForm(mgdScript, su, null, itFinHalf,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), false, false).getKey();
-		final Term guardOfClosedFormOddItFin = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
-				closedFormOddItFin, inVars, inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormOddItFinTmp = guardOfClosedForm(script, guardTf.getFormula(),
+				closedFormOddItFin, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
+		final Term guardOfClosedFormOddItFin =
+				SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormOddItFinTmp);
 
 		// ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1)))
 		final TermVariable itHalf = mgdScript.variable("itHalf", sort);
@@ -631,8 +649,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// (guard(closedFormEven(x, 2*itHalf)))
 		final HashMap<TermVariable, Term> closedFormEvenIt = closedForm(mgdScript, su, null, itHalf,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, false).getKey();
-		final Term guardOfClosedFormEvenIt = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
-				closedFormEvenIt, inVars, inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormEvenItTmp = guardOfClosedForm(script, guardTf.getFormula(), 
+				closedFormEvenIt, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
+		final Term guardOfClosedFormEvenIt = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormEvenItTmp);
 
 		// (=> ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1))) (guard(closedFormEven(x,
 		// 2*itHalf))))
@@ -646,8 +665,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// (guard(closedFormOdd(x, 2*itHalf+1))
 		final HashMap<TermVariable, Term> closedFormOddIt = closedForm(mgdScript, su, null, itHalf,
 				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), false, false).getKey();
-		final Term guardOfClosedFormOddIt = guardOfClosedForm(script, guardTf.getFormula(), su.getHavocedVars(),
-				closedFormOddIt, inVars, inVarsInverted, loopTransFormula.getOutVars());
+		final Term guardOfClosedFormOddItTmp = guardOfClosedForm(script, guardTf.getFormula(),
+				closedFormOddIt, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
+		final Term guardOfClosedFormOddIt = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormOddItTmp);
 
 		// (=> ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))) (guard(closedFormOdd(x,
 		// 2*itHalf+1)))))))
@@ -847,7 +867,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		
 		// Check whether sequential composition of relation with itself is subset of reflexive transitive closure
-		// Check: sequCompo(x,x') and guard(closedForm(x,1) and not (guard(closedForm(x,2)))
+		// Check: sequCompo(x,x') and not (guard(closedForm(x,2)))
 		// and not (loopAccelerationFormula(x,x')) is unsat.
 		List<UnmodifiableTransFormula> loopTransFormulaList = new ArrayList<>();
 		loopTransFormulaList.add(loopTransFormula);
@@ -876,12 +896,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term notGuardOfClosedForm2 = Util.not(script, subst2.transform(guardOfClosedFormEven));
 		
 		if (Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
-				guardOfClosedForm1, notLoopAccFormula)) == LBool.UNKNOWN) {
+				 notLoopAccFormula)) == LBool.UNKNOWN) {
 			logger.warn("Unable to prove that computed reflexive-transitive closure contains sequential"
 					+ "composition of relation with itself.");
 		}
 		if (Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
-				guardOfClosedForm1, notLoopAccFormula)) == LBool.SAT) {
+				notLoopAccFormula)) == LBool.SAT) {
 			throw new AssertionError("Computed reflexive-transitive closure does not contain sequential composition of"
 					+ " relation with itself. Something went wrong in computation of loop acceleration formula.");
 		}
@@ -889,13 +909,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// Check whether "havoc" of all variables is superset of reflexive transitive closure.
 		// Check: loopAccelerationFormula(x,x') and (not x = x') and (not guard(x) is unsat.
 		if (Util.checkSat(script, Util.and(script, simplified, Util.not(script, 
-		// if (Util.checkSat(script, Util.and(script, loopAccelerationFormula.getFormula(), Util.not(script, 
 				xPrimeEqualsX), notGuard)) == LBool.UNKNOWN) {
 			logger.warn("Unable to prove that havoc of all variables is a superset of the reflexive"
 					+ "transitive closure.");
 		}
 		if (Util.checkSat(script, Util.and(script, simplified, Util.not(script, 
-		// if (Util.checkSat(script, Util.and(script, loopAccelerationFormula.getFormula(), Util.not(script, 
 				xPrimeEqualsX), notGuard)) == LBool.SAT) {
 			throw new AssertionError("Havoc of all variables is not a superset of the reflexive transitive closure."
 					+ "Something went wrong in computation of loop acceleration formula.");
