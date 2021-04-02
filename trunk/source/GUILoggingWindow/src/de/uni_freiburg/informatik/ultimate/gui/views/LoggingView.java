@@ -39,6 +39,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -94,9 +95,9 @@ public class LoggingView extends ViewPart {
 		if (sFontName == null) {
 			final Display display = Display.getCurrent();
 			final Set<String> availableScalableFonts =
-					Arrays.stream(display.getFontList(null, true)).map(a -> a.getName()).collect(Collectors.toSet());
+					Arrays.stream(display.getFontList(null, true)).map(FontData::getName).collect(Collectors.toSet());
 
-			final String[] preferredFonts = new String[] { "Roboto Mono", "Monospace", "Courier" };
+			final String[] preferredFonts = new String[] { "Roboto Mono", "Monospace", "Courier New", "Courier" };
 			for (final String f : preferredFonts) {
 				if (availableScalableFonts.contains(f)) {
 					sFontName = f;
@@ -125,7 +126,8 @@ public class LoggingView extends ViewPart {
 			throw new IllegalArgumentException("No service present");
 		}
 		mLoggingService = service;
-		service.getControllerLogger().info("Activated GUI Logging Window for Log4j Subsystem");
+		service.getControllerLogger().info("Activated GUI Logging Window for Log4j Subsystem (using font %s)",
+				sFontName);
 
 		// Listen to preference changes affecting the GUI log output: Pattern
 		// and colors
