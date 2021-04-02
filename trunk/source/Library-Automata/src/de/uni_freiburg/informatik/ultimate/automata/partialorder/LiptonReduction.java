@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -81,7 +82,7 @@ public class LiptonReduction<L, P> {
 	protected final IIndependenceRelation<Set<P>, L> mMoverCheck;
 
 	private BranchingProcess<L, P> mBranchingProcess;
-	private final Set<Event<L, P>> mCutOffEvents;
+	private final HashRelation<Event<L, P>, Event<L, P>> mCutOffs;
 	protected CoenabledRelation<L, P> mCoEnabledRelation;
 	private final Map<L, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
 	private final Map<L, Set<L>> mChoiceCompositions = new HashMap<>();
@@ -111,7 +112,7 @@ public class LiptonReduction<L, P> {
 		mCompositionFactory = compositionFactory;
 		mMoverCheck = independenceRelation;
 		mPetriNet = petriNet;
-		mCutOffEvents = new HashSet<>();
+		mCutOffs = new HashRelation<>();
 		mNewToOldTransitions = new HashMap<>();
 	}
 
@@ -134,8 +135,8 @@ public class LiptonReduction<L, P> {
 					new HashSet<>(mPetriNet.getTransitions()), mPetriNet.getAlphabet(), true);
 
 			mBranchingProcess = new FinitePrefix<>(mServices, resultCurrentIteration).getResult();
-			mCutOffEvents.addAll(
-					mBranchingProcess.getEvents().stream().filter(Event::isCutoffEvent).collect(Collectors.toSet()));
+			mBranchingProcess.getEvents().stream().filter(Event::isCutoffEvent)
+					.forEach(e -> mCutOffs.addPair(e.getCompanion(), e));
 			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
 
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
@@ -494,7 +495,7 @@ public class LiptonReduction<L, P> {
 
 		for (final Event<L, P> e1 : t1Events) {
 			for (final Event<L, P> e2 : t2Events) {
-				if (containsEventInBetween(e1, e2, ignoredEvents)) {
+				if (containsEventInBetween(e1, e2, ignoredEvents, new HashSet<>())) {
 					return false;
 				}
 			}
@@ -516,24 +517,22 @@ public class LiptonReduction<L, P> {
 	}
 
 	private boolean containsEventInBetween(final Event<L, P> e1, final Event<L, P> e2,
-			final Set<Event<L, P>> ignoredEvents) {
+			final Set<Event<L, P>> ignoredEvents, final Set<Event<L, P>> cutOffsVisited) {
 		for (final Event<L, P> e3 : e2.getLocalConfiguration()) {
-			if (ignoredEvents.contains(e3)) {
-				continue;
-			}
-			if (e3.getLocalConfiguration().contains(e1)) {
+			if (e3 != e2 && !ignoredEvents.contains(e3) && e3.getLocalConfiguration().contains(e1)) {
 				return true;
 			}
-		}
 
-		// Check cutoff events.
-		for (final Event<L, P> e3 : mCutOffEvents) {
-			final Event<L, P> companion = e3.getCompanion();
-			if (ignoredEvents.contains(e3)) {
-				continue;
-			}
-			if (e2.getLocalConfiguration().contains(companion) && e3.getLocalConfiguration().contains(e1)) {
-				return true;
+			if (mCutOffs.getDomain().contains(e3)) {
+				for (final Event<L, P> cutoff : mCutOffs.getImage(e3)) {
+					if (cutOffsVisited.contains(cutoff)) {
+						continue;
+					}
+					cutOffsVisited.add(cutoff);
+					if (containsEventInBetween(e1, cutoff, ignoredEvents, cutOffsVisited)) {
+						return true;
+					}
+				}
 			}
 		}
 
