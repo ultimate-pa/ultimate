@@ -120,8 +120,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		
 		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
 		
+		final boolean itFinAuxVar = true;
+		
 		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormulaRestricted(logger,
-				services, jlasg, mgdScript, su, loopTransFormula, guardTf, true);
+				services, jlasg, mgdScript, su, loopTransFormula, guardTf, true, itFinAuxVar);
 		
 		if (QuantifierUtils.isQuantifierFree(loopAccelerationFormula.getFormula())) {
 			jlasg.reportQuantifierFreeResult();
@@ -403,7 +405,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final ILogger logger, final IUltimateServiceProvider services, 
 			final JordanLoopAccelerationStatisticsGenerator jlasg, final ManagedScript mgdScript,
 			final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
-			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible) {
+			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible,
+			final boolean itFinAuxVar) {
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
 		final TermVariable itFin = mgdScript.variable("itFin", sort);
@@ -418,7 +421,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				closedForm(mgdScript, su, itFin, null, loopTransFormula.getInVars(),
 				loopTransFormula.getOutVars(), true, restrictedVersionPossible);
 		if (!closedFormItFinTuple.getValue()) {
-			return createLoopAccelerationFormula(logger, services, jlasg, mgdScript, su, loopTransFormula, guardTf);
+			return createLoopAccelerationFormula(logger, services, jlasg, mgdScript, su, loopTransFormula, guardTf,
+					itFinAuxVar);
 		}
 		final HashMap<TermVariable, Term> closedFormItFin = closedFormItFinTuple.getKey();
 		final HashMap<IProgramVar, TermVariable> havocVars = new HashMap<>();
@@ -496,33 +500,53 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 
 		final Term disjunction = Util.or(script, finalDisjunct1, conjunction);
-
+		
 		final Set<TermVariable> itFinSet = new HashSet<>();
 		itFinSet.add(itFin);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinSet, disjunction);
-		// final Term loopAccelerationTerm = disjunction;
 		
-		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
-				.transform(disjunction);
-		final Term loopAccelerationFormulaWithoutQuantifiers =
-				QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, nnf);
-		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
-
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
-				loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
-				loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
-				loopTransFormula.getBranchEncoders(), false);
-
-		tfb.addAuxVar(itFin);
+		UnmodifiableTransFormula loopAccelerationFormula;
 		
-		tfb.setFormula(simplified);
-		tfb.setInfeasibility(loopTransFormula.isInfeasible());
-
-		final UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-		
-		// Check correctness of quantifier elimination.
-		assert checkCorrectnessOfQuantifierElimination(logger, script, disjunction, simplified);
+		if (itFinAuxVar) {
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+					.transform(disjunction);
+			final Term loopAccelerationFormulaWithoutQuantifiers =
+					QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, nnf);
+			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
+					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+			
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
+					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
+					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
+					loopTransFormula.getBranchEncoders(), false);
+			
+			tfb.addAuxVar(itFin);
+			tfb.setFormula(simplified);
+			tfb.setInfeasibility(loopTransFormula.isInfeasible());
+			
+			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
+			
+			// Check correctness of quantifier elimination.
+			assert checkCorrectnessOfQuantifierElimination(logger, script, disjunction, simplified);
+		} else {
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+					.transform(loopAccelerationTerm);
+			final Term loopAccelerationFormulaWithoutQuantifiers =
+					QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, nnf);
+			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
+					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+			
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
+					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
+					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
+					loopTransFormula.getBranchEncoders(), loopTransFormula.getAuxVars().isEmpty());
+			tfb.setFormula(simplified);
+			tfb.setInfeasibility(loopTransFormula.isInfeasible());
+			
+			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
+			
+			// Quantifier elimination is checked within checkPropertiesOfLoopAccelerationFormula.
+		}
 		
 		assert checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula,
 				loopAccelerationFormula, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormIt,
@@ -583,11 +607,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	private static UnmodifiableTransFormula createLoopAccelerationFormula(final ILogger logger,
 			final IUltimateServiceProvider services, final JordanLoopAccelerationStatisticsGenerator jlasg,
 			final ManagedScript mgdScript, final SimultaneousUpdate su,
-			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf) {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
-				loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
-				loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
-				loopTransFormula.getBranchEncoders(), false);
+			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf,
+			final boolean itFinAuxVar) {
 
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
@@ -750,26 +771,48 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		final Set<TermVariable> itFinHalfSet = new HashSet<>();
 		itFinHalfSet.add(itFinHalf);
+		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinHalfSet, disjunction);
 		
-		// final Term loopAccelerationTerm = disjunction;
-		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinHalfSet, disjunction);			
+		UnmodifiableTransFormula loopAccelerationFormula;
 		
-		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
-				.transform(disjunction);
-		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services, mgdScript,
-				true, PqeTechniques.ALL, nnf);
-		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
-
-		tfb.addAuxVar(itFinHalf);
-		
-		tfb.setInfeasibility(loopTransFormula.isInfeasible());
-
-		tfb.setFormula(simplified);
-		final UnmodifiableTransFormula loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-		
-		// Check correctness of quantifier elimination.
-		assert checkCorrectnessOfQuantifierElimination(logger, script, disjunction, simplified);
+		if (itFinAuxVar) {
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+					.transform(disjunction);
+			final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services, mgdScript,
+					true, PqeTechniques.ALL, nnf);
+			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
+					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+			
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
+					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
+					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
+					loopTransFormula.getBranchEncoders(), false);
+			
+			tfb.addAuxVar(itFinHalf);
+			tfb.setInfeasibility(loopTransFormula.isInfeasible());
+			tfb.setFormula(simplified);
+			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
+			
+			// Check correctness of quantifier elimination.
+			assert checkCorrectnessOfQuantifierElimination(logger, script, disjunction, simplified);
+		} else {
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+					.transform(loopAccelerationTerm);
+			final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services, mgdScript,
+					true, PqeTechniques.ALL, nnf);
+			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
+					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+			
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
+					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
+					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
+					loopTransFormula.getBranchEncoders(), loopTransFormula.getAuxVars().isEmpty());
+			tfb.setInfeasibility(loopTransFormula.isInfeasible());
+			tfb.setFormula(simplified);
+			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
+			
+			// Correctness of quantifier elimination is checked within checkPropertiesOfLoopAccelerationFormula.
+		}
 		
 		assert checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula,
 				loopAccelerationFormula, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormEvenIt,
