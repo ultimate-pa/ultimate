@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Class for quadratic integer matrices.
@@ -734,16 +735,69 @@ public class QuadraticMatrix {
 		}
 		return true;
 	}
-	
+
 	public int getDimension() {
 		return mDimension;
 	}
-	
-	public BigInteger getEntry(int i, int j) {
+
+	public BigInteger getEntry(final int i, final int j) {
 		return mEntries[i][j];
 	}
-	
-	public void setEntry(int i, int j, BigInteger value) {
+
+	public void setEntry(final int i, final int j, final BigInteger value) {
 		mEntries[i][j] = value;
+	}
+
+	static class JordanTransformationResult {
+		enum JordanTransformationStatus {
+			SUCCESS,
+			/**
+			 * We support the transformation to JNF only if
+			 * each eigenvalue is either -1,0 or 1.
+			 */
+			UNSUPPORTED_EIGENVALUES
+		};
+
+		private final JordanTransformationStatus mStatus;
+		private final QuadraticMatrix mJnf;
+		/**
+		 * Contains triple (ev, bs, occ) if there are exactly occ Jordan blocks of size
+		 * bs for eigenvalue ev.
+		 */
+		private final NestedMap2<Integer, Integer, Integer> mJordanBlockSizes;
+		public JordanTransformationResult(final JordanTransformationStatus status, final QuadraticMatrix jnf,
+				final NestedMap2<Integer, Integer, Integer> jordanBlockSizes) {
+			super();
+			assert (status == JordanTransformationStatus.SUCCESS) ^ (jnf == null) : "provide JNF iff success";
+			assert (jnf == null) == (jordanBlockSizes == null) : "all or nothing";
+			assert jordanBlockSizes.keySet().stream()
+					.allMatch(x -> x == -1 || x == 0 || x == 1) : "only supported eigenvalues as keys";
+			mStatus = status;
+			mJnf = jnf;
+			mJordanBlockSizes = jordanBlockSizes;
+		}
+		public JordanTransformationStatus getStatus() {
+			return mStatus;
+		}
+		public QuadraticMatrix getJnf() {
+			return mJnf;
+		}
+		public NestedMap2<Integer, Integer, Integer> getJordanBlockSizes() {
+			return mJordanBlockSizes;
+		}
+
+		/**
+		 * Auxiliary method for filling the JordanBlockSizes.
+		 */
+		static void reportJordanBlock(final NestedMap2<Integer, Integer, Integer> jordanBlockSizes,
+				final int eigenvalue, final int blockSize) {
+			Integer occurence = jordanBlockSizes.get(eigenvalue, blockSize);
+			if (occurence == null) {
+				occurence = 1;
+			} else {
+				occurence++;
+			}
+			jordanBlockSizes.put(eigenvalue, blockSize, occurence);
+		}
 	}
 }
