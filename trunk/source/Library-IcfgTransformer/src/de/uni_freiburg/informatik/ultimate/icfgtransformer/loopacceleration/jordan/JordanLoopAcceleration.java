@@ -409,7 +409,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final boolean itFinAuxVar) {
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
-		final TermVariable itFin = mgdScript.variable("itFin", sort);
+		final TermVariable itFin = mgdScript.constructFreshTermVariable("itFin", sort);
 
 		// Create the subformula guard(cf(x,itFin)).
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>(
@@ -449,7 +449,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		// (forall ((it Int)) (=> (and (<= 1 it) (<= it (- itFin 1)))
 		// (guard(closedForm(x,it)))))
-		final TermVariable it = mgdScript.variable("it", sort);
+		final TermVariable it = mgdScript.constructFreshTermVariable("it", sort);
 		final Term itGreater1 = script.term("<=", script.numeral(BigInteger.ONE), it);
 		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
 		final HashMap<TermVariable, Term> closedFormIt = closedForm(mgdScript, su, it, null,
@@ -606,7 +606,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Sort sort = SmtSortUtils.getIntSort(script);
 
 		// (and (= itFinHalf 0) (not (guard)) (x'=x))
-		final TermVariable itFinHalf = mgdScript.variable("itFinHalf", sort);
+		final TermVariable itFinHalf = mgdScript.constructFreshTermVariable("itFinHalf", sort);
 		final Term itFinHalfEquals0 = script.term("=", itFinHalf, script.numeral(BigInteger.ZERO));
 		final Term notGuard = Util.not(script, guardTf.getFormula());
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>(loopTransFormula.getInVars());
@@ -643,7 +643,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormOddItFinTmp);
 
 		// ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1)))
-		final TermVariable itHalf = mgdScript.variable("itHalf", sort);
+		final TermVariable itHalf = mgdScript.constructFreshTermVariable("itHalf", sort);
 		final Term oneLeqItHalf = script.term("<=", script.numeral(BigInteger.ONE), itHalf);
 		final Term itHalfLeqItFinHalfM1 =
 				script.term("<=", itHalf, script.term("-", itFinHalf, script.numeral(BigInteger.ONE)));
