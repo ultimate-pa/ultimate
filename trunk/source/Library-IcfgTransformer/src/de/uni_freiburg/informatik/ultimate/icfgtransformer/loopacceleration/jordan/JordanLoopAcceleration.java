@@ -618,19 +618,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term itFinHalfEquals0 = script.term("=", itFinHalf, script.numeral(BigInteger.ZERO));
 		final Term notGuard = Util.not(script, guardTf.getFormula());
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>(loopTransFormula.getInVars());
-		final Term[] xPrimeEqualsXArray = new Term[loopTransFormula.getOutVars().size()];
-		int k = 0;
-		for (final IProgramVar outVar : loopTransFormula.getOutVars().keySet()) {
-			if (!loopTransFormula.getInVars().containsKey(outVar)) {
-				final TermVariable inVar = mgdScript.constructFreshTermVariable(outVar.getGloballyUniqueId(),
-						outVar.getTermVariable().getSort());
-				inVars.put(outVar, inVar);
-			}
-			xPrimeEqualsXArray[k] = script.term("=", loopTransFormula.getOutVars().get(outVar),
-					loopTransFormula.getInVars().get(outVar));
-			k = k + 1;
-		}
-		final Term xPrimeEqualsX = Util.and(script, xPrimeEqualsXArray);
+		final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, inVars, loopTransFormula.getOutVars());
 		final Term firstFinalDisjunctEven = Util.and(script, itFinHalfEquals0, notGuard, xPrimeEqualsX);
 
 		// (> itFinHalf 0)
@@ -823,6 +811,27 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		jlasg.reportTwoCaseAcceleration();
 
 		return loopAccelerationFormula;
+	}
+
+	/**
+	 * Construct formula that states that all outVars equal the corresponding inVar.
+	 * Missing inVars are added on-demand.
+	 */
+	private static Term constructXPrimeEqualsX(final ManagedScript mgdScript,
+			final Map<IProgramVar, TermVariable> modifiableInVars, final Map<IProgramVar, TermVariable> outVars) {
+		final Term[] xPrimeEqualsXArray = new Term[outVars.size()];
+		int k = 0;
+		for (final IProgramVar outVar : outVars.keySet()) {
+			if (!modifiableInVars.containsKey(outVar)) {
+				final TermVariable inVar = mgdScript.constructFreshTermVariable(outVar.getGloballyUniqueId(),
+						outVar.getTermVariable().getSort());
+				modifiableInVars.put(outVar, inVar);
+			}
+			xPrimeEqualsXArray[k] = mgdScript.term(null, "=", outVars.get(outVar), modifiableInVars.get(outVar));
+			k = k + 1;
+		}
+		final Term xPrimeEqualsX = Util.and(mgdScript.getScript(), xPrimeEqualsXArray);
+		return xPrimeEqualsX;
 	}
 
 	/**
