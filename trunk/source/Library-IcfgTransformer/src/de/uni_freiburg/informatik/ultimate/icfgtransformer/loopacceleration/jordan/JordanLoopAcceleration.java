@@ -617,11 +617,14 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final TermVariable itFinHalf = mgdScript.variable("itFinHalf", sort);
 		final Term itFinHalfEquals0 = script.term("=", itFinHalf, script.numeral(BigInteger.ZERO));
 		final Term notGuard = Util.not(script, guardTf.getFormula());
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>(loopTransFormula.getInVars());
 		final Term[] xPrimeEqualsXArray = new Term[loopTransFormula.getOutVars().size()];
 		int k = 0;
 		for (final IProgramVar outVar : loopTransFormula.getOutVars().keySet()) {
 			if (!loopTransFormula.getInVars().containsKey(outVar)) {
-				throw new AssertionError("Could not find inVar for every outVar. Term (x'=x) cannot be constructed.");
+				final TermVariable inVar = mgdScript.constructFreshTermVariable(outVar.getGloballyUniqueId(),
+						outVar.getTermVariable().getSort());
+				inVars.put(outVar, inVar);
 			}
 			xPrimeEqualsXArray[k] = script.term("=", loopTransFormula.getOutVars().get(outVar),
 					loopTransFormula.getInVars().get(outVar));
@@ -634,7 +637,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term itFinHalfGreater0 = script.term(">", itFinHalf, script.numeral(BigInteger.ZERO));
 
 		// (not (guard(closedFormEven(x, 2*itFinHalf))))
-		final Map<IProgramVar, TermVariable> inVars = loopTransFormula.getInVars();
 		final HashMap<TermVariable, IProgramVar> inVarsInverted = new HashMap<>();
 		for (final IProgramVar inVar : inVars.keySet()) {
 			inVarsInverted.put(inVars.get(inVar), inVar);
