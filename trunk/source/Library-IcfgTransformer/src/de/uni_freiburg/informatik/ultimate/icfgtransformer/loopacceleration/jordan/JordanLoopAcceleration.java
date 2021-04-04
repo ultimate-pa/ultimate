@@ -629,14 +629,14 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Set<TermVariable> havocVarSet = new HashSet<>(havocVars.values());
 
 		final HashMap<TermVariable, Term> closedFormEvenItFin = closedForm(mgdScript, su, null, itFinHalf,
-				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, false).getKey();
+				inVars, loopTransFormula.getOutVars(), true, false).getKey();
 		final Term guardOfClosedFormEvenItFinTmp = guardOfClosedForm(script, guardTf.getFormula(),
 				closedFormEvenItFin, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
 		final Term guardOfClosedFormEvenItFin =
 				SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormEvenItFinTmp);
 
 		final HashMap<TermVariable, Term> closedFormOddItFin = closedForm(mgdScript, su, null, itFinHalf,
-				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), false, false).getKey();
+				inVars, loopTransFormula.getOutVars(), false, false).getKey();
 		final Term guardOfClosedFormOddItFinTmp = guardOfClosedForm(script, guardTf.getFormula(),
 				closedFormOddItFin, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
 		final Term guardOfClosedFormOddItFin =
@@ -651,7 +651,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		// (guard(closedFormEven(x, 2*itHalf)))
 		final HashMap<TermVariable, Term> closedFormEvenIt = closedForm(mgdScript, su, null, itHalf,
-				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, false).getKey();
+				inVars, loopTransFormula.getOutVars(), true, false).getKey();
 		final Term guardOfClosedFormEvenItTmp = guardOfClosedForm(script, guardTf.getFormula(),
 				closedFormEvenIt, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
 		final Term guardOfClosedFormEvenIt = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormEvenItTmp);
@@ -667,7 +667,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		// (guard(closedFormOdd(x, 2*itHalf+1))
 		final HashMap<TermVariable, Term> closedFormOddIt = closedForm(mgdScript, su, null, itHalf,
-				loopTransFormula.getInVars(), loopTransFormula.getOutVars(), false, false).getKey();
+				inVars, loopTransFormula.getOutVars(), false, false).getKey();
 		final Term guardOfClosedFormOddItTmp = guardOfClosedForm(script, guardTf.getFormula(),
 				closedFormOddIt, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
 		final Term guardOfClosedFormOddIt = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormOddItTmp);
@@ -707,9 +707,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				closedFormArrayEven[j] = script.term("=", loopTransFormula.getOutVars().get(var),
 						closedFormEvenItFin.get(loopTransFormula.getOutVars().get(var)));
 			} else {
-				closedFormArrayEven[j] =
-						script.term("=", loopTransFormula.getOutVars().get(var),
-								loopTransFormula.getInVars().get(var));
+				closedFormArrayEven[j] = script.term("=", loopTransFormula.getOutVars().get(var), inVars.get(var));
 			}
 			j = j + 1;
 		}
@@ -726,9 +724,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				closedFormArrayOdd[i] = script.term("=", loopTransFormula.getOutVars().get(var),
 						closedFormOddItFin.get(loopTransFormula.getOutVars().get(var)));
 			} else {
-				closedFormArrayOdd[i] =
-						script.term("=", loopTransFormula.getOutVars().get(var),
-								loopTransFormula.getInVars().get(var));
+				closedFormArrayOdd[i] = script.term("=", loopTransFormula.getOutVars().get(var), inVars.get(var));
 			}
 			i = i + 1;
 		}
@@ -765,7 +761,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
 					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
 
-			final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars,
 					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
 					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
 					loopTransFormula.getBranchEncoders(), false);
