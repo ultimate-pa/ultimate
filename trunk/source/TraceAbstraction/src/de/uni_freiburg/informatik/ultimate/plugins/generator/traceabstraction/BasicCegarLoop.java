@@ -469,8 +469,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		switch (mode) {
 		case SLEEP_DELAY_SET:
 			automatonConstructor = new SleepSetVisitorAutomaton<>(input, automataServices, mStateFactoryForRefinement);
-			new SleepSetDelayReduction<>(automataServices, input, mSleepSetStateFactory, indep, order,
-					automatonConstructor);
+			new SleepSetDelayReduction<>(automataServices, input, new ISleepSetStateFactory.NoUnrolling<>(), indep,
+					order, automatonConstructor);
 			break;
 		case SLEEP_NEW_STATES:
 			final SleepSetStateFactoryForRefinement<L> factory =
@@ -478,7 +478,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			automatonConstructor = new SleepSetVisitorAutomaton<>(x -> input.isInitial(factory.getOriginalState(x)),
 					x -> input.isFinal(factory.getOriginalState(x)), input.getVpAlphabet(), automataServices,
 					mStateFactoryForRefinement);
-			new SleepSetNewStateReduction<>(automataServices, input, indep, order, mSleepSetStateFactory,
+			new SleepSetNewStateReduction<>(automataServices, input, mSleepSetStateFactory, indep, order,
 					automatonConstructor);
 			break;
 		default:

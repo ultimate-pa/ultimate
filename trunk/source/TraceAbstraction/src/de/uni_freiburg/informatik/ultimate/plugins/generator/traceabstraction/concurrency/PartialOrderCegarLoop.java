@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
@@ -192,12 +193,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		try {
 			switch (mPartialOrderMode) {
 			case SLEEP_DELAY_SET:
-				new SleepSetDelayReduction<>(automataServices, abstraction, mSleepSetStateFactory,
+				new SleepSetDelayReduction<>(automataServices, abstraction, new ISleepSetStateFactory.NoUnrolling<>(),
 						mIndependenceRelation, mSleepSetOrder, mVisitor);
 				break;
 			case SLEEP_NEW_STATES:
-				new SleepSetNewStateReduction<>(automataServices, abstraction, mIndependenceRelation, mSleepSetOrder,
-						mSleepSetStateFactory, mVisitor);
+				new SleepSetNewStateReduction<>(automataServices, abstraction, mSleepSetStateFactory,
+						mIndependenceRelation, mSleepSetOrder, mVisitor);
 				break;
 			default:
 				throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);

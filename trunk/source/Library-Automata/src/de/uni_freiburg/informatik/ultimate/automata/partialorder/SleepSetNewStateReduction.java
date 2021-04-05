@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 @Deprecated(since = "2021-03-22")
 public class SleepSetNewStateReduction<L, S, R> {
 	private final ISleepSetStateFactory<L, S, R> mStateFactory;
-	private final ISleepSetOrder<S, L> mOrder;
+	private final ISleepSetOrder<R, L> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final IPartialOrderVisitor<L, R> mVisitor;
@@ -93,8 +93,8 @@ public class SleepSetNewStateReduction<L, S, R> {
 	 */
 	public SleepSetNewStateReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
-			final ISleepSetStateFactory<L, S, R> stateFactory, final IPartialOrderVisitor<L, R> visitor)
+			final ISleepSetStateFactory<L, S, R> stateFactory, final IIndependenceRelation<S, L> independenceRelation,
+			final ISleepSetOrder<R, L> sleepSetOrder, final IPartialOrderVisitor<L, R> visitor)
 			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
@@ -163,7 +163,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 			}
 
 			// sort successorTransitionList according to the given order
-			successorTransitionList.sort(mOrder.getOrder(currentState));
+			successorTransitionList.sort(mOrder.getOrder(currentSleepSetState));
 			final Set<L> explored = new HashSet<>();
 			final ArrayDeque<R> successorStateList = new ArrayDeque<>(successorTransitionList.size());
 
