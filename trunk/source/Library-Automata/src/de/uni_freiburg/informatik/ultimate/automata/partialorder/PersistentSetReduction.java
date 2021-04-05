@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice.PersistentSleepOrder;
 
 /**
- * Performs persistent reduction on top of sleep set reduction. The goal of this is primarily to reduce the size (in
+ * Performs persistent set reduction on top of sleep set reduction. The goal of this is primarily to reduce the size (in
  * number of states) of the reduced automaton, not so much the language. In particular, sleep set reduction with new
  * states already yields a minimal reduction (in terms of the language), hence persistent sets do not achieve any
  * further reduction in this sense. Some further language reduction can possibly be achieved in the delay set case.
