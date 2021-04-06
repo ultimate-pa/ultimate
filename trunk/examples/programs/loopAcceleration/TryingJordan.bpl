@@ -5,10 +5,9 @@
  */
 
 procedure main() returns () {
-  var x1, x2, x3, x4 : int;
-  while(x2 > 0)
+  var x : int;
+  while(x < 10)
   {
-    x1 := x1 + 1;
-    x2 := x2 - 1;
+	x := 2 * x;
   }
 }

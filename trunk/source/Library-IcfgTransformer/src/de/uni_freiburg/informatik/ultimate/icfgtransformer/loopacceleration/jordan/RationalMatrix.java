@@ -56,9 +56,9 @@ public class RationalMatrix {
 	/**
 	 * Computes the inverse of the matrix using the inverse of the integer matrix: (c*M)^-1 = c^-1 * M ^-1.
 	 */
-	public static RationalMatrix inverse(final RationalMatrix matrix) {
+	public static RationalMatrix computeInverse(final RationalMatrix matrix) {
 		final int n = matrix.mIntMatrix.getDimension();
-		final RationalMatrix matrixInverse = QuadraticMatrix.inverse(matrix.mIntMatrix);
+		final RationalMatrix matrixInverse = QuadraticMatrix.computeInverse(matrix.mIntMatrix);
 		Rational factorInverse = Rational.valueOf(matrix.mDenominator, matrixInverse.mDenominator);
 		factorInverse = Rational.valueOf(factorInverse.numerator(), factorInverse.denominator());
 		for (int i = 0; i < n; i++) {
@@ -143,14 +143,14 @@ public class RationalMatrix {
 		final int numberOfConstraints = constraints.length;
 		final RationalMatrix lesGauss1 =
 				new RationalMatrix(BigInteger.valueOf(1), QuadraticMatrix.gaussElimination(les.mIntMatrix));
-		final int rank = lesGauss1.mIntMatrix.rank();
+		final int rank = lesGauss1.mIntMatrix.computeRank();
 		for (int i = 0; i < numberOfConstraints; i++) {
 			// for (int i=rank, i<n; i++) {
 			// for (int i=rank; i<= rank + numberOfConstraints; i++) {
 			lesGauss1.addRowToMatrix(rank + i, constraints[i]);
 		}
 		// Keep 1 in last non-zero row.
-		lesGauss1.mIntMatrix.setEntry(lesGauss1.mIntMatrix.rank() - 1, lesGauss1.mIntMatrix.getDimension() - 1,
+		lesGauss1.mIntMatrix.setEntry(lesGauss1.mIntMatrix.computeRank() - 1, lesGauss1.mIntMatrix.getDimension() - 1,
 				BigInteger.valueOf(1));
 		// lesGauss1.mIntMatrix.mEntries[lesGauss1.mIntMatrix.rank()-1][lesGauss1.mIntMatrix.getDimension()-1] =
 		// BigInteger.valueOf(1);
