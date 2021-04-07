@@ -132,6 +132,15 @@ public final class TransFormulaUtils {
 			final boolean tryAuxVarElimination, final boolean tranformToCNF,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<UnmodifiableTransFormula> transFormula) {
+		return sequentialComposition(logger, services, mgdScript, simplify, tryAuxVarElimination, tranformToCNF, true,
+				xnfConversionTechnique, simplificationTechnique, transFormula);
+	}
+
+	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
+			final boolean tryAuxVarElimination, final boolean tranformToCNF, final boolean checkSat,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
+			final List<UnmodifiableTransFormula> transFormula) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
 		}
@@ -253,7 +262,7 @@ public final class TransFormulaUtils {
 		}
 		if (simplify) {
 			formula = SmtUtils.simplify(mgdScript, formula, services, simplificationTechnique);
-		} else {
+		} else if (checkSat) {
 			final LBool isSat = Util.checkSat(script, formula);
 			if (isSat == LBool.UNSAT) {
 				if (logger.isDebugEnabled()) {
@@ -266,8 +275,10 @@ public final class TransFormulaUtils {
 		Infeasibility infeasibility;
 		if (formula == script.term("false")) {
 			infeasibility = Infeasibility.INFEASIBLE;
-		} else {
+		} else if (simplify || checkSat) {
 			infeasibility = Infeasibility.UNPROVEABLE;
+		} else {
+			infeasibility = Infeasibility.NOT_DETERMINED;
 		}
 
 		if (tranformToCNF) {

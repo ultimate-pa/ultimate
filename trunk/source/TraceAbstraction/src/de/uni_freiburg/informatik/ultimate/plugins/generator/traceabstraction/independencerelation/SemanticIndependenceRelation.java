@@ -197,7 +197,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final boolean tryAuxVarElimination = false;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
-				tryAuxVarElimination, false, mXnfConversionTechnique, mSimplificationTechnique,
+				tryAuxVarElimination, false, false, mXnfConversionTechnique, mSimplificationTechnique,
 				Arrays.asList(first, second));
 	}
 
