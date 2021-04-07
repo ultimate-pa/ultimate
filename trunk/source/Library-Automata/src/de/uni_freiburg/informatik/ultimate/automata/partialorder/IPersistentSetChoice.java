@@ -41,7 +41,8 @@ import java.util.Set;
  */
 public interface IPersistentSetChoice<L, S> {
 	/**
-	 * Given a state, returns a set of letters forming a persistent set for this state.
+	 * Given a state, returns a set of letters forming a persistent set for this state. Return null to represent the
+	 * trivial persistent set.
 	 *
 	 * @param state
 	 *            A state of the reduction's input automaton
@@ -72,9 +73,9 @@ public interface IPersistentSetChoice<L, S> {
 			final Set<L> persistent = mPersistent.persistentSet(state);
 			final Comparator<L> comparator = mUnderlying.getOrder(state);
 			return (a, b) -> {
-				if (persistent.contains(a) && !persistent.contains(b)) {
+				if (persistent != null && persistent.contains(a) && !persistent.contains(b)) {
 					return -1;
-				} else if (persistent.contains(b) && !persistent.contains(a)) {
+				} else if (persistent != null && persistent.contains(b) && !persistent.contains(a)) {
 					return 1;
 				}
 				return comparator.compare(a, b);

@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -82,7 +84,8 @@ public final class PersistentSetReduction {
 
 		@Override
 		public boolean discoverTransition(final S source, final L letter, final S target) {
-			if (!mPersistent.persistentSet(source).contains(letter)) {
+			final Set<L> persistent = mPersistent.persistentSet(source);
+			if (persistent != null && !persistent.contains(letter)) {
 				return true;
 			}
 			return mUnderlying.discoverTransition(source, letter, target);
