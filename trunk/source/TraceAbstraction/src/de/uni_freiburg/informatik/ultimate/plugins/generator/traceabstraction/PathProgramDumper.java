@@ -87,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
@@ -633,7 +634,12 @@ public class PathProgramDumper {
 		final Expression guardExpression = mTerm2Expression.translate(guardTerm);
 		final AssumeStatement assume = new AssumeStatement(constructNewLocation(), guardExpression);
 
-		final SimultaneousUpdate su = SimultaneousUpdate.fromTransFormula(action.getTransformula(), mgdScript);
+		final SimultaneousUpdate su;
+		try {
+			su = SimultaneousUpdate.fromTransFormula(action.getTransformula(), mgdScript);
+		} catch (final SimultaneousUpdateException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
 		final AssignmentStatement assignment;
 		{
 			final LeftHandSide[] lhs = new LeftHandSide[su.getDeterministicAssignment().size()];

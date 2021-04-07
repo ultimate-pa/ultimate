@@ -48,13 +48,16 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Represents a simultaneous variable update that consists of two parts 1. variables that get the value of an term
- * (deterministically assigned) 2. variables that are nondeterministically assigned (havoced)
+ * Represents a simultaneous variable update that consists of two parts 1.
+ * variables that get the value of an term (deterministically assigned) 2.
+ * variables that are nondeterministically assigned (havoced)
  *
- * We can often transform {@link TransFormula}s into this form. We note that a {@link TransFormula} is usually not
- * equivalent to this form, because a {@link TransFormula} consists of a guard and an update. The guard can be obtained
- * by {@link TransFormulaUtils#computeGuard}. The conjunction of the guard and the {@link SimultaneousUpdate} (lhs
- * variables considered as outVars all other variables considered as inVars) is equivalent to the original
+ * We can often transform {@link TransFormula}s into this form. We note that a
+ * {@link TransFormula} is usually not equivalent to this form, because a
+ * {@link TransFormula} consists of a guard and an update. The guard can be
+ * obtained by {@link TransFormulaUtils#computeGuard}. The conjunction of the
+ * guard and the {@link SimultaneousUpdate} (lhs variables considered as outVars
+ * all other variables considered as inVars) is equivalent to the original
  * {@link TransFormula}.
  *
  * @author heizmann@informatik.uni-freiburg.de
@@ -71,7 +74,8 @@ public class SimultaneousUpdate {
 		mHavocedVars = havocedVars;
 	}
 
-	public static SimultaneousUpdate fromTransFormula(final TransFormula tf, final ManagedScript mgdScript) {
+	public static SimultaneousUpdate fromTransFormula(final TransFormula tf, final ManagedScript mgdScript)
+			throws SimultaneousUpdateException {
 		final Set<IProgramVar> havocedVars = new HashSet<>();
 		final Set<IProgramVar> assignmentCandidates = new HashSet<>();
 		final Set<IProgramVar> allProgVars = TransFormula.collectAllProgramVars(tf);
@@ -87,11 +91,10 @@ public class SimultaneousUpdate {
 			}
 		}
 
-
-		final Map<TermVariable, IProgramVar> inVarsReverseMapping =
-				TransFormulaUtils.constructReverseMapping(tf.getInVars());
-		final Map<TermVariable, IProgramVar> outVarsReverseMapping =
-				TransFormulaUtils.constructReverseMapping(tf.getOutVars());
+		final Map<TermVariable, IProgramVar> inVarsReverseMapping = TransFormulaUtils
+				.constructReverseMapping(tf.getInVars());
+		final Map<TermVariable, IProgramVar> outVarsReverseMapping = TransFormulaUtils
+				.constructReverseMapping(tf.getOutVars());
 		final Term[] conjuncts = SmtUtils.getConjuncts(tf.getFormula());
 		final HashRelation<IProgramVar, Term> pv2conjuncts = new HashRelation<>();
 		for (final Term conjunct : conjuncts) {
@@ -122,7 +125,7 @@ public class SimultaneousUpdate {
 					final Term renamed = extractUpdateRhs(outVar, conjuncts, forbiddenTerm, inVarsReverseMapping,
 							outVarsReverseMapping, mgdScript);
 					if (renamed == null) {
-						throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
+						throw new SimultaneousUpdateException("cannot bring into simultaneous update form " + pv
 								+ "'s outvar occurs in several conjuncts " + Arrays.toString(conjuncts));
 					}
 					deterministicAssignment.put(pv, renamed);
@@ -167,7 +170,8 @@ public class SimultaneousUpdate {
 
 	private static Term extractUpdateRhs(final TermVariable outVar, final Term[] conjuncts, final Term forbiddenTerm,
 			final Map<TermVariable, IProgramVar> inVarsReverseMapping,
-			final Map<TermVariable, IProgramVar> outVarsReverseMapping, final ManagedScript mgdScript) {
+			final Map<TermVariable, IProgramVar> outVarsReverseMapping, final ManagedScript mgdScript)
+			throws SimultaneousUpdateException {
 		final EqualityInformation ei = EqualityInformation.getEqinfo(mgdScript.getScript(), outVar, conjuncts,
 				forbiddenTerm, QuantifiedFormula.EXISTS);
 		if (ei == null) {
@@ -182,7 +186,8 @@ public class SimultaneousUpdate {
 
 	private static Map<Term, Term> computeSubstitutionMapping(final Term rhs, final Term[] conjuncts,
 			final TermVariable forbiddenTerm, final Map<TermVariable, IProgramVar> inVarsReverseMapping,
-			final Map<TermVariable, IProgramVar> outVarsReverseMapping, final ManagedScript mgdScript) {
+			final Map<TermVariable, IProgramVar> outVarsReverseMapping, final ManagedScript mgdScript)
+			throws SimultaneousUpdateException {
 		final Map<Term, Term> result = new HashMap<>();
 		for (final TermVariable tv : rhs.getFreeVars()) {
 			IProgramVar pv = inVarsReverseMapping.get(tv);
@@ -194,13 +199,13 @@ public class SimultaneousUpdate {
 					final Term renamed = extractUpdateRhs(tv, conjuncts, forbiddenTerm, inVarsReverseMapping,
 							outVarsReverseMapping, mgdScript);
 					if (renamed == null) {
-						throw new IllegalArgumentException("cannot bring into simultaneous update form, " + tv
+						throw new SimultaneousUpdateException("cannot bring into simultaneous update form, " + tv
 								+ " has two outvars in equality " + Arrays.toString(conjuncts));
 
 					}
 					result.put(tv, renamed);
 				} else {
-					throw new IllegalArgumentException("cannot bring into simultaneous update form, " + tv
+					throw new SimultaneousUpdateException("cannot bring into simultaneous update form, " + tv
 							+ " has neither invar nor outvar in " + Arrays.toString(conjuncts));
 				}
 			}
@@ -214,6 +219,14 @@ public class SimultaneousUpdate {
 
 	public Set<IProgramVar> getHavocedVars() {
 		return mHavocedVars;
+	}
+
+	public static class SimultaneousUpdateException extends Exception {
+
+		public SimultaneousUpdateException(final String errorMessage) {
+			super(errorMessage);
+		}
+
 	}
 
 }
