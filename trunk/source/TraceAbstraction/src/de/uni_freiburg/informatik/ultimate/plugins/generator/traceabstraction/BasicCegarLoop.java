@@ -232,7 +232,15 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		 * Sleep set partial order reduction. Unrolling and splitting is performed to achieve a minimal reduction (in
 		 * terms of the language). This duplicates states of the input automaton.
 		 */
-		SLEEP_NEW_STATES
+		SLEEP_NEW_STATES,
+		/**
+		 * Combines persistent set reduction with {@link SLEEP_DELAY_SET}.
+		 */
+		PERSISTENT_SLEEP_DELAY_SET,
+		/**
+		 * Combines persistent set reduction with {@link SLEEP_NEW_STATES}.
+		 */
+		PERSISTENT_SLEEP_NEW_STATES
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
@@ -321,9 +329,11 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		case NONE:
 			mSleepSetStateFactory = null;
 			break;
+		case PERSISTENT_SLEEP_NEW_STATES:
 		case SLEEP_NEW_STATES:
 			mSleepSetStateFactory = new SleepSetStateFactoryForRefinement<>(predicateFactory);
 			break;
+		case PERSISTENT_SLEEP_DELAY_SET:
 		case SLEEP_DELAY_SET:
 			mSleepSetStateFactory = new ISleepSetStateFactory.NoUnrolling<>();
 			break;

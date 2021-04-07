@@ -43,12 +43,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inform
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransformingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
@@ -59,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -115,6 +119,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceRelation<IPredicate, L> mConditionalRelation;
+	private final IPersistentSetChoice<L, IPredicate> mPersistent;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
@@ -134,6 +139,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final DefaultIndependenceCache<IPredicate, L> independenceCache = new DefaultIndependenceCache<>();
 		mConditionalRelation = constructConditionalIndependence(semanticIndependence, independenceCache);
 		mIndependenceRelation = constructIndependenceRelation(semanticIndependence, independenceCache);
+		mPersistent = createPersistentSets(csToolkit, independenceCache);
 	}
 
 	@Override
@@ -200,6 +206,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				new SleepSetNewStateReduction<>(automataServices, abstraction, mSleepSetStateFactory,
 						mIndependenceRelation, mSleepSetOrder, mVisitor);
 				break;
+			case PERSISTENT_SLEEP_DELAY_SET:
+				PersistentSetReduction.applyDelaySetReduction(automataServices, abstraction, mIndependenceRelation,
+						mSleepSetOrder, mPersistent, mVisitor);
+				break;
 			default:
 				throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);
 			}
@@ -263,6 +273,28 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				new DistributingIndependenceRelation<>(mConjunctIndependenceRelations, this::getConjuncts));
 	}
 
+	private final IPersistentSetChoice<L, IPredicate> createPersistentSets(final CfgSmtToolkit csToolkit,
+			final IIndependenceCache<IPredicate, L> independenceCache) {
+		final ManagedScript independenceScript = constructIndependenceScript();
+		final TermTransferrer independenceTransferrer =
+				new TermTransferrer(csToolkit.getManagedScript().getScript(), independenceScript.getScript());
+		final IIndependenceRelation<IPredicate, L> semIndep =
+				new SemanticIndependenceRelation<>(mServices, independenceScript, false, true, independenceTransferrer);
+		final IIndependenceRelation<IPredicate, L> indep = new CachedIndependenceRelation<>(
+				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(), semIndep)),
+				independenceCache);
+
+		switch (mPartialOrderMode) {
+		case PERSISTENT_SLEEP_DELAY_SET:
+			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
+					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) indep));
+		case PERSISTENT_SLEEP_NEW_STATES:
+			throw new UnsupportedOperationException("unsupported (must first check access to location)");
+		default:
+			return null;
+		}
+	}
+
 	private void switchToOnDemandConstructionMode() {
 		for (final AbstractInterpolantAutomaton<L> aut : mAbstractItpAutomata) {
 			aut.switchToOnDemandConstructionMode();
@@ -295,6 +327,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	}
 
 	private IPredicate[] getConjuncts(final IPredicate conjunction) {
+		if (conjunction == null) {
+			return new IPredicate[mIteration + 1];
+		}
 		return mPredicateConjuncts.getOrDefault(conjunction, new IPredicate[] { conjunction });
 	}
 
