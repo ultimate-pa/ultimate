@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionDer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -136,17 +136,11 @@ public class SimultaneousUpdate {
 			final IProgramVar pv, final Set<Term> pvContainingConjuncts) {
 		if (SmtSortUtils.isBoolSort(pv.getTerm().getSort()) && pvContainingConjuncts.size() == 1) {
 			final Term conjunct = pvContainingConjuncts.iterator().next();
-			if (conjunct.equals(tf.getOutVars().get(pv))) {
+			if (DualJunctionDer.isSimilarModuloNegation(conjunct, tf.getOutVars().get(pv))) {
 				return mgdScript.getScript().term("true");
 			}
-			if (conjunct instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) conjunct;
-				if (appTerm.getFunction().getName().equals("not")) {
-					final Term negated = appTerm.getParameters()[0];
-					if (negated.equals(tf.getOutVars().get(pv))) {
-						return mgdScript.getScript().term("false");
-					}
-				}
+			if (DualJunctionDer.isDistinctModuloNegation(conjunct, tf.getOutVars().get(pv))) {
+				return mgdScript.getScript().term("false");
 			}
 		}
 		return null;

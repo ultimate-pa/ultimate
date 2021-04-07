@@ -271,9 +271,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	public static SolvedBinaryRelation tryPlr(final Script script, final int quantifier, final TermVariable eliminatee,
 			final Term atom) {
 		final Term rightHandSide;
-		if (occursPositive(eliminatee, atom)) {
+		if (isSimilarModuloNegation(eliminatee, atom)) {
 			rightHandSide = QuantifierUtils.negateIfUniversal(script, quantifier, script.term("true"));
-		} else if (occursNegative(eliminatee, atom)) {
+		} else if (isDistinctModuloNegation(eliminatee, atom)) {
 			rightHandSide = QuantifierUtils.negateIfUniversal(script, quantifier, script.term("false"));
 		} else {
 			return null;
@@ -282,22 +282,22 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		return new SolvedBinaryRelation(eliminatee, rightHandSide, relationSymbol);
 	}
 
-	private static boolean occursPositive(final TermVariable eliminatee, final Term atom) {
-		if (atom.equals(eliminatee)) {
+	public static boolean isSimilarModuloNegation(final Term checkedTerm, final Term wantedTerm) {
+		if (wantedTerm.equals(checkedTerm)) {
 			return true;
 		}
-		final Term unzipped = SmtUtils.unzipNot(atom);
+		final Term unzipped = SmtUtils.unzipNot(wantedTerm);
 		if (unzipped != null) {
-			return occursNegative(eliminatee, unzipped);
+			return isDistinctModuloNegation(checkedTerm, unzipped);
 		} else {
 			return false;
 		}
 	}
 
-	private static boolean occursNegative(final TermVariable eliminatee, final Term atom) {
-		final Term unzipped = SmtUtils.unzipNot(atom);
+	public static boolean isDistinctModuloNegation(final Term checkedTerm, final Term wantedTerm) {
+		final Term unzipped = SmtUtils.unzipNot(wantedTerm);
 		if (unzipped != null) {
-			return occursPositive(eliminatee, unzipped);
+			return isSimilarModuloNegation(checkedTerm, unzipped);
 		} else {
 			return false;
 		}
