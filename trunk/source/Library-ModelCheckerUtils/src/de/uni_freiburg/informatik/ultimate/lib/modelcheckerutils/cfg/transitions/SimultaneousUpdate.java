@@ -86,9 +86,7 @@ public class SimultaneousUpdate {
 				}
 			}
 		}
-		final Set<IProgramVar> allProgVars = new HashSet<>();
-		allProgVars.addAll(tf.getInVars().keySet());
-		allProgVars.addAll(tf.getOutVars().keySet());
+		final Set<IProgramVar> allProgVars = TransFormula.collectAllProgramVars(tf);
 		for (final IProgramVar pv : allProgVars) {
 			if (tf.getInVars().get(pv) == tf.getOutVars().get(pv)) {
 				// var unchanged
@@ -131,6 +129,7 @@ public class SimultaneousUpdate {
 
 		return new SimultaneousUpdate(deterministicAssignment, havocedVars);
 	}
+
 
 	private static Term isAssignedWithBooleanConstant(final ManagedScript mgdScript, final TransFormula tf,
 			final IProgramVar pv, final Set<Term> pvContainingConjuncts) {
