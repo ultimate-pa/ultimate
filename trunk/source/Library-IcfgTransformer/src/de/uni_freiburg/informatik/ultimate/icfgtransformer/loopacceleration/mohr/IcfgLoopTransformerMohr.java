@@ -239,8 +239,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			// xxx outvar occurs in several conjuncts" still persists. I have to check with Matthias if we can fix this.
 			// Until then, you can just ignore these errors.
 
-			final SimultaneousUpdate su = new SimultaneousUpdate(path, mManagedScript);
-			final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
+			final SimultaneousUpdate su = SimultaneousUpdate.fromTransFormula(path, mManagedScript);
+			final Map<IProgramVar, Term> varUpdates = su.getDeterministicAssignment();
 			final Set<IProgramVar> havocVars = su.getHavocedVars();
 			mLogger.debug("Updates: " + varUpdates + " havocs: " + havocVars);
 			if (!havocVars.isEmpty()) {

@@ -58,10 +58,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class SimultaneousUpdate {
 
-	Map<IProgramVar, Term> mDeterministicallyAssignedVars = new HashMap<>();
-	Set<IProgramVar> mHavocedVars = new HashSet<>();
+	private final Map<IProgramVar, Term> mDeterministicAssignment;
+	private final Set<IProgramVar> mHavocedVars;
 
-	public SimultaneousUpdate(final TransFormula tf, final ManagedScript mgdScript) {
+	public SimultaneousUpdate(final Map<IProgramVar, Term> deterministicAssignment,
+			final Set<IProgramVar> havocedVars) {
+		super();
+		mDeterministicAssignment = deterministicAssignment;
+		mHavocedVars = havocedVars;
+	}
+
+	public static SimultaneousUpdate fromTransFormula(final TransFormula tf, final ManagedScript mgdScript) {
+		final Map<IProgramVar, Term> deterministicAssignment = new HashMap<>();
+		final Set<IProgramVar> havocedVars = new HashSet<>();
+
 		final Map<TermVariable, IProgramVar> inVarsReverseMapping =
 				TransFormulaUtils.constructReverseMapping(tf.getInVars());
 		final Map<TermVariable, IProgramVar> outVarsReverseMapping =
@@ -85,7 +95,7 @@ public class SimultaneousUpdate {
 				continue;
 			}
 			if (tf.isHavocedOut(pv)) {
-				mHavocedVars.add(pv);
+				havocedVars.add(pv);
 			} else {
 				final Set<Term> pvContainingConjuncts = pv2conjuncts.getImage(pv);
 				if (pvContainingConjuncts.isEmpty()) {
@@ -95,7 +105,7 @@ public class SimultaneousUpdate {
 				} else {
 					final Term boolConst = isAssignedWithBooleanConstant(mgdScript, tf, pv, pvContainingConjuncts);
 					if (boolConst != null) {
-						mDeterministicallyAssignedVars.put(pv, boolConst);
+						deterministicAssignment.put(pv, boolConst);
 					} else {
 						// extract
 						final Term pvContainingConjunct = pvContainingConjuncts.iterator().next();
@@ -107,7 +117,7 @@ public class SimultaneousUpdate {
 							throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
 									+ "'s outvar occurs in several conjuncts " + Arrays.toString(conjuncts));
 						}
-						mDeterministicallyAssignedVars.put(pv, renamed);
+						deterministicAssignment.put(pv, renamed);
 					}
 				}
 
@@ -119,10 +129,10 @@ public class SimultaneousUpdate {
 			}
 		}
 
-		mgdScript.toString();
+		return new SimultaneousUpdate(deterministicAssignment, havocedVars);
 	}
 
-	private Term isAssignedWithBooleanConstant(final ManagedScript mgdScript, final TransFormula tf,
+	private static Term isAssignedWithBooleanConstant(final ManagedScript mgdScript, final TransFormula tf,
 			final IProgramVar pv, final Set<Term> pvContainingConjuncts) {
 		if (SmtSortUtils.isBoolSort(pv.getTerm().getSort()) && pvContainingConjuncts.size() == 1) {
 			final Term conjunct = pvContainingConjuncts.iterator().next();
@@ -142,7 +152,7 @@ public class SimultaneousUpdate {
 		return null;
 	}
 
-	private Term extractUpdateRhs(final TermVariable outVar, final Term[] conjuncts, final Term forbiddenTerm,
+	private static Term extractUpdateRhs(final TermVariable outVar, final Term[] conjuncts, final Term forbiddenTerm,
 			final Map<TermVariable, IProgramVar> inVarsReverseMapping,
 			final Map<TermVariable, IProgramVar> outVarsReverseMapping, final ManagedScript mgdScript) {
 		final EqualityInformation ei = EqualityInformation.getEqinfo(mgdScript.getScript(), outVar, conjuncts,
@@ -157,7 +167,7 @@ public class SimultaneousUpdate {
 		return renamed;
 	}
 
-	private Map<Term, Term> computeSubstitutionMapping(final Term rhs, final Term[] conjuncts,
+	private static Map<Term, Term> computeSubstitutionMapping(final Term rhs, final Term[] conjuncts,
 			final TermVariable forbiddenTerm, final Map<TermVariable, IProgramVar> inVarsReverseMapping,
 			final Map<TermVariable, IProgramVar> outVarsReverseMapping, final ManagedScript mgdScript) {
 		final Map<Term, Term> result = new HashMap<>();
@@ -185,8 +195,8 @@ public class SimultaneousUpdate {
 		return result;
 	}
 
-	public Map<IProgramVar, Term> getUpdatedVars() {
-		return mDeterministicallyAssignedVars;
+	public Map<IProgramVar, Term> getDeterministicAssignment() {
+		return mDeterministicAssignment;
 	}
 
 	public Set<IProgramVar> getHavocedVars() {

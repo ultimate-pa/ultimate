@@ -113,16 +113,15 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * Loop acceleration for loops with linear updates, where only -1,0,1 are eigenvalues of the update matrix.
 	 */
 	public static UnmodifiableTransFormula accelerateLoop(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula) {
+			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula, final boolean itFinAuxVar) {
 		final ILogger logger = services.getLoggingService().getLogger(JordanLoopAcceleration.class);
 		final UnmodifiableTransFormula guardTf =
 				TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services, logger);
 		logger.info("Guard: " + guardTf);
-		final SimultaneousUpdate su = new SimultaneousUpdate(loopTransFormula, mgdScript);
+		final SimultaneousUpdate su = SimultaneousUpdate.fromTransFormula(loopTransFormula, mgdScript);
 
 		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
 
-		final boolean itFinAuxVar = true;
 
 		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(logger,
 				services, jlasg, mgdScript, su, loopTransFormula, guardTf, true, itFinAuxVar);
@@ -148,14 +147,14 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	private static HashMap<TermVariable, Integer> determineMatrixIndices(final SimultaneousUpdate su) {
 		final HashMap<TermVariable, Integer> varMatrixIndex = new HashMap<>();
 		int i = -1;
-		for (final IProgramVar updatedVar : su.getUpdatedVars().keySet()) {
+		for (final IProgramVar updatedVar : su.getDeterministicAssignment().keySet()) {
 			if (!varMatrixIndex.containsKey(updatedVar.getTermVariable())) {
 				i = i + 1;
 				// add all updated variables.
 				varMatrixIndex.put(updatedVar.getTermVariable(), i);
 			}
 			// add all not updated variables.
-			final TermVariable[] variables = su.getUpdatedVars().get(updatedVar).getFreeVars();
+			final TermVariable[] variables = su.getDeterministicAssignment().get(updatedVar).getFreeVars();
 			for (final TermVariable var : variables) {
 				if (!varMatrixIndex.containsKey(var)) {
 					i = i + 1;
@@ -239,7 +238,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		final int n = closedFormMatrix.getDimension();
 		final HashMap<TermVariable, Term> closedForm = new HashMap<>();
-		for (final IProgramVar iVar : su.getUpdatedVars().keySet()) {
+		for (final IProgramVar iVar : su.getDeterministicAssignment().keySet()) {
 			final int varIndex = varMatrixIndex.get(iVar.getTermVariable());
 			final Term[] summands = new Term[n];
 			int current = 0;
@@ -312,7 +311,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 
 		// Fill update matrix.
-		for (final Entry<IProgramVar, Term> update : su.getUpdatedVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
 			final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 					.transform(update.getValue());
 
@@ -376,7 +375,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		return script.term(((ApplicationTerm) guardFormula).getFunction().getName(), paramReplaced);
 	}
-	
+
 	/**
 	 * Create loopAccelerationFormula. Try version that is restricted to eigenvalues 0 and 1 and block sizes
 	 * smaller than 3. If restricted version returns null try version for eigenvalues -1, 0 and 1 and
@@ -387,6 +386,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final ManagedScript mgdScript, final SimultaneousUpdate su, final UnmodifiableTransFormula loopTransFormula,
 			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible,
 			final boolean itFinAuxVar) {
+
 		UnmodifiableTransFormula formula = createLoopAccelerationFormulaEv01(logger, services,
 				jlasg, mgdScript, su, loopTransFormula, guardTf, restrictedVersionPossible, itFinAuxVar);
 		if (formula == null) {
@@ -567,7 +567,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				guardOfClosedFormIt, it, true);
 
 		jlasg.reportOneCaseAcceleration();
-		
+
 		return loopAccelerationFormula;
 	}
 
@@ -999,7 +999,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				// self loop, lets accelerate
 				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
 				final UnmodifiableTransFormula transformedTf =
-						accelerateLoop(mServices, mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf);
+						accelerateLoop(mServices, mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, true);
 				mLogger.info("Accelerated %s with %s", oldTf, transformedTf);
 				return new TransformulaTransformationResult(transformedTf);
 			}

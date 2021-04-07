@@ -298,7 +298,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	 * @param loop
 	 */
 	private void calculateSymbolicMemory(final Backbone backbone, final Loop loop) {
-		final SimultaneousUpdate update = new SimultaneousUpdate(backbone.getFormula(), mScript);
+		final SimultaneousUpdate update = SimultaneousUpdate.fromTransFormula(backbone.getFormula(), mScript);
 
 		if (!update.getHavocedVars().isEmpty() || !loop.getNestedLoops().isEmpty()) {
 			mOverApproximation.put(loop.getLoophead(), true);
@@ -313,7 +313,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		backbone.setFormula(tf);
 
 		final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mServices, tf, mOldSymbolTable);
-		symbolicMemory.updateVars(update.getUpdatedVars());
+		symbolicMemory.updateVars(update.getDeterministicAssignment());
 
 		final UnmodifiableTransFormula condition = symbolicMemory.updateCondition(
 				TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices, mLogger));

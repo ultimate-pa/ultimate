@@ -164,7 +164,7 @@ public class LoopAcceleratorLite {
 	 * @param loop
 	 */
 	private void calculateSymbolicMemory(final Backbone backbone, final Loop loop) {
-		final SimultaneousUpdate update = new SimultaneousUpdate(backbone.getFormula(), mScript);
+		final SimultaneousUpdate update = SimultaneousUpdate.fromTransFormula(backbone.getFormula(), mScript);
 		final Set<TermVariable> aux = new HashSet<>(loop.getVars());
 		final TransFormula tf = buildFormula(mScript, loop.updateVars(backbone.getFormula().getFormula(),
 				backbone.getFormula().getInVars(), backbone.getFormula().getOutVars()), loop.getInVars(),
@@ -173,7 +173,7 @@ public class LoopAcceleratorLite {
 		backbone.setFormula(tf);
 
 		final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mServices, tf, mOldSymbolTable);
-		symbolicMemory.updateVars(update.getUpdatedVars());
+		symbolicMemory.updateVars(update.getDeterministicAssignment());
 
 		final UnmodifiableTransFormula condition = symbolicMemory.updateCondition(
 				TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices, mLogger));
