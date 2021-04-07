@@ -75,7 +75,7 @@ public class DistributingIndependenceRelation<S, L> implements IIndependenceRela
 	@Override
 	public boolean contains(final S state, final L a, final L b) {
 		final S[] conjuncts = mDistribution.apply(state);
-		assert conjuncts.length == mRelations.size();
+		assert conjuncts.length == mRelations.size() : "Number of conjuncts must be equal to number of relations";
 		for (int i = 0; i < mRelations.size(); ++i) {
 			mStatistics.reportQueriedIndex(i);
 			if (mRelations.get(i).contains(conjuncts[i], a, b)) {
