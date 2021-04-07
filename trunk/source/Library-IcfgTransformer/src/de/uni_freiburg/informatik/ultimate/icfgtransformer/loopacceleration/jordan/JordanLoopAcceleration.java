@@ -1011,4 +1011,42 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	public IIcfg<OUTLOC> getResult() {
 		return mResult;
 	}
+
+	private static class JordanLoopAccelerationResult {
+		enum AccelerationStatus {
+			SUCCESS, SIMULTANEOUS_UPDATE_FAILED, NONLINEAR_UPDATE, UNSUPPORTED_EIGENVALUES,
+		};
+
+		private final AccelerationStatus mAccelerationStatus;
+		private final String mErrorMessage;
+		private final UnmodifiableTransFormula mTransFormula;
+		private final JordanLoopAccelerationStatisticsGenerator mJordanLoopAccelerationStatistics;
+
+		public JordanLoopAccelerationResult(final AccelerationStatus accelerationStatus, final String errorMessage,
+				final UnmodifiableTransFormula transFormula,
+				final JordanLoopAccelerationStatisticsGenerator jordanLoopAccelerationStatistics) {
+			super();
+			mAccelerationStatus = accelerationStatus;
+			mErrorMessage = errorMessage;
+			mTransFormula = transFormula;
+			mJordanLoopAccelerationStatistics = jordanLoopAccelerationStatistics;
+		}
+
+		public AccelerationStatus getAccelerationStatus() {
+			return mAccelerationStatus;
+		}
+
+		public String getErrorMessage() {
+			return mErrorMessage;
+		}
+
+		public UnmodifiableTransFormula getTransFormula() {
+			return mTransFormula;
+		}
+
+		public JordanLoopAccelerationStatisticsGenerator getJordanLoopAccelerationStatistics() {
+			return mJordanLoopAccelerationStatistics;
+		}
+
+	}
 }
