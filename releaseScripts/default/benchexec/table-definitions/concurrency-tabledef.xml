@@ -99,7 +99,7 @@
 
   <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant -->
   <!-- ============================================================================ -->
-  <result filename="*.results.Automizer SLEEP_SET_FA.Delay.xml">
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleep.xml">
     <!-- default columns -->
     <column title="status"/>
     <column title="cputime" displayTitle="CPU Time"/>
@@ -117,7 +117,7 @@
 
   <!-- results for Automizer with integrated Sleep Set POR, using New States variant -->
   <!-- ============================================================================= -->
-  <result filename="*.results.Automizer SLEEP_SET_FA.NewStates.xml">
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleep.xml">
     <!-- default columns -->
     <column title="status"/>
     <column title="cputime" displayTitle="CPU Time"/>
@@ -167,7 +167,7 @@
 
   <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant, with one-shot Petri net LBE -->
   <!-- ========================================================================================================= -->
-  <result filename="*.results.Automizer SLEEP_SET_FA.SemanticLbe.Delay.xml">
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleep.SemanticLbe.xml">
     <!-- default columns -->
     <column title="status"/>
     <column title="cputime" displayTitle="CPU Time"/>
