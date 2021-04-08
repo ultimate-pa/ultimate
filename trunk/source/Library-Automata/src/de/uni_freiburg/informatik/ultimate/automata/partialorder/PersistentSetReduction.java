@@ -45,12 +45,20 @@ public final class PersistentSetReduction {
 	private PersistentSetReduction() {
 	}
 
+	public static <L, S> void applyWithoutSleepSets(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+			final IDfsOrder<L, S> dfsOrder, final IPersistentSetChoice<L, S> persistent,
+			final IDfsVisitor<L, S> visitor) {
+		final IDfsOrder<L, S> combinedOrder = new PersistentDfsOrder<>(persistent, dfsOrder);
+		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
+		new DepthFirstTraversal<>(operand, combinedOrder, combinedVisitor);
+	}
+
 	public static <L, S, R> void applyNewStateReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, R> sleepSetOrder,
+			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, R> dfsOrder,
 			final ISleepSetStateFactory<L, S, R> factory, final IPersistentSetChoice<L, R> persistent,
 			final IDfsVisitor<L, R> visitor) throws AutomataOperationCanceledException {
-		final IDfsOrder<L, R> combinedOrder = new PersistentDfsOrder<>(persistent, sleepSetOrder);
+		final IDfsOrder<L, R> combinedOrder = new PersistentDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetNewStateReduction<>(services, operand, factory, independenceRelation, combinedOrder,
 				combinedVisitor);
@@ -58,10 +66,10 @@ public final class PersistentSetReduction {
 
 	public static <L, S> void applyDelaySetReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, S> sleepSetOrder,
+			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, S> dfsOrder,
 			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor)
 			throws AutomataOperationCanceledException {
-		final IDfsOrder<L, S> combinedOrder = new PersistentDfsOrder<>(persistent, sleepSetOrder);
+		final IDfsOrder<L, S> combinedOrder = new PersistentDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetDelayReduction<>(services, operand, new ISleepSetStateFactory.NoUnrolling<>(), independenceRelation,
 				combinedOrder, combinedVisitor);
@@ -82,8 +90,7 @@ public final class PersistentSetReduction {
 		private final IPersistentSetChoice<L, S> mPersistent;
 		private final IDfsVisitor<L, S> mUnderlying;
 
-		public PersistentSetVisitor(final IPersistentSetChoice<L, S> persistent,
-				final IDfsVisitor<L, S> underlying) {
+		public PersistentSetVisitor(final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> underlying) {
 			mPersistent = persistent;
 			mUnderlying = underlying;
 		}
