@@ -143,7 +143,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final DefaultIndependenceCache<IPredicate, L> independenceCache = new DefaultIndependenceCache<>();
 		mConditionalRelation = constructConditionalIndependence(semanticIndependence, independenceCache);
 		mIndependenceRelation = constructIndependenceRelation(semanticIndependence, independenceCache);
-		mPersistent = createPersistentSets(csToolkit, independenceCache);
+		mPersistent = createPersistentSets(csToolkit);
 	}
 
 	@Override
@@ -306,16 +306,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				new DistributingIndependenceRelation<>(mConjunctIndependenceRelations, this::getConjuncts));
 	}
 
-	private final IPersistentSetChoice<L, IPredicate> createPersistentSets(final CfgSmtToolkit csToolkit,
-			final IIndependenceCache<IPredicate, L> independenceCache) {
+	private final IPersistentSetChoice<L, IPredicate> createPersistentSets(final CfgSmtToolkit csToolkit) {
+		// TODO Use same script as sleep set reduction
 		final ManagedScript independenceScript = constructIndependenceScript();
 		final TermTransferrer independenceTransferrer =
 				new TermTransferrer(csToolkit.getManagedScript().getScript(), independenceScript.getScript());
+		// TODO Once semi-commutativity is supported, use same independence relation as sleep sets (but unconditional).
 		final IIndependenceRelation<IPredicate, L> semIndep =
 				new SemanticIndependenceRelation<>(mServices, independenceScript, false, true, independenceTransferrer);
+		// TODO Temporarily we are not sharing the cache here. This should be changed once semi-commutativity works.
 		final IIndependenceRelation<IPredicate, L> indep = new CachedIndependenceRelation<>(
-				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(), semIndep)),
-				independenceCache);
+				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(), semIndep)));
 
 		switch (mPartialOrderMode) {
 		case PERSISTENT_SETS:
