@@ -115,11 +115,6 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 	}
 
 	@Override
-	public void delayState(final S state) {
-		// do nothing
-	}
-
-	@Override
 	public boolean isFinished() {
 		return mFound;
 	}

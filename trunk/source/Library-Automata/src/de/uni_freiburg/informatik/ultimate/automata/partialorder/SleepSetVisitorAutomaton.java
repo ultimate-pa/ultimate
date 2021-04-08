@@ -89,12 +89,6 @@ public class SleepSetVisitorAutomaton<L, S> implements IDfsVisitor<L, S> {
 	}
 
 	@Override
-	public boolean discoverState(final S state) {
-		// do nothing
-		return false;
-	}
-
-	@Override
 	public boolean discoverTransition(final S source, final L letter, final S target) {
 		// add succState to the automaton
 		if (!mReductionAutomaton.contains(target)) {
@@ -106,27 +100,12 @@ public class SleepSetVisitorAutomaton<L, S> implements IDfsVisitor<L, S> {
 	}
 
 	@Override
-	public void backtrackState(final S state) {
-		// do nothing
-	}
-
-	public NestedWordAutomaton<L, S> getReductionAutomaton() {
-		return mReductionAutomaton;
-	}
-
-	@Override
 	public boolean addStartState(final S state) {
 		mReductionAutomaton.addState(true, mIsFinal.test(state), state);
 		return false;
 	}
 
-	@Override
-	public void delayState(final S state) {
-		// do nothing
-	}
-
-	@Override
-	public boolean isFinished() {
-		return false;
+	public NestedWordAutomaton<L, S> getReductionAutomaton() {
+		return mReductionAutomaton;
 	}
 }

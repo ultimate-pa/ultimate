@@ -48,7 +48,9 @@ public interface IDfsVisitor<L, S> {
 	 * @return true to indicate that outgoing transitions of the state should be pruned, i.e., that the successor states
 	 *         should not be visited by the DFS (from this state). Otherwise, return false.
 	 */
-	boolean addStartState(S state);
+	default boolean addStartState(final S state) {
+		return false;
+	}
 
 	/**
 	 * Called when a transition is discovered.
@@ -62,7 +64,9 @@ public interface IDfsVisitor<L, S> {
 	 * @return true to indicate that the discovered transition should be pruned, i.e., that the target state should not
 	 *         be visited by the DFS (through this transition). Otherwise, return false.
 	 */
-	boolean discoverTransition(S source, L letter, S target);
+	default boolean discoverTransition(final S source, final L letter, final S target) {
+		return false;
+	}
 
 	/**
 	 * Called when a state is discovered.
@@ -74,7 +78,9 @@ public interface IDfsVisitor<L, S> {
 	 * @return true to indicate that outgoing transitions of the state should be pruned, i.e., that the successor states
 	 *         should not be visited by the DFS (from this state). Otherwise, return false.
 	 */
-	boolean discoverState(S state);
+	default boolean discoverState(final S state) {
+		return false;
+	}
 
 	/**
 	 * Called when a state is backtracked.
@@ -84,7 +90,9 @@ public interface IDfsVisitor<L, S> {
 	 * @param state
 	 *            state that is backtracked
 	 */
-	void backtrackState(S state);
+	default void backtrackState(final S state) {
+		// by default, do nothing here
+	}
 
 	/**
 	 * Called when a state is "delayed". This is specific to the "delay set" variant of Partial Order Reduction.
@@ -97,12 +105,16 @@ public interface IDfsVisitor<L, S> {
 	// TODO (Dominik 2021-01-24) We should try to get rid of this method, as "delaying" states is an
 	// implementation detail of SleepSetDelayReduction that should not be exposed to visitors.
 	@Deprecated(since = "2021-01-24")
-	void delayState(S state);
+	default void delayState(final S state) {
+		// by default, do nothing here
+	}
 
 	/**
 	 * Used to indicate that the visitor is finished and further traversal of the automaton is not needed.
 	 *
 	 * @return true if the search should be (completely) aborted, false otherwise.
 	 */
-	boolean isFinished();
+	default boolean isFinished() {
+		return false;
+	}
 }
