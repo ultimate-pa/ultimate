@@ -26,12 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Comparator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice.PersistentSleepOrder;
 
 /**
  * Performs persistent set reduction on top of sleep set reduction. The goal of this is primarily to reduce the size (in
@@ -67,6 +67,17 @@ public final class PersistentSetReduction {
 				combinedOrder, combinedVisitor);
 	}
 
+	/**
+	 * A visitor that performs persistent set reduction by pruning transitions, and proxies non-pruned calls to an
+	 * underlying visitor implementation.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters in the reduced automaton
+	 * @param <S>
+	 *            The type of states in the reduced automaton
+	 */
 	private static class PersistentSetVisitor<L, S> implements IPartialOrderVisitor<L, S> {
 		private final IPersistentSetChoice<L, S> mPersistent;
 		private final IPartialOrderVisitor<L, S> mUnderlying;
@@ -109,6 +120,41 @@ public final class PersistentSetReduction {
 		@Override
 		public boolean isFinished() {
 			return mUnderlying.isFinished();
+		}
+	}
+
+	/**
+	 * A sleep set order that can be used with persistent set reduction.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters in the reduced automaton
+	 * @param <S>
+	 *            The type of states in the reduced automaton
+	 */
+	private static class PersistentSleepOrder<L, S> implements ISleepSetOrder<S, L> {
+		private final IPersistentSetChoice<L, S> mPersistent;
+		private final ISleepSetOrder<S, L> mUnderlying;
+
+		public PersistentSleepOrder(final IPersistentSetChoice<L, S> persistent,
+				final ISleepSetOrder<S, L> underlying) {
+			mPersistent = persistent;
+			mUnderlying = underlying;
+		}
+
+		@Override
+		public Comparator<L> getOrder(final S state) {
+			final Set<L> persistent = mPersistent.persistentSet(state);
+			final Comparator<L> comparator = mUnderlying.getOrder(state);
+			return (a, b) -> {
+				if (persistent != null && persistent.contains(a) && !persistent.contains(b)) {
+					return -1;
+				} else if (persistent != null && persistent.contains(b) && !persistent.contains(a)) {
+					return 1;
+				}
+				return comparator.compare(a, b);
+			};
 		}
 	}
 }

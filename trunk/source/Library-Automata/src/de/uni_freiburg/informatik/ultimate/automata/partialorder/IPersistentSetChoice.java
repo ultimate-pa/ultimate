@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.Comparator;
 import java.util.Set;
 
 /**
@@ -35,9 +34,9 @@ import java.util.Set;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
- *            The type of letters
+ *            The type of letters in the persistent sets
  * @param <S>
- *            The type of states
+ *            The type of states for which persistent sets are computed
  */
 public interface IPersistentSetChoice<L, S> {
 	/**
@@ -46,40 +45,7 @@ public interface IPersistentSetChoice<L, S> {
 	 *
 	 * @param state
 	 *            A state of the reduction's input automaton
-	 * @return the persistent set
+	 * @return the persistent set, or null
 	 */
 	Set<L> persistentSet(final S state);
-
-	/**
-	 * A sleep set order that can be used with persistent set reduction.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <L>
-	 * @param <S>
-	 */
-	public class PersistentSleepOrder<L, S> implements ISleepSetOrder<S, L> {
-		private final IPersistentSetChoice<L, S> mPersistent;
-		private final ISleepSetOrder<S, L> mUnderlying;
-
-		public PersistentSleepOrder(final IPersistentSetChoice<L, S> persistent,
-				final ISleepSetOrder<S, L> underlying) {
-			mPersistent = persistent;
-			mUnderlying = underlying;
-		}
-
-		@Override
-		public Comparator<L> getOrder(final S state) {
-			final Set<L> persistent = mPersistent.persistentSet(state);
-			final Comparator<L> comparator = mUnderlying.getOrder(state);
-			return (a, b) -> {
-				if (persistent != null && persistent.contains(a) && !persistent.contains(b)) {
-					return -1;
-				} else if (persistent != null && persistent.contains(b) && !persistent.contains(a)) {
-					return 1;
-				}
-				return comparator.compare(a, b);
-			};
-		}
-	}
 }

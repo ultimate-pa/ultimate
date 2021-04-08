@@ -30,10 +30,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Caches computed persistent sets.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters in the persistent sets
+ * @param <S>
+ *            The type of states for which persistent sets are computed
+ */
 public class CachedPersistentSetChoice<L, S> implements IPersistentSetChoice<L, S> {
 	private final Map<S, Set<L>> mCache = new HashMap<>();
 	private final IPersistentSetChoice<L, S> mUnderlying;
 
+	/**
+	 * Creates a new instance that caches the results of an underlying implementation.
+	 *
+	 * @param underlying
+	 *            The underlying implementation of persistent sets
+	 */
 	public CachedPersistentSetChoice(final IPersistentSetChoice<L, S> underlying) {
 		mUnderlying = underlying;
 	}
