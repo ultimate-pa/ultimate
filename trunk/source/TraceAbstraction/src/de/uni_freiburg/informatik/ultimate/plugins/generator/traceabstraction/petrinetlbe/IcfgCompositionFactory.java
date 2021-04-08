@@ -36,6 +36,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Implements an {@link ICompositionFactory} that is suitable for Trace Abstraction. This class is used by
@@ -69,6 +71,26 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		mBranchEncoders = new HashMap<>();
 	}
 
+	/**
+	 * Work around a problem that can happen with repeated Lipton reduction: When applying the choice rule, a formula
+	 * with branch encoders is created. Then the Trace Abstraction may cause the composed transition to be duplicated
+	 * with different predicates as pre- or postconditions. If we then compose the two duplicated transitions they will
+	 * both have the same branch encoders and thus the resulting formula will only allow a subset of the original
+	 * traces. To prevent this, we must not compose transitions with the same branch encoders.
+	 *
+	 * @param t1
+	 *            The first transition.
+	 * @param t2
+	 *            The second transition.
+	 * @return false if the branch encoders prevent composition. true otherwise.
+	 */
+	private static boolean checkBranchEncoders(final IcfgEdge t1, final IcfgEdge t2) {
+		return !(t1 instanceof IActionWithBranchEncoders && t2 instanceof IActionWithBranchEncoders
+				&& DataStructureUtils.haveNonEmptyIntersection(
+						((IActionWithBranchEncoders) t1).getTransitionFormulaWithBranchEncoders().getBranchEncoders(),
+						((IActionWithBranchEncoders) t2).getTransitionFormulaWithBranchEncoders().getBranchEncoders()));
+	}
+
 	private static boolean isComposable(final IcfgEdge transition) {
 		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof Summary);
 	}
@@ -79,14 +101,15 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 
 	@Override
 	public boolean isSequentiallyComposable(final IcfgEdge t1, final IcfgEdge t2) {
-		return isComposable(t1) && isComposable(t2) && t1.getTarget() == t2.getSource();
+		return isComposable(t1) && isComposable(t2) && t1.getTarget() == t2.getSource() && checkBranchEncoders(t1, t2);
 	}
 
 	@Override
 	public boolean isParallelyComposable(final List<IcfgEdge> letters) {
 		final IcfgLocation source = letters.get(0).getSource();
 		final IcfgLocation target = letters.get(0).getTarget();
-		return letters.stream().allMatch(t -> isComposable(t) && t.getSource() == source && t.getTarget() == target);
+		return letters.stream().allMatch(t -> isComposable(t) && t.getSource() == source && t.getTarget() == target
+				&& letters.stream().allMatch(t2 -> t == t2 || checkBranchEncoders(t, t2)));
 	}
 
 	@Override
