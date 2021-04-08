@@ -135,7 +135,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 					.transform(update.getValue());
 			if (!polyRhs.isAffine()) {
-				final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
+				final JordanLoopAccelerationStatisticsGenerator jlasg =
+						new JordanLoopAccelerationStatisticsGenerator();
 				return new JordanLoopAccelerationResult(
 						JordanLoopAccelerationResult.AccelerationStatus.NONLINEAR_UPDATE, null, null, jlasg);
 			}
@@ -160,15 +161,15 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		
 		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
-		UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormulaEv01(logger, services,
-				mgdScript, su, updateMatrixPair, jordanUpdate, loopTransFormula, guardTf, true,
-				!quantifyItFinExplicitly);
-		if (loopAccelerationFormula == null) {
-			loopAccelerationFormula = createLoopAccelerationFormulaEvM101(logger, services, mgdScript, su,
-					updateMatrixPair, jordanUpdate, loopTransFormula, guardTf, !quantifyItFinExplicitly);
-			jlasg.reportAlternatingAcceleration();
-		} else {
+		final Pair<UnmodifiableTransFormula, JordanLoopAccelerationDefinitions> loopAccelerationPair =
+				createLoopAccelerationFormula(logger, services,
+						mgdScript, su, updateMatrixPair, jordanUpdate, loopTransFormula, guardTf, true,
+						!quantifyItFinExplicitly);
+		UnmodifiableTransFormula loopAccelerationFormula = loopAccelerationPair.getFirst();
+		if (loopAccelerationPair.getSecond() == JordanLoopAccelerationDefinitions.SequentialAcceleration) {
 			jlasg.reportSequentialAcceleration();
+		} else if (loopAccelerationPair.getSecond() == JordanLoopAccelerationDefinitions.AlternatingAcceleration) {
+			jlasg.reportAlternatingAcceleration();
 		}
 
 		if (QuantifierUtils.isQuantifierFree(loopAccelerationFormula.getFormula())) {
@@ -178,7 +179,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.SUCCESS, null,
 				loopAccelerationFormula, jlasg);
 	}
-
 
 	/**
 	 * Go through terms, get all variables and create a hash map varMatrixIndex with
@@ -226,7 +226,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		for (final TermVariable termVar : varMatrixIndex.keySet()) {
 			updateMatrix.setEntry(varMatrixIndex.get(variable.getTermVariable()), varMatrixIndex.get(termVar),
 					determineCoefficient(polyRhs, termVar));
-			if (updateMatrix.getEntry(varMatrixIndex.get(variable.getTermVariable()), varMatrixIndex.get(termVar)) == null) {
+			if (updateMatrix.getEntry(varMatrixIndex.get(variable.getTermVariable()), varMatrixIndex.get(termVar)) ==
+					null) {
 				// not a linear term.
 				break;
 			}
@@ -423,7 +424,97 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		return script.term(((ApplicationTerm) guardFormula).getFunction().getName(), paramReplaced);
 	}
+	
+	/**
+	 * Create the loop Acceleration formula and save as JordanLoopAccelerationDefinitions which version of
+	 * formula creation was used. Version Ev01, works without case distinctions, for eigenvalues 0 and 1 and
+	 * block sizes smaller than 2. Version EvM101, needs case distinctions, for eigenvalues 0,1 and -1
+	 * and arbitrary block sizes.
+	 */
+	private static Pair<UnmodifiableTransFormula, JordanLoopAccelerationDefinitions> createLoopAccelerationFormula(
+			final ILogger logger,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final SimultaneousUpdate su, final Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> updateMatrixPair,
+			JordanTransformationResult jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
+			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible,
+			final boolean itFinAuxVar) {
+		
+		final boolean minus1isEigenvalue = updateMatrixPair.getFirst().computeSmallEigenvalues()[0];
+		boolean ev1hasBlockGreater2 = false;
+		for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(1).keySet()) {
+			if (blockSize > 2 && (jordanUpdate.getJordanBlockSizes().get(1).get(blockSize) != 0)) {
+				ev1hasBlockGreater2 = true;
+			}
+		}
+		JordanLoopAccelerationDefinitions version;
+		UnmodifiableTransFormula loopAccelerationFormula;
+		final Map<IProgramVar, TermVariable> inVars =
+				new HashMap<IProgramVar, TermVariable>(loopTransFormula.getInVars());
+		final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, inVars, loopTransFormula.getOutVars());
+		if (!minus1isEigenvalue && !ev1hasBlockGreater2) {
+			final TermVariable itFin =
+					mgdScript.constructFreshTermVariable("itFin", SmtSortUtils.getIntSort(mgdScript.getScript()));
+			final Term loopAccelerationTerm = createLoopAccelerationTermEv01(logger, services, mgdScript, su,
+					updateMatrixPair, jordanUpdate, loopTransFormula, guardTf, restrictedVersionPossible, itFinAuxVar,
+					itFin, xPrimeEqualsX, inVars);
+			version = JordanLoopAccelerationDefinitions.SequentialAcceleration;
+			loopAccelerationFormula = buildAccelerationFormula(logger, mgdScript, services,
+					loopTransFormula, loopAccelerationTerm, itFinAuxVar, itFin, inVars);
+		} else {
+			final TermVariable itFinHalf =
+					mgdScript.constructFreshTermVariable("itFinHalf", SmtSortUtils.getIntSort(mgdScript.getScript()));
+			final Term loopAccelerationTerm = createLoopAccelerationTermEvM101(logger, services, mgdScript, su,
+					updateMatrixPair, jordanUpdate, loopTransFormula, guardTf, itFinAuxVar, itFinHalf,
+					xPrimeEqualsX, inVars);
+			version = JordanLoopAccelerationDefinitions.AlternatingAcceleration;
+			loopAccelerationFormula = buildAccelerationFormula(logger, mgdScript, services,
+					loopTransFormula, loopAccelerationTerm, itFinAuxVar, itFinHalf, inVars);
+		}
+		return new Pair<>(loopAccelerationFormula, version);
+	}
 
+	/**
+	 * Simplify the term representing the loop acceleration formula and build UnmodifiableTransFormula.
+	 */
+	private static UnmodifiableTransFormula buildAccelerationFormula(final ILogger logger,
+			final ManagedScript mgdScript, final IUltimateServiceProvider services,
+			final UnmodifiableTransFormula loopTransFormula, final Term loopAccelerationTerm,
+			final boolean itFinAuxVar, final TermVariable itFin, final Map<IProgramVar, TermVariable> inVars) {
+		UnmodifiableTransFormula loopAccelerationFormula;
+
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+				.transform(loopAccelerationTerm);
+		final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services,
+				mgdScript, true, PqeTechniques.ALL, nnf);
+		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
+				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+
+		if (itFinAuxVar) {
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars,
+					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
+					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
+					loopTransFormula.getBranchEncoders(), false);
+
+			tfb.addAuxVar(itFin);
+			tfb.setInfeasibility(loopTransFormula.isInfeasible());
+			tfb.setFormula(simplified);
+			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
+
+			// Check correctness of quantifier elimination.
+			assert checkCorrectnessOfQuantifierElimination(logger, mgdScript.getScript(), loopAccelerationTerm,
+					simplified);
+		} else {
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars,
+					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
+					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
+					loopTransFormula.getBranchEncoders(), loopTransFormula.getAuxVars().isEmpty());
+			tfb.setInfeasibility(loopTransFormula.isInfeasible());
+			tfb.setFormula(simplified);
+			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
+			// Correctness of quantifier elimination is checked within checkPropertiesOfLoopAccelerationFormula.
+		}
+		return loopAccelerationFormula;
+	}
 
 	/**
 	 * Create the loop acceleration formula.
@@ -453,19 +544,17 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @param guardTf
 	 * @return
 	 */
-	private static UnmodifiableTransFormula createLoopAccelerationFormulaEv01(
+	private static Term createLoopAccelerationTermEv01(
 			final ILogger logger, final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final SimultaneousUpdate su, final Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> updateMatrixPair,
 			final JordanTransformationResult jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
 			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible,
-			final boolean itFinAuxVar) {
+			final boolean itFinAuxVar, final TermVariable itFin, final Term xPrimeEqualsX,
+			final Map<IProgramVar, TermVariable> inVars) {
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
-		final TermVariable itFin = mgdScript.constructFreshTermVariable("itFin", sort);
 
 		// Create the subformula guard(cf(x,itFin)).
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>(
-				loopTransFormula.getInVars());
 		final HashMap<TermVariable, IProgramVar> inVarsInverted = new HashMap<>();
 		for (final IProgramVar inVar : inVars.keySet()) {
 			inVarsInverted.put(inVars.get(inVar), inVar);
@@ -490,10 +579,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// (and (= itFin 0) (not (guard)) (x'=x))
 		final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
 		final Term notGuard = Util.not(script, guardTf.getFormula());
-		final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, inVars, loopTransFormula.getOutVars());
+		// final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, inVars, loopTransFormula.getOutVars());
 		final Term finalDisjunct1 = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
 
-		// (< itFin 0)
+		// (> itFin 0)
 		final Term firstConjunct = script.term(">", itFin, script.numeral(BigInteger.ZERO));
 
 		// (not (guard(closedForm(x, itFin))))
@@ -549,55 +638,16 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Set<TermVariable> itFinSet = new HashSet<>();
 		itFinSet.add(itFin);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinSet, disjunction);
-
-		UnmodifiableTransFormula loopAccelerationFormula;
-
-		if (itFinAuxVar) {
-			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
-					.transform(disjunction);
-			final Term loopAccelerationFormulaWithoutQuantifiers =
-					QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, nnf);
-			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
-
-			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars,
-					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
-					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
-					loopTransFormula.getBranchEncoders(), false);
-
-			tfb.addAuxVar(itFin);
-			tfb.setFormula(simplified);
-			tfb.setInfeasibility(loopTransFormula.isInfeasible());
-
-			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-
-			// Check correctness of quantifier elimination.
-			assert checkCorrectnessOfQuantifierElimination(logger, script, disjunction, simplified);
-		} else {
-			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
-					.transform(loopAccelerationTerm);
-			final Term loopAccelerationFormulaWithoutQuantifiers =
-					QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, nnf);
-			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
-
-			final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
-					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
-					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
-					loopTransFormula.getBranchEncoders(), loopTransFormula.getAuxVars().isEmpty());
-			tfb.setFormula(simplified);
-			tfb.setInfeasibility(loopTransFormula.isInfeasible());
-
-			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-
-			// Quantifier elimination is checked within checkPropertiesOfLoopAccelerationFormula.
-		}
-
+		
 		assert checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula,
-				loopAccelerationFormula, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormIt,
+				inVars, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormIt,
 				guardOfClosedFormIt, it, true);
-
-		return loopAccelerationFormula;
+		
+		if (itFinAuxVar) {
+			return disjunction;
+		} else {
+			return loopAccelerationTerm;
+		}
 	}
 
 	/**
@@ -647,23 +697,21 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @param guardTf
 	 * @return
 	 */
-	private static UnmodifiableTransFormula createLoopAccelerationFormulaEvM101(final ILogger logger,
+	private static Term createLoopAccelerationTermEvM101(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final SimultaneousUpdate su,
 			final Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> updateMatrixPair,
 			final JordanTransformationResult jordanUpdate,
 			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf,
-			final boolean itFinAuxVar) {
+			final boolean itFinAuxVar, final TermVariable itFinHalf, final Term xPrimeEqualsX,
+			final Map<IProgramVar, TermVariable> inVars) {
 
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
 
 		// (and (= itFinHalf 0) (not (guard)) (x'=x))
-		final TermVariable itFinHalf = mgdScript.constructFreshTermVariable("itFinHalf", sort);
+		// final TermVariable itFinHalf = mgdScript.constructFreshTermVariable("itFinHalf", sort);
 		final Term itFinHalfEquals0 = script.term("=", itFinHalf, script.numeral(BigInteger.ZERO));
 		final Term notGuard = Util.not(script, guardTf.getFormula());
-		final Map<IProgramVar, TermVariable> inVars =
-				new HashMap<IProgramVar, TermVariable>(loopTransFormula.getInVars());
-		final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, inVars, loopTransFormula.getOutVars());
 		final Term firstFinalDisjunctEven = Util.and(script, itFinHalfEquals0, notGuard, xPrimeEqualsX);
 
 		// (> itFinHalf 0)
@@ -681,15 +729,17 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		final Set<TermVariable> havocVarSet = new HashSet<>(havocVars.values());
 
-		final HashMap<TermVariable, Term> closedFormEvenItFin = computeClosedFormOfUpdate(mgdScript, su, updateMatrixPair,
-				jordanUpdate, null, itFinHalf, inVars, loopTransFormula.getOutVars(), true, false).getKey();
+		final HashMap<TermVariable, Term> closedFormEvenItFin = computeClosedFormOfUpdate(mgdScript, su,
+				updateMatrixPair, jordanUpdate, null, itFinHalf, inVars, loopTransFormula.getOutVars(), true,
+				false).getKey();
 		final Term guardOfClosedFormEvenItFinTmp = constructGuardOfClosedForm(script, guardTf.getFormula(),
 				closedFormEvenItFin, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
 		final Term guardOfClosedFormEvenItFin =
 				SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormEvenItFinTmp);
 
-		final HashMap<TermVariable, Term> closedFormOddItFin = computeClosedFormOfUpdate(mgdScript, su, updateMatrixPair,
-				jordanUpdate, null, itFinHalf, inVars, loopTransFormula.getOutVars(), false, false).getKey();
+		final HashMap<TermVariable, Term> closedFormOddItFin = computeClosedFormOfUpdate(mgdScript, su,
+				updateMatrixPair, jordanUpdate, null, itFinHalf, inVars, loopTransFormula.getOutVars(), false,
+				false).getKey();
 		final Term guardOfClosedFormOddItFinTmp = constructGuardOfClosedForm(script, guardTf.getFormula(),
 				closedFormOddItFin, inVars, inVarsInverted, loopTransFormula.getOutVars(), havocVars);
 		final Term guardOfClosedFormOddItFin =
@@ -803,53 +853,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Set<TermVariable> itFinHalfSet = new HashSet<>();
 		itFinHalfSet.add(itFinHalf);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinHalfSet, disjunction);
-
-		UnmodifiableTransFormula loopAccelerationFormula;
-
+		
 		if (itFinAuxVar) {
-			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
-					.transform(disjunction);
-			final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services,
-					mgdScript, true, PqeTechniques.ALL, nnf);
-			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
-
-			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars,
-					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
-					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
-					loopTransFormula.getBranchEncoders(), false);
-
-			tfb.addAuxVar(itFinHalf);
-			tfb.setInfeasibility(loopTransFormula.isInfeasible());
-			tfb.setFormula(simplified);
-			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-
-			// Check correctness of quantifier elimination.
-			assert checkCorrectnessOfQuantifierElimination(logger, script, disjunction, simplified);
+			return disjunction;
 		} else {
-			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
-					.transform(loopAccelerationTerm);
-			final Term loopAccelerationFormulaWithoutQuantifiers = QuantifierPushTermWalker.eliminate(services,
-					mgdScript, true, PqeTechniques.ALL, nnf);
-			final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-					mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
-
-			final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
-					loopTransFormula.getOutVars(), loopTransFormula.getNonTheoryConsts().isEmpty(),
-					loopTransFormula.getNonTheoryConsts(), loopTransFormula.getBranchEncoders().isEmpty(),
-					loopTransFormula.getBranchEncoders(), loopTransFormula.getAuxVars().isEmpty());
-			tfb.setInfeasibility(loopTransFormula.isInfeasible());
-			tfb.setFormula(simplified);
-			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-
-			// Correctness of quantifier elimination is checked within checkPropertiesOfLoopAccelerationFormula.
+			return loopAccelerationTerm;
 		}
-
-		assert checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula,
-				loopAccelerationFormula, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormEvenIt,
-				guardOfClosedFormOddIt, itHalf, false);
-
-		return loopAccelerationFormula;
 	}
 
 	/**
@@ -905,9 +914,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 */
 	private static boolean checkPropertiesOfLoopAccelerationFormula(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula loopAccelerationFormula,
-			final Term loopAccelerationTerm,
-			final UnmodifiableTransFormula guardTf, final Term xPrimeEqualsX, final Term guardOfClosedFormEven,
+			final UnmodifiableTransFormula loopTransFormula, final Map<IProgramVar, TermVariable> inVars,
+			final Term loopAccelerationTerm, final UnmodifiableTransFormula guardTf,
+			final Term xPrimeEqualsX, final Term guardOfClosedFormEven,
 			final Term guardOfClosedFormOdd, final TermVariable it, final boolean restrictedVersion) {
 		final Script script = mgdScript.getScript();
 
@@ -971,11 +980,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Map<TermVariable, TermVariable> substitutionMappingSc = new HashMap<>();
 		for (final IProgramVar iVar : sequentialComposition.getInVars().keySet()) {
 			substitutionMappingSc.put(sequentialComposition.getInVars().get(iVar),
-					loopAccelerationFormula.getInVars().get(iVar));
+					inVars.get(iVar));
 		}
 		for (final IProgramVar iVar : sequentialComposition.getOutVars().keySet()) {
 			substitutionMappingSc.put(sequentialComposition.getOutVars().get(iVar),
-					loopAccelerationFormula.getOutVars().get(iVar));
+					loopTransFormula.getOutVars().get(iVar));
 		}
 		final Substitution substSc = new Substitution(script, substitutionMappingSc);
 		final Term sequentialCompositionSubst = substSc.transform(sequentialComposition.getFormula());
