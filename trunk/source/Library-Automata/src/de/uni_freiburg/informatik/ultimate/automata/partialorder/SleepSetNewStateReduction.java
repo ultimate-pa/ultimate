@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -104,31 +103,11 @@ public class SleepSetNewStateReduction<L, S, R> {
 		mOperand = operand;
 		mVisitor = visitor;
 
-		final S startState = getOneAndOnly(operand.getInitialStates(), "initial state");
+		final S startState = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
 		final R newStartState = getSleepSetState(startState, Collections.emptySet());
 		mVisitor.addStartState(newStartState);
 		mStateStack.push(newStartState);
 		search(services);
-	}
-
-	// TODO eliminate duplication
-	private static <E> E getOneAndOnly(final Iterable<E> elements, final String thing) {
-		final Iterator<E> iterator = elements.iterator();
-		assert iterator.hasNext() : "Must have at least one " + thing;
-		final E elem = iterator.next();
-		assert !iterator.hasNext() : "Only one " + thing + " allowed";
-		return elem;
-	}
-
-	// TODO eliminate duplication
-	private static <E> E getOnly(final Iterable<E> elements, final String errMsg) {
-		final Iterator<E> iterator = elements.iterator();
-		if (!iterator.hasNext()) {
-			return null;
-		}
-		final E elem = iterator.next();
-		assert !iterator.hasNext() : errMsg;
-		return elem;
 	}
 
 	private void search(final AutomataLibraryServices services) throws AutomataOperationCanceledException {
@@ -174,11 +153,12 @@ public class SleepSetNewStateReduction<L, S, R> {
 			// fewer times the ManagedScript need change lock ownership.
 
 			for (final L currentLetter : successorTransitionList) {
-				final var currentTransition = getOnly(mOperand.internalSuccessors(currentState, currentLetter),
-						"Automaton must be deterministic");
-				if (currentTransition == null) {
+				final var currentTransitionOpt = DataStructureUtils.getOnly(
+						mOperand.internalSuccessors(currentState, currentLetter), "Automaton must be deterministic");
+				if (currentTransitionOpt.isEmpty()) {
 					continue;
 				}
+				final var currentTransition = currentTransitionOpt.get();
 
 				final S succState = currentTransition.getSucc();
 				final Set<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
