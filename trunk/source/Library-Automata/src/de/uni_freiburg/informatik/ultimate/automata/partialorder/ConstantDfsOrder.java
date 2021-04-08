@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An {@link ISleepSetOrder} implementation that maps all states to the same ordering.
+ * An {@link IDfsOrder} implementation that maps all states to the same ordering.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -41,7 +41,7 @@ import java.util.Map;
  * @param <L>
  *            The type of letters
  */
-public class ConstantSleepSetOrder<S, L> implements ISleepSetOrder<S, L> {
+public class ConstantDfsOrder<L, S> implements IDfsOrder<L, S> {
 
 	private final Map<L, Integer> mLetter2Index = new HashMap<>();
 
@@ -51,7 +51,7 @@ public class ConstantSleepSetOrder<S, L> implements ISleepSetOrder<S, L> {
 	 * @param letters
 	 *            All letters in the alphabet. Letters are ordered the same as in this Iterable.
 	 */
-	public ConstantSleepSetOrder(final Iterable<L> letters) {
+	public ConstantDfsOrder(final Iterable<L> letters) {
 		int i = 0;
 		for (final L letter : letters) {
 			mLetter2Index.put(letter, i);

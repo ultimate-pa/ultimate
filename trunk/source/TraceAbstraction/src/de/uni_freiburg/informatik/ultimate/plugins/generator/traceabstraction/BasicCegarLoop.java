@@ -72,9 +72,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
@@ -470,8 +470,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				new CachedIndependenceRelation<>(new UnionIndependenceRelation<>(Arrays.asList(
 						new SyntacticIndependenceRelation<>(),
 						new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true)))));
-		final ISleepSetOrder<IPredicate, L> order =
-				new ConstantSleepSetOrder<>(input.getVpAlphabet().getInternalAlphabet());
+		final IDfsOrder<L, IPredicate> order = new ConstantDfsOrder<>(input.getVpAlphabet().getInternalAlphabet());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
 		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);

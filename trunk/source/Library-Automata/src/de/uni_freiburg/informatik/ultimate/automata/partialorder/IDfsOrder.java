@@ -30,24 +30,24 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.Comparator;
 
 /**
- * Interface of the transition order used by the sleep set implementations
- * 
+ * Interface used during depth-first search exploration of a finite automaton. This is for instance used by
+ * {@link DepthFirstTraversal} and by sleep set reduction implementations.
+ *
  * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <S>
- * 		state type
+ *            The type of states in the automaton
  * @param <L>
- * 		letter type
+ *            The type of letters in the automaton
  */
-public interface ISleepSetOrder<S, L> {
-	
+public interface IDfsOrder<L, S> {
 	/**
-	 * Returns the order as a Comparator
-	 * 
+	 * Given a state of a finite automaton, determines in which order its outgoing transitions shall be explored.
+	 *
 	 * @param state
-	 * 		state
-	 * @return
+	 *            the automaton state
+	 * @return the order as a {@link Comparator}
 	 */
 	Comparator<L> getOrder(S state);
-	
 }

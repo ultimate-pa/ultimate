@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndepende
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransformingIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
@@ -107,7 +107,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final SleepSetVisitorSearch<L, IPredicate> mVisitor;
-	private ISleepSetOrder<IPredicate, L> mSleepSetOrder;
+	private IDfsOrder<L, IPredicate> mSleepSetOrder;
 
 	// Maps an IPredicate built through refinement rounds to the sequence of conjuncts it was built from.
 	// This is used to distribute an independence query across conjuncts.
@@ -146,7 +146,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 		mSleepSetOrder =
-				new ConstantSleepSetOrder<>(((INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction)
+				new ConstantDfsOrder<>(((INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction)
 						.getVpAlphabet().getInternalAlphabet());
 	}
 

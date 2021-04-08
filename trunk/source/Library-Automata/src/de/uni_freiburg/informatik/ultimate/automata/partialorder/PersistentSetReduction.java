@@ -47,10 +47,10 @@ public final class PersistentSetReduction {
 
 	public static <L, S, R> void applyNewStateReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<R, L> sleepSetOrder,
+			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, R> sleepSetOrder,
 			final ISleepSetStateFactory<L, S, R> factory, final IPersistentSetChoice<L, R> persistent,
 			final IPartialOrderVisitor<L, R> visitor) throws AutomataOperationCanceledException {
-		final ISleepSetOrder<R, L> combinedOrder = new PersistentSleepOrder<>(persistent, sleepSetOrder);
+		final IDfsOrder<L, R> combinedOrder = new PersistentDfsOrder<>(persistent, sleepSetOrder);
 		final IPartialOrderVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetNewStateReduction<>(services, operand, factory, independenceRelation, combinedOrder,
 				combinedVisitor);
@@ -58,10 +58,10 @@ public final class PersistentSetReduction {
 
 	public static <L, S> void applyDelaySetReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
+			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, S> sleepSetOrder,
 			final IPersistentSetChoice<L, S> persistent, final IPartialOrderVisitor<L, S> visitor)
 			throws AutomataOperationCanceledException {
-		final ISleepSetOrder<S, L> combinedOrder = new PersistentSleepOrder<>(persistent, sleepSetOrder);
+		final IDfsOrder<L, S> combinedOrder = new PersistentDfsOrder<>(persistent, sleepSetOrder);
 		final IPartialOrderVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetDelayReduction<>(services, operand, new ISleepSetStateFactory.NoUnrolling<>(), independenceRelation,
 				combinedOrder, combinedVisitor);
@@ -133,12 +133,11 @@ public final class PersistentSetReduction {
 	 * @param <S>
 	 *            The type of states in the reduced automaton
 	 */
-	private static class PersistentSleepOrder<L, S> implements ISleepSetOrder<S, L> {
+	private static class PersistentDfsOrder<L, S> implements IDfsOrder<L, S> {
 		private final IPersistentSetChoice<L, S> mPersistent;
-		private final ISleepSetOrder<S, L> mUnderlying;
+		private final IDfsOrder<L, S> mUnderlying;
 
-		public PersistentSleepOrder(final IPersistentSetChoice<L, S> persistent,
-				final ISleepSetOrder<S, L> underlying) {
+		public PersistentDfsOrder(final IPersistentSetChoice<L, S> persistent, final IDfsOrder<L, S> underlying) {
 			mPersistent = persistent;
 			mUnderlying = underlying;
 		}

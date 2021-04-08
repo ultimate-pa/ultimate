@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class SleepSetDelayReduction<L, S, R> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final ISleepSetStateFactory<L, S, R> mFactory;
-	private final ISleepSetOrder<R, L> mOrder;
+	private final IDfsOrder<L, R> mOrder;
 	private final IIndependenceRelation<R, L> mIndependenceRelation;
 	private final IPartialOrderVisitor<L, R> mVisitor;
 
@@ -93,7 +93,7 @@ public class SleepSetDelayReduction<L, S, R> {
 	 */
 	public SleepSetDelayReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final ISleepSetStateFactory<L, S, R> factory,
-			final IIndependenceRelation<R, L> independenceRelation, final ISleepSetOrder<R, L> sleepSetOrder,
+			final IIndependenceRelation<R, L> independenceRelation, final IDfsOrder<L, R> sleepSetOrder,
 			final IPartialOrderVisitor<L, R> visitor) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
