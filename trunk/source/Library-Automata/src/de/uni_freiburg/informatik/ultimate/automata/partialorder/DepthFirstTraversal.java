@@ -89,45 +89,70 @@ public class DepthFirstTraversal<L, S> {
 			final OutgoingInternalTransition<L, S> currentTransition = current.getSecond();
 
 			// Backtrack states still on the stack whose exploration has finished.
-			backtrackUntil(currentState);
+			final boolean abort = backtrackUntil(currentState);
+			if (abort) {
+				return;
+			}
 
 			final S nextState = currentTransition.getSucc();
-			mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
-			if (!mVisited.contains(nextState)) {
-				visitState(nextState);
+			final boolean prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
+			if (mVisitor.isFinished()) {
+				return;
+			}
+
+			if (!prune && !mVisited.contains(nextState)) {
+				final boolean abortNow = visitState(nextState);
+				if (abortNow) {
+					return;
+				}
 			}
 		}
 
-		backtrackUntil(initial);
+		final boolean abort = backtrackUntil(initial);
+		if (abort) {
+			return;
+		}
+
 		mStateStack.pop();
 		mVisitor.backtrackState(initial);
 	}
 
-	private void backtrackUntil(final S state) {
+	private boolean backtrackUntil(final S state) {
 		while (!mStateStack.peek().equals(state)) {
 			final S oldState = mStateStack.pop();
 			mVisitor.backtrackState(oldState);
+			if (mVisitor.isFinished()) {
+				return true;
+			}
 		}
+		return false;
 	}
 
-	private void visitState(final S state) {
+	private boolean visitState(final S state) {
 		assert !mVisited.contains(state) : "must never re-visit state";
 
+		final boolean pruneSuccessors;
 		if (mOperand.isInitial(state)) {
 			assert mVisited.isEmpty() : "initial state should be first visited state";
-			mVisitor.addStartState(state);
+			pruneSuccessors = mVisitor.addStartState(state);
 		} else {
-			mVisitor.discoverState(state);
+			pruneSuccessors = mVisitor.discoverState(state);
+		}
+		if (mVisitor.isFinished()) {
+			return true;
 		}
 		mVisited.add(state);
 
 		assert !mStateStack.contains(state) : "must not infinitely unroll loop";
 		mStateStack.push(state);
 
-		final Comparator<OutgoingInternalTransition<L, S>> comp =
-				Comparator.<OutgoingInternalTransition<L, S>, L> comparing(OutgoingInternalTransition::getLetter,
-						mOrder.getOrder(state)).reversed();
-		StreamSupport.stream(mOperand.internalSuccessors(state).spliterator(), false).sorted(comp)
-				.forEachOrdered(out -> mWorklist.push(new Pair<>(state, out)));
+		if (!pruneSuccessors) {
+			final Comparator<OutgoingInternalTransition<L, S>> comp =
+					Comparator.<OutgoingInternalTransition<L, S>, L> comparing(OutgoingInternalTransition::getLetter,
+							mOrder.getOrder(state)).reversed();
+			StreamSupport.stream(mOperand.internalSuccessors(state).spliterator(), false).sorted(comp)
+					.forEachOrdered(out -> mWorklist.push(new Pair<>(state, out)));
+		}
+		return false;
 	}
 }
