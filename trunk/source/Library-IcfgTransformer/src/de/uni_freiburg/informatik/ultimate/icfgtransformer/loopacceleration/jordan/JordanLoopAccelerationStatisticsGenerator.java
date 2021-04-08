@@ -33,27 +33,27 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDataProvider {
 
-	private int mOneCaseAcceleration;
+	private int mSequentialAcceleration;
 	private int mQuantifierFreeResult;
-	private int mTwoCaseAcceleration;
+	private int mAlternatingAcceleration;
 
 	public JordanLoopAccelerationStatisticsGenerator() {
 		super();
-		mOneCaseAcceleration = 0;
+		mSequentialAcceleration = 0;
 		mQuantifierFreeResult = 0;
-		mTwoCaseAcceleration = 0;
+		mAlternatingAcceleration = 0;
 	}
 
 	@Override
 	public Object getValue(final String key) {
 		final JordanLoopAccelerationDefinitions keyEnum = Enum.valueOf(JordanLoopAccelerationDefinitions.class, key);
 		switch (keyEnum) {
-		case OneCaseAcceleration:
-			return mOneCaseAcceleration;
+		case SequentialAcceleration:
+			return mSequentialAcceleration;
 		case QuantifierFreeResult:
 			return mQuantifierFreeResult;
-		case TwoCaseAcceleration:
-			return mTwoCaseAcceleration;
+		case AlternatingAcceleration:
+			return mAlternatingAcceleration;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -69,12 +69,12 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 		return getBenchmarkType().getKeys();
 	}
 
-	public void reportOneCaseAcceleration() {
-		mOneCaseAcceleration++;
+	public void reportSequentialAcceleration() {
+		mSequentialAcceleration++;
 	}
 
-	public void reportTwoCaseAcceleration() {
-		mTwoCaseAcceleration++;
+	public void reportAlternatingAcceleration() {
+		mAlternatingAcceleration++;
 	}
 
 	public void reportQuantifierFreeResult() {

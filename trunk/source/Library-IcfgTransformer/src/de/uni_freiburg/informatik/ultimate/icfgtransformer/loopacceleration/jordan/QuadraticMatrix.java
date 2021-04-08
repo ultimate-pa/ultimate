@@ -562,7 +562,7 @@ public class QuadraticMatrix {
 	 * (eigenvalue, blocksize, occurrence).
 	 * This method also works for integral eigenvalues not equal to -1,0 or 1, only need to change eigenvalues array.
 	 */
-	public JordanTransformationResult constructJordanMatrix() {
+	public JordanTransformationResult constructJordanTransformation() {
 		final int n = mDimension;
 		QuadraticMatrix jordanMatrix = constructZeroMatrix(n);
 		NestedMap2<Integer, Integer, Integer> jordanBlockSizes = computeJordanBlockSizes();
@@ -584,10 +584,13 @@ public class QuadraticMatrix {
 		JordanTransformationResult jtr;
 		if (current != n) {
 			status = JordanTransformationStatus.UNSUPPORTED_EIGENVALUES;
-			jtr = new JordanTransformationResult(status, null, null);
+			jtr = new JordanTransformationResult(status, null, null, null, null);
 		} else {
 			status = JordanTransformationStatus.SUCCESS;
-			jtr = new JordanTransformationResult(status, jordanMatrix, jordanBlockSizes);
+			final RationalMatrix modal = computeModalMatrix(this, jordanMatrix);
+			final RationalMatrix inverseModal = RationalMatrix.computeInverse(modal);
+			assert checkCorrectnessofJordanDecomposition(this, modal, jordanMatrix, inverseModal);
+			jtr = new JordanTransformationResult(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
 		}
 		return jtr;
 	}
@@ -786,12 +789,15 @@ public class QuadraticMatrix {
 
 		private final JordanTransformationStatus mStatus;
 		private final QuadraticMatrix mJnf;
+		private final RationalMatrix mModal;
+		private final RationalMatrix mInverseModal;
 		/**
 		 * Contains triple (ev, bs, occ) if there are exactly occ Jordan blocks of size
 		 * bs for eigenvalue ev.
 		 */
 		private final NestedMap2<Integer, Integer, Integer> mJordanBlockSizes;
 		public JordanTransformationResult(final JordanTransformationStatus status, final QuadraticMatrix jnf,
+				final RationalMatrix modal, final RationalMatrix inverseModal,
 				final NestedMap2<Integer, Integer, Integer> jordanBlockSizes) {
 			super();
 			assert (status == JordanTransformationStatus.SUCCESS) ^ (jnf == null) : "provide JNF iff success";
@@ -802,6 +808,8 @@ public class QuadraticMatrix {
 			}
 			mStatus = status;
 			mJnf = jnf;
+			mModal = modal;
+			mInverseModal = inverseModal;
 			mJordanBlockSizes = jordanBlockSizes;
 		}
 		public JordanTransformationStatus getStatus() {
@@ -809,6 +817,12 @@ public class QuadraticMatrix {
 		}
 		public QuadraticMatrix getJnf() {
 			return mJnf;
+		}
+		public RationalMatrix getModal() {
+			return mModal;
+		}
+		public RationalMatrix getInverseModal() {
+			return mInverseModal;
 		}
 		public NestedMap2<Integer, Integer, Integer> getJordanBlockSizes() {
 			return mJordanBlockSizes;

@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum JordanLoopAccelerationDefinitions implements IStatisticsElement {
 
-	OneCaseAcceleration(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	SequentialAcceleration(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	TwoCaseAcceleration(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	AlternatingAcceleration(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	QuantifierFreeResult(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 	;
