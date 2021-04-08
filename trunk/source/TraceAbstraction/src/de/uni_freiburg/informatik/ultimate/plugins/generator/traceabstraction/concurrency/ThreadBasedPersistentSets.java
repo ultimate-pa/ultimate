@@ -43,6 +43,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+// TODO check if join handling is correct (do we need to check if "not-later" joins are truly enabled now?)
+// TODO Consider only commutativity against actions of the other thread that are still reachable from current loc (is there an IIcfg visitor?)
+// TODO Allow persistent sets containing multiple threads
+// TODO Check which other thread is participating in joins -- if also in set, no problem? is there some easy way to prune incorrect joins from CFG?
+// TODO track dependence between threads:
+// TODO (a) dependence because of join
+// TODO (b) dependence because of non-commutativity
+// TODO (c) support dependence because of DFS order (enforce compliance here, not in order), turn on/off via param
+// TODO Maintain transitive closure of dependence; if thread i in set then all j s.t. i depends on j also in set
+// TODO Re-use dependence information across states
 public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge, IPredicate> {
 	private final ILogger mLogger;
 	private final IIcfg<?> mIcfg;
