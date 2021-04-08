@@ -304,7 +304,8 @@ public class QuadraticMatrix {
 		final QuadraticMatrix identity = constructIdentityMatrix(n);
 		for (int i=-1; i<2; i++) {
 			if ((addition(this, 
-					scalarMultiplication(BigInteger.valueOf(-i), identity))).computeDet().equals(BigInteger.valueOf(0))) {
+					scalarMultiplication(BigInteger.valueOf(-i), identity))).computeDet()
+						.equals(BigInteger.valueOf(0))) {
 				eigenvalues[i+1] = true;
 			}
 		}

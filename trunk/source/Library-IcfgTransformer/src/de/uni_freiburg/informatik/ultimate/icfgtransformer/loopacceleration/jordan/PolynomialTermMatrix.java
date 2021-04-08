@@ -192,11 +192,11 @@ public class PolynomialTermMatrix {
 			for (int j=0; j<blockSize; j++) {
 				// first row
 				if (j % 2 == 0) {
-					block.mEntries[0][j] = constructBinomialCoefficientNumerator(script, it, itHalf, j, blockSize, itEven,
-							restrictedVersionPossible);
+					block.mEntries[0][j] = constructBinomialCoefficientNumerator(script, it, itHalf, j, blockSize,
+							itEven, restrictedVersionPossible);
 				} else {
-					block.mEntries[0][j] = PolynomialTerm.mulPolynomials(constructBinomialCoefficientNumerator(script, it,
-							itHalf, j, blockSize, itEven, restrictedVersionPossible),
+					block.mEntries[0][j] = PolynomialTerm.mulPolynomials(constructBinomialCoefficientNumerator(script,
+							it, itHalf, j, blockSize, itEven, restrictedVersionPossible),
 							AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.valueOf(-1),
 									BigInteger.ONE)));
 				}
@@ -282,8 +282,9 @@ public class PolynomialTermMatrix {
 	 */
 	public static Pair<PolynomialTermMatrix, Boolean> computeClosedFormMatrix(
 			final ManagedScript mgdScript, final QuadraticMatrix updateMatrix, final RationalMatrix modalUpdate,
-			final JordanTransformationResult jordanUpdate, final RationalMatrix inverseModalUpdate, final TermVariable it,
-			final TermVariable itHalf, final boolean itEven, boolean restrictedVersionPossible) {
+			final JordanTransformationResult jordanUpdate, final RationalMatrix inverseModalUpdate,
+			final TermVariable it, final TermVariable itHalf, final boolean itEven,
+			boolean restrictedVersionPossible) {
 		final int n = jordanUpdate.getJnf().getDimension();
 		final Script script = mgdScript.getScript();
 		Sort sort = SmtSortUtils.getIntSort(script);

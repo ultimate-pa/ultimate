@@ -64,8 +64,6 @@ public class RationalMatrix {
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
 				matrix.mIntMatrix.setEntry(i, j, matrix.mIntMatrix.getEntry(i, j).multiply(factorInverse.numerator()));
-				// matrix.mIntMatrix.mEntries[i][j] = (matrix.mIntMatrix.mEntries[i][j]).multiply(
-				// factorInverse.numerator());
 			}
 		}
 		matrixInverse.mDenominator = factorInverse.denominator();
@@ -88,17 +86,13 @@ public class RationalMatrix {
 			vector[i] = Rational.valueOf(vector[i].numerator(), vector[i].denominator());
 			final BigInteger gcd = Rational.gcd(vector[i].denominator(), mDenominator);
 			intMatrix.setEntry(i, j, vector[i].numerator().multiply(mDenominator.divide(gcd)));
-			// intMatrix.mEntries[i][j] = (vector[i].numerator()).multiply((mDenominator.divide(gcd)));
 			mDenominator = mDenominator.multiply(vector[i].denominator().divide(gcd));
 			for (int l = 0; l < n; l++) {
 				for (int k = 0; k < n; k++) {
 					intMatrix.setEntry(l, k, intMatrix.getEntry(l, k).multiply(vector[i].denominator().divide(gcd)));
-					// intMatrix.mEntries[l][k] = (intMatrix.mEntries[l][k]).multiply(
-					// (vector[i].denominator()).divide(gcd));
 				}
 			}
 			intMatrix.setEntry(i, j, intMatrix.getEntry(i, j).divide(vector[i].denominator().divide(gcd)));
-			// intMatrix.mEntries[i][j] = (intMatrix.mEntries[i][j]).divide((vector[i].denominator()).divide(gcd));
 		}
 	}
 
@@ -118,17 +112,13 @@ public class RationalMatrix {
 			vector[j] = Rational.valueOf(vector[j].numerator(), vector[j].denominator());
 			final BigInteger gcd = Rational.gcd(vector[j].denominator(), mDenominator);
 			intMatrix.setEntry(i, j, vector[j].numerator().multiply(mDenominator.divide(gcd)));
-			// intMatrix.mEntries[i][j] = (vector[j].numerator()).multiply((mDenominator.divide(gcd)));
 			mDenominator = mDenominator.multiply(vector[j].denominator().divide(gcd));
 			for (int k = 0; k < n; k++) {
 				for (int l = 0; l < n; l++) {
 					intMatrix.setEntry(k, l, intMatrix.getEntry(k, l).multiply(vector[j].denominator().divide(gcd)));
-					// intMatrix.mEntries[k][l] =
-					// intMatrix.mEntries[k][l].multiply((vector[j].denominator()).divide(gcd));
 				}
 			}
 			intMatrix.setEntry(i, j, intMatrix.getEntry(i, j).divide(vector[j].denominator().divide(gcd)));
-			// intMatrix.mEntries[i][j] = (intMatrix.mEntries[i][j]).divide((vector[j].denominator()).divide(gcd));
 		}
 	}
 
@@ -139,21 +129,16 @@ public class RationalMatrix {
 	 * system with right-hand side 0 (scalar product of constraint and solution is 0).
 	 */
 	public static Rational[] solveLes(final RationalMatrix les, final Rational[][] constraints, final int k) {
-		// final int n = les.mIntMatrix.mDimension;
 		final int numberOfConstraints = constraints.length;
 		final RationalMatrix lesGauss1 =
 				new RationalMatrix(BigInteger.valueOf(1), QuadraticMatrix.gaussElimination(les.mIntMatrix));
 		final int rank = lesGauss1.mIntMatrix.computeRank();
 		for (int i = 0; i < numberOfConstraints; i++) {
-			// for (int i=rank, i<n; i++) {
-			// for (int i=rank; i<= rank + numberOfConstraints; i++) {
 			lesGauss1.addRowToMatrix(rank + i, constraints[i]);
 		}
 		// Keep 1 in last non-zero row.
 		lesGauss1.mIntMatrix.setEntry(lesGauss1.mIntMatrix.computeRank() - 1, lesGauss1.mIntMatrix.getDimension() - 1,
 				BigInteger.valueOf(1));
-		// lesGauss1.mIntMatrix.mEntries[lesGauss1.mIntMatrix.rank()-1][lesGauss1.mIntMatrix.getDimension()-1] =
-		// BigInteger.valueOf(1);
 		final QuadraticMatrix lesGauss2 = QuadraticMatrix.gaussElimination(lesGauss1.mIntMatrix);
 		final Rational[] solution = QuadraticMatrix.backwardSubstitution(lesGauss2, k);
 		return solution;
