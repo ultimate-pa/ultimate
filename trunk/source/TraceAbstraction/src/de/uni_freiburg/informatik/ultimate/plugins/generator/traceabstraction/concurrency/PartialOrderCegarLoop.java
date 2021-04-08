@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransf
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
@@ -210,6 +211,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				PersistentSetReduction.applyDelaySetReduction(automataServices, abstraction, mIndependenceRelation,
 						mDfsOrder, mPersistent, visitor);
 				break;
+			case NONE:
+				new DepthFirstTraversal<>(abstraction, mDfsOrder, visitor);
+				break;
 			default:
 				throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);
 			}
@@ -248,7 +252,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			visitor = ((DeadEndOptimizingSearchVisitor<?, ?, IDfsVisitor<L, IPredicate>>) visitor).getUnderlying();
 		}
 
-		if (mPartialOrderMode == PartialOrderMode.PERSISTENT_SETS) {
+		if (mPartialOrderMode == PartialOrderMode.PERSISTENT_SETS || mPartialOrderMode == PartialOrderMode.NONE) {
 			return ((AcceptingRunSearchVisitor<L, IPredicate>) visitor).getAcceptingRun();
 		}
 		return ((SleepSetVisitorSearch<L, IPredicate>) visitor).constructRun();
@@ -256,7 +260,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private IDfsVisitor<L, IPredicate> createVisitor() {
 		// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
-		if (mPartialOrderMode == PartialOrderMode.PERSISTENT_SETS) {
+		if (mPartialOrderMode == PartialOrderMode.PERSISTENT_SETS || mPartialOrderMode == PartialOrderMode.NONE) {
 			return new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
 		}
 		return new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
@@ -264,7 +268,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private static final boolean supportsDeadStateOptimization(final PartialOrderMode mode) {
 		// At the moment, only sleep sets with new states support this optimization.
-		return mode == PartialOrderMode.SLEEP_NEW_STATES || mode == PartialOrderMode.PERSISTENT_SLEEP_NEW_STATES;
+		return mode == PartialOrderMode.SLEEP_NEW_STATES || mode == PartialOrderMode.PERSISTENT_SLEEP_NEW_STATES
+				|| mode == PartialOrderMode.NONE;
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructSemanticIndependence(final CfgSmtToolkit csToolkit) {
