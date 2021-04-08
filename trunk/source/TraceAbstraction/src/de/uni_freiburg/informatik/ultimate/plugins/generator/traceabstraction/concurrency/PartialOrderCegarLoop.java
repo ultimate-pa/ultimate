@@ -107,7 +107,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final SleepSetVisitorSearch<L, IPredicate> mVisitor;
-	private IDfsOrder<L, IPredicate> mSleepSetOrder;
+	private IDfsOrder<L, IPredicate> mDfsOrder;
 
 	// Maps an IPredicate built through refinement rounds to the sequence of conjuncts it was built from.
 	// This is used to distribute an independence query across conjuncts.
@@ -145,9 +145,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
-		mSleepSetOrder =
-				new ConstantDfsOrder<>(((INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction)
-						.getVpAlphabet().getInternalAlphabet());
+		mDfsOrder = new ConstantDfsOrder<>(((INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction)
+				.getVpAlphabet().getInternalAlphabet());
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.
@@ -200,15 +199,18 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			switch (mPartialOrderMode) {
 			case SLEEP_DELAY_SET:
 				new SleepSetDelayReduction<>(automataServices, abstraction, new ISleepSetStateFactory.NoUnrolling<>(),
-						mIndependenceRelation, mSleepSetOrder, mVisitor);
+						mIndependenceRelation, mDfsOrder, mVisitor);
 				break;
 			case SLEEP_NEW_STATES:
 				new SleepSetNewStateReduction<>(automataServices, abstraction, mSleepSetStateFactory,
-						mIndependenceRelation, mSleepSetOrder, mVisitor);
+						mIndependenceRelation, mDfsOrder, mVisitor);
+				break;
+			case PERSISTENT_SETS:
+				PersistentSetReduction.applyWithoutSleepSets(abstraction, mDfsOrder, mPersistent, mVisitor);
 				break;
 			case PERSISTENT_SLEEP_DELAY_SET:
 				PersistentSetReduction.applyDelaySetReduction(automataServices, abstraction, mIndependenceRelation,
-						mSleepSetOrder, mPersistent, mVisitor);
+						mDfsOrder, mPersistent, mVisitor);
 				break;
 			default:
 				throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);

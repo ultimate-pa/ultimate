@@ -234,6 +234,10 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		 */
 		SLEEP_NEW_STATES,
 		/**
+		 * Persistent set reduction.
+		 */
+		PERSISTENT_SETS,
+		/**
 		 * Combines persistent set reduction with {@link SLEEP_DELAY_SET}.
 		 */
 		PERSISTENT_SLEEP_DELAY_SET,
@@ -327,6 +331,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		switch (mPref.getPartialOrderMode()) {
 		case NONE:
+		case PERSISTENT_SETS:
 			mSleepSetStateFactory = null;
 			break;
 		case PERSISTENT_SLEEP_NEW_STATES:
