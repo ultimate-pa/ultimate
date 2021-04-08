@@ -54,8 +54,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final IIndependenceRelation<?, IcfgEdge> independence) {
-		assert independence.isSymmetric() : "Not ready for semi-commutativity";
-		assert !independence.isConditional() : "Not ready for conditional independence";
+		assert !independence.isConditional() : "Conditional independence currently not supported";
 
 		mLogger = services.getLoggingService().getLogger(ThreadBasedPersistentSets.class);
 		mIcfg = icfg;
@@ -111,7 +110,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	private boolean commuteAll(final IcfgLocation loc, final String thread) {
 		for (final IcfgEdge other : getThreadActions(thread).collect(Collectors.toSet())) {
 			for (final IcfgEdge action : loc.getOutgoingEdges()) {
-				if (!mIndependence.contains(null, action, other)) {
+				if (!mIndependence.contains(null, other, action)) {
 					return false;
 				}
 			}

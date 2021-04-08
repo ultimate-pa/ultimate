@@ -142,9 +142,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		final IIndependenceRelation<IPredicate, L> semanticIndependence = constructSemanticIndependence(csToolkit);
 		final DefaultIndependenceCache<IPredicate, L> independenceCache = new DefaultIndependenceCache<>();
+		final IIndependenceRelation<IPredicate, L> unconditionalRelation =
+				constructUnconditionalIndependence(semanticIndependence, independenceCache);
 		mConditionalRelation = constructConditionalIndependence(semanticIndependence, independenceCache);
-		mIndependenceRelation = constructIndependenceRelation(semanticIndependence, independenceCache);
-		mPersistent = createPersistentSets(csToolkit);
+		mIndependenceRelation = constructIndependenceRelation(unconditionalRelation);
+		mPersistent = createPersistentSets(unconditionalRelation);
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.
@@ -291,36 +293,29 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				PartialOrderCegarLoop::isFalseState);
 	}
 
-	private IIndependenceRelation<IPredicate, L> constructIndependenceRelation(
+	private IIndependenceRelation<IPredicate, L> constructUnconditionalIndependence(
 			final IIndependenceRelation<IPredicate, L> semanticIndependence,
 			final IIndependenceCache<IPredicate, L> independenceCache) {
-		// Construct unconditional relation
-		final IIndependenceRelation<IPredicate, L> unconditionalRelation = new CachedIndependenceRelation<>(
+		return new CachedIndependenceRelation<>(
 				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
 						ConditionTransformingIndependenceRelation.unconditional(semanticIndependence))),
 				independenceCache);
+	}
+
+	private IIndependenceRelation<IPredicate, L>
+			constructIndependenceRelation(final IIndependenceRelation<IPredicate, L> unconditionalRelation) {
 		mConjunctIndependenceRelations.add(unconditionalRelation);
 		return new ThreadSeparatingIndependenceRelation<>(
 				new DistributingIndependenceRelation<>(mConjunctIndependenceRelations, this::getConjuncts));
 	}
 
-	private final IPersistentSetChoice<L, IPredicate> createPersistentSets(final CfgSmtToolkit csToolkit) {
-		// TODO Use same script as sleep set reduction
-		final ManagedScript independenceScript = constructIndependenceScript();
-		final TermTransferrer independenceTransferrer =
-				new TermTransferrer(csToolkit.getManagedScript().getScript(), independenceScript.getScript());
-		// TODO Once semi-commutativity is supported, use same independence relation as sleep sets (but unconditional).
-		final IIndependenceRelation<IPredicate, L> semIndep =
-				new SemanticIndependenceRelation<>(mServices, independenceScript, false, true, independenceTransferrer);
-		// TODO Temporarily we are not sharing the cache here. This should be changed once semi-commutativity works.
-		final IIndependenceRelation<IPredicate, L> indep = new CachedIndependenceRelation<>(
-				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(), semIndep)));
-
+	private final IPersistentSetChoice<L, IPredicate>
+			createPersistentSets(final IIndependenceRelation<IPredicate, L> independence) {
 		switch (mPartialOrderMode) {
 		case PERSISTENT_SETS:
 		case PERSISTENT_SLEEP_DELAY_SET:
 			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
-					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) indep));
+					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) independence));
 		case NONE:
 		case SLEEP_DELAY_SET:
 		case SLEEP_NEW_STATES:
