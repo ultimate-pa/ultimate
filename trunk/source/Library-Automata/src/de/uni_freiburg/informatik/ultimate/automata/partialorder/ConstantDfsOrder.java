@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * An {@link IDfsOrder} implementation that maps all states to the same ordering.
@@ -42,25 +43,43 @@ import java.util.Map;
  *            The type of letters
  */
 public class ConstantDfsOrder<L, S> implements IDfsOrder<L, S> {
-
-	private final Map<L, Integer> mLetter2Index = new HashMap<>();
+	private final Comparator<L> mComparator;
 
 	/**
-	 * Creates a new instance.
+	 * Create a new instance where every state uses the given order.
 	 *
-	 * @param letters
-	 *            All letters in the alphabet. Letters are ordered the same as in this Iterable.
+	 * @param comparator
+	 *            The order to use for every state, as {@link Comparator}
 	 */
-	public ConstantDfsOrder(final Iterable<L> letters) {
-		int i = 0;
-		for (final L letter : letters) {
-			mLetter2Index.put(letter, i);
-			i++;
-		}
+	public ConstantDfsOrder(final Comparator<L> comparator) {
+		mComparator = comparator;
 	}
 
 	@Override
 	public Comparator<L> getOrder(final S state) {
-		return (a, b) -> mLetter2Index.get(a) - mLetter2Index.get(b);
+		return mComparator;
+	}
+
+	public static <L, S, U extends Comparable<U>> ConstantDfsOrder<L, S> comparing(final Function<L, U> keyExtractor) {
+		return new ConstantDfsOrder<>(Comparator.comparing(keyExtractor));
+	}
+
+	public static <L, S, U> ConstantDfsOrder<L, S> comparing(final Function<L, U> keyExtractor,
+			final Comparator<U> comparator) {
+		return new ConstantDfsOrder<>(Comparator.comparing(keyExtractor, comparator));
+	}
+
+	public static <L, S> ConstantDfsOrder<L, S> byHashCode() {
+		return comparing(Object::hashCode);
+	}
+
+	public static <L, S> ConstantDfsOrder<L, S> fromIterable(final Iterable<L> letters) {
+		final Map<L, Integer> letter2Index = new HashMap<>();
+		int i = 0;
+		for (final L letter : letters) {
+			letter2Index.put(letter, i);
+			i++;
+		}
+		return comparing(letter2Index::get);
 	}
 }

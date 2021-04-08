@@ -110,7 +110,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final IDfsVisitor<L, IPredicate> mVisitor;
-	private IDfsOrder<L, IPredicate> mDfsOrder;
+	private final IDfsOrder<L, IPredicate> mDfsOrder = ConstantDfsOrder.byHashCode();
 
 	// Maps an IPredicate built through refinement rounds to the sequence of conjuncts it was built from.
 	// This is used to distribute an independence query across conjuncts.
@@ -144,13 +144,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mConditionalRelation = constructConditionalIndependence(semanticIndependence, independenceCache);
 		mIndependenceRelation = constructIndependenceRelation(semanticIndependence, independenceCache);
 		mPersistent = createPersistentSets(csToolkit);
-	}
-
-	@Override
-	protected void getInitialAbstraction() throws AutomataLibraryException {
-		super.getInitialAbstraction();
-		mDfsOrder = new ConstantDfsOrder<>(((INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction)
-				.getVpAlphabet().getInternalAlphabet());
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.

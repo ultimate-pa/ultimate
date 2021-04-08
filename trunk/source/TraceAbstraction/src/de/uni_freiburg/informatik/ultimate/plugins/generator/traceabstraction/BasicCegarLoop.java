@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
@@ -78,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -475,14 +475,15 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				new CachedIndependenceRelation<>(new UnionIndependenceRelation<>(Arrays.asList(
 						new SyntacticIndependenceRelation<>(),
 						new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true)))));
-		final IDfsOrder<L, IPredicate> order = new ConstantDfsOrder<>(input.getVpAlphabet().getInternalAlphabet());
+		final IDfsOrder<L, IPredicate> order = ConstantDfsOrder.byHashCode();
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
 		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
 		final AutomatonConstructingVisitor<L, IPredicate> automatonConstructor;
 		switch (mode) {
 		case SLEEP_DELAY_SET:
-			automatonConstructor = new AutomatonConstructingVisitor<>(input, automataServices, mStateFactoryForRefinement);
+			automatonConstructor =
+					new AutomatonConstructingVisitor<>(input, automataServices, mStateFactoryForRefinement);
 			new SleepSetDelayReduction<>(automataServices, input, new ISleepSetStateFactory.NoUnrolling<>(), indep,
 					order, automatonConstructor);
 			break;
