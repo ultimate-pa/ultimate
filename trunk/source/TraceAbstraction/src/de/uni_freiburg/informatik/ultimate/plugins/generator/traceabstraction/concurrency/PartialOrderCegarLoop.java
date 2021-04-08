@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndepend
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
@@ -198,7 +197,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		try {
 			switch (mPartialOrderMode) {
 			case SLEEP_DELAY_SET:
-				new SleepSetDelayReduction<>(automataServices, abstraction, new ISleepSetStateFactory.NoUnrolling<>(),
+				new SleepSetDelayReduction<>(automataServices, abstraction, mSleepSetStateFactory,
 						mIndependenceRelation, mDfsOrder, mVisitor);
 				break;
 			case SLEEP_NEW_STATES:
