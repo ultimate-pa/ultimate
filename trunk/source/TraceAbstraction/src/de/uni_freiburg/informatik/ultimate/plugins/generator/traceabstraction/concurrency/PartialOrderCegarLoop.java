@@ -403,6 +403,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				}
 			}
 
+			if (mPersistent instanceof CachedPersistentSetChoice<?, ?>) {
+				final var cache = (CachedPersistentSetChoice<?, IPredicate>) mPersistent;
+				cache.transferCachedInformation(state1, newState);
+			}
+
 			return newState;
 		}
 	}

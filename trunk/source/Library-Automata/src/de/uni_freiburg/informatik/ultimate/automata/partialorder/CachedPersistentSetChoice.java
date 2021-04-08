@@ -58,4 +58,19 @@ public class CachedPersistentSetChoice<L, S> implements IPersistentSetChoice<L, 
 	public Set<L> persistentSet(final S state) {
 		return mCache.computeIfAbsent(state, mUnderlying::persistentSet);
 	}
+
+	/**
+	 * Copies cached information from one state to the other.
+	 *
+	 * @param oldState
+	 *            A state for which a persistent set might already be cached
+	 * @param newState
+	 *            A state for which no persistent set is cached
+	 */
+	public void transferCachedInformation(final S oldState, final S newState) {
+		assert !mCache.containsKey(newState);
+		if (mCache.containsKey(oldState)) {
+			mCache.put(newState, mCache.get(oldState));
+		}
+	}
 }
