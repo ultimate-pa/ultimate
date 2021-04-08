@@ -115,8 +115,9 @@ public class SleepSetVisitorAutomaton<L, S> implements IDfsVisitor<L, S> {
 	}
 
 	@Override
-	public void addStartState(final S state) {
+	public boolean addStartState(final S state) {
 		mReductionAutomaton.addState(true, mIsFinal.test(state), state);
+		return false;
 	}
 
 	@Override

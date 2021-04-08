@@ -105,9 +105,11 @@ public class SleepSetNewStateReduction<L, S, R> {
 
 		final S startState = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
 		final R newStartState = getSleepSetState(startState, Collections.emptySet());
-		mVisitor.addStartState(newStartState);
 		mStateStack.push(newStartState);
-		search(services);
+		final boolean prune = mVisitor.addStartState(newStartState);
+		if (!prune) {
+			search(services);
+		}
 	}
 
 	private void search(final AutomataLibraryServices services) throws AutomataOperationCanceledException {

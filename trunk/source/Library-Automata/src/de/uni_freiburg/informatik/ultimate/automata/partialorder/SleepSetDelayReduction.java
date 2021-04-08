@@ -106,8 +106,10 @@ public class SleepSetDelayReduction<L, S, R> {
 		final S startState = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
 		final R redStartState = getReductionState(startState, Collections.emptySet());
 		mStateStack.push(redStartState);
-		mVisitor.addStartState(redStartState);
-		search(services);
+		final boolean prune = mVisitor.addStartState(redStartState);
+		if (!prune) {
+			search(services);
+		}
 	}
 
 	private R getReductionState(final S state, final Set<L> sleepSet) {

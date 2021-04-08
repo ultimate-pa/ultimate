@@ -45,8 +45,10 @@ public interface IDfsVisitor<L, S> {
 	 *
 	 * @param state
 	 *            initial state where the DFS starts
+	 * @return true to indicate that outgoing transitions of the state should be pruned, i.e., that the successor states
+	 *         should not be visited by the DFS (from this state). Otherwise, return false.
 	 */
-	void addStartState(S state);
+	boolean addStartState(S state);
 
 	/**
 	 * Called when a transition is discovered.

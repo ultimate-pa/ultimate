@@ -162,12 +162,13 @@ public class SleepSetVisitorSearch<L, S> implements IDfsVisitor<L, S> {
 	}
 
 	@Override
-	public void addStartState(final S state) {
+	public boolean addStartState(final S state) {
 		reset();
 		mStartState = state;
 		mLetterStack.push(new ArrayList<>());
 		mStateStack.push(new ArrayList<>());
 		mFound = mIsGoalState.test(state);
+		return isDeadEndState(state) || isHopelessState(state);
 	}
 
 	@Override

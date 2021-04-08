@@ -96,8 +96,8 @@ public final class PersistentSetReduction {
 		}
 
 		@Override
-		public void addStartState(final S state) {
-			mUnderlying.addStartState(state);
+		public boolean addStartState(final S state) {
+			return mUnderlying.addStartState(state);
 		}
 
 		@Override
