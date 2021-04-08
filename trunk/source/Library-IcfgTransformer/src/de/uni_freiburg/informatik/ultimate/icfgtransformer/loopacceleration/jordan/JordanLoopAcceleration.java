@@ -131,8 +131,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 					jlasg);
 		}
 		
-		// TODO: catch non-linear updates.
-		
 		final int numberOfAssignedVariables = su.getDeterministicAssignment().size();
 		final int numberOfHavocedVariables = su.getHavocedVars().size();
 
@@ -142,6 +140,13 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		
 		final Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> updateMatrixPair = computeUpdateMatrix(mgdScript,
 				su);
+		
+		if (updateMatrixPair == null) {
+			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
+			return new JordanLoopAccelerationResult(
+					JordanLoopAccelerationResult.AccelerationStatus.NONLINEAR_UPDATE, null, null, jlasg);
+		}
+		
 		final JordanTransformationResult jordanUpdate = updateMatrixPair.getFirst().constructJordanMatrix();
 		
 		if (jordanUpdate.getStatus() == JordanTransformationStatus.UNSUPPORTED_EIGENVALUES) {
@@ -217,6 +222,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		for (final TermVariable termVar : varMatrixIndex.keySet()) {
 			updateMatrix.setEntry(varMatrixIndex.get(variable.getTermVariable()), varMatrixIndex.get(termVar),
 					determineCoefficient(polyRhs, termVar));
+			if (updateMatrix.getEntry(varMatrixIndex.get(variable.getTermVariable()), varMatrixIndex.get(termVar)) == null) {
+				// not a linear term.
+				break;
+			}
 			updateMatrix.setEntry(varMatrixIndex.get(variable.getTermVariable()), n, determineConstant(polyRhs));
 		}
 	}
@@ -227,7 +236,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	private static BigInteger determineCoefficient(final IPolynomialTerm polyRhs, final TermVariable termVar) {
 		for (final Monomial monom : polyRhs.getMonomial2Coefficient().keySet()) {
 			if (!monom.isLinear()) {
-				throw new AssertionError("Some term is not linear.");
+				return null;
 			}
 			if (monom.getSingleVariable().equals(termVar)) {
 				final Rational coefficient = polyRhs.getMonomial2Coefficient().get(monom);
@@ -339,6 +348,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 					.transform(update.getValue());
 
 			fillMatrixRow(updateMatrix, varMatrixIndices, polyRhs, update.getKey());
+			for (int j=0; j<n; j++) {
+				if (updateMatrix.getEntry(varMatrixIndices.get(update.getKey().getTermVariable()), j) == null) {
+					return null;
+				}
+			}
 		}
 		return new Pair<>(updateMatrix, varMatrixIndices);
 	}
