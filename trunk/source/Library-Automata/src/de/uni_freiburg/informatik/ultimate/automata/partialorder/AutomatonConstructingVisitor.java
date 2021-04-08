@@ -36,23 +36,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
 /**
- * Visitor Class for the Sleep Set Reduction, which constructs the reduced automaton.
+ * A visitor that explicitly constructs the traversed automaton.
  *
  * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
  *            The type of letters in the automaton
  * @param <S>
  *            The type of automaton states
  */
-public class SleepSetVisitorAutomaton<L, S> implements IDfsVisitor<L, S> {
+public class AutomatonConstructingVisitor<L, S> implements IDfsVisitor<L, S> {
 	private final Predicate<S> mIsInitial;
 	private final Predicate<S> mIsFinal;
 	private final NestedWordAutomaton<L, S> mReductionAutomaton;
 
 	/**
 	 * Create a new visitor instance that constructs a sub-automaton of a given automaton. This can e.g. be used for
-	 * delay reductions.
+	 * sleep set reductions with delay sets.
 	 *
 	 * @param operand
 	 *            The unreduced automaton, used to identify the alphabet, initial and final states
@@ -61,7 +62,7 @@ public class SleepSetVisitorAutomaton<L, S> implements IDfsVisitor<L, S> {
 	 * @param stateFactory
 	 *            State factory used by the constructed automaton
 	 */
-	public SleepSetVisitorAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+	public AutomatonConstructingVisitor(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final AutomataLibraryServices services, final IEmptyStackStateFactory<S> stateFactory) {
 		this(operand::isInitial, operand::isFinal, operand.getVpAlphabet(), services, stateFactory);
 	}
@@ -80,7 +81,7 @@ public class SleepSetVisitorAutomaton<L, S> implements IDfsVisitor<L, S> {
 	 * @param stateFactory
 	 *            State factory used by the constructed automaton
 	 */
-	public SleepSetVisitorAutomaton(final Predicate<S> isInitial, final Predicate<S> isFinal,
+	public AutomatonConstructingVisitor(final Predicate<S> isInitial, final Predicate<S> isFinal,
 			final VpAlphabet<L> alphabet, final AutomataLibraryServices services,
 			final IEmptyStackStateFactory<S> stateFactory) {
 		mIsInitial = isInitial;

@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -479,17 +479,17 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
 		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
-		final SleepSetVisitorAutomaton<L, IPredicate> automatonConstructor;
+		final AutomatonConstructingVisitor<L, IPredicate> automatonConstructor;
 		switch (mode) {
 		case SLEEP_DELAY_SET:
-			automatonConstructor = new SleepSetVisitorAutomaton<>(input, automataServices, mStateFactoryForRefinement);
+			automatonConstructor = new AutomatonConstructingVisitor<>(input, automataServices, mStateFactoryForRefinement);
 			new SleepSetDelayReduction<>(automataServices, input, new ISleepSetStateFactory.NoUnrolling<>(), indep,
 					order, automatonConstructor);
 			break;
 		case SLEEP_NEW_STATES:
 			final SleepSetStateFactoryForRefinement<L> factory =
 					(SleepSetStateFactoryForRefinement<L>) mSleepSetStateFactory;
-			automatonConstructor = new SleepSetVisitorAutomaton<>(x -> input.isInitial(factory.getOriginalState(x)),
+			automatonConstructor = new AutomatonConstructingVisitor<>(x -> input.isInitial(factory.getOriginalState(x)),
 					x -> input.isFinal(factory.getOriginalState(x)), input.getVpAlphabet(), automataServices,
 					mStateFactoryForRefinement);
 			new SleepSetNewStateReduction<>(automataServices, input, mSleepSetStateFactory, indep, order,
