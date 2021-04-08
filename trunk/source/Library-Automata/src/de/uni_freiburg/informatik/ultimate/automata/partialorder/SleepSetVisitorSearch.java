@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
  * @param <S>
  *            state
  */
-public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
+public class SleepSetVisitorSearch<L, S> implements IDfsVisitor<L, S> {
 	private final Predicate<S> mIsGoalState;
 	private final Predicate<S> mIsHopelessState;
 

@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  * @param <S>
  *            The type of automaton states
  */
-public class SleepSetVisitorAutomaton<L, S> implements IPartialOrderVisitor<L, S> {
+public class SleepSetVisitorAutomaton<L, S> implements IDfsVisitor<L, S> {
 	private final Predicate<S> mIsInitial;
 	private final Predicate<S> mIsFinal;
 	private final NestedWordAutomaton<L, S> mReductionAutomaton;

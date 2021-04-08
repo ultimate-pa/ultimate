@@ -65,7 +65,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 	private final IDfsOrder<L, R> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
-	private final IPartialOrderVisitor<L, R> mVisitor;
+	private final IDfsVisitor<L, R> mVisitor;
 
 	private final Set<R> mVisitedSet = new HashSet<>();
 	private final ArrayDeque<R> mStateStack = new ArrayDeque<>();
@@ -93,7 +93,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 	public SleepSetNewStateReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final ISleepSetStateFactory<L, S, R> stateFactory, final IIndependenceRelation<S, L> independenceRelation,
-			final IDfsOrder<L, R> sleepSetOrder, final IPartialOrderVisitor<L, R> visitor)
+			final IDfsOrder<L, R> sleepSetOrder, final IDfsVisitor<L, R> visitor)
 			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 

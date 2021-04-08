@@ -28,7 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 /**
- * Interface for visitors used in DFS-based Partial Order Reductions on finite automata.
+ * Interface for visitors used in depth-first traversal of finite automata, e.g. by {@link DepthFirstTraversal}, or by
+ * DFS-based Partial Order Reductions.
  *
  * @author Marcel Ebbinghaus
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -38,7 +39,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
  * @param <S>
  *            The type of states in the automaton.
  */
-public interface IPartialOrderVisitor<L, S> {
+public interface IDfsVisitor<L, S> {
 	/**
 	 * Called when the DFS begins its search at an initial state of the automaton.
 	 *
@@ -86,11 +87,14 @@ public interface IPartialOrderVisitor<L, S> {
 	/**
 	 * Called when a state is "delayed". This is specific to the "delay set" variant of Partial Order Reduction.
 	 *
+	 * @deprecated
+	 *
 	 * @param state
 	 *            state that is delayed
 	 */
 	// TODO (Dominik 2021-01-24) We should try to get rid of this method, as "delaying" states is an
 	// implementation detail of SleepSetDelayReduction that should not be exposed to visitors.
+	@Deprecated(since = "2021-01-24")
 	void delayState(S state);
 
 	/**

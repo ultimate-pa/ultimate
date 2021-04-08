@@ -49,9 +49,9 @@ public final class PersistentSetReduction {
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, R> sleepSetOrder,
 			final ISleepSetStateFactory<L, S, R> factory, final IPersistentSetChoice<L, R> persistent,
-			final IPartialOrderVisitor<L, R> visitor) throws AutomataOperationCanceledException {
+			final IDfsVisitor<L, R> visitor) throws AutomataOperationCanceledException {
 		final IDfsOrder<L, R> combinedOrder = new PersistentDfsOrder<>(persistent, sleepSetOrder);
-		final IPartialOrderVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
+		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetNewStateReduction<>(services, operand, factory, independenceRelation, combinedOrder,
 				combinedVisitor);
 	}
@@ -59,10 +59,10 @@ public final class PersistentSetReduction {
 	public static <L, S> void applyDelaySetReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, S> sleepSetOrder,
-			final IPersistentSetChoice<L, S> persistent, final IPartialOrderVisitor<L, S> visitor)
+			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor)
 			throws AutomataOperationCanceledException {
 		final IDfsOrder<L, S> combinedOrder = new PersistentDfsOrder<>(persistent, sleepSetOrder);
-		final IPartialOrderVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
+		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetDelayReduction<>(services, operand, new ISleepSetStateFactory.NoUnrolling<>(), independenceRelation,
 				combinedOrder, combinedVisitor);
 	}
@@ -78,12 +78,12 @@ public final class PersistentSetReduction {
 	 * @param <S>
 	 *            The type of states in the reduced automaton
 	 */
-	private static class PersistentSetVisitor<L, S> implements IPartialOrderVisitor<L, S> {
+	private static class PersistentSetVisitor<L, S> implements IDfsVisitor<L, S> {
 		private final IPersistentSetChoice<L, S> mPersistent;
-		private final IPartialOrderVisitor<L, S> mUnderlying;
+		private final IDfsVisitor<L, S> mUnderlying;
 
 		public PersistentSetVisitor(final IPersistentSetChoice<L, S> persistent,
-				final IPartialOrderVisitor<L, S> underlying) {
+				final IDfsVisitor<L, S> underlying) {
 			mPersistent = persistent;
 			mUnderlying = underlying;
 		}
