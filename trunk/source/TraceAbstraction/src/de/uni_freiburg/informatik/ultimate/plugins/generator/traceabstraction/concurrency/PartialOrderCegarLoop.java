@@ -286,13 +286,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				independenceCache);
 
 		switch (mPartialOrderMode) {
+		case PERSISTENT_SETS:
 		case PERSISTENT_SLEEP_DELAY_SET:
 			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
 					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) indep));
-		case PERSISTENT_SLEEP_NEW_STATES:
-			throw new UnsupportedOperationException("unsupported (must first check access to location)");
-		default:
+		case NONE:
+		case SLEEP_DELAY_SET:
+		case SLEEP_NEW_STATES:
 			return null;
+		default:
+			throw new UnsupportedOperationException("unsupported POR mode");
 		}
 	}
 
