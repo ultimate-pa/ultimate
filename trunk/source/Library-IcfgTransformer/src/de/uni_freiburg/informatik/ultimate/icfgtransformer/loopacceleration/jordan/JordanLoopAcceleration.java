@@ -111,37 +111,43 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 
 	/**
-	 * Loop acceleration for loops with linear updates, where only -1,0,1 are eigenvalues of the update matrix.
+	 * Loop acceleration for loops with linear updates, where only -1,0,1 are
+	 * eigenvalues of the update matrix.
+	 * Try version that is restricted to eigenvalues 0 and 1 and block sizes
+	 * smaller than 3. If restricted version returns null try version for eigenvalues -1, 0 and 1 and
+	 * arbitrary block sizes.
 	 */
-	public static UnmodifiableTransFormula accelerateLoop(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula, final boolean itFinAuxVar) {
+	public static JordanLoopAccelerationResult accelerateLoop(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula,
+			final boolean quantifyItFinExplicitly) {
 		final ILogger logger = services.getLoggingService().getLogger(JordanLoopAcceleration.class);
-		final UnmodifiableTransFormula guardTf =
-				TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services, logger);
-		logger.info("Guard: " + guardTf);
 		final SimultaneousUpdate su;
 		try {
 			su = SimultaneousUpdate.fromTransFormula(loopTransFormula, mgdScript);
 		} catch (final SimultaneousUpdateException e) {
-			throw new IllegalArgumentException(e.getMessage());
+			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
+			return new JordanLoopAccelerationResult(
+					JordanLoopAccelerationResult.AccelerationStatus.SIMULTANEOUS_UPDATE_FAILED, e.getMessage(), null,
+					jlasg);
 		}
 
+		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services,
+				logger);
+		logger.info("Guard: " + guardTf);
 		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
-
-
-		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(logger,
-				services, jlasg, mgdScript, su, loopTransFormula, guardTf, true, itFinAuxVar);
+		UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormulaEv01(logger, services, jlasg,
+				mgdScript, su, loopTransFormula, guardTf, true, !quantifyItFinExplicitly);
+		if (loopAccelerationFormula == null) {
+			loopAccelerationFormula = createLoopAccelerationFormulaEvM101(logger, services, jlasg, mgdScript, su,
+					loopTransFormula, guardTf, !quantifyItFinExplicitly);
+		}
 
 		if (QuantifierUtils.isQuantifierFree(loopAccelerationFormula.getFormula())) {
 			jlasg.reportQuantifierFreeResult();
 		}
-		final String shortDescrption = "Jordan loop acceleration statistics";
-		final StatisticsData statistics = new StatisticsData();
-		statistics.aggregateBenchmarkData(jlasg);
-		final String id = "IcfgTransformer";
-		services.getResultService().reportResult(id, new StatisticsResult<>(id, shortDescrption, statistics));
 
-		return loopAccelerationFormula;
+		return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.SUCCESS, null,
+				loopAccelerationFormula, jlasg);
 	}
 
 
@@ -383,9 +389,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 
 	/**
-	 * Create loopAccelerationFormula. Try version that is restricted to eigenvalues 0 and 1 and block sizes
-	 * smaller than 3. If restricted version returns null try version for eigenvalues -1, 0 and 1 and
-	 * arbitrary block sizes.
+
 	 */
 	private static UnmodifiableTransFormula createLoopAccelerationFormula(final ILogger logger,
 			final IUltimateServiceProvider services, final JordanLoopAccelerationStatisticsGenerator jlasg,
@@ -1004,12 +1008,23 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			if (oldEdge.getSource() == oldEdge.getTarget()) {
 				// self loop, lets accelerate
 				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
-				final UnmodifiableTransFormula transformedTf =
-						accelerateLoop(mServices, mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, true);
-				mLogger.info("Accelerated %s with %s", oldTf, transformedTf);
-				return new TransformulaTransformationResult(transformedTf);
+				final JordanLoopAccelerationResult jlar = accelerateLoop(mServices,
+						mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, false);
+				if (jlar.getAccelerationStatus() == JordanLoopAccelerationResult.AccelerationStatus.SUCCESS) {
+					mLogger.info("Accelerated %s with %s", oldTf, jlar.getTransFormula());
+					final String shortDescrption = "Jordan loop acceleration statistics";
+					final StatisticsData statistics = new StatisticsData();
+					statistics.aggregateBenchmarkData(jlar.getJordanLoopAccelerationStatistics());
+					final String id = "IcfgTransformer";
+					mServices.getResultService().reportResult(id,
+							new StatisticsResult<>(id, shortDescrption, statistics));
+					return new TransformulaTransformationResult(jlar.getTransFormula());
+				} else {
+					return super.transform(oldEdge, tf);
+				}
+			} else {
+				return super.transform(oldEdge, tf);
 			}
-			return super.transform(oldEdge, tf);
 		}
 	}
 
@@ -1019,7 +1034,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 
 	private static class JordanLoopAccelerationResult {
-		enum AccelerationStatus {
+		public enum AccelerationStatus {
 			SUCCESS, SIMULTANEOUS_UPDATE_FAILED, NONLINEAR_UPDATE, UNSUPPORTED_EIGENVALUES,
 		};
 
