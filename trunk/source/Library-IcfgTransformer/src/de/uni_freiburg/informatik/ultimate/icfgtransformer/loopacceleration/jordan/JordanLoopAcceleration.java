@@ -147,11 +147,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			}
 		}
 
-
-		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services,
-				logger);
-		logger.info("Guard: " + guardTf);
-
 		final Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> updateMatrixPair = computeUpdateMatrix(mgdScript,
 				su);
 
@@ -165,6 +160,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 
 		final boolean isAlternatingClosedFormRequired = isAlternatingClosedFormRequired(jordanUpdate);
+		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services,
+				logger);
+		logger.info("Guard: " + guardTf);
 		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(logger, services,
 				mgdScript, su, updateMatrixPair, jordanUpdate, loopTransFormula, guardTf, true,
 				quantifyItFinExplicitly, isAlternatingClosedFormRequired);
