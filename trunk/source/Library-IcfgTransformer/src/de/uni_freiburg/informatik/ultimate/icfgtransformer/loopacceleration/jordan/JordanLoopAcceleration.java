@@ -164,15 +164,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 					JordanLoopAccelerationResult.AccelerationStatus.UNSUPPORTED_EIGENVALUES, null, null, jlasg);
 		}
 
-		final boolean minus1isEigenvalue = updateMatrixPair.getFirst().computeSmallEigenvalues()[0];
-		final boolean ev1hasBlockGreater2 = hasEv1JordanBlockStrictlyGreater2(jordanUpdate);
-		final boolean isAlternatingClosedFormRequired = minus1isEigenvalue || ev1hasBlockGreater2;
-
-		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
-				numberOfAssignedVariables, numberOfHavocedVariables, jordanUpdate.getJordanBlockSizes());
+		final boolean isAlternatingClosedFormRequired = isAlternatingClosedFormRequired(jordanUpdate);
 		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(logger, services,
 				mgdScript, su, updateMatrixPair, jordanUpdate, loopTransFormula, guardTf, true,
 				quantifyItFinExplicitly, isAlternatingClosedFormRequired);
+		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
+				numberOfAssignedVariables, numberOfHavocedVariables, jordanUpdate.getJordanBlockSizes());
 		if (isAlternatingClosedFormRequired) {
 			jlasg.reportAlternatingAcceleration();
 		} else {
@@ -185,6 +182,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.SUCCESS, null,
 				loopAccelerationFormula, jlasg);
+	}
+
+	private static boolean isAlternatingClosedFormRequired(final JordanTransformationResult jordanUpdate) {
+		final boolean minus1isEigenvalue = jordanUpdate.getJordanBlockSizes().containsKey(-1);
+		final boolean ev1hasBlockGreater2 = hasEv1JordanBlockStrictlyGreater2(jordanUpdate);
+		return (minus1isEigenvalue || ev1hasBlockGreater2);
 	}
 
 	/**
