@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -125,47 +126,50 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		try {
 			su = SimultaneousUpdate.fromTransFormula(loopTransFormula, mgdScript);
 		} catch (final SimultaneousUpdateException e) {
-			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
+			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(-1,
+					-1, new NestedMap2<>());
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.SIMULTANEOUS_UPDATE_FAILED, e.getMessage(), null,
 					jlasg);
 		}
-		
+		final int numberOfAssignedVariables = su.getDeterministicAssignment().size();
+		final int numberOfHavocedVariables = su.getHavocedVars().size();
+
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
 			final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 					.transform(update.getValue());
 			if (!polyRhs.isAffine()) {
-				final JordanLoopAccelerationStatisticsGenerator jlasg =
-						new JordanLoopAccelerationStatisticsGenerator();
+				final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
+						numberOfAssignedVariables, numberOfHavocedVariables, new NestedMap2<>());
 				return new JordanLoopAccelerationResult(
 						JordanLoopAccelerationResult.AccelerationStatus.NONLINEAR_UPDATE, null, null, jlasg);
 			}
 		}
-		
-		final int numberOfAssignedVariables = su.getDeterministicAssignment().size();
-		final int numberOfHavocedVariables = su.getHavocedVars().size();
+
 
 		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services,
 				logger);
 		logger.info("Guard: " + guardTf);
-		
+
 		final Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> updateMatrixPair = computeUpdateMatrix(mgdScript,
 				su);
-		
+
 		final JordanTransformationResult jordanUpdate = updateMatrixPair.getFirst().constructJordanTransformation();
-		
+
 		if (jordanUpdate.getStatus() == JordanTransformationStatus.UNSUPPORTED_EIGENVALUES) {
-			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
+			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
+					numberOfAssignedVariables, numberOfHavocedVariables, new NestedMap2<>());
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.UNSUPPORTED_EIGENVALUES, null, null, jlasg);
 		}
-		
-		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator();
+
+		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
+				numberOfAssignedVariables, numberOfHavocedVariables, jordanUpdate.getJordanBlockSizes());
 		final Pair<UnmodifiableTransFormula, JordanLoopAccelerationDefinitions> loopAccelerationPair =
 				createLoopAccelerationFormula(logger, services,
 						mgdScript, su, updateMatrixPair, jordanUpdate, loopTransFormula, guardTf, true,
 						!quantifyItFinExplicitly);
-		UnmodifiableTransFormula loopAccelerationFormula = loopAccelerationPair.getFirst();
+		final UnmodifiableTransFormula loopAccelerationFormula = loopAccelerationPair.getFirst();
 		if (loopAccelerationPair.getSecond() == JordanLoopAccelerationDefinitions.SequentialAcceleration) {
 			jlasg.reportSequentialAcceleration();
 		} else if (loopAccelerationPair.getSecond() == JordanLoopAccelerationDefinitions.AlternatingAcceleration) {
@@ -334,12 +338,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		return closedForm;
 	}
-	
+
 	/**
 	 * Compute the update matrix out of the simultaneous update.
 	 */
-	private static Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> computeUpdateMatrix(ManagedScript mgdScript,
-			SimultaneousUpdate su) {
+	private static Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> computeUpdateMatrix(final ManagedScript mgdScript,
+			final SimultaneousUpdate su) {
 		// HashMap to get matrix index from TermVariable.
 		final HashMap<TermVariable, Integer> varMatrixIndices = determineMatrixIndices(su);
 		final int n = varMatrixIndices.size() + 1;
@@ -361,7 +365,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		return new Pair<>(updateMatrix, varMatrixIndices);
 	}
-	
+
 	/**
 	 * Compute the closed form given the update, the update matrix and the corresponding jordan matrix.
 	 */
@@ -372,7 +376,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final TermVariable itHalf, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final boolean itEven,
 			final boolean restrictedVersionPossible) {
-		
+
 		final QuadraticMatrix updateMatrix = updateMatrixPair.getFirst();
 		final HashMap<TermVariable, Integer> varMatrixIndices = updateMatrixPair.getSecond();
 		final RationalMatrix modalUpdate = QuadraticMatrix.computeModalMatrix(updateMatrix, jordanUpdate.getJnf());
@@ -424,7 +428,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		}
 		return script.term(((ApplicationTerm) guardFormula).getFunction().getName(), paramReplaced);
 	}
-	
+
 	/**
 	 * Create the loop Acceleration formula and save as JordanLoopAccelerationDefinitions which version of
 	 * formula creation was used. Version Ev01, works without case distinctions, for eigenvalues 0 and 1 and
@@ -435,10 +439,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final SimultaneousUpdate su, final Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> updateMatrixPair,
-			JordanTransformationResult jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
+			final JordanTransformationResult jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
 			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible,
 			final boolean itFinAuxVar) {
-		
+
 		final boolean minus1isEigenvalue = updateMatrixPair.getFirst().computeSmallEigenvalues()[0];
 		boolean ev1hasBlockGreater2 = false;
 		for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(1).keySet()) {
@@ -638,11 +642,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Set<TermVariable> itFinSet = new HashSet<>();
 		itFinSet.add(itFin);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinSet, disjunction);
-		
+
 		assert checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula,
 				inVars, loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormIt,
 				guardOfClosedFormIt, it, true);
-		
+
 		if (itFinAuxVar) {
 			return disjunction;
 		} else {
@@ -853,7 +857,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Set<TermVariable> itFinHalfSet = new HashSet<>();
 		itFinHalfSet.add(itFinHalf);
 		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinHalfSet, disjunction);
-		
+
 		if (itFinAuxVar) {
 			return disjunction;
 		} else {

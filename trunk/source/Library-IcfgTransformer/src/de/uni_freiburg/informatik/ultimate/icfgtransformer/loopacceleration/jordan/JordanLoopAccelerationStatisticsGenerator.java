@@ -28,17 +28,24 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDataProvider {
 
+	private final int mNumberOfAssignedVariables;
+	private final int mNumberOfHavocedVariables;
+	private final NestedMap2<Integer, Integer, Integer> mEigenvalues;
 	private int mSequentialAcceleration;
 	private int mQuantifierFreeResult;
 	private int mAlternatingAcceleration;
 
-	public JordanLoopAccelerationStatisticsGenerator() {
+	public JordanLoopAccelerationStatisticsGenerator(final int numberOfAssignedVariables, final int numberOfHavocedVariables, final NestedMap2<Integer, Integer, Integer> eigenvalues) {
 		super();
+		mNumberOfAssignedVariables = numberOfAssignedVariables;
+		mNumberOfHavocedVariables = numberOfHavocedVariables;
+		mEigenvalues = eigenvalues;
 		mSequentialAcceleration = 0;
 		mQuantifierFreeResult = 0;
 		mAlternatingAcceleration = 0;
@@ -48,6 +55,12 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 	public Object getValue(final String key) {
 		final JordanLoopAccelerationDefinitions keyEnum = Enum.valueOf(JordanLoopAccelerationDefinitions.class, key);
 		switch (keyEnum) {
+		case AssignedVariables:
+			return mNumberOfAssignedVariables;
+		case HavocedVariables:
+			return mNumberOfHavocedVariables;
+		case Eigenvalues:
+			return mEigenvalues;
 		case SequentialAcceleration:
 			return mSequentialAcceleration;
 		case QuantifierFreeResult:

@@ -29,10 +29,17 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 import java.util.Objects;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum JordanLoopAccelerationDefinitions implements IStatisticsElement {
+
+	HavocedVariables(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	AssignedVariables(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	Eigenvalues(NestedMap2.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 	SequentialAcceleration(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
