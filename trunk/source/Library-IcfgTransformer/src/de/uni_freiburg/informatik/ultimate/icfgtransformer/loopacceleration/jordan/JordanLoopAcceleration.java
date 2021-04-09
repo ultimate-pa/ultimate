@@ -388,9 +388,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final RationalMatrix modalUpdate = jordanUpdate.getModal();
 		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
 
-		assert QuadraticMatrix.checkCorrectnessofJordanDecomposition(updateMatrix, modalUpdate,
-				jordanUpdate.getJnf(), inverseModalUpdate);
-
 		final Script script = mgdScript.getScript();
 
 		// Compute matrix that represents closed form.
