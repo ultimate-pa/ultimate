@@ -147,8 +147,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			}
 		}
 
+		// HashMap to get matrix index from TermVariable.
+		final HashMap<TermVariable, Integer> varMatrixIndexMap = determineMatrixIndices(su);
 		final Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> updateMatrixPair = computeUpdateMatrix(mgdScript,
-				su);
+				su, varMatrixIndexMap);
 
 		final JordanTransformationResult jordanUpdate = updateMatrixPair.getFirst().constructJordanTransformation();
 
@@ -219,7 +221,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	 * updated with polyRhs.
 	 */
 	private static void fillMatrixRow(final QuadraticMatrix updateMatrix,
-			final HashMap<TermVariable, Integer> varMatrixIndex, final IPolynomialTerm polyRhs,
+			final HashMap<TermVariable, Integer> varMatrixIndexMap, final IPolynomialTerm polyRhs,
 			final IProgramVar variable) {
 
 		final int n = updateMatrix.getDimension() - 1;
@@ -227,19 +229,19 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// Set diagonal entry to 0 for case variable assignment does not depend on
 		// variable itself
 		// (matrix was initialized as identity matrix).
-		updateMatrix.setEntry(varMatrixIndex.get(variable.getTermVariable()),
-				varMatrixIndex.get(variable.getTermVariable()), BigInteger.valueOf(0));
+		updateMatrix.setEntry(varMatrixIndexMap.get(variable.getTermVariable()),
+				varMatrixIndexMap.get(variable.getTermVariable()), BigInteger.valueOf(0));
 
 		// Fill row.
-		for (final TermVariable termVar : varMatrixIndex.keySet()) {
-			updateMatrix.setEntry(varMatrixIndex.get(variable.getTermVariable()), varMatrixIndex.get(termVar),
+		for (final TermVariable termVar : varMatrixIndexMap.keySet()) {
+			updateMatrix.setEntry(varMatrixIndexMap.get(variable.getTermVariable()), varMatrixIndexMap.get(termVar),
 					determineCoefficient(polyRhs, termVar));
-			if (updateMatrix.getEntry(varMatrixIndex.get(variable.getTermVariable()), varMatrixIndex.get(termVar)) ==
-					null) {
+			if (updateMatrix.getEntry(varMatrixIndexMap.get(variable.getTermVariable()),
+					varMatrixIndexMap.get(termVar)) == null) {
 				// not a linear term.
 				break;
 			}
-			updateMatrix.setEntry(varMatrixIndex.get(variable.getTermVariable()), n, determineConstant(polyRhs));
+			updateMatrix.setEntry(varMatrixIndexMap.get(variable.getTermVariable()), n, determineConstant(polyRhs));
 		}
 	}
 
@@ -346,11 +348,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	/**
 	 * Compute the update matrix out of the simultaneous update.
 	 */
-	private static Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> computeUpdateMatrix(final ManagedScript mgdScript,
-			final SimultaneousUpdate su) {
-		// HashMap to get matrix index from TermVariable.
-		final HashMap<TermVariable, Integer> varMatrixIndices = determineMatrixIndices(su);
-		final int n = varMatrixIndices.size() + 1;
+	private static Pair<QuadraticMatrix, HashMap<TermVariable, Integer>> computeUpdateMatrix(
+			final ManagedScript mgdScript, final SimultaneousUpdate su,
+			final HashMap<TermVariable, Integer> varMatrixIndexMap) {
+
+		final int n = varMatrixIndexMap.size() + 1;
 
 		// Initialize update matrix with identity matrix (every variable assigned to itself).
 		final QuadraticMatrix updateMatrix = QuadraticMatrix.constructIdentityMatrix(n);
@@ -360,14 +362,14 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 					.transform(update.getValue());
 
-			fillMatrixRow(updateMatrix, varMatrixIndices, polyRhs, update.getKey());
+			fillMatrixRow(updateMatrix, varMatrixIndexMap, polyRhs, update.getKey());
 			for (int j=0; j<n; j++) {
-				if (updateMatrix.getEntry(varMatrixIndices.get(update.getKey().getTermVariable()), j) == null) {
+				if (updateMatrix.getEntry(varMatrixIndexMap.get(update.getKey().getTermVariable()), j) == null) {
 					return null;
 				}
 			}
 		}
-		return new Pair<>(updateMatrix, varMatrixIndices);
+		return new Pair<>(updateMatrix, varMatrixIndexMap);
 	}
 
 	/**
