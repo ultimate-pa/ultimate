@@ -385,8 +385,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		final QuadraticMatrix updateMatrix = updateMatrixPair.getFirst();
 		final HashMap<TermVariable, Integer> varMatrixIndices = updateMatrixPair.getSecond();
-		final RationalMatrix modalUpdate = QuadraticMatrix.computeModalMatrix(updateMatrix, jordanUpdate.getJnf());
-		final RationalMatrix inverseModalUpdate = RationalMatrix.computeInverse(modalUpdate);
+		final RationalMatrix modalUpdate = jordanUpdate.getModal();
+		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
 
 		assert QuadraticMatrix.checkCorrectnessofJordanDecomposition(updateMatrix, modalUpdate,
 				jordanUpdate.getJnf(), inverseModalUpdate);
