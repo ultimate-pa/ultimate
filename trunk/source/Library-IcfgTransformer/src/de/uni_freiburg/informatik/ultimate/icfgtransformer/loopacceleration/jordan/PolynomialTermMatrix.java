@@ -251,9 +251,9 @@ public class PolynomialTermMatrix {
 	/**
 	 * Create the it-th power of a Jordan matrix out of the Jordan matrix.
 	 */
-	public static PolynomialTermMatrix jordan2JordanPower(final QuadraticMatrix matrix,
-			final ManagedScript mgdScript, final TermVariable it, final TermVariable itHalf, final boolean itEven,
-			final JordanTransformationResult jordan, final boolean restrictedVersionPossible) {
+	public static PolynomialTermMatrix jordan2JordanPower(final ManagedScript mgdScript, final TermVariable it,
+			final TermVariable itHalf, final boolean itEven, final JordanTransformationResult jordan,
+			final boolean restrictedVersionPossible) {
 		final int n = jordan.getJnf().getDimension();
 		final PolynomialTermMatrix jordanPower = constructConstantZeroMatrix(mgdScript, n);
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = jordan.getJordanBlockSizes();
@@ -281,17 +281,16 @@ public class PolynomialTermMatrix {
 	 * the iteration count is even or odd.
 	 */
 	public static Pair<PolynomialTermMatrix, Boolean> computeClosedFormMatrix(
-			final ManagedScript mgdScript, final QuadraticMatrix updateMatrix, final RationalMatrix modalUpdate,
-			final JordanTransformationResult jordanUpdate, final RationalMatrix inverseModalUpdate,
-			final TermVariable it, final TermVariable itHalf, final boolean itEven,
-			boolean restrictedVersionPossible) {
+			final ManagedScript mgdScript, final RationalMatrix modalUpdate, final JordanTransformationResult jordanUpdate,
+			final RationalMatrix inverseModalUpdate, final TermVariable it,
+			final TermVariable itHalf, final boolean itEven, boolean restrictedVersionPossible) {
 		final int n = jordanUpdate.getJnf().getDimension();
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
-		PolynomialTermMatrix closedFormMatrix = constructConstantZeroMatrix(mgdScript, updateMatrix.getDimension());
+		PolynomialTermMatrix closedFormMatrix = constructConstantZeroMatrix(mgdScript, n);
 		if (restrictedVersionPossible) {
-			final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(updateMatrix, mgdScript, it, itHalf, itEven,
-					jordanUpdate, restrictedVersionPossible);
+			final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, it, itHalf, itEven, jordanUpdate,
+					restrictedVersionPossible);
 			final PolynomialTermMatrix tmp = multiplication(mgdScript,
 					rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePower);
 			closedFormMatrix = multiplication(mgdScript, tmp,
@@ -320,8 +319,8 @@ public class PolynomialTermMatrix {
 			}
 		}
 		if (!restrictedVersionPossible) {
-			final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(updateMatrix, mgdScript, it, itHalf, itEven,
-					jordanUpdate, restrictedVersionPossible);
+			final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, it, itHalf, itEven, jordanUpdate,
+					restrictedVersionPossible);
 			final PolynomialTermMatrix tmp = multiplication(mgdScript,
 					rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePower);
 			closedFormMatrix = multiplication(mgdScript, tmp,

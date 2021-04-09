@@ -395,8 +395,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		// Compute matrix that represents closed form.
 		final Pair<PolynomialTermMatrix, Boolean> closedFormMatrix =
-				PolynomialTermMatrix.computeClosedFormMatrix(mgdScript, updateMatrix, modalUpdate, jordanUpdate,
-						inverseModalUpdate, it, itHalf, itEven, restrictedVersionPossible);
+				PolynomialTermMatrix.computeClosedFormMatrix(mgdScript, modalUpdate, jordanUpdate, inverseModalUpdate,
+						it, itHalf, itEven, restrictedVersionPossible);
 		if (!closedFormMatrix.getValue()) {
 			final Pair<HashMap<TermVariable, Term>, Boolean> result = new Pair<>(null, false);
 			return result;
