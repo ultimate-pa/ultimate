@@ -1052,7 +1052,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 							new StatisticsResult<>(id, shortDescrption, statistics));
 					return new TransformulaTransformationResult(jlar.getTransFormula());
 				} else {
-					return super.transform(oldEdge, tf);
+					throw new IllegalArgumentException(jlar.getAccelerationStatus() + " " + jlar.getErrorMessage());
+//					return super.transform(oldEdge, tf);
 				}
 			} else {
 				return super.transform(oldEdge, tf);
