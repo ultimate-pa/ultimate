@@ -255,6 +255,15 @@ public class SimultaneousUpdate {
 
 
 
+	/**
+	 * Exception that is thrown if we failed to extract a {@link SimultaneousUpdate}
+	 * from a {@link TransFormula}. TODO 20210411 This class is work in progress.
+	 * Currently we don't know what are the preconditions for a successful
+	 * extraction.
+	 *
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 *
+	 */
 	public static class SimultaneousUpdateException extends Exception {
 
 		public SimultaneousUpdateException(final String errorMessage) {
