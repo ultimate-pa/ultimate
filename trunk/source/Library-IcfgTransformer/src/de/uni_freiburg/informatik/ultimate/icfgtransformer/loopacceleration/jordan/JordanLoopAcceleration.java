@@ -161,7 +161,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final QuadraticMatrix updateMatrix = computeUpdateMatrix(mgdScript, su, varMatrixIndexMap);
 
 		final JordanTransformationResult jordanUpdate = updateMatrix.constructJordanTransformation();
-		assert isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables, jordanUpdate);
 
 		if (jordanUpdate.getStatus() == JordanTransformationStatus.UNSUPPORTED_EIGENVALUES) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
@@ -169,6 +168,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.UNSUPPORTED_EIGENVALUES, null, null, jlasg);
 		}
+		assert isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables, jordanUpdate);
 
 		final boolean isAlternatingClosedFormRequired = isAlternatingClosedFormRequired(jordanUpdate);
 		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services,
