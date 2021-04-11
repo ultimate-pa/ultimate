@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -66,25 +67,26 @@ public class SimultaneousUpdate {
 
 	private final Map<IProgramVar, Term> mDeterministicAssignment;
 	private final Set<IProgramVar> mHavocedVars;
+	private final Set<IProgramVar> mReadonlyVars;
 
 	public SimultaneousUpdate(final Map<IProgramVar, Term> deterministicAssignment,
-			final Set<IProgramVar> havocedVars) {
+			final Set<IProgramVar> havocedVars, final Set<IProgramVar> readonlyVars) {
 		super();
 		mDeterministicAssignment = deterministicAssignment;
 		mHavocedVars = havocedVars;
+		mReadonlyVars = readonlyVars;
 	}
 
 	public static SimultaneousUpdate fromTransFormula(final TransFormula tf, final ManagedScript mgdScript)
 			throws SimultaneousUpdateException {
 		final Set<IProgramVar> havocedVars = new HashSet<>();
 		final Set<IProgramVar> assignmentCandidates = new HashSet<>();
+		final Set<IProgramVar> unmodifiedVars = new HashSet<>();
 		final Set<IProgramVar> allProgVars = TransFormula.collectAllProgramVars(tf);
 		for (final IProgramVar pv : allProgVars) {
 			if (tf.getInVars().get(pv) == tf.getOutVars().get(pv)) {
-				// var unchanged
-				continue;
-			}
-			if (tf.isHavocedOut(pv)) {
+				unmodifiedVars.add(pv);
+			} else if (tf.isHavocedOut(pv)) {
 				havocedVars.add(pv);
 			} else {
 				assignmentCandidates.add(pv);
@@ -133,7 +135,23 @@ public class SimultaneousUpdate {
 			}
 		}
 
-		return new SimultaneousUpdate(deterministicAssignment, havocedVars);
+		final Set<IProgramVar> readonlyVariables = new HashSet<>();
+		for (final IProgramVar pv : unmodifiedVars) {
+			if (isReadInSomeAssignment(pv, deterministicAssignment)) {
+				readonlyVariables.add(pv);
+			}
+		}
+		return new SimultaneousUpdate(deterministicAssignment, havocedVars, readonlyVariables);
+	}
+
+	private static boolean isReadInSomeAssignment(final IProgramVar pv,
+			final Map<IProgramVar, Term> deterministicAssignment) {
+		for (final Entry<IProgramVar, Term> entry : deterministicAssignment.entrySet()) {
+			if (Arrays.asList(entry.getValue().getFreeVars()).contains(pv.getTermVariable())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static Term tryToExtractAssigedTerm(final Script script, final Term conjunction, final TermVariable outVar,
@@ -213,13 +231,29 @@ public class SimultaneousUpdate {
 		return result;
 	}
 
+	/**
+	 * Returns the variables that occur on the right-hand side of updates.
+	 */
 	public Map<IProgramVar, Term> getDeterministicAssignment() {
 		return mDeterministicAssignment;
 	}
 
+	/**
+	 * Returns the variables to which a nondeterministic value is assigned.
+	 */
 	public Set<IProgramVar> getHavocedVars() {
 		return mHavocedVars;
 	}
+
+	/**
+	 * Returns the variables that occur on the left-hand side of updates but never
+	 * on the right-hand side.
+	 */
+	public Set<IProgramVar> getReadonlyVars() {
+		return mReadonlyVars;
+	}
+
+
 
 	public static class SimultaneousUpdateException extends Exception {
 
