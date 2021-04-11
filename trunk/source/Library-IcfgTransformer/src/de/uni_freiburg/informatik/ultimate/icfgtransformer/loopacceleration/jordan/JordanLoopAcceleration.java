@@ -115,9 +115,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	/**
 	 * Loop acceleration for loops with linear updates, where only -1,0,1 are
 	 * eigenvalues of the update matrix.
-	 * Try version that is restricted to eigenvalues 0 and 1 and block sizes
-	 * smaller than 3. If restricted version returns null try version for eigenvalues -1, 0 and 1 and
-	 * arbitrary block sizes.
 	 */
 	public static JordanLoopAccelerationResult accelerateLoop(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula,
@@ -183,6 +180,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				loopAccelerationFormula, jlasg);
 	}
 
+	/**
+	 * @return true iff -1 is an eigenvalue or for eigenvalue 1 there is a Jordan block of size greater than 2.
+	 */
 	private static boolean isAlternatingClosedFormRequired(final JordanTransformationResult jordanUpdate) {
 		final boolean minus1isEigenvalue = jordanUpdate.getJordanBlockSizes().containsKey(-1);
 		final boolean ev1hasBlockGreater2 = hasEv1JordanBlockStrictlyGreater2(jordanUpdate);
@@ -428,11 +428,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 
 	/**
-	 * Create the loop Acceleration formula and save as
-	 * JordanLoopAccelerationDefinitions which version of formula creation was used.
-	 * Version Ev01, works without case distinctions, for eigenvalues 0 and 1 and
-	 * block sizes smaller than 2. Version EvM101, needs case distinctions, for
-	 * eigenvalues 0,1 and -1 and arbitrary block sizes.
+	 * Create the loop Acceleration formula.
 	 *
 	 * @param isAlternatingClosedFormRequired If set we construct a closed from that
 	 *                                        consists of two formulas one for even

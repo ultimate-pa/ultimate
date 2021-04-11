@@ -277,8 +277,10 @@ public class PolynomialTermMatrix {
 
 	/**
 	 * Method that computes matrix that represents closed form out of the jordan decomposition.
-	 * If !restrictedVersionPossible Computes two closed form matrices for the two cases that
+	 * If !restrictedVersionPossible computes two closed form matrices for the two cases that
 	 * the iteration count is even or odd.
+	 * @return a pair consisting of the matrix and a boolean which is true iff the computation
+	 * of the matrix was successful.
 	 */
 	public static Pair<PolynomialTermMatrix, Boolean> computeClosedFormMatrix(
 			final ManagedScript mgdScript, final RationalMatrix modalUpdate, final JordanTransformationResult jordanUpdate,
