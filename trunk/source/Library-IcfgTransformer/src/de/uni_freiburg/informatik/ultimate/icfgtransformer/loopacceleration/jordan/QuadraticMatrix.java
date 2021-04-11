@@ -550,13 +550,15 @@ public class QuadraticMatrix {
 					}
 				}
 				for (int s=1; s<=n; s++) {
-					jordanBlockSizes.put(e, s, numberOfBlocks[s]);
+					if (numberOfBlocks[s] != 0) {
+						jordanBlockSizes.put(e, s, numberOfBlocks[s]);
+					}
 				}
 			}
 		}
 		return jordanBlockSizes;
 	}
-	
+
 	/**
 	 * Computes the jordan matrix of a given quadratic matrix given jordanBlockSizes which contains triples
 	 * (eigenvalue, blocksize, occurrence).
