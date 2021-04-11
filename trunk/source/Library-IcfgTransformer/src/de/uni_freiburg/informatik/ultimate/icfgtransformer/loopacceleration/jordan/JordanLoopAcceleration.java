@@ -115,6 +115,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 	/**
 	 * Loop acceleration for loops with linear updates, where only -1,0,1 are
 	 * eigenvalues of the update matrix.
+	 * Remark: the main parts of this algorithm also work if eigenvalues are (complex)
+	 * roots of unity with a suitable representation of complex numbers.
 	 */
 	public static JordanLoopAccelerationResult accelerateLoop(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula,
