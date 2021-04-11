@@ -619,7 +619,7 @@ public class QuadraticMatrix {
 			jtr = new JordanTransformationResult(status, null, null, null, null);
 		} else {
 			status = JordanTransformationStatus.SUCCESS;
-			final RationalMatrix modal = computeModalMatrix(this);
+			final RationalMatrix modal = computeModalMatrix(this, jordanMatrix);
 			final RationalMatrix inverseModal = RationalMatrix.computeInverse(modal);
 			assert checkCorrectnessofJordanDecomposition(this, modal, jordanMatrix, inverseModal);
 			jtr = new JordanTransformationResult(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
