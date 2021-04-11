@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -127,20 +128,28 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			su = SimultaneousUpdate.fromTransFormula(loopTransFormula, mgdScript);
 		} catch (final SimultaneousUpdateException e) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(-1,
-					-1, new NestedMap2<>());
+					-1, -1, new NestedMap2<>());
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.SIMULTANEOUS_UPDATE_FAILED, e.getMessage(), null,
 					jlasg);
 		}
 		final int numberOfAssignedVariables = su.getDeterministicAssignment().size();
 		final int numberOfHavocedVariables = su.getHavocedVars().size();
+		final int numberOfReadonlyVariables = su.getReadonlyVars().size();
+
+		if (!isIntegerLoop(su)) {
+			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
+					numberOfAssignedVariables, numberOfHavocedVariables, numberOfReadonlyVariables, new NestedMap2<>());
+			return new JordanLoopAccelerationResult(
+					JordanLoopAccelerationResult.AccelerationStatus.NONINTEGER_LOOP, null, null, jlasg);
+		}
 
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
 			final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 					.transform(update.getValue());
 			if (!polyRhs.isAffine()) {
 				final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
-						numberOfAssignedVariables, numberOfHavocedVariables, new NestedMap2<>());
+						numberOfAssignedVariables, numberOfHavocedVariables, numberOfReadonlyVariables, new NestedMap2<>());
 				return new JordanLoopAccelerationResult(
 						JordanLoopAccelerationResult.AccelerationStatus.NONLINEAR_UPDATE, null, null, jlasg);
 			}
@@ -151,10 +160,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final QuadraticMatrix updateMatrix = computeUpdateMatrix(mgdScript, su, varMatrixIndexMap);
 
 		final JordanTransformationResult jordanUpdate = updateMatrix.constructJordanTransformation();
+		assert isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables, jordanUpdate);
+
 
 		if (jordanUpdate.getStatus() == JordanTransformationStatus.UNSUPPORTED_EIGENVALUES) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
-					numberOfAssignedVariables, numberOfHavocedVariables, new NestedMap2<>());
+					numberOfAssignedVariables, numberOfHavocedVariables, numberOfReadonlyVariables, new NestedMap2<>());
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.UNSUPPORTED_EIGENVALUES, null, null, jlasg);
 		}
@@ -167,7 +178,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				mgdScript, su, varMatrixIndexMap, jordanUpdate, loopTransFormula, guardTf, true,
 				quantifyItFinExplicitly, isAlternatingClosedFormRequired);
 		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
-				numberOfAssignedVariables, numberOfHavocedVariables, jordanUpdate.getJordanBlockSizes());
+				numberOfAssignedVariables, numberOfHavocedVariables, numberOfReadonlyVariables, jordanUpdate.getJordanBlockSizes());
 		if (isAlternatingClosedFormRequired) {
 			jlasg.reportAlternatingAcceleration();
 		} else {
@@ -180,6 +191,34 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.SUCCESS, null,
 				loopAccelerationFormula, jlasg);
+	}
+
+	private static boolean isIntegerLoop(final SimultaneousUpdate su) {
+		for (final IProgramVar pv : su.getDeterministicAssignment().keySet()) {
+			if (!SmtSortUtils.isIntSort(pv.getSort())) {
+				return false;
+			}
+		}
+		for (final IProgramVar pv : su.getReadonlyVars()) {
+			if (!SmtSortUtils.isIntSort(pv.getSort())) {
+				throw new AssertionError("Non-integer neither written nor read - implement optimization");
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The sum of the sizes of all block is the sum of the number of assigned
+	 * variables, the number of unmodified variables and one (one is for the numbers
+	 * that are added in the loop).
+	 */
+	private static boolean isBlockSizeConsistent(final int numberOfAssignedVariables,
+			final int numberOfUnmodifiedVariables, final JordanTransformationResult jordanUpdate) {
+		int blockSizeSum = 0;
+		for (final Triple<Integer, Integer, Integer> triple : jordanUpdate.getJordanBlockSizes().entrySet()) {
+			blockSizeSum += triple.getSecond() * triple.getThird();
+		}
+		return (numberOfAssignedVariables + numberOfUnmodifiedVariables + 1 == blockSizeSum);
 	}
 
 	/**
@@ -1076,7 +1115,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private static class JordanLoopAccelerationResult {
 		public enum AccelerationStatus {
-			SUCCESS, SIMULTANEOUS_UPDATE_FAILED, NONLINEAR_UPDATE, UNSUPPORTED_EIGENVALUES,
+			SUCCESS, SIMULTANEOUS_UPDATE_FAILED, NONINTEGER_LOOP, NONLINEAR_UPDATE, UNSUPPORTED_EIGENVALUES,
 		};
 
 		private final AccelerationStatus mAccelerationStatus;

@@ -36,15 +36,19 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 
 	private final int mNumberOfAssignedVariables;
 	private final int mNumberOfHavocedVariables;
+	private final int mNumberOfReadonlyVariables;
 	private final NestedMap2<Integer, Integer, Integer> mEigenvalues;
 	private int mSequentialAcceleration;
 	private int mQuantifierFreeResult;
 	private int mAlternatingAcceleration;
 
-	public JordanLoopAccelerationStatisticsGenerator(final int numberOfAssignedVariables, final int numberOfHavocedVariables, final NestedMap2<Integer, Integer, Integer> eigenvalues) {
+	public JordanLoopAccelerationStatisticsGenerator(final int numberOfAssignedVariables,
+			final int numberOfHavocedVariables, final int numberOfReadonlyVariables,
+			final NestedMap2<Integer, Integer, Integer> eigenvalues) {
 		super();
 		mNumberOfAssignedVariables = numberOfAssignedVariables;
 		mNumberOfHavocedVariables = numberOfHavocedVariables;
+		mNumberOfReadonlyVariables = numberOfReadonlyVariables;
 		mEigenvalues = eigenvalues;
 		mSequentialAcceleration = 0;
 		mQuantifierFreeResult = 0;
@@ -59,6 +63,8 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 			return mNumberOfAssignedVariables;
 		case HavocedVariables:
 			return mNumberOfHavocedVariables;
+		case ReadonlyVariables:
+			return mNumberOfReadonlyVariables;
 		case Eigenvalues:
 			return mEigenvalues;
 		case SequentialAcceleration:
