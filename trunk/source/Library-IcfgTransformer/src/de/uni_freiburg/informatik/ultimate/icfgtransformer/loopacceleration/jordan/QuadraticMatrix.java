@@ -682,8 +682,8 @@ public class QuadraticMatrix {
 	 * @param jordanMatrix
 	 * @return modal matrix
 	 */
-	public static RationalMatrix computeModalMatrix(final QuadraticMatrix matrix, final QuadraticMatrix jordanMatrix) {
-		final int n = matrix.mDimension;
+	public static RationalMatrix computeModalMatrix(final QuadraticMatrix jordanMatrix) {
+		final int n = jordanMatrix.mDimension;
 		final QuadraticMatrix modalIntMatrix = constructZeroMatrix(n);
 		final RationalMatrix modalMatrix = new RationalMatrix(BigInteger.valueOf(1), modalIntMatrix);
 		// Hashmap that assigns order to list of columns corresponding to that order.
@@ -695,11 +695,11 @@ public class QuadraticMatrix {
 			zeroVector[i] = Rational.valueOf(BigInteger.valueOf(0), BigInteger.valueOf(1));
 		}
 		for (int lambda = 1; lambda >= -1; lambda--) {
-			if (matrix.computeSmallEigenvalues()[lambda + 1]) {
-				final QuadraticMatrix eigenvalueMatrix = addition(matrix,
+			if (jordanMatrix.computeSmallEigenvalues()[lambda + 1]) {
+				final QuadraticMatrix eigenvalueMatrix = addition(jordanMatrix,
 						scalarMultiplication(BigInteger.valueOf(-lambda), constructIdentityMatrix(n)));
 				int blockSize = n;
-				while (matrix.computeNumberOfBlocks(lambda, blockSize) == 0) {
+				while (jordanMatrix.computeNumberOfBlocks(lambda, blockSize) == 0) {
 					blockSize = blockSize - 1;
 				}
 				// s is the size of the greatest jordan block for lambda.
@@ -709,7 +709,7 @@ public class QuadraticMatrix {
 					columnOrder.put(order, orderList);
 				}
 				while (blockSize > 0) {
-					final int numberOfBlocks = matrix.computeNumberOfBlocks(lambda, blockSize);
+					final int numberOfBlocks = jordanMatrix.computeNumberOfBlocks(lambda, blockSize);
 					if (numberOfBlocks == 0) {
 						blockSize = blockSize - 1;
 						continue;
