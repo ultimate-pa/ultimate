@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark.AcceleratedInterpolationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorFastUPR;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorJordan;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorWernerOverapprox;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.IAccelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.ILoopdetector;
@@ -74,13 +77,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <LETTER>
  */
 public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
-
-	/**
-	 * How to deal with loops.
-	 */
-	public enum AccelerationMethod {
-		NONE, FAST_UPR, UNDERAPPROXIMATION, OVERAPPROXIMATION_WERNER
-	}
 
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
@@ -139,17 +135,24 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 		if ("FAST_UPR".equals(accelerationMethod)) {
 			loopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
+			final List<String> fastUPRPreprocessOptions = new ArrayList<>(Arrays.asList("ite", "mod", "!=", "not"));
 			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
-					mIcfg.getCfgSmtToolkit());
+					mIcfg.getCfgSmtToolkit(), fastUPRPreprocessOptions);
 			loopAccelerator =
 					new AcceleratorFastUPR(mLogger, mScript, mServices, mIcfg.getCfgSmtToolkit().getSymbolTable());
 
 		} else if ("WERNER_OVERAPPROX".equals(accelerationMethod)) {
 			loopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
 			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
-					mIcfg.getCfgSmtToolkit());
+					mIcfg.getCfgSmtToolkit(), new ArrayList<>(Arrays.asList("")));
 			loopAccelerator = new AcceleratorWernerOverapprox(mLogger, mScript, mServices,
 					mIcfg.getCfgSmtToolkit().getSymbolTable());
+
+		} else if ("JORDAN".equals(accelerationMethod)) {
+			loopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
+			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
+					mIcfg.getCfgSmtToolkit(), new ArrayList<>(Arrays.asList("")));
+			loopAccelerator = new AcceleratorJordan(mLogger, mScript, mServices);
 		} else {
 			throw new UnsupportedOperationException();
 		}

@@ -755,6 +755,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum AcceleratedInterpolationLoopAccelerationTechnique {
-		FAST_UPR, WERNER_OVERAPPROX
+		FAST_UPR, WERNER_OVERAPPROX, JORDAN
 	}
 }

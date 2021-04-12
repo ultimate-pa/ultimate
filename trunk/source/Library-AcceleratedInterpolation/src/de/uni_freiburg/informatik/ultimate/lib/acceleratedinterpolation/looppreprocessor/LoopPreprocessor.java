@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +80,8 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 	 * @param predUnifier
 	 */
 	public LoopPreprocessor(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
-			final IPredicateUnifier predUnifier, final PredicateHelper<L> predHelper, final CfgSmtToolkit toolkit) {
+			final IPredicateUnifier predUnifier, final PredicateHelper<L> predHelper, final CfgSmtToolkit toolkit,
+			final List<String> preProcessOptions) {
 		mLogger = logger;
 		mScript = script;
 		// mPredUnifier = predUnifier;
@@ -89,8 +89,7 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 		mServices = services;
 		mCsToolkit = toolkit;
 		mReplacementVarFactory = new ReplacementVarFactory(mCsToolkit, false);
-
-		mOptions = new ArrayList<>(Arrays.asList("ite", "mod", "!=", "not"));
+		mOptions = preProcessOptions;
 	}
 
 	@Override
