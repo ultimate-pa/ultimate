@@ -109,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  */
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 	private final PartialOrderMode mPartialOrderMode;
+	private final boolean mConditionalPor;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final IDfsVisitor<L, IPredicate> mVisitor;
 	private final IDfsOrder<L, IPredicate> mDfsOrder = ConstantDfsOrder.byHashCode();
@@ -140,11 +141,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				? new DeadEndOptimizingSearchVisitor<>(this::createVisitor)
 				: null;
 
+		mConditionalPor = mPref.getConditionalPor();
 		final IIndependenceRelation<IPredicate, L> semanticIndependence = constructSemanticIndependence(csToolkit);
 		final DefaultIndependenceCache<IPredicate, L> independenceCache = new DefaultIndependenceCache<>();
 		final IIndependenceRelation<IPredicate, L> unconditionalRelation =
 				constructUnconditionalIndependence(semanticIndependence, independenceCache);
-		mConditionalRelation = constructConditionalIndependence(semanticIndependence, independenceCache);
+		if (mConditionalPor) {
+			mConditionalRelation = constructConditionalIndependence(semanticIndependence, independenceCache);
+		} else {
+			mConditionalRelation = null;
+		}
 		mIndependenceRelation = constructIndependenceRelation(unconditionalRelation);
 		mPersistent = createPersistentSets(unconditionalRelation);
 	}
@@ -181,7 +187,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
 
 		// Update independence relation
-		mConjunctIndependenceRelations.add(mConditionalRelation);
+		if (mConditionalPor) {
+			mConjunctIndependenceRelations.add(mConditionalRelation);
+		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -278,7 +286,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final ManagedScript independenceScript = constructIndependenceScript();
 		final TermTransferrer independenceTransferrer =
 				new TermTransferrer(csToolkit.getManagedScript().getScript(), independenceScript.getScript());
-		return new SemanticIndependenceRelation<>(mServices, independenceScript, true, false, independenceTransferrer);
+		return new SemanticIndependenceRelation<>(mServices, independenceScript, mConditionalPor, false,
+				independenceTransferrer);
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructConditionalIndependence(
@@ -296,17 +305,27 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private IIndependenceRelation<IPredicate, L> constructUnconditionalIndependence(
 			final IIndependenceRelation<IPredicate, L> semanticIndependence,
 			final IIndependenceCache<IPredicate, L> independenceCache) {
+		final IIndependenceRelation<IPredicate, L> unconditional;
+		if (semanticIndependence.isConditional()) {
+			unconditional = ConditionTransformingIndependenceRelation.unconditional(semanticIndependence);
+		} else {
+			unconditional = semanticIndependence;
+		}
 		return new CachedIndependenceRelation<>(
-				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(),
-						ConditionTransformingIndependenceRelation.unconditional(semanticIndependence))),
+				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(), unconditional)),
 				independenceCache);
 	}
 
 	private IIndependenceRelation<IPredicate, L>
 			constructIndependenceRelation(final IIndependenceRelation<IPredicate, L> unconditionalRelation) {
-		mConjunctIndependenceRelations.add(unconditionalRelation);
-		return new ThreadSeparatingIndependenceRelation<>(
-				new DistributingIndependenceRelation<>(mConjunctIndependenceRelations, this::getConjuncts));
+		final IIndependenceRelation<IPredicate, L> independence;
+		if (mConditionalPor) {
+			mConjunctIndependenceRelations.add(unconditionalRelation);
+			independence = new DistributingIndependenceRelation<>(mConjunctIndependenceRelations, this::getConjuncts);
+		} else {
+			independence = unconditionalRelation;
+		}
+		return new ThreadSeparatingIndependenceRelation<>(independence);
 	}
 
 	private final IPersistentSetChoice<L, IPredicate>
@@ -390,10 +409,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final IPredicate newState = mPredicateFactory.newMLPredicate(locations, formula);
 
 			// Update the map back to individual conjuncts
-			final IPredicate[] oldDistribution = getConjuncts(state1);
-			final IPredicate[] newDistribution = Arrays.copyOf(oldDistribution, oldDistribution.length + 1);
-			newDistribution[newDistribution.length - 1] = state2;
-			mPredicateConjuncts.put(newState, newDistribution);
+			if (mConditionalPor) {
+				final IPredicate[] oldDistribution = getConjuncts(state1);
+				final IPredicate[] newDistribution = Arrays.copyOf(oldDistribution, oldDistribution.length + 1);
+				newDistribution[newDistribution.length - 1] = state2;
+				mPredicateConjuncts.put(newState, newDistribution);
+			}
 
 			// Transfer dead state info
 			if (mVisitor instanceof DeadEndOptimizingSearchVisitor<?, ?, ?>) {
