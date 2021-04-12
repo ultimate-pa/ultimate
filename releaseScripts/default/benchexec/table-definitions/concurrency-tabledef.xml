@@ -32,6 +32,19 @@
     <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
   </result>
 
+  <!-- results for Automizer (Lazy Product) -->
+  <!-- ==================================== -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.None.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+  </result>
+
   <!-- results for Petri Automizer -->
   <!-- =========================== -->
   <result filename="*.results.Automizer PN.xml" />
@@ -131,6 +144,24 @@
     <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
     <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
     <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+  </result>
+
+  <!-- results for Automizer with integrated Sleep Set POR, using New States variant (unconditional commutativity) -->
+  <!-- =========================================================================================================== -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleepUncond.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column> <!-- should always be 0 -->
   </result>
 
   <!-- results for Automizer with integrated Persistent Set POR -->
