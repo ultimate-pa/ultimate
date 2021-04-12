@@ -6,6 +6,7 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
 	</rundefinition>
 
+<!--
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.None">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-None-NoLbe.epf</option>
 	</rundefinition>
@@ -29,6 +30,7 @@
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe.epf</option>
 	</rundefinition>
+-->
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
@@ -38,6 +40,7 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepUncond-NoLbe.epf</option>
 	</rundefinition>
 
+<!--
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.Persistent">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistent-NoLbe.epf</option>
 	</rundefinition>
@@ -49,6 +52,7 @@
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.SemanticLbe">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-SemanticLbe.epf</option>
 	</rundefinition>
+-->
 
 	<tasks name="SVCOMP ConcurrencySafety-Main">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
