@@ -57,18 +57,21 @@
 	<tasks name="SVCOMP ConcurrencySafety-Main">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
 	</tasks>
 
 	<tasks name="Ultimate Repo: pthreads">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
+		<excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
 	</tasks>
 
 	<tasks name="Ultimate Repo: Boogie">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
 		<includesfile>../../../trunk/examples/bench-concurrent-boogie.set</includesfile>
+		<excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
 	</tasks>
 
