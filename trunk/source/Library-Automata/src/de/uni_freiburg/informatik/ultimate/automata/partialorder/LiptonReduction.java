@@ -78,6 +78,7 @@ public class LiptonReduction<L, P> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final ICompositionFactory<L> mCompositionFactory;
+	private final IPlaceFactory<P> mPlaceFactory;
 	protected final IIndependenceRelation<Set<P>, L> mMoverCheck;
 
 	private BranchingProcess<L, P> mBranchingProcess;
@@ -90,7 +91,6 @@ public class LiptonReduction<L, P> {
 	private final BoundedPetriNet<L, P> mPetriNet;
 	private BoundedPetriNet<L, P> mResult;
 	protected final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
-	private final IStuckPlaceChecker<L, P> mStuckPlaceChecker;
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -101,23 +101,22 @@ public class LiptonReduction<L, P> {
 	 *            The Petri Net on which the Lipton reduction should be performed.
 	 * @param compositionFactory
 	 *            An {@link ICompositionFactory} capable of performing compositions for the given alphabet.
+	 * @param placeFactory
+	 *            An {@link IPlaceFactory} capable of creating places for the given Petri net.
 	 * @param independenceRelation
 	 *            The independence relation used for mover checks.
-	 * @param stuckPlaceChecker
-	 *            An {@link IStuckPlaceChecker}.
 	 */
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
-			final ICompositionFactory<L> compositionFactory,
-			final IIndependenceRelation<Set<P>, L> independenceRelation,
-			final IStuckPlaceChecker<L, P> stuckPlaceChecker) {
+			final ICompositionFactory<L> compositionFactory, final IPlaceFactory<P> placeFactory,
+			final IIndependenceRelation<Set<P>, L> independenceRelation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mCompositionFactory = compositionFactory;
+		mPlaceFactory = placeFactory;
 		mMoverCheck = independenceRelation;
 		mPetriNet = petriNet;
 		mCutOffs = new HashRelation<>();
 		mNewToOldTransitions = new HashMap<>();
-		mStuckPlaceChecker = stuckPlaceChecker;
 	}
 
 	/**
@@ -278,6 +277,7 @@ public class LiptonReduction<L, P> {
 		final Set<ITransition<L, P>> obsoleteTransitions = new HashSet<>();
 		final Set<ITransition<L, P>> composedTransitions = new HashSet<>();
 		final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions = new HashSet<>();
+		final Map<P, Set<ITransition<L, P>>> transitionsToBeReplaced = new HashMap<>();
 
 		for (final P place : places) {
 			if (initialPlaces.contains(place)) {
@@ -295,14 +295,12 @@ public class LiptonReduction<L, P> {
 				continue;
 			}
 
-			if (mStuckPlaceChecker.mightGetStuck(petriNet, place)) {
-				continue;
-			}
-
 			final boolean isYv = incomingTransitions.size() != 1;
 
 			final Set<ITransition<L, P>> composedHere = new HashSet<>();
 			boolean completeComposition = true;
+
+			final Set<ITransition<L, P>> replacementNeeded = new HashSet<>();
 
 			for (final ITransition<L, P> t1 : incomingTransitions) {
 				if (composedTransitions.contains(t1) || petriNet.getPredecessors(t1).contains(place)) {
@@ -332,6 +330,9 @@ public class LiptonReduction<L, P> {
 						}
 						composedHere.add(t1);
 						composedHere.add(t2);
+
+						replacementNeeded.add(t1);
+
 						if (isYv) {
 							obsoleteTransitions.add(t1);
 						} else {
@@ -360,6 +361,24 @@ public class LiptonReduction<L, P> {
 			}
 
 			composedTransitions.addAll(composedHere);
+			if (!replacementNeeded.isEmpty()) {
+				transitionsToBeReplaced.put(place, replacementNeeded);
+			}
+		}
+
+		for (final Map.Entry<P, Set<ITransition<L, P>>> entry : transitionsToBeReplaced.entrySet()) {
+			final P deadPlace = mPlaceFactory.createPlace();
+			petriNet.addPlace(deadPlace, false, false);
+
+			for (final ITransition<L, P> t : entry.getValue()) {
+				final Set<P> post = new HashSet<>(petriNet.getSuccessors(t));
+				post.remove(entry.getKey());
+				post.add(deadPlace);
+				final ITransition<L, P> newTransition =
+						petriNet.addTransition(t.getSymbol(), petriNet.getPredecessors(t), post);
+				mNewToOldTransitions.put(newTransition, getOriginalTransition(t));
+				mCoEnabledRelation.copyRelationships(t, newTransition);
+			}
 		}
 
 		final Map<L, ITransition<L, P>> composedLetters2Transitions = new HashMap<>();
@@ -379,8 +398,6 @@ public class LiptonReduction<L, P> {
 		// delete obsolete information
 		for (final ITransition<L, P> t : obsoleteTransitions) {
 			mCoEnabledRelation.deleteElement(t);
-			removeMoverProperties(t.getSymbol());
-			mSequentialCompositions.remove(t.getSymbol());
 		}
 
 		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);

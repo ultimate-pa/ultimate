@@ -26,28 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-
 /**
- * An interface that supports checking whether execution might get stuck in a place.
+ * An interface for creating places in a Petri net.
  *
- * @param <L>
- *            The type of the letters in the Petri net.
  * @param <P>
- *            The type of the places in the Petri net.
+ *            The type of places in the Petri net.
  */
-public interface IStuckPlaceChecker<L, P> {
+public interface IPlaceFactory<P> {
 	/**
-	 * Checks whether execution might get stuck at the given place. This is the case if there exists a valuation for
-	 * which none of the successor transitions' formulas is satisfied. This function will return true if this property
-	 * cannot be proven. Note that predecessor locations of the transitions are not taken into account. They are assumed
-	 * to be not more restrictive than the formulas. This function may cache the result.
+	 * Creates a new place for a Petri net. The place still needs to be added manually to the Petri net.
 	 *
-	 * @param petriNet
-	 *            The Petri net.
-	 * @param place
-	 *            A place in the Petri net.
-	 * @return false if there is always successor transition with a satisfied formula, true if there might not be one.
+	 * @return A new place.
 	 */
-	boolean mightGetStuck(IPetriNet<L, P> petriNet, P place);
+	P createPlace();
 }
