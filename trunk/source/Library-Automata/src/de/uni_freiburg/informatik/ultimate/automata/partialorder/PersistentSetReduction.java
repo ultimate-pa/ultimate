@@ -28,10 +28,13 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Comparator;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Performs persistent set reduction on top of sleep set reduction. The goal of this is primarily to reduce the size (in
@@ -48,7 +51,7 @@ public final class PersistentSetReduction {
 	public static <L, S> void applyWithoutSleepSets(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IDfsOrder<L, S> dfsOrder, final IPersistentSetChoice<L, S> persistent,
 			final IDfsVisitor<L, S> visitor) {
-		final IDfsOrder<L, S> combinedOrder = new PersistentDfsOrder<>(persistent, dfsOrder);
+		final IDfsOrder<L, S> combinedOrder = new CompliantDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new DepthFirstTraversal<>(operand, combinedOrder, combinedVisitor);
 	}
@@ -58,7 +61,7 @@ public final class PersistentSetReduction {
 			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, R> dfsOrder,
 			final ISleepSetStateFactory<L, S, R> factory, final IPersistentSetChoice<L, R> persistent,
 			final IDfsVisitor<L, R> visitor) throws AutomataOperationCanceledException {
-		final IDfsOrder<L, R> combinedOrder = new PersistentDfsOrder<>(persistent, dfsOrder);
+		final IDfsOrder<L, R> combinedOrder = new CompliantDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetNewStateReduction<>(services, operand, factory, independenceRelation, combinedOrder,
 				combinedVisitor);
@@ -69,7 +72,7 @@ public final class PersistentSetReduction {
 			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, S> dfsOrder,
 			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor)
 			throws AutomataOperationCanceledException {
-		final IDfsOrder<L, S> combinedOrder = new PersistentDfsOrder<>(persistent, dfsOrder);
+		final IDfsOrder<L, S> combinedOrder = new CompliantDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetDelayReduction<>(services, operand, new ISleepSetStateFactory.NoUnrolling<>(), independenceRelation,
 				combinedOrder, combinedVisitor);
@@ -140,11 +143,11 @@ public final class PersistentSetReduction {
 	 * @param <S>
 	 *            The type of states in the reduced automaton
 	 */
-	private static class PersistentDfsOrder<L, S> implements IDfsOrder<L, S> {
+	private static class CompliantDfsOrder<L, S> implements IDfsOrder<L, S> {
 		private final IPersistentSetChoice<L, S> mPersistent;
 		private final IDfsOrder<L, S> mUnderlying;
 
-		public PersistentDfsOrder(final IPersistentSetChoice<L, S> persistent, final IDfsOrder<L, S> underlying) {
+		public CompliantDfsOrder(final IPersistentSetChoice<L, S> persistent, final IDfsOrder<L, S> underlying) {
 			mPersistent = persistent;
 			mUnderlying = underlying;
 		}
@@ -161,6 +164,42 @@ public final class PersistentSetReduction {
 				}
 				return comparator.compare(a, b);
 			};
+		}
+	}
+
+	/**
+	 * A persistent set choice that can be used with sleep set reduction.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters in the reduced automaton
+	 * @param <S>
+	 *            The type of states in the reduced automaton
+	 */
+	private static class CompliantPersistentSetChoice<L, S> implements IPersistentSetChoice<L, S> {
+		private final IPersistentSetChoice<L, S> mUnderlying;
+		private final IDfsOrder<L, S> mOrder;
+		private final Function<S, Set<L>> mEnabledLetters;
+
+		public CompliantPersistentSetChoice(final IPersistentSetChoice<L, S> underlying, final IDfsOrder<L, S> order,
+				final Function<S, Set<L>> enabledLetters) {
+			mUnderlying = underlying;
+			mOrder = order;
+			mEnabledLetters = enabledLetters;
+		}
+
+		@Override
+		public Set<L> persistentSet(final S state) {
+			final Set<L> set = mUnderlying.persistentSet(state);
+			if (set == null) {
+				return set;
+			}
+
+			final Comparator<L> comparator = mOrder.getOrder(state);
+			final Set<L> additional = mEnabledLetters.apply(state).stream()
+					.filter(a -> set.stream().anyMatch(b -> comparator.compare(a, b) <= 0)).collect(Collectors.toSet());
+			return DataStructureUtils.union(set, additional);
 		}
 	}
 }

@@ -40,12 +40,12 @@ import java.util.Set;
  */
 public interface IPersistentSetChoice<L, S> {
 	/**
-	 * Given a state, returns a set of letters forming a persistent set for this state. Return null to represent the
-	 * trivial persistent set.
+	 * Given a state, returns a set of letters, such that some subset is a persistent set for this state. Return null to
+	 * represent the trivial persistent set.
 	 *
 	 * @param state
 	 *            A state of the reduction's input automaton
-	 * @return the persistent set, or null
+	 * @return the (superset of a) persistent set, or null
 	 */
 	Set<L> persistentSet(final S state);
 }
