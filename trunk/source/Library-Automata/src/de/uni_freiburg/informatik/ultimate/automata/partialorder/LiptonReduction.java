@@ -84,7 +84,7 @@ public class LiptonReduction<L, P> {
 	private final HashRelation<Event<L, P>, Event<L, P>> mCutOffs;
 	protected CoenabledRelation<L, P> mCoEnabledRelation;
 	private final Map<L, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
-	private final Map<L, Set<L>> mChoiceCompositions = new HashMap<>();
+	private final Map<L, Set<ITransition<L, P>>> mChoiceCompositions = new HashMap<>();
 	private final Map<ITransition<L, P>, ITransition<L, P>> mNewToOldTransitions;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
@@ -230,7 +230,7 @@ public class LiptonReduction<L, P> {
 
 					final List<L> parallelLetters = Arrays.asList(t1.getSymbol(), t2.getSymbol());
 					final L composedLetter = mCompositionFactory.composeParallel(parallelLetters);
-					mChoiceCompositions.put(composedLetter, new HashSet<>(parallelLetters));
+					mChoiceCompositions.put(composedLetter, new HashSet<>(Arrays.asList(t1, t2)));
 
 					// Create new element of choiceStack.
 					pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
@@ -437,52 +437,63 @@ public class LiptonReduction<L, P> {
 		}
 
 		final boolean structurallyCorrect =
-				!petriNet.getSuccessors(t2).contains(place) && checkForEventsInBetween(t1, t2);
+				!petriNet.getSuccessors(t2).contains(place) && checkForEventsInBetween(t1, t2, place, petriNet);
 		if (!structurallyCorrect) {
 			return false;
 		}
 		return performMoverCheck(petriNet, t1, t2);
 	}
 
-	private boolean checkForEventsInBetween(final ITransition<L, P> t1, final ITransition<L, P> t2) {
-		final Set<Event<L, P>> ignoredEvents = new HashSet<>();
-
-		final Set<Event<L, P>> t1Events;
-		if (mSequentialCompositions.containsKey(t1.getSymbol())) {
-			final List<ITransition<L, P>> originalTransitions = mSequentialCompositions.get(t1.getSymbol());
-			final ITransition<L, P> relevantTransition = originalTransitions.get(0);
-			t1Events = mBranchingProcess.getEvents(getOriginalTransition(relevantTransition));
-			ignoredEvents.addAll(originalTransitions.stream().flatMap(t -> mBranchingProcess.getEvents(t).stream())
-					.collect(Collectors.toList()));
-		} else if (mChoiceCompositions.containsKey(t1.getSymbol())) {
-			// Skip this case for now
-			return false;
+	private Set<ITransition<L, P>> getFirstTransitions(final ITransition<L, P> t) {
+		if (mSequentialCompositions.containsKey(t.getSymbol())) {
+			final List<ITransition<L, P>> transitions = mSequentialCompositions.get(t.getSymbol());
+			return getFirstTransitions(transitions.get(0));
+		} else if (mChoiceCompositions.containsKey(t.getSymbol())) {
+			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(t2 -> getFirstTransitions(t2).stream())
+					.collect(Collectors.toSet());
 		} else {
-			t1Events = mBranchingProcess.getEvents(getOriginalTransition(t1));
-			ignoredEvents.addAll(t1Events);
+			final ITransition<L, P> originalTransition = getOriginalTransition(t);
+			return new HashSet<>(Arrays.asList(originalTransition));
 		}
+	}
 
-		final Set<Event<L, P>> t2Events;
-		if (mSequentialCompositions.containsKey(t2.getSymbol())) {
-			final List<ITransition<L, P>> originalTransitions = mSequentialCompositions.get(t2.getSymbol());
-			final ITransition<L, P> relevantTransition = originalTransitions.get(originalTransitions.size() - 1);
-			t2Events = mBranchingProcess.getEvents(getOriginalTransition(relevantTransition));
-			ignoredEvents.addAll(originalTransitions.stream().flatMap(t -> mBranchingProcess.getEvents(t).stream())
-					.collect(Collectors.toList()));
-		} else if (mChoiceCompositions.containsKey(t2.getSymbol())) {
-			// Skip this case for now
-			return false;
+	private Set<ITransition<L, P>> getLastTransitions(final ITransition<L, P> t) {
+		if (mSequentialCompositions.containsKey(t.getSymbol())) {
+			final List<ITransition<L, P>> transitions = mSequentialCompositions.get(t.getSymbol());
+			return getLastTransitions(transitions.get(transitions.size() - 1));
+		} else if (mChoiceCompositions.containsKey(t.getSymbol())) {
+			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(t2 -> getLastTransitions(t2).stream())
+					.collect(Collectors.toSet());
 		} else {
-			t2Events = mBranchingProcess.getEvents(getOriginalTransition(t2));
-			ignoredEvents.addAll(t2Events);
+			final ITransition<L, P> originalTransition = getOriginalTransition(t);
+			return new HashSet<>(Arrays.asList(originalTransition));
 		}
+	}
 
-		assert !t1Events.isEmpty();
-		assert !t2Events.isEmpty();
+	private Set<Event<L, P>> getFirstEvents(final ITransition<L, P> t) {
+		return getFirstTransitions(t).stream().flatMap(t2 -> mBranchingProcess.getEvents(t2).stream())
+				.collect(Collectors.toSet());
+	}
+
+	private Set<Event<L, P>> getLastEvents(final ITransition<L, P> t) {
+		return getLastTransitions(t).stream().flatMap(t2 -> mBranchingProcess.getEvents(t2).stream())
+				.collect(Collectors.toSet());
+	}
+
+	private boolean checkForEventsInBetween(final ITransition<L, P> t1, final ITransition<L, P> t2, final P place,
+			final BoundedPetriNet<L, P> petriNet) {
+
+		final Set<ITransition<L, P>> transitions = DataStructureUtils.difference(petriNet.getSuccessors(t1).stream()
+				.flatMap(p2 -> petriNet.getSuccessors(p2).stream()).collect(Collectors.toSet()),
+				petriNet.getSuccessors(place));
+
+		final Set<Event<L, P>> t1Events =
+				transitions.stream().flatMap(t -> getFirstEvents(t).stream()).collect(Collectors.toSet());
+		final Set<Event<L, P>> t2Events = getLastEvents(t2);
 
 		for (final Event<L, P> e1 : t1Events) {
 			for (final Event<L, P> e2 : t2Events) {
-				if (containsEventInBetween(e1, e2, ignoredEvents, new HashSet<>())) {
+				if (isAncestorEvent(e1, e2, new HashSet<>())) {
 					return false;
 				}
 			}
@@ -503,20 +514,19 @@ public class LiptonReduction<L, P> {
 		return mNewToOldTransitions.getOrDefault(t, t);
 	}
 
-	private boolean containsEventInBetween(final Event<L, P> e1, final Event<L, P> e2,
-			final Set<Event<L, P>> ignoredEvents, final Set<Event<L, P>> cutOffsVisited) {
-		for (final Event<L, P> e3 : e2.getLocalConfiguration()) {
-			if (e3 != e2 && !ignoredEvents.contains(e3) && e3.getLocalConfiguration().contains(e1)) {
-				return true;
-			}
+	private boolean isAncestorEvent(final Event<L, P> e1, final Event<L, P> e2, final Set<Event<L, P>> cutOffsVisited) {
+		if (e2.getLocalConfiguration().contains(e1)) {
+			return true;
+		}
 
+		for (final Event<L, P> e3 : e2.getLocalConfiguration()) {
 			if (mCutOffs.getDomain().contains(e3)) {
 				for (final Event<L, P> cutoff : mCutOffs.getImage(e3)) {
 					if (cutOffsVisited.contains(cutoff)) {
 						continue;
 					}
 					cutOffsVisited.add(cutoff);
-					if (containsEventInBetween(e1, cutoff, ignoredEvents, cutOffsVisited)) {
+					if (isAncestorEvent(e1, cutoff, cutOffsVisited)) {
 						return true;
 					}
 				}
@@ -638,7 +648,8 @@ public class LiptonReduction<L, P> {
 	}
 
 	public Map<L, Set<L>> getChoiceCompositions() {
-		return mChoiceCompositions;
+		return mChoiceCompositions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+				e -> e.getValue().stream().map(ITransition::getSymbol).collect(Collectors.toSet())));
 	}
 
 	public LiptonReductionStatisticsGenerator getStatistics() {
