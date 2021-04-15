@@ -242,8 +242,9 @@ public class LiptonReduction<L, P> {
 			}
 		}
 		final Map<L, ITransition<L, P>> composedLetters2Transitions = new HashMap<>();
+		final Map<ITransition<L, P>, ITransition<L, P>> oldToNewTransitions = new HashMap<>();
 		final BoundedPetriNet<L, P> newNet = copyPetriNetWithModification(petriNet, pendingCompositions,
-				composedTransitions, composedLetters2Transitions);
+				composedTransitions, composedLetters2Transitions, oldToNewTransitions);
 
 		// update information for composed transition
 		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> composition : pendingCompositions) {
@@ -259,6 +260,7 @@ public class LiptonReduction<L, P> {
 			removeMoverProperties(t.getSymbol());
 		}
 
+		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
 		return newNet;
 	}
 
@@ -361,8 +363,9 @@ public class LiptonReduction<L, P> {
 		}
 
 		final Map<L, ITransition<L, P>> composedLetters2Transitions = new HashMap<>();
+		final Map<ITransition<L, P>, ITransition<L, P>> oldToNewTransitions = new HashMap<>();
 		final BoundedPetriNet<L, P> newNet = copyPetriNetWithModification(petriNet, pendingCompositions,
-				obsoleteTransitions, composedLetters2Transitions);
+				obsoleteTransitions, composedLetters2Transitions, oldToNewTransitions);
 
 		// update information for composed transition
 		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> composition : pendingCompositions) {
@@ -380,6 +383,7 @@ public class LiptonReduction<L, P> {
 			mSequentialCompositions.remove(t.getSymbol());
 		}
 
+		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
 		return newNet;
 	}
 
@@ -536,7 +540,8 @@ public class LiptonReduction<L, P> {
 	 */
 	private BoundedPetriNet<L, P> copyPetriNetWithModification(final BoundedPetriNet<L, P> petriNet,
 			final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions,
-			final Set<ITransition<L, P>> obsoleteTransitions, final Map<L, ITransition<L, P>> letters2Transitions) {
+			final Set<ITransition<L, P>> obsoleteTransitions, final Map<L, ITransition<L, P>> letters2Transitions,
+			final Map<ITransition<L, P>, ITransition<L, P>> oldToNewTransitions) {
 
 		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> triplet : pendingCompositions) {
 			petriNet.getAlphabet().add(triplet.getFirst());
@@ -555,10 +560,8 @@ public class LiptonReduction<L, P> {
 		final Set<ITransition<L, P>> transitionsToKeep = new HashSet<>(petriNet.getTransitions());
 		transitionsToKeep.removeAll(obsoleteTransitions);
 
-		final Map<ITransition<L, P>, ITransition<L, P>> oldToNewTransitions = new HashMap<>();
 		final BoundedPetriNet<L, P> newPetriNet = CopySubnet.copy(mServices, petriNet, transitionsToKeep,
 				petriNet.getAlphabet(), true, oldToNewTransitions);
-		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
 		oldToNewTransitions.forEach((oldT, newT) -> mNewToOldTransitions.put(newT, getOriginalTransition(oldT)));
 		letters2Transitions.replaceAll((l, t) -> oldToNewTransitions.get(t));
 		return newPetriNet;
