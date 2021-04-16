@@ -190,7 +190,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
 				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
 						mSimplificationTechnique, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
+				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
 
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
