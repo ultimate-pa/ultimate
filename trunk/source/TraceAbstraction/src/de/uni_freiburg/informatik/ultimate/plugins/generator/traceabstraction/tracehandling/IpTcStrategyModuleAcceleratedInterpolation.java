@@ -58,7 +58,6 @@ public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransitio
 	public IpTcStrategyModuleAcceleratedInterpolation(final ILogger logger, final IRun<L, ?> counterexample,
 			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<L> prefs,
 			final Class<L> transitionClazz) {
-		super();
 		mCounterexample = counterexample;
 		mPredicateUnifier = predicateUnifier;
 		mLogger = logger;
@@ -67,9 +66,10 @@ public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransitio
 		mScript = mPrefs.getCfgSmtToolkit().getManagedScript();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
-		return new AcceleratedInterpolation<L>(mLogger, mPrefs, mScript, mPredicateUnifier,
+		return new AcceleratedInterpolation<>(mLogger, mPrefs, mScript, mPredicateUnifier,
 				(IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
 				mPrefs.getLoopAccelerationTechnique().toString());
 	}
