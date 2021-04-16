@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -36,48 +35,34 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
+ * Variation of {@link IcfgEdgeIterator} that goes backwards.
  *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class IcfgEdgeIterator implements Iterator<IcfgEdge> {
+public class ReverseIcfgEdgeIterator implements Iterator<IcfgEdge> {
+	private final Deque<IcfgEdge> mWorklist = new ArrayDeque<>();
+	private final Set<IcfgEdge> mFinished = new HashSet<>();
+	private final Predicate<IcfgEdge> mIncludePredecessors;
 
-	private final Deque<IcfgEdge> mWorklist;
-	private final Set<IcfgEdge> mFinished;
-	private final Predicate<IcfgEdge> mIncludeSuccessors;
-
-	public <T extends IcfgEdge> IcfgEdgeIterator(final T edge) {
-		this(Collections.singleton(edge));
-	}
-
-	public <T extends IcfgEdge> IcfgEdgeIterator(final Collection<T> edges) {
-		this(edges, null);
-	}
-
-	public <T extends IcfgEdge> IcfgEdgeIterator(final Collection<T> edges,
-			final Predicate<IcfgEdge> includeSuccessors) {
-		mFinished = new HashSet<>();
-		mWorklist = new ArrayDeque<>();
-		mWorklist.addAll(edges);
-		mFinished.addAll(mWorklist);
-		mIncludeSuccessors = includeSuccessors;
-	}
-
-	public IcfgEdgeIterator(final IIcfg<?> icfg) {
-		this(icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet()));
-	}
-
-	public IcfgEdgeIterator(final IcfgLocation loc) {
-		this(loc.getOutgoingEdges());
-	}
-
-	public IcfgEdgeIterator(final IcfgLocation loc, final Predicate<IcfgEdge> includeSuccessors) {
-		this(loc.getOutgoingEdges(), includeSuccessors);
+	/**
+	 * Create a new iterator
+	 *
+	 * @param <T>
+	 *            a sub-type of {@link IcfgEdge}
+	 * @param startEdges
+	 *            A set of edges that serve as start-point
+	 * @param includePredecessors
+	 *            an optional predicate that determines if a given edge's predecessors are iterated over or not (null if
+	 *            no predicate should be used, and predecessors are always included)
+	 */
+	public <T extends IcfgEdge> ReverseIcfgEdgeIterator(final Collection<T> startEdges,
+			final Predicate<IcfgEdge> includePredecessors) {
+		mWorklist.addAll(startEdges);
+		mIncludePredecessors = includePredecessors;
 	}
 
 	@Override
@@ -88,17 +73,17 @@ public class IcfgEdgeIterator implements Iterator<IcfgEdge> {
 	@Override
 	public IcfgEdge next() {
 		final IcfgEdge current = mWorklist.removeFirst();
-		final IcfgLocation target = current.getTarget();
-		if (target == null) {
-			assert false : "Dangling edge";
-			return current;
+		final IcfgLocation source = current.getSource();
+		if (source != null && (mIncludePredecessors == null || mIncludePredecessors.test(current))) {
+			source.getIncomingEdges().stream().filter(mFinished::add).forEachOrdered(mWorklist::add);
 		}
-		if (mIncludeSuccessors == null || mIncludeSuccessors.test(current)) {
-			target.getOutgoingEdges().stream().filter(mFinished::add).forEachOrdered(mWorklist::add);
-		}
+		assert source != null : "Dangling edge";
 		return current;
 	}
 
+	/**
+	 * Creates a stream from the iterator.
+	 */
 	public Stream<IcfgEdge> asStream() {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(this, Spliterator.ORDERED), false);
 	}
