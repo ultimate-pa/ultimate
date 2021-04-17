@@ -163,6 +163,8 @@ public class MemoryHandler {
 
 		ULTIMATE_LENGTH(SFO.LENGTH),
 
+		ULTIMATE_PTHREADS_FORK_COUNT("#PthreadsForkCount"),
+
 		ULTIMATE_PTHREADS_MUTEX("#PthreadsMutex"),
 
 		ULTIMATE_PTHREADS_MUTEX_LOCK("#PthreadsMutexLock"),
@@ -536,6 +538,11 @@ public class MemoryHandler {
 			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, (TypeHandler) mTypeHandler,
 					mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes);
 			decl.addAll(cr.declareRealloc(main, heapDataArrays, hook));
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_FORK_COUNT)) {
+			decl.add(declarePthreadsForkCount(tuLoc));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -1070,6 +1077,11 @@ public class MemoryHandler {
 	public void endScope() {
 		mVariablesToBeMalloced.endScope();
 		mVariablesToBeFreed.endScope();
+	}
+
+	public IdentifierExpression getPthreadForkCount(final ILocation loc) {
+		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, SFO.ULTIMATE_FORK_COUNT,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
 
 	public Expression constructMutexArrayIdentifierExpression(final ILocation loc) {
@@ -1832,6 +1844,12 @@ public class MemoryHandler {
 			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, false, hook));
 		}
 		return result;
+	}
+
+	private static VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
+		final ASTType counterType = new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
+		final VarList varList = new VarList(loc, new String[] { SFO.ULTIMATE_FORK_COUNT }, counterType);
+		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
 
 	private VariableDeclaration declarePThreadsMutexArray(final ILocation loc) {
@@ -2791,6 +2809,8 @@ public class MemoryHandler {
 					new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() }, BoogieType.TYPE_INT));
 		case ULTIMATE_MEMINIT:
 			break;
+		case ULTIMATE_PTHREADS_FORK_COUNT:
+			return new MemoryModelDeclarationInfo(mmd, BoogieType.TYPE_INT);
 		case ULTIMATE_PTHREADS_MUTEX:
 			return new MemoryModelDeclarationInfo(mmd,
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, mTypeHandler

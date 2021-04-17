@@ -163,8 +163,6 @@ public class StandardFunctionHandler {
 
 	private final ITypeHandler mTypeHandler;
 
-	private int mPthreadCreateCounter = 0;
-
 	private final CExpressionTranslator mCEpressionTranslator;
 
 	private final ILogger mLogger;
@@ -991,6 +989,7 @@ public class StandardFunctionHandler {
 	 */
 	private Result handlePthread_create(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_FORK_COUNT);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
@@ -1064,8 +1063,29 @@ public class StandardFunctionHandler {
 					argThreadIdPointer.getLrValue().getCType(), false, null);
 		}
 
-		final Expression threadId = mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.ULONG),
-				BigInteger.valueOf(mPthreadCreateCounter++));
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final IdentifierExpression forkCount = mMemoryHandler.getPthreadForkCount(loc);
+		// set temporary ID variable to value of global fork count
+		final AuxVarInfo tmpThreadId =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.ULONG), SFO.AUXVAR.PRE_MOD);
+		builder.addDeclaration(tmpThreadId.getVarDec());
+		builder.addAuxVar(tmpThreadId);
+		final AssignmentStatement counterStore = new AssignmentStatement(loc,
+				new LeftHandSide[] { tmpThreadId.getLhs() }, new Expression[] { forkCount });
+		builder.addStatement(counterStore);
+		// increment the global variable fork count
+		final var counterLhs = new VariableLHS(loc, forkCount.getType(), forkCount.getIdentifier(),
+				forkCount.getDeclarationInformation());
+		final Expression sum = mExpressionTranslation.constructArithmeticExpression(
+				loc, IASTBinaryExpression.op_plus, forkCount, new CPrimitive(CPrimitives.ULONG), mTypeSizes
+						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.ULONG), BigInteger.valueOf(1L)),
+				new CPrimitive(CPrimitives.ULONG));
+		final AssignmentStatement counterIncrement =
+				new AssignmentStatement(loc, new VariableLHS[] { counterLhs }, new Expression[] { sum });
+		builder.addStatement(counterIncrement);
+		// use temporary variable as ID for forked thread
+		final Expression threadId = tmpThreadId.getExp();
+
 		final List<Statement> writeCall =
 				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, new CPrimitive(CPrimitives.ULONG), false, node);
 
@@ -1082,7 +1102,6 @@ public class StandardFunctionHandler {
 		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId }, methodName, forkArguments);
 		mProcedureManager.registerForkStatement(fs);
 
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue(argThreadIdPointer, argThreadAttributes, argStartRoutine, startRoutineArguments);
 		builder.addStatements(writeCall);
 
