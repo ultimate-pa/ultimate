@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetC
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
@@ -83,10 +83,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		final long start = System.currentTimeMillis();
 		try {
 			final IMLPredicate mlState = (IMLPredicate) state;
-			final Set<IcfgLocation> locs = Set.of(mlState.getProgramPoints());
-			final Set<IcfgLocation> enabled = Arrays.stream(mlState.getProgramPoints())
-					.filter(l -> l.getOutgoingEdges().stream().anyMatch(e -> isEnabled(locs, e)))
-					.collect(Collectors.toSet());
+			final Set<IcfgLocation> enabled = getEnabledThreadLocations(mlState);
 
 			// For non-concurrent parts of a program, no need for complicated computations.
 			if (enabled.size() <= 1) {
@@ -121,23 +118,39 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		}
 	}
 
-	private boolean isEnabled(final Set<IcfgLocation> locs, final IcfgEdge edge) {
+	private static Set<IcfgLocation> getEnabledThreadLocations(final IMLPredicate state) {
+		final Set<IcfgLocation> locs = Set.of(state.getProgramPoints());
+		return locs.stream().filter(l -> l.getOutgoingEdges().stream().anyMatch(e -> isEnabled(locs, e)))
+				.collect(Collectors.toSet());
+
+	}
+
+	private static boolean isEnabled(final Set<IcfgLocation> locs, final IcfgEdge edge) {
+		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>
+				|| edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+			// These edges exist in the Icfg, but in traces they are represented by the respective
+			// IIcfg*TransitionThreadOther transitions. Hence they are never enabled.
+			return false;
+		}
+		if (edge instanceof IIcfgForkTransitionThreadOther<?>) {
+			// Enabled if predecessor location is in state, and forked thread instance is not yet running.
+			final Set<String> threads = locs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
+			final String forkedThread = edge.getSucceedingProcedure();
+			return locs.contains(edge.getSource()) && !threads.contains(forkedThread);
+		}
 		if (edge instanceof IIcfgJoinTransitionThreadOther<?>) {
+			// Enabled if predecessor location and predecessor location of the corresponding
+			// IIcfg*TransitionThreadCurrent instance are both in the state.
 			final var joinOther = (IIcfgJoinTransitionThreadOther<?>) edge;
 			final var joinCurrent = joinOther.getCorrespondingIIcfgJoinTransitionCurrentThread();
-			return locs.contains(joinOther.getSource()) && locs.contains(joinCurrent.getSource());
-		}
-		if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
-			final var joinCurrent = (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) edge;
-			final var joinOther = mInfo.getJoinOther(joinCurrent);
 			return locs.contains(joinOther.getSource()) && locs.contains(joinCurrent.getSource());
 		}
 		return locs.contains(edge.getSource());
 	}
 
 	private Stream<IcfgLocation> getConflicts(final Set<IcfgLocation> enabled, final IcfgLocation loc) {
-		// TODO support enforcing compliance for thread-uniform DFS orders
-		// TODO Re-use (more) dependence information across states (?)
+		// TODO (new feature:) support enforcing compliance for thread-uniform DFS orders
+		// TODO (optimization:) Re-use (more) dependence information across states (?)
 		return Stream.concat(getJoinConflicts(enabled, loc.getProcedure()), getCommutativityConflicts(enabled, loc));
 	}
 
@@ -147,7 +160,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	}
 
 	private boolean canJoinLater(final IcfgLocation joinerLoc, final String joinedThread) {
-		// TODO Is there some easy way to prune incorrect joins from CFG?
+		// TODO (optimization:) Is there some easy way to prune incorrect joins from CFG?
 		return !mInfo.getReachableJoinsOf(joinerLoc, joinedThread).isEmpty();
 	}
 

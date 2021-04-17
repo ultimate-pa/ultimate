@@ -28,13 +28,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
@@ -52,8 +51,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class ExtendedConcurrencyInformation {
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 	private final Map<String, Set<IIcfgJoinTransitionThreadOther<IcfgLocation>>> mThreadJoins = new HashMap<>();
-	private final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, IIcfgJoinTransitionThreadOther<IcfgLocation>> mCorrespondingJoins =
-			new HashMap<>();
 
 	private final HashRelation<String, String> mComputedReachableJoins = new HashRelation<>();
 	private final HashRelation3<IcfgLocation, String, IIcfgJoinTransitionThreadOther<IcfgLocation>> mReachableJoins =
@@ -76,31 +73,6 @@ public class ExtendedConcurrencyInformation {
 	}
 
 	/**
-	 * The inverse of {@link IIcfgJoinTransitionThreadOther::getCorrespondingIIcfgJoinTransitionCurrentThread}.
-	 *
-	 * @param join
-	 *            A join transition whose twin IIcfgJoinTransitionThreadOther shall be retrieved
-	 * @return the corresponding IIcfgJoinTransitionThreadOther instance
-	 */
-	public IIcfgJoinTransitionThreadOther<IcfgLocation>
-			getJoinOther(final IIcfgJoinTransitionThreadCurrent<IcfgLocation> join) {
-		final IIcfgJoinTransitionThreadOther<IcfgLocation> other = mCorrespondingJoins.get(join);
-		if (other != null) {
-			return other;
-		}
-
-		for (final String thread : mIcfg.getCfgSmtToolkit().getProcedures()) {
-			getJoinsOf(thread);
-			final IIcfgJoinTransitionThreadOther<IcfgLocation> otherJoin = mCorrespondingJoins.get(join);
-			if (otherJoin != null) {
-				return otherJoin;
-			}
-		}
-
-		throw new IllegalArgumentException();
-	}
-
-	/**
 	 * Retrieve the join transitions where a given thread is joined by another thread.
 	 *
 	 * @param joinedThread
@@ -113,20 +85,12 @@ public class ExtendedConcurrencyInformation {
 			return cachedJoins;
 		}
 
-		final Set<IIcfgJoinTransitionThreadOther<IcfgLocation>> joins = new HashSet<>();
-		final var iterator = new IcfgEdgeIterator(mIcfg.getProcedureEntryNodes().get(joinedThread),
-				ExtendedConcurrencyInformation::isThreadLocal);
-		while (iterator.hasNext()) {
-			final IcfgEdge edge = iterator.next();
-			if (edge instanceof IIcfgJoinTransitionThreadOther<?>) {
-				final var join = (IIcfgJoinTransitionThreadOther<IcfgLocation>) edge;
-				joins.add(join);
-				assert !mCorrespondingJoins.containsKey(join.getCorrespondingIIcfgJoinTransitionCurrentThread())
-						|| mCorrespondingJoins.get(
-								join.getCorrespondingIIcfgJoinTransitionCurrentThread()) == join : "duplicated join";
-				mCorrespondingJoins.put(join.getCorrespondingIIcfgJoinTransitionCurrentThread(), join);
-			}
-		}
+		final Set<IIcfgJoinTransitionThreadOther<IcfgLocation>> joins =
+				new IcfgEdgeIterator(mIcfg.getProcedureEntryNodes().get(joinedThread),
+						ExtendedConcurrencyInformation::isThreadLocal).asStream()
+								.filter(edge -> edge instanceof IIcfgJoinTransitionThreadOther<?>)
+								.map(edge -> (IIcfgJoinTransitionThreadOther<IcfgLocation>) edge)
+								.collect(Collectors.toSet());
 		mThreadJoins.put(joinedThread, Collections.unmodifiableSet(joins));
 		return joins;
 	}
