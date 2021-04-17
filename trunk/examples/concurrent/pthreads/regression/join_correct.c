@@ -12,13 +12,10 @@
 #include <pthread.h>
 
 typedef unsigned long int pthread_t;
-int ret[2];
 
-void* thread0(void *arg)
+void* increment(void *arg)
 {
-  int in = *((int*)arg);
-  ret[in] = in - 1;
-  return (void*) &ret[in];
+  return (void*) (((int)arg) + 42);
 }
 
 void main(void)
@@ -27,11 +24,12 @@ void main(void)
   int x = 0;
 
   while (x < 2) {
-    pthread_create(&threads[x], NULL, thread0, &x);
+    pthread_create(&threads[x], NULL, increment, (void*)x);
     x++;
   }
-  pthread_join(threads[0], &x);
 
-  //@ assert x == -1;
+  void* result;
+  pthread_join(threads[0], &result);
+  //@ assert result == 42;
 }
 
