@@ -194,6 +194,9 @@
 
     <!-- POR-specific columns -->
     <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="persistentTime"   displayTitle="Persistent set computation time" sourceUnit="ms">Persistent set computation time[ms]: (\d+(\.\d+)?)</column>
+    <column hidden="true" title="persistentCounter" displayTitle="Persistent set computations">Number of persistent set computation: (\d+)</column>
+    <column hidden="true" title="trivialPersistent" displayTitle="Trivial persistent sets">Number of trivial persistent sets: (\d+)</column>
   </result>
 
   <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant, with one-shot Petri net LBE -->

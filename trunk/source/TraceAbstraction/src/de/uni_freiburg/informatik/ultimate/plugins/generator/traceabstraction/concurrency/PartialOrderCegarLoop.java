@@ -241,10 +241,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
 
-		final StatisticsData data = new StatisticsData();
-		data.aggregateBenchmarkData(mIndependenceRelation.getStatistics());
+		final StatisticsData indepData = new StatisticsData();
+		indepData.aggregateBenchmarkData(mIndependenceRelation.getStatistics());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
+				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", indepData));
+
+		if (mPersistent != null) {
+			final StatisticsData persistentData = new StatisticsData();
+			persistentData.aggregateBenchmarkData(mPersistent.getStatistics());
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+					new StatisticsResult<>(Activator.PLUGIN_NAME, "Persistent set benchmarks", persistentData));
+		}
 
 		super.finish();
 	}

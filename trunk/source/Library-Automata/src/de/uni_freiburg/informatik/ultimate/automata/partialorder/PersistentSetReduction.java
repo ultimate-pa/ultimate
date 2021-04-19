@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Performs persistent set reduction on top of sleep set reduction. The goal of this is primarily to reduce the size (in
@@ -200,6 +201,11 @@ public final class PersistentSetReduction {
 			final Set<L> additional = mEnabledLetters.apply(state).stream()
 					.filter(a -> set.stream().anyMatch(b -> comparator.compare(a, b) <= 0)).collect(Collectors.toSet());
 			return DataStructureUtils.union(set, additional);
+		}
+
+		@Override
+		public IStatisticsDataProvider getStatistics() {
+			return mUnderlying.getStatistics();
 		}
 	}
 }

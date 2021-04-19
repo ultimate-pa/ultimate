@@ -28,6 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+
 /**
  * An interface for the computation of persistent sets, used in persistent set reduction.
  *
@@ -48,4 +51,16 @@ public interface IPersistentSetChoice<L, S> {
 	 * @return the (superset of a) persistent set, or null
 	 */
 	Set<L> persistentSet(final S state);
+
+	/**
+	 * An optional method that allows collecting statistics about the history of persistent set computations. The
+	 * default implementation does not provide any statistics.
+	 *
+	 * @return a statistics provider with implementation-defined data
+	 */
+	default IStatisticsDataProvider getStatistics() {
+		return new AbstractStatisticsDataProvider() {
+			// By default, no statistics are collected.
+		};
+	}
 }

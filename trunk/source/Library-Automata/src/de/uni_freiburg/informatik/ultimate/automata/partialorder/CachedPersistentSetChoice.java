@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+
 /**
  * Caches computed persistent sets.
  *
@@ -57,6 +59,11 @@ public class CachedPersistentSetChoice<L, S> implements IPersistentSetChoice<L, 
 	@Override
 	public Set<L> persistentSet(final S state) {
 		return mCache.computeIfAbsent(state, mUnderlying::persistentSet);
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mUnderlying.getStatistics();
 	}
 
 	/**

@@ -48,6 +48,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * A choice of persistent sets for pthread-like concurrent programs. By analysing the CFG, we compute persistent sets
@@ -67,11 +70,18 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	private final HashRelation<IcfgLocation, IcfgLocation> mCommutativityConflict = new HashRelation<>();
 	private final HashRelation<IcfgLocation, IcfgLocation> mNoCommutativityConflict = new HashRelation<>();
 
-	// TODO move this to statistics
-	private int mQueries;
-	private int mTrivialQueries;
-	private long mComputationTime;
+	private final ThreadBasedPersistentSetStatistics mStatistics;
 
+	/**
+	 * Create a new instance for a given CFG.
+	 *
+	 * @param services
+	 *            Ultimate services, used for logging
+	 * @param icfg
+	 *            An {@link IIcfg} based on which persistent sets will be computed
+	 * @param independence
+	 *            An unconditional independence relation which is used to compute persistent sets
+	 */
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final IIndependenceRelation<?, IcfgEdge> independence) {
 		assert !independence.isConditional() : "Conditional independence currently not supported";
@@ -79,47 +89,43 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		mLogger = services.getLoggingService().getLogger(ThreadBasedPersistentSets.class);
 		mInfo = new ExtendedConcurrencyInformation(icfg);
 		mIndependence = independence;
+		mStatistics = new ThreadBasedPersistentSetStatistics(independence);
 	}
 
 	@Override
 	public Set<IcfgEdge> persistentSet(final IPredicate state) {
-		boolean isTrivial = false;
-		final long start = System.currentTimeMillis();
-		try {
-			final IMLPredicate mlState = (IMLPredicate) state;
-			final Set<IcfgLocation> enabled = getEnabledThreadLocations(mlState);
+		mStatistics.beginComputation();
 
-			// For non-concurrent parts of a program, no need for complicated computations.
-			if (enabled.size() <= 1) {
-				isTrivial = true;
-				return null;
-			}
+		final IMLPredicate mlState = (IMLPredicate) state;
+		final Set<IcfgLocation> enabled = getEnabledThreadLocations(mlState);
 
-			final var sccComp = new SccComputationNonRecursive<>(mLogger, l -> getConflicts(enabled, l).iterator(),
-					StronglyConnectedComponent<IcfgLocation>::new, enabled.size(), enabled);
-			final var persistentCandidates = sccComp.getRootComponents();
-			// TODO possibly use heuristics in selection, e.g. size or IDfsOrder
-			final Set<IcfgLocation> persistentLocs = persistentCandidates.iterator().next().getNodes();
-
-			assert persistentLocs.size() <= enabled.size() : "Non-enabled locs must not be base for persistent set";
-			if (persistentLocs.size() >= enabled.size()) {
-				isTrivial = true;
-				return null;
-			}
-
-			return persistentLocs.stream().flatMap(l -> l.getOutgoingEdges().stream()).collect(Collectors.toSet());
-		} finally {
-			// TODO move this to statistics: beginQuery(), reportQuery(boolean isTrivial)
-			mQueries++;
-			if (isTrivial) {
-				mTrivialQueries++;
-			}
-			mComputationTime += System.currentTimeMillis() - start;
-			if (mQueries % 20_000 == 0) {
-				mLogger.warn("Computed %d persistent sets (%.2f %% trivial) in %d s", mQueries,
-						(100.0 * mTrivialQueries) / mQueries, mComputationTime / 1000);
-			}
+		// For non-concurrent parts of a program, no need for complicated computations.
+		if (enabled.size() <= 1) {
+			mStatistics.reportTrivialQuery();
+			return null;
 		}
+
+		final var sccComp = new SccComputationNonRecursive<>(mLogger, l -> getConflicts(enabled, l).iterator(),
+				StronglyConnectedComponent<IcfgLocation>::new, enabled.size(), enabled);
+		final var persistentCandidates = sccComp.getRootComponents();
+		// TODO possibly use heuristics in selection, e.g. size or IDfsOrder
+		final Set<IcfgLocation> persistentLocs = persistentCandidates.iterator().next().getNodes();
+
+		assert persistentLocs.size() <= enabled.size() : "Non-enabled locs must not be base for persistent set";
+		if (persistentLocs.size() >= enabled.size()) {
+			mStatistics.reportTrivialQuery();
+			return null;
+		}
+
+		final Set<IcfgEdge> result =
+				persistentLocs.stream().flatMap(l -> l.getOutgoingEdges().stream()).collect(Collectors.toSet());
+		mStatistics.reportQuery();
+		return result;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 
 	private static Set<IcfgLocation> getEnabledThreadLocations(final IMLPredicate state) {
@@ -202,5 +208,42 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	private static boolean isThreadLocal(final IcfgEdge edge) {
 		return !(edge instanceof IIcfgForkTransitionThreadOther<?>)
 				&& !(edge instanceof IIcfgJoinTransitionThreadOther<?>);
+	}
+
+	private static final class ThreadBasedPersistentSetStatistics extends AbstractStatisticsDataProvider {
+		public static final String COMPUTATION_TIME = "Persistent set computation time";
+		public static final String PERSISTENT_SET_COMPUTATIONS = "Number of persistent set computation";
+		public static final String TRIVIAL_SETS = "Number of trivial persistent sets";
+		public static final String UNDERLYING_INDEPENDENCE = "Underlying independence relation";
+
+		private long mComputationTime;
+		private int mTrivialSets;
+		private int mQueries;
+
+		private long mComputationStart;
+
+		private ThreadBasedPersistentSetStatistics(final IIndependenceRelation<?, IcfgEdge> independence) {
+			declare(COMPUTATION_TIME, () -> mComputationTime, KeyType.TIMER);
+			declare(PERSISTENT_SET_COMPUTATIONS, () -> mQueries, KeyType.COUNTER);
+			declare(TRIVIAL_SETS, () -> mTrivialSets, KeyType.COUNTER);
+			forward(UNDERLYING_INDEPENDENCE, independence::getStatistics);
+		}
+
+		private void beginComputation() {
+			assert mComputationStart == -1 : "Computation timer already running";
+			mComputationStart = System.nanoTime();
+		}
+
+		private void reportTrivialQuery() {
+			mTrivialSets++;
+			reportQuery();
+		}
+
+		private void reportQuery() {
+			assert mComputationStart >= 0 : "Computation timer was not running";
+			mComputationTime += System.nanoTime() - mComputationStart;
+			mComputationStart = -1;
+			mQueries++;
+		}
 	}
 }
