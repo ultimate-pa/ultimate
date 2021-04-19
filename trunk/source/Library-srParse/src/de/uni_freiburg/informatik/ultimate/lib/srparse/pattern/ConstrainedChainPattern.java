@@ -38,18 +38,13 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern> {
 
 	public ConstrainedChainPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public ConstrainedChainPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new ConstrainedChainPattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -87,11 +82,6 @@ public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\"");
 		return sb.toString();
-	}
-
-	@Override
-	public ConstrainedChainPattern rename(final String newName) {
-		return new ConstrainedChainPattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

@@ -1,0 +1,12 @@
+# Tasks from the weaver testsuite, translated to Boogie.
+# Source: <https://github.com/weaver-verifier/weaver>
+
+generated/*.yml
+generated/bench/*.yml
+generated/chl/*.yml
+generated/parallel/*.yml
+generated/popl20/*.yml
+generated/popl20-bad/*.yml
+generated/popl20-more/*.yml
+generated/popl20-proofs/*.yml
+generated/test/*.yml

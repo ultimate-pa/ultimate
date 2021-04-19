@@ -36,7 +36,9 @@ import java.util.Collection;
  */
 public interface IStatisticsDataProvider {
 
-	Collection<String> getKeys();
+	default Collection<String> getKeys() {
+		return getBenchmarkType().getKeys();
+	}
 
 	Object getValue(String key);
 

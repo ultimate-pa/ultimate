@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that "R" holds at least every "c1" time units
@@ -47,14 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class BndRecurrencePattern extends PatternType<BndRecurrencePattern> {
 	public BndRecurrencePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndRecurrencePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndRecurrencePattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -106,14 +101,9 @@ public class BndRecurrencePattern extends PatternType<BndRecurrencePattern> {
 		sb.append("it is always the case that \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds at least every \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units");
 		return sb.toString();
-	}
-
-	@Override
-	public BndRecurrencePattern rename(final String newName) {
-		return new BndRecurrencePattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

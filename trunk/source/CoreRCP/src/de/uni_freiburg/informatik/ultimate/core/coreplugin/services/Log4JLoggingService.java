@@ -219,6 +219,13 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		for (final Entry<String, Level> entry : toolLevels.entrySet()) {
 			rtr.put(getToolLoggerName(entry.getKey()), entry.getValue());
 		}
+
+		// settings for specific classes
+		final Map<String, Level> clazzLevels =
+				getSettingToolSpecificLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_CLAZZ_SPECIFIC);
+		for (final Entry<String, Level> entry : clazzLevels.entrySet()) {
+			rtr.put(getPluginLoggerName(entry.getKey()), entry.getValue());
+		}
 		return rtr;
 	}
 
@@ -436,6 +443,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			mRelevantSettings.add(CorePreferenceInitializer.LABEL_COLOR_ERROR);
 			mRelevantSettings.add(CorePreferenceInitializer.LABEL_COLOR_FATAL);
 			mRelevantSettings.add(CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_LOGLEVEL_CLAZZ_SPECIFIC);
+			mRelevantSettings.add(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
 		}
 		return mRelevantSettings;
 	}
@@ -471,7 +480,6 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		private final Writer mWriter;
 
 		private Log4JAppenderWrapper(final Writer writer, final String pattern) {
-			super();
 			mWriter = writer;
 			setWriter(writer);
 			if (pattern != null) {

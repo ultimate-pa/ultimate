@@ -63,9 +63,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskWithContext;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -169,11 +170,8 @@ public class Elim1Store {
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 	}
 
-	public EliminationTaskWithContext elim1(final EliminationTaskWithContext input) {
+	public EliminationTaskPlain elim1(final EliminationTaskPlain input) throws ElimStorePlainException {
 		final Term inputTerm = input.getTerm();
-		if (!QuantifierUtils.isQuantifierFree(inputTerm)) {
-			throw new AssertionError("Alternating quantifiers not yet supported");
-		}
 		if (input.getEliminatees().size() != 1) {
 			throw new IllegalArgumentException("Can only eliminate one variable");
 		}
@@ -220,7 +218,7 @@ public class Elim1Store {
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTaskWithContext(quantifier, Collections.emptySet(), absobingElement, input.getContext());
+			return new EliminationTaskPlain(quantifier, Collections.emptySet(), absobingElement, input.getContext());
 		}
 
 		final Set<ArrayIndex> selectIndices = new HashSet<>();
@@ -234,7 +232,7 @@ public class Elim1Store {
 			aiem.unlockSolver();
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTaskWithContext(quantifier, Collections.emptySet(), absobingElement,
+			return new EliminationTaskPlain(quantifier, Collections.emptySet(), absobingElement,
 					input.getContext());
 		}
 
@@ -335,6 +333,12 @@ public class Elim1Store {
 				.transform(intermediateTerm);
 //		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
 //				indexMapping, substitutionMapping, indexEqualityInformation);
+		if (Arrays.asList(transformedTerm.getFreeVars()).contains(eliminatee)) {
+			if (QuantifierUtils.isQuantifierFree(inputTerm)) {
+				throw new AssertionError("Unexpected substitution problem.");
+			}
+			throw new ElimStorePlain.ElimStorePlainException(ElimStorePlainException.CAPTURED_INDEX);
+		}
 		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, transformedTerm,
 				singleCaseTerm);
 		if (!doubleCaseJuncts.isEmpty()) {
@@ -383,7 +387,7 @@ public class Elim1Store {
 					new DAGSize().treesize(result)));
 			mLogger.info(sb.toString());
 		}
-		final EliminationTaskWithContext resultEt;
+		final EliminationTaskPlain resultEt;
 		if (APPLY_RESULT_SIMPLIFICATION) {
 			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
 				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result,
@@ -406,14 +410,14 @@ public class Elim1Store {
 				mLogger.info(sizeMessage);
 			}
 			mLogger.info("treesize after simplification " + new DAGSize().treesize(simplified));
-			resultEt = new EliminationTaskWithContext(quantifier, newAuxVars, simplified, input.getContext());
+			resultEt = new EliminationTaskPlain(quantifier, newAuxVars, simplified, input.getContext());
 		} else {
-			resultEt = new EliminationTaskWithContext(quantifier, newAuxVars, result, input.getContext());
+			resultEt = new EliminationTaskPlain(quantifier, newAuxVars, result, input.getContext());
 		}
 		assert !DEBUG_EXTENDED_RESULT_CHECK
-				|| EliminationTask
+				|| EliminationTaskSimple
 						.areDistinct(mMgdScript.getScript(), resultEt,
-								new EliminationTask(quantifier, Collections.singleton(eliminatee),
+								new EliminationTaskSimple(quantifier, Collections.singleton(eliminatee),
 										inputTerm)) != LBool.SAT : "Bug array QE Input: " + inputTerm + " Result:"
 												+ resultEt;
 		assert !mMgdScript.isLocked() : "Solver still locked";

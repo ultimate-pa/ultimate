@@ -86,7 +86,7 @@ public class DerPreprocessor extends TermTransformer {
 	private static final String AUX_VAR_PREFIX = "DerPreprocessor";
 
 	private enum DerCase {
-		SELF_UPDATE, EQ_STORE, EQ_SELECT
+		SELF_UPDATE, EQ_STORE, EQ_SELECT, CLASSICAL_DER
 	};
 
 	private final List<TermVariable> mNewAuxVars;
@@ -103,6 +103,13 @@ public class DerPreprocessor extends TermTransformer {
 		DerCase derCase = null;
 		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getXjunctsInner(quantifier, input))
 				.collect(Collectors.toSet());
+		for (final BinaryEqualityRelation ber : classification.getImage(DerCase.CLASSICAL_DER)) {
+			if (topLevelDualJuncts.contains(ber.toTerm(mgdScript.getScript()))) {
+				throw new AssertionError("Should have been eliminated by DER");
+			} else {
+				throw new ElimStorePlain.ElimStorePlainException(ElimStorePlainException.NON_TOP_LEVEL_DER);
+			}
+		}
 		for (final BinaryEqualityRelation ber : classification.getImage(DerCase.EQ_SELECT)) {
 			if (topLevelDualJuncts.contains(ber.toTerm(mgdScript.getScript()))) {
 				if (someTopLevelEquality == null) {
@@ -213,7 +220,7 @@ public class DerPreprocessor extends TermTransformer {
 
 	private static DerCase classify(final Script script, final Term otherSide, final TermVariable eliminatee) throws ElimStorePlainException {
 		if (!Arrays.asList(otherSide.getFreeVars()).contains(eliminatee)) {
-			throw new ElimStorePlain.ElimStorePlainException("This case should habe been handled by DER");
+			return DerCase.CLASSICAL_DER;
 		}
 		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(script, otherSide);
 		if (mdns != null) {

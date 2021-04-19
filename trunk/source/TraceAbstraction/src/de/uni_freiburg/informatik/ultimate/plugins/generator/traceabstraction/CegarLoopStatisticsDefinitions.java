@@ -50,6 +50,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	TraceHistogramMax(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 
+	EmptinessCheckTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+
 	AutomataDifference(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	DeadEndRemovalTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
@@ -57,6 +59,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	HoareAnnotationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	InitialAbstractionConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+
+	PartialOrderReductionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
@@ -68,6 +72,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	BiggestAbstraction(Integer.class, CegarStatisticsType.SIZE_ITERATION_PAIR_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
+
+	InterpolantAutomatonStates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 	traceCheckStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),

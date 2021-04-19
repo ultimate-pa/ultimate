@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
  * @author Elisabeth Schanno
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  */
 public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
@@ -81,8 +80,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
 	private final BoundedPetriNet<L, IPredicate> mResult;
 	private final BlockEncodingBacktranslator mBacktranslator;
-	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics =
-			new PetriNetLargeBlockEncodingStatisticsGenerator();
+	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics;
 
 	/**
 	 * Performs Large Block Encoding on the given Petri net.
@@ -138,12 +136,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 					petriNet, compositionFactory, moverCheck);
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
-
-			mStatistics.extractStatistics((SemanticIndependenceRelation<L>) semanticCheck);
-			mStatistics.extractStatistics((SyntacticIndependenceRelation<?, L>) variableCheck);
-			mStatistics.extractStatistics(moverCheck);
-			mStatistics.addLiptonStatistics(lipton.getStatistics());
-
+			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
+					moverCheck.getStatistics());
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			aoce.addRunningTaskInfo(runningTaskInfo);
@@ -194,7 +188,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return mBacktranslator;
 	}
 
-	public PetriNetLargeBlockEncodingBenchmarks getPetriNetLargeBlockEncodingStatistics() {
+	public PetriNetLargeBlockEncodingBenchmarks getStatistics() {
 		return new PetriNetLargeBlockEncodingBenchmarks(mStatistics);
 	}
 

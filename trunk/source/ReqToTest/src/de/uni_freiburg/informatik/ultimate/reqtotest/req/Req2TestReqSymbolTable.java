@@ -323,7 +323,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public Collection<String> getStateVars() {
+	public Set<String> getStateVars() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -333,7 +333,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public Collection<String> getPcVars() {
+	public Set<String> getPcVars() {
 		throw new UnsupportedOperationException();
 	}
 

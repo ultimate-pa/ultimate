@@ -65,7 +65,7 @@ public class UnfTransformer extends TermTransformer {
 			}
 		} else if (term instanceof ConstantTerm) {
 			final ConstantTerm constTerm = (ConstantTerm) term;
-			final Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
+			final Rational rational = SmtUtils.toRational(constTerm);
 			final Term normalized = rational.toTerm(term.getSort());
 			setResult(normalized);
 			return;

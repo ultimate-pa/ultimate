@@ -118,7 +118,7 @@ public class Phase implements Comparable<Phase> {
 		Transition result = null;
 
 		for (final Transition transition : transitions) {
-			if (transition.dest.equals(dest)) {
+			if (transition.getDest().equals(dest)) {
 				result = transition;
 				break;
 			}
@@ -134,8 +134,8 @@ public class Phase implements Comparable<Phase> {
 		while (it.hasNext()) {
 			final Transition t = it.next();
 
-			if ((t.getDest() == dest) && t.resets.equals(resets)) {
-				t.guard = t.guard.or(guard);
+			if ((t.getDest() == dest) && t.getResets().equals(resets)) {
+				t.setGuard(t.getGuard().or(guard));
 
 				return t;
 			}
@@ -193,7 +193,7 @@ public class Phase implements Comparable<Phase> {
 
 		while (it.hasNext()) {
 			final Transition t = it.next();
-			System.out.println("  " + t.getSrc().name + " -> " + t.getDest().name + " [ label = \"" + t.guard + "\" ]");
+			System.out.println("  " + t.getSrc().name + " -> " + t.getDest().name + " [ label = \"" + t.getGuard() + "\" ]");
 		}
 	}
 

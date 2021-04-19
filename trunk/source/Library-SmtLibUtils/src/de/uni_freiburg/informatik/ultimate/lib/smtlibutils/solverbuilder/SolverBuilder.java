@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInt
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  * Wrapper that constructs SMTInterpol or an external SMT solver.
@@ -486,7 +487,7 @@ public final class SolverBuilder {
 
 		public String constructFullPathOfDumpedScript() {
 			final StringBuilder sb = new StringBuilder();
-			sb.append(addFileSeparator(getPathOfDumpedScript()));
+			sb.append(CoreUtil.addFileSeparator(getPathOfDumpedScript()));
 			sb.append(getBaseNameOfDumpedScript());
 			if (compressDumpedScript()) {
 				sb.append(".smt2.gz");
@@ -660,16 +661,11 @@ public final class SolverBuilder {
 					mCompressDumpedScript, mAdditionalOptions, logger);
 		}
 
-		/**
-		 * Add file separator if last symbol is not already file separator.
-		 */
-		private static String addFileSeparator(final String string) {
-			if (string.endsWith(System.getProperty("file.separator"))) {
-				return string;
-			}
-			return string + System.getProperty("file.separator");
-
+		@Override
+		public String toString() {
+			return ReflectionUtil.instanceFieldsToString(this);
 		}
+
 	}
 
 	private static final class SelfDestructingSolverStorable extends WrapperScript implements IStorable {

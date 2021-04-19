@@ -66,14 +66,14 @@ public class TimedAutomata {
 			final Collection<Edge> edges = new ArrayList<>();
 			while (it.hasNext()) {
 				final Transition t = it.next();
-				final Guard[][] allGuards = filterCDD(t.guard);
+				final Guard[][] allGuards = filterCDD(t.getGuard());
 				for (int k = 0; k < allGuards.length; k++) {
 					final Edge e = new Edge();
 					e.guard = allGuards[k];
-					e.resets = t.resets;
+					e.resets = t.getResets();
 					addClocks(e.guard);
 					addClocks(e.resets);
-					e.dest = mStates[t.dest.nr];
+					e.dest = mStates[t.getDest().nr];
 					edges.add(e);
 				}
 			}

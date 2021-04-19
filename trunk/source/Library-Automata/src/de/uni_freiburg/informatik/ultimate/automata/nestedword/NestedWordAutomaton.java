@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -571,17 +572,22 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 
 	@Override
 	public String sizeInformation() {
-		final boolean verbose = false;
+		final boolean verbose = true;
 		if (!verbose) {
 			final int states = getStates().size();
 			return states + " states.";
 		}
 		final int statesWithInternalSuccessors;
+		final double internalSuccAvg;
 		final Set<STATE> statesWithOutgoingInternal = mInternalOut.keySet();
 		if (statesWithOutgoingInternal == null) {
 			statesWithInternalSuccessors = 0;
+			internalSuccAvg = 0;
 		} else {
 			statesWithInternalSuccessors = statesWithOutgoingInternal.size();
+			final int sum = statesWithOutgoingInternal.stream()
+					.collect(Collectors.summingInt(this::numberOfOutgoingInternalTransitions));
+			internalSuccAvg = statesWithInternalSuccessors == 0 ? 0 : (sum / (double) statesWithInternalSuccessors);
 		}
 
 		final int internalSuccessors = mInternalOut.size();
@@ -663,9 +669,10 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append(" has ").append(getStates().size()).append(" states, " + statesWithInternalSuccessors)
-				.append(" states have internal successors, (").append(internalSuccessors).append("), ")
-				.append(statesWithInternalPredecessors).append(" states have internal predecessors, (")
-				.append(internalPredecessors).append("), ").append(statesWithCallSuccessors)
+				.append(" states have (on average " + internalSuccAvg + ") internal successors, (")
+				.append(internalSuccessors).append("), ").append(statesWithInternalPredecessors)
+				.append(" states have internal predecessors, (").append(internalPredecessors).append("), ")
+				.append(statesWithCallSuccessors)
 
 				.append(" states have call successors, (").append(callSuccessors).append("), ")
 				.append(statesWithCallPredecessors).append(" states have call predecessors, (").append(callPredecessors)

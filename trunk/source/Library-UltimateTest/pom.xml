@@ -92,6 +92,7 @@
 							<excludes>
 							<exclude>*.xml</exclude>
 							<exclude>*.xsd</exclude>
+							<exclude>jaxb.properties</exclude>
 							</excludes>
 						</fileset>
 					</filesets>

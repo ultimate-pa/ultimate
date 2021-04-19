@@ -66,14 +66,15 @@ public final class PatternUtil {
 	 *            {@link PatternScopeNotImplemented} when their {@link PatternType#transformToPea(ILogger, Map)} method
 	 *            is called.
 	 */
-	public static Pair<List<? extends PatternType<?>>, Map<String, Integer>>
+	public static Pair<List<? extends PatternType<?>>, Durations>
 			createAllPatterns(final boolean withoutNotImplemented) {
 		// first, create some observables and durartions
 		final int count = 10;
 		int duration = 5;
 		final CDD[] patternObs = new CDD[count];
 		final String[] durations = new String[count];
-		final Map<String, Integer> duration2bounds = Collections.emptyMap();
+
+		final Durations duration2bounds = new Durations(PatternUtil::dummyConsumer);
 
 		for (int i = 0; i < count; ++i) {
 			patternObs[i] = BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16));
@@ -112,7 +113,7 @@ public final class PatternUtil {
 			// instantiate it again for real for every scope
 
 			final PatternType<?> dummyInstance =
-					ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null);
+					ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null, null);
 			final int cddCount = dummyInstance.getExpectedCddSize();
 			final int durationCount = dummyInstance.getExpectedDurationSize();
 
@@ -122,7 +123,7 @@ public final class PatternUtil {
 				final List<String> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
 				final PatternType<?> pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
-						"ID_" + String.valueOf(id), currentCdds, currentDurations);
+						"ID_" + String.valueOf(id), currentCdds, currentDurations, null);
 
 				if (withoutNotImplemented) {
 					try {
@@ -138,6 +139,10 @@ public final class PatternUtil {
 		}
 
 		return new Pair<>(patterns, duration2bounds);
+	}
+
+	private static void dummyConsumer(final String a) {
+		// do nothing
 	}
 
 	private static final class ClassNameComparator implements Comparator<Object> {

@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AcceleratedInterpolationLoopAccelerationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
 /**
@@ -75,6 +76,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final String mPathOfDumpedScript;
 	private final Logics mLogicForExternalSolver;
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
+	private final AcceleratedInterpolationLoopAccelerationTechnique mLoopAccelerationTechnique;
 
 	// fields that can be read from the IUltimateServiceProvider
 	private final AssertCodeBlockOrder mAssertCodeBlockOrder;
@@ -142,6 +144,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mCollectInterpolantStatistics = taPrefs.collectInterpolantStatistics();
 		mDumpFeatureVectors = taPrefs.useSMTFeatureExtraction();
 		mFeatureVectorDumpPath = taPrefs.getSMTFeatureExtractionDumpPath();
+		mLoopAccelerationTechnique = taPrefs.getLoopAccelerationTechnique();
 
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAssertCodeBlockOrder = new TaAssertCodeBlockOrder(ultimatePrefs);
@@ -253,6 +256,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public UnsatCores getUnsatCores() {
 		return mUnsatCores;
+	}
+
+	public AcceleratedInterpolationLoopAccelerationTechnique getLoopAccelerationTechnique() {
+		return mLoopAccelerationTechnique;
 	}
 
 	@Override

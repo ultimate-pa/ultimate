@@ -82,7 +82,7 @@ public class Svcomp20AutomizerConcurrentBenchmarks extends AbstractTraceAbstract
 	 */
 	@Override
 	public long getTimeout() {
-		return TIMEOUT * 1000;
+		return TIMEOUT * 1000L;
 	}
 
 	/**

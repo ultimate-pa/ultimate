@@ -10,7 +10,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib,
  de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2,
  de.uni_freiburg.informatik.ultimate.smtinterpol.util
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ActivationPolicy: lazy
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.util,

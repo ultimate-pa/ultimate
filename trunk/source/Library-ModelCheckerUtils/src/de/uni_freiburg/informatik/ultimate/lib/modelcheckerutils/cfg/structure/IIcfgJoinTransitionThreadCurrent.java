@@ -27,13 +27,24 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure;
 
-/** 
- * An {@link IIcfgTransition} that represents a Join. Edges of this type connect 
+/**
+ * An {@link IIcfgTransition} that represents a Join. Edges of this type connect
  * the location of the join with the next location of the current thread.
- * 
+ * Conceptually, there is only one transition that represents the join and this
+ * transition has one target and one source for each forked procedure. The data
+ * structures of our {@link IIcfg} however do not support edges with serveral
+ * sources and as a workaround we implement the fork by the two edges
+ * {@link IIcfgJoinTransitionThreadCurrent} and
+ * {@link IIcfgJoinTransitionThreadOther}. If our "petrification" produces
+ * several thread instances for a thread template the resulting {@link IICFG}
+ * has only one {@link IIcfgJoinTransitionThreadCurrent} and many
+ * {@link IIcfgJoinTransitionThreadOther}.
+ *
+ *
  * @author Lars Nitzke
  *
  */
-public interface IIcfgJoinTransitionThreadCurrent<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IJoinActionThreadCurrent {
+public interface IIcfgJoinTransitionThreadCurrent<LOC extends IcfgLocation>
+		extends IIcfgTransition<LOC>, IJoinActionThreadCurrent {
 	// Just for grouping
 }

@@ -21,13 +21,10 @@ modifies y;
 procedure ULTIMATE.start() returns()
 modifies x, y;
 {
-  var i : int;
   x := 0;
 
   while (*) {
-    fork i thread();
-	// join i;
-	i := i + 1;
+    fork 0 thread();
   }
 
   assert x == 0;

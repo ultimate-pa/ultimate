@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units for at least "c2" time
@@ -45,14 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class BndDelayedResponsePatternUT extends PatternType<BndDelayedResponsePatternUT> {
 
 	public BndDelayedResponsePatternUT(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndDelayedResponsePatternUT create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndDelayedResponsePatternUT(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
@@ -94,16 +89,11 @@ public class BndDelayedResponsePatternUT extends PatternType<BndDelayedResponseP
 		sb.append("\" holds, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds after at most \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units for at least \"");
-		sb.append(getDuration().get(1));
+		sb.append(getDurations().get(1));
 		sb.append("\" time units");
 		return sb.toString();
-	}
-
-	@Override
-	public BndDelayedResponsePatternUT rename(final String newName) {
-		return new BndDelayedResponsePatternUT(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

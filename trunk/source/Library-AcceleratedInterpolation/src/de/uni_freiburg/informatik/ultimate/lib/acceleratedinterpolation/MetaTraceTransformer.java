@@ -140,11 +140,6 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 				switch (mtam) {
 				case ONLY_AT_FIRST_LOOP_ENTRY:
 					actualInterpolants = getInductiveFirstEntryOnlyPost(actualInterpolants, i, loopEndPoint);
-					// actualInterpolants = getInductiveFirstEntryOnlyIterativePredTransformer(actualInterpolants, i,
-					// loopEndPoint, actualInterpolants[i - 1], preds[cnt]);
-					// needed for underapprox!!
-					// actualInterpolants = getInductiveFirstEntryOnly(actualInterpolants, i,
-					// i + loopSize.getSecond() - loopSize.getFirst() - 1);
 					break;
 				case INVARIANT:
 					actualInterpolants = getInductiveInvariant(actualInterpolants, i, loopEndPoint);
@@ -152,8 +147,6 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 				default:
 					throw new UnsupportedOperationException();
 				}
-				// needed for underapprox!!
-				// i = loopSize.getSecond() - loopSize.getFirst() + i - 1;
 				i = loopEndPoint - 1;
 			} else {
 				final IPredicate prevInterpol;
@@ -241,10 +234,6 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 			} else {
 				postTfPred = mPredTransformer.strongestPostcondition(loopPostTerm, transRel);
 			}
-
-			// final Term qf = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, postTfPred,
-			// SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER,
-			// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			currentPreds[j] = mPredUnifier.getOrConstructPredicate(postTfPred);
 			mLogger.debug("Generated Interpolant");
 		}
@@ -255,16 +244,7 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 	private IPredicate[] getInductiveInvariant(final IPredicate[] currentPreds, final Integer start,
 			final Integer end) {
 		final IPredicate invariant = currentPreds[start - 1];
-		// final LETTER l = mCounterexample.get(start);
-		// final UnmodifiableTransFormula transRel = l.getTransformula();
-		// final Term postTfPred = mPredTransformer.strongestPostcondition(invariant, transRel);
-		// currentPreds[start] = mPredUnifier.getOrConstructPredicate(postTfPred);
 		for (int j = start; j < end; j++) {
-			// final LETTER l = mCounterexample.get(j);
-			// final UnmodifiableTransFormula transRel = l.getTransformula();
-			// final IPredicate loopPostTerm;
-			// loopPostTerm = currentPreds[j - 1];
-			// final Term postTfPred = mPredTransformer.strongestPostcondition(loopPostTerm, transRel);
 			currentPreds[j] = mPredUnifier.getOrConstructPredicate(invariant);
 		}
 		return currentPreds;

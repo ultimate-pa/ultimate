@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is never the case that "R" holds
@@ -44,14 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class InstAbsPattern extends PatternType<InstAbsPattern> {
 	public InstAbsPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public InstAbsPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new InstAbsPattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -99,11 +94,6 @@ public class InstAbsPattern extends PatternType<InstAbsPattern> {
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds");
 		return sb.toString();
-	}
-
-	@Override
-	public InstAbsPattern rename(final String newName) {
-		return new InstAbsPattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

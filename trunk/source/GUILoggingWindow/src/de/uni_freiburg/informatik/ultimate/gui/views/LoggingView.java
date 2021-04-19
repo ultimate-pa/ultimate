@@ -32,12 +32,14 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -87,12 +89,34 @@ public class LoggingView extends ViewPart {
 	private Color mColorError;
 	private Color mColorFatal;
 
+	private static String sFontName;
+
+	public LoggingView() {
+		if (sFontName == null) {
+			final Display display = Display.getCurrent();
+			final Set<String> availableScalableFonts =
+					Arrays.stream(display.getFontList(null, true)).map(FontData::getName).collect(Collectors.toSet());
+
+			final String[] preferredFonts = new String[] { "Roboto Mono", "Monospace", "Courier New", "Courier" };
+			for (final String f : preferredFonts) {
+				if (availableScalableFonts.contains(f)) {
+					sFontName = f;
+					break;
+				}
+			}
+			if (sFontName == null) {
+				sFontName = availableScalableFonts.stream().findFirst()
+						.orElseThrow(() -> new UnsupportedOperationException("This system has no fonts"));
+			}
+		}
+	}
+
 	@Override
 	public void createPartControl(final Composite parent) {
 		mOldLineCount = 0;
 		parent.setLayout(new GridLayout());
 		mStyledText = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI | SWT.READ_ONLY | SWT.BORDER);
-		mStyledText.setFont(new Font(mStyledText.getFont().getDevice(), "Courier", FONT_SIZE, SWT.NORMAL));
+		mStyledText.setFont(new Font(mStyledText.getFont().getDevice(), sFontName, FONT_SIZE, SWT.NORMAL));
 		mStyledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		mStyledText.addModifyListener(e -> mStyledText.setSelection(mStyledText.getCharCount()));
 	}
@@ -102,7 +126,8 @@ public class LoggingView extends ViewPart {
 			throw new IllegalArgumentException("No service present");
 		}
 		mLoggingService = service;
-		service.getControllerLogger().info("Activated GUI Logging Window for Log4j Subsystem");
+		service.getControllerLogger().info("Activated GUI Logging Window for Log4j Subsystem (using font %s)",
+				sFontName);
 
 		// Listen to preference changes affecting the GUI log output: Pattern
 		// and colors
