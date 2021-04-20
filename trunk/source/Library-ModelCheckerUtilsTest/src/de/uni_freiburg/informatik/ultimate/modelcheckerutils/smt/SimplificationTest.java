@@ -490,6 +490,13 @@ public class SimplificationTest {
 		runSimplificationTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript);
 	}
 
+	@Test
+	public void missingConjuncts() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
+		final String formulaAsString = "(and (<= x 11) (not (= (+ x (- 2)) 0)) (<= 11 x))";
+		final String simplified = "(and (<= x 11) (<= 11 x))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, true, mServices, mLogger, mMgdScript);
+	}
 
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
