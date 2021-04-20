@@ -164,6 +164,9 @@ public class BitabsTranslation {
 				left_eq0);
 		Expression right_size1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
 				right_eq1, right_eq0);
+		
+		Expression left_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, left,literal_0);
+		Expression right_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, right,literal_0);
 
 		/*
 		 * Expression cond_left_1 = ExpressionFactory.newBinaryExpression(loc,
@@ -219,6 +222,8 @@ public class BitabsTranslation {
 
 		Expression cond_and_0 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq0,
 				right_eq0);
+		Expression cond_and_1 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_eq1,
+				right_eq1);
 
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
@@ -230,7 +235,10 @@ public class BitabsTranslation {
 		Expression rightMod2 = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, right,
 				literal2);
 		// case a&0
-		Expression and_mod = ExpressionFactory.constructIfThenElseExpression(loc, right_eq1, leftMod2, func);
+//		Expression and_mod = ExpressionFactory.constructIfThenElseExpression(loc, right_eq1, leftMod2, func);
+		Expression left_mod = ExpressionFactory.constructIfThenElseExpression(loc, left_pos, leftMod2, func);
+		Expression right_mod = ExpressionFactory.constructIfThenElseExpression(loc, right_pos, rightMod2, func);
+//		Expression and_pos = ExpressionFactory.constructIfThenElseExpression(loc, right_eq1, leftMod2, func);
 
 		// for the case, a&1, if size(a) is not 1, the result would diverge, this is
 		// actually equal to modular : -2&1=0, 2&1=0, 3&1=1.
@@ -241,8 +249,16 @@ public class BitabsTranslation {
 				leftUnsigned, right_eq1);
 //		Expression right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc, condRight1, leftMod2, and_0);
 //		Expression and_abs = ExpressionFactory.constructIfThenElseExpression(loc, condLeft1, rightMod2, right_1_ite);
-		Expression right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_eq1, rightMod2, and_mod);
-		Expression and_abs = ExpressionFactory.constructIfThenElseExpression(loc, cond_and_0, literal_0, right_1_ite);
+//		Expression right_1_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_eq1, rightMod2, and_mod);
+	
+		Expression right_bit_ite = ExpressionFactory.constructIfThenElseExpression(loc, right_size1, right, right_mod);
+		
+		Expression left_eq1_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_eq1, right_bit_ite, func);
+		
+		Expression left_bit_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_size1, left, left_mod);	
+		Expression right_eq1_ite = ExpressionFactory.constructIfThenElseExpression(loc, right_eq1, left_bit_ite, left_eq1_ite);
+		
+		Expression and_abs = ExpressionFactory.constructIfThenElseExpression(loc, cond_and_0, literal_0, right_eq1_ite);
 		return and_abs;
 	}
 
