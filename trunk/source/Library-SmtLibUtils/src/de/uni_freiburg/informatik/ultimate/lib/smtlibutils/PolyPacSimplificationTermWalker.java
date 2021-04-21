@@ -32,13 +32,35 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 
+/**
+ * Simplification that is based on the ideas of {@link SimplifyDDA}. Unlike
+ * {@link SimplifyDDA} we do not use an SMT solver but check implications only
+ * pairwise implications between polynomials. Like {@link SimplifyDDA} we use
+ * the context of subformulas (resp. the polynomials in the context for
+ * implications checks). This simplification is less effective that
+ * {@link SimplifyDDA} because we cannot detect implications that involve more
+ * than two literals. However this simplification is usually much faster than
+ * {@link SimplifyDDA}. In some cases it could be more effective than
+ * {@link SimplifyDDA} because currently {@link SimplifyDDA} considers
+ * quantified subformulas as atoms. <br />
+ * TOOO 20210421 Matthias: There is still some room for improving efficiency.
+ * Currently we transform very often the same terms to
+ * {@link PolynomialRelation}s. We could store the the context as
+ * {@link PolynomialRelation}s instead of terms or add a cache from which one
+ * can obtain the {@link PolynomialRelation} of a term.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	private final Script mScript;
 
@@ -50,8 +72,8 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb,
-			final List<Term> allParams, final int selectedParam) {
+	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb, final List<Term> allParams,
+			final int selectedParam) {
 		return Context.buildCriticalConstraintForConDis(mScript, context, symb, allParams, selectedParam);
 	}
 
@@ -90,8 +112,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 				script.term("true"), term);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
-			SmtUtils.checkLogicalEquivalenceForDebugging(script, result, term, PolyPoNeUtils.class,
-					tolerateUnknown);
+			SmtUtils.checkLogicalEquivalenceForDebugging(script, result, term, PolyPoNeUtils.class, tolerateUnknown);
 		}
 		return result;
 	}
