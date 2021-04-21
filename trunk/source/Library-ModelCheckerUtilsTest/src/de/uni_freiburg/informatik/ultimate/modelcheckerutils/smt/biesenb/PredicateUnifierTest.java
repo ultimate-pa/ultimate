@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
@@ -76,11 +74,7 @@ public class PredicateUnifierTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
-		try {
-			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices, "z3");
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
+		mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		mFactory = new TestPredicateFactory(mMgdScript);
@@ -391,7 +385,7 @@ public class PredicateUnifierTest {
 		final IPredicate oPred4 = oUnifier.getOrConstructPredicate(and(neg(pred(">", mA, 2)), neg(pred("<", mA, 2))));
 
 		final TestPredicate pred5 = and(neg(pred(">", mA, 2)), neg(pred("<", mA, 2)));
-		final TestPredicate pred6 = and(neg(pred(">", mA, 2)), (pred("<", mA, 2)));
+		final TestPredicate pred6 = and(neg(pred(">", mA, 2)), pred("<", mA, 2));
 		final IPredicate pred7 = new TestPredicate(mScript.term("true"), new HashSet<>(), mScript);
 
 		Assert.assertThat("1", unifier.isRepresentative(pred1), Is.is(oUnifier.isRepresentative(pred1)));
@@ -431,7 +425,7 @@ public class PredicateUnifierTest {
 		a.forEach(p -> sa.add(p.getFormula().toString()));
 		b.forEach(p -> sb.add(p.getFormula().toString()));
 		Assert.assertThat(s, sa, Is.is(sb));
-		return (sa + " = " + sb);
+		return sa + " = " + sb;
 	}
 
 	private TestPredicate neg(final TestPredicate pred) {

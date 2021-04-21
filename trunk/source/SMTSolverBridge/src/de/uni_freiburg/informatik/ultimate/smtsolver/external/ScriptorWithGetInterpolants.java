@@ -52,9 +52,9 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 	private final ExternalInterpolator mExternalInterpolator;
 
 	public ScriptorWithGetInterpolants(final String command, final ILogger logger,
-			final IUltimateServiceProvider services, final ExternalInterpolator externalInterpolator, final String name)
-			throws IOException {
-		super(command, logger, services, name);
+			final IUltimateServiceProvider services, final ExternalInterpolator externalInterpolator, final String name,
+			final String fullPathOfDumpedFile) throws IOException {
+		super(command, logger, services, name, fullPathOfDumpedFile);
 		mExternalInterpolator = externalInterpolator;
 	}
 
@@ -117,7 +117,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			command.append("(get-interpolants ");
 			break;
 		default:
-			throw new AssertionError("unknown mExternalInterpolator");
+			throw new AssertionError("unknown ExternalInterpolator: " + mExternalInterpolator);
 		}
 		String sep = "";
 		for (final Term t : partition) {
@@ -142,7 +142,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			command.append("(get-interpolants ");
 			break;
 		default:
-			throw new AssertionError("unknown mExternalInterpolator");
+			throw new AssertionError("unknown ExternalInterpolator: " + mExternalInterpolator);
 		}
 		pt.append(command, partition[0]);
 		for (int i = 1; i < partition.length; ++i) {
@@ -173,7 +173,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			interpolants = super.mExecutor.parseGetAssertionsResult();
 			break;
 		default:
-			throw new AssertionError("unknown mExternalInterpolator");
+			throw new AssertionError("unknown ExternalInterpolator: " + mExternalInterpolator);
 		}
 		return interpolants;
 	}
