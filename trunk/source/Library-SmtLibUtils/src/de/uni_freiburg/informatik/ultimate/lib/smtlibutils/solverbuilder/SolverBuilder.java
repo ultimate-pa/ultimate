@@ -76,6 +76,8 @@ public final class SolverBuilder {
 
 		External_Z3InterpolationMode(true),
 
+		External_MathsatInterpolationMode(true),
+
 		External_ModelsAndUnsatCoreMode(true),
 
 		External_ModelsMode(true),
@@ -84,7 +86,7 @@ public final class SolverBuilder {
 
 		private final boolean mIsExternal;
 
-		private SolverMode(final boolean isExternal) {
+		SolverMode(final boolean isExternal) {
 			mIsExternal = isExternal;
 		}
 
@@ -269,6 +271,7 @@ public final class SolverBuilder {
 			break;
 		case External_PrincessInterpolationMode:
 		case External_SMTInterpolInterpolationMode:
+		case External_MathsatInterpolationMode:
 			script.setOption(":produce-models", true);
 			script.setOption(":produce-interpolants", true);
 			if (logic != null) {
@@ -624,6 +627,13 @@ public final class SolverBuilder {
 				useExternalSolver = true;
 				timeoutSmtInterpol = -1;
 				externalInterpolator = ExternalInterpolator.IZ3;
+				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
+				logics = mSolverLogics;
+				break;
+			case External_MathsatInterpolationMode:
+				useExternalSolver = true;
+				timeoutSmtInterpol = -1;
+				externalInterpolator = ExternalInterpolator.MATHSAT;
 				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
 				logics = mSolverLogics;
 				break;

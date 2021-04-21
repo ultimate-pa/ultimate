@@ -55,6 +55,7 @@ public class InterpolationPreferenceChecker {
 			legalSolverSettings.add(SolverMode.External_PrincessInterpolationMode);
 			legalSolverSettings.add(SolverMode.External_SMTInterpolInterpolationMode);
 			legalSolverSettings.add(SolverMode.External_Z3InterpolationMode);
+			legalSolverSettings.add(SolverMode.External_MathsatInterpolationMode);
 			break;
 		case BackwardPredicates:
 		case FPandBP:

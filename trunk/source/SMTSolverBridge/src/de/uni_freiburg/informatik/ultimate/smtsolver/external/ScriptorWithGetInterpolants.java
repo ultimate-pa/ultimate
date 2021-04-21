@@ -30,6 +30,8 @@ import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -44,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class ScriptorWithGetInterpolants extends Scriptor {
 
 	public enum ExternalInterpolator {
-		IZ3, PRINCESS, SMTINTERPOL
+		IZ3, PRINCESS, SMTINTERPOL, MATHSAT
 	}
 
 	private final ExternalInterpolator mExternalInterpolator;
@@ -59,18 +61,47 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 	@Override
 	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
 		sendInterpolationCommand(partition);
-
-		final Term[] interpolants = readInterpolants(partition.length - 1);
-		return interpolants;
+		return readInterpolants();
 	}
 
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
 			throws SMTLIBException, UnsupportedOperationException {
 		sendInterpolationCommand(partition, startOfSubtree);
+		return readInterpolants();
+	}
 
-		final Term[] interpolants = readInterpolants(partition.length - 1);
-		return interpolants;
+	@Override
+	public LBool assertTerm(final Term term) throws SMTLIBException {
+		final Term actualTerm;
+		if (mExternalInterpolator == ExternalInterpolator.MATHSAT) {
+			actualTerm = convertAnnotationNamedToInterpolationGroup(term);
+		} else {
+			actualTerm = term;
+		}
+		return super.assertTerm(actualTerm);
+	}
+
+	private Term convertAnnotationNamedToInterpolationGroup(final Term term) {
+		if (term instanceof AnnotatedTerm) {
+			final AnnotatedTerm aterm = (AnnotatedTerm) term;
+			final Annotation[] annots = aterm.getAnnotations();
+			final Annotation[] newAnnots = new Annotation[annots.length];
+			boolean changed = false;
+			for (int i = 0; i < annots.length; ++i) {
+				final Annotation annot = annots[i];
+				if (":named".equals(annot.getKey())) {
+					changed = true;
+					newAnnots[i] = new Annotation(":interpolation-group", annot.getValue());
+				} else {
+					newAnnots[i] = annot;
+				}
+			}
+			if (changed) {
+				return annotate(aterm.getSubterm(), newAnnots);
+			}
+		}
+		return term;
 	}
 
 	private void sendInterpolationCommand(final Term[] partition) throws AssertionError {
@@ -78,6 +109,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		final PrintTerm pt = new PrintTerm();
 		switch (mExternalInterpolator) {
 		case IZ3:
+		case MATHSAT:
 			command.append("(get-interpolant ");
 			break;
 		case PRINCESS:
@@ -102,6 +134,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		final PrintTerm pt = new PrintTerm();
 		switch (mExternalInterpolator) {
 		case IZ3:
+		case MATHSAT:
 			command.append("(get-interpolant ");
 			break;
 		case PRINCESS:
@@ -128,12 +161,13 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		super.mExecutor.input(command.toString());
 	}
 
-	private Term[] readInterpolants(final int numberOfInterpolants) throws AssertionError {
+	private Term[] readInterpolants() throws AssertionError {
 		Term[] interpolants;
 		switch (mExternalInterpolator) {
 		case IZ3:
 			interpolants = super.mExecutor.parseInterpolants();
 			break;
+		case MATHSAT:
 		case PRINCESS:
 		case SMTINTERPOL:
 			interpolants = super.mExecutor.parseGetAssertionsResult();
