@@ -111,7 +111,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 
 	@Override
 	boolean applyRepeatedlyUntilNoChange() {
-		return false;
+		return true;
 	}
 
 }
