@@ -161,7 +161,7 @@ public class SimplificationTest {
 	public void distinctAndLeq2 () {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
 		final String formulaAsString = "(and (not (= x 7.0)) (<= x 7.0))";
-		final String expectedResultAsString = "(and (<= x 7.0) (not (= 7.0 x)))";
+		final String expectedResultAsString = "(and (not (= x 7.0)) (<= x 7.0))";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
 	}
 
