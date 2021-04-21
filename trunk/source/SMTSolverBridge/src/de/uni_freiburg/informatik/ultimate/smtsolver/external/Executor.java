@@ -71,7 +71,7 @@ class Executor {
 	private final IUltimateServiceProvider mServices;
 	private final String mName;
 
-	private static final String sEofErrorMessage = "Received EOF on stdin.";
+	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
 
 	Executor(final String solverCommand, final Script script, final ILogger logger,
 			final IUltimateServiceProvider services, final String solverName) throws IOException {
@@ -85,13 +85,13 @@ class Executor {
 
 	private void createProcess() throws IOException {
 		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices);
-		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
-
 		if (mProcess == null) {
 			final String errorMsg = getLogStringPrefix() + " Could not create process, terminating... ";
 			mLogger.fatal(errorMsg);
 			throw new IllegalStateException(errorMsg);
 		}
+
+		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
 
 		final OutputStream stdin = mProcess.getOutputStream();
 		final InputStream stdout = mProcess.getInputStream();
@@ -206,7 +206,7 @@ class Executor {
 			return parser.parse();
 		} catch (final SMTLIBException ex) {
 			if (ex.getMessage().equals(Parser.s_EOF)) {
-				throw new SMTLIBException(getLogStringPrefix() + sEofErrorMessage + " " + generateStderrMessage(stderr),
+				throw new SMTLIBException(getLogStringPrefix() + EOF_ERROR_MSG + " " + generateStderrMessage(stderr),
 						ex);
 			}
 			throw ex;
