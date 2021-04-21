@@ -28,6 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,6 +38,8 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.io.output.TeeOutputStream;
 
 import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 import com.github.jhoenicke.javacup.runtime.Symbol;
@@ -70,16 +74,35 @@ class Executor {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final String mName;
+	private final String mFullPathOfDumpedFile;
 
 	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
 
+	/**
+	 * 
+	 * @param solverCommand
+	 *            The command to execute an external process with all parameters
+	 * @param script
+	 *            The {@link Script} that represents the API by which this executor is accessed
+	 * @param logger
+	 *            A logger
+	 * @param services
+	 *            The global services
+	 * @param solverName
+	 *            The internal name of the external process
+	 * @param fullPathOfDumpedFile
+	 *            Path to a file to which all solver output will be written or null to disable logging.
+	 * @throws IOException
+	 */
 	Executor(final String solverCommand, final Script script, final ILogger logger,
-			final IUltimateServiceProvider services, final String solverName) throws IOException {
+			final IUltimateServiceProvider services, final String solverName, final String fullPathOfDumpedFile)
+			throws IOException {
 		mServices = services;
 		mSolverCmd = solverCommand;
 		mScript = script;
 		mLogger = logger;
 		mName = solverName;
+		mFullPathOfDumpedFile = fullPathOfDumpedFile;
 		createProcess();
 	}
 
@@ -102,7 +125,16 @@ class Executor {
 		mLexer = new Lexer(new InputStreamReader(stdout));
 		mLexer.setSymbolFactory(symfactory);
 
-		mWriter = new BufferedWriter(new OutputStreamWriter(stdin));
+		final OutputStream underlying;
+		if (mFullPathOfDumpedFile != null) {
+			final File logFile = new File(mFullPathOfDumpedFile);
+			final FileOutputStream fos = new FileOutputStream(logFile);
+			underlying = new TeeOutputStream(stdin, fos);
+		} else {
+			underlying = stdin;
+		}
+
+		mWriter = new BufferedWriter(new OutputStreamWriter(underlying));
 
 		input("(set-option :print-success true)");
 		parseSuccess();
