@@ -154,18 +154,17 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 
 		final Collection<IcfgLocation> errNodesOfAllProc = getAllErrorLocs(icfg);
-		mLogger.info("Appying trace abstraction to program that has " + errNodesOfAllProc.size() + " error locations.");
+		final int numberOfErrorLocs = errNodesOfAllProc.size();
+		mLogger.info("Applying trace abstraction to program that has " + numberOfErrorLocs + " error locations.");
 
 		mOverallResult = Result.SAFE;
 		mArtifact = null;
 		final IProgressMonitorService progmon = mServices.getProgressMonitorService();
-		final int numberOfErrorLocs = errNodesOfAllProc.size();
 		if (mPrefs.allErrorLocsAtOnce()) {
 			if (mPrefs.hasLimitAnalysisTime()) {
 				progmon.addChildTimer(progmon.getTimer(mPrefs.getLimitAnalysisTime() * 1000 * numberOfErrorLocs));
 			}
-			iterateAllErrorsAtOnce(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, traceAbstractionBenchmark,
-					errNodesOfAllProc);
+			iterateAllErrorsAtOnce(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, traceAbstractionBenchmark);
 			reportBenchmark(AllErrorsAtOnceDebugIdentifier.INSTANCE, traceAbstractionBenchmark);
 			if (mPrefs.hasLimitAnalysisTime()) {
 				progmon.removeChildTimer();
@@ -175,12 +174,11 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			// TODO This is incorrect for concurrent programs: error locs must be collected AFTER petrification!
 			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
 				final DebugIdentifier name = errorLoc.getDebugIdentifier();
-				final List<IcfgLocation> errorLocs = Arrays.asList(errorLoc);
 				if (mPrefs.hasLimitAnalysisTime()) {
 					progmon.addChildTimer(progmon.getTimer(mPrefs.getLimitAnalysisTime() * 1000));
 				}
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
-				final Result result = iterate(name, icfg, traceAbstractionBenchmark, errorLocs);
+				final Result result = iterate(name, icfg, traceAbstractionBenchmark, Arrays.asList(errorLoc));
 				mLogger.info(String.format("Result for error location %s was %s (%s/%s)", name, result,
 						finishedErrorLocs, numberOfErrorLocs));
 				reportBenchmark(name, traceAbstractionBenchmark);
@@ -194,7 +192,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
 		if (mOverallResult == Result.SAFE) {
 			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
-					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errNodesOfAllProc.size());
+					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, numberOfErrorLocs);
 			reportResult(result);
 		}
 
@@ -299,40 +297,36 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private Result iterateAllErrorsAtOnce(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs) {
-		final CegarLoopResult<L> clres;
-		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
-			clres = CegarLoopUtils.getCegarLoopResult(mServices, name, root, mPrefs, getPredicateFactory(root),
-					errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile, mComputeHoareAnnotation,
-					mPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
-		} else {
-			int numberOfThreadInstances = 1;
-			while (true) {
-				final IIcfg<IcfgLocation> petrifiedIcfg = petrifyIfConcurrent(root, numberOfThreadInstances);
-				// TODO: Use ThreadGeneralization here (with a setting!)
-				final Set<IcfgLocation> errNodesOfAllProc = getAllErrorLocs(petrifiedIcfg);
-				final CegarLoopResult<L> result = CegarLoopUtils.getCegarLoopResult(mServices, name, petrifiedIcfg,
-						mPrefs, getPredicateFactory(petrifiedIcfg), errNodesOfAllProc, mWitnessAutomaton,
-						mRawFloydHoareAutomataFromFile, mComputeHoareAnnotation, mPrefs.getConcurrency(),
-						mCompositionFactory, mTransitionClazz);
-				if (hasSufficientThreadInstances(result)) {
-					clres = result;
-					break;
-				}
-				mLogger.warn(numberOfThreadInstances
-						+ " thread instances were not sufficient, I will increase this number and restart the analysis");
-				numberOfThreadInstances++;
-				taBenchmark.aggregateBenchmarkData(result.getCegarLoopStatisticsGenerator());
+			final TraceAbstractionBenchmarks taBenchmark) {
+		Set<IcfgLocation> errorLocs;
+		CegarLoopResult<L> clres;
+		int numberOfThreadInstances = 1;
+
+		// For sequential programs, this loop will run exactly once.
+		while (true) {
+			final IIcfg<IcfgLocation> petrifiedIcfg = petrifyIfConcurrent(root, numberOfThreadInstances);
+			// TODO: Use ThreadGeneralization here (with a setting!)
+
+			errorLocs = getAllErrorLocs(petrifiedIcfg);
+			clres = CegarLoopUtils.getCegarLoopResult(mServices, name, petrifiedIcfg, mPrefs,
+					getPredicateFactory(petrifiedIcfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
+					mComputeHoareAnnotation, mPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
+			taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
+
+			if (hasSufficientThreadInstances(clres)) {
+				break;
 			}
+			assert isConcurrent(root) : "Insufficient thread instances for sequential program";
+			mLogger.warn(numberOfThreadInstances
+					+ " thread instances were not sufficient, I will increase this number and restart the analysis");
+			numberOfThreadInstances++;
 		}
+
 		if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 			mFloydHoareAutomataFromOtherErrorLocations.addAll(clres.getFloydHoareAutomata());
 		}
 		mOverallResult = clres.getOverallResult();
 		reportResults(errorLocs, clres);
-
-		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
-
 		mArtifact = clres.getArtifact();
 		return mOverallResult;
 	}
@@ -357,6 +351,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				getPredicateFactory(icfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
 				mComputeHoareAnnotation, Concurrency.FINITE_AUTOMATA, mCompositionFactory, mTransitionClazz);
 		if (!hasSufficientThreadInstances(result)) {
+			assert isConcurrent(root) : "Insufficient thread instances for sequential program";
 			reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program",
 					"unable to analyze", Severity.WARNING));
 			return Result.UNKNOWN;
@@ -374,8 +369,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return result.getOverallResult();
 	}
 
+	private static boolean isConcurrent(final IIcfg<IcfgLocation> icfg) {
+		return !icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
+	}
+
 	private IIcfg<IcfgLocation> petrifyIfConcurrent(final IIcfg<IcfgLocation> icfg, final int numberOfThreadInstances) {
-		if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (!isConcurrent(icfg)) {
 			// For sequential programs, no petrification is necessary.
 			return icfg;
 		}
