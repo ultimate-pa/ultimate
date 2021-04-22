@@ -205,8 +205,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mLogger.debug("Overall result: " + mOverallResult);
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (mComputeHoareAnnotation && mOverallResult != Result.TIMEOUT
-				&& !Result.USER_LIMIT_RESULTS.contains(mOverallResult)
-				&& mServices.getProgressMonitorService().continueProcessing()) {
+				&& !Result.USER_LIMIT_RESULTS.contains(mOverallResult) && progmon.continueProcessing()) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			createInvariantResults(icfg, icfg.getCfgSmtToolkit(), backTranslatorService);
 			createProcedureContractResults(icfg, backTranslatorService);
@@ -338,7 +337,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mFloydHoareAutomataFromOtherErrorLocations.addAll(clres.getFloydHoareAutomata());
 		}
 		mOverallResult = clres.getOverallResult();
-		reportResults(errorLocs, clres, mOverallResult);
+		reportResults(errorLocs, clres);
 
 		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
 
@@ -370,34 +369,25 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 			icfg = petrifiedIcfg;
 		}
-		final BasicCegarLoop<L> basicCegarLoop =
-				CegarLoopUtils.constructCegarLoop(mServices, name, icfg, mPrefs, icfg.getCfgSmtToolkit(),
-						getPredicateFactory(icfg), errorLocs, mRawFloydHoareAutomataFromFile, mComputeHoareAnnotation,
-						Concurrency.FINITE_AUTOMATA, mCompositionFactory, mTransitionClazz, mWitnessAutomaton);
-		final Result result = basicCegarLoop.iterate();
-		if (result == Result.UNSAFE) {
-			final AtomicTraceElement<L> te = basicCegarLoop.getRcfgProgramExecution()
-					.getTraceElement(basicCegarLoop.getRcfgProgramExecution().getLength() - 1);
-			final IcfgLocation tar = te.getTraceElement().getTarget();
-			final Check check = Check.getAnnotation(tar);
-			if (check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES)) {
-				reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program",
-						"unable to analyze", Severity.WARNING));
-				return Result.UNKNOWN;
-			}
+		final CegarLoopResult<L> result = CegarLoopUtils.getCegarLoopResult(mServices, name, icfg, mPrefs,
+				getPredicateFactory(icfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
+				mComputeHoareAnnotation, Concurrency.FINITE_AUTOMATA, mCompositionFactory, mTransitionClazz);
+		if (!hasSufficientThreadInstances(result)) {
+			reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program",
+					"unable to analyze", Severity.WARNING));
+			return Result.UNKNOWN;
 		}
 
-		basicCegarLoop.finish();
 		if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
-			mFloydHoareAutomataFromOtherErrorLocations.addAll(basicCegarLoop.getFloydHoareAutomata());
+			mFloydHoareAutomataFromOtherErrorLocations.addAll(result.getFloydHoareAutomata());
 		}
 
-		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
-		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
+		mOverallResult = reportResults(errorLocs, result);
+		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = result.getCegarLoopStatisticsGenerator();
 		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 
-		mArtifact = basicCegarLoop.getArtifact();
-		return result;
+		mArtifact = result.getArtifact();
+		return result.getOverallResult();
 	}
 
 	private PredicateFactory getPredicateFactory(final IIcfg<IcfgLocation> icfg) {
@@ -405,8 +395,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
 
-	private Result reportResults(final Collection<IcfgLocation> errorLocs, final CegarLoopResult<L> clres,
-			final Result result) {
+	private Result reportResults(final Collection<IcfgLocation> errorLocs, final CegarLoopResult<L> clres) {
+		final Result result = clres.getOverallResult();
 		switch (result) {
 		case SAFE:
 			reportPositiveResults(errorLocs);
@@ -424,34 +414,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		case UNKNOWN:
 			final IProgramExecution<L, Term> pe = clres.getProgramExecution();
 			reportUnproveableResult(pe, clres.getUnprovabilityReasons());
-			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
-		default:
-			throw new IllegalArgumentException();
-		}
-	}
-
-	private Result computeOverallResult(final Collection<IcfgLocation> errorLocs,
-			final BasicCegarLoop<L> basicCegarLoop, final Result result) {
-		switch (result) {
-		case SAFE:
-			reportPositiveResults(errorLocs);
-			return mOverallResult;
-		case UNSAFE:
-			reportCounterexampleResult(basicCegarLoop.getRcfgProgramExecution());
-			return result;
-		case TIMEOUT:
-		case USER_LIMIT_ITERATIONS:
-		case USER_LIMIT_PATH_PROGRAM:
-		case USER_LIMIT_TIME:
-		case USER_LIMIT_TRACEHISTOGRAM:
-			reportLimitResult(result, errorLocs, basicCegarLoop.getRunningTaskStackProvider());
-			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
-		case UNKNOWN:
-			final IProgramExecution<L, Term> pe = basicCegarLoop.getRcfgProgramExecution();
-			final List<UnprovabilityReason> unprovabilityReasons = new ArrayList<>();
-			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
-			unprovabilityReasons.addAll(UnprovabilityReason.getUnprovabilityReasons(pe));
-			reportUnproveableResult(pe, unprovabilityReasons);
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		default:
 			throw new IllegalArgumentException();
