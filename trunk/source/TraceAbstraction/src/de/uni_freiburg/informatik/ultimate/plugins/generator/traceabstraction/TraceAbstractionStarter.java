@@ -311,11 +311,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		} else {
 			int numberOfThreadInstances = 1;
 			while (true) {
-				mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
-				final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, root,
-						IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
-				final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
-				mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+				final IIcfg<IcfgLocation> petrifiedIcfg = petrify(root, numberOfThreadInstances);
 				// TODO: Use ThreadGeneralization here (with a setting!)
 				final Set<IcfgLocation> errNodesOfAllProc = petrifiedIcfg.getProcedureErrorNodes().values().stream()
 						.flatMap(Set::stream).collect(Collectors.toSet());
@@ -358,16 +354,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 	private Result iterate(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs) {
-		IIcfg<IcfgLocation> icfg;
+		final IIcfg<IcfgLocation> icfg;
 		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			icfg = root;
 		} else {
 			final int numberOfThreadInstances = 3;
-			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, root,
-					IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
-			final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
-			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
-			icfg = petrifiedIcfg;
+			icfg = petrify(root, numberOfThreadInstances);
 		}
 		final CegarLoopResult<L> result = CegarLoopUtils.getCegarLoopResult(mServices, name, icfg, mPrefs,
 				getPredicateFactory(icfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
@@ -388,6 +380,15 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		mArtifact = result.getArtifact();
 		return result.getOverallResult();
+	}
+
+	private IIcfg<IcfgLocation> petrify(final IIcfg<IcfgLocation> icfg, final int numberOfThreadInstances) {
+		mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
+		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg,
+				IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
+		final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
+		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+		return petrifiedIcfg;
 	}
 
 	private PredicateFactory getPredicateFactory(final IIcfg<IcfgLocation> icfg) {
