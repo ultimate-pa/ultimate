@@ -118,6 +118,7 @@ public class PolyPoNe {
 			final boolean removeExpliedPolyRels) {
 		final Set<PolynomialRelation> existingPolyRels = mPolyRels
 				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
+		final List<PolynomialRelation> existingThatExplyNew = new ArrayList<>();
 		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
 			final ComparisonResult comp = AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel,
 					newPolyRel);
@@ -128,7 +129,7 @@ public class PolyPoNe {
 					return Check.REDUNDANT;
 				case EXPLIES:
 					if (removeExpliedPolyRels) {
-						mPolyRels.removeDomainElement(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
+						existingThatExplyNew.add(existingPolyRel);
 					}
 					break;
 				case INCONSISTENT:
@@ -136,6 +137,15 @@ public class PolyPoNe {
 				default:
 					throw new AssertionError("unknown value " + comp);
 				}
+			}
+		}
+		if (removeExpliedPolyRels) {
+			// remove all existing relations that exply the new relation (i.e., all that are
+			// implied by the new relation)
+			for (final PolynomialRelation existing : existingThatExplyNew) {
+				final boolean modified = mPolyRels.removePair(existing.getPolynomialTerm().getAbstractVariable2Coefficient(),
+						existing);
+				assert modified : "nothing removed";
 			}
 		}
 		return null;

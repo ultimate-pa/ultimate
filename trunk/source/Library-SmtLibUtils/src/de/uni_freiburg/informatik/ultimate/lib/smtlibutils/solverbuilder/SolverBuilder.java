@@ -76,6 +76,8 @@ public final class SolverBuilder {
 
 		External_Z3InterpolationMode(true),
 
+		External_MathsatInterpolationMode(true),
+
 		External_ModelsAndUnsatCoreMode(true),
 
 		External_ModelsMode(true),
@@ -84,7 +86,7 @@ public final class SolverBuilder {
 
 		private final boolean mIsExternal;
 
-		private SolverMode(final boolean isExternal) {
+		SolverMode(final boolean isExternal) {
 			mIsExternal = isExternal;
 		}
 
@@ -101,6 +103,9 @@ public final class SolverBuilder {
 
 	// 20161214 Matthias: MathSAT does not support timeouts
 	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
+	public static final String COMMAND_MATHSAT_INTERPOLATION =
+			"mathsat -theory.bv.eager=false -theory.fp.enabled=false";
+
 	public static final long TIMEOUT_SMTINTERPOL = 12_000L;
 	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
 	public static final Logics LOGIC_Z3 = Logics.ALL;
@@ -135,48 +140,22 @@ public final class SolverBuilder {
 		final ILogger solverLogger = getSolverLogger(services, settings);
 		Script script;
 		if (settings.useExternalSolver()) {
-			assert settings.getSolverMode() == null || settings
-					.getSolverMode() != SolverMode.Internal_SMTInterpol : "You set solver mode to Internal* and enabled useExternalSolver";
-			final String command = settings.getCommandExternalSolver();
-			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
-			try {
-				final ExternalInterpolator externalInterpolator = settings.getExternalInterpolator();
-				if (externalInterpolator == null) {
-					if (settings.fakeNonIncrementalScript()) {
-						script = new NonIncrementalScriptor(command, solverLogger, services,
-								"External_FakeNonIncremental", settings.dumpSmtScriptToFile(),
-								settings.getPathOfDumpedScript(), settings.getBaseNameOfDumpedScript());
-					} else {
-						script = new Scriptor(command, solverLogger, services, "External");
-					}
-				} else {
-					solverLogger.info("external solver will use " + externalInterpolator + " interpolation mode");
-					script = new ScriptorWithGetInterpolants(command, solverLogger, services, externalInterpolator,
-							"ExternalInterpolator");
-				}
-				if (settings.useDiffWrapper()) {
-					script = new DiffWrapperScript(script);
-				}
-			} catch (final IOException e) {
-				solverLogger.fatal("Unable to construct solver");
-				throw new RuntimeException(e);
-			}
+			script = createExternalSolver(services, settings, solverLogger);
 		} else {
 			solverLogger.info("constructing new instance of SMTInterpol");
 			final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(solverLogger);
 			final TerminationRequest termRequest =
 					new SMTInterpolTerminationRequest(services.getProgressMonitorService());
 			script = new SMTInterpol(loggerWrapper, termRequest);
-		}
-		if (settings.dumpSmtScriptToFile()) {
-			script = wrapScriptWithLoggingScript(services, script, solverLogger,
-					settings.constructFullPathOfDumpedScript());
-		}
-		if (!settings.useExternalSolver()) {
+			if (settings.dumpSmtScriptToFile()) {
+				script = wrapScriptWithLoggingScript(services, script, solverLogger,
+						settings.constructFullPathOfDumpedScript());
+			}
 			script.setOption(":timeout", settings.getTimeoutSmtInterpol());
 			// ensure that SMTInterpol is exited when toolchain ends
 			script = new SelfDestructingSolverStorable(script, services.getStorage());
 		}
+
 		if (USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS) {
 			script = new ScriptWithTermConstructionChecks(script);
 		}
@@ -193,6 +172,46 @@ public final class SolverBuilder {
 					settings.getPathOfDumpedScript());
 		}
 		return new HistoryRecordingScript(script);
+	}
+
+	private static Script createExternalSolver(final IUltimateServiceProvider services, final SolverSettings settings,
+			final ILogger solverLogger) {
+		assert settings.getSolverMode() == null || settings
+				.getSolverMode() != SolverMode.Internal_SMTInterpol : "You set solver mode to Internal* and enabled useExternalSolver";
+		final String command = settings.getCommandExternalSolver();
+		solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
+		final String fullPathOfDumpedFile;
+		if (settings.dumpSmtScriptToFile()) {
+			fullPathOfDumpedFile = settings.constructFullPathOfDumpedScript();
+			solverLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
+		} else {
+			fullPathOfDumpedFile = null;
+		}
+
+		Script script;
+		try {
+			final ExternalInterpolator externalInterpolator = settings.getExternalInterpolator();
+			if (externalInterpolator == null) {
+				if (settings.fakeNonIncrementalScript()) {
+					script = new NonIncrementalScriptor(command, solverLogger, services, "External_FakeNonIncremental",
+							settings.dumpSmtScriptToFile(), settings.getPathOfDumpedScript(),
+							settings.getBaseNameOfDumpedScript(), fullPathOfDumpedFile);
+				} else {
+					script = new Scriptor(command, solverLogger, services, "External", fullPathOfDumpedFile);
+				}
+			} else {
+				solverLogger.info("external solver will use " + externalInterpolator + " interpolation mode");
+				script = new ScriptorWithGetInterpolants(command, solverLogger, services, externalInterpolator,
+						"ExternalInterpolator", fullPathOfDumpedFile);
+			}
+			if (settings.useDiffWrapper()) {
+				script = new DiffWrapperScript(script);
+			}
+		} catch (final IOException e) {
+			solverLogger.fatal("Unable to construct solver");
+			throw new RuntimeException(e);
+		}
+		return script;
 	}
 
 	public static Script buildAndInitializeSolver(final IUltimateServiceProvider services,
@@ -269,6 +288,7 @@ public final class SolverBuilder {
 			break;
 		case External_PrincessInterpolationMode:
 		case External_SMTInterpolInterpolationMode:
+		case External_MathsatInterpolationMode:
 			script.setOption(":produce-models", true);
 			script.setOption(":produce-interpolants", true);
 			if (logic != null) {
@@ -624,6 +644,13 @@ public final class SolverBuilder {
 				useExternalSolver = true;
 				timeoutSmtInterpol = -1;
 				externalInterpolator = ExternalInterpolator.IZ3;
+				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
+				logics = mSolverLogics;
+				break;
+			case External_MathsatInterpolationMode:
+				useExternalSolver = true;
+				timeoutSmtInterpol = -1;
+				externalInterpolator = ExternalInterpolator.MATHSAT;
 				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
 				logics = mSolverLogics;
 				break;
