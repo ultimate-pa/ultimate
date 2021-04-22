@@ -208,6 +208,8 @@ public final class SFO {
 	public static final String REALLOC_PTR = "ptr";
 	public static final String REALLOC_SIZE = "size";
 
+	public static final String ULTIMATE_FORK_COUNT = "#pthreadsForks";
+
 	public static final String ULTIMATE_PTHREADS_MUTEX = "#pthreadsMutex";
 
 	public static final String INIT_TO_ZERO_AT_ADDRESS = "initToZeroAtPointerBaseAddress~";
