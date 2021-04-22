@@ -1846,8 +1846,8 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private static VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
-		final ASTType counterType = new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
+	private VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
+		final ASTType counterType = mTypeHandler.cType2AstType(loc, new CPrimitive(CPrimitives.ULONG));
 		final VarList varList = new VarList(loc, new String[] { SFO.ULTIMATE_FORK_COUNT }, counterType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
