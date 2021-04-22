@@ -1065,9 +1065,9 @@ public class StandardFunctionHandler {
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final IdentifierExpression forkCount = mMemoryHandler.getPthreadForkCount(loc);
+		final CPrimitive threadIdType = mMemoryHandler.getThreadIdType();
 		// set temporary ID variable to value of global fork count
-		final AuxVarInfo tmpThreadId =
-				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.ULONG), SFO.AUXVAR.PRE_MOD);
+		final AuxVarInfo tmpThreadId = mAuxVarInfoBuilder.constructAuxVarInfo(loc, threadIdType, SFO.AUXVAR.PRE_MOD);
 		builder.addDeclaration(tmpThreadId.getVarDec());
 		builder.addAuxVar(tmpThreadId);
 		final AssignmentStatement counterStore = new AssignmentStatement(loc,
@@ -1076,10 +1076,9 @@ public class StandardFunctionHandler {
 		// increment the global variable fork count
 		final var counterLhs = new VariableLHS(loc, forkCount.getType(), forkCount.getIdentifier(),
 				forkCount.getDeclarationInformation());
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(
-				loc, IASTBinaryExpression.op_plus, forkCount, new CPrimitive(CPrimitives.ULONG), mTypeSizes
-						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.ULONG), BigInteger.valueOf(1L)),
-				new CPrimitive(CPrimitives.ULONG));
+		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
+				forkCount, threadIdType,
+				mTypeSizes.constructLiteralForIntegerType(loc, threadIdType, BigInteger.valueOf(1L)), threadIdType);
 		final AssignmentStatement counterIncrement =
 				new AssignmentStatement(loc, new VariableLHS[] { counterLhs }, new Expression[] { sum });
 		builder.addStatement(counterIncrement);
@@ -1087,7 +1086,7 @@ public class StandardFunctionHandler {
 		final Expression threadId = tmpThreadId.getExp();
 
 		final List<Statement> writeCall =
-				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, new CPrimitive(CPrimitives.ULONG), false, node);
+				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, threadIdType, false, node);
 
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
@@ -1146,10 +1145,10 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 2, name, arguments);
 		final ExpressionResult argThreadId;
 		{
+			final CPrimitive threadIdType = mMemoryHandler.getThreadIdType();
 			final ExpressionResult tmp =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-			// TODO 2018-10-26 Matthias: we presume that pthread_t is unsigned long
-			argThreadId = mExprResultTransformer.performImplicitConversion(tmp, new CPrimitive(CPrimitives.ULONG), loc);
+			argThreadId = mExprResultTransformer.performImplicitConversion(tmp, threadIdType, loc);
 		}
 		final ExpressionResult argAddressOfResultPointer;
 		{

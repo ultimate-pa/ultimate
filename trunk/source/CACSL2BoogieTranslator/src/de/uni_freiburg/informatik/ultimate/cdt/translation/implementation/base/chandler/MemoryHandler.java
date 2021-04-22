@@ -1080,7 +1080,8 @@ public class MemoryHandler {
 	}
 
 	public IdentifierExpression getPthreadForkCount(final ILocation loc) {
-		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, SFO.ULTIMATE_FORK_COUNT,
+		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(getThreadIdType());
+		return ExpressionFactory.constructIdentifierExpression(loc, counterType, SFO.ULTIMATE_FORK_COUNT,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
 
@@ -1847,9 +1848,13 @@ public class MemoryHandler {
 	}
 
 	private VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
-		final ASTType counterType = mTypeHandler.cType2AstType(loc, new CPrimitive(CPrimitives.ULONG));
+		final ASTType counterType = mTypeHandler.cType2AstType(loc, getThreadIdType());
 		final VarList varList = new VarList(loc, new String[] { SFO.ULTIMATE_FORK_COUNT }, counterType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
+	}
+
+	public CPrimitive getThreadIdType() {
+		return new CPrimitive(CPrimitives.INT);
 	}
 
 	private VariableDeclaration declarePThreadsMutexArray(final ILocation loc) {
@@ -2810,7 +2815,7 @@ public class MemoryHandler {
 		case ULTIMATE_MEMINIT:
 			break;
 		case ULTIMATE_PTHREADS_FORK_COUNT:
-			return new MemoryModelDeclarationInfo(mmd, BoogieType.TYPE_INT);
+			return new MemoryModelDeclarationInfo(mmd, mTypeHandler.getBoogieTypeForCType(getThreadIdType()));
 		case ULTIMATE_PTHREADS_MUTEX:
 			return new MemoryModelDeclarationInfo(mmd,
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, mTypeHandler
