@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -152,11 +153,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 
-		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
-		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
-		for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
-			errNodesOfAllProc.addAll(errNodeOfProc);
-		}
+		final Collection<IcfgLocation> errNodesOfAllProc = getAllErrorLocs(icfg);
 		mLogger.info("Appying trace abstraction to program that has " + errNodesOfAllProc.size() + " error locations.");
 
 		mOverallResult = Result.SAFE;
@@ -169,16 +166,16 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			}
 			iterateAllErrorsAtOnce(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, traceAbstractionBenchmark,
 					errNodesOfAllProc);
-			reportBenchmark(traceAbstractionBenchmark);
+			reportBenchmark(AllErrorsAtOnceDebugIdentifier.INSTANCE, traceAbstractionBenchmark);
 			if (mPrefs.hasLimitAnalysisTime()) {
 				progmon.removeChildTimer();
 			}
 		} else {
 			int finishedErrorLocs = 1;
+			// TODO This is incorrect for concurrent programs: error locs must be collected AFTER petrification!
 			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
 				final DebugIdentifier name = errorLoc.getDebugIdentifier();
-				final List<IcfgLocation> errorLocs = new ArrayList<>(1);
-				errorLocs.add(errorLoc);
+				final List<IcfgLocation> errorLocs = Arrays.asList(errorLoc);
 				if (mPrefs.hasLimitAnalysisTime()) {
 					progmon.addChildTimer(progmon.getTimer(mPrefs.getLimitAnalysisTime() * 1000));
 				}
@@ -186,7 +183,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final Result result = iterate(name, icfg, traceAbstractionBenchmark, errorLocs);
 				mLogger.info(String.format("Result for error location %s was %s (%s/%s)", name, result,
 						finishedErrorLocs, numberOfErrorLocs));
-				reportBenchmarkForErrLocation(traceAbstractionBenchmark, errorLoc.toString());
+				reportBenchmark(name, traceAbstractionBenchmark);
 				traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 				if (mPrefs.hasLimitAnalysisTime()) {
 					progmon.removeChildTimer();
@@ -311,10 +308,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		} else {
 			int numberOfThreadInstances = 1;
 			while (true) {
-				final IIcfg<IcfgLocation> petrifiedIcfg = petrify(root, numberOfThreadInstances);
+				final IIcfg<IcfgLocation> petrifiedIcfg = petrifyIfConcurrent(root, numberOfThreadInstances);
 				// TODO: Use ThreadGeneralization here (with a setting!)
-				final Set<IcfgLocation> errNodesOfAllProc = petrifiedIcfg.getProcedureErrorNodes().values().stream()
-						.flatMap(Set::stream).collect(Collectors.toSet());
+				final Set<IcfgLocation> errNodesOfAllProc = getAllErrorLocs(petrifiedIcfg);
 				final CegarLoopResult<L> result = CegarLoopUtils.getCegarLoopResult(mServices, name, petrifiedIcfg,
 						mPrefs, getPredicateFactory(petrifiedIcfg), errNodesOfAllProc, mWitnessAutomaton,
 						mRawFloydHoareAutomataFromFile, mComputeHoareAnnotation, mPrefs.getConcurrency(),
@@ -354,13 +350,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 	private Result iterate(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs) {
-		final IIcfg<IcfgLocation> icfg;
-		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
-			icfg = root;
-		} else {
-			final int numberOfThreadInstances = 3;
-			icfg = petrify(root, numberOfThreadInstances);
-		}
+		final int numberOfThreadInstances = 3;
+		final IIcfg<IcfgLocation> icfg = petrifyIfConcurrent(root, numberOfThreadInstances);
+
 		final CegarLoopResult<L> result = CegarLoopUtils.getCegarLoopResult(mServices, name, icfg, mPrefs,
 				getPredicateFactory(icfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
 				mComputeHoareAnnotation, Concurrency.FINITE_AUTOMATA, mCompositionFactory, mTransitionClazz);
@@ -382,7 +374,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return result.getOverallResult();
 	}
 
-	private IIcfg<IcfgLocation> petrify(final IIcfg<IcfgLocation> icfg, final int numberOfThreadInstances) {
+	private IIcfg<IcfgLocation> petrifyIfConcurrent(final IIcfg<IcfgLocation> icfg, final int numberOfThreadInstances) {
+		if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+			// For sequential programs, no petrification is necessary.
+			return icfg;
+		}
+
 		mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
 		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg,
 				IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
@@ -394,6 +391,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private PredicateFactory getPredicateFactory(final IIcfg<IcfgLocation> icfg) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		return new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
+	}
+
+	private static Set<IcfgLocation> getAllErrorLocs(final IIcfg<IcfgLocation> icfg) {
+		return icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toSet());
 	}
 
 	private Result reportResults(final Collection<IcfgLocation> errorLocs, final CegarLoopResult<L> clres) {
@@ -489,15 +490,13 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				unproabilityReasons));
 	}
 
-	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
-		final String shortDescription = "Ultimate Automizer benchmark data";
-		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
-		reportResult(res);
-	}
-
-	private <T> void reportBenchmarkForErrLocation(final ICsvProviderProvider<T> benchmark,
-			final String errLocDescription) {
-		final String shortDescription = "Ultimate Automizer benchmark data for error location: " + errLocDescription;
+	private <T> void reportBenchmark(final DebugIdentifier ident, final ICsvProviderProvider<T> benchmark) {
+		final String shortDescription;
+		if (ident instanceof AllErrorsAtOnceDebugIdentifier) {
+			shortDescription = "Ultimate Automizer benchmark data";
+		} else {
+			shortDescription = "Ultimate Automizer benchmark data for error location: " + ident;
+		}
 		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		reportResult(res);
 	}
