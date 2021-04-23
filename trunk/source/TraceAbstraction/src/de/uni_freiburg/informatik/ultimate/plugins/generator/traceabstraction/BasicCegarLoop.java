@@ -71,9 +71,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;<<<<<<<HEAD
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;=======
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
@@ -81,7 +79,9 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;>>>>>>>dev
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
@@ -126,10 +126,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;<<<<<<<HEAD
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesValidityCheck;=======
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement;>>>>>>>dev
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesValidityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
@@ -281,7 +281,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	protected IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> mRefinementEngine;
 
 	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
-	private final boolean mFirstReuseDump = true;
+	private boolean mFirstReuseDump = true;
 	private boolean mUseHeuristicEmptinessCheck = false;
 	private final ScoringMethod mScoringMethod;
 	private final AStarHeuristic mAStarHeuristic;
