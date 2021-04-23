@@ -36,7 +36,10 @@ public interface IPlaceFactory<P> {
 	/**
 	 * Creates a new place for a Petri net. The place still needs to be added manually to the Petri net.
 	 *
+	 * @param oldPlace
+	 *            A place that will be copied.
+	 *
 	 * @return A new place.
 	 */
-	P createPlace();
+	P createPlace(P oldPlace);
 }

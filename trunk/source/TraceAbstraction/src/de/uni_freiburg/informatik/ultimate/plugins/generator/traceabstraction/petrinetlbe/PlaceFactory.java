@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPlaceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
  * A factory for creating places in the Petri net.
@@ -37,23 +36,19 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
  */
 public class PlaceFactory implements IPlaceFactory<IPredicate> {
 	private final BasicPredicateFactory mPredicateFactory;
-	private final ManagedScript mScript;
 
 	/**
 	 * Creates a PlaceFactory.
 	 *
 	 * @param predicateFactory
 	 *            A predicate factory.
-	 * @param script
-	 *            A managed script.
 	 */
-	public PlaceFactory(final BasicPredicateFactory predicateFactory, final ManagedScript script) {
+	public PlaceFactory(final BasicPredicateFactory predicateFactory) {
 		mPredicateFactory = predicateFactory;
-		mScript = script;
 	}
 
 	@Override
-	public IPredicate createPlace() {
-		return mPredicateFactory.newPredicate(mScript.getScript().term("true"));
+	public IPredicate createPlace(final IPredicate oldPlace) {
+		return mPredicateFactory.newPredicate(oldPlace.getFormula());
 	}
 }

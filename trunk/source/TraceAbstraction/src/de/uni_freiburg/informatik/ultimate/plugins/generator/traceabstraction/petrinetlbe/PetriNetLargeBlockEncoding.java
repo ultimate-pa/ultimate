@@ -137,7 +137,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 		try {
 			final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
-			final PlaceFactory placeFactory = new PlaceFactory(predicateFactory, mManagedScript);
+			final PlaceFactory placeFactory = new PlaceFactory(predicateFactory);
 			final LiptonReduction<L, IPredicate> lipton =
 					new LiptonReduction<>(automataServices, petriNet, compositionFactory, placeFactory, moverCheck);
 			lipton.performReduction();

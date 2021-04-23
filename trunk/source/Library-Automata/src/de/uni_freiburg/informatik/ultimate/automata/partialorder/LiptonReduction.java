@@ -367,7 +367,7 @@ public class LiptonReduction<L, P> {
 		}
 
 		for (final Map.Entry<P, Set<ITransition<L, P>>> entry : transitionsToBeReplaced.entrySet()) {
-			final P deadPlace = mPlaceFactory.createPlace();
+			final P deadPlace = mPlaceFactory.createPlace(entry.getKey());
 			petriNet.addPlace(deadPlace, false, false);
 
 			for (final ITransition<L, P> t : entry.getValue()) {
