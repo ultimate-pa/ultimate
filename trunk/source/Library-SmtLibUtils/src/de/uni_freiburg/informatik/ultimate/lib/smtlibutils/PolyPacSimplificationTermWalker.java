@@ -26,21 +26,41 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 
+/**
+ * Simplification that is based on the ideas of {@link SimplifyDDA}. Unlike
+ * {@link SimplifyDDA} we do not use an SMT solver but check implications only
+ * pairwise implications between polynomials. Like {@link SimplifyDDA} we use
+ * the context of subformulas (resp. the polynomials in the context for
+ * implications checks). This simplification is less effective that
+ * {@link SimplifyDDA} because we cannot detect implications that involve more
+ * than two literals. However this simplification is usually much faster than
+ * {@link SimplifyDDA}. In some cases it could be more effective than
+ * {@link SimplifyDDA} because currently {@link SimplifyDDA} considers
+ * quantified subformulas as atoms. <br />
+ * TOOO 20210421 Matthias: There is still some room for improving efficiency.
+ * Currently we transform very often the same terms to
+ * {@link PolynomialRelation}s. We could store the the context as
+ * {@link PolynomialRelation}s instead of terms or add a cache from which one
+ * can obtain the {@link PolynomialRelation} of a term.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	private final Script mScript;
 
@@ -52,37 +72,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb,
-			final List<Term> allParams, final int selectedParam) {
-		return buildCriticalConstraintForApplicationTerm(mScript, context, symb, allParams, selectedParam);
-	}
-
-	public static Term buildCriticalConstraintForApplicationTerm(final Script script, final Term parentContext,
-			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
-		final List<Term> otherParams = new ArrayList<>(allParams);
-		otherParams.remove(selectedParam);
-		Term result;
-		if (symb.getName().equals("and")) {
-			result = SmtUtils.and(script, otherParams);
-		} else if (symb.getName().equals("or")) {
-			final List<Term> otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(script, x))
-					.collect(Collectors.toList());
-			result = SmtUtils.and(script, otherParamsNegated);
-		} else {
-			throw new AssertionError("only conjunction and disjunction are supported");
-		}
-		result = SmtUtils.and(script, result, parentContext);
-		return result;
+	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb, final List<Term> allParams,
+			final int selectedParam) {
+		return Context.buildCriticalConstraintForConDis(mScript, context, symb, allParams, selectedParam);
 	}
 
 	@Override
-	Term constructContextForQuantifiedFormula(final Term context, final int quant, final TermVariable[] vars) {
-		return buildCriticalContraintForQuantifiedFormula(mScript, context, vars);
-	}
-
-	public static Term buildCriticalContraintForQuantifiedFormula(final Script script, final Term context,
-			final TermVariable[] vars) {
-		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, Arrays.asList(vars), context);
+	Term constructContextForQuantifiedFormula(final Term context, final int quant, final List<TermVariable> vars) {
+		return Context.buildCriticalContraintForQuantifiedFormula(mScript, context, vars);
 	}
 
 	@Override
@@ -115,9 +112,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 				script.term("true"), term);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
-			SmtUtils.checkLogicalEquivalenceForDebugging(script, result, term, PolyPoNeUtils.class,
-					tolerateUnknown);
+			SmtUtils.checkLogicalEquivalenceForDebugging(script, result, term, PolyPoNeUtils.class, tolerateUnknown);
 		}
+		return result;
+	}
+
+	public static Term simplify(final Script script, final Term context, final Term term) {
+		final Term result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(script),
+				context, term);
 		return result;
 	}
 
@@ -130,7 +132,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 
 	@Override
 	boolean applyRepeatedlyUntilNoChange() {
-		return false;
+		return true;
 	}
 
 }

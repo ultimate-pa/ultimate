@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.io.IOException;
-
 import org.eclipse.core.runtime.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -65,13 +62,8 @@ public class XnfTransformerTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		try {
-			mScript =
-					new Scriptor("z3 SMTLIB2_COMPLIANT=true -t:5000 -memory:2024 -smt2 -in", mLogger, mServices, "z3");
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
-		// script = new SMTInterpol();
+		mScript =
+				UltimateMocks.createSolver("z3 SMTLIB2_COMPLIANT=true -t:5000 -memory:2024 -smt2 -in", LogLevel.DEBUG);
 		mMgdScript = new ManagedScript(mServices, mScript);
 
 		mScript.setLogic(Logics.ALL);

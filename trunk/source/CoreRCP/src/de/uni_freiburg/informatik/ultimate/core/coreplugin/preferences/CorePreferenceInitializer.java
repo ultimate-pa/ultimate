@@ -148,6 +148,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String LABEL_PLUGINS_PREF = "Log level for plugins";
 	private static final String LABEL_LOGLEVEL_PLUGIN_SPECIFIC = "Log level for";
 	public static final String LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC = "Log level for specific external tool";
+	public static final String LABEL_LOGLEVEL_CLAZZ_SPECIFIC = "Log level for class";
 
 	public static final String DEFAULT_VALUE_ROOT_PREF = "DEBUG";
 	public static final String DEFAULT_VALUE_TOOLS_PREF = "WARN";
@@ -266,6 +267,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 						new LogLevelValidator()),
 
 				new UltimatePreferenceItem<>(LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC, Collections.emptyMap(),
+						PreferenceType.KeyValue),
+				new UltimatePreferenceItem<>(LABEL_LOGLEVEL_CLAZZ_SPECIFIC, Collections.emptyMap(),
 						PreferenceType.KeyValue),
 
 				// Log colours

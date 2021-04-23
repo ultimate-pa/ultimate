@@ -62,9 +62,9 @@ public interface IReqSymbolTable {
 
 	VariableLHS getVariableLhs(String clockVar);
 
-	Collection<String> getClockVars();
+	Set<String> getClockVars();
 
-	Collection<String> getStateVars();
+	Set<String> getStateVars();
 
 	/**
 	 * Given a variable name, return the name of the primed version of this variable.
@@ -76,7 +76,7 @@ public interface IReqSymbolTable {
 	 */
 	String getHistoryVarId(String name);
 
-	Collection<String> getPcVars();
+	Set<String> getPcVars();
 
 	Collection<Declaration> getDeclarations();
 

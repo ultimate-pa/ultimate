@@ -27,9 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * A simple and efficient syntax-based independence relation. Two actions are independent if all variable accessed by
@@ -39,11 +41,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  * @param <STATE>
  *            This relation is non-conditional, so this parameter is not used.
+ * @param <L>
+ *            The type of letters whose independence is tracked
  */
 public class SyntacticIndependenceRelation<STATE, L extends IAction> implements IIndependenceRelation<STATE, L> {
-
-	private long mPositiveQueries;
-	private long mNegativeQueries;
+	private final IndependenceStatisticsDataProvider mStatistics =
+			new IndependenceStatisticsDataProvider(SyntacticIndependenceRelation.class);
 
 	@Override
 	public boolean isSymmetric() {
@@ -68,20 +71,12 @@ public class SyntacticIndependenceRelation<STATE, L extends IAction> implements 
 				DataStructureUtils.haveEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars());
 
 		final boolean result = noWWConflict && noWRConflict && noRWConflict;
-		if (result) {
-			mPositiveQueries++;
-		} else {
-			mNegativeQueries++;
-		}
+		mStatistics.reportQuery(result, false);
 		return result;
 	}
 
-	public long getPositiveQueries() {
-		return mPositiveQueries;
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
-
-	public long getNegativeQueries() {
-		return mNegativeQueries;
-	}
-
 }

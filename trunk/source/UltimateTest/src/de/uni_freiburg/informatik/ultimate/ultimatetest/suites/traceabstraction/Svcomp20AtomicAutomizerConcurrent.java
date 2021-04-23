@@ -1079,7 +1079,7 @@ public class Svcomp20AtomicAutomizerConcurrent extends AbstractTraceAbstractionT
 	 */
 	@Override
 	public long getTimeout() {
-		return 40 * 1000;
+		return 40_000L;
 	}
 
 	/**

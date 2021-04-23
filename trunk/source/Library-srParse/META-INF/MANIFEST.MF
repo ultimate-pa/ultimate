@@ -5,13 +5,15 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.srparse;singleton:=
 Bundle-Version: 1.0.0
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.srparse,
  de.uni_freiburg.informatik.ultimate.lib.srparse.pattern
-Require-Bundle: com.github.jhoenicke.javacup, 
+Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
- de.uni_freiburg.informatik.ultimate.astbuilder
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+ de.uni_freiburg.informatik.ultimate.astbuilder,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Import-Package: de.uni_freiburg.informatik.ultimate.core.util,
  de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.datastructures.relation

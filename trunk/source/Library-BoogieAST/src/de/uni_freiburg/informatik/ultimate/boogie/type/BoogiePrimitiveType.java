@@ -36,96 +36,104 @@ public class BoogiePrimitiveType extends BoogieType {
 	 * long serialVersionUID
 	 */
 	private static final long serialVersionUID = -1842658349197318623L;
-	public static final int BOOL  = -1;
-	public static final int INT   = -2;
-	public static final int REAL  = -3;
+	public static final int BOOL = -1;
+	public static final int INT = -2;
+	public static final int REAL = -3;
 	public static final int ERROR = -42;
 
 	/**
-	 * The type code.  If this is >= 0, this is the length and the class
-	 * represents a bit vector type of this length.  Otherwise, this is
-	 * one of BOOL, INT, REAL, or ERROR.
+	 * The type code. If this is >= 0, this is the length and the class represents a bit vector type of this length.
+	 * Otherwise, this is one of BOOL, INT, REAL, or ERROR.
 	 */
-	private final int type;
+	private final int mType;
 
 	BoogiePrimitiveType(final int type) {
-		this.type = type;
+		this.mType = type;
 	}
 
-	//@Override
+	// @Override
 	@Override
 	public BoogieType getUnderlyingType() {
 		return this;
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected boolean hasPlaceholder(final int minDepth, final int maxDepth) {
 		return false;
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected BoogieType incrementPlaceholders(final int depth, final int incDepth) {
 		return this;
 	}
 
-	//@Override
+	// @Override
 	@Override
-	protected boolean isUnifiableTo(final int depth, final BoogieType other,
-			final ArrayList<BoogieType> subst) {
+	protected boolean isUnifiableTo(final int depth, final BoogieType other, final ArrayList<BoogieType> subst) {
 		if (other instanceof BoogiePlaceholderType) {
 			return other.isUnifiableTo(depth, this, subst);
 		}
 		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
 	}
 
-	//@Override
+	// @Override
 	@Override
-	protected BoogieType substitutePlaceholders(final int depth,
-			final BoogieType[] substType) {
+	protected BoogieType substitutePlaceholders(final int depth, final BoogieType[] substType) {
 		return this;
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected String toString(final int depth, final boolean needParentheses) {
-		switch (type) {
+		switch (mType) {
 		case INT:
 			return "int";
 		case BOOL:
 			return "bool";
 		case REAL:
-		    return "real";
+			return "real";
 		case ERROR:
 			return "*type-error*";
 		default:
-			return "bv"+type;
+			return "bv" + mType;
 
 		}
 	}
 
 	@Override
 	protected ASTType toASTType(final ILocation loc, final int depth) {
-		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
-			PrimitiveType(loc, this, toString(depth, false));
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType(loc, this, toString(depth, false));
 	}
 
-	//@Override
+	// @Override
 	@Override
-	protected boolean unify(final int depth, final BoogieType other,
-			final BoogieType[] substitution) {
+	protected boolean unify(final int depth, final BoogieType other, final BoogieType[] substitution) {
 		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
 	}
 
 	public int getTypeCode() {
-		return type;
+		return mType;
 	}
 
 	@Override
 	public boolean isFinite() {
 		/* Everything except INT may be finite */
-		return type != INT;
+		return mType != INT;
+	}
+
+	public static BoogiePrimitiveType toPrimitiveType(final String type) {
+		switch (type.toLowerCase()) {
+		case "bool":
+			return BoogieType.TYPE_BOOL;
+		case "real":
+			return BoogieType.TYPE_REAL;
+		case "int":
+			return BoogieType.TYPE_INT;
+		default:
+			return BoogieType.TYPE_ERROR;
+		}
 	}
 
 }

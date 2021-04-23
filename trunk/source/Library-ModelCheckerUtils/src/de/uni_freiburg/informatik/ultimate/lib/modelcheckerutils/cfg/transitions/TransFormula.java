@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transition
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -117,5 +118,12 @@ public abstract class TransFormula implements ITransitionRelation {
 			return false;
 		}
 		return !Arrays.asList(getFormula().getFreeVars()).contains(inVar);
+	}
+
+	public static Set<IProgramVar> collectAllProgramVars(final TransFormula tf) {
+		final Set<IProgramVar> allProgramVars = new HashSet<>();
+		allProgramVars.addAll(tf.getInVars().keySet());
+		allProgramVars.addAll(tf.getOutVars().keySet());
+		return allProgramVars;
 	}
 }

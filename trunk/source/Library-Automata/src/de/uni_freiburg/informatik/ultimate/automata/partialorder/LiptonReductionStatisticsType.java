@@ -29,11 +29,16 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class LiptonReductionStatisticsType extends StatisticsType<LiptonReductionStatisticsDefinitions> {
+/**
+ * The statistics type used for data on {@link LiptonReduction}.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
+public final class LiptonReductionStatisticsType extends StatisticsType<LiptonReductionStatisticsDefinitions> {
 
-	private static LiptonReductionStatisticsType INSTANCE = new LiptonReductionStatisticsType();
+	private static final LiptonReductionStatisticsType INSTANCE = new LiptonReductionStatisticsType();
 
-	public LiptonReductionStatisticsType() {
+	private LiptonReductionStatisticsType() {
 		super(LiptonReductionStatisticsDefinitions.class);
 	}
 

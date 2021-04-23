@@ -54,10 +54,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 /**
- * Replace e.g., (x % 256) == y by the following disjunction (0 <= x && x < 256) && x == y || (-256 <= x && x < 0) && (x
- * + 256) == y || (256 <= x && x < 256 + 256) && (x - 256) == y || (x < -256 || 256 + 256 <= x) && (x % 256) == y
+ * Replace e.g.,
+ * <pre> (x % 256) == y </ pre>
+ * by the following disjunction
+ * <pre>
+ * (0 <= x && x < 256) && x == y || (-256 <= x && x < 0) && (x + 256) == y ||
+ * (256 <= x && x < 256 + 256) && (x - 256) == y || (x < -256 || 256 + 256 <= x)
+ * && (x % 256) == y
+ * </ pre>
  *
- * @author Matthias Heizmann
+ * TODO: This class is not yet finished and the existing code was not properly
+ * evaluated.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Replace modulo operation by disjunction if divisor is a literal";
@@ -79,9 +88,18 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	private static final BigInteger BITLENGTH64_VALUE = new BigInteger("9223372036854775808");
 	private static final BigInteger BITLENGTH128_VALUE = new BigInteger("340282366920938463463374607431768211456");
 
-	public ModuloNeighborTransformation(final IUltimateServiceProvider services) {
+	/**
+	 * @param useNeighbors If set to false we obtain the underapproximation where we
+	 *                     assume that the modulo operator is the identity for the
+	 *                     first argument.
+	 */
+	public ModuloNeighborTransformation(final IUltimateServiceProvider services, final boolean useNeighbors) {
 		super();
 		mServices = services;
+		if (!useNeighbors) {
+			// TODO: Implement no-neighbor case
+			throw new UnsupportedOperationException("not yet implemented");
+		}
 	}
 
 	@Override

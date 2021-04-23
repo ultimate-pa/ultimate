@@ -117,7 +117,7 @@ public class LoopPreprocessorTransformulaTransformer {
 	public static UnmodifiableTransFormula moduloTransformation(final ModifiableTransFormula loopRelation,
 			final ManagedScript managedScript, final ReplacementVarFactory replacementVarFactory,
 			final IUltimateServiceProvider services) {
-		final ModuloNeighborTransformation modNeighborTransformer = new ModuloNeighborTransformation(services);
+		final ModuloNeighborTransformation modNeighborTransformer = new ModuloNeighborTransformation(services, true);
 		ModifiableTransFormula modTfTransformed;
 		try {
 			modTfTransformed = modNeighborTransformer.process(managedScript, loopRelation);
@@ -125,9 +125,6 @@ public class LoopPreprocessorTransformulaTransformer {
 			modTfTransformed = null;
 			e.printStackTrace();
 		}
-		/*
-		 * TODO: programs with multiple modulos Use SubTermPropertyChecker -> returns multiple terms
-		 */
 
 		final List<Term> result = new ArrayList<>();
 		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", false);

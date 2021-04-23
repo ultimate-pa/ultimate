@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /*
  * {scope}, it is always the case that if "R" holds, then "S" holds as well
@@ -45,14 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class InvariantPattern extends PatternType<InvariantPattern> {
 	public InvariantPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public InvariantPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new InvariantPattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -107,11 +102,6 @@ public class InvariantPattern extends PatternType<InvariantPattern> {
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds as well");
 		return sb.toString();
-	}
-
-	@Override
-	public InvariantPattern rename(final String newName) {
-		return new InvariantPattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

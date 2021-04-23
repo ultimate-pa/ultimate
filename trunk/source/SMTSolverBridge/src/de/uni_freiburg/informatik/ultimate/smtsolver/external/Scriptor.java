@@ -64,12 +64,14 @@ public class Scriptor extends NoopScript {
 	 *            the command that starts the external SMT solver. The solver is expected to read smtlib 2 commands on
 	 *            stdin.
 	 * @param services
+	 * @param fullPathOfDumpedLogFile
+	 *            null if we should not dump the script to a file or a path to a file
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
 	 */
 	public Scriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
-			final String solverName) throws IOException {
-		mExecutor = new Executor(command, this, logger, services, solverName);
+			final String solverName, final String fullPathOfDumpedLogFile) throws IOException {
+		mExecutor = new Executor(command, this, logger, services, solverName, fullPathOfDumpedLogFile);
 		super.setOption(":print-success", true);
 	}
 

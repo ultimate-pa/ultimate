@@ -87,9 +87,12 @@ public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements I
 	}
 
 	public static String prettyprintNanoseconds(final long time) {
-		final long seconds = time / 1_000_000_000;
-		final long tenthDigit = time / 100_000_000 % 10;
-		return seconds + "." + tenthDigit + "s";
+		// final long seconds = time / 1_000_000_000;
+		// final long tenthDigit = time / 100_000_000 % 10;
+		// return seconds + "." + tenthDigit + "s";
+		final long milliseconds = time / 1_000_000;
+		final long tenthDigit = time / 100_000 % 10;
+		return milliseconds + "." + tenthDigit + "ms";
 	}
 
 }

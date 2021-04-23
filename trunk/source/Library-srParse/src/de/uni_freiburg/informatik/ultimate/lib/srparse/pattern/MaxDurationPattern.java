@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that once "R" becomes satisfied, it holds for less than "c1" time units
@@ -47,14 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  */
 public class MaxDurationPattern extends PatternType<MaxDurationPattern> {
 	public MaxDurationPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public MaxDurationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new MaxDurationPattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -106,14 +101,9 @@ public class MaxDurationPattern extends PatternType<MaxDurationPattern> {
 		sb.append("it is always the case that once \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" becomes satisfied, it holds for less than \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units");
 		return sb.toString();
-	}
-
-	@Override
-	public MaxDurationPattern rename(final String newName) {
-		return new MaxDurationPattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

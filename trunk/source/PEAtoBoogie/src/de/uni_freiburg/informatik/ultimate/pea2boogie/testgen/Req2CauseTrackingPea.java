@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -71,6 +72,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	private final IUltimateServiceProvider mServices;
 	private final Map<PhaseEventAutomata, ReqEffectStore> mPea2EffectStore;
 	private final Req2CauseTrackingCDD mCddTransformer;
+	private final Durations mDurations;
 
 	private static final String LOWER_AUTOMATON_SUFFIX = "_tt";
 
@@ -82,6 +84,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		mPea2EffectStore = new HashMap<>();
 		mReqPeas = new ArrayList<>();
 		mCddTransformer = new Req2CauseTrackingCDD(mLogger);
+		mDurations = new Durations();
 	}
 
 	@Override
@@ -91,12 +94,14 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 		for (final InitializationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
+			mDurations.addInitPattern(p);
 			if (p.getCategory() == VariableCategory.OUT) {
 				builder.addAuxvar(ReqTestAnnotator.getTrackingVar(p.getId()), "bool", p);
 			}
 		}
 		for (final ReqPeas reqpea : simplePeas) {
 			final PatternType<?> pattern = reqpea.getPattern();
+			mDurations.addNonInitPattern(pattern);
 			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqpea.getCounterTrace2Pea();
 			final List<Entry<CounterTrace, PhaseEventAutomata>> newCt2pea = new ArrayList<>(ct2pea.size());
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
@@ -379,6 +384,11 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	@Override
 	public IReq2PeaAnnotator getAnnotator() {
 		return new ReqTestAnnotator(mServices, mLogger, this);
+	}
+
+	@Override
+	public Durations getDurations() {
+		return mDurations;
 	}
 
 }

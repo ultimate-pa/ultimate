@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author Jochen Hoenicke
  * @author Roland Meyer
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace
@@ -89,9 +89,9 @@ public class Trace2PeaCompilerStateless {
 
 	/**
 	 * Constructs a phase event automaton named <code>name</code> from the given {@link CounterTrace}.
-	 * 
+	 *
 	 * The resulting {@link PhaseEventAutomata} is available from {@link #getResult()}.
-	 * 
+	 *
 	 * @param name
 	 *            The name attribute of the phase event automaton is set to <code>name</code>.
 	 * @param counterTrace
@@ -162,7 +162,7 @@ public class Trace2PeaCompilerStateless {
 				}
 				return result;
 			}
-			if (mCountertrace.getPhases()[i].getBoundType() < 0 && (canseep(state) & ibit) == 0
+			if (mCountertrace.getPhases()[i].getBoundType() < 0 && (canSeep(state) & ibit) == 0
 					&& (state.exactbound & ibit) == 0) {
 				/*
 				 * The phase has a strict upper bound. It is only complete if that bound has not yet been reached.
@@ -247,7 +247,7 @@ public class Trace2PeaCompilerStateless {
 	/**
 	 * Compute for each phase whether we can seep through from the predecessor phase.
 	 */
-	private final int canseep(final PhaseBits p) {
+	private final int canSeep(final PhaseBits p) {
 		return (p.active & ~p.waiting) << 1 & mCanPossiblySeep;
 	}
 
@@ -261,7 +261,7 @@ public class Trace2PeaCompilerStateless {
 			 */
 			if ((srcBits.active & pbit) != 0) {
 				mCKeep[p] = mKeep[p];
-				if (mCountertrace.getPhases()[p].getBoundType() < 0 && (canseep(srcBits) & pbit) == 0) {
+				if (mCountertrace.getPhases()[p].getBoundType() < 0 && (canSeep(srcBits) & pbit) == 0) {
 					/*
 					 * phase has < or <= bound and can't be reentered. We can only stay in this state if clock hasn't
 					 * reached its maximum.
@@ -283,7 +283,7 @@ public class Trace2PeaCompilerStateless {
 	 * If not present, creates a new phase according to the parameters <code>stateInv</code> and <code>destBits</code>
 	 * and a transition from phase <code>src</code> to the newly created phase with guard <code>guard</code> and resets
 	 * <code>resets</code>. The parameter <code>src</code> is the source phase itself.
-	 * 
+	 *
 	 * @param src
 	 *            Source phase of the new transition
 	 * @param guard
@@ -310,7 +310,7 @@ public class Trace2PeaCompilerStateless {
 			CDD clockInv = CDD.TRUE;
 			for (int p = 0, pbit = 1; pbit <= destBits.active; p++, pbit += pbit) {
 				if ((destBits.waiting & pbit) != 0
-						|| mCountertrace.getPhases()[p].getBoundType() < 0 && (canseep(destBits) & pbit) == 0) {
+						|| mCountertrace.getPhases()[p].getBoundType() < 0 && (canSeep(destBits) & pbit) == 0) {
 					/*
 					 * Phase invariants only apply to waiting states and states with upper bounds that cannot be
 					 * reentered immediately.
@@ -331,7 +331,7 @@ public class Trace2PeaCompilerStateless {
 			}
 
 			mLogger.debug("Creating destination phase");
-			dest = new Phase(destBits.toString(), stateInv, clockInv);
+			dest = new Phase(phaseName(destBits.toString()), stateInv, clockInv);
 			dest.phaseBits = destBits;
 			mAllPhases.put(destBits, dest);
 			mTodo.add(destBits);
@@ -496,7 +496,7 @@ public class Trace2PeaCompilerStateless {
 				CDD enterExact;
 				CDD keep;
 
-				if ((canseep(srcBits) & pbit) != 0) {
+				if ((canSeep(srcBits) & pbit) != 0) {
 					if (mCountertrace.getPhases()[p].getBoundType() == CounterTrace.BOUND_LESS) {
 						/*
 						 * For less bounds this phase never has an exact bound.
@@ -613,7 +613,7 @@ public class Trace2PeaCompilerStateless {
 			 */
 
 			mLogger.debug("Trying to add transitions from start state");
-			start = new Phase(Trace2PeaCompilerStateless.START + "_" + mName, CDD.TRUE, CDD.TRUE);
+			start = new Phase(phaseName(Trace2PeaCompilerStateless.START), CDD.TRUE, CDD.TRUE);
 			start.addTransition(start, mNoSyncEvent.prime(mConstantIds), new String[0]);
 			for (int i = 0; i < mCountertrace.getPhases().length; i++) {
 				if ((mCanPossiblySeep & 1 << i) == 0) {
@@ -633,7 +633,7 @@ public class Trace2PeaCompilerStateless {
 			mLogger.debug("Adding transitions from start state successful");
 		} else {
 			mLogger.debug("Bulding initial transitions");
-			final Phase dummyinit = new Phase("dummyinit", CDD.TRUE, CDD.TRUE);
+			final Phase dummyinit = new Phase(phaseName("dummyinit"), CDD.TRUE, CDD.TRUE);
 			/*
 			 * Special case: Initially we can enter the first phases, up to the first one that does not allowEnter or
 			 * requires entry events.
@@ -659,13 +659,14 @@ public class Trace2PeaCompilerStateless {
 			mInit = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
 				final Transition trans = initTrans.get(i);
-				if ("st".equals(trans.dest.getName())) {
+				if ("st".equals(trans.getDest().getName())) {
 					/*
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
 					 * only if the predicate of the first phase does not hold.
 					 */
-					start = new Phase("stinit", mCountertrace.getPhases()[0].getInvariant().negate(), CDD.TRUE);
-					start.addTransition(trans.dest, mNoSyncEvent.prime(mConstantIds), new String[0]);
+					start = new Phase(phaseName("stinit"), mCountertrace.getPhases()[0].getInvariant().negate(),
+							CDD.TRUE);
+					start.addTransition(trans.getDest(), mNoSyncEvent.prime(mConstantIds), new String[0]);
 					/* for completeness add stutter-step edge */
 					start.addTransition(start, mNoSyncEvent.prime(mConstantIds), new String[0]);
 					mInit[i] = start;
@@ -674,7 +675,7 @@ public class Trace2PeaCompilerStateless {
 					 * For all other states the guard of trans should already equal the state invariant, so we do not
 					 * need to add an extra state
 					 */
-					mInit[i] = trans.dest;
+					mInit[i] = trans.getDest();
 				}
 			}
 		}
@@ -777,7 +778,7 @@ public class Trace2PeaCompilerStateless {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace
 	 */
 	private Phase buildExitSyncTransitions() {
-		final Phase exit = new Phase(Trace2PeaCompilerStateless.FINAL + "_" + mName, CDD.TRUE, CDD.TRUE);
+		final Phase exit = new Phase(phaseName(Trace2PeaCompilerStateless.FINAL), CDD.TRUE, CDD.TRUE);
 		final String[] noResets = {};
 		exit.addTransition(exit, mNoSyncEvent.prime(mConstantIds), noResets);
 
@@ -800,5 +801,9 @@ public class Trace2PeaCompilerStateless {
 			}
 		}
 		return exit;
+	}
+
+	private String phaseName(final String suffix) {
+		return String.format("%s_%s", mName, suffix);
 	}
 }

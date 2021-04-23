@@ -1,1 +1,3 @@
-concurrent/pthreads/*
+concurrent/pthreads/*.c
+concurrent/pthreads/regression/*.c
+concurrent/pthreads/regression/atomic/*.c

@@ -48,15 +48,15 @@ public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithS
 	private int mPlacesAfterwards = -1;
 	private int mTransitionsAfterwards = -1;
 
-	private int mMoverChecksTotal = 0;
+	private int mMoverChecksTotal;
 	private int mNumberOfFixpointIterations = -1;
 
-	private int mTrivialSequentialCompositions = 0;
-	private int mConcurrentSequentialCompositions = 0;
-	private int mTrivialYvCompositions = 0;
-	private int mConcurrentYvCompositions = 0;
-	private int mChoiceCompositions = 0;
-	private int mTotalNumberOfCompositions = 0;
+	private int mTrivialSequentialCompositions;
+	private int mConcurrentSequentialCompositions;
+	private int mTrivialYvCompositions;
+	private int mConcurrentYvCompositions;
+	private int mChoiceCompositions;
+	private int mTotalNumberOfCompositions;
 
 	public void reportFixpointIteration() {
 		mNumberOfFixpointIterations++;

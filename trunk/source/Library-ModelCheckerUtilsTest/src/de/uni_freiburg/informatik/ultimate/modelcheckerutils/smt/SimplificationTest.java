@@ -161,7 +161,7 @@ public class SimplificationTest {
 	public void distinctAndLeq2 () {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "A"),};
 		final String formulaAsString = "(and (not (= x 7.0)) (<= x 7.0))";
-		final String expectedResultAsString = "(and (<= x 7.0) (not (= 7.0 x)))";
+		final String expectedResultAsString = "(and (not (= x 7.0)) (<= x 7.0))";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript);
 	}
 
@@ -490,6 +490,13 @@ public class SimplificationTest {
 		runSimplificationTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript);
 	}
 
+	@Test
+	public void missingConjuncts() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
+		final String formulaAsString = "(and (<= x 11) (not (= (+ x (- 2)) 0)) (<= 11 x))";
+		final String simplified = "(and (<= x 11) (<= 11 x))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, true, mServices, mLogger, mMgdScript);
+	}
 
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
@@ -502,7 +509,7 @@ public class SimplificationTest {
 		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
 
-		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, letFree, null, services, SimplificationTechnique.POLY_PAC);
+		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, letFree, services, SimplificationTechnique.POLY_PAC);
 		final Term result = esr.getSimplifiedTerm();
 		logger.info("Simplified result: " + esr.getSimplifiedTerm());
 		logger.info(esr.buildSizeReductionMessage());

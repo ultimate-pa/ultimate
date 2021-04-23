@@ -30,12 +30,21 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure;
 /**
  * An {@link IIcfgTransition} that represents a Fork. Edges of this type connect
  * the location of the fork with the next location of the current thread.
+ * Conceptually, there is only one transition that represents the fork and this
+ * transition has one source and two targets. The data structures of our
+ * {@link IIcfg} however do not support edges with two targets and as a
+ * workaround we implement the fork by the two edges
+ * {@link IIcfgForkTransitionThreadCurrent} and
+ * {@link IIcfgForkTransitionThreadOther}. If our "petrification" produces
+ * several thread instances for a thread template the resulting {@link IICFG}
+ * has only one {@link IIcfgForkTransitionThreadCurrent} and several
+ * {@link IIcfgForkTransitionThreadOther}.
  *
  * @author Lars Nitzke
  *
  */
-public interface IIcfgForkTransitionThreadCurrent<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IForkActionThreadCurrent {
+public interface IIcfgForkTransitionThreadCurrent<LOC extends IcfgLocation>
+		extends IIcfgTransition<LOC>, IForkActionThreadCurrent {
 	// just for grouping
-
 
 }

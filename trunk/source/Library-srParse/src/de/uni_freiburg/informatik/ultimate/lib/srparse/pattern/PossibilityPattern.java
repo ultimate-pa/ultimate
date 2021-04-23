@@ -31,6 +31,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that if "R" holds, then there is at least one execution sequence such that "S"
@@ -40,14 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  */
 public class PossibilityPattern extends PatternType<PossibilityPattern> {
 	public PossibilityPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public PossibilityPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new PossibilityPattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -77,11 +72,6 @@ public class PossibilityPattern extends PatternType<PossibilityPattern> {
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" eventually holds");
 		return sb.toString();
-	}
-
-	@Override
-	public PossibilityPattern rename(final String newName) {
-		return new PossibilityPattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

@@ -90,15 +90,20 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			if (!SmtSortUtils.isArraySort(eliminatee.getSort())) {
 				continue;
 			}
-			EliminationTaskWithContext res;
+			EliminationTaskPlain res;
 			try {
 				res = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript,
-						new EliminationTaskWithContext(inputEt.getQuantifier(), Collections.singleton(eliminatee),
-								inputEt.getTerm(), ((EliminationTaskWithContext) inputEt).getContext()));
+						new EliminationTaskPlain(inputEt.getQuantifier(), Collections.singleton(eliminatee),
+								inputEt.getTerm(), inputEt.getContext().getCriticalConstraint()));
 			} catch (final SMTLIBException e) {
 				throw new AssertionError(e);
 			} catch (final ElimStorePlainException e) {
-				throw new AssertionError(e);
+				if (e.getMessage().equals(ElimStorePlainException.NON_TOP_LEVEL_DER)
+						|| e.getMessage().equals(ElimStorePlainException.CAPTURED_INDEX)) {
+					res = null;
+				} else {
+					throw new AssertionError(e);
+				}
 			}
 			if (res != null) {
 				if (Arrays.asList(res.getTerm().getFreeVars()).contains(eliminatee)) {

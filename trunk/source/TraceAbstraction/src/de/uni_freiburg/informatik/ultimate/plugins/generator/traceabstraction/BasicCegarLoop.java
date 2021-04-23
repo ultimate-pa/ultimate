@@ -71,11 +71,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;<<<<<<<HEAD
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;=======
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantSleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;>>>>>>>dev
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
@@ -117,11 +126,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;<<<<<<<HEAD
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesValidityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesValidityCheck;=======
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement;>>>>>>>dev
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.ThreadSeparatingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -152,6 +165,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -203,6 +217,28 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		VARIABLE_BASED_MOVER_CHECK,
 	}
 
+	/**
+	 * Indicates a kind of partial order reduction.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 */
+	public enum PartialOrderMode {
+		/**
+		 * No partial order reduction is performed.
+		 */
+		NONE,
+		/**
+		 * Sleep set partial order reduction. Delay sets are used to handle loops, and the reduced automaton is a
+		 * sub-structure of the input.
+		 */
+		SLEEP_DELAY_SET,
+		/**
+		 * Sleep set partial order reduction. Unrolling and splitting is performed to achieve a minimal reduction (in
+		 * terms of the language). This duplicates states of the input automaton.
+		 */
+		SLEEP_NEW_STATES
+	}
+
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
@@ -215,6 +251,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
+	protected final SleepSetStateFactoryForRefinement<L> mSleepSetStateFactory;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
@@ -244,7 +281,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	protected IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> mRefinementEngine;
 
 	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
-	private boolean mFirstReuseDump = true;
+	private final boolean mFirstReuseDump = true;
 	private boolean mUseHeuristicEmptinessCheck = false;
 	private final ScoringMethod mScoringMethod;
 	private final AStarHeuristic mAStarHeuristic;
@@ -289,6 +326,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationStates, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
 				predicateFactory, computeHoareAnnotation, mHoareAnnotationLocations);
+		mSleepSetStateFactory = new SleepSetStateFactoryForRefinement<>(predicateFactory);
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, computeHoareAnnotation);
 
@@ -362,27 +400,36 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 				mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
 				net = lbecfg;
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
-								lbe.getPetriNetLargeBlockEncodingStatistics()));
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(
+						Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 			} else {
 				net = petrifiedCfg;
 			}
-			try {
-				mPetriNet = net;
-				final PetriNet2FiniteAutomaton<L, IPredicate> conversion = new PetriNet2FiniteAutomaton<>(
-						new AutomataLibraryServices(mServices), mStateFactoryForRefinement, net);
-				mAbstraction = conversion.getResult();
-				mMarking2State = conversion.getStateMap();
-			} catch (final PetriNetNot1SafeException e) {
-				final Collection<?> unsafePlaces = e.getUnsafePlaces();
-				if (unsafePlaces == null) {
-					throw new AssertionError("Unable to find Petri net place that violates 1-safety");
+
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
+			if (mPref.getPartialOrderMode() != PartialOrderMode.NONE) {
+				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
+				automaton = new LazyPetriNet2FiniteAutomaton<>(mStateFactoryForRefinement, net,
+						new AutomataLibraryServices(mServices));
+			} else {
+				try {
+					mPetriNet = net;
+					final PetriNet2FiniteAutomaton<L, IPredicate> conversion = new PetriNet2FiniteAutomaton<>(
+							new AutomataLibraryServices(mServices), mStateFactoryForRefinement, net);
+					automaton = conversion.getResult();
+					mMarking2State = conversion.getStateMap();
+				} catch (final PetriNetNot1SafeException e) {
+					final Collection<?> unsafePlaces = e.getUnsafePlaces();
+					if (unsafePlaces == null) {
+						throw new AssertionError("Unable to find Petri net place that violates 1-safety");
+					}
+					final ISLPredicate unsafePlace = (ISLPredicate) unsafePlaces.iterator().next();
+					final String proc = unsafePlace.getProgramPoint().getProcedure();
+					throw new IllegalStateException(
+							"Petrification does not provide enough thread instances for " + proc);
 				}
-				final ISLPredicate unsafePlace = (ISLPredicate) unsafePlaces.iterator().next();
-				final String proc = unsafePlace.getProgramPoint().getProcedure();
-				throw new IllegalStateException("Petrification does not provide enough thread instances for " + proc);
 			}
+			mAbstraction = computePartialOrderReduction(mPref.getPartialOrderMode(), automaton);
 		}
 
 		if (mComputeHoareAnnotation) {
@@ -416,11 +463,60 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 	}
 
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
+			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input)
+			throws AutomataOperationCanceledException {
+		if (mode == PartialOrderMode.NONE) {
+			return input;
+		}
+
+		final IIndependenceRelation<IPredicate, L> indep = new ThreadSeparatingIndependenceRelation<>(
+				new CachedIndependenceRelation<>(new UnionIndependenceRelation<>(Arrays.asList(
+						new SyntacticIndependenceRelation<>(),
+						new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true)))));
+		final ISleepSetOrder<IPredicate, L> order =
+				new ConstantSleepSetOrder<>(input.getVpAlphabet().getInternalAlphabet());
+
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
+		final SleepSetVisitorAutomaton<L, IPredicate> automatonConstructor;
+		switch (mode) {
+		case SLEEP_DELAY_SET:
+			automatonConstructor = new SleepSetVisitorAutomaton<>(input, automataServices, mStateFactoryForRefinement);
+			new SleepSetDelayReduction<>(automataServices, input, indep, order, automatonConstructor);
+			break;
+		case SLEEP_NEW_STATES:
+			automatonConstructor =
+					new SleepSetVisitorAutomaton<>(x -> input.isInitial(mSleepSetStateFactory.getOriginalState(x)),
+							x -> input.isFinal(mSleepSetStateFactory.getOriginalState(x)), input.getVpAlphabet(),
+							automataServices, mStateFactoryForRefinement);
+			new SleepSetNewStateReduction<>(automataServices, input, indep, order, mSleepSetStateFactory,
+					automatonConstructor);
+			break;
+		default:
+			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
+		}
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =
+				automatonConstructor.getReductionAutomaton();
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+
+		mLogger.warn("Sleep set: input automaton " + input.sizeInformation());
+		mLogger.warn("Sleep set: output automaton " + result.sizeInformation());
+
+		final StatisticsData data = new StatisticsData();
+		data.aggregateBenchmarkData(indep.getStatistics());
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
+
+		return result;
+	}
+
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		if (mUseHeuristicEmptinessCheck) {
 			mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction,
 					IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod, mAStarRandomHeuristicSeed)).getNestedRun();
@@ -430,6 +526,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			mCounterexample =
 					new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
 		}
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 
 		if (mCounterexample == null) {
 			return true;
@@ -612,6 +709,12 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord(),
 				false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
+
+		// FIXME (Dominik 2020-12-19): The assertion below is problematic, because it has side-effects!
+		// In particular, InductivityCheck calls IncrementalHoareTripleChecker, which in the method unAssertCodeBlock
+		// unlocks a ManagedScript. If assertions are disabled, this remains locked. This leads to exceptions if other
+		// callers try to lock it. With assertions enabled, the line below causes the ManagedScript to be unlocked and
+		// no exceptions occur.
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 	}
@@ -650,6 +753,16 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
 	}
 
+	protected final IHoareTripleChecker getHoareTripleChecker() {
+		final IHoareTripleChecker refinementHtc = mRefinementEngine.getHoareTripleChecker();
+		if (refinementHtc != null) {
+			return refinementHtc;
+		}
+
+		return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementEngine.getPredicateUnifier());
+	}
+
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		mStateFactoryForRefinement.setIteration(mIteration);
@@ -658,13 +771,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		final INestedWordAutomaton<L, IPredicate> minuend = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 
 		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
-		final IHoareTripleChecker htc;
-		if (mRefinementEngine.getHoareTripleChecker() != null) {
-			htc = mRefinementEngine.getHoareTripleChecker();
-		} else {
-			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-					mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
-		}
+		final IHoareTripleChecker htc = getHoareTripleChecker();
 
 		final AutomatonType automatonType;
 		final boolean useErrorAutomaton;
@@ -686,16 +793,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
-			if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
-				subtrahend = subtrahendBeforeEnhancement;
-			} else {
-				final AbstractInterpolantAutomaton<L> ia = constructInterpolantAutomatonForOnDemandEnhancement(
-						subtrahendBeforeEnhancement, predicateUnifier, htc, enhanceMode);
-				subtrahend = ia;
-				if (mStoreFloydHoareAutomata) {
-					mFloydHoareAutomata.add(new Pair<>(ia, predicateUnifier));
-				}
-			}
+			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
 		}
 
 		// TODO: HTC and predicateunifier statistics are saved in the following method, but it seems better to save them
@@ -711,6 +809,23 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 				(NestedWord<L>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
+	}
+
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> enhanceInterpolantAutomaton(
+			final InterpolantAutomatonEnhancement enhanceMode, final IPredicateUnifier predicateUnifier,
+			final IHoareTripleChecker htc, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
+		if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+			subtrahend = interpolantAutomaton;
+		} else {
+			final AbstractInterpolantAutomaton<L> ia = constructInterpolantAutomatonForOnDemandEnhancement(
+					interpolantAutomaton, predicateUnifier, htc, enhanceMode);
+			subtrahend = ia;
+			if (mStoreFloydHoareAutomata) {
+				mFloydHoareAutomata.add(new Pair<>(ia, predicateUnifier));
+			}
+		}
+		return subtrahend;
 	}
 
 	/**
@@ -772,6 +887,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 					diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, minuend,
 							subtrahend, psd, explointSigmaStarConcatOfIA);
 				}
+				mCegarLoopBenchmark.reportInterpolantAutomatonStates(subtrahend.size());
 			} catch (final AutomataOperationCanceledException aoce) {
 				final RunningTaskInfo runningTaskInfo = executeDifferenceTimeoutActions(minuend, subtrahend,
 						subtrahendBeforeEnhancement, automatonType);

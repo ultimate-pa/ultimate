@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux;
 
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.Is;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -85,12 +85,11 @@ public class MonniauxMapEliminatorTest {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		final StoreSelectEqualityCollector sseCollector = new StoreSelectEqualityCollector();
 		sseCollector.transform(formulaAsTerm);
-		Assert.assertThat(sseCollector.mSelectTerms.size(), Is.is(1));
-		Assert.assertThat(sseCollector.mStoreTerms.size(), Is.is(1));
-		
-		// TBD: Tests for the sets idxD and valD
-		
-		// TBD: Tests for the sets lowD and highD
+		MatcherAssert.assertThat(sseCollector.getSelectTerms().size(), Is.is(1));
+		MatcherAssert.assertThat(sseCollector.getStoreTerms().size(), Is.is(1));
+
+		// TODO: Tests for the sets idxD and valD
+		// TODO: Tests for the sets lowD and highD
 	}
 
 	@After

@@ -28,8 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -44,14 +45,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class OctConjunction {
 
 	private final ArrayList<OctTerm> mTerms;
-	private HashSet<TermVariable> mCachedVariables;
+	private Set<TermVariable> mCachedVariables;
 
 	/**
 	 * Creates an empty OctConjunction
 	 */
 	public OctConjunction() {
 		mTerms = new ArrayList<>();
-		mCachedVariables = new HashSet<>();
+		mCachedVariables = new LinkedHashSet<>();
 	}
 
 	/**
@@ -59,7 +60,7 @@ public class OctConjunction {
 	 *
 	 * @param octagonTerm
 	 */
-	public void addTerm(OctTerm octagonTerm) {
+	public void addTerm(final OctTerm octagonTerm) {
 		if (octagonTerm == null) {
 			return;
 		}
@@ -73,7 +74,7 @@ public class OctConjunction {
 	 * @param octagonTerm
 	 *            Term to be removed.
 	 */
-	public void removeTerm(OctTerm octagonTerm) {
+	public void removeTerm(final OctTerm octagonTerm) {
 		mTerms.remove(octagonTerm);
 		mCachedVariables = null;
 	}
@@ -86,11 +87,11 @@ public class OctConjunction {
 		return getVariables().size();
 	}
 
-	public HashSet<TermVariable> getVariables() {
+	public Set<TermVariable> getVariables() {
 		if (mCachedVariables != null) {
 			return mCachedVariables;
 		}
-		final HashSet<TermVariable> variables = new HashSet<>();
+		final Set<TermVariable> variables = new LinkedHashSet<>();
 		for (final OctTerm t : mTerms) {
 			if (t.isOneVar()) {
 				variables.add(t.getFirstVar());
@@ -124,7 +125,7 @@ public class OctConjunction {
 	 *            Utils for Debug output
 	 * @return fresh Term representing the conjunction
 	 */
-	public Term toTerm(Script script, FastUPRUtils utils) {
+	public Term toTerm(final Script script, final FastUPRUtils utils) {
 		if (isEmpty()) {
 			return script.term("true");
 		}
@@ -148,7 +149,7 @@ public class OctConjunction {
 	 *            Script to build a term
 	 * @return fresh Term representing the conjunction
 	 */
-	public Term toTerm(Script script) {
+	public Term toTerm(final Script script) {
 		if (isEmpty()) {
 			return script.term("true");
 		}

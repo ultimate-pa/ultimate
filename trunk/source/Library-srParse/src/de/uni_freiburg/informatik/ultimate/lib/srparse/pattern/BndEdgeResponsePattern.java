@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that once "R" becomes satisfied, "S" holds for at least "c1" time units.
@@ -44,14 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class BndEdgeResponsePattern extends PatternType<BndEdgeResponsePattern> {
 
 	public BndEdgeResponsePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndEdgeResponsePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndEdgeResponsePattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -91,14 +86,9 @@ public class BndEdgeResponsePattern extends PatternType<BndEdgeResponsePattern> 
 		sb.append("\" becomes satisfied, \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds for at least \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units");
 		return sb.toString();
-	}
-
-	@Override
-	public BndEdgeResponsePattern rename(final String newName) {
-		return new BndEdgeResponsePattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

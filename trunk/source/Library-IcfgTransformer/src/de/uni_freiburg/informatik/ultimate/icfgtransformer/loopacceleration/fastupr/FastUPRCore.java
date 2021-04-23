@@ -29,8 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -119,8 +118,8 @@ public class FastUPRCore {
 
 		mUtils.output("Formula:" + mFormula.toString());
 
-		mInVars = new HashMap<>(mFormula.getInVars());
-		mOutVars = new HashMap<>(mFormula.getOutVars());
+		mInVars = new LinkedHashMap<>(mFormula.getInVars());
+		mOutVars = new LinkedHashMap<>(mFormula.getOutVars());
 
 		mVariables = new ArrayList<>();
 
@@ -211,7 +210,7 @@ public class FastUPRCore {
 			final OctConjunction rC = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, c);
 			final OctConjunction intervalRC = mOctagonCalculator.binarySequentialize(interval, rC, mInVars, mOutVars);
 			consistent = mTermChecker.checkTerm(intervalRC.toTerm(mManagedScript.getScript()));
-			final OctConjunction interval1 = (differenceN1.add(rBMatrix)).toOctConjunction();
+			final OctConjunction interval1 = differenceN1.add(rBMatrix).toOctConjunction();
 
 			mUtils.output(intervalRC.toString());
 			mUtils.output(intervalRC.toTerm(mManagedScript.getScript()).toStringDirect());
@@ -366,7 +365,7 @@ public class FastUPRCore {
 
 		// INCONSISTENCY
 
-		final HashSet<TermVariable> vars = intervalBeginning.getVariables();
+		final Set<TermVariable> vars = intervalBeginning.getVariables();
 		final boolean isSat = mTermChecker.checkQuantifiedTerm(quantTerm);
 		if (!isSat) {
 			return false;

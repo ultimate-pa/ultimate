@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.srparse.test;
 import java.io.StringReader;
 import java.util.List;
 
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,13 +27,13 @@ public class BoogieRequirementsParserTest {
 	 * @throws Exception
 	 *
 	 */
-	private PatternType[] genPatterns(final String testInput) throws Exception {
+	private PatternType<?>[] genPatterns(final String testInput) throws Exception {
 		final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 
 		final StringReader sr = new StringReader(testInput);
-		final ReqParser parser = new ReqParser(services, services.getLoggingService().getLogger(getClass()), sr, "");
+		final ReqParser parser = new ReqParser(services.getLoggingService().getLogger(getClass()), sr, "");
 		final Symbol goal = parser.parse();
-		final PatternType[] patterns = (PatternType[]) goal.value;
+		final PatternType<?>[] patterns = (PatternType[]) goal.value;
 
 		return patterns;
 	}
@@ -75,7 +76,7 @@ public class BoogieRequirementsParserTest {
 	public void testListOfRequirements() throws Exception {
 		final String testString = "id1: Globally, it is always the case that \"A >=  B\" holds.\n"
 				+ "id2: Globally, it is always the case that \"C >= D + 3\" holds.\n";
-		final PatternType[] parsedPatterns = genPatterns(testString);
+		final PatternType<?>[] parsedPatterns = genPatterns(testString);
 
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
 		Assert.assertTrue("Parser did not recognize all Pattern (2)", parsedPatterns.length == 2);
@@ -91,7 +92,7 @@ public class BoogieRequirementsParserTest {
 	// @Test
 	public void testOldBehaviour() throws Exception {
 		final String testString = "id: Globally, it is always the case that \"A\" holds";
-		final PatternType[] parsedPatterns = genPatterns(testString);
+		final PatternType<?>[] parsedPatterns = genPatterns(testString);
 
 		System.out.println(parsedPatterns[0].toString());
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
@@ -110,13 +111,13 @@ public class BoogieRequirementsParserTest {
 	}
 
 	private void check(final String testString, final String cddCheck) throws Exception {
-		final PatternType[] parsedPatterns = genPatterns(testString);
+		final PatternType<?>[] parsedPatterns = genPatterns(testString);
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
-		Assert.assertThat(parsedPatterns.length, Is.is(1));
-		final PatternType pattern = parsedPatterns[0];
+		MatcherAssert.assertThat(parsedPatterns.length, Is.is(1));
+		final PatternType<?> pattern = parsedPatterns[0];
 		Assert.assertNotNull("Parser did not recognize pattern", pattern);
 		final List<CDD> cdds = pattern.getCdds();
-		Assert.assertThat(cdds.size(), Is.is(1));
+		MatcherAssert.assertThat(cdds.size(), Is.is(1));
 		final CDD cdd = cdds.get(0);
 
 		System.out.println(testString);

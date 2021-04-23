@@ -178,8 +178,8 @@ public class Req2CauseTrackingCDD {
 		return newGuard;
 	}
 
-	public static Set<String> getAllVariables(final PatternType<?> pattern, final Map<String, Integer> id2bounds) {
-		final List<CounterTrace> cts = pattern.constructCounterTrace(id2bounds);
+	public static Set<String> getAllVariables(final PatternType<?> pattern) {
+		final List<CounterTrace> cts = pattern.constructCounterTrace();
 		final Set<String> variables = new HashSet<>();
 
 		for (final CounterTrace ct : cts) {
@@ -201,8 +201,8 @@ public class Req2CauseTrackingCDD {
 		return cdds.get(0);
 	}
 
-	public static Set<String> getEffectVariables(final PatternType<?> pattern, final Map<String, Integer> id2bounds) {
-		final List<CounterTrace> cts = pattern.constructCounterTrace(id2bounds);
+	public static Set<String> getEffectVariables(final PatternType<?> pattern) {
+		final List<CounterTrace> cts = pattern.constructCounterTrace();
 		final Set<String> variables = new HashSet<>();
 
 		for (final CounterTrace ct : cts) {

@@ -209,8 +209,9 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			if (externalSolverCommand == null) {
 				solver = new SMTInterpol(null, options);
 			} else {
-				solver = new Scriptor(externalSolverCommand, mLogger, services, "External Solver");
+				solver = new Scriptor(externalSolverCommand, mLogger, services, "External Solver", null);
 			}
+
 			final Script eliminator = new UltimateEliminator(services, mLogger, solver);
 			final int exitCode = parser.run(eliminator, filename, options);
 			core.releaseToolchain(tc);

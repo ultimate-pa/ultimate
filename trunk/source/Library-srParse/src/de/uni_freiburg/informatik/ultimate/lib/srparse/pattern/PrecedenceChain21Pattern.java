@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that if "R" holds, then "S" previously held and was preceded by "T"
@@ -47,14 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class PrecedenceChain21Pattern extends PatternType<PrecedenceChain21Pattern> {
 
 	public PrecedenceChain21Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public PrecedenceChain21Pattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new PrecedenceChain21Pattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -151,11 +146,6 @@ public class PrecedenceChain21Pattern extends PatternType<PrecedenceChain21Patte
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\"");
 		return sb.toString();
-	}
-
-	@Override
-	public PrecedenceChain21Pattern rename(final String newName) {
-		return new PrecedenceChain21Pattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

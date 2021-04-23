@@ -45,8 +45,7 @@ public class InterpolationPreferenceChecker {
 
 	public static void check(final String pluginName, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services) {
-		final SolverMode currentSolverMode = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
+
 		final Set<SolverMode> legalSolverSettings = new HashSet<>();
 		switch (interpolation) {
 		case Craig_TreeInterpolation:
@@ -55,6 +54,7 @@ public class InterpolationPreferenceChecker {
 			legalSolverSettings.add(SolverMode.External_PrincessInterpolationMode);
 			legalSolverSettings.add(SolverMode.External_SMTInterpolInterpolationMode);
 			legalSolverSettings.add(SolverMode.External_Z3InterpolationMode);
+			legalSolverSettings.add(SolverMode.External_MathsatInterpolationMode);
 			break;
 		case BackwardPredicates:
 		case FPandBP:
@@ -66,6 +66,8 @@ public class InterpolationPreferenceChecker {
 		default:
 			throw new AssertionError("unknown option " + interpolation);
 		}
+		final SolverMode currentSolverMode = services.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 		if (!legalSolverSettings.contains(currentSolverMode)) {
 			final String errorMessage = "Incompatible preferences. You want to use " + interpolation + " in the "
 					+ pluginName + " plugin. This requires that " + RcfgPreferenceInitializer.LABEL_SOLVER + " in the "

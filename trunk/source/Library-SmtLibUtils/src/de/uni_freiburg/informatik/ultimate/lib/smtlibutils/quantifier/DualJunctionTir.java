@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -154,12 +155,14 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
+			final Set<TermVariable> bannedForDivCapture = new HashSet<>(inputEt.getEliminatees());
+			bannedForDivCapture.addAll(inputEt.getContext().getBoundByAncestors());
 			final Term resultTerm = tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
-					inputEt.getTerm(), eliminatee, inputEt.getBannedForDivCapture());
+					inputEt.getTerm(), eliminatee, bannedForDivCapture);
 			if (resultTerm != null) {
 				if (COMPARE_TO_OLD_RESULT) {
 					final Term old = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
-							inputEt.getTerm(), eliminatee, inputEt.getBannedForDivCapture());
+							inputEt.getTerm(), eliminatee, bannedForDivCapture);
 					if (old != null) {
 						final LBool test = SmtUtils.checkEquivalence(old, resultTerm, mScript);
 						if (test != LBool.UNSAT) {

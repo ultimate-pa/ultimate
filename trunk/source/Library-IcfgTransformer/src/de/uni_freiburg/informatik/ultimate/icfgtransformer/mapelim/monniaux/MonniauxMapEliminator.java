@@ -415,7 +415,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final Map<IProgramVar, Pair<List<Term>, Integer>> chain = new LinkedHashMap<>();
 				final Map<Term, Term> lowValues = new LinkedHashMap<>();
 				// Eliminate the Select-, Store-, and Equality-Terms
-				for (final Term selectTerm : ssec.mSelectTerms) {
+				for (final Term selectTerm : ssec.getSelectTerms()) {
 					final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
 					final Pair<TermVariable, Term> substTerm = eliminateSelects(mMgdScript, idxTerms, aSelectTerm,
 							hierarchy, auxVars, subst, idxTermToIdxProgramVar, idxAssignments, newInVars, chain,
@@ -424,14 +424,14 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					addendum.add(substTerm.getSecond());
 
 				}
-				for (final Term storeTerm : ssec.mStoreTerms) {
+				for (final Term storeTerm : ssec.getStoreTerms()) {
 					final ApplicationTerm aStoreTerm = (ApplicationTerm) storeTerm;
 					final Term substTerm = eliminateStores(mMgdScript, idxTerms, aStoreTerm, hierarchy, newInVars,
 							oldTermToProgramVar, subst, newAuxVars, idxTermToIdxProgramVar, idxAssignments, chain,
 							mCells, valVars, lowValues, oldProgramVars, idxAuxVars, valAuxVars);
 					subst.put(storeTerm, substTerm);
 				}
-				for (final Term equalityTerm : ssec.mEqualityTerms) {
+				for (final Term equalityTerm : ssec.getEqualityTerms()) {
 					final ApplicationTerm aEqualityTerm = (ApplicationTerm) equalityTerm;
 					final Term substTerm = eliminateEqualities(mMgdScript, idxTerms, aEqualityTerm, hierarchy, subst);
 					subst.put(equalityTerm, substTerm);
@@ -452,7 +452,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					final StoreSelectEqualityCollector newSsec = new StoreSelectEqualityCollector();
 					newSsec.transform(term);
 					final Set<Term> ors = new HashSet<>();
-					final Set<Term> storeTerms = new HashSet<>(newSsec.mStoreTerms);
+					final Set<Term> storeTerms = new HashSet<>(newSsec.getStoreTerms());
 					for (final Term storeTerm : storeTerms) {
 						final ApplicationTerm aStoreTerm = ((ApplicationTerm) storeTerm);
 						final Term[] paramsTerm = aStoreTerm.getParameters();
@@ -508,7 +508,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 						}
 					}
 					
-					final Set<Term> selectTerms = new HashSet<>(newSsec.mSelectTerms);
+					final Set<Term> selectTerms = new HashSet<>(newSsec.getSelectTerms());
 					for (final Term selectTerm : selectTerms) {
 						final ApplicationTerm aSelectTerm = ((ApplicationTerm) selectTerm);
 						final Term[] paramsTerm = aSelectTerm.getParameters();
@@ -594,7 +594,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					
 					final Map<Term, Term> iterSubst = new HashMap<>();
 					final Set<Term> iterAdd = new LinkedHashSet<>();
-					for (final Term selectTerm : iterSsec.mSelectTerms) {
+					for (final Term selectTerm : iterSsec.getSelectTerms()) {
 						final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
 						final Pair<TermVariable, Term> substTerm = eliminateSelects(mMgdScript, idxTerms, aSelectTerm,
 								hierarchy, auxVars, subst, idxTermToIdxProgramVar, idxAssignments, newInVars, chain,
@@ -631,7 +631,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 						newSsec.transform(term);
 						final Set<Term> ors = new HashSet<>();
 						
-						final Set<Term> selectTerms = new HashSet<>(newSsec.mSelectTerms);
+						final Set<Term> selectTerms = new HashSet<>(newSsec.getSelectTerms());
 						for (final Term selectTerm : selectTerms) {
 							final ApplicationTerm aSelectTerm = ((ApplicationTerm) selectTerm);
 							final Term[] paramsTerm = aSelectTerm.getParameters();
