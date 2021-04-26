@@ -164,6 +164,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ assume\ true\ statements=false
 #Fri Dec 09 13:35:39 CET 2016
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ using\ LBE\ with\ the\ strategy=NONE

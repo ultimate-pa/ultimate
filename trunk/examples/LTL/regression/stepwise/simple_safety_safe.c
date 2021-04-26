@@ -1,3 +1,4 @@
+//#Safe
 //@ ltl invariant positive: []( AP(a >= b) ) ;
 
 #include <stdio.h> 
@@ -23,6 +24,7 @@ int main()
 	__VERIFIER_ltl_step();
 	__VERIFIER_ltl_step();
 	__VERIFIER_ltl_step();
-	a = 555;
-	b = 722342;
+	a = 22;
+	b = 11;
+	
 }
