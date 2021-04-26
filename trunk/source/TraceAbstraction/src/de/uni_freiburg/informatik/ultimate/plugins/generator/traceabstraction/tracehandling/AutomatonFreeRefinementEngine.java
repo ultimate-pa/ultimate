@@ -191,8 +191,14 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 			if (interpolantGenerator == null) {
 				continue;
 			}
-			perfectIpps.addAll(interpolantGenerator.getPerfectInterpolantSequences());
-			imperfectIpps.addAll(interpolantGenerator.getImperfectInterpolantSequences());
+			final Collection<QualifiedTracePredicates> newPeIpSeq =
+					interpolantGenerator.getPerfectInterpolantSequences();
+			perfectIpps.addAll(newPeIpSeq);
+			final Collection<QualifiedTracePredicates> newImIpSeq =
+					interpolantGenerator.getImperfectInterpolantSequences();
+			imperfectIpps.addAll(newImIpSeq);
+			mLogger.info("%s provided %s perfect and %s imperfect interpolant sequences",
+					getModuleFingerprintString(interpolantGenerator), newPeIpSeq.size(), newImIpSeq.size());
 			interpolantGenerator.aggregateStatistics(mRefinementEngineStatistics);
 		}
 
