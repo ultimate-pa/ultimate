@@ -607,7 +607,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final HashMap<TermVariable, Term> closedFormItFin = closedFormItFinTuple.getKey();
 		final HashMap<IProgramVar, TermVariable> havocVars = new HashMap<>();
 		for (final IProgramVar havocVar : su.getHavocedVars()) {
-			havocVars.put(havocVar, mgdScript.variable(havocVar.getTermVariable().getName() + "_h", sort));
+			havocVars.put(havocVar, mgdScript.variable(havocVar.getTermVariable().getName() + "_h", havocVar.getSort()));
 		}
 		final Set<TermVariable> havocVarSet = new HashSet<>(havocVars.values());
 		final Term guardOfClosedFormItFinTmp = constructGuardOfClosedForm(script, guardTf.getFormula(), closedFormItFin,
