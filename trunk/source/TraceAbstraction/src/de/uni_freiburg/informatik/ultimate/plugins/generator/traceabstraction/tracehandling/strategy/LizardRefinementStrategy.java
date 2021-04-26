@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016-2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016-2019 University of Freiburg
+ * Copyright (C) 2021 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
@@ -38,30 +40,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
 
 /**
- * {@link IRefinementStrategy} similar to {@link CamelRefinementStrategy}, except that it does modulate the assertion
- * order according to a SMT feature heuristic.
+ * {@link IRefinementStrategy} is like {@link CamelNoAmRefinementStrategy}, except that it continues as soon as some
+ * state assertions are available.
  *
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class CamelSmtAmRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class LizardRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public CamelSmtAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public LizardRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
-				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-								InterpolationTechnique.Craig_NestedInterpolation,
-								new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)),
+				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						InterpolationTechnique.Craig_NestedInterpolation, AssertCodeBlockOrder.NOT_INCREMENTALLY),
 						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
-								new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)) },
+								AssertCodeBlockOrder.NOT_INCREMENTALLY) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override
 	public String getName() {
-		return RefinementStrategy.CAMEL_SMT_AM.toString();
+		return RefinementStrategy.LIZARD.toString();
+	}
+
+	@Override
+	protected boolean needsMoreInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
+		return perfectIpps.isEmpty() && imperfectIpps.isEmpty();
 	}
 }

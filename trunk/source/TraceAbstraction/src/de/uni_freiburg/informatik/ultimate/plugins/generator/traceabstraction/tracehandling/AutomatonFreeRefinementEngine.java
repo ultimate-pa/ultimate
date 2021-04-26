@@ -176,6 +176,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 		// trace is infeasible, extract a proof
 		if (feasibilityResult == LBool.UNSAT) {
+			mLogger.info("Strategy %s found an infeasible trace", mStrategy.getName());
 			return generateProof();
 		}
 		throw new UnsupportedOperationException("Unknown LBool: " + feasibilityResult);
@@ -245,7 +246,8 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 				}
 				currentTraceCheck.aggregateStatistics(mRefinementEngineStatistics);
 				return feasibilityResult;
-			} else if (feasibilityResult == LBool.UNSAT) {
+			}
+			if (feasibilityResult == LBool.UNSAT) {
 				currentTraceCheck.aggregateStatistics(mRefinementEngineStatistics);
 				return feasibilityResult;
 			}
