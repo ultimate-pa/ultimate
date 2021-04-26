@@ -292,7 +292,6 @@ public class QuantifierPusher extends TermTransformer {
 	public static Term tryToPushOverDualFiniteConnective(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final EliminationTask et, final IQuantifierEliminator qe) {
-
 		final Term flattened1 =
 				flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
 		if (!(flattened1 instanceof QuantifiedFormula)) {
@@ -302,16 +301,18 @@ public class QuantifierPusher extends TermTransformer {
 		final EliminationTask res1Et = new EliminationTask((QuantifiedFormula) flattened1, et.getContext());
 		final EliminationTask pushed =
 				pushDualQuantifiersInParams(services, mgdScript, applyDistributivity, pqeTechniques, res1Et, qe);
+		final Term pushedTerm = pushed.toTerm(mgdScript.getScript());
+		if (!(pushedTerm instanceof QuantifiedFormula)) {
+			// outer quantifiers removed for trivial reason after removal of inner quantifier
+			return pushedTerm;
+		}
 		final Term flattened2 =
-				flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) pushed.toTerm(mgdScript.getScript()));
+				flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) pushedTerm);
 		if (!(flattened2 instanceof QuantifiedFormula)) {
 			// some quantifiers could be removed for trivial reasons
 			return flattened2;
 		}
 		final EliminationTask res2Et = new EliminationTask((QuantifiedFormula) flattened2, et.getContext());
-		// final Term simp = SmtUtils.simplify(mMgdScript, inputEt.getTerm(), mServices,
-		// SimplificationTechnique.SIMPLIFY_DDA);
-
 		return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques, res2Et, qe);
 	}
 
