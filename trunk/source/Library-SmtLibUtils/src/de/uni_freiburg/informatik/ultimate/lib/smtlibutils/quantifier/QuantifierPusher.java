@@ -486,24 +486,30 @@ public class QuantifierPusher extends TermTransformer {
 	private static EliminationTask pushDualQuantifiersInParams(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final EliminationTask inputEt, final IQuantifierEliminator qe) {
-		final Term[] dualFiniteParams =
-				QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(), inputEt.getTerm());
+		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(),
+				inputEt.getTerm());
 		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
+		final List<Term> resultDualFiniteParams = new ArrayList<Term>();
 		for (int i = 0; i < dualFiniteParams.length; i++) {
 			if (dualFiniteParams[i] instanceof QuantifiedFormula) {
-				// TODO remove if no bug
-				final Term criticalConstraint = Context.buildCriticalConstraintForConDis(mgdScript.getScript(),
-						inputEt.getContext().getCriticalConstraint(),
-						((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
 				final Context childContext = inputEt.getContext().constructChildContextForConDis(mgdScript.getScript(),
 						((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
-				assert criticalConstraint.equals(childContext.getCriticalConstraint());
-				dualFiniteParams[i] = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
-						childContext, dualFiniteParams[i]);
+				{
+					// TODO remove if no bug
+					final Term criticalConstraint = Context.buildCriticalConstraintForConDis(mgdScript.getScript(),
+							inputEt.getContext().getCriticalConstraint(),
+							((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
+					assert criticalConstraint.equals(childContext.getCriticalConstraint());
+				}
+				final Term resultDualFiniteParamI = qe.eliminate(services, mgdScript, applyDistributivity,
+						pqeTechniques, childContext, dualFiniteParams[i]);
+				resultDualFiniteParams.add(resultDualFiniteParamI);
+			} else {
+				resultDualFiniteParams.add(dualFiniteParams[i]);
 			}
 		}
 		final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
-				inputEt.getQuantifier(), dualFiniteParams);
+				inputEt.getQuantifier(), resultDualFiniteParams);
 		final EliminationTask et = new EliminationTask(inputEt.getQuantifier(), inputEt.getEliminatees(),
 				dualFiniteJunction, inputEt.getContext());
 		return et;
