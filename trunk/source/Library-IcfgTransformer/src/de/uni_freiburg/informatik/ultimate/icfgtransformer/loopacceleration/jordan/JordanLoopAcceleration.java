@@ -757,7 +757,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		final HashMap<IProgramVar, TermVariable> havocVars = new HashMap<>();
 		for (final IProgramVar havocVar : su.getHavocedVars()) {
-			havocVars.put(havocVar, mgdScript.variable(havocVar.getTermVariable().getName() + "_h", sort));
+			havocVars.put(havocVar, mgdScript.variable(havocVar.getTermVariable().getName() + "_h", havocVar.getSort()));
 		}
 		final Set<TermVariable> havocVarSet = new HashSet<>(havocVars.values());
 
