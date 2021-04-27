@@ -609,10 +609,12 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term guardOfClosedFormItFin = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormItFinTmp);
 
 		// (and (= itFin 0) (not (guard)) (x'=x))
-		final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
-		final Term notGuard = Util.not(script, guardTf.getFormula());
-		// final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, inVars, loopTransFormula.getOutVars());
-		final Term finalDisjunct1 = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
+		final Term zeroIterationCase;
+		{
+			final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
+			final Term notGuard = Util.not(script, guardTf.getFormula());
+			zeroIterationCase = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
+		}
 
 		// (> itFin 0)
 		final Term firstConjunct = script.term(">", itFin, script.numeral(BigInteger.ZERO));
@@ -662,7 +664,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			conjunction = Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct, xPrimed);
 		}
 
-		final Term disjunction = Util.or(script, finalDisjunct1, conjunction);
+		final Term disjunction = Util.or(script, zeroIterationCase, conjunction);
 
 		final Set<TermVariable> itFinSet = new HashSet<>();
 		itFinSet.add(itFin);
