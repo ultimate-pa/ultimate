@@ -849,9 +849,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term[] closedFormArrayOdd = new Term[numbOfVars];
 		int i = 0;
 		for (final IProgramVar var : loopTransFormula.getOutVars().keySet()) {
-			if (closedFormOddItFin.containsKey(loopTransFormula.getOutVars().get(var))) {
+			if (closedFormOddItFin.containsKey(var)) {
 				closedFormArrayOdd[i] = script.term("=", loopTransFormula.getOutVars().get(var),
-						closedFormOddItFin.get(loopTransFormula.getOutVars().get(var)));
+						closedFormOddItFin.get(var));
 			} else {
 				closedFormArrayOdd[i] = script.term("=", loopTransFormula.getOutVars().get(var), inVars.get(var));
 			}
