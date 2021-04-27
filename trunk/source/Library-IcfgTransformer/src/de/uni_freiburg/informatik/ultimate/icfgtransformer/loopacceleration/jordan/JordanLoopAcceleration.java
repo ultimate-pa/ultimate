@@ -135,7 +135,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final int numberOfHavocedVariables = su.getHavocedVars().size();
 		final int numberOfReadonlyVariables = su.getReadonlyVars().size();
 
-		if (!isIntegerLoop(su)) {
+		if (!isIntegerUpdate(su)) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
 					numberOfAssignedVariables, numberOfHavocedVariables, numberOfReadonlyVariables, new NestedMap2<>());
 			return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.NONINTEGER_UPDATE,
@@ -192,7 +192,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				loopAccelerationFormula, jlasg);
 	}
 
-	private static boolean isIntegerLoop(final SimultaneousUpdate su) {
+	private static boolean isIntegerUpdate(final SimultaneousUpdate su) {
 		for (final IProgramVar pv : su.getDeterministicAssignment().keySet()) {
 			if (!SmtSortUtils.isIntSort(pv.getSort())) {
 				return false;
