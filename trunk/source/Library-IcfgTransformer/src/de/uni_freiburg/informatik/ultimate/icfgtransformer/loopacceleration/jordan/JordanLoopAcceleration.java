@@ -639,30 +639,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		itSet.add(it);
 		final Term fourthConjunct = SmtUtils.quantifier(script, 1, itSet, implication);
 
-		final int numbOfVars = loopTransFormula.getOutVars().size();
-		final Term[] closedFormArray = new Term[numbOfVars];
-		int j = 0;
-		for (final IProgramVar var : loopTransFormula.getOutVars().keySet()) {
-			if (closedFormItFin.containsKey(var)) {
-				closedFormArray[j] = script.term("=", loopTransFormula.getOutVars().get(var),
-						closedFormItFin.get(var));
-				j = j + 1;
-			} else if (!su.getHavocedVars().contains(var)) {
-				closedFormArray[j] = script.term("=", loopTransFormula.getOutVars().get(var), inVars.get(var));
-				j = j + 1;
-			}
-		}
-		Term xPrimed;
-		Term conjunction;
-		if (j == 0) {
-			conjunction = Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct);
-		} else if (j == 1) {
-			xPrimed = closedFormArray[0];
-			conjunction = Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct, xPrimed);
-		} else {
-			xPrimed = Util.and(script, Arrays.copyOfRange(closedFormArray, 0, j));
-			conjunction = Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct, xPrimed);
-		}
+		// (x' = closedForm(x,itFin))
+		final Term xPrimed = constructClosedUpdateConstraint(script, loopTransFormula, su.getHavocedVars(), closedFormItFin);
+		final Term conjunction = Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct, xPrimed);
 
 		final Term disjunction = Util.or(script, zeroIterationCase, conjunction);
 
@@ -678,6 +657,26 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		} else {
 			return disjunction;
 		}
+	}
+
+	private static Term constructClosedUpdateConstraint(final Script script, final UnmodifiableTransFormula loopTf,
+			final Set<IProgramVar> havocedVars, final Map<IProgramVar, Term> closedForm) {
+		final List<Term> equalities = new ArrayList<>();
+		for (final IProgramVar var : loopTf.getOutVars().keySet()) {
+			if (!havocedVars.contains(var)) {
+				final Term lhs = loopTf.getOutVars().get(var);
+				final Term rhs;
+				if (closedForm.containsKey(var)) {
+					rhs = closedForm.get(var);
+				} else {
+					rhs = loopTf.getInVars().get(var);
+				}
+				final Term equality = SmtUtils.binaryEquality(script, lhs, rhs);
+				equalities.add(equality);
+			}
+		}
+		return SmtUtils.and(script, equalities);
+
 	}
 
 	/**
@@ -828,39 +827,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term forallTerm2 = SmtUtils.quantifier(script, 1, itHalfSet, forallTermConjunction2);
 
 		// (x' = closedFormEven(x,2*itFinHalf))
-		final int numbOfVars = loopTransFormula.getOutVars().size();
-		final Term[] closedFormArrayEven = new Term[numbOfVars];
-		int j = 0;
-		for (final IProgramVar var : loopTransFormula.getOutVars().keySet()) {
-			if (closedFormEvenItFin.containsKey(var)) {
-				closedFormArrayEven[j] = script.term("=", loopTransFormula.getOutVars().get(var),
-						closedFormEvenItFin.get(var));
-			} else {
-				closedFormArrayEven[j] = script.term("=", loopTransFormula.getOutVars().get(var), inVars.get(var));
-			}
-			j = j + 1;
-		}
-		Term xPrimedEven = closedFormArrayEven[0];
-		if (closedFormArrayEven.length > 1) {
-			xPrimedEven = Util.and(script, closedFormArrayEven);
-		}
-
+		final Term xPrimedEven = constructClosedUpdateConstraint(script, loopTransFormula, su.getHavocedVars(),
+				closedFormEvenItFin);
 		// (x' = closedFormOdd(x,2*itFinHalf+1))
-		final Term[] closedFormArrayOdd = new Term[numbOfVars];
-		int i = 0;
-		for (final IProgramVar var : loopTransFormula.getOutVars().keySet()) {
-			if (closedFormOddItFin.containsKey(var)) {
-				closedFormArrayOdd[i] = script.term("=", loopTransFormula.getOutVars().get(var),
-						closedFormOddItFin.get(var));
-			} else {
-				closedFormArrayOdd[i] = script.term("=", loopTransFormula.getOutVars().get(var), inVars.get(var));
-			}
-			i = i + 1;
-		}
-		Term xPrimedOdd = closedFormArrayOdd[0];
-		if (closedFormArrayOdd.length > 1) {
-			xPrimedOdd = Util.and(script, closedFormArrayOdd);
-		}
+		final Term xPrimedOdd = constructClosedUpdateConstraint(script, loopTransFormula, su.getHavocedVars(),
+				closedFormOddItFin);
 
 		// (and (not (guardOfClosedFormEvenItFin)) (forallTerm1) (xPrimedEven))
 		final Term innerConjunction1 = Util.and(script, itFinHalfGreater0, guardTf.getFormula(),
