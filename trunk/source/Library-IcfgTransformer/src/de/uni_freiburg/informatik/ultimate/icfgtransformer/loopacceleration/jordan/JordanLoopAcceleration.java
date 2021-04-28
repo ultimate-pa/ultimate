@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -436,17 +437,20 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 	/**
 	 * Computes the term guard(closedForm(inVars)).
+	 *
+	 * @param havocVarReplacements Map that assigns variables that are havoced the term
+	 *                         with which they should be replaced.
 	 */
 	private static Term constructGuardOfClosedForm(final ManagedScript mgdScript,
 			final UnmodifiableTransFormula guardTf, final HashMap<IProgramVar, Term> closedFormOfUpdate,
-			final HashMap<IProgramVar, TermVariable> havocVars) {
+			final HashMap<IProgramVar, TermVariable> havocVarReplacements) {
 		final Map<IProgramVar, Term> map = new HashMap<>();
 		for (final IProgramVar pv : guardTf.getInVars().keySet()) {
 			final Term updateTerm = closedFormOfUpdate.get(pv);
 			if (updateTerm != null) {
 				map.put(pv, updateTerm);
 			} else {
-				final TermVariable auxVar = havocVars.get(pv);
+				final TermVariable auxVar = havocVarReplacements.get(pv);
 				if (auxVar != null) {
 					map.put(pv, auxVar);
 				} else {
@@ -587,7 +591,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
 
-		// Create the subformula guard(cf(x,itFin)).
+
 		final HashMap<TermVariable, IProgramVar> inVarsInverted = new HashMap<>();
 		for (final IProgramVar inVar : inVars.keySet()) {
 			inVarsInverted.put(inVars.get(inVar), inVar);
@@ -599,14 +603,10 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			return null;
 		}
 		final HashMap<IProgramVar, Term> closedFormItFin = closedFormItFinTuple.getKey();
-		final HashMap<IProgramVar, TermVariable> havocVars = new HashMap<>();
-		for (final IProgramVar havocVar : su.getHavocedVars()) {
-			havocVars.put(havocVar, mgdScript.variable(havocVar.getTermVariable().getName() + "_h", havocVar.getSort()));
-		}
-		final Set<TermVariable> havocVarSet = new HashSet<>(havocVars.values());
-		final Term guardOfClosedFormItFinTmp = constructGuardOfClosedForm(mgdScript, guardTf, closedFormItFin,
-				havocVars);
-		final Term guardOfClosedFormItFin = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormItFinTmp);
+
+		// Construct subformula guard(cf(x,itFin)).
+		final Term guardOfClosedFormItFin = constructGuardAfterFinalIteration(mgdScript, su.getHavocedVars(),
+				loopTransFormula.getOutVars(), guardTf, closedFormItFin);
 
 		// (and (= itFin 0) (not (guard)) (x'=x))
 		final Term zeroIterationCase;
@@ -627,12 +627,11 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final TermVariable it = mgdScript.constructFreshTermVariable("it", sort);
 		final Term itGreater1 = script.term("<=", script.numeral(BigInteger.ONE), it);
 		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
-		final HashMap<IProgramVar, Term> closedFormIt =
-				computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap, jordanUpdate, it, null, inVars,
-						loopTransFormula.getOutVars(), true, restrictedVersionPossible).getKey();
-		final Term guardOfClosedFormItTmp = constructGuardOfClosedForm(mgdScript, guardTf, closedFormIt,
-				havocVars);
-		final Term guardOfClosedFormIt = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormItTmp);
+		final HashMap<IProgramVar, Term> closedFormIt = computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap,
+				jordanUpdate, it, null, inVars, loopTransFormula.getOutVars(), true, restrictedVersionPossible)
+				.getKey();
+		final Term guardOfClosedFormIt = constructGuardAfterIntermediateIterations(mgdScript, su.getHavocedVars(),
+				guardTf, closedFormIt);
 		final Term leftSideOfImpl = Util.and(script, itGreater1, itSmallerItFinM1);
 		final Term implication = Util.implies(script, leftSideOfImpl, guardOfClosedFormIt);
 		final Set<TermVariable> itSet = new HashSet<>();
@@ -658,6 +657,46 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			return disjunction;
 		}
 	}
+
+	private static Term constructGuardAfterIntermediateIterations(final ManagedScript mgdScript,
+			final Set<IProgramVar> havocedVars, final UnmodifiableTransFormula guardTf,
+			final HashMap<IProgramVar, Term> closedFormIt) {
+		final HashMap<IProgramVar, TermVariable> havocReplacements = constructHavocReplacementsForIntermediateIteration(
+				mgdScript, havocedVars);
+		final Set<TermVariable> havocVarSet = new HashSet<>(havocReplacements.values());
+		final Term guardOfClosedFormItUnquantified = constructGuardOfClosedForm(mgdScript, guardTf, closedFormIt,
+				havocReplacements);
+		return SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, havocVarSet,
+				guardOfClosedFormItUnquantified);
+	}
+
+	private static Term constructGuardAfterFinalIteration(final ManagedScript mgdScript,
+			final Set<IProgramVar> havocedVars, final Map<IProgramVar, TermVariable> outVars,
+			final UnmodifiableTransFormula guardTf, final HashMap<IProgramVar, Term> closedFormItFin) {
+		final HashMap<IProgramVar, TermVariable> havocReplacements = constructHavocReplacementsForFinalIteration(
+				havocedVars, outVars);
+		return constructGuardOfClosedForm(mgdScript, guardTf, closedFormItFin, havocReplacements);
+	}
+
+	private static HashMap<IProgramVar, TermVariable> constructHavocReplacementsForIntermediateIteration(
+			final ManagedScript mgdScript, final Set<IProgramVar> havocedVars) {
+		final HashMap<IProgramVar, TermVariable> havocReplacements = new HashMap<>();
+		for (final IProgramVar pv : havocedVars) {
+			final String varName = pv.getTermVariable().getName() + "_havocIntermIteration";
+			havocReplacements.put(pv, mgdScript.variable(varName, pv.getSort()));
+		}
+		return havocReplacements;
+	}
+
+	private static HashMap<IProgramVar, TermVariable> constructHavocReplacementsForFinalIteration(
+			final Set<IProgramVar> havocedVars, final Map<IProgramVar, TermVariable> outVars) {
+		final HashMap<IProgramVar, TermVariable> havocReplacements = new HashMap<>();
+		for (final IProgramVar pv : havocedVars) {
+			havocReplacements.put(pv, outVars.get(pv));
+		}
+		return havocReplacements;
+	}
+
 
 	private static Term constructClosedUpdateConstraint(final Script script, final UnmodifiableTransFormula loopTf,
 			final Set<IProgramVar> havocedVars, final Map<IProgramVar, Term> closedForm) {
