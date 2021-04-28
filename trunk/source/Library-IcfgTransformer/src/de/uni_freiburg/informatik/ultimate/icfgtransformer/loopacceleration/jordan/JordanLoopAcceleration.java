@@ -784,32 +784,17 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final Term itFinHalfGreater0 = script.term(">", itFinHalf, script.numeral(BigInteger.ZERO));
 
 		// (not (guard(closedFormEven(x, 2*itFinHalf))))
-		final HashMap<TermVariable, IProgramVar> inVarsInverted = new HashMap<>();
-		for (final IProgramVar inVar : inVars.keySet()) {
-			inVarsInverted.put(inVars.get(inVar), inVar);
-		}
-
-		final HashMap<IProgramVar, TermVariable> havocVars = new HashMap<>();
-		for (final IProgramVar havocVar : su.getHavocedVars()) {
-			havocVars.put(havocVar, mgdScript.variable(havocVar.getTermVariable().getName() + "_h", havocVar.getSort()));
-		}
-		final Set<TermVariable> havocVarSet = new HashSet<>(havocVars.values());
-
 		final HashMap<IProgramVar, Term> closedFormEvenItFin =
 				computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap, jordanUpdate, null, itFinHalf, inVars,
 						loopTransFormula.getOutVars(), true, false).getKey();
-		final Term guardOfClosedFormEvenItFinTmp = constructGuardOfClosedForm(mgdScript, guardTf,
-				closedFormEvenItFin, havocVars);
-		final Term guardOfClosedFormEvenItFin =
-				SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormEvenItFinTmp);
+		final Term guardOfClosedFormEvenItFin = constructGuardAfterFinalIteration(mgdScript, su.getHavocedVars(),
+				loopTransFormula.getOutVars(), guardTf, closedFormEvenItFin);
 
 		final HashMap<IProgramVar, Term> closedFormOddItFin =
 				computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap, jordanUpdate, null, itFinHalf, inVars,
 						loopTransFormula.getOutVars(), false, false).getKey();
-		final Term guardOfClosedFormOddItFinTmp = constructGuardOfClosedForm(mgdScript, guardTf,
-				closedFormOddItFin, havocVars);
-		final Term guardOfClosedFormOddItFin =
-				SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormOddItFinTmp);
+		final Term guardOfClosedFormOddItFin = constructGuardAfterFinalIteration(mgdScript, su.getHavocedVars(),
+				loopTransFormula.getOutVars(), guardTf, closedFormOddItFin);
 
 		// ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1)))
 		final TermVariable itHalf = mgdScript.constructFreshTermVariable("itHalf", sort);
@@ -821,9 +806,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// (guard(closedFormEven(x, 2*itHalf)))
 		final HashMap<IProgramVar, Term> closedFormEvenIt = computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap,
 				jordanUpdate, null, itHalf, inVars, loopTransFormula.getOutVars(), true, false).getKey();
-		final Term guardOfClosedFormEvenItTmp = constructGuardOfClosedForm(mgdScript, guardTf,
-				closedFormEvenIt, havocVars);
-		final Term guardOfClosedFormEvenIt = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormEvenItTmp);
+		final Term guardOfClosedFormEvenIt = constructGuardAfterIntermediateIterations(mgdScript, su.getHavocedVars(),
+				guardTf, closedFormEvenIt);
 
 		// (=> ((and (<= 1 itHalf) (<= itHalf (- itFinHalf 1))) (guard(closedFormEven(x,
 		// 2*itHalf))))
@@ -836,9 +820,8 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		// (guard(closedFormOdd(x, 2*itHalf+1))
 		final HashMap<IProgramVar, Term> closedFormOddIt = computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap,
 				jordanUpdate, null, itHalf, inVars, loopTransFormula.getOutVars(), false, false).getKey();
-		final Term guardOfClosedFormOddItTmp = constructGuardOfClosedForm(mgdScript, guardTf, closedFormOddIt,
-				havocVars);
-		final Term guardOfClosedFormOddIt = SmtUtils.quantifier(script, 0, havocVarSet, guardOfClosedFormOddItTmp);
+		final Term guardOfClosedFormOddIt = constructGuardAfterIntermediateIterations(mgdScript, su.getHavocedVars(),
+				guardTf, closedFormOddIt);
 
 		// (=> ((and (<= 0 itHalf) (<= itHalf (- itFinHalf 1)))) (guard(closedFormOdd(x,
 		// 2*itHalf+1)))))))
