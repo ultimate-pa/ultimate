@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class ProductBacktranslator extends
-		DefaultTranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, String, String> {
+DefaultTranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, String, String> {
 
 	private final HashMap<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> mEdgeMapping;
 
@@ -61,7 +61,7 @@ public class ProductBacktranslator extends
 	@SuppressWarnings("unchecked")
 	@Override
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term>
-			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution) {
+	translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution) {
 
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof IcfgProgramExecution) {
@@ -87,9 +87,13 @@ public class ProductBacktranslator extends
 				newBranchEncoders.add(oldBranchEncoders[i]);
 			}
 		}
-
-		return IcfgProgramExecution.create(newTrace, newValues,
-				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
+		if (!newTrace.isEmpty()) {
+			return IcfgProgramExecution.create(newTrace, newValues,
+					newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
+		} else {
+			return new IcfgProgramExecution(newTrace, newValues,
+					newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), false, IIcfgTransition.class);
+		}
 	}
 
 	private static void addProgramState(final Integer i, final Map<Integer, ProgramState<Term>> newValues,
