@@ -589,13 +589,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			final boolean restrictedVersionPossible, final boolean quantifyItFinExplicitly, final TermVariable itFin,
 			final Term xPrimeEqualsX, final Map<IProgramVar, TermVariable> inVars) {
 		final Script script = mgdScript.getScript();
-		final Sort sort = SmtSortUtils.getIntSort(script);
 
-
-		final HashMap<TermVariable, IProgramVar> inVarsInverted = new HashMap<>();
-		for (final IProgramVar inVar : inVars.keySet()) {
-			inVarsInverted.put(inVars.get(inVar), inVar);
-		}
 		final Pair<HashMap<IProgramVar, Term>, Boolean> closedFormItFinTuple =
 				computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap, jordanUpdate, itFin, null,
 						loopTransFormula.getInVars(), loopTransFormula.getOutVars(), true, restrictedVersionPossible);
@@ -624,7 +618,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 
 		// (forall ((it Int)) (=> (and (<= 1 it) (<= it (- itFin 1)))
 		// (guard(closedForm(x,it)))))
-		final TermVariable it = mgdScript.constructFreshTermVariable("it", sort);
+		final TermVariable it = mgdScript.constructFreshTermVariable("it", SmtSortUtils.getIntSort(script));
 		final Term itGreater1 = script.term("<=", script.numeral(BigInteger.ONE), it);
 		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
 		final HashMap<IProgramVar, Term> closedFormIt = computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap,
