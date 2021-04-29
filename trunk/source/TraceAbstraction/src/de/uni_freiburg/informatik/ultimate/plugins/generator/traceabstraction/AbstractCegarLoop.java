@@ -552,6 +552,8 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 			res = Result.TIMEOUT;
 		}
 
+		mCegarLoopBenchmark.stopAllStopwatches();
+
 		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, res)) {
 			return reportResult(Result.UNSAFE);
 		}
