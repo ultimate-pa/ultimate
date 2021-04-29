@@ -75,6 +75,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -432,6 +434,13 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
 	}
 
+	private static boolean isInsufficientThreadsIdentifier(final DebugIdentifier ident) {
+		if (ident instanceof ProcedureErrorDebugIdentifier) {
+			return ((ProcedureErrorDebugIdentifier) ident).getType() == ProcedureErrorType.INUSE_VIOLATION;
+		}
+		return false;
+	}
+
 	private static boolean isConcurrent(final IIcfg<IcfgLocation> icfg) {
 		return !icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
 	}
@@ -583,6 +592,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final String description;
 		if (ident instanceof AllErrorsAtOnceDebugIdentifier) {
 			description = "Ultimate Automizer benchmark data";
+		} else if (isInsufficientThreadsIdentifier(ident)) {
+			description = "Ultimate Automizer benchmark data for thread instances sufficiency: " + ident;
 		} else {
 			description = "Ultimate Automizer benchmark data for error location: " + ident;
 		}
@@ -623,8 +634,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		// TODO (Matthias/Dominik 2021-04-29) remove all PositiveResults if "additional assume for each assert" is set
 		// TODO and any location is unsafe
 
-		for (final IResult res : mResultsPerLocation.values()) {
-			reportResult(res);
+		for (final Map.Entry<DebugIdentifier, IResult> entry : mResultsPerLocation.entrySet()) {
+			if (!isInsufficientThreadsIdentifier(entry.getKey())) {
+				reportResult(entry.getValue());
+			}
 		}
 	}
 
