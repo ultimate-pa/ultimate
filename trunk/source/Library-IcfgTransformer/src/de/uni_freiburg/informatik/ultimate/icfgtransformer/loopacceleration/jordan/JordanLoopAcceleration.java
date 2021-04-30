@@ -136,11 +136,13 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final int numberOfHavocedVariables = su.getHavocedVars().size();
 		final int numberOfReadonlyVariables = su.getReadonlyVars().size();
 
-		if (!isIntegerUpdate(su)) {
+		final Set<Sort> nonIntegerSorts = getNonIntegerSorts(su.getDeterministicAssignment().keySet());
+		if (!nonIntegerSorts.isEmpty()) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
-					numberOfAssignedVariables, numberOfHavocedVariables, numberOfReadonlyVariables, new NestedMap2<>());
+					numberOfAssignedVariables, numberOfHavocedVariables, -1, new NestedMap2<>());
+			final String errorMessage = "Some updated variables are of non-integer sorts : " + nonIntegerSorts;
 			return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.NONINTEGER_UPDATE,
-					null, null, jlasg);
+					errorMessage, null, jlasg);
 		}
 
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
@@ -218,6 +220,16 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 			blockSizeSum += triple.getSecond() * triple.getThird();
 		}
 		return (numberOfAssignedVariables + numberOfUnmodifiedVariables + 1 == blockSizeSum);
+	}
+
+	private static Set<Sort> getNonIntegerSorts(final Set<IProgramVar> programVariables) {
+		final Set<Sort> result = new HashSet<>();
+		for (final IProgramVar pv : programVariables) {
+			if (!SmtSortUtils.isIntSort(pv.getSort())) {
+				result.add(pv.getSort());
+			}
+		}
+		return result;
 	}
 
 	/**
