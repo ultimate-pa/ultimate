@@ -43,8 +43,6 @@ public abstract class StatisticsGeneratorWithStopwatches {
 	private final Map<String, Boolean> mRunningStopwatches;
 	private final Benchmark mBenchmark;
 
-	public abstract String[] getStopwatches();
-
 	public StatisticsGeneratorWithStopwatches() {
 		mRunningStopwatches = new HashMap<>(getStopwatches().length);
 		mBenchmark = new Benchmark();
@@ -53,6 +51,8 @@ public abstract class StatisticsGeneratorWithStopwatches {
 			mBenchmark.register(name);
 		}
 	}
+
+	public abstract String[] getStopwatches();
 
 	public void start(final Object stopwatchName) {
 		start(stopwatchName.toString());
