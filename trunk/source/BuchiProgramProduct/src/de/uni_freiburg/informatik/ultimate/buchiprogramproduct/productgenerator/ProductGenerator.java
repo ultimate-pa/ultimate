@@ -178,17 +178,24 @@ public final class ProductGenerator {
 			currentPoint = unhandledLocations.iterator().next();
 			unhandledLocations.remove(currentPoint);
 			mRCFGLocations.add(currentPoint);
+
 			for (final IcfgEdge p : currentPoint.getOutgoingEdges()) {
 				if (!mRCFGLocations.contains(p.getTarget()) && !unhandledLocations.contains(p.getTarget())) {
 					unhandledLocations.add((BoogieIcfgLocation) p.getTarget());
 				}
 			}
+
 			// collect all sinks and add self loops to them
-			if (currentPoint.getOutgoingEdges().isEmpty()) {
+			if (!isNonProductNode(currentPoint)
+					&& !currentPoint.getOutgoingEdges().stream()
+					.filter(a -> !isNonProductNode((BoogieIcfgLocation) a.getTarget()))
+					.findAny().isPresent()) {
 				mRcfgSinks.add(currentPoint);
-				mapNewEdge2OldEdge(mCodeblockFactory.constructStatementSequence(currentPoint, currentPoint,
-						generateNeverClaimAssumeStatement(new BooleanLiteral(null, true))), null);
+				AssumeStatement stmtTrue = generateNeverClaimAssumeStatement(new BooleanLiteral(null, true));
+				IcfgEdge newEdge = mCodeblockFactory.constructStatementSequence(currentPoint, currentPoint, stmtTrue);
+				new LTLStepAnnotation().annotate(newEdge);
 			}
+
 		}
 	}
 
@@ -365,6 +372,8 @@ public final class ProductGenerator {
 					.get(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
 
 			if (rcfgEdge instanceof StatementSequence) {
+				mLogger.info(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc) + " --> "
+						+ ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
 				handleEdgeStatementSequence(productSourceLoc, nwaLoc, (StatementSequence) rcfgEdge, isProgramStep);
 			} else if (rcfgEdge instanceof Call) {
 				handleEdgeCall(productSourceLoc, nwaLoc, (Call) rcfgEdge, origRcfgSourceLoc, isProgramStep);
@@ -460,19 +469,16 @@ public final class ProductGenerator {
 			// we only consider helpers that lead from product parts to
 			// non-product parts, and those helpers have only return edges as
 			// incoming edge
-			if (!areAllIncomingEdgesReturn(helper) || !areAllDirectPredecessorsProductNodes(helper)
-					|| !areAllDirectSuccessorsNonProductNodes(helper)) {
-				continue;
+			if (areAllIncomingEdgesReturn(helper) && areAllDirectPredecessorsProductNodes(helper)
+					&& areAllDirectSuccessorsNonProductNodes(helper)) {
+				pruneNonProductSink(helper);
 			}
-
-			pruneNonProductSink(helper);
 		}
 	}
 
 	private void pruneNonProductSink(final BoogieIcfgLocation helper) {
 		final List<IcfgEdge> outEdges = new ArrayList<>(helper.getOutgoingEdges());
 		final Set<IcfgLocation> successors = new HashSet<>(helper.getOutgoingNodes());
-		final Set<IcfgLocation> predecessors = new HashSet<>(helper.getIncomingNodes());
 
 		for (final IcfgEdge outgoing : outEdges) {
 			// remove all outgoing edges
@@ -491,37 +497,11 @@ public final class ProductGenerator {
 				generateNeverClaimAssumeStatement(new BooleanLiteral(null, BoogieType.TYPE_BOOL, true)));
 		mapNewEdge2OldEdge(seq, null);
 
-		// determine what kind of loop has to be added to this state based
-		// on the LTL NWA state of the predecessor
-		boolean added = false;
-		for (final String nwaState : mNWA.getStates()) {
-			for (final IcfgLocation node : predecessors) {
-				final BoogieIcfgLocation predecessor = (BoogieIcfgLocation) node;
-				if (!predecessor.getDebugIdentifier().toString().endsWith(nwaState)) {
-					continue;
-				}
-
-				// ok, the predecessor is from this node; now we add self loops to the helper
-				// state that keep us
-				// in this NWA state
-				for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaState)) {
-					if (autTrans.getSucc().equals(nwaState)) {
-						createNewStatementSequence(helper, seq, helper, autTrans.getLetter(), false);
-						added = true;
-					}
-				}
-
-				if (mNWA.isFinal(nwaState)) {
-					// and if the nwa state is accepting, this state will also be accepting
-					mAcceptingNodeAnnotation.annotate(helper);
-				}
-			}
-		}
 		// hacky shit: the ss is now useless; we remove it
-		if (added) {
-			seq.disconnectSource();
-			seq.disconnectTarget();
-		}
+		//		if (added) {
+		seq.disconnectSource();
+		seq.disconnectTarget();
+		//		}
 	}
 
 	private static boolean areAllIncomingEdgesReturn(final BoogieIcfgLocation helper) {
@@ -666,7 +646,7 @@ public final class ProductGenerator {
 			// we do not add a return edge!
 			final Call correspondingCall = returnEdge.getCorrespondingCall();
 			mLogger.warn("Ignoring return edge from " + returnEdge.getSource() + " to " + returnEdge.getTarget()
-					+ " (Corresponding call: " + correspondingCall + " from " + correspondingCall.getSource() + ")");
+			+ " (Corresponding call: " + correspondingCall + " from " + correspondingCall.getSource() + ")");
 
 			return;
 		}

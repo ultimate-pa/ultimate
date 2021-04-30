@@ -1,5 +1,5 @@
 //#Safe
-//@ ltl invariant positive: [](AP(y == 1) ==> X(AP(x == 2) ));
+//@ ltl invariant positive: [](AP(y == 0) ==> X(AP(x == 2) ));
 // Bug: Counterexample found although no counterexample should exists. End of program with X operator still 'evaluated' does report wrong counterexamples. 
 
 #include <stdio.h> 
@@ -14,11 +14,14 @@ int x,y;
 
 int main()
 {
-	y = 1;
+	y = 0;
 	__VERIFIER_ltl_step();
 	x = 2;
 	//y = 2;
 	__VERIFIER_ltl_step();
+
+
+	
 	
 }
 
