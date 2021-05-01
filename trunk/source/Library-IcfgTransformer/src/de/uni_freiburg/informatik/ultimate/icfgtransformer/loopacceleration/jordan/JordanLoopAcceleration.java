@@ -243,8 +243,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				final TermVariable termVariableOfModified = containsTermVariableOfModified(inVarsReverseMapping,
 						termVariablesOfModified, monomialAsTerm);
 				if (termVariableOfModified != null) {
-					final String errorMessage = String.format("Monomial %s contains modified variable %s",
-							monomialAsTerm, termVariableOfModified);
+					final String errorMessage = String.format(
+							"Monomial contains modified variable. Monomial %s, Variable %s", monomialAsTerm,
+							termVariableOfModified);
 					return new Triple<AffineTerm, Set<Term>, String>(null, null, errorMessage);
 				} else {
 					readonlyVariables.add(monomialAsTerm);
