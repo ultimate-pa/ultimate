@@ -219,6 +219,7 @@ public class NestedSsaBuilder<L extends IAction> {
 			 */
 			initOldVarsVV.versionAssignedVars(mStartOfCallingContext);
 			initLocalVarsVV.versionAssignedVars(mStartOfCallingContext);
+			initLocalVarsVV.replaceAuxVars();
 
 			mSsa.setOldVarAssignmentAtPos(pendingReturnPosition, initOldVarsVV.getVersioneeredTerm());
 			mVariable2Constant.setOldVarAssignmentAtPos(pendingReturnPosition, initOldVarsVV.getSubstitutionMapping());
