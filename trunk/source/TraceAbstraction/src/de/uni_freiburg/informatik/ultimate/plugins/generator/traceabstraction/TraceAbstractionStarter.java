@@ -593,7 +593,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		if (ident instanceof AllErrorsAtOnceDebugIdentifier) {
 			description = "Ultimate Automizer benchmark data";
 		} else if (isInsufficientThreadsIdentifier(ident)) {
-			description = "Ultimate Automizer benchmark data for thread instances sufficiency: " + ident;
+			description = "Ultimate Automizer benchmark data for thread instance sufficiency: " + ident;
 		} else {
 			description = "Ultimate Automizer benchmark data for error location: " + ident;
 		}
