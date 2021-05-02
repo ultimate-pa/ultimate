@@ -220,7 +220,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		private int mTrivialSets;
 		private int mQueries;
 
-		private long mComputationStart;
+		private long mComputationStart = -1;
 
 		private ThreadBasedPersistentSetStatistics(final IIndependenceRelation<?, IcfgEdge> independence) {
 			declare(COMPUTATION_TIME, () -> mComputationTime, KeyType.TIMER);
