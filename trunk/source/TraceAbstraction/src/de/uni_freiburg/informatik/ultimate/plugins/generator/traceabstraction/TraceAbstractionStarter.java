@@ -106,6 +106,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final TAPreferences mPrefs;
 	private final boolean mComputeHoareAnnotation;
 	private final boolean mIsConcurrent;
+	private final boolean mRemovePositiveResultsIfUnsafe;
 	private final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 
 	/**
@@ -131,7 +132,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+			final IPLBECompositionFactory<L> compositionFactory, final boolean removePositiveResultsIfUnsafe,
+			final Class<L> transitionClazz) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mTransitionClazz = transitionClazz;
@@ -140,6 +142,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mWitnessAutomaton = witnessAutomaton;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mIsConcurrent = isConcurrent(icfg);
+		mRemovePositiveResultsIfUnsafe = removePositiveResultsIfUnsafe;
 
 		if (mPrefs.computeHoareAnnotation() && mIsConcurrent) {
 			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
@@ -640,13 +643,19 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void reportLocationResults() {
-		// TODO (Matthias/Dominik 2021-04-29) remove all PositiveResults if "additional assume for each assert" is set
-		// TODO and any location is unsafe
+		// If any error location is (possibly) reachable, and we added "assume phi" edges for the corresponding
+		// "assert phi", then we cannot be sure other error locations are actually unreachable.
+		final boolean removePositiveResults = mRemovePositiveResultsIfUnsafe
+				&& mResultsPerLocation.values().stream().anyMatch(x -> !(x instanceof PositiveResult<?>));
 
 		for (final Map.Entry<DebugIdentifier, IResult> entry : mResultsPerLocation.entrySet()) {
-			if (!isInsufficientThreadsIdentifier(entry.getKey())) {
-				reportResult(entry.getValue());
+			if (isInsufficientThreadsIdentifier(entry.getKey())) {
+				continue;
 			}
+			if (removePositiveResults && entry.getValue() instanceof PositiveResult<?>) {
+				continue;
+			}
+			reportResult(entry.getValue());
 		}
 	}
 
