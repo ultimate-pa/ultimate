@@ -617,6 +617,15 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	/**
+	 * Combines results for multiple petrification-created copies of a location, for a fixed number of thread instances.
+	 *
+	 * @param oldResult
+	 *            The first computed result
+	 * @param newResult
+	 *            A new result computed for another copy of the location
+	 * @return the combined result
+	 */
 	private static IResult combineLocationResults(final IResult oldResult, final IResult newResult) {
 		if (newResult instanceof CounterExampleResult<?, ?, ?>) {
 			return newResult;
