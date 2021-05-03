@@ -94,9 +94,9 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	protected AbstractGeneralizedAffineTerm(final Sort s, final Rational constant,
 			final Map<AVAR, Rational> variables2coeffcient) {
 		super(0);
-		Objects.nonNull(s);
-		Objects.nonNull(constant);
-		Objects.nonNull(variables2coeffcient);
+		Objects.requireNonNull(s);
+		Objects.requireNonNull(constant);
+		Objects.requireNonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
 		mAbstractVariable2Coefficient = variables2coeffcient;
