@@ -175,6 +175,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	}
 
 	private Stream<IcfgLocation> getCommutativityConflicts(final Set<IcfgLocation> enabled, final IcfgLocation loc) {
+		// TODO (optimization:) What if conflict is only reachable after join of thread(loc) ?
 		return enabled.stream().filter(l -> hasCommutativityConflict(loc, l));
 	}
 
