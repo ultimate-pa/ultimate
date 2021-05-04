@@ -100,4 +100,9 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 		mQuantifierFreeResult++;
 	}
 
+	@Override
+	public String toString() {
+		return getBenchmarkType().prettyprintBenchmarkData(this);
+	}
+
 }
