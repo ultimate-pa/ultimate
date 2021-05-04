@@ -386,6 +386,9 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			}
 		}
 		final Rational newConstant = PolynomialTermUtils.divInvertible(getSort(), getConstant(), divisor);
+		if (newConstant == null) {
+			return null;
+		}
 		return new PolynomialTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
 	}
 
