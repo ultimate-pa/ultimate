@@ -70,6 +70,7 @@ public class AcceleratorJordan implements IAccelerator {
 			mLogger.debug("Accelerating Loop using Jordan Transformation");
 			final JordanLoopAccelerationResult jla =
 					JordanLoopAcceleration.accelerateLoop(mServices, mScript, loop, true);
+			mLogger.info("Jordan loop acceleration statistics" + jla.getJordanLoopAccelerationStatistics());
 			if (jla.getAccelerationStatus() != AccelerationStatus.SUCCESS) {
 				mLogger.warn("Jordan acceleration failed, because " + jla.getAccelerationStatus().toString());
 				return loop;

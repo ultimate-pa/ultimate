@@ -178,7 +178,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		final boolean isAlternatingClosedFormRequired = isAlternatingClosedFormRequired(jordanUpdate);
 		final UnmodifiableTransFormula guardTf =
 				TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services, logger);
-		logger.info("Guard: " + guardTf);
 		final UnmodifiableTransFormula loopAccelerationFormula =
 				createLoopAccelerationFormula(logger, services, mgdScript, su, varMatrixIndexMap, jordanUpdate,
 						loopTransFormula, guardTf, true, quantifyItFinExplicitly, isAlternatingClosedFormRequired);
@@ -1108,8 +1107,9 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
 				final JordanLoopAccelerationResult jlar =
 						accelerateLoop(mServices, mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, false);
+				mLogger.info("Jordan loop acceleration statistics" + jlar.getJordanLoopAccelerationStatistics());
 				if (jlar.getAccelerationStatus() == JordanLoopAccelerationResult.AccelerationStatus.SUCCESS) {
-					mLogger.info("Accelerated %s with %s", oldTf, jlar.getTransFormula());
+					mLogger.info("Accelerated %s to %s", oldTf, jlar.getTransFormula());
 					final String shortDescrption = "Jordan loop acceleration statistics";
 					final StatisticsData statistics = new StatisticsData();
 					statistics.aggregateBenchmarkData(jlar.getJordanLoopAccelerationStatistics());
@@ -1185,6 +1185,7 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		public JordanLoopAccelerationStatisticsGenerator getJordanLoopAccelerationStatistics() {
 			return mJordanLoopAccelerationStatistics;
 		}
+
 
 	}
 }
