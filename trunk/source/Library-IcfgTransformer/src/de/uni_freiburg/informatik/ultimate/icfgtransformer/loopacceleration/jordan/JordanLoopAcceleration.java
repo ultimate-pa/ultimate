@@ -36,21 +36,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult.JordanTransformationStatus;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -86,33 +75,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * @author Miriam Herzig
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-		implements IIcfgTransformer<OUTLOC> {
+public class JordanLoopAcceleration {
 
-	private final ILogger mLogger;
-	private final IIcfg<INLOC> mOriginalIcfg;
-	private final ITransformulaTransformer mTransformer;
-	private final IUltimateServiceProvider mServices;
-	private final IIcfg<OUTLOC> mResult;
-
-	public JordanLoopAcceleration(final ILogger logger, final IIcfg<INLOC> originalIcfg,
-			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final String newIcfgIdentifier, final IBacktranslationTracker backtranslationTracker,
-			final IUltimateServiceProvider services) {
-		mLogger = logger;
-		mOriginalIcfg = originalIcfg;
-		mServices = services;
-		mTransformer = new JordanLoopAccelerationTransformer(mLogger,
-				originalIcfg.getCfgSmtToolkit().getManagedScript(), originalIcfg.getCfgSmtToolkit());
-		mResult = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac, backtranslationTracker, outLocationClass,
-				newIcfgIdentifier, mTransformer).getResult();
+	private JordanLoopAcceleration() {
+		// do not instantiate
 	}
 
 	/**
@@ -1092,46 +1064,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		return true;
 	}
 
-	private final class JordanLoopAccelerationTransformer extends CopyingTransformulaTransformer {
-
-		public JordanLoopAccelerationTransformer(final ILogger logger, final ManagedScript managedScript,
-				final CfgSmtToolkit oldToolkit) {
-			super(logger, managedScript, oldToolkit);
-		}
-
-		@Override
-		public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
-				final UnmodifiableTransFormula tf) {
-			if (oldEdge.getSource() == oldEdge.getTarget()) {
-				// self loop, lets accelerate
-				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
-				final JordanLoopAccelerationResult jlar =
-						accelerateLoop(mServices, mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, false);
-				mLogger.info("Jordan loop acceleration statistics" + jlar.getJordanLoopAccelerationStatistics());
-				if (jlar.getAccelerationStatus() == JordanLoopAccelerationResult.AccelerationStatus.SUCCESS) {
-					mLogger.info("Accelerated %s to %s", oldTf, jlar.getTransFormula());
-					final String shortDescrption = "Jordan loop acceleration statistics";
-					final StatisticsData statistics = new StatisticsData();
-					statistics.aggregateBenchmarkData(jlar.getJordanLoopAccelerationStatistics());
-					final String id = "IcfgTransformer";
-					mServices.getResultService().reportResult(id,
-							new StatisticsResult<>(id, shortDescrption, statistics));
-					return new TransformulaTransformationResult(jlar.getTransFormula());
-				} else {
-					throw new IllegalArgumentException(jlar.getAccelerationStatus() + " " + jlar.getErrorMessage());
-					// return super.transform(oldEdge, tf);
-				}
-			} else {
-				return super.transform(oldEdge, tf);
-			}
-		}
-	}
-
-	@Override
-	public IIcfg<OUTLOC> getResult() {
-		return mResult;
-	}
-
 	private static class LinearUpdate {
 		Map<IProgramVar, AffineTerm> mUpdateMap;
 		Set<Term> mReadonlyVariables;
@@ -1146,8 +1078,6 @@ public class JordanLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends I
 		public Set<Term> getReadonlyVariables() {
 			return mReadonlyVariables;
 		}
-
-
 	}
 
 	public static class JordanLoopAccelerationResult {
