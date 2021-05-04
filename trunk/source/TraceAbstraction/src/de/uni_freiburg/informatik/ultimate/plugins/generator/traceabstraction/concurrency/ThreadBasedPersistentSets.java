@@ -107,7 +107,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 
 		final var sccComp = new SccComputationNonRecursive<>(mLogger, l -> getConflicts(enabled, l).iterator(),
 				StronglyConnectedComponent<IcfgLocation>::new, enabled.size(), enabled);
-		final var persistentCandidates = sccComp.getRootComponents();
+		final var persistentCandidates = sccComp.getLeafComponents();
 		// TODO possibly use heuristics in selection, e.g. size or IDfsOrder
 		final Set<IcfgLocation> persistentLocs = persistentCandidates.iterator().next().getNodes();
 
