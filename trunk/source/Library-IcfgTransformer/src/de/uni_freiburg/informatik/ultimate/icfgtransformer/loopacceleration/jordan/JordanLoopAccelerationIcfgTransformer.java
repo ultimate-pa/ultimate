@@ -86,7 +86,7 @@ public class JordanLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
 				final JordanLoopAccelerationResult jlar = JordanLoopAcceleration.accelerateLoop(mServices,
 						mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, false);
-				mLogger.info("Jordan loop acceleration statistics" + jlar.getJordanLoopAccelerationStatistics());
+				mLogger.info("Jordan loop acceleration statistics: " + jlar.getJordanLoopAccelerationStatistics());
 				if (jlar.getAccelerationStatus() == JordanLoopAccelerationResult.AccelerationStatus.SUCCESS) {
 					mLogger.info("Accelerated %s to %s", oldTf, jlar.getTransFormula());
 					final String shortDescrption = "Jordan loop acceleration statistics";
