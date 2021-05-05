@@ -83,6 +83,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class JordanLoopAcceleration {
 
+	private static final boolean CONCATENATE_WITH_NEGATION_OF_GUARD = false;
+
 	private JordanLoopAcceleration() {
 		// do not instantiate
 	}
@@ -631,9 +633,49 @@ public class JordanLoopAcceleration {
 		}
 		final HashMap<IProgramVar, Term> closedFormItFin = closedFormItFinTuple.getKey();
 
-		// Construct subformula guard(cf(x,itFin)).
-		final Term guardOfClosedFormItFin = constructGuardAfterFinalIteration(mgdScript, su.getHavocedVars(),
-				loopTransFormula.getOutVars(), guardTf, closedFormItFin);
+		final List<Term> conjuncts = new ArrayList<Term>();
+
+		if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
+			// Construct subformula guard(cf(x,itFin)).
+			final Term guardOfClosedFormItFin = constructGuardAfterFinalIteration(mgdScript, su.getHavocedVars(),
+					loopTransFormula.getOutVars(), guardTf, closedFormItFin);
+			// (not (guard(closedForm(x, itFin))))
+			final Term notGuardOfCf = Util.not(script, guardOfClosedFormItFin);
+			conjuncts.add(notGuardOfCf);
+		}
+
+		// (> itFin 0)
+		final Term firstConjunct = script.term(">", itFin, script.numeral(BigInteger.ZERO));
+		conjuncts.add(firstConjunct);
+
+		// (forall ((it Int)) (=> (and (<= 1 it) (<= it (- itFin 1)))
+		// (guard(closedForm(x,it)))))
+		final TermVariable it = mgdScript.constructFreshTermVariable("it", SmtSortUtils.getIntSort(script));
+		final Term fourthConjunct;
+		final Term guardOfClosedFormIt;
+		{
+			final Term itGreater1 = script.term("<=", script.numeral(BigInteger.ONE), it);
+			final Term itSmallerItFinM1 = script.term("<=", it,
+					script.term("-", itFin, script.numeral(BigInteger.ONE)));
+			final HashMap<IProgramVar, Term> closedFormIt = computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap,
+					jordanUpdate, it, null, inVars, loopTransFormula.getOutVars(), true, restrictedVersionPossible)
+							.getKey();
+			guardOfClosedFormIt = constructGuardAfterIntermediateIterations(mgdScript, su.getHavocedVars(),
+					guardTf, closedFormIt);
+			final Term leftSideOfImpl = Util.and(script, itGreater1, itSmallerItFinM1);
+			final Term implication = Util.implies(script, leftSideOfImpl, guardOfClosedFormIt);
+			final Set<TermVariable> itSet = new HashSet<>();
+			itSet.add(it);
+			fourthConjunct = SmtUtils.quantifier(script, 1, itSet, implication);
+		}
+		conjuncts.add(fourthConjunct);
+
+		// (x' = closedForm(x,itFin))
+		final Term xPrimed = constructClosedUpdateConstraint(script, loopTransFormula, su.getHavocedVars(), closedFormItFin);
+		conjuncts.add(xPrimed);
+
+		conjuncts.add(guardTf.getFormula());
+		final Term conjunction = SmtUtils.and(script, conjuncts);
 
 		// (and (= itFin 0) (not (guard)) (x'=x))
 		final Term zeroIterationCase;
@@ -642,33 +684,6 @@ public class JordanLoopAcceleration {
 			final Term notGuard = Util.not(script, guardTf.getFormula());
 			zeroIterationCase = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
 		}
-
-		// (> itFin 0)
-		final Term firstConjunct = script.term(">", itFin, script.numeral(BigInteger.ZERO));
-
-		// (not (guard(closedForm(x, itFin))))
-		final Term notGuardOfCf = Util.not(script, guardOfClosedFormItFin);
-
-		// (forall ((it Int)) (=> (and (<= 1 it) (<= it (- itFin 1)))
-		// (guard(closedForm(x,it)))))
-		final TermVariable it = mgdScript.constructFreshTermVariable("it", SmtSortUtils.getIntSort(script));
-		final Term itGreater1 = script.term("<=", script.numeral(BigInteger.ONE), it);
-		final Term itSmallerItFinM1 = script.term("<=", it, script.term("-", itFin, script.numeral(BigInteger.ONE)));
-		final HashMap<IProgramVar, Term> closedFormIt = computeClosedFormOfUpdate(mgdScript, su, varMatrixIndexMap,
-				jordanUpdate, it, null, inVars, loopTransFormula.getOutVars(), true, restrictedVersionPossible)
-				.getKey();
-		final Term guardOfClosedFormIt = constructGuardAfterIntermediateIterations(mgdScript, su.getHavocedVars(),
-				guardTf, closedFormIt);
-		final Term leftSideOfImpl = Util.and(script, itGreater1, itSmallerItFinM1);
-		final Term implication = Util.implies(script, leftSideOfImpl, guardOfClosedFormIt);
-		final Set<TermVariable> itSet = new HashSet<>();
-		itSet.add(it);
-		final Term fourthConjunct = SmtUtils.quantifier(script, 1, itSet, implication);
-
-		// (x' = closedForm(x,itFin))
-		final Term xPrimed = constructClosedUpdateConstraint(script, loopTransFormula, su.getHavocedVars(), closedFormItFin);
-		final Term conjunction = Util.and(script, firstConjunct, notGuardOfCf, guardTf.getFormula(), fourthConjunct, xPrimed);
-
 		final Term disjunction = Util.or(script, zeroIterationCase, conjunction);
 
 		final Set<TermVariable> itFinSet = new HashSet<>();
@@ -883,14 +898,29 @@ public class JordanLoopAcceleration {
 				closedFormOddItFin);
 
 		// (and (not (guardOfClosedFormEvenItFin)) (forallTerm1) (xPrimedEven))
-		final Term innerConjunction1 = Util.and(script, itFinHalfGreater0, guardTf.getFormula(),
-				Util.not(script, guardOfClosedFormEvenItFin), forallTerm1, xPrimedEven);
+		final List<Term> innerConjuncts1 = new ArrayList<>();
+		innerConjuncts1.add(itFinHalfGreater0);
+		innerConjuncts1.add(guardTf.getFormula());
+		if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
+			innerConjuncts1.add(Util.not(script, guardOfClosedFormEvenItFin));
+		}
+		innerConjuncts1.add(forallTerm1);
+		innerConjuncts1.add(xPrimedEven);
+		final Term innerConjunction1 = SmtUtils.and(script, innerConjuncts1);
 
 		// (and (>= itFinHalf 0) (not (guardOfClosedFormOddItFin) (forallTerm2)) (xPrimedOdd))
 		final Term itFinHalfGeq0 = script.term(">=", itFinHalf, script.numeral(BigInteger.ZERO));
 
-		final Term innerConjunction2 = Util.and(script, itFinHalfGeq0, guardTf.getFormula(),
-				Util.not(script, guardOfClosedFormOddItFin), forallTerm2, xPrimedOdd);
+		final List<Term> innerConjuncts2 = new ArrayList<>();
+		innerConjuncts2.add(itFinHalfGeq0);
+		innerConjuncts2.add(guardTf.getFormula());
+		if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
+			innerConjuncts2.add(Util.not(script, guardOfClosedFormOddItFin));
+		}
+		innerConjuncts2.add(forallTerm2);
+		innerConjuncts2.add(xPrimedOdd);
+
+		final Term innerConjunction2 = SmtUtils.and(script, innerConjuncts2);
 
 		final Term middleDisjunction = Util.or(script, firstFinalDisjunctEven, innerConjunction1);
 
