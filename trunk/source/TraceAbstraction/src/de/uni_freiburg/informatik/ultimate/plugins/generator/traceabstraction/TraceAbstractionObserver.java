@@ -42,8 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.IcfgCompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
@@ -123,12 +121,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				constructRawNestedWordAutomata(mAutomataTestFileAsts);
 		final IcfgCompositionFactory compositionFactory =
 				new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit());
-
-		final boolean removePositiveResultsIfUnsafe = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
-		final TraceAbstractionStarter<IcfgEdge> tas =
-				new TraceAbstractionStarter<>(mServices, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile,
-						compositionFactory, removePositiveResultsIfUnsafe, IcfgEdge.class);
+		final TraceAbstractionStarter<IcfgEdge> tas = new TraceAbstractionStarter<>(mServices, rcfgRootNode,
+				witnessAutomaton, rawFloydHoareAutomataFromFile, compositionFactory, IcfgEdge.class);
 		mRootOfNewModel = tas.getRootOfNewModel();
 	}
 
