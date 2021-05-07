@@ -225,6 +225,11 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 *            The CFG for the program (unpetrified).
 	 */
 	private void analyseConcurrentProgram(final IIcfg<IcfgLocation> icfg) {
+		if (icfg.getInitialNodes().size() > 1) {
+			throw new UnsupportedOperationException("Library mode is not supported for concurrent programs. "
+					+ "There must be a unique entry procedure.");
+		}
+
 		int numberOfThreadInstances = 1;
 		while (true) {
 			final IIcfg<IcfgLocation> petrifiedIcfg = petrify(icfg, numberOfThreadInstances);
