@@ -385,8 +385,8 @@ public class PolynomialRelation implements IBinaryRelation {
 			assert mTrivialityStatus == TrivialityStatus.NONTRIVIAL;
 			final List<Term> lhsSummands = new ArrayList<>();
 			final List<Term> rhsSummands = new ArrayList<>();
-			for (final Entry<Term, Rational> entry : mPolynomialTerm.getAbstractVariable2Coefficient().entrySet()) {
-				final Term abstractVariableAsTerm = mPolynomialTerm.abstractVariableToTerm(script, entry.getKey());
+			for (final Entry<Term, Rational> entry : mPolynomialTerm.getAbstractVariableAsTerm2Coefficient(script).entrySet()) {
+				final Term abstractVariableAsTerm = entry.getKey();
 				if (entry.getValue().isNegative()) {
 					rhsSummands.add(SmtUtils.mul(script, entry.getValue().abs(), abstractVariableAsTerm));
 				} else {

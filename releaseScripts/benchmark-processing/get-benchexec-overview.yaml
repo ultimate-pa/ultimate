@@ -22,6 +22,11 @@
 
 
 known_exceptions:
+  "AssertionError: Possible infinite loop detected":
+  "IllegalArgumentException: NONLINEAR_UPDATE Monomial contains modified variable.":
+  "IllegalArgumentException: NONINTEGER_UPDATE Some updated variables are of non-integer sorts":
+  "IllegalArgumentException: UNSUPPORTED_EIGENVALUES":
+  "NegativeArraySizeException":
   "UnsupportedOperationException: Unsupported type":
   "AssertionError: at least one of both input predicates is unknown":
     delta_debug: True

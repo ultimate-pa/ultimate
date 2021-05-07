@@ -3,6 +3,8 @@
 <benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="8GB" cpuCores="2">
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
     <option name="--force-no-wrapper" />
+    <option name="--core.log.level.for.class">de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher=WARN</option>
+
     <tasks name="reach-svcomp-all">
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
         <!-- <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>

@@ -308,7 +308,7 @@ public class PolynomialTermUtils {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	public static <T extends AbstractGeneralizedAffineTerm<MNL>, MNL extends Term> T applyModuloToAllCoefficients(
+	public static <T extends AbstractGeneralizedAffineTerm<MNL>, MNL> T applyModuloToAllCoefficients(
 			final T agAffineTerm, final BigInteger divident, final GeneralizedConstructor<MNL, T> constructor) {
 		assert SmtSortUtils.isIntSort(agAffineTerm.getSort());
 		final SparseMapBuilder<MNL, Rational> mapBuilder = new SparseMapBuilder<>();
@@ -369,7 +369,7 @@ public class PolynomialTermUtils {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	static <T extends AbstractGeneralizedAffineTerm<?>, MNL extends Term> T constructSum(
+	static <T extends AbstractGeneralizedAffineTerm<?>, MNL> T constructSum(
 			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm... summands) {
 		final Sort sort = summands[0].getSort();
@@ -418,7 +418,7 @@ public class PolynomialTermUtils {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	static <T extends IPolynomialTerm, MNL extends Term> T constructMul(
+	static <T extends IPolynomialTerm, MNL> T constructMul(
 			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm term, final Rational multiplier) {
 		final Sort sort;

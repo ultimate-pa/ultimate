@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
 
 /**
- * {@link IRefinementStrategy} similar to {@link CamelRefinementStrategy}, except that it does not modulate the
- * assertion order.
- * 
+ * {@link IRefinementStrategy} similar to {@link CamelRefinementStrategy}, except that it does modulate the assertion
+ * order according to a SMT feature heuristic.
+ *
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
