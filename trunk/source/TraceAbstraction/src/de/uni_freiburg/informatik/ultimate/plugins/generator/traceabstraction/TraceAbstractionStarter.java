@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -123,7 +124,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final Class<L> mTransitionClazz;
 	private final IPLBECompositionFactory<L> mCompositionFactory;
 
-	private final Map<DebugIdentifier, IResult> mResultsPerLocation = new LinkedHashMap<>();
+	private Map<IcfgLocation, IcfgLocation> mLocationMap;
+	private final Map<IcfgLocation, IResult> mResultsPerLocation = new LinkedHashMap<>();
 
 	// list has one entry per analysis restart with increased number of threads (only 1 entry if sequential)
 	private final Map<DebugIdentifier, List<TraceAbstractionBenchmarks>> mStatistics = new LinkedHashMap<>();
@@ -452,8 +454,16 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg,
 				IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
 		final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
+		mLocationMap = ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getLocationMapping();
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		return petrifiedIcfg;
+	}
+
+	private IcfgLocation getOriginalLocation(final IcfgLocation loc) {
+		if (mLocationMap == null) {
+			return loc;
+		}
+		return mLocationMap.getOrDefault(loc, loc);
 	}
 
 	private PredicateFactory getPredicateFactory(final IIcfg<IcfgLocation> icfg) {
@@ -609,11 +619,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void recordLocationResult(final IcfgLocation loc, final IResult res) {
-		final IResult old = mResultsPerLocation.get(loc.getDebugIdentifier());
+		final IcfgLocation original = getOriginalLocation(loc);
+		final IResult old = mResultsPerLocation.get(original);
 		if (old == null) {
-			mResultsPerLocation.put(loc.getDebugIdentifier(), res);
+			mResultsPerLocation.put(original, res);
 		} else {
-			mResultsPerLocation.put(loc.getDebugIdentifier(), combineLocationResults(old, res));
+			mResultsPerLocation.put(original, combineLocationResults(old, res));
 		}
 	}
 
@@ -640,8 +651,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void reportLocationResults() {
-		for (final Map.Entry<DebugIdentifier, IResult> entry : mResultsPerLocation.entrySet()) {
-			if (!isInsufficientThreadsIdentifier(entry.getKey())) {
+		for (final Map.Entry<IcfgLocation, IResult> entry : mResultsPerLocation.entrySet()) {
+			if (!isInsufficientThreadsLocation(entry.getKey())) {
 				reportResult(entry.getValue());
 			}
 		}
