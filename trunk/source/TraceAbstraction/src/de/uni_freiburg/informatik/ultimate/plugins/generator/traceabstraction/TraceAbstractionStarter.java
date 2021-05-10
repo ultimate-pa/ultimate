@@ -179,13 +179,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		}
 
 		final IProgressMonitorService progmon = mServices.getProgressMonitorService();
-		mLogger.debug("Compute Hoare Annotation: " + mComputeHoareAnnotation);
-		mLogger.debug("Overall result: " + mOverallResult);
-		mLogger.debug("Continue processing: " + progmon.continueProcessing());
 		if (mComputeHoareAnnotation && mOverallResult != Result.TIMEOUT
 				&& !Result.USER_LIMIT_RESULTS.contains(mOverallResult) && progmon.continueProcessing()) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			createInvariantResults(icfg, icfg.getCfgSmtToolkit(), backTranslatorService);
+			createInvariantResults(icfg, backTranslatorService);
 			createProcedureContractResults(icfg, backTranslatorService);
 		}
 
@@ -355,8 +352,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return clres;
 	}
 
-	private void createInvariantResults(final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
+	private void createInvariantResults(final IIcfg<IcfgLocation> icfg,
 			final IBacktranslationService backTranslatorService) {
+		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		assert new HoareAnnotationChecker(mServices, icfg, csToolkit).isInductive() : "incorrect Hoare annotation";
 
 		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
