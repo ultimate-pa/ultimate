@@ -465,7 +465,7 @@ public final class ProductGenerator {
 		// all helper states that have edges to non-product states receive a
 		// self-loop that keeps them in the same product state as the LTL NWA
 
-		for (final BoogieIcfgLocation helper : mHelperProductStates) {
+		for (final BoogieIcfgLocation helper : new HashSet<>(mHelperProductStates)) {
 			// we only consider helpers that lead from product parts to
 			// non-product parts, and those helpers have only return edges as
 			// incoming edge
