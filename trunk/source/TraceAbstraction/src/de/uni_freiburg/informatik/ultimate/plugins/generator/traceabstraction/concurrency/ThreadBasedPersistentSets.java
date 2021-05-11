@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
@@ -107,14 +108,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 			return null;
 		}
 
-		final var sccComp = new SccComputationNonRecursive<>(mLogger, l -> getConflicts(enabled, l).iterator(),
-				StronglyConnectedComponent<IcfgLocation>::new, enabled.size(), enabled);
-		// heuristically choose SCC with fewest threads:
-		final Optional<StronglyConnectedComponent<IcfgLocation>> persistentScc = sccComp.getLeafComponents().stream()
-				.min(Comparator.comparingInt(StronglyConnectedComponent::getNumberOfStates));
-		assert persistentScc.isPresent() : "There must be always at least one leaf SCC";
-		final Set<IcfgLocation> persistentLocs = persistentScc.get().getNodes();
-
+		final Set<IcfgLocation> persistentLocs = pickMaximalScc(enabled, l -> getConflicts(enabled, l).iterator());
 		assert persistentLocs.size() <= enabled.size() : "Non-enabled locs must not be base for persistent set";
 		if (persistentLocs.size() >= enabled.size()) {
 			mStatistics.reportTrivialQuery();
@@ -125,6 +119,19 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 				persistentLocs.stream().flatMap(l -> l.getOutgoingEdges().stream()).collect(Collectors.toSet());
 		mStatistics.reportQuery();
 		return result;
+	}
+
+	private <N> Set<N> pickMaximalScc(final Set<N> nodes, final ISuccessorProvider<N> edges) {
+		assert !nodes.isEmpty() : "Cannot compute SCCs of empty graph";
+
+		final var sccComp = new SccComputationNonRecursive<>(mLogger, edges, StronglyConnectedComponent<N>::new,
+				nodes.size(), nodes);
+		// heuristic: choose smallest maximal SCC
+		final Optional<StronglyConnectedComponent<N>> persistentScc = sccComp.getLeafComponents().stream()
+				.min(Comparator.comparingInt(StronglyConnectedComponent::getNumberOfStates));
+
+		assert persistentScc.isPresent() : "There must be always at least one leaf SCC";
+		return persistentScc.get().getNodes();
 	}
 
 	@Override
