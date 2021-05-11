@@ -140,7 +140,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mPrefs = new TAPreferences(mServices);
 		mWitnessAutomaton = witnessAutomaton;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
-		mIsConcurrent = isConcurrent(icfg);
+		mIsConcurrent = !icfg.isSequential();
 		mComputeHoareAnnotation = mPrefs.computeHoareAnnotation();
 
 		runCegarLoops(icfg);
@@ -155,10 +155,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		mOverallResult = Result.SAFE;
 		mArtifact = null;
-		if (isConcurrent(icfg)) {
-			analyseConcurrentProgram(icfg);
-		} else {
+		if (icfg.isSequential()) {
 			analyseSequentialProgram(icfg);
+		} else {
+			analyseConcurrentProgram(icfg);
 		}
 
 		// Report results that were buffered because they may be overridden or amended.
@@ -231,7 +231,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (results.isEmpty() || hasSufficientThreadInstances(results.get(results.size() - 1))) {
 				break;
 			}
-			assert isConcurrent(icfg) : "Insufficient thread instances for sequential program";
+			assert !icfg.isSequential() : "Insufficient thread instances for sequential program";
 			mLogger.warn(numberOfThreadInstances
 					+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 			numberOfThreadInstances++;
@@ -439,12 +439,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return false;
 	}
 
-	private static boolean isConcurrent(final IIcfg<IcfgLocation> icfg) {
-		return !icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
-	}
-
 	private IIcfg<IcfgLocation> petrify(final IIcfg<IcfgLocation> icfg, final int numberOfThreadInstances) {
-		assert isConcurrent(icfg) : "Petrification unnecessary for sequential programs";
+		assert !icfg.isSequential() : "Petrification unnecessary for sequential programs";
 
 		mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
 		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg,
