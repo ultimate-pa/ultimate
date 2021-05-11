@@ -173,6 +173,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 	 * Intermediate layer to encapsulate preferences.
 	 */
 	protected final TAPreferences mPref;
+	protected final boolean mComputeHoareAnnotation;
 
 	/**
 	 * Set of error location whose reachability is analyzed by this CEGAR loop.
@@ -235,7 +236,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs, final ILogger logger,
-			final Class<L> transitionClazz) {
+			final Class<L> transitionClazz, final boolean computeHoareAnnotation) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -248,6 +249,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
 		mTransitionClazz = transitionClazz;
+		mComputeHoareAnnotation = computeHoareAnnotation;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mLogger.info("Starting to check reachability of " + errorLocs.size() + " error locations.");
@@ -374,7 +376,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 
 	private Result iterateInternal() {
 		mLogger.info("Interprodecural is " + mPref.interprocedural());
-		mLogger.info("Hoare is " + mPref.computeHoareAnnotation());
+		mLogger.info("Hoare is " + mComputeHoareAnnotation);
 		mLogger.info("Compute interpolants for " + mPref.interpolation());
 		mLogger.info("Backedges is " + mPref.interpolantAutomaton());
 		mLogger.info("Determinization is " + mPref.interpolantAutomatonEnhancement());
@@ -481,7 +483,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 						mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
 					}
 
-					if (mPref.computeHoareAnnotation()
+					if (mComputeHoareAnnotation
 							&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 						assert new InductivityCheck<>(mServices, (INestedWordAutomaton<L, IPredicate>) mAbstraction,
 								false, true, new IncrementalHoareTripleChecker(mCsToolkit, false))
