@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -107,9 +109,11 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 
 		final var sccComp = new SccComputationNonRecursive<>(mLogger, l -> getConflicts(enabled, l).iterator(),
 				StronglyConnectedComponent<IcfgLocation>::new, enabled.size(), enabled);
-		final var persistentCandidates = sccComp.getLeafComponents();
-		// TODO possibly use heuristics in selection, e.g. size or IDfsOrder
-		final Set<IcfgLocation> persistentLocs = persistentCandidates.iterator().next().getNodes();
+		// heuristically choose SCC with fewest threads:
+		final Optional<StronglyConnectedComponent<IcfgLocation>> persistentScc = sccComp.getLeafComponents().stream()
+				.min(Comparator.comparingInt(StronglyConnectedComponent::getNumberOfStates));
+		assert persistentScc.isPresent() : "There must be always at least one leaf SCC";
+		final Set<IcfgLocation> persistentLocs = persistentScc.get().getNodes();
 
 		assert persistentLocs.size() <= enabled.size() : "Non-enabled locs must not be base for persistent set";
 		if (persistentLocs.size() >= enabled.size()) {
