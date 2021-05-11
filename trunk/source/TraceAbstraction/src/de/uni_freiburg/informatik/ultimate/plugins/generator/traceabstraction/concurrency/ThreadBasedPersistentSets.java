@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -69,6 +70,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	private final ILogger mLogger;
 	private final ExtendedConcurrencyInformation mInfo;
 	private final IIndependenceRelation<?, IcfgEdge> mIndependence;
+	private final IDfsOrder<IcfgEdge, IPredicate> mOrder;
 
 	private final HashRelation<IcfgLocation, IcfgLocation> mCommutativityConflict = new HashRelation<>();
 	private final HashRelation<IcfgLocation, IcfgLocation> mNoCommutativityConflict = new HashRelation<>();
@@ -87,11 +89,30 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	 */
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final IIndependenceRelation<?, IcfgEdge> independence) {
+		this(services, icfg, independence, null);
+	}
+
+	/**
+	 * Create a new instance for a given CFG, and (optionally) enforce compatibility with a given DFS order.
+	 *
+	 * @param services
+	 *            Ultimate services, used for logging
+	 * @param icfg
+	 *            An {@link IIcfg} based on which persistent sets will be computed
+	 * @param independence
+	 *            An unconditional independence relation which is used to compute persistent sets
+	 * @param order
+	 *            A DFS traversal order with which the persistent sets should be compatible. Set this to null if
+	 *            compatibility should not be enforced.
+	 */
+	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<?> icfg,
+			final IIndependenceRelation<?, IcfgEdge> independence, final IDfsOrder<IcfgEdge, IPredicate> order) {
 		assert !independence.isConditional() : "Conditional independence currently not supported";
 
 		mLogger = services.getLoggingService().getLogger(ThreadBasedPersistentSets.class);
 		mInfo = new ExtendedConcurrencyInformation(icfg);
 		mIndependence = independence;
+		mOrder = order;
 		mStatistics = new ThreadBasedPersistentSetStatistics(independence);
 	}
 
@@ -100,7 +121,8 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		mStatistics.beginComputation();
 
 		final IMLPredicate mlState = (IMLPredicate) state;
-		final Set<IcfgLocation> enabled = getEnabledThreadLocations(mlState);
+		final HashRelation<IcfgLocation, IcfgEdge> enabledActions = getEnabledActions(mlState);
+		final Set<IcfgLocation> enabled = enabledActions.getDomain();
 
 		// For non-concurrent parts of a program, no need for complicated computations.
 		if (enabled.size() <= 1) {
@@ -108,15 +130,14 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 			return null;
 		}
 
-		final Set<IcfgLocation> persistentLocs = pickMaximalScc(enabled, l -> getConflicts(enabled, l).iterator());
+		final Set<IcfgLocation> persistentLocs = pickMaximalScc(enabled, l -> getConflicts(mlState, enabledActions, l));
 		assert persistentLocs.size() <= enabled.size() : "Non-enabled locs must not be base for persistent set";
 		if (persistentLocs.size() >= enabled.size()) {
 			mStatistics.reportTrivialQuery();
 			return null;
 		}
 
-		final Set<IcfgEdge> result =
-				persistentLocs.stream().flatMap(l -> l.getOutgoingEdges().stream()).collect(Collectors.toSet());
+		final Set<IcfgEdge> result = enabledActions.projectToRange(persistentLocs);
 		mStatistics.reportQuery();
 		return result;
 	}
@@ -139,11 +160,17 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		return mStatistics;
 	}
 
-	private static Set<IcfgLocation> getEnabledThreadLocations(final IMLPredicate state) {
+	private static HashRelation<IcfgLocation, IcfgEdge> getEnabledActions(final IMLPredicate state) {
+		final HashRelation<IcfgLocation, IcfgEdge> enabledActions = new HashRelation<>();
 		final Set<IcfgLocation> locs = Set.of(state.getProgramPoints());
-		return locs.stream().filter(l -> l.getOutgoingEdges().stream().anyMatch(e -> isEnabled(locs, e)))
-				.collect(Collectors.toSet());
-
+		for (final IcfgLocation loc : locs) {
+			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+				if (isEnabled(locs, edge)) {
+					enabledActions.addPair(loc, edge);
+				}
+			}
+		}
+		return enabledActions;
 	}
 
 	private static boolean isEnabled(final Set<IcfgLocation> locs, final IcfgEdge edge) {
@@ -169,10 +196,14 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		return locs.contains(edge.getSource());
 	}
 
-	private Stream<IcfgLocation> getConflicts(final Set<IcfgLocation> enabled, final IcfgLocation loc) {
-		// TODO (new feature:) support enforcing compliance for thread-uniform DFS orders
+	private Iterator<IcfgLocation> getConflicts(final IPredicate state,
+			final HashRelation<IcfgLocation, IcfgEdge> enabledActions, final IcfgLocation loc) {
 		// TODO (optimization:) Re-use (more) dependence information across states (?)
-		return Stream.concat(getJoinConflicts(enabled, loc.getProcedure()), getCommutativityConflicts(enabled, loc));
+		final Set<IcfgLocation> enabled = enabledActions.getDomain();
+		return Stream
+				.of(getCompatibilityConflicts(state, enabledActions, loc),
+						getJoinConflicts(enabled, loc.getProcedure()), getCommutativityConflicts(enabled, loc))
+				.flatMap(s -> s).iterator();
 	}
 
 	private Stream<IcfgLocation> getJoinConflicts(final Set<IcfgLocation> enabled, final String joinedThread) {
@@ -214,6 +245,29 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 			}
 		}
 		mNoCommutativityConflict.addPair(loc1, loc2);
+		return false;
+	}
+
+	private Stream<IcfgLocation> getCompatibilityConflicts(final IPredicate state,
+			final HashRelation<IcfgLocation, IcfgEdge> enabledActions, final IcfgLocation loc) {
+		if (mOrder == null) {
+			return Stream.empty();
+		}
+
+		final Comparator<IcfgEdge> comp = mOrder.getOrder(state);
+		return enabledActions.getDomain().stream().filter(other -> other != loc
+				&& hasCompatibilityConflict(comp, enabledActions.getImage(loc), enabledActions.getImage(other)));
+	}
+
+	private static boolean hasCompatibilityConflict(final Comparator<IcfgEdge> comp, final Set<IcfgEdge> actions,
+			final Set<IcfgEdge> otherActions) {
+		for (final IcfgEdge action : actions) {
+			for (final IcfgEdge other : otherActions) {
+				if (comp.compare(action, other) < 0) {
+					return true;
+				}
+			}
+		}
 		return false;
 	}
 
