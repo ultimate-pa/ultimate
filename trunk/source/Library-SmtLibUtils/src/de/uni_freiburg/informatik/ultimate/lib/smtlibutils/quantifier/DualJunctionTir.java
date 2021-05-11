@@ -648,6 +648,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					return null;
 				}
 			}
+			if ( ((long) lowerBounds.size()) * ((long) upperBounds.size()) >= Integer.MAX_VALUE) {
+				throw new UnsupportedOperationException(String.format("Size of result too large: %s xjuncts",
+						((long) lowerBounds.size()) * ((long) upperBounds.size())));
+			}
 			final Term[] allCombinations = new Term[lowerBounds.size() * upperBounds.size()];
 
 			int i = 0;

@@ -621,6 +621,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		CAMEL_SMT_AM,
 		/**
+		 * Like {@link #CAMEL_NO_AM}, but continues as soon as some interpolants are available.
+		 */
+		LIZARD,
+		/**
 		 * An integer strategy without assertion order modulation using SMTInterpol with interpolation, Z3 with FP, and
 		 * Mathsat with FP. This strategy is used by ReqChecker.
 		 */
