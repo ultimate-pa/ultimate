@@ -260,7 +260,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	protected final UnsatCores mUnsatCores;
 	protected final boolean mUseLiveVariables;
 
-	protected final boolean mComputeHoareAnnotation;
 	protected final AssertCodeBlockOrderType mAssertCodeBlocksIncrementally;
 	protected final Collection<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mStoredRawInterpolantAutomata;
 
@@ -298,7 +297,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(services, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				services.getLoggingService().getLogger(Activator.PLUGIN_ID), transitionClazz);
+				services.getLoggingService().getLogger(Activator.PLUGIN_ID), transitionClazz, computeHoareAnnotation);
 		mPathProgramDumpController = new PathProgramDumpController<>(mServices, mPref, mIcfg);
 		mCompositionFactory = compositionFactory;
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
@@ -312,7 +311,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			mInterpolation = interpolation;
 		}
 		mInterpolantAutomatonConstructionProcedure = mPref.interpolantAutomaton();
-		mComputeHoareAnnotation = computeHoareAnnotation;
 		if (mComputeHoareAnnotation) {
 			mHoareAnnotationLocations = (Set<IcfgLocation>) TraceAbstractionUtils
 					.getLocationsForWhichHoareAnnotationIsComputed(rootNode, mPref.getHoareAnnotationPositions());
