@@ -190,9 +190,15 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
 				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
 						mSimplificationTechnique, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
+				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
 
-				mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
+					mLogger.debug("Simplified: " + SmtUtils
+							.simplify(mScript, tf.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA)
+							.toStringDirect());
+				}
+
 				accelerations.add(tf);
 			}
 			if (!accelerationFinishedCorrectly) {
@@ -226,7 +232,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Meta-Trace: ");
 				for (int i = 0; i < metaTrace.getLength() - 1; i++) {
-					mLogger.debug(metaTrace.getSymbol(i).getTransformula().toStringDirect());
+					mLogger.debug(SmtUtils.simplify(mScript, metaTrace.getSymbol(i).getTransformula().getFormula(),
+							mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
 				}
 			}
 
@@ -393,13 +400,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Current trace");
 			mCounterexample.forEach(a -> mLogger.debug(a.getTransformula()));
-
-			mLogger.debug("Simpified acceleration");
-			for (final L letter : traceSchemeNestedWord) {
-				mLogger.debug(SmtUtils.simplify(mScript, letter.getTransformula().getFormula(), mServices,
-						SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
-				mLogger.debug(letter.getTransformula());
-			}
 		}
 
 		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);

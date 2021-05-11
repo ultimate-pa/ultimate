@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -283,6 +285,12 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	@Override
+	protected Collection<Term> getFreeVars(final Monomial var) {
+		return var.getVariable2Exponent().entrySet().stream().flatMap(x -> Arrays.stream(x.getKey().getFreeVars()))
+				.collect(Collectors.toSet());
+	}
+
+	@Override
 	protected Term abstractVariableTimesCoeffToTerm(final Script script, final Monomial abstractVariable, final Rational coeff) {
 		return abstractVariable.timesCoefficientToTerm(script, coeff);
 	}
@@ -378,6 +386,9 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			}
 		}
 		final Rational newConstant = PolynomialTermUtils.divInvertible(getSort(), getConstant(), divisor);
+		if (newConstant == null) {
+			return null;
+		}
 		return new PolynomialTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
 	}
 

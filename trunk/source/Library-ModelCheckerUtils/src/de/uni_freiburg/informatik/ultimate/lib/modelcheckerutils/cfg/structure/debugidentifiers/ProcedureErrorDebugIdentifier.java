@@ -53,6 +53,10 @@ public class ProcedureErrorDebugIdentifier extends StringDebugIdentifier {
 		mType = Objects.requireNonNull(type);
 	}
 
+	public ProcedureErrorType getType() {
+		return mType;
+	}
+
 	@Override
 	public String toString() {
 		return new StringBuilder().append(getPrefix()).append("Err").append(mId).append(mType).toString();

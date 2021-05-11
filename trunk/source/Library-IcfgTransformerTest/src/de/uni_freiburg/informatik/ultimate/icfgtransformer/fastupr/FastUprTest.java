@@ -407,12 +407,14 @@ public class FastUprTest {
 			final LBool isDistinct = script.checkSat();
 			script.pop(1);
 			mLogger.info("isDistinct %s", isDistinct);
-			Assert.assertEquals(LBool.UNSAT, isDistinct);
+			Assert.assertEquals("Simplification and actual term are not equal", LBool.UNSAT, isDistinct);
 		}
 
 		final Term expectedT = TermParseUtils.parseTerm(script, expected);
 		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", expectedT, actualT));
-		Assert.assertEquals(LBool.UNSAT, isDistinct);
+		Assert.assertEquals(String.format("(E)xpected result %s and (A)ctual result %s are not equal. (distict E A): ",
+				expectedT, actualT), LBool.UNSAT, isDistinct);
+
 	}
 
 	// @Test not necessary, was just trying to look at possible error sources
@@ -494,13 +496,12 @@ public class FastUprTest {
 
 	@FunctionalInterface
 	private interface TestAcceleration {
-		public void testAcceleration(final ManagedScript script, final UnmodifiableTransFormula input,
-				final String expected);
+		void testAcceleration(final ManagedScript script, final UnmodifiableTransFormula input, final String expected);
 	}
 
 	@FunctionalInterface
 	private interface TestData {
-		public UnmodifiableTransFormula getLoopBody(final ManagedScript script);
+		UnmodifiableTransFormula getLoopBody(final ManagedScript script);
 	}
 
 }

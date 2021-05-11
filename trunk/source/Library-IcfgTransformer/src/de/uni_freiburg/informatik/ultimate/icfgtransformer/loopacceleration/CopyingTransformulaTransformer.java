@@ -31,17 +31,17 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -51,14 +51,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class ExampleLoopAccelerationTransformulaTransformer implements ITransformulaTransformer {
+public class CopyingTransformulaTransformer implements ITransformulaTransformer {
 
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mOldSymbolTable;
+	private final ModifiableGlobalsTable mOldModifiableGlobalsTable;
 
 	/**
-	 * Create an {@link ExampleLoopAccelerationTransformulaTransformer} instance.
+	 * Create an {@link CopyingTransformulaTransformer} instance.
 	 *
 	 * @param logger
 	 *            A {@link ILogger} instance that is used for debug logging.
@@ -66,18 +67,15 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	 *            A {@link TransFormula} representing a loop body.
 	 * @param managedScript
 	 *            A {@link ManagedScript} instance that can be used to perform SMT operations.
-	 * @param oldSymbolTable
-	 *            An {@link IIcfgSymbolTable} instance that can be used to look up program variables of the loopBody
-	 *            TransFormula.
-	 * @param replacementVarFac
-	 *            The {@link ReplacementVarFactory} instance which can create new (Term-)variables that represent
-	 *            {@link Term}s of the old {@link TransFormula}.
+	 * @param oldToolkit
+	 *            The {@link CfgSmtToolkit} instance of the {@link IIcfg} for which this transformer is used.
 	 */
-	public ExampleLoopAccelerationTransformulaTransformer(final ILogger logger, final ManagedScript managedScript,
-			final IIcfgSymbolTable oldSymbolTable, final ReplacementVarFactory replacementVarFac) {
+	public CopyingTransformulaTransformer(final ILogger logger, final ManagedScript managedScript,
+			final CfgSmtToolkit oldToolkit) {
 		mLogger = logger;
 		mManagedScript = Objects.requireNonNull(managedScript);
-		mOldSymbolTable = oldSymbolTable;
+		mOldSymbolTable = oldToolkit.getSymbolTable();
+		mOldModifiableGlobalsTable = oldToolkit.getModifiableGlobalsTable();
 	}
 
 	@Override
@@ -89,7 +87,7 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Performing identity transformation for " + tf);
+			mLogger.debug("Creating copy for " + tf);
 		}
 		return new TransformulaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, tf,
 				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
@@ -107,8 +105,7 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 
 	@Override
 	public HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals() {
-		// TODO
-		throw new UnsupportedOperationException("TODO");
+		return mOldModifiableGlobalsTable.getProcToGlobals();
 	}
 
 }

@@ -625,6 +625,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		CAMEL_SMT_AM,
 		/**
+		 * Like {@link #CAMEL_NO_AM}, but continues as soon as some interpolants are available.
+		 */
+		LIZARD,
+		/**
 		 * An integer strategy without assertion order modulation using SMTInterpol with interpolation, Z3 with FP, and
 		 * Mathsat with FP. This strategy is used by ReqChecker.
 		 */
@@ -759,6 +763,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum AcceleratedInterpolationLoopAccelerationTechnique {
-		FAST_UPR, WERNER_OVERAPPROX
+		FAST_UPR, WERNER_OVERAPPROX, JORDAN
 	}
 }

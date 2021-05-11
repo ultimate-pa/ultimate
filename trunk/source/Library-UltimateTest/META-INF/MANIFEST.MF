@@ -22,9 +22,11 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  org.junit,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
- de.uni_freiburg.informatik.ultimate.smtsolver.external
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ javax.activation
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
- org.junit.runners
+ org.junit.runners,
+ com.sun.xml.bind.v2;version="2.2.0"
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.test

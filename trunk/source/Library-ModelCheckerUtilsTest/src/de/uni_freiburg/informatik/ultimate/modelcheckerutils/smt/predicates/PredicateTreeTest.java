@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -57,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -77,11 +75,7 @@ public class PredicateTreeTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
-		try {
-			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices, "z3");
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
+		mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 
