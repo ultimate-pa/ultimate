@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -95,6 +96,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
+
+	// TODO add setting for this
+	public static final boolean ERRORS_PER_THREAD = true;
 
 	public static final String ULTIMATE_INIT = "ULTIMATE.init";
 	public static final String ULTIMATE_START = "ULTIMATE.start";
@@ -332,6 +336,18 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		// TODO (Dominik 2021-04-29) Support other mode: group by original (i.e. all copies of a location together)
 
 		final List<Pair<DebugIdentifier, List<IcfgLocation>>> result = new ArrayList<>();
+		if (ERRORS_PER_THREAD) {
+			assert mIsConcurrent : "Cannot analyse errors per thread instance for sequential program";
+			for (final Map.Entry<String, Set<IcfgLocation>> entry : icfg.getProcedureErrorNodes().entrySet()) {
+				final Set<IcfgLocation> locs = entry.getValue();
+				if (!locs.isEmpty()) {
+					final DebugIdentifier ident = new ThreadInstanceDebugIdentifier(entry.getKey());
+					result.add(new Pair<>(ident, List.copyOf(locs)));
+				}
+			}
+			return result;
+		}
+
 		final List<IcfgLocation> errNodesOfAllProc = getAllErrorLocs(icfg);
 		if (mPrefs.allErrorLocsAtOnce()) {
 			result.add(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, errNodesOfAllProc));
@@ -340,6 +356,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				result.add(new Pair<>(errorLoc.getDebugIdentifier(), Arrays.asList(errorLoc)));
 			}
 		}
+
 		return result;
 	}
 
@@ -604,6 +621,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final String description;
 		if (ident instanceof AllErrorsAtOnceDebugIdentifier) {
 			description = "Ultimate Automizer benchmark data";
+		} else if (ident instanceof ThreadInstanceDebugIdentifier) {
+			description = "Ultimate Automizer benchmark data for errors in thread instance: " + ident;
 		} else if (isInsufficientThreadsIdentifier(ident)) {
 			description = "Ultimate Automizer benchmark data for thread instance sufficiency: " + ident;
 		} else {
@@ -688,6 +707,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		@Override
 		public String toString() {
 			return "AllErrorsAtOnce";
+		}
+	}
+
+	private static final class ThreadInstanceDebugIdentifier extends StringDebugIdentifier {
+		private ThreadInstanceDebugIdentifier(final String threadInstance) {
+			super(threadInstance);
 		}
 	}
 }
