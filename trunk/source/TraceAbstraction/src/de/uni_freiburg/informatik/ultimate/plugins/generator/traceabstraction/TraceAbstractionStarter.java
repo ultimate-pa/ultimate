@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -37,7 +36,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -159,7 +157,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private void runCegarLoops(final IIcfg<IcfgLocation> icfg) {
 		logSettings();
 
-		final Collection<IcfgLocation> errNodesOfAllProc = getAllErrorLocs(icfg);
+		final Collection<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		final int numberOfErrorLocs = errNodesOfAllProc.size();
 		mLogger.info("Applying trace abstraction to program that has " + numberOfErrorLocs + " error locations.");
 
@@ -274,14 +272,14 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final Predicate<CegarLoopResult<L>> continueAnalysis) {
 		final List<CegarLoopResult<L>> results = new ArrayList<>();
 
-		final List<Pair<DebugIdentifier, List<IcfgLocation>>> errorPartitions = partitionErrorLocations(icfg);
+		final List<Pair<DebugIdentifier, Set<IcfgLocation>>> errorPartitions = partitionErrorLocations(icfg);
 		final boolean multiplePartitions = errorPartitions.size() > 1;
 
 		final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 		int finishedErrorSets = 0;
-		for (final Pair<DebugIdentifier, List<IcfgLocation>> partition : errorPartitions) {
+		for (final Pair<DebugIdentifier, Set<IcfgLocation>> partition : errorPartitions) {
 			final DebugIdentifier name = partition.getKey();
-			final List<IcfgLocation> errorLocs = partition.getValue();
+			final Set<IcfgLocation> errorLocs = partition.getValue();
 
 			if (mPrefs.hasLimitAnalysisTime()) {
 				progmon.addChildTimer(
@@ -330,30 +328,31 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 *            The CFG whose error locations shall be partitioned.
 	 * @return A partition of the error locations, each set annotated with a debug identifier
 	 */
-	private List<Pair<DebugIdentifier, List<IcfgLocation>>> partitionErrorLocations(final IIcfg<IcfgLocation> icfg) {
+	private List<Pair<DebugIdentifier, Set<IcfgLocation>>> partitionErrorLocations(final IIcfg<IcfgLocation> icfg) {
 		// TODO (Dominik 2021-04-29) Support other mode: "insufficient thread" locations first
 		// TODO (Dominik 2021-04-29) Support other mode: group by thread
 		// TODO (Dominik 2021-04-29) Support other mode: group by original (i.e. all copies of a location together)
 
-		final List<Pair<DebugIdentifier, List<IcfgLocation>>> result = new ArrayList<>();
+		final List<Pair<DebugIdentifier, Set<IcfgLocation>>> result = new ArrayList<>();
+
 		if (ERRORS_PER_THREAD) {
 			assert mIsConcurrent : "Cannot analyse errors per thread instance for sequential program";
 			for (final Map.Entry<String, Set<IcfgLocation>> entry : icfg.getProcedureErrorNodes().entrySet()) {
 				final Set<IcfgLocation> locs = entry.getValue();
 				if (!locs.isEmpty()) {
 					final DebugIdentifier ident = new ThreadInstanceDebugIdentifier(entry.getKey());
-					result.add(new Pair<>(ident, List.copyOf(locs)));
+					result.add(new Pair<>(ident, locs));
 				}
 			}
 			return result;
 		}
 
-		final List<IcfgLocation> errNodesOfAllProc = getAllErrorLocs(icfg);
+		final Set<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		if (mPrefs.allErrorLocsAtOnce()) {
 			result.add(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, errNodesOfAllProc));
 		} else {
 			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
-				result.add(new Pair<>(errorLoc.getDebugIdentifier(), Arrays.asList(errorLoc)));
+				result.add(new Pair<>(errorLoc.getDebugIdentifier(), Set.of(errorLoc)));
 			}
 		}
 
@@ -488,10 +487,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private PredicateFactory getPredicateFactory(final IIcfg<IcfgLocation> icfg) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		return new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
-	}
-
-	private static List<IcfgLocation> getAllErrorLocs(final IIcfg<IcfgLocation> icfg) {
-		return icfg.getProcedureErrorNodes().values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 	}
 
 	private Result reportResults(final Collection<IcfgLocation> errorLocs, final CegarLoopResult<L> clres) {
