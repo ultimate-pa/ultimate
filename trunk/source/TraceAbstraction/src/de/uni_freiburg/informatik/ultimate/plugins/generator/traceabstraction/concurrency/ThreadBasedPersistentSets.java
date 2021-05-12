@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Optional;
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
@@ -71,6 +73,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	private final ExtendedConcurrencyInformation mInfo;
 	private final IIndependenceRelation<?, IcfgEdge> mIndependence;
 	private final IDfsOrder<IcfgEdge, IPredicate> mOrder;
+	private final Collection<? extends IcfgLocation> mErrorLocs;
 
 	private final HashRelation<IcfgLocation, IcfgLocation> mCommutativityConflict = new HashRelation<>();
 	private final HashRelation<IcfgLocation, IcfgLocation> mNoCommutativityConflict = new HashRelation<>();
@@ -89,7 +92,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	 */
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final IIndependenceRelation<?, IcfgEdge> independence) {
-		this(services, icfg, independence, null);
+		this(services, icfg, independence, null, null);
 	}
 
 	/**
@@ -104,15 +107,19 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 	 * @param order
 	 *            A DFS traversal order with which the persistent sets should be compatible. Set this to null if
 	 *            compatibility should not be enforced.
+	 * @param errorLocs
+	 *            The set of error locations to be considered. If null, all error locations of the CFG are used.
 	 */
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<?> icfg,
-			final IIndependenceRelation<?, IcfgEdge> independence, final IDfsOrder<IcfgEdge, IPredicate> order) {
+			final IIndependenceRelation<?, IcfgEdge> independence, final IDfsOrder<IcfgEdge, IPredicate> order,
+			final Collection<? extends IcfgLocation> errorLocs) {
 		assert !independence.isConditional() : "Conditional independence currently not supported";
 
 		mLogger = services.getLoggingService().getLogger(ThreadBasedPersistentSets.class);
 		mInfo = new ExtendedConcurrencyInformation(icfg);
 		mIndependence = independence;
 		mOrder = order;
+		mErrorLocs = errorLocs == null ? IcfgUtils.getErrorLocations(icfg) : errorLocs;
 		mStatistics = new ThreadBasedPersistentSetStatistics(independence);
 	}
 

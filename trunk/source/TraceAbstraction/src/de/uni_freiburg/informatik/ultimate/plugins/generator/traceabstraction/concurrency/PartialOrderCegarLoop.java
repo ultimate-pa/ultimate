@@ -341,7 +341,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		case PERSISTENT_SETS:
 		case PERSISTENT_SLEEP_DELAY_SET:
 			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
-					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) independence));
+					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) independence, null, mErrorLocs));
 		case NONE:
 		case SLEEP_DELAY_SET:
 		case SLEEP_NEW_STATES:
