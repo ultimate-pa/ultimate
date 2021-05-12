@@ -43,10 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransformingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
@@ -59,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -75,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -88,9 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.DistributingIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticConditionEliminator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.ThreadSeparatingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
@@ -290,11 +284,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructSemanticIndependence(final CfgSmtToolkit csToolkit) {
-		final ManagedScript independenceScript = constructIndependenceScript();
-		final TermTransferrer independenceTransferrer =
-				new TermTransferrer(csToolkit.getManagedScript().getScript(), independenceScript.getScript());
-		return new SemanticIndependenceRelation<>(mServices, independenceScript, mConditionalPor, false,
-				independenceTransferrer);
+		return IndependenceBuilder.<L> semantic(mServices, constructIndependenceScript(),
+				csToolkit.getManagedScript().getScript(), mConditionalPor, false).build();
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructConditionalIndependence(
@@ -304,23 +295,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		// syntactically equal to "false". Here, this is achieved by usage of DistributingIndependenceRelation: The only
 		// predicates we use as conditions are the original interpolants (i.e., not conjunctions of them), where we
 		// assume this constraint holds.
-		return new SemanticConditionEliminator<>(
-				new CachedIndependenceRelation<>(semanticIndependence, independenceCache),
-				PartialOrderCegarLoop::isFalseState);
+		return IndependenceBuilder.fromPredicateActionIndependence(semanticIndependence).cached(independenceCache)
+				.withConditionElimination(PartialOrderCegarLoop::isFalseState).build();
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructUnconditionalIndependence(
 			final IIndependenceRelation<IPredicate, L> semanticIndependence,
 			final IIndependenceCache<IPredicate, L> independenceCache) {
-		final IIndependenceRelation<IPredicate, L> unconditional;
-		if (semanticIndependence.isConditional()) {
-			unconditional = ConditionTransformingIndependenceRelation.unconditional(semanticIndependence);
-		} else {
-			unconditional = semanticIndependence;
-		}
-		return new CachedIndependenceRelation<>(
-				new UnionIndependenceRelation<>(Arrays.asList(new SyntacticIndependenceRelation<>(), unconditional)),
-				independenceCache);
+		return IndependenceBuilder.fromActionIndependence(semanticIndependence).ensureUnconditional()
+				.withSyntacticCheck().cached(independenceCache).build();
 	}
 
 	private IIndependenceRelation<IPredicate, L>
