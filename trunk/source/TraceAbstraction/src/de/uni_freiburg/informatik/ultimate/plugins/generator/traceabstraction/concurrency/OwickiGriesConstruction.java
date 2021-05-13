@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
@@ -91,6 +92,7 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 
 	private final Map<PLACE, IProgramVar> mGhostVariables;
 	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
+	
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IPetriNet<LETTER, PLACE> net, final Map<Marking<LETTER, PLACE>, IPredicate> floydHoare) {
@@ -112,6 +114,8 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 		mAnnotation = new OwickiGriesAnnotation<>(formulaMapping, assignmentMapping,
 				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, mNet, mSymbolTable);
 	}
+	
+
 
 	/**
 	 * Constructs the mapping from places to formulas. A place is mapped to a disjunction of marking predicates, where
@@ -297,5 +301,6 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 		}
 		return relation;
 	}
+	
 
 }
