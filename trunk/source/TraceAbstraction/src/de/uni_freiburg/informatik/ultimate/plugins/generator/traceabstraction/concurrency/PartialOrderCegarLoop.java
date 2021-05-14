@@ -350,13 +350,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
 				+ state.getClass();
 
-		final IcfgLocation[] programPoints;
+		final boolean isErrorState;
 		if (state instanceof ISLPredicate) {
-			programPoints = new IcfgLocation[] { ((ISLPredicate) state).getProgramPoint() };
+			isErrorState = mErrorLocs.contains(((ISLPredicate) state).getProgramPoint());
 		} else {
-			programPoints = ((IMLPredicate) state).getProgramPoints();
+			isErrorState = Arrays.stream(((IMLPredicate) state).getProgramPoints()).anyMatch(mErrorLocs::contains);
 		}
-		final boolean isErrorState = Arrays.stream(programPoints).anyMatch(mErrorLocs::contains);
 		return isErrorState && !isFalseState(state);
 	}
 
