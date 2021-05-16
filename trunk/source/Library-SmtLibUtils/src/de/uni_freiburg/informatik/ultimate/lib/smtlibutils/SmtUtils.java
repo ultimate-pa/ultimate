@@ -664,6 +664,20 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * TODO 20210516 Matthias: Extend optimizations of the methods called by
+	 * {@link SmtUtils#binaryEquality} to this method. Currently, this is not very
+	 * important since we have mainly binary equalities in program verification.
+	 *
+	 */
+	public static Term equality(final Script script, final Term... params) {
+		if (params.length == 2) {
+			return binaryEquality(script, params[0], params[1]);
+		} else {
+			return script.term("=", params);
+		}
+	}
+
+	/**
 	 * Returns the equality ("=" lhs rhs), or true resp. false if some simple checks detect validity or unsatisfiablity
 	 * of the equality.
 	 */

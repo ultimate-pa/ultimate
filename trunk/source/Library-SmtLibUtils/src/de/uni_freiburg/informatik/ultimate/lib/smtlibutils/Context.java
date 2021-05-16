@@ -124,6 +124,8 @@ public class Context {
 			final List<Term> otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(script, x))
 					.collect(Collectors.toList());
 			result = SmtUtils.and(script, otherParamsNegated);
+		} else if (symb.getName().equals("=")) {
+			result = script.term("true");
 		} else {
 			throw new AssertionError("only conjunction and disjunction are supported");
 		}

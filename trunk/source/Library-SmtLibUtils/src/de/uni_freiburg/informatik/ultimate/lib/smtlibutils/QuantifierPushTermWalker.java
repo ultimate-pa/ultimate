@@ -211,6 +211,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		if (originalApplicationTerm.getFunction().getName().equals("or")) {
 			return PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(), Arrays.asList(resultParams));
 		}
+		// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
+		// terms here.
 		if (originalApplicationTerm.getFunction().getName().equals("=")) {
 			return SmtUtils.equality(mMgdScript.getScript(), resultParams);
 		}
