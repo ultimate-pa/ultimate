@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -107,7 +108,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 					final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
 					logger.info(esr.buildSizeReductionMessage());
 					currentTerm = esr.getSimplifiedTerm();
-					return new TermContextTransformationEngine.FinalResultForAscend<Term>(currentTerm);
+					return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
 				} else {
 					final Term negated = SmtUtils.unzipNot(currentTerm);
 					if (negated != null && SmtUtils.isAtomicFormula(negated)) {
@@ -117,7 +118,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 						final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
 						logger.info(esr.buildSizeReductionMessage());
 						currentTerm = esr.getSimplifiedTerm();
-						return new TermContextTransformationEngine.FinalResultForAscend<Term>(currentTerm);
+						return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
 					} else {
 						return new TermContextTransformationEngine.IntermediateResultForDescend(currentTerm);
 					}
@@ -137,7 +138,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 				final FormulaClassification tmpClassification = QuantifierPusher.classify(tmp);
 				if (tmpClassification == FormulaClassification.DUAL_QUANTIFIER) {
 					// unable to push, we have to take this subformula as result
-					return new TermContextTransformationEngine.FinalResultForAscend<Term>(tmp);
+					return new TermContextTransformationEngine.FinalResultForAscend(tmp);
 				} else {
 					currentTerm = tmp;
 					break;
@@ -157,7 +158,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 					final Term res = QuantifierPusher.pushInner(mServices, mMgdScript, mApplyDistributivity,
 							mPqeTechniques, context.getBoundByAncestors(), (QuantifiedFormula) currentTerm,
 							context.getCriticalConstraint(), QuantifierPushTermWalker::eliminate);
-					return new TermContextTransformationEngine.FinalResultForAscend<Term>(res);
+					return new TermContextTransformationEngine.FinalResultForAscend(res);
 				} else {
 					currentTerm = tmp;
 					break;
@@ -173,7 +174,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 					final Term res = QuantifierPusher.pushInner(mServices, mMgdScript, mApplyDistributivity,
 							mPqeTechniques, context.getBoundByAncestors(), (QuantifiedFormula) currentTerm,
 							context.getCriticalConstraint(), QuantifierPushTermWalker::eliminate);
-					return new TermContextTransformationEngine.FinalResultForAscend<Term>(res);
+					return new TermContextTransformationEngine.FinalResultForAscend(res);
 				} else {
 					currentTerm = tmp;
 					break;
@@ -209,6 +210,9 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		}
 		if (originalApplicationTerm.getFunction().getName().equals("or")) {
 			return PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(), Arrays.asList(resultParams));
+		}
+		if (originalApplicationTerm.getFunction().getName().equals("=")) {
+			return SmtUtils.equality(mMgdScript.getScript(), resultParams);
 		}
 		assert Arrays.equals(originalApplicationTerm.getParameters(), resultParams);
 		return originalApplicationTerm;
@@ -249,6 +253,27 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 					tolerateUnknown);
 		}
 		return result;
+	}
+
+	@Override
+	void checkIntermediateResult(final Context context, final Term input, final Term output) {
+		final LBool lBool = SmtUtils.checkEquivalenceUnderAssumption(input, output, context.getCriticalConstraint(),
+				mMgdScript.getScript());
+		switch (lBool) {
+		case SAT:
+			throw new AssertionError(String.format(
+					"Intermediate result not equivalent. Input: %s Output: %s Assumption: %s", input, output, context));
+		case UNKNOWN:
+			final ILogger logger = mServices.getLoggingService().getLogger(this.getClass());
+			logger.warn(String.format(
+					"Insufficient ressources to check equivalence of intermediate result. Input: %s Output: %s Assumption: %s",
+					input, output, context));
+			break;
+		case UNSAT:
+			break;
+		default:
+			throw new AssertionError("unknown value: " + lBool);
+		}
 	}
 
 }

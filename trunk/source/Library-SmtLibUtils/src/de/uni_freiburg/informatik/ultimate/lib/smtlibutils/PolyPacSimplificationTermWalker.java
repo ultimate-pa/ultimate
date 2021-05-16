@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
@@ -92,7 +93,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		} else if (term instanceof QuantifiedFormula) {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
-		return new TermContextTransformationEngine.FinalResultForAscend<Term>(term);
+		return new TermContextTransformationEngine.FinalResultForAscend(term);
 	}
 
 	@Override
@@ -133,6 +134,25 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	@Override
 	boolean applyRepeatedlyUntilNoChange() {
 		return true;
+	}
+
+	@Override
+	void checkIntermediateResult(final Term context, final Term input, final Term output) {
+		final LBool lBool = SmtUtils.checkEquivalenceUnderAssumption(input, output, context, mScript);
+		switch (lBool) {
+		case SAT:
+			throw new AssertionError(String.format(
+					"Intermediate result not equivalent. Input: %s Output: %s Assumption: %s", input, output, context));
+		case UNKNOWN:
+			System.out.println(String.format(
+					"Insufficient ressources to check equivalence of intermediate result. Input: %s Output: %s Assumption: %s",
+					input, output, context));
+			break;
+		case UNSAT:
+			break;
+		default:
+			throw new AssertionError("unknown value: " + lBool);
+		}
 	}
 
 }
