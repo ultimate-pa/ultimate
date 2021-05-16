@@ -154,6 +154,23 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
+	public void constArrayDerExists() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "v") };
+		final String inputSTR = "(exists ((arr (Array Int Int))) (= (store arr i v) ((as const (Array Int Int)) 23) ))";
+		final String expectedResult = "(= v 23)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void constArrayAntiDerExists() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getBoolSort, "i", "v") };
+		final String inputSTR = "(exists ((arr (Array Bool Bool))) (and (not (= (store arr i v) ((as const (Array Bool Bool)) true) )) (= (select arr true) true) (= (select arr false) true) ) ))";
+		final String expectedResult = "(= v false)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
 	public void choirNightTrezor04Triathlon() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
 		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (and (< 0 (mod (+ (* b 4294967295) moda) 4294967296)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)) (> 0 moda) (>= moda 4294967296) (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (mod (+ i 1) 4294967296) moda) (< (+ (* 4294967296 diva) moda) 0)))";
