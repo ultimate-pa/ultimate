@@ -2337,6 +2337,18 @@ public final class SmtUtils {
 		return Util.checkSat(script, notEq);
 	}
 
+	/**
+	 * Returns true iff the boolean formulas formula1 and formula2 are equivalent under the given assumption w.r.t
+	 * script.
+	 */
+	public static LBool checkEquivalenceUnderAssumption(final Term formula1, final Term formula2, final Term assumption,
+			final Script script) {
+		final Term eq = binaryEquality(script, formula1, formula2);
+		final Term impl = implies(script, assumption, eq);
+		return Util.checkSat(script, not(script, impl));
+	}
+
+
 	public static void checkLogicalEquivalenceForDebugging(final Script script, final Term result, final Term input,
 			final Class<?> checkedClass, final boolean tolerateUnknown) {
 		script.echo(new QuotedObject(String.format("Start correctness check for %s.", checkedClass.getSimpleName())));
