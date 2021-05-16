@@ -462,7 +462,7 @@ public class QuantifierPusher extends TermTransformer {
 				final Context childContext = et.getContext().constructChildContextForConDis(mgdScript.getScript(),
 						((ApplicationTerm) et.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
 				assert criticalConstraint.equals(childContext.getCriticalConstraint());
-				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, childContext,
+				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, et.getContext(),
 						correspondingFinite);
 				if (allStillQuantified(et.getEliminatees(), pushed)) {
 					// we should not pay the high price for applying distributivity if we do not get
