@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgDominatorInfo;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -71,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge, IPredicate> {
 	private final ILogger mLogger;
 	private final ExtendedConcurrencyInformation mInfo;
+	private final IcfgDominatorInfo<?> mDominatorInfo;
 	private final IIndependenceRelation<?, IcfgEdge> mIndependence;
 	private final IDfsOrder<IcfgEdge, IPredicate> mOrder;
 	private final Collection<? extends IcfgLocation> mErrorLocs;
@@ -117,6 +119,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 
 		mLogger = services.getLoggingService().getLogger(ThreadBasedPersistentSets.class);
 		mInfo = new ExtendedConcurrencyInformation(icfg);
+		mDominatorInfo = new IcfgDominatorInfo<>(icfg);
 		mIndependence = independence;
 		mOrder = order;
 		mErrorLocs = errorLocs == null ? IcfgUtils.getErrorLocations(icfg) : errorLocs;
