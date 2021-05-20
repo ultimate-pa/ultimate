@@ -21,7 +21,8 @@
    </extension>
    
    <extension point="org.eclipse.core.runtime.products" id="Debug">
-      <product application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" name="Ultimate-Debug">
+      <product
+            name="Ultimate-Debug">
          <property name="appName" value="Ultimate-Debug" />
          <property name="aboutImage" value="icons/about.gif" />
          <property name="aboutText"

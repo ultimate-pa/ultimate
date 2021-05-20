@@ -28,7 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -93,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pe
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PetriCegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding;
@@ -235,6 +239,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			mCoRelationQueries +=
 					(finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo());
 			mCounterexample = unf.getAcceptingRun();
+			
+		//	computeOwickiGries(finPrefix, )
 		}
 		if (mCounterexample == null) {
 			return true;
@@ -687,6 +693,28 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 						(IPetriNet<L, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw, false);
 	}
+	
+	public void computeOwickiGries(final BranchingProcess<L, IPredicate> bp, IPetriNet<L, IPredicate> net) {
+		//assert !isSequential() : "Cannot compute Owicki-Gries for sequential program.";
+		//assert !floydHoare.isEmpty();
+		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
+			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
+		}		 
+		final OwickiGriesFloydHoare<IPredicate, L> floydHoare = new OwickiGriesFloydHoare<IPredicate, L>
+																 (mServices, mCsToolkit, bp, net);
+		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
+			
+
+		final OwickiGriesConstruction<IPredicate, L> construction =
+				new OwickiGriesConstruction<>(mServices, mCsToolkit, net, petriFloydHoare);
+		// TODO: simplify
+		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
+				construction.getResult(), construction.getCoMarkedPlaces());
+		assert check.isValid() : "Invalid Owicki-Gries annotation";
+	}
+	
+	
+	
 
 	@Override
 	public IStatisticsDataProvider getCegarLoopBenchmark() {

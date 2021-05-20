@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
@@ -71,7 +72,7 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	private final BasicPredicateFactory mFactory;
 	
 	private final BranchingProcess<LETTER, PLACE> mBp;
-	private final Map<PLACE, IPredicate> mAssertion;
+	private final IPetriNet <LETTER, PLACE> mNet;
 	
 	private Set<Set<PLACE>> mCuts;
 	private Set<PLACE> mPlaces;
@@ -81,9 +82,15 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	
 	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
 	
-	
+	/**
+	 * @TODO: assertion, places are IPredicate
+	 * @param services
+	 * @param csToolkit
+	 * @param bp
+	 * @param assertion
+	 */
 	public OwickiGriesFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-								BranchingProcess<LETTER, PLACE> bp, Map<PLACE, IPredicate> assertion) {
+								final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net) {
 		
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -94,12 +101,13 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 
 		
 		mBp = bp;
-		mAssertion = assertion;
-		
+		mNet = net;
+				
 		mCuts = computeMaximalCosets(mBp);
-		mAssertPlaces = mAssertion.keySet();
+		
 		mPlaces = getPlaces(mCuts);
-		mOrigPlaces = getOrigPlaces(mPlaces, mAssertPlaces);
+		mOrigPlaces = new HashSet<>(mNet.getPlaces());
+		mAssertPlaces = getAssertPlaces(mPlaces, mOrigPlaces);
 		mReach = getReach(mCuts);
 		
 		mFloydHoareAnnotation = getAnnotation();		
@@ -108,7 +116,7 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	
 	/**
 	 * @param branching process
-	 * @return set of all maximal coset (cuts)
+	 * @return set of all maximal co-set (cuts)
 	 * TODO: Set<Set<PLACE>>, no set of conditions?? labelling function? cCheck branching def
 	 */
 	private static <LETTER, PLACE> Set<Set<PLACE>> computeMaximalCosets(final BranchingProcess<LETTER, PLACE> bp) {
@@ -125,7 +133,7 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	private Map<Marking<LETTER, PLACE>, IPredicate> getAnnotation(){
 		final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
 		for (Set<PLACE> marking : mReach) {
-			mapping.put(new Marking<LETTER, PLACE>(marking), getCutAssertion(marking));
+			mapping.put(new Marking<LETTER, PLACE>(marking), getMarkingAssertion(marking));
 		}
 		return mapping;
 	}
@@ -135,7 +143,7 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	private IPredicate getCutAssertion(Set<PLACE> cut){
 		final Set<Term> predicates = new HashSet<>();
 		for (PLACE place : getAssertPlaces(cut)) {
-			predicates.add((Term) mAssertion.get(place)); //TODO: properly get Term?			
+			predicates.add((Term) place); //TODO: properly get Term?			
 		}
 		return  mFactory.newPredicate(SmtUtils.and(mScript, predicates));		
 	}
@@ -169,8 +177,8 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	 * @TODO: with Parameters or not? 
 	 * @TODO: Get original places from Petri Net?
 	 */
-	private Set<PLACE> getOrigPlaces(Set<PLACE> places, Set<PLACE> assertPlaces){
-		return DataStructureUtils.difference(places, assertPlaces);		
+	private Set<PLACE> getAssertPlaces(Set<PLACE> places, Set<PLACE> origPlaces){
+		return DataStructureUtils.difference(places, origPlaces);		
 	}
 	 
 	/**
