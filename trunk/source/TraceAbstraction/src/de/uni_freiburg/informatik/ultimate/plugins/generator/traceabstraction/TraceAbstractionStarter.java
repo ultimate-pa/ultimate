@@ -458,7 +458,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 	private static boolean isInsufficientThreadsLocation(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
-		return check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
+		return check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
 	}
 
 	private static boolean isInsufficientThreadsIdentifier(final DebugIdentifier ident) {
