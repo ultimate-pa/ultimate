@@ -100,6 +100,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
+	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_LAST = "Check the insufficient thread errors last";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Enhance during reuse of Floyd-Hoare automata";
@@ -192,6 +193,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_MINIMIZE = true;
 	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
 	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
+	public static final boolean DEF_INSUFFICIENT_THREAD_ERRORS_LAST = false;
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
@@ -238,6 +240,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Specifies how to compute successors on-demand for re-use interpolant automata.";
 
 	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
+	private static final String DESC_INSUFFICIENT_THREAD_ERRORS_LAST = null;
+
 	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
 	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
 	private static final String DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
@@ -339,6 +343,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, DESC_ALL_ERRORS_AT_ONCE,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_LAST, DEF_INSUFFICIENT_THREAD_ERRORS_LAST,
+						DESC_INSUFFICIENT_THREAD_ERRORS_LAST, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
 						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),

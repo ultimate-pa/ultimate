@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -65,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -88,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pe
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -214,8 +218,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 * Analyses a concurrent program and detects if thread instances are insufficient. If so, the number of thread
 	 * instances is increased and the analysis restarts.
 	 *
-	 * TODO Use ThreadGeneralization here (with a setting!)
-	 *
 	 * @param icfg
 	 *            The CFG for the program (unpetrified).
 	 */
@@ -232,7 +234,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mResultsPerLocation.clear();
 
 			final var results = analyseProgram(petrifiedIcfg, TraceAbstractionStarter::hasSufficientThreadInstances);
-			if (results.isEmpty() || hasSufficientThreadInstances(results.get(results.size() - 1))) {
+			// Stop if either every in-use error location is unreachable or any other error locations is reachable
+			if (resultsHaveSufficientInstances(results)) {
 				break;
 			}
 			assert isConcurrent(icfg) : "Insufficient thread instances for sequential program";
@@ -241,6 +244,21 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			numberOfThreadInstances++;
 		}
 		mLogger.info("Analysis of concurrent program completed with " + numberOfThreadInstances + " thread instances");
+	}
+
+	private static <L extends IIcfgTransition<?>> boolean
+			resultsHaveSufficientInstances(final List<CegarLoopResult<L>> results) {
+		boolean res = true;
+		for (final CegarLoopResult<L> r : results) {
+			if (r.getOverallResult() != Result.UNSAFE) {
+				continue;
+			}
+			if (hasSufficientThreadInstances(r)) {
+				return true;
+			}
+			res = false;
+		}
+		return res;
 	}
 
 	/**
@@ -325,20 +343,27 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 * @return A partition of the error locations, each set annotated with a debug identifier
 	 */
 	private List<Pair<DebugIdentifier, Set<IcfgLocation>>> partitionErrorLocations(final IIcfg<IcfgLocation> icfg) {
-		// TODO (Dominik 2021-04-29) Support other mode: "insufficient thread" locations first
 		// TODO (Dominik 2021-04-29) Support other mode: group by thread
 		// TODO (Dominik 2021-04-29) Support other mode: group by original (i.e. all copies of a location together)
 
-		final List<Pair<DebugIdentifier, Set<IcfgLocation>>> result = new ArrayList<>();
 		final Set<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
-		if (mPrefs.allErrorLocsAtOnce()) {
-			result.add(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, errNodesOfAllProc));
-		} else {
-			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
-				result.add(new Pair<>(errorLoc.getDebugIdentifier(), Set.of(errorLoc)));
+		if (!mPrefs.allErrorLocsAtOnce()) {
+			Stream<IcfgLocation> errorLocs = errNodesOfAllProc.stream();
+			if (mPrefs.insufficientThreadErrorsLast()) {
+				// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
+				errorLocs = errorLocs.sorted(
+						(x, y) -> Boolean.compare(isInsufficientThreadsLocation(x), isInsufficientThreadsLocation(y)));
 			}
+			return errorLocs.map(x -> new Pair<>(x.getDebugIdentifier(), Set.of(x))).collect(Collectors.toList());
 		}
-		return result;
+		if (mPrefs.insufficientThreadErrorsLast() && isConcurrent(icfg)) {
+			final ConcurrencyInformation concurrencyInformation = icfg.getCfgSmtToolkit().getConcurrencyInformation();
+			final Set<IcfgLocation> inUseErrors = new HashSet<>(concurrencyInformation.getInUseErrorNodeMap().values());
+			final Set<IcfgLocation> otherErrors = DataStructureUtils.difference(errNodesOfAllProc, inUseErrors);
+			return List.of(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, otherErrors),
+					new Pair<>(InUseDebugIdentifier.INSTANCE, inUseErrors));
+		}
+		return List.of(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, errNodesOfAllProc));
 	}
 
 	private CegarLoopResult<L> executeCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> icfg,
@@ -598,6 +623,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final String description;
 		if (ident instanceof AllErrorsAtOnceDebugIdentifier) {
 			description = "Ultimate Automizer benchmark data";
+		} else if (ident instanceof InUseDebugIdentifier) {
+			description = "Ultimate Automizer benchmark data for thread instance sufficiency";
 		} else if (isInsufficientThreadsIdentifier(ident)) {
 			description = "Ultimate Automizer benchmark data for thread instance sufficiency: " + ident;
 		} else {
@@ -682,6 +709,20 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		@Override
 		public String toString() {
 			return "AllErrorsAtOnce";
+		}
+	}
+
+	public static final class InUseDebugIdentifier extends DebugIdentifier {
+
+		public static final InUseDebugIdentifier INSTANCE = new InUseDebugIdentifier();
+
+		private InUseDebugIdentifier() {
+			// singleton constructor
+		}
+
+		@Override
+		public String toString() {
+			return "InUseError";
 		}
 	}
 }

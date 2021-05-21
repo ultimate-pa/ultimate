@@ -198,6 +198,10 @@ public final class TAPreferences {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
 	}
 
+	public boolean insufficientThreadErrorsLast() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INSUFFICIENT_THREAD_ERRORS_LAST);
+	}
+
 	public FloydHoareAutomataReuse getFloydHoareAutomataReuse() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_FLOYD_HOARE_AUTOMATA_REUSE,
 				FloydHoareAutomataReuse.class);
