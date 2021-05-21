@@ -150,7 +150,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	private Set<IPredicate> mProgramPointPlaces;
 
 	private final CounterexampleCache<L> mCounterexampleCache;
+	private  BranchingProcess<L, IPredicate> mFinPrefix;
+	private  IPetriNet<L, IPredicate> mInitialNet;
 
+	
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
@@ -189,6 +192,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 					"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 		} else {
 			mAbstraction = cfg;
+			mInitialNet = cfg;
 		}
 		mProgramPointPlaces = ((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces();
 
@@ -240,7 +244,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 					(finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo());
 			mCounterexample = unf.getAcceptingRun();
 			
-		//	computeOwickiGries(finPrefix, )
+			mFinPrefix = finPrefix;
 		}
 		if (mCounterexample == null) {
 			return true;
@@ -693,8 +697,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 						(IPetriNet<L, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw, false);
 	}
-	
-	public void computeOwickiGries(final BranchingProcess<L, IPredicate> bp, IPetriNet<L, IPredicate> net) {
+	//final BranchingProcess<L, IPredicate> bp, IPetriNet<L, IPredicate> net
+	@Override
+	public void computeOwickiGries() {
 		//assert !isSequential() : "Cannot compute Owicki-Gries for sequential program.";
 		//assert !floydHoare.isEmpty();
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
