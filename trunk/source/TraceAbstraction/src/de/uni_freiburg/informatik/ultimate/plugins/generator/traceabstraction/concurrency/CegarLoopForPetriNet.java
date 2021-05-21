@@ -697,21 +697,19 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 						(IPetriNet<L, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw, false);
 	}
-	//final BranchingProcess<L, IPredicate> bp, IPetriNet<L, IPredicate> net
+
 	@Override
 	public void computeOwickiGries() {
-		//assert !isSequential() : "Cannot compute Owicki-Gries for sequential program.";
-		//assert !floydHoare.isEmpty();
+
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}		 
 		final OwickiGriesFloydHoare<IPredicate, L> floydHoare = new OwickiGriesFloydHoare<IPredicate, L>
-																 (mServices, mCsToolkit, bp, net);
-		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
-			
+																 (mServices, mCsToolkit, mFinPrefix, mInitialNet);
+		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();			
 
 		final OwickiGriesConstruction<IPredicate, L> construction =
-				new OwickiGriesConstruction<>(mServices, mCsToolkit, net, petriFloydHoare);
+				new OwickiGriesConstruction<>(mServices, mCsToolkit, mInitialNet, petriFloydHoare);
 		// TODO: simplify
 		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
 				construction.getResult(), construction.getCoMarkedPlaces());
