@@ -127,7 +127,7 @@ public class EqualityInformation {
 			final BinaryEqualityRelation ber = binaryRelations[i];
 			final EqualityInformation eqInfo = getEqinfo(givenTerm, ber, forbiddenTerm, i);
 			SolvedBinaryRelation sbr = ber.solveForSubject(script, givenTerm);
-			if (SmtUtils.isSubterm(sbr.getRightHandSide(), forbiddenTerm)) {
+			if (sbr != null && SmtUtils.isSubterm(sbr.getRightHandSide(), forbiddenTerm)) {
 				sbr = null;
 			}
 			assert (sbr == null) == (eqInfo == null) : "sbr: " + sbr + " eqInfo: " + eqInfo;
