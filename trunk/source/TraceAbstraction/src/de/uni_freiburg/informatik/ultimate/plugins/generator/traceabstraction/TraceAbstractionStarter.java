@@ -434,7 +434,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			}
 			final BoogieASTNode boogieASTNode = ((BoogieIcfgLocation) err).getBoogieASTNode();
 			final Check check = Check.getAnnotation(boogieASTNode);
-			if (check.getSpec().contains(Spec.WITNESS_INVARIANT)) {
+			if (check != null && check.getSpec().contains(Spec.WITNESS_INVARIANT)) {
 				numberOfCheckedInvariants++;
 			}
 		}
