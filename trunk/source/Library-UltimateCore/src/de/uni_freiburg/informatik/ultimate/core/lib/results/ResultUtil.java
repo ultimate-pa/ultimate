@@ -144,21 +144,6 @@ public final class ResultUtil {
 	}
 
 	/**
-	 * Return the checked specification that is checked at the error location.
-	 */
-	public static <ELEM extends IElement> Check getCheckedSpecification(final ELEM element) {
-		final Check check = Check.getAnnotation(element);
-		if (check != null) {
-			return check;
-		}
-		final ILocation loc = ILocation.getAnnotation(element);
-		if (loc == null) {
-			return null;
-		}
-		return null;
-	}
-
-	/**
 	 * Write all results contained in the {@link IResultService} instance to a logger instance.
 	 *
 	 * @param logger

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.results;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -12,7 +13,7 @@ public final class ReqCheckSuccessResult<E extends IElement> extends AbstractRes
 	public ReqCheckSuccessResult(final E element, final String plugin,
 			final IBacktranslationService translatorSequence) {
 		super(element, plugin, translatorSequence);
-		mReqCheck = (ReqCheck) ResultUtil.getCheckedSpecification(element);
+		mReqCheck = (ReqCheck) Check.getAnnotation(element);
 	}
 
 	@Override

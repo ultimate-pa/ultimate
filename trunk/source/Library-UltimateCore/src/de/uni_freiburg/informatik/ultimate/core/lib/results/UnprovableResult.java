@@ -94,7 +94,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		super(position, plugin, translatorSequence);
 		assert unprovabilityReasons != null;
 		assert programExecution != null;
-		final Check check = ResultUtil.getCheckedSpecification(position);
+		final Check check = Check.getAnnotation(position);
 		if (check == null) {
 			mCheckedSpecification = new Check(Spec.UNKNOWN);
 		} else {

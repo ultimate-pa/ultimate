@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
@@ -790,7 +791,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		for (final IcfgLocation errorIpp : errorLocs) {
 			final ILocation origin = ILocation.getAnnotation(errorIpp);
 			String timeOutMessage =
-					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
+					"Unable to prove that " + Check.getAnnotation(errorIpp).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);

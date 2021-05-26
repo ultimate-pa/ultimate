@@ -341,6 +341,9 @@ public class Check extends ModernAnnotations {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
+	/**
+	 * Return the checked specification that is checked at this location or null.
+	 */
 	public static Check getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (Check) a);
 	}

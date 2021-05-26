@@ -55,7 +55,7 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 	 */
 	public PositiveResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence) {
 		super(position, plugin, translatorSequence);
-		mCheckedSpecification = ResultUtil.getCheckedSpecification(position);
+		mCheckedSpecification = Check.getAnnotation(position);
 	}
 
 	@Override

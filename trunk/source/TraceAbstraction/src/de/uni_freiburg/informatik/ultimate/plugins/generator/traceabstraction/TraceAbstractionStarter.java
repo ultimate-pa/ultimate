@@ -563,7 +563,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final IRunningTaskStackProvider rtsp, final IcfgLocation errorIpp) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Unable to prove that ");
-		sb.append(ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage());
+		sb.append(Check.getAnnotation(errorIpp).getPositiveMessage());
 		if (errorIpp instanceof BoogieIcfgLocation) {
 			final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
 			sb.append(" (line ").append(origin.getStartLine()).append(").");
