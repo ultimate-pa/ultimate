@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
@@ -59,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UserSpecifiedLimitReachedResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -435,12 +433,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				return;
 			}
 			final BoogieASTNode boogieASTNode = ((BoogieIcfgLocation) err).getBoogieASTNode();
-			final IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
-			if (annot != null) {
-				final Check check = (Check) annot;
-				if (check.getSpec().contains(Spec.WITNESS_INVARIANT)) {
-					numberOfCheckedInvariants++;
-				}
+			final Check check = Check.getAnnotation(boogieASTNode);
+			if (check.getSpec().contains(Spec.WITNESS_INVARIANT)) {
+				numberOfCheckedInvariants++;
 			}
 		}
 		if (numberOfCheckedInvariants > 0) {
