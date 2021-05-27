@@ -2,13 +2,11 @@
 # 
 # Author: Nico Hauff (hauffn@informatik.uni-freiburg.de)
 
-# Maven and Graphviz are required.
-
-ultimate_dir="/mnt/data/projects/ultimate/ultimate"
+ultimate_dir="/media/Daten/Projects/ultimate"
 ultimate_adds_dir="${ultimate_dir}/releaseScripts/default/adds"
 ultimate_maven_dir="${ultimate_dir}/trunk/source/BA_MavenParentUltimate"
 ultimate_failure_paths_image_dir="${ultimate_dir}/trunk/examples/Requirements/failure-paths/img"
-hanfor_dir="/mnt/data/projects/hanfor"
+hanfor_dir="/media/Daten/Projects/hanfor"
 hanfor_pattern_dir="${hanfor_dir}/documentation/docs/references/patterns"
 hanfor_failure_paths_image_dir="${hanfor_dir}/documentation/docs/img/failure_paths/positive"
 
@@ -28,11 +26,9 @@ done
 # Check if Ultimate adds directory is in PATH variable.
 if ! echo $PATH | grep -q $ultimate_adds_dir
 then
-	#echo "Could not find Ultimate adds directory in PATH."
-	#echo "Try: export PATH=\$PATH:$ultimate_adds_dir"
-	#exit 1
-	echo "Add Ultimate adds directory to PATH."
-	export PATH=$PATH:$ultimate_adds_dir
+	echo "Could not find Ultimate adds directory in PATH."
+	echo "Try: export PATH=\$PATH:$ultimate_adds_dir"
+	exit 1
 fi
 
 # Check if branch is dev and is not dirty.
