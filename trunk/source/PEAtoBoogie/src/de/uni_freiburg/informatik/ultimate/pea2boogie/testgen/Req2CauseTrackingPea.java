@@ -266,7 +266,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	}
 
 	private static int getHighestDCPhase(final Phase[] oldLocations, final DCPhase[] dcFormula) {
-		// Find the last phase that is mentioneoldLocationsd in automaton. Its the effect phase.
+		// Find the last phase that is mentioned in automaton. Its the effect phase.
 		int lastDcPhase = 0;
 		for (int i = 0; i < dcFormula.length; i++) {
 			for (final Phase p : oldLocations) {
