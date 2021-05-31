@@ -53,7 +53,7 @@ public class UltimateWebController implements IController<RunDefinition> {
 
 	public JSONObject runUltimate(final JSONObject json) throws Throwable {
 		try {
-			final IStatus status = mExternalUltimateCore.runUltimate();
+			final IStatus status = mExternalUltimateCore.runUltimate(getClass().getSimpleName());
 			mLogger.log("Ultimate returned with status " + status);
 			UltimateResultProcessor.processUltimateResults(mLogger, mCurrentServices, json);
 		} finally {
