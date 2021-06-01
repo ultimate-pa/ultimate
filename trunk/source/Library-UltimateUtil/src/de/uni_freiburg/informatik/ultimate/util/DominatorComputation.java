@@ -88,7 +88,8 @@ public final class DominatorComputation<V> {
 		while (it.hasNext()) {
 			final V dom = it.next();
 			for (final V pred : predecessors) {
-				if (!mDominators.get(pred).contains(dom)) {
+				assert mNodes.contains(pred) : "Discovered unknown node: " + pred;
+				if (!Objects.equals(node, dom) && !mDominators.get(pred).contains(dom)) {
 					it.remove();
 					changes = true;
 					break;

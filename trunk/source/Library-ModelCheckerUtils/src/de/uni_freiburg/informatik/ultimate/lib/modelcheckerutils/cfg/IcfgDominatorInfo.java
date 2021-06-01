@@ -93,22 +93,25 @@ public final class IcfgDominatorInfo<LOC extends IcfgLocation> {
 	private Map<IcfgEdge, Set<IcfgEdge>> computeEdgeDominators() {
 		final Set<IcfgEdge> allEdges = Stream.concat(new IcfgEdgeIterator(mIcfg).asStream(), Stream.of(ROOT_EDGE))
 				.flatMap(this::getRealEdges).collect(Collectors.toSet());
-		return new DominatorComputation<>(allEdges, ROOT_EDGE, this::getPredecessorEdges).getResult();
+		return new DominatorComputation<>(allEdges, ROOT_EDGE, e -> getPredecessorEdges(e, allEdges)).getResult();
 	}
 
-	private Set<IcfgEdge> getPredecessorEdges(final IcfgEdge edge) {
+	// We pass the set of all reachable edges. This is needed e.g. to rule out fork transitions from non-instantiated
+	// thread templates.
+	private Set<IcfgEdge> getPredecessorEdges(final IcfgEdge edge, final Set<IcfgEdge> reachableEdges) {
 		if (edge == ROOT_EDGE) {
 			return Collections.emptySet();
 		}
 
-		final Set<IcfgEdge> pred = realIncoming(edge.getSource()).collect(Collectors.toCollection(HashSet::new));
+		final Set<IcfgEdge> pred = realIncoming(edge.getSource()).filter(reachableEdges::contains)
+				.collect(Collectors.toCollection(HashSet::new));
 		if (mIcfg.getInitialNodes().contains(edge.getSource())) {
 			pred.add(ROOT_EDGE);
 		}
 		if (edge instanceof IIcfgJoinTransitionThreadOther<?>) {
 			final IcfgLocation loc = ((IIcfgJoinTransitionThreadOther<?>) edge)
 					.getCorrespondingIIcfgJoinTransitionCurrentThread().getSource();
-			pred.addAll(realIncoming(loc).collect(Collectors.toSet()));
+			pred.addAll(realIncoming(loc).filter(reachableEdges::contains).collect(Collectors.toSet()));
 		}
 		return pred;
 	}
