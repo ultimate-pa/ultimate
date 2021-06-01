@@ -240,7 +240,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		/**
 		 * Combines persistent set reduction with {@link SLEEP_DELAY_SET}.
 		 */
-		PERSISTENT_SLEEP_DELAY_SET,
+		PERSISTENT_SLEEP_DELAY_SET, PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER,
 		/**
 		 * Combines persistent set reduction with {@link SLEEP_NEW_STATES}.
 		 */
@@ -336,6 +336,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		case SLEEP_NEW_STATES:
 			mSleepSetStateFactory = new SleepSetStateFactoryForRefinement<>(predicateFactory);
 			break;
+		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
 		case PERSISTENT_SLEEP_DELAY_SET:
 		case SLEEP_DELAY_SET:
 			mSleepSetStateFactory = new ISleepSetStateFactory.NoUnrolling<>();
