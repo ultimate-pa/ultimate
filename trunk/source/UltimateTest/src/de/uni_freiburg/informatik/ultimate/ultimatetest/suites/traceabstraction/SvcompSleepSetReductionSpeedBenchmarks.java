@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDec
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 public class SvcompSleepSetReductionSpeedBenchmarks extends AbstractTraceAbstractionTestSuite {
-	private static final int TIMEOUT = 1000; // seconds
+	private static final int TIMEOUT = 150; // seconds
 
 	// @formatter:off
 	private static final String[] BENCHMARKS = {
@@ -65,8 +65,10 @@ public class SvcompSleepSetReductionSpeedBenchmarks extends AbstractTraceAbstrac
 	 */
 	private static final String[] SETTINGS_32BIT = {
 		//"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"
-		//"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-Sleep-NoLbe-Delay.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-Sleep-NoLbe-New_States.epf"
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe.epf",
+		//"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistent-NoLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistentFixedOrder-NoLbe.epf",
 	};
 
 	private static final String[] TOOLCHAINS = {
