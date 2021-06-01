@@ -28,9 +28,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  */
 public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge, IPredicate> {
 	private final ILogger mLogger;
+	private final IIcfg<?> mIcfg;
 	private final ExtendedConcurrencyInformation mInfo;
 	private final IcfgDominatorInfo<?> mDominatorInfo;
 	private final IIndependenceRelation<?, IcfgEdge> mIndependence;
@@ -118,12 +123,87 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		assert !independence.isConditional() : "Conditional independence currently not supported";
 
 		mLogger = services.getLoggingService().getLogger(ThreadBasedPersistentSets.class);
+		mIcfg = icfg;
 		mInfo = new ExtendedConcurrencyInformation(icfg);
 		mDominatorInfo = new IcfgDominatorInfo<>(icfg);
 		mIndependence = independence;
 		mOrder = order;
 		mErrorLocs = errorLocs == null ? IcfgUtils.getErrorLocations(icfg) : errorLocs;
 		mStatistics = new ThreadBasedPersistentSetStatistics(independence);
+	}
+
+	private ISuccessorProvider<IcfgLocation> getActiveConflicts(final IMLPredicate state) {
+		final HashRelation<IcfgLocation, IcfgLocation> conflictRelation = computeAllConflicts(state);
+		final Set<IcfgLocation> active = Set.of(state.getProgramPoints());
+		return loc -> {
+			assert active.contains(loc) : "Only conflicts between active locations should be considered";
+			return conflictRelation.getImage(loc).stream().filter(active::contains).iterator();
+		};
+	}
+
+	private HashRelation<IcfgLocation, IcfgLocation> computeAllConflicts(final IMLPredicate state) {
+		final HashRelation<IcfgLocation, IcfgLocation> conflictRelation = new HashRelation<>();
+		final Map<String, IcfgLocation> threadLocs = getCurrentThreadLocs(state);
+
+		for (final Map.Entry<String, IcfgLocation> entry : threadLocs.entrySet()) {
+			final IcfgLocation loc = entry.getValue();
+
+			// compute commutativity conflicts
+			final Stream<IcfgLocation> commConflicts = getCommutativityConflicts(threadLocs.values(), loc);
+			conflictRelation.addAllPairs(loc, commConflicts.collect(Collectors.toSet()));
+
+			// compute join conflicts
+			final Stream<IcfgLocation> joinConflicts = getJoinConflicts(threadLocs.values(), loc.getProcedure());
+			conflictRelation.addAllPairs(loc, joinConflicts.collect(Collectors.toSet()));
+
+			// compute compatibility conflicts
+			final Stream<IcfgLocation> compConflicts = getCompatibilityConflicts(state, getEnabledActions(state), loc);
+			conflictRelation.addAllPairs(loc, compConflicts.collect(Collectors.toSet()));
+
+			// compute error conflicts
+			final Stream<IcfgLocation> errConflicts = getErrorConflicts(threadLocs.values(), loc);
+			conflictRelation.addAllPairs(loc, errConflicts.collect(Collectors.toSet()));
+		}
+
+		saturateForkConflicts(conflictRelation, threadLocs.values());
+		return conflictRelation;
+	}
+
+	private static void saturateForkConflicts(final HashRelation<IcfgLocation, IcfgLocation> conflictRelation,
+			final Collection<IcfgLocation> locs) {
+		boolean changes;
+		do {
+			final HashRelation<IcfgLocation, IcfgLocation> newConflicts = new HashRelation<>();
+			for (final Map.Entry<IcfgLocation, IcfgLocation> entry : conflictRelation) {
+				final Collection<IcfgLocation> propagatedConflicts =
+						propagateConflict(entry.getKey(), entry.getValue(), conflictRelation, locs);
+				newConflicts.addAllPairs(entry.getKey(), propagatedConflicts);
+			}
+			conflictRelation.addAll(newConflicts);
+			changes = !newConflicts.isEmpty();
+		} while (changes);
+	}
+
+	private static Collection<IcfgLocation> propagateConflict(final IcfgLocation loc1, final IcfgLocation loc2,
+			final HashRelation<IcfgLocation, IcfgLocation> conflictRelation, final Collection<IcfgLocation> locs) {
+		final Set<IcfgLocation> newConflicts = new HashSet<>();
+		for (final IcfgLocation loc : locs) {
+			if (conflictRelation.containsPair(loc1, loc)) {
+				continue;
+			}
+			final boolean canFork = canReachLocally(loc, e -> e instanceof IIcfgForkTransitionThreadOther<?>
+					&& e.getSucceedingProcedure() == loc2.getProcedure(), e -> false);
+			if (canFork) {
+				newConflicts.add(loc);
+			}
+		}
+		return newConflicts;
+	}
+
+	private static boolean canReachLocally(final IcfgLocation source, final Predicate<IcfgEdge> isTarget,
+			final Predicate<IcfgEdge> isPrune) {
+		final IcfgEdgeIterator it = new IcfgEdgeIterator(source, x -> isThreadLocal(x) && !isPrune.test(x));
+		return it.asStream().anyMatch(isTarget);
 	}
 
 	@Override
@@ -140,7 +220,9 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 			return null;
 		}
 
-		final Set<IcfgLocation> persistentLocs = pickMaximalScc(enabled, l -> getConflicts(mlState, enabledActions, l));
+		final Set<IcfgLocation> currentThreadLocs = Set.copyOf(getCurrentThreadLocs(mlState).values());
+
+		final Set<IcfgLocation> persistentLocs = pickMaximalScc(enabled, getActiveConflicts(mlState));
 		assert persistentLocs.size() <= enabled.size() : "Non-enabled locs must not be base for persistent set";
 		if (persistentLocs.size() >= enabled.size()) {
 			mStatistics.reportTrivialQuery();
@@ -152,6 +234,26 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		return result;
 	}
 
+	/**
+	 * Collect a set of locations, with one location for each thread. Running threads are represented by their current
+	 * location, other threads are represented by their initial location.
+	 *
+	 * @param state
+	 *            The current state of the program
+	 * @return the described set of locations
+	 */
+	private Map<String, IcfgLocation> getCurrentThreadLocs(final IMLPredicate state) {
+		final Map<String, IcfgLocation> threadLocs = new HashMap<>();
+		for (final IcfgLocation loc : state.getProgramPoints()) {
+			assert !threadLocs.containsKey(loc.getProcedure()) : "Duplicate location for same thread";
+			threadLocs.put(loc.getProcedure(), loc);
+		}
+		for (final Map.Entry<String, ? extends IcfgLocation> proc : mIcfg.getProcedureEntryNodes().entrySet()) {
+			threadLocs.putIfAbsent(proc.getKey(), proc.getValue());
+		}
+		return threadLocs;
+	}
+
 	private <N> Set<N> pickMaximalScc(final Set<N> nodes, final ISuccessorProvider<N> edges) {
 		assert !nodes.isEmpty() : "Cannot compute SCCs of empty graph";
 
@@ -159,7 +261,9 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 				nodes.size(), nodes);
 		// heuristic: choose smallest maximal SCC
 		final Optional<StronglyConnectedComponent<N>> persistentScc = sccComp.getLeafComponents().stream()
-				.min(Comparator.comparingInt(StronglyConnectedComponent::getNumberOfStates));
+				.min(Comparator
+						.<StronglyConnectedComponent<N>> comparingInt(StronglyConnectedComponent::getNumberOfStates)
+						.thenComparing(Comparator.comparing(StronglyConnectedComponent::toString)));
 
 		assert persistentScc.isPresent() : "There must be always at least one leaf SCC";
 		return persistentScc.get().getNodes();
@@ -216,7 +320,14 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 				.flatMap(s -> s).iterator();
 	}
 
-	private Stream<IcfgLocation> getJoinConflicts(final Set<IcfgLocation> enabled, final String joinedThread) {
+	private Stream<IcfgLocation> getErrorConflicts(final Collection<IcfgLocation> locations, final IcfgLocation loc) {
+		return locations.stream()
+				.filter(other -> canReachLocally(other, e -> mErrorLocs.contains(e.getTarget()),
+						e -> e instanceof IIcfgJoinTransitionThreadOther<?>
+								&& e.getPrecedingProcedure() == loc.getProcedure()));
+	}
+
+	private Stream<IcfgLocation> getJoinConflicts(final Collection<IcfgLocation> enabled, final String joinedThread) {
 		// TODO (optimization:) except if joins are already enabled in state
 		return enabled.stream().filter(l -> canJoinLater(l, joinedThread));
 	}
@@ -226,12 +337,16 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		return !mInfo.getReachableJoinsOf(joinerLoc, joinedThread).isEmpty();
 	}
 
-	private Stream<IcfgLocation> getCommutativityConflicts(final Set<IcfgLocation> enabled, final IcfgLocation loc) {
+	private Stream<IcfgLocation> getCommutativityConflicts(final Collection<IcfgLocation> enabled,
+			final IcfgLocation loc) {
 		// TODO (optimization:) What if conflict is only reachable after join of thread(loc) ?
 		return enabled.stream().filter(l -> hasCommutativityConflict(loc, l));
 	}
 
 	private boolean hasCommutativityConflict(final IcfgLocation loc, final IcfgLocation l) {
+		if (loc == l) {
+			return true;
+		}
 		if (mCommutativityConflict.containsPair(loc, l)) {
 			return true;
 		}
@@ -243,19 +358,18 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 
 	private boolean computeCommutativityConflict(final IcfgLocation loc1, final IcfgLocation loc2) {
 		// TODO optimize: if loc2 -> loc2' and loc2' has a conflict, then so has loc2
-
-		final Iterator<IcfgEdge> iterator = new IcfgEdgeIterator(loc2, ThreadBasedPersistentSets::isThreadLocal);
-		while (iterator.hasNext()) {
-			final IcfgEdge other = iterator.next();
-			for (final IcfgEdge action : loc1.getOutgoingEdges()) {
-				if (!mIndependence.contains(null, other, action)) {
-					mCommutativityConflict.addPair(loc1, loc2);
-					return true;
-				}
-			}
+		// TODO optimize: if path from loc2 to conflict goes through loc2', then loc2' has a conflict too
+		final boolean result = canReachLocally(loc2,
+				other -> loc1.getOutgoingEdges().stream()
+						.anyMatch(action -> !mIndependence.contains(null, other, action)),
+				other -> other instanceof IIcfgJoinTransitionThreadOther<?>
+						&& other.getPrecedingProcedure() == loc1.getProcedure());
+		if (result) {
+			mCommutativityConflict.addPair(loc1, loc2);
+		} else {
+			mNoCommutativityConflict.addPair(loc1, loc2);
 		}
-		mNoCommutativityConflict.addPair(loc1, loc2);
-		return false;
+		return result;
 	}
 
 	private Stream<IcfgLocation> getCompatibilityConflicts(final IPredicate state,
