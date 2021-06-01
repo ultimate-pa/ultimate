@@ -190,7 +190,7 @@
 
   <!-- results for Automizer with integrated Persistent Set and Sleep Set POR, using Delay Set variant -->
   <!-- =============================================================================================== -->
-  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleepPersistent.xml">
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleepPersistent*.xml">
     <!-- default columns -->
     <column title="status"/>
     <column title="cputime" displayTitle="CPU Time"/>
