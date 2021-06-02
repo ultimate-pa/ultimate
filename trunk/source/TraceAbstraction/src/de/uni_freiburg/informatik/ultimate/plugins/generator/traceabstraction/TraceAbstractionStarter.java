@@ -669,8 +669,26 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void reportLocationResults() {
+		// Determine if we were unable to prove thread instance sufficiency. This could e.g. be due to a counterexample,
+		// a timeout, or a unprovable trace.
+		final boolean couldBeInsufficient =
+				mResultsPerLocation.entrySet().stream().anyMatch(entry -> isInsufficientThreadsLocation(entry.getKey())
+						&& !(entry.getValue() instanceof PositiveResult<?>));
+
 		for (final Map.Entry<IcfgLocation, IResult> entry : mResultsPerLocation.entrySet()) {
-			if (!isInsufficientThreadsLocation(entry.getKey())) {
+			final boolean output;
+			if (couldBeInsufficient) {
+				// Output all non-positive results (for real error locations, and for insufficient threads). Results for
+				// insufficient threads are reported to explain why a determination on some real error locations could
+				// potentially not be made.
+				output = !(entry.getValue() instanceof PositiveResult<?>);
+			} else {
+				// Output only results for real error locations. (If not mentioned, the user can simply assume that
+				// sufficient thread instances were used.)
+				output = !isInsufficientThreadsLocation(entry.getKey());
+			}
+
+			if (output) {
 				reportResult(entry.getValue());
 			}
 		}
