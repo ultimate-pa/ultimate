@@ -291,6 +291,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			if (USE_COUNTEREXAMPLE_CACHE) {
 				final PetriNetRun<L, IPredicate> run =
 						enhancementResult.getSecond().getFinitePrefixOfDifference().getAcceptingRun();
+				mFinPrefix = enhancementResult.getSecond().getFinitePrefixOfDifference().getResult();
 				mCounterexampleCache.setCounterexample(run);
 			}
 
