@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -65,13 +66,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
@@ -322,6 +324,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			}
 			mOverallResult = reportResults(errorLocs, clres);
 			mArtifact = clres.getArtifact();
+
+			if (mPrefs.allErrorLocsAtOnce() && mOverallResult == Result.UNSAFE) {
+				break;
+			}
 		}
 
 		return results;
@@ -354,9 +360,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			}
 			return errorLocs.map(x -> new Pair<>(x.getDebugIdentifier(), Set.of(x))).collect(Collectors.toList());
 		}
-		if (mPrefs.insufficientThreadErrorsLast() && isConcurrent(icfg)) {
-			final ConcurrencyInformation concurrencyInformation = icfg.getCfgSmtToolkit().getConcurrencyInformation();
-			final Set<IcfgLocation> inUseErrors = new HashSet<>(concurrencyInformation.getInUseErrorNodeMap().values());
+		if (mPrefs.insufficientThreadErrorsLast() && isAnyForkInCycle(icfg)) {
+			final Set<IcfgLocation> inUseErrors = new HashSet<>(getInUseErrorNodeMap(icfg).values());
 			final Set<IcfgLocation> otherErrors = DataStructureUtils.difference(errNodesOfAllProc, inUseErrors);
 			return List.of(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, otherErrors),
 					new Pair<>(InUseDebugIdentifier.INSTANCE, inUseErrors));
@@ -371,6 +376,38 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				mComputeHoareAnnotation, mPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
 		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
 		return clres;
+	}
+
+	private static boolean isAnyForkInCycle(final IIcfg<IcfgLocation> icfg) {
+		final Map<String, IcfgLocation> entryLocs = icfg.getProcedureEntryNodes();
+		for (final var fork : getInUseErrorNodeMap(icfg).keySet()) {
+			final ArrayDeque<IcfgLocation> queue = new ArrayDeque<>();
+			final Set<IcfgLocation> visited = new HashSet<>();
+			queue.add(fork.getTarget());
+			queue.add(entryLocs.get(fork.getNameOfForkedProcedure()));
+			while (!queue.isEmpty()) {
+				final IcfgLocation loc = queue.pop();
+				if (!visited.add(loc)) {
+					continue;
+				}
+				if (loc.equals(fork.getSource())) {
+					return true;
+				}
+				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+					queue.add(edge.getTarget());
+					if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
+						final var fork2 = (IIcfgForkTransitionThreadCurrent<?>) edge;
+						queue.add(entryLocs.get(fork2.getNameOfForkedProcedure()));
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	private static Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation>
+			getInUseErrorNodeMap(final IIcfg<?> icfg) {
+		return icfg.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap();
 	}
 
 	private void createInvariantResults(final IIcfg<IcfgLocation> icfg,
