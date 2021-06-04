@@ -46,9 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgDominatorInfo;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
@@ -279,35 +277,12 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		final Set<IcfgLocation> locs = Set.of(state.getProgramPoints());
 		for (final IcfgLocation loc : locs) {
 			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-				if (isEnabled(locs, edge)) {
+				if (IcfgUtils.isEnabled(locs, edge)) {
 					enabledActions.addPair(loc, edge);
 				}
 			}
 		}
 		return enabledActions;
-	}
-
-	private static boolean isEnabled(final Set<IcfgLocation> locs, final IcfgEdge edge) {
-		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>
-				|| edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
-			// These edges exist in the Icfg, but in traces they are represented by the respective
-			// IIcfg*TransitionThreadOther transitions. Hence they are never enabled.
-			return false;
-		}
-		if (edge instanceof IIcfgForkTransitionThreadOther<?>) {
-			// Enabled if predecessor location is in state, and forked thread instance is not yet running.
-			final Set<String> threads = locs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
-			final String forkedThread = edge.getSucceedingProcedure();
-			return locs.contains(edge.getSource()) && !threads.contains(forkedThread);
-		}
-		if (edge instanceof IIcfgJoinTransitionThreadOther<?>) {
-			// Enabled if predecessor location and predecessor location of the corresponding
-			// IIcfg*TransitionThreadCurrent instance are both in the state.
-			final var joinOther = (IIcfgJoinTransitionThreadOther<?>) edge;
-			final var joinCurrent = joinOther.getCorrespondingIIcfgJoinTransitionCurrentThread();
-			return locs.contains(joinOther.getSource()) && locs.contains(joinCurrent.getSource());
-		}
-		return locs.contains(edge.getSource());
 	}
 
 	private Iterator<IcfgLocation> getConflicts(final IPredicate state,

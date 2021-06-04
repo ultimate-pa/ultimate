@@ -37,6 +37,10 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -182,5 +186,43 @@ public class IcfgUtils {
 	 */
 	public static <LOC extends IcfgLocation> boolean isExit(final LOC loc, final IIcfg<LOC> icfg) {
 		return icfg.getProcedureExitNodes().get(loc.getProcedure()).equals(loc);
+	}
+
+	/**
+	 * Determines if a given edge is currently enabled, given the set of current locations (across all thread instances)
+	 *
+	 * Note that {@link IIcfgForkTransitionThreadCurrent} and {@link IIcfgJoinTransitionThreadCurrent} are never
+	 * considered enabled, but their counterparts ({@link IIcfgForkTransitionThreadOther} and
+	 * {@link IIcfgJoinTransitionThreadOther}) are.
+	 *
+	 * @param <LOC>
+	 *            The type of locations
+	 * @param locs
+	 *            The set of all current locations
+	 * @param edge
+	 *            An edge of the CFG
+	 * @return true iff the given edge is enabled
+	 */
+	public static <LOC extends IcfgLocation> boolean isEnabled(final Set<LOC> locs, final IcfgEdge edge) {
+		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>
+				|| edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+			// These edges exist in the Icfg, but in traces they are represented by the respective
+			// IIcfg*TransitionThreadOther transitions. Hence they are never enabled.
+			return false;
+		}
+		if (edge instanceof IIcfgForkTransitionThreadOther<?>) {
+			// Enabled if predecessor location is in state, and forked thread instance is not yet running.
+			final Set<String> threads = locs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
+			final String forkedThread = edge.getSucceedingProcedure();
+			return locs.contains(edge.getSource()) && !threads.contains(forkedThread);
+		}
+		if (edge instanceof IIcfgJoinTransitionThreadOther<?>) {
+			// Enabled if predecessor location and predecessor location of the corresponding
+			// IIcfg*TransitionThreadCurrent instance are both in the state.
+			final var joinOther = (IIcfgJoinTransitionThreadOther<?>) edge;
+			final var joinCurrent = joinOther.getCorrespondingIIcfgJoinTransitionCurrentThread();
+			return locs.contains(joinOther.getSource()) && locs.contains(joinCurrent.getSource());
+		}
+		return locs.contains(edge.getSource());
 	}
 }
