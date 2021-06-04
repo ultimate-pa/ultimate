@@ -130,9 +130,9 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 		mStatistics = new ThreadBasedPersistentSetStatistics(independence);
 	}
 
-	private ISuccessorProvider<IcfgLocation> getActiveConflicts(final IMLPredicate state) {
+	private ISuccessorProvider<IcfgLocation> getActiveConflicts(final IMLPredicate state,
+			final Set<IcfgLocation> active) {
 		final HashRelation<IcfgLocation, IcfgLocation> conflictRelation = computeAllConflicts(state);
-		final Set<IcfgLocation> active = Set.of(state.getProgramPoints());
 		return loc -> {
 			assert active.contains(loc) : "Only conflicts between active locations should be considered";
 			return conflictRelation.getImage(loc).stream().filter(active::contains).iterator();
@@ -220,7 +220,7 @@ public class ThreadBasedPersistentSets implements IPersistentSetChoice<IcfgEdge,
 
 		final Set<IcfgLocation> currentThreadLocs = Set.copyOf(getCurrentThreadLocs(mlState).values());
 
-		final Set<IcfgLocation> persistentLocs = pickMaximalScc(enabled, getActiveConflicts(mlState));
+		final Set<IcfgLocation> persistentLocs = pickMaximalScc(enabled, getActiveConflicts(mlState, enabled));
 		assert persistentLocs.size() <= enabled.size() : "Non-enabled locs must not be base for persistent set";
 		if (persistentLocs.size() >= enabled.size()) {
 			mStatistics.reportTrivialQuery();
