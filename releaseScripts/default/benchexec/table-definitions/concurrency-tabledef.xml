@@ -129,6 +129,24 @@
     <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
   </result>
 
+  <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant (different DFS orders) -->
+  <!-- =================================================================================================== -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleep.Order*.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+  </result>
+
   <!-- results for Automizer with integrated Sleep Set POR, using New States variant -->
   <!-- ============================================================================= -->
   <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleep.xml">

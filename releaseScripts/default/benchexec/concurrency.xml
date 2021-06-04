@@ -32,6 +32,22 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe.epf</option>
 	</rundefinition>
 
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderLockstep">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom42">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random42.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom521">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random521.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom7777">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random7777.epf</option>
+	</rundefinition>
+
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
 	</rundefinition-->
@@ -40,13 +56,13 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepUncond-NoLbe.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.Persistent">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.Persistent">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-Persistent-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleepPersistent">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleepPersistent">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistent-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleepPersistentFixedOrder">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistentFixedOrder-NoLbe.epf</option>
