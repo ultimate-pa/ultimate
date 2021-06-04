@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -97,6 +98,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
 	private static final boolean DEF_COND_POR = true;
+
+	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
+	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
+
+	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
+	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
 
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
@@ -457,6 +464,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
 				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
+						OrderType.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
+						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,

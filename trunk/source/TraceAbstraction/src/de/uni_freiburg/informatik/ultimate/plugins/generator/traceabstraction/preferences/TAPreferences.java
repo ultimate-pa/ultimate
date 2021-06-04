@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AcceleratedInterpolationLoopAccelerationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
@@ -356,6 +357,14 @@ public final class TAPreferences {
 
 	public PartialOrderMode getPartialOrderMode() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_MODE, PartialOrderMode.class);
+	}
+
+	public OrderType getDfsOrderType() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.class);
+	}
+
+	public long getDfsOrderSeed() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
 	}
 
 	public boolean getConditionalPor() {

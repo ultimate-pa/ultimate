@@ -106,7 +106,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private final boolean mConditionalPor;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final IDfsVisitor<L, IPredicate> mVisitor;
-	private final IDfsOrder<L, IPredicate> mDfsOrder = ConstantDfsOrder.byHashCode();
+	private final IDfsOrder<L, IPredicate> mDfsOrder;
 
 	// Maps an IPredicate built through refinement rounds to the sequence of conjuncts it was built from.
 	// This is used to distribute an independence query across conjuncts.
@@ -122,6 +122,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
+	public enum OrderType {
+		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM
+	}
+
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
@@ -129,6 +133,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
+		mDfsOrder = getDfsOrder();
 		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
 		mVisitor = supportsDeadStateOptimization(mPartialOrderMode)
@@ -282,6 +287,21 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		// At the moment, only sleep sets with new states support this optimization.
 		return mode == PartialOrderMode.SLEEP_NEW_STATES || mode == PartialOrderMode.PERSISTENT_SLEEP_NEW_STATES
 				|| mode == PartialOrderMode.NONE;
+	}
+
+	private IDfsOrder<L, IPredicate> getDfsOrder() {
+		switch (mPref.getDfsOrderType()) {
+		case BY_SERIAL_NUMBER:
+			return ConstantDfsOrder.byHashCode();
+		case PSEUDO_LOCKSTEP:
+			return new PseudoLockstepOrder<>();
+		case RANDOM:
+			return new RandomDfsOrder<>(mPref.getDfsOrderSeed(), false);
+		case POSITIONAL_RANDOM:
+			return new RandomDfsOrder<>(mPref.getDfsOrderSeed(), true);
+		default:
+			throw new UnsupportedOperationException("Unknown order type: " + mPref.getDfsOrderType());
+		}
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructSemanticIndependence(final CfgSmtToolkit csToolkit) {
