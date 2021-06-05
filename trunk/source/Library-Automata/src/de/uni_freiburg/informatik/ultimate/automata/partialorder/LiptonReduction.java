@@ -91,6 +91,7 @@ public class LiptonReduction<L, P> {
 	private final BoundedPetriNet<L, P> mPetriNet;
 	private BoundedPetriNet<L, P> mResult;
 	protected final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
+	private final IStuckPlaceChecker<L, P> mStuckPlaceChecker;
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -105,10 +106,13 @@ public class LiptonReduction<L, P> {
 	 *            An {@link IPlaceFactory} capable of creating places for the given Petri net.
 	 * @param independenceRelation
 	 *            The independence relation used for mover checks.
+	 * @param stuckPlaceChecker
+	 *            An {@link IStuckPlaceChecker}.
 	 */
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
 			final ICompositionFactory<L> compositionFactory, final IPlaceFactory<P> placeFactory,
-			final IIndependenceRelation<Set<P>, L> independenceRelation) {
+			final IIndependenceRelation<Set<P>, L> independenceRelation,
+			final IStuckPlaceChecker<L, P> stuckPlaceChecker) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mCompositionFactory = compositionFactory;
@@ -117,6 +121,7 @@ public class LiptonReduction<L, P> {
 		mPetriNet = petriNet;
 		mCutOffs = new HashRelation<>();
 		mNewToOldTransitions = new HashMap<>();
+		mStuckPlaceChecker = stuckPlaceChecker;
 	}
 
 	/**
@@ -331,7 +336,9 @@ public class LiptonReduction<L, P> {
 						composedHere.add(t1);
 						composedHere.add(t2);
 
-						replacementNeeded.add(t1);
+						if (mStuckPlaceChecker.mightGetStuck(petriNet, place)) {
+							replacementNeeded.add(t1);
+						}
 
 						if (isYv) {
 							obsoleteTransitions.add(t1);

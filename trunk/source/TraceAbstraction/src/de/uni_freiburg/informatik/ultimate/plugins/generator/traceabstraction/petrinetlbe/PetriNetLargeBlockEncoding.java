@@ -138,8 +138,10 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		try {
 			final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
 			final PlaceFactory placeFactory = new PlaceFactory(predicateFactory);
-			final LiptonReduction<L, IPredicate> lipton =
-					new LiptonReduction<>(automataServices, petriNet, compositionFactory, placeFactory, moverCheck);
+			final StuckPlaceChecker<L, IPredicate> stuckPlaceChecker =
+					new StuckPlaceChecker<>(mLogger, mServices, mManagedScript);
+			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(automataServices, petriNet,
+					compositionFactory, placeFactory, moverCheck, stuckPlaceChecker);
 			lipton.performReduction();
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
