@@ -28,25 +28,25 @@
 	</rundefinition>
 -->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderLockstep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe.epf</option>
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Lockstep.epf</option>
 	</rundefinition>
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom42">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom42">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random42.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom521">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom521">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random521.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom7777">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom7777">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random7777.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
