@@ -393,7 +393,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			final ExplicitLhsPolynomialRelation upper = elpr.changeRelationSymbol(lessRelationSymbol);
 			result.addAntiDerRelation(lower, upper);
 		}
-
 		return result;
 	}
 
