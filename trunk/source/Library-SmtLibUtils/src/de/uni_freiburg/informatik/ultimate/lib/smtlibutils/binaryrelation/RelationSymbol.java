@@ -345,125 +345,78 @@ public enum RelationSymbol {
 		}
 	}
 
-	public RelationSymbol getInequality(final boolean strict, final Sort sort, final BvSignedness signess) {
-		switch (this) {
-		case EQ:
-			return RelationSymbol.EQ;
-		case DISTINCT:
-			return RelationSymbol.DISTINCT;
-		case LEQ:
-		case LESS:
-			final RelationSymbol rs1;
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				if (strict) {
-					if (signess == BvSignedness.SIGNED) {
-						rs1 = RelationSymbol.BVSLT;
-					} else if (signess == BvSignedness.UNSIGNED) {
-						rs1 = RelationSymbol.BVULT;
-					} else {
-						rs1 = this;
-					}
-				} else {
-					if (signess == BvSignedness.SIGNED) {
-						rs1 = RelationSymbol.BVSLE;
-					} else if (signess == BvSignedness.UNSIGNED) {
-						rs1 = RelationSymbol.BVULE;
-					} else {
-						rs1 = this;
-					}
+	public static RelationSymbol getLessRelationSymbol(final boolean strict, final Sort sort,
+			final BvSignedness sigedness) {
+		final RelationSymbol result;
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			if (strict) {
+				switch (sigedness) {
+				case SIGNED:
+					result = BVSLT;
+					break;
+				case UNSIGNED:
+					result = BVULT;
+					break;
+				default:
+					throw new AssertionError("unknown value " + sigedness);
 				}
 			} else {
-				if (strict) {
-					rs1 = RelationSymbol.LESS;
-				} else {
-					rs1 = RelationSymbol.LEQ;
-				}
-
-			}
-			return rs1;
-		case GEQ:
-		case GREATER:
-			final RelationSymbol rs2;
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				if (strict) {
-					if (signess == BvSignedness.SIGNED) {
-						rs2 = RelationSymbol.BVSGT;
-					} else if (signess == BvSignedness.UNSIGNED) {
-						rs2 = RelationSymbol.BVUGT;
-					} else {
-						rs2 = this;
-					}
-				} else {
-					if (signess == BvSignedness.SIGNED) {
-						rs2 = RelationSymbol.BVSGE;
-					} else if (signess == BvSignedness.UNSIGNED) {
-						rs2 = RelationSymbol.BVUGE;
-					} else {
-						rs2 = this;
-					}
-				}
-
-			} else {
-				if (strict) {
-					rs2 = RelationSymbol.GREATER;
-				} else {
-					rs2 = RelationSymbol.GEQ;
+				switch (sigedness) {
+				case SIGNED:
+					result = BVSLE;
+					break;
+				case UNSIGNED:
+					result = BVULE;
+					break;
+				default:
+					throw new AssertionError("unknown value " + sigedness);
 				}
 			}
-			return rs2;
-		case BVULE:
+		} else {
 			if (strict) {
-				return RelationSymbol.BVULT;
+				result = LESS;
 			} else {
-				return RelationSymbol.BVULE;
+				result = LEQ;
 			}
-
-		case BVULT:
-			if (strict) {
-				return RelationSymbol.BVULT;
-			} else {
-				return RelationSymbol.BVULE;
-			}
-		case BVUGE:
-			if (strict) {
-				return RelationSymbol.BVUGT;
-			} else {
-				return RelationSymbol.BVUGE;
-			}
-		case BVUGT:
-			if (strict) {
-				return RelationSymbol.BVUGT;
-			} else {
-				return RelationSymbol.BVUGE;
-			}
-		case BVSLE:
-			if (strict) {
-				return RelationSymbol.BVSLT;
-			} else {
-				return RelationSymbol.BVSLE;
-			}
-		case BVSLT:
-			if (strict) {
-				return RelationSymbol.BVSLT;
-			} else {
-				return RelationSymbol.BVSLE;
-			}
-		case BVSGE:
-			if (strict) {
-				return RelationSymbol.BVSGT;
-			} else {
-				return RelationSymbol.BVSGE;
-			}
-		case BVSGT:
-			if (strict) {
-				return RelationSymbol.BVSGT;
-			} else {
-				return RelationSymbol.BVSGE;
-			}
-		default:
-			throw new AssertionError("unknown RelationSymbol " + this);
 		}
+		return result;
+	}
 
+	public static RelationSymbol getGreaterRelationSymbol(final boolean strict, final Sort sort,
+			final BvSignedness sigedness) {
+		final RelationSymbol result;
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			if (strict) {
+				switch (sigedness) {
+				case SIGNED:
+					result = BVSGT;
+					break;
+				case UNSIGNED:
+					result = BVUGT;
+					break;
+				default:
+					throw new AssertionError("unknown value " + sigedness);
+				}
+			} else {
+				switch (sigedness) {
+				case SIGNED:
+					result = BVSGE;
+					break;
+				case UNSIGNED:
+					result = BVUGE;
+					break;
+				default:
+					throw new AssertionError("unknown value " + sigedness);
+				}
+			}
+		} else {
+			if (strict) {
+				result = GREATER;
+			} else {
+				result = GEQ;
+			}
+		}
+		return result;
 	}
 
 	public boolean isSignedBvRelation() {
@@ -509,6 +462,23 @@ public enum RelationSymbol {
 			return true;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+	}
+
+	public BvSignedness getSignedness() {
+		switch(this) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+			return BvSignedness.SIGNED;
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			return BvSignedness.UNSIGNED;
+		default:
+			throw new AssertionError("not a bitvector inequality " + this);
 		}
 	}
 }
