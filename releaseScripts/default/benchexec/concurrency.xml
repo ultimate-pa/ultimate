@@ -2,9 +2,9 @@
 <benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 	<option name="--force-no-wrapper" />
 
-	<rundefinition name="Automizer FA">
+	<!--rundefinition name="Automizer FA">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 <!--
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.None">
