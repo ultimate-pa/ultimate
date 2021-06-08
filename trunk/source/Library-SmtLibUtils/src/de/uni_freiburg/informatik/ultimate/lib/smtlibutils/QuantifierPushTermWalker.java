@@ -93,7 +93,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	@Override
 	DescendResult convert(final Context context, final Term term) {
 		FormulaClassification classification = null;
-		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mMgdScript.getScript(), context.getCriticalConstraint(), term);
+		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript.getScript(), context.getCriticalConstraint(), term);
 				//PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(), Collections.singleton(term));
 		int iterations = 0;
 		while (true) {

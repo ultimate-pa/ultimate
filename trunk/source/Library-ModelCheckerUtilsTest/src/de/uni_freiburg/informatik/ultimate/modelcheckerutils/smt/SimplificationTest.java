@@ -498,6 +498,16 @@ public class SimplificationTest {
 		runSimplificationTest(funDecls, formulaAsString, simplified, true, mServices, mLogger, mMgdScript);
 	}
 
+	@Test
+	public void reqchecker_vacuity_test82() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "Constraint_assumption_ct0_pc", "req1_ct0_pc"), };
+		final String formulaAsString = "(and (= Constraint_assumption_ct0_pc 0) (let ((.cse2 (= (+ req1_ct0_pc (- 16)) 0)) (.cse1 (= (+ req1_ct0_pc (- 15)) 0)) (.cse6 (= (+ req1_ct0_pc (- 10)) 0)) (.cse4 (= (+ req1_ct0_pc (- 9)) 0))) (let ((.cse20 (not .cse4)) (.cse5 (= (+ req1_ct0_pc (- 6)) 0)) (.cse19 (not .cse6)) (.cse9 (= (+ req1_ct0_pc (- 8)) 0)) (.cse11 (= (+ req1_ct0_pc (- 14)) 0)) (.cse13 (= (+ req1_ct0_pc (- 13)) 0)) (.cse14 (= (+ req1_ct0_pc (- 5)) 0)) (.cse16 (= (+ req1_ct0_pc (- 12)) 0)) (.cse3 (= (+ req1_ct0_pc (- 2)) 0)) (.cse17 (= (+ req1_ct0_pc (- 11)) 0)) (.cse22 (not .cse1)) (.cse23 (not .cse2)) (.cse15 (= req1_ct0_pc 0)) (.cse10 (= (+ req1_ct0_pc (- 7)) 0)) (.cse12 (= (+ req1_ct0_pc (- 4)) 0)) (.cse18 (= (+ req1_ct0_pc (- 1)) 0))) (or (let ((.cse21 (or .cse23 .cse15 .cse5 .cse3)) (.cse7 (= (+ req1_ct0_pc (- 3)) 0)) (.cse0 (or .cse22 .cse15 .cse5 .cse3))) (and .cse0 (or .cse1 (and (or .cse2 (let ((.cse8 (or .cse4 .cse9 .cse10 .cse11 .cse12 .cse7 .cse13 .cse14 .cse15 .cse5 .cse6 .cse16 .cse3 .cse17 .cse18))) (and (or (not .cse3) .cse4 .cse5 .cse6 .cse7 (and .cse8 (or .cse1 .cse4 .cse9 .cse10 .cse2 .cse11 .cse12 .cse7 .cse13 .cse14 .cse15 .cse5 .cse6 .cse16 .cse3 .cse17 .cse18)) .cse18) (or (and .cse0 (or .cse1 (and (or .cse2 (and (or .cse4 (and (or .cse15 .cse5 .cse19) (or .cse5 .cse6 (and .cse8 .cse15)))) (or .cse15 .cse20 .cse5))) .cse21))) .cse3)))) .cse21)) .cse21 (or (and (or .cse1 .cse4 .cse9 .cse10 .cse11 .cse12 .cse7 .cse13 .cse14 .cse15 .cse5 .cse6 .cse16 .cse3 .cse17 .cse18) .cse0) .cse2))) (let ((.cse25 (or .cse23 .cse15 .cse10 .cse12 .cse18))) (let ((.cse24 (or .cse22 .cse15 .cse10 .cse12 .cse18)) (.cse26 (and .cse25 (or .cse4 .cse9 .cse10 .cse2 .cse11 .cse12 .cse13 .cse14 .cse15 .cse6 .cse16 .cse3 .cse17 .cse18)))) (and (or (and .cse24 (or .cse1 (and .cse25 (or (and (or .cse15 .cse20 .cse10 .cse12 .cse18) (or (and (or .cse5 .cse6 .cse3 .cse26) (or .cse15 .cse19 .cse10 .cse12 .cse18)) .cse4)) .cse2)))) .cse3) (or .cse3 (and .cse24 (or .cse1 .cse3 .cse26)))))) (= (+ req1_ct0_pc (- 17)) 0) (= (+ req1_ct0_pc (- 20)) 0) (= (+ req1_ct0_pc (- 19)) 0) (= (+ req1_ct0_pc (- 18)) 0)))))";
+		final String simplified = formulaAsString;
+		runSimplificationTest(funDecls, formulaAsString, simplified, true, mServices, mLogger, mMgdScript);
+	}
+
+
+
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript) {
