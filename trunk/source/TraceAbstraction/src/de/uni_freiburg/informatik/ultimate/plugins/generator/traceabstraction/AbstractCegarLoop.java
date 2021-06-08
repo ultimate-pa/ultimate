@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  * CEGAR loop of a trace abstraction. Can be used to check safety and termination of sequential and concurrent programs.
@@ -375,13 +376,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 	}
 
 	private Result iterateInternal() {
-		mLogger.info("Interprodecural is " + mPref.interprocedural());
-		mLogger.info("Hoare is " + mComputeHoareAnnotation);
-		mLogger.info("Compute interpolants for " + mPref.interpolation());
-		mLogger.info("Backedges is " + mPref.interpolantAutomaton());
-		mLogger.info("Determinization is " + mPref.interpolantAutomatonEnhancement());
-		mLogger.info("Difference is " + mPref.differenceSenwa());
-		mLogger.info("Minimize is " + mPref.getMinimization());
+		mLogger.info(ReflectionUtil.instanceFieldsToString(mPref));
 
 		mIteration = 0;
 
@@ -438,15 +433,14 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 					final String automatonType;
 					final LBool isCounterexampleFeasible = isCounterexampleFeasible();
 					if (isCounterexampleFeasible == Script.LBool.SAT) {
-						if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
-							if (mLogger.isInfoEnabled()) {
-								mLogger.info("Generalizing and excluding counterexample to continue analysis");
-							}
-							automatonType = "Error";
-							constructErrorAutomaton();
-						} else {
+						if (!CONTINUE_AFTER_ERROR_TRACE_FOUND) {
 							return reportResult(Result.UNSAFE);
 						}
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("Generalizing and excluding counterexample to continue analysis");
+						}
+						automatonType = "Error";
+						constructErrorAutomaton();
 					} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
 						if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.UNKNOWN)) {
 							return reportResult(Result.UNSAFE);
@@ -593,4 +587,5 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 	public UnprovabilityReason getReasonUnknown() {
 		return mReasonUnknown;
 	}
+
 }
