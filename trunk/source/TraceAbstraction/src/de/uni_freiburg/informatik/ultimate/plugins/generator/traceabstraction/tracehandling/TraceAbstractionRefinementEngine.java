@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -68,10 +69,11 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 	private NestedWordAutomaton<L, IPredicate> mInterpolantAutomaton;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
 
-	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<L> strategy) {
+	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
+			final IRefinementStrategy<L> strategy) {
 		mLogger = logger;
 		mStrategy = strategy;
-		mAutomatonFreeEngine = new AutomatonFreeRefinementEngine<>(logger, strategy);
+		mAutomatonFreeEngine = new AutomatonFreeRefinementEngine<>(services, logger, strategy);
 		generateProof();
 	}
 
@@ -137,7 +139,7 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 		try {
 
 			final List<QualifiedTracePredicates> perfectIpps =
-					ipps.stream().filter(a -> a.isPerfect()).collect(Collectors.toList());
+					ipps.stream().filter(QualifiedTracePredicates::isPerfect).collect(Collectors.toList());
 			final List<QualifiedTracePredicates> imperfectIpps =
 					ipps.stream().filter(a -> !a.isPerfect()).collect(Collectors.toList());
 

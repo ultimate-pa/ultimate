@@ -544,7 +544,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		if (isEmptyHeuristicCex == null && isEmptyCex == null) {
 			return true;
-		} else if (isEmptyHeuristicCex != null && isEmptyCex == null) {
+		}
+		if (isEmptyHeuristicCex != null && isEmptyCex == null) {
 			mLogger.fatal("IsEmptyHeuristic found a path but IsEmpty did not.");
 			mLogger.fatal("IsEmptyHeuristic: " + toStr.apply(isEmptyHeuristicCex));
 			return false;
@@ -607,7 +608,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mCounterexample, mAbstraction,
 					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
-			mRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
+			mRefinementEngine = new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
@@ -636,24 +637,20 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 						mCsToolkit.getModifiableGlobalsTable(), mRefinementEngine.getPredicateUnifier(),
 						mFaultLocalizationMode, mSimplificationTechnique, mXnfConversionTechnique,
 						mIcfg.getCfgSmtToolkit().getSymbolTable(), (IIcfg<IcfgLocation>) mIcfg);
-				if (mRcfgProgramExecution instanceof IcfgProgramExecution) {
-					mRcfgProgramExecution = ((IcfgProgramExecution<L>) mRcfgProgramExecution)
-							.addRelevanceInformation(fl.getRelevanceInformation());
-				} else {
+				if (!(mRcfgProgramExecution instanceof IcfgProgramExecution)) {
 					throw new UnsupportedOperationException("Program execution is not " + IcfgProgramExecution.class);
 				}
+				mRcfgProgramExecution = ((IcfgProgramExecution<L>) mRcfgProgramExecution)
+						.addRelevanceInformation(fl.getRelevanceInformation());
 
 				if (mFaultLocalizationAngelic) {
 					mRcfgProgramExecution =
 							new IcfgAngelicProgramExecution<>(mRcfgProgramExecution, fl.getAngelicStatus());
 				}
 			}
-		} else {
-			if (DUMP_DIFFICULT_PATH_PROGRAMS) {
-				mPathProgramDumpController.reportPathProgram((NestedRun<L, IPredicate>) mCounterexample,
-						((TraceAbstractionRefinementEngine<L>) mRefinementEngine).somePerfectSequenceFound(),
-						mIteration);
-			}
+		} else if (DUMP_DIFFICULT_PATH_PROGRAMS) {
+			mPathProgramDumpController.reportPathProgram((NestedRun<L, IPredicate>) mCounterexample,
+					((TraceAbstractionRefinementEngine<L>) mRefinementEngine).somePerfectSequenceFound(), mIteration);
 		}
 
 		mCegarLoopBenchmark.addRefinementEngineStatistics(mRefinementEngine.getRefinementEngineStatistics());
@@ -1190,7 +1187,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			} catch (final AutomataOperationCanceledException e) {
 				return null;
 			}
-		} else if (mPref.artifact() == Artifact.RCFG) {
+		}
+		if (mPref.artifact() == Artifact.RCFG) {
 			return mIcfg;
 		} else {
 			throw new IllegalArgumentException();

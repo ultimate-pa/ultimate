@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -76,8 +77,11 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 	private List<QualifiedTracePredicates> mQualifiedTracePredicates;
 
 	private String mUsedTraceCheckFingerprint;
+	private final IUltimateServiceProvider mServices;
 
-	public AutomatonFreeRefinementEngine(final ILogger logger, final IRefinementStrategy<L> strategy) {
+	public AutomatonFreeRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
+			final IRefinementStrategy<L> strategy) {
+		mServices = services;
 		mLogger = logger;
 		mStrategy = strategy;
 		mRefinementEngineStatistics = new RefinementEngineStatisticsGenerator();
@@ -243,7 +247,10 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 	private LBool checkFeasibility() {
 		while (mStrategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<L, ?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
+			abortIfTimeout("Timeout during feasibility check between " + mUsedTraceCheckFingerprint + " and "
+					+ getModuleFingerprintString(currentTraceCheck));
 			mUsedTraceCheckFingerprint = getModuleFingerprintString(currentTraceCheck);
+
 			logModule("Using trace check", currentTraceCheck);
 			final LBool feasibilityResult = currentTraceCheck.isCorrect();
 			if (feasibilityResult == LBool.SAT) {
@@ -262,6 +269,12 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		}
 		// no trace checker could determine the feasibility of the trace, need to abort
 		return LBool.UNKNOWN;
+	}
+
+	private void abortIfTimeout(final String taskDesc) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), taskDesc);
+		}
 	}
 
 	private void abortIfNecessaryOnUnknown(final TraceCheckReasonUnknown tcra) {
@@ -291,6 +304,8 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private IIpgStrategyModule<?, L> tryExecuteInterpolantGenerator() {
 		final IIpgStrategyModule<?, L> interpolantGenerator = mStrategy.nextInterpolantGenerator();
+		abortIfTimeout(
+				"Timeout during proof generation before using " + getModuleFingerprintString(interpolantGenerator));
 		final InterpolantComputationStatus status;
 		try {
 			logModule("Using interpolant generator", interpolantGenerator);

@@ -154,7 +154,7 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 		final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(counterexample, mAbstraction,
 				mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
 				IPostconditionProvider.constructDefaultPostconditionProvider(), refinementStrategy);
-		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mLogger, strategy);
+		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mPrefs.getUltimateServices(), mLogger, strategy);
 		final List<L> trace = counterexample.getWord().asList();
 		final RefinementEngineStatisticsGenerator statistics = mRefinementEngine.getRefinementEngineStatistics();
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();

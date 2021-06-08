@@ -255,22 +255,20 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (mLassoCheckResult.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
 					|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
+		} else if (mLassoCheckResult.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
+			assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE;
 		} else {
-			if (mLassoCheckResult.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-				assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE;
+			// loop not infeasible
+			if (mLassoCheckResult.getLoopTermination() == SynthesisResult.TERMINATING) {
+				assert mBspm.providesPredicates();
 			} else {
-				// loop not infeasible
-				if (mLassoCheckResult.getLoopTermination() == SynthesisResult.TERMINATING) {
-					assert mBspm.providesPredicates();
+				assert mConcatCheck != null;
+				if (mLassoCheckResult.getConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
+					assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
+							|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
+					assert mConcatenatedCounterexample != null;
 				} else {
-					assert mConcatCheck != null;
-					if (mLassoCheckResult.getConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
-						assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
-								|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
-						assert mConcatenatedCounterexample != null;
-					} else {
-						assert mLassoCheckResult.getContinueDirective() != ContinueDirective.REFINE_FINITE;
-					}
+					assert mLassoCheckResult.getContinueDirective() != ContinueDirective.REFINE_FINITE;
 				}
 			}
 		}
@@ -662,7 +660,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
-		} else if (nonTermArgument != null) {
+		}
+		if (nonTermArgument != null) {
 			return SynthesisResult.NONTERMINATING;
 		} else {
 			return SynthesisResult.UNKNOWN;
@@ -866,12 +865,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			if (mLassoTermination == SynthesisResult.TERMINATING) {
 				mContinueDirective = ContinueDirective.REFINE_BUCHI;
 				return;
-			} else if (mLassoTermination == SynthesisResult.NONTERMINATING) {
+			}
+			if (mLassoTermination == SynthesisResult.NONTERMINATING) {
 				mContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
-				return;
 			} else {
 				mContinueDirective = ContinueDirective.REPORT_UNKNOWN;
-				return;
 			}
 		}
 
@@ -925,7 +923,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						IPreconditionProvider.constructDefaultPreconditionProvider(),
 						IPostconditionProvider.constructDefaultPostconditionProvider());
 				final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =
-						new TraceAbstractionRefinementEngine<>(mLogger, strategy);
+						new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
 				mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());
 				return engine;
 			} catch (final ToolchainCanceledException tce) {
