@@ -28,6 +28,10 @@ package de.uni_freiburg.informatik.ultimate.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -250,14 +254,16 @@ public class ReflectionUtil {
 
 	/**
 	 * Return a string of the form "name=value, " for all variables and their values from the instance represented by
-	 * obj, excluding fields of the {@link Object} type itself, and fields whose name starts with $.
+	 * obj, excluding fields of the {@link Object} type itself, fields whose name starts with $, and fields that are
+	 * marked with a {@link ExcludeFromToString} annotation.
 	 */
 	public static String instanceFieldsToString(final Object obj) {
 		if (obj == null) {
 			return "NULL";
 		}
 		final List<Field> fields = instanceFields(obj);
-		return fields.stream().filter(a -> !a.getName().startsWith("$")).map(a -> fieldToString(obj, a))
+		return fields.stream().filter(a -> !a.getName().startsWith("$"))
+				.filter(a -> a.getAnnotation(ExcludeFromToString.class) == null).map(a -> fieldToString(obj, a))
 				.collect(Collectors.joining(", "));
 	}
 
@@ -407,20 +413,20 @@ public class ReflectionUtil {
 			} catch (final URISyntaxException e) {
 				return null;
 			}
-		} else if ("bundleresource".equals(protocol)) {
-			if (resourceConverter == null) {
-				throw new AssertionError("Someone supplied a bundleresource resource but we do not have a converter -- "
-						+ "check if this deployable is built correctly "
-						+ "(maybe de.uni_freiburg.informatik.ultimate.core is missing?)");
-			}
-			try {
-				final URL fileUrl = resourceConverter.convert(url);
-				return new File(fileUrl.getFile());
-			} catch (final IOException e) {
-				return null;
-			}
-		} else {
+		}
+		if (!"bundleresource".equals(protocol)) {
 			throw new UnsupportedOperationException("unknown protocol " + protocol);
+		}
+		if (resourceConverter == null) {
+			throw new AssertionError("Someone supplied a bundleresource resource but we do not have a converter -- "
+					+ "check if this deployable is built correctly "
+					+ "(maybe de.uni_freiburg.informatik.ultimate.core is missing?)");
+		}
+		try {
+			final URL fileUrl = resourceConverter.convert(url);
+			return new File(fileUrl.getFile());
+		} catch (final IOException e) {
+			return null;
 		}
 	}
 
@@ -652,7 +658,19 @@ public class ReflectionUtil {
 	 */
 	@FunctionalInterface
 	public interface UrlConverter {
-		public URL convert(URL url) throws IOException;
+		URL convert(URL url) throws IOException;
+	}
+
+	/**
+	 * Annotation that marks a field as excluded by the {@link ReflectionUtil#instanceFieldsToString(Object)} method.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.FIELD)
+	public @interface ExcludeFromToString {
+
 	}
 
 }
