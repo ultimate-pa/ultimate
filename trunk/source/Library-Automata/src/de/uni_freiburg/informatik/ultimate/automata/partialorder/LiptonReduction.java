@@ -269,6 +269,52 @@ public class LiptonReduction<L, P> {
 	}
 
 	/**
+	 * Check whether the first transition needs to be kept after composing two transitions.
+	 *
+	 * @param place
+	 *            The place where the compositions happens at.
+	 * @param t1
+	 *            The first transition.
+	 * @param t2
+	 *            The second transition.
+	 * @param petriNet
+	 *            The Petri net.
+	 * @return true if the first transition is still needed after compossition, false if the transition can be deleted.
+	 */
+	private boolean isFirstTransitionNeeded(final P place, final ITransition<L, P> t1, final ITransition<L, P> t2,
+			final BoundedPetriNet<L, P> petriNet) {
+		if (!mStuckPlaceChecker.mightGetStuck(petriNet, place)) {
+			return false;
+		}
+
+		// Check whether any transition which either
+		// - is co-enabled to t1 or t2, or
+		// - is a successor of a successor place of t1 other than the given place
+		// is an ancestor of an accepting place.
+		final Set<ITransition<L, P>> relevantTransitions = new HashSet<>(mCoEnabledRelation.getImage(t1));
+		relevantTransitions.addAll(mCoEnabledRelation.getImage(t2));
+		final Set<P> successorPlaces = new HashSet<>(petriNet.getSuccessors(t1));
+		successorPlaces.remove(place);
+		relevantTransitions.addAll(successorPlaces.stream().flatMap(p2 -> petriNet.getSuccessors(p2).stream())
+				.collect(Collectors.toSet()));
+
+		final Set<Event<L, P>> events =
+				relevantTransitions.stream().flatMap(t -> getFirstEvents(t).stream()).collect(Collectors.toSet());
+		final Set<Event<L, P>> errorEvents =
+				petriNet.getAcceptingPlaces().stream().flatMap(p -> petriNet.getPredecessors(p).stream())
+						.flatMap(t -> getLastEvents(t).stream()).collect(Collectors.toSet());
+
+		for (final Event<L, P> errorEvent : errorEvents) {
+			for (final Event<L, P> e : events) {
+				if (isAncestorEvent(e, errorEvent, new HashSet<>())) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Performs the sequence rule on the Petri net.
 	 *
 	 * @param petriNet
@@ -336,7 +382,7 @@ public class LiptonReduction<L, P> {
 						composedHere.add(t1);
 						composedHere.add(t2);
 
-						if (mStuckPlaceChecker.mightGetStuck(petriNet, place)) {
+						if (isFirstTransitionNeeded(place, t1, t2, petriNet)) {
 							replacementNeeded.add(t1);
 						}
 
