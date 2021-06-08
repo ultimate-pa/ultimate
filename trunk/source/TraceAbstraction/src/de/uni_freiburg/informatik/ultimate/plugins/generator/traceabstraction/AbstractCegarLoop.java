@@ -389,6 +389,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 		try {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
 			try {
+				abortIfTimeout();
 				getInitialAbstraction();
 			} catch (final AutomataOperationCanceledException aoce) {
 				final RunningTaskInfo runningTaskInfo =
@@ -420,6 +421,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 			}
 
 			for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
+				abortIfTimeout();
 				final String msg = "=== Iteration " + mIteration + " === " + errorLocs() + "===";
 				mServices.getStorage().pushMarker(msg);
 				mLogger.info(msg);
@@ -586,6 +588,12 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 
 	public UnprovabilityReason getReasonUnknown() {
 		return mReasonUnknown;
+	}
+
+	protected void abortIfTimeout() {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass());
+		}
 	}
 
 }
