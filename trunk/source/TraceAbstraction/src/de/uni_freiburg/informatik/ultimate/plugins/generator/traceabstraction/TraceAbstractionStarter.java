@@ -353,14 +353,15 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final Set<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		if (!mPrefs.allErrorLocsAtOnce()) {
 			Stream<IcfgLocation> errorLocs = errNodesOfAllProc.stream();
-			if (mPrefs.insufficientThreadErrorsLast()) {
+
+			if (isConcurrent(icfg) && mPrefs.insufficientThreadErrorsLast()) {
 				// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
 				errorLocs = errorLocs.sorted(
 						(x, y) -> Boolean.compare(isInsufficientThreadsLocation(x), isInsufficientThreadsLocation(y)));
 			}
 			return errorLocs.map(x -> new Pair<>(x.getDebugIdentifier(), Set.of(x))).collect(Collectors.toList());
 		}
-		if (mPrefs.insufficientThreadErrorsLast() && isAnyForkInCycle(icfg)) {
+		if (isConcurrent(icfg) && mPrefs.insufficientThreadErrorsLast() && isAnyForkInCycle(icfg)) {
 			final Set<IcfgLocation> inUseErrors = new HashSet<>(getInUseErrorNodeMap(icfg).values());
 			final Set<IcfgLocation> otherErrors = DataStructureUtils.difference(errNodesOfAllProc, inUseErrors);
 			return List.of(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, otherErrors),
