@@ -286,7 +286,7 @@ public class CfgBuilder {
 		}
 
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
-				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(a -> a.getValue()).collect(Collectors.toSet());
+				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(Entry::getValue).collect(Collectors.toSet());
 		if (initialNodes.isEmpty()) {
 			mLogger.info("Using library mode");
 			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
@@ -315,35 +315,35 @@ public class CfgBuilder {
 	}
 
 	private boolean isAtomicCompositionComplete(final BoogieIcfgLocation pp) {
-		if (isStartOfAtomicBlock(pp)) {
-			return pp.getOutgoingNodes().stream().allMatch(successor -> {
-				if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation) successor).isErrorLocation()) {
-					return true;
-				}
-
-				// We tolerate nodes without successors, such as thread exit locations.
-				final boolean successorIsSink = successor.getOutgoingEdges().isEmpty();
-				if (successorIsSink) {
-					mLogger.warn(
-							"Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.",
-							successor);
-				} else {
-					mLogger.error(
-							"Unexpected successor node of atomic block begin: %s is neither atomic block end nor a sink node.",
-							successor);
-				}
-				return successorIsSink;
-			});
-		} else {
+		if (!isStartOfAtomicBlock(pp)) {
 			return true;
 		}
+		return pp.getOutgoingNodes().stream().allMatch(successor -> {
+			if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation) successor).isErrorLocation()) {
+				return true;
+			}
+
+			// We tolerate nodes without successors, such as thread exit locations.
+			final boolean successorIsSink = successor.getOutgoingEdges().isEmpty();
+			if (successorIsSink) {
+				mLogger.warn(
+						"Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.",
+						successor);
+			} else {
+				mLogger.error(
+						"Unexpected successor node of atomic block begin: %s is neither atomic block end nor a sink node.",
+						successor);
+			}
+			return successorIsSink;
+		});
 
 		// Dominik 2020-09-18:
 		// There is no corresponding check for end-points of atomic blocks.
 		// The reason is that such points may be reached in other ways than through the atomic block.
 		// For instance, consider a loop whose body is an atomic block.
 		// The end point of the body is also the loop head, and thus has a predecessor outside the atomic block.
-		// A second (but less important) effect is that orphaned __VERIFIER_atomic_end() statements do not cause an error.
+		// A second (but less important) effect is that orphaned __VERIFIER_atomic_end() statements do not cause an
+		// error.
 	}
 
 	public Boogie2SMT getBoogie2Smt() {
@@ -451,7 +451,7 @@ public class CfgBuilder {
 		Set<BoogieIcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().get(procName);
 		final int locNodeNumber;
 		if (errorNodes == null) {
-			errorNodes = new HashSet<>();
+			errorNodes = new LinkedHashSet<>();
 			mIcfg.getProcedureErrorNodes().put(procName, errorNodes);
 			locNodeNumber = 0;
 		} else {
@@ -747,18 +747,16 @@ public class CfgBuilder {
 				final Entry<DebugIdentifier, BoogieIcfgLocation> entry = it.next();
 				if (reachablePPs.contains(entry.getValue())) {
 					// do nothing
+				} else if (exitPP == entry.getValue()) {
+					// do nothing
 				} else {
-					if (exitPP == entry.getValue()) {
-						// do nothing
-					} else {
-						it.remove();
-						final List<IcfgEdge> outgoingEdges = new ArrayList<>(entry.getValue().getOutgoingEdges());
-						for (final IcfgEdge outEdge : outgoingEdges) {
-							outEdge.disconnectSource();
-							outEdge.disconnectTarget();
-							mLogger.info("dead code at ProgramPoint " + entry.getValue() + ": " + outEdge);
-							mImplementationSummarys.remove(outEdge);
-						}
+					it.remove();
+					final List<IcfgEdge> outgoingEdges = new ArrayList<>(entry.getValue().getOutgoingEdges());
+					for (final IcfgEdge outEdge : outgoingEdges) {
+						outEdge.disconnectSource();
+						outEdge.disconnectTarget();
+						mLogger.info("dead code at ProgramPoint " + entry.getValue() + ": " + outEdge);
+						mImplementationSummarys.remove(outEdge);
 					}
 				}
 			}
@@ -1216,7 +1214,8 @@ public class CfgBuilder {
 		private boolean isIntraproceduralBranchFreeStatement(final Statement st) {
 			if (st instanceof AssumeStatement) {
 				return true;
-			} else if (st instanceof AssignmentStatement) {
+			}
+			if (st instanceof AssignmentStatement) {
 				return true;
 			} else if (st instanceof HavocStatement) {
 				return true;
@@ -1815,7 +1814,8 @@ public class CfgBuilder {
 			case ALL:
 				if (isStraightline) {
 					return SequentialCompositionType.STRAIGHTLINE;
-				} else if (isInAtomicBlock || isBetweenSequencePoints) {
+				}
+				if (isInAtomicBlock || isBetweenSequencePoints) {
 					// Y-V currently unsupported outside atomic blocks (implementation cannot handle loops properly)
 					// TODO (Dominik 2020-09-16) Check if above comment still holds after Y-to-V fix, may work now (as
 					// loop entry is reverse Y-to-V).
@@ -1850,8 +1850,7 @@ public class CfgBuilder {
 			}
 			assert edge instanceof StatementSequence || edge instanceof SequentialComposition
 					|| edge instanceof ParallelComposition || edge instanceof Summary
-					|| edge instanceof GotoEdge : "unexpected type of edge: "
-							+ edge.getClass().getSimpleName();
+					|| edge instanceof GotoEdge : "unexpected type of edge: " + edge.getClass().getSimpleName();
 			return true;
 		}
 

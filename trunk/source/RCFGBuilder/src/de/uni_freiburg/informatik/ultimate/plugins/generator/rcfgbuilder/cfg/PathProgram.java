@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -217,18 +217,18 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final Set<? extends IIcfgTransition<?>> nonNullTransitions = Objects.requireNonNull(allowedTransitions);
 			mOriginalIcfg = Objects.requireNonNull(originalIcfg);
 
-			mOldLoc2NewLoc = new HashMap<>();
-			mOldTransition2NewTransition = new HashMap<>();
-			mOldCall2NewCall = new HashMap<>();
+			mOldLoc2NewLoc = new LinkedHashMap<>();
+			mOldTransition2NewTransition = new LinkedHashMap<>();
+			mOldCall2NewCall = new LinkedHashMap<>();
 			mSymbolTable = new DefaultIcfgSymbolTable();
-			mProcedures = new HashSet<>();
+			mProcedures = new LinkedHashSet<>();
 
-			mProgramPoints = new HashMap<>();
-			mProcEntries = new HashMap<>();
-			mProcExits = new HashMap<>();
-			mProcError = new HashMap<>();
-			mInitialNodes = new HashSet<>(additionalInitialLocations);
-			mLoopLocations = new HashSet<>();
+			mProgramPoints = new LinkedHashMap<>();
+			mProcEntries = new LinkedHashMap<>();
+			mProcExits = new LinkedHashMap<>();
+			mProcError = new LinkedHashMap<>();
+			mInitialNodes = new LinkedHashSet<>(additionalInitialLocations);
+			mLoopLocations = new LinkedHashSet<>();
 
 			final Predicate<IIcfgTransition<?>> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
 			nonNullTransitions.stream().filter(onlyReturn.negate()).forEach(this::createPathProgramTransition);
@@ -337,7 +337,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 				final Set<IcfgLocation> ppProcErrors = mProcError.get(procedure);
 				final Set<IcfgLocation> newPpProcErrors;
 				if (ppProcErrors == null) {
-					newPpProcErrors = new HashSet<>();
+					newPpProcErrors = new LinkedHashSet<>();
 					mProcError.put(procedure, newPpProcErrors);
 				} else {
 					newPpProcErrors = ppProcErrors;
@@ -348,7 +348,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final Map<DebugIdentifier, IcfgLocation> procProgramPoints = mProgramPoints.get(procedure);
 			final Map<DebugIdentifier, IcfgLocation> newProcProgramPoints;
 			if (procProgramPoints == null) {
-				newProcProgramPoints = new HashMap<>();
+				newProcProgramPoints = new LinkedHashMap<>();
 				mProgramPoints.put(procedure, newProcProgramPoints);
 			} else {
 				newProcProgramPoints = procProgramPoints;
