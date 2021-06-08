@@ -221,6 +221,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				PersistentSetReduction.applyDelaySetReduction(automataServices, abstraction, mIndependenceRelation,
 						mDfsOrder, mPersistent, visitor);
 				break;
+			case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
+			case PERSISTENT_SLEEP_NEW_STATES:
+				PersistentSetReduction.applyNewStateReduction(automataServices, abstraction, mIndependenceRelation,
+						mDfsOrder, mSleepSetStateFactory, mPersistent, visitor);
+				break;
 			case NONE:
 				new DepthFirstTraversal<>(abstraction, mDfsOrder, visitor);
 				break;
@@ -344,9 +349,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		switch (mPartialOrderMode) {
 		case PERSISTENT_SETS:
 		case PERSISTENT_SLEEP_DELAY_SET:
+		case PERSISTENT_SLEEP_NEW_STATES:
 			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
 					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) independence, null, mErrorLocs));
 		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
+		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
 			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
 					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) independence,
 					(IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder, mErrorLocs));

@@ -244,7 +244,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		/**
 		 * Combines persistent set reduction with {@link SLEEP_NEW_STATES}.
 		 */
-		PERSISTENT_SLEEP_NEW_STATES
+		PERSISTENT_SLEEP_NEW_STATES, PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER,
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
