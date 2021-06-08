@@ -72,14 +72,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
@@ -125,12 +118,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.ThreadSeparatingIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -161,7 +153,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -213,40 +204,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		VARIABLE_BASED_MOVER_CHECK,
 	}
 
-	/**
-	 * Indicates a kind of partial order reduction.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 */
-	public enum PartialOrderMode {
-		/**
-		 * No partial order reduction is performed.
-		 */
-		NONE,
-		/**
-		 * Sleep set partial order reduction. Delay sets are used to handle loops, and the reduced automaton is a
-		 * sub-structure of the input.
-		 */
-		SLEEP_DELAY_SET,
-		/**
-		 * Sleep set partial order reduction. Unrolling and splitting is performed to achieve a minimal reduction (in
-		 * terms of the language). This duplicates states of the input automaton.
-		 */
-		SLEEP_NEW_STATES,
-		/**
-		 * Persistent set reduction.
-		 */
-		PERSISTENT_SETS,
-		/**
-		 * Combines persistent set reduction with {@link SLEEP_DELAY_SET}.
-		 */
-		PERSISTENT_SLEEP_DELAY_SET, PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER,
-		/**
-		 * Combines persistent set reduction with {@link SLEEP_NEW_STATES}.
-		 */
-		PERSISTENT_SLEEP_NEW_STATES, PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER,
-	}
-
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
@@ -259,7 +216,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
-	protected final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepSetStateFactory;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
@@ -326,24 +282,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
 				predicateFactory, computeHoareAnnotation, mHoareAnnotationLocations);
-
-		switch (mPref.getPartialOrderMode()) {
-		case NONE:
-		case PERSISTENT_SETS:
-			mSleepSetStateFactory = null;
-			break;
-		case PERSISTENT_SLEEP_NEW_STATES:
-		case SLEEP_NEW_STATES:
-			mSleepSetStateFactory = new SleepSetStateFactoryForRefinement<>(predicateFactory);
-			break;
-		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_DELAY_SET:
-		case SLEEP_DELAY_SET:
-			mSleepSetStateFactory = new ISleepSetStateFactory.NoUnrolling<>();
-			break;
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mPref.getPartialOrderMode());
-		}
 
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, computeHoareAnnotation);
@@ -469,48 +407,28 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		if (mode == PartialOrderMode.NONE) {
 			return input;
 		}
-
-		final IIndependenceRelation<IPredicate, L> indep = new ThreadSeparatingIndependenceRelation<>(
-				new CachedIndependenceRelation<>(new UnionIndependenceRelation<>(Arrays.asList(
-						new SyntacticIndependenceRelation<>(),
-						new SemanticIndependenceRelation<>(mServices, mCsToolkit.getManagedScript(), false, true)))));
-		final IDfsOrder<L, IPredicate> order = ConstantDfsOrder.byHashCode();
-
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
-		final AutomatonConstructingVisitor<L, IPredicate> automatonConstructor;
-		switch (mode) {
-		case SLEEP_DELAY_SET:
-			automatonConstructor =
-					new AutomatonConstructingVisitor<>(input, automataServices, mStateFactoryForRefinement);
-			new SleepSetDelayReduction<>(automataServices, input, new ISleepSetStateFactory.NoUnrolling<>(), indep,
-					order, automatonConstructor);
-			break;
-		case SLEEP_NEW_STATES:
-			final SleepSetStateFactoryForRefinement<L> factory =
-					(SleepSetStateFactoryForRefinement<L>) mSleepSetStateFactory;
-			automatonConstructor = new AutomatonConstructingVisitor<>(x -> input.isInitial(factory.getOriginalState(x)),
-					x -> input.isFinal(factory.getOriginalState(x)), input.getVpAlphabet(), automataServices,
-					mStateFactoryForRefinement);
-			new SleepSetNewStateReduction<>(automataServices, input, mSleepSetStateFactory, indep, order,
-					automatonConstructor);
-			break;
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
+		try {
+			// setup POR depending on settings
+			final IIndependenceRelation<IPredicate, L> indep =
+					IndependenceBuilder.<L> semantic(mServices, mCsToolkit.getManagedScript(), false, false)
+							.withSyntacticCheck().cached().threadSeparated().build();
+			final PartialOrderReductionFacade<L> por =
+					new PartialOrderReductionFacade<>(mServices, mPredicateFactory, mIcfg, mErrorLocs,
+							mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), indep);
+			final AutomatonConstructingVisitor<L, IPredicate> automatonConstructor =
+					por.createConstructionVisitor(input, mStateFactoryForRefinement);
+
+			// actually apply POR to automaton
+			por.apply(input, automatonConstructor);
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =
+					automatonConstructor.getReductionAutomaton();
+
+			por.reportStatistics();
+			return result;
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
 		}
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =
-				automatonConstructor.getReductionAutomaton();
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-
-		mLogger.warn("Sleep set: input automaton " + input.sizeInformation());
-		mLogger.warn("Sleep set: output automaton " + result.sizeInformation());
-
-		final StatisticsData data = new StatisticsData();
-		data.aggregateBenchmarkData(indep.getStatistics());
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
-
-		return result;
 	}
 
 	@Override

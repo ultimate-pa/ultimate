@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -45,25 +44,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Totali
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -80,16 +70,15 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.DistributingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.ThreadSeparatingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * A CEGAR loop for concurrent programs, based on finite automata, which uses Partial Order Reduction (POR) in every
@@ -106,7 +95,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private final boolean mConditionalPor;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final IDfsVisitor<L, IPredicate> mVisitor;
-	private final IDfsOrder<L, IPredicate> mDfsOrder;
+	private final PartialOrderReductionFacade<L> mPOR;
 
 	// Maps an IPredicate built through refinement rounds to the sequence of conjuncts it was built from.
 	// This is used to distribute an independence query across conjuncts.
@@ -118,13 +107,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceRelation<IPredicate, L> mConditionalRelation;
-	private final IPersistentSetChoice<L, IPredicate> mPersistent;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
-
-	public enum OrderType {
-		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM
-	}
 
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -133,7 +117,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
-		mDfsOrder = getDfsOrder();
+
 		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
 		mVisitor = supportsDeadStateOptimization(mPartialOrderMode)
@@ -151,13 +135,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			mConditionalRelation = null;
 		}
 		mIndependenceRelation = constructIndependenceRelation(unconditionalRelation);
-		mPersistent = createPersistentSets(unconditionalRelation);
+
+		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
+				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), mIndependenceRelation);
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.
 	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
-			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+			final PartialOrderReductionFacade.PartialOrderMode mode,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
 		return input;
 	}
 
@@ -201,37 +188,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		switchToOnDemandConstructionMode();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
 		final IDfsVisitor<L, IPredicate> visitor = getNewVisitor();
 		try {
-			switch (mPartialOrderMode) {
-			case SLEEP_DELAY_SET:
-				new SleepSetDelayReduction<>(automataServices, abstraction, mSleepSetStateFactory,
-						mIndependenceRelation, mDfsOrder, visitor);
-				break;
-			case SLEEP_NEW_STATES:
-				new SleepSetNewStateReduction<>(automataServices, abstraction, mSleepSetStateFactory,
-						mIndependenceRelation, mDfsOrder, visitor);
-				break;
-			case PERSISTENT_SETS:
-				PersistentSetReduction.applyWithoutSleepSets(abstraction, mDfsOrder, mPersistent, visitor);
-				break;
-			case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-			case PERSISTENT_SLEEP_DELAY_SET:
-				PersistentSetReduction.applyDelaySetReduction(automataServices, abstraction, mIndependenceRelation,
-						mDfsOrder, mPersistent, visitor);
-				break;
-			case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			case PERSISTENT_SLEEP_NEW_STATES:
-				PersistentSetReduction.applyNewStateReduction(automataServices, abstraction, mIndependenceRelation,
-						mDfsOrder, mSleepSetStateFactory, mPersistent, visitor);
-				break;
-			case NONE:
-				new DepthFirstTraversal<>(abstraction, mDfsOrder, visitor);
-				break;
-			default:
-				throw new UnsupportedOperationException("Unsupported POR mode: " + mPartialOrderMode);
-			}
+			mPOR.apply(abstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 			return mCounterexample == null;
@@ -245,19 +204,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		for (final AbstractInterpolantAutomaton<L> ia : mAbstractItpAutomata) {
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
-
-		final StatisticsData indepData = new StatisticsData();
-		indepData.aggregateBenchmarkData(mIndependenceRelation.getStatistics());
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", indepData));
-
-		if (mPersistent != null) {
-			final StatisticsData persistentData = new StatisticsData();
-			persistentData.aggregateBenchmarkData(mPersistent.getStatistics());
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new StatisticsResult<>(Activator.PLUGIN_NAME, "Persistent set benchmarks", persistentData));
-		}
-
+		mPOR.reportStatistics();
 		super.finish();
 	}
 
@@ -274,7 +221,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			visitor = ((DeadEndOptimizingSearchVisitor<?, ?, IDfsVisitor<L, IPredicate>>) visitor).getUnderlying();
 		}
 
-		if (mPartialOrderMode == PartialOrderMode.PERSISTENT_SETS || mPartialOrderMode == PartialOrderMode.NONE) {
+		if (mPartialOrderMode == PartialOrderReductionFacade.PartialOrderMode.PERSISTENT_SETS
+				|| mPartialOrderMode == PartialOrderReductionFacade.PartialOrderMode.NONE) {
 			return ((AcceptingRunSearchVisitor<L, IPredicate>) visitor).getAcceptingRun();
 		}
 		return ((SleepSetVisitorSearch<L, IPredicate>) visitor).constructRun();
@@ -282,31 +230,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private IDfsVisitor<L, IPredicate> createVisitor() {
 		// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
-		if (mPartialOrderMode == PartialOrderMode.PERSISTENT_SETS || mPartialOrderMode == PartialOrderMode.NONE) {
+		if (mPartialOrderMode == PartialOrderReductionFacade.PartialOrderMode.PERSISTENT_SETS
+				|| mPartialOrderMode == PartialOrderReductionFacade.PartialOrderMode.NONE) {
 			return new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
 		}
 		return new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
 	}
 
-	private static final boolean supportsDeadStateOptimization(final PartialOrderMode mode) {
+	private static final boolean
+			supportsDeadStateOptimization(final PartialOrderReductionFacade.PartialOrderMode mode) {
 		// At the moment, only sleep sets with new states support this optimization.
-		return mode == PartialOrderMode.SLEEP_NEW_STATES || mode == PartialOrderMode.PERSISTENT_SLEEP_NEW_STATES
-				|| mode == PartialOrderMode.NONE;
-	}
-
-	private IDfsOrder<L, IPredicate> getDfsOrder() {
-		switch (mPref.getDfsOrderType()) {
-		case BY_SERIAL_NUMBER:
-			return ConstantDfsOrder.byHashCode();
-		case PSEUDO_LOCKSTEP:
-			return new PseudoLockstepOrder<>();
-		case RANDOM:
-			return new RandomDfsOrder<>(mPref.getDfsOrderSeed(), false);
-		case POSITIONAL_RANDOM:
-			return new RandomDfsOrder<>(mPref.getDfsOrderSeed(), true);
-		default:
-			throw new UnsupportedOperationException("Unknown order type: " + mPref.getDfsOrderType());
-		}
+		return mode == PartialOrderReductionFacade.PartialOrderMode.SLEEP_NEW_STATES
+				|| mode == PartialOrderReductionFacade.PartialOrderMode.PERSISTENT_SLEEP_NEW_STATES
+				|| mode == PartialOrderReductionFacade.PartialOrderMode.NONE;
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructSemanticIndependence(final CfgSmtToolkit csToolkit) {
@@ -342,28 +278,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			independence = unconditionalRelation;
 		}
 		return new ThreadSeparatingIndependenceRelation<>(independence);
-	}
-
-	private final IPersistentSetChoice<L, IPredicate>
-			createPersistentSets(final IIndependenceRelation<IPredicate, L> independence) {
-		switch (mPartialOrderMode) {
-		case PERSISTENT_SETS:
-		case PERSISTENT_SLEEP_DELAY_SET:
-		case PERSISTENT_SLEEP_NEW_STATES:
-			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
-					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) independence, null, mErrorLocs));
-		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
-					mServices, mIcfg, (IIndependenceRelation<IPredicate, IcfgEdge>) independence,
-					(IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder, mErrorLocs));
-		case NONE:
-		case SLEEP_DELAY_SET:
-		case SLEEP_NEW_STATES:
-			return null;
-		default:
-			throw new UnsupportedOperationException("unsupported POR mode");
-		}
 	}
 
 	private void switchToOnDemandConstructionMode() {
@@ -445,8 +359,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				}
 			}
 
-			if (mPersistent instanceof CachedPersistentSetChoice<?, ?>) {
-				final var cache = (CachedPersistentSetChoice<?, IPredicate>) mPersistent;
+			if (mPOR.getPersistentSets() instanceof CachedPersistentSetChoice<?, ?>) {
+				final var cache = (CachedPersistentSetChoice<?, IPredicate>) mPOR.getPersistentSets();
 				cache.transferCachedInformation(state1, newState);
 			}
 
