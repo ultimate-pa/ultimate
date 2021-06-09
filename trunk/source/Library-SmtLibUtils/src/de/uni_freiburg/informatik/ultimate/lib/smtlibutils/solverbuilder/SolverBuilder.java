@@ -95,25 +95,8 @@ public final class SolverBuilder {
 		}
 	}
 
-	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
-	public static final String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
-
-	public static final String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --incremental --print-success --lang smt";
-	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
-
-	// 20161214 Matthias: MathSAT does not support timeouts
-	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
-	public static final String COMMAND_MATHSAT_INTERPOLATION =
-			"mathsat -theory.bv.eager=false -theory.fp.enabled=false";
-
-	public static final long TIMEOUT_SMTINTERPOL = 12_000L;
-	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
-	public static final Logics LOGIC_Z3 = Logics.ALL;
 	public static final Logics LOGIC_CVC4_DEFAULT = Logics.AUFLIRA;
 	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.ALL;
-	public static final Logics LOGIC_MATHSAT = Logics.ALL;
-	public static final Logics LOGIC_SMTINTERPOL = Logics.ALL;
-
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
 
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
@@ -318,11 +301,10 @@ public final class SolverBuilder {
 			script.setOption(":produce-interpolants", true);
 			script.setOption(":interpolant-check-mode", true);
 			script.setOption(":proof-transformation", "LU");
-			if (logic != null) {
-				script.setLogic(logic);
-			} else {
-				script.setLogic(LOGIC_SMTINTERPOL.toString());
+			if (logic == null) {
+				throw new AssertionError("SMTInterpol requires explicit logic");
 			}
+			script.setLogic(logic);
 			break;
 		default:
 			throw new AssertionError("unknown solver");
@@ -553,8 +535,9 @@ public final class SolverBuilder {
 		}
 
 		public SolverSettings setSmtInterpolTimeout(final long timeoutSmtInterpol) {
+			final long actualSmtInterpolTimeout = Math.max(0, timeoutSmtInterpol);
 			return new SolverSettings(mSolverMode, mFakeNonIncrementalScript, mUseExternalSolver,
-					mExternalSolverCommand, mSolverLogics, timeoutSmtInterpol, mExternalInterpolator,
+					mExternalSolverCommand, mSolverLogics, actualSmtInterpolTimeout, mExternalInterpolator,
 					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript,
 					mBaseNameOfDumpedScript, mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath,
 					mCompressDumpedScript, mAdditionalOptions, mSolverLogger);
@@ -610,8 +593,8 @@ public final class SolverBuilder {
 		 * @param solver
 		 *            The external solver.
 		 * @param timeout
-		 *            A timeout in ms that should be supplied to the solver. Use only non-negative values. Some solvers
-		 *            do not support setting a timeout.
+		 *            A non-negative timeout in ms that should be supplied to the solver or -1 if no timeout should be
+		 *            used. Some solvers do not support setting a timeout.
 		 */
 		public SolverSettings setUseExternalSolver(final ExternalSolver solver, final long timeout) {
 			return setUseExternalSolver(true, solver.getSolverCommand(timeout), solver.getDefaultLogic());
@@ -707,7 +690,7 @@ public final class SolverBuilder {
 				timeoutSmtInterpol = -1;
 				externalInterpolator = null;
 				useDiffWrapper = false;
-				logics = LOGIC_SMTINTERPOL;
+				logics = ExternalSolver.SMTINTERPOL.getDefaultLogic();
 				break;
 			default:
 				throw new AssertionError("unknown solver mode " + solverMode);
@@ -790,15 +773,16 @@ public final class SolverBuilder {
 	 *
 	 */
 	public enum ExternalSolver {
-		Z3(COMMAND_Z3_NO_TIMEOUT, COMMAND_Z3_NO_TIMEOUT + " -t:%d", LOGIC_Z3),
+		Z3("z3 -smt2 -in SMTLIB2_COMPLIANT=true", "z3 -smt2 -in SMTLIB2_COMPLIANT=true" + " -t:%d", Logics.ALL),
 
-		CVC4(COMMAND_CVC4_NO_TIMEOUT, COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=%d", LOGIC_CVC4_DEFAULT),
+		CVC4("cvc4 --incremental --print-success --lang smt",
+				"cvc4 --incremental --print-success --lang smt" + " --tlimit-per=%d", LOGIC_CVC4_DEFAULT),
 
-		MATHSAT(COMMAND_MATHSAT, null, LOGIC_MATHSAT),
+		MATHSAT("mathsat -unsat_core_generation=3", null, Logics.ALL),
 
-		MATHSAT_INTERPOLATION(COMMAND_MATHSAT_INTERPOLATION, null, LOGIC_MATHSAT),
+		MATHSAT_INTERPOLATION("mathsat -theory.bv.eager=false -theory.fp.enabled=false", null, Logics.ALL),
 
-		SMTINTERPOL(null, null, LOGIC_SMTINTERPOL),
+		SMTINTERPOL(null, null, Logics.ALL),
 
 		PRINCESS(null, null, null);
 
@@ -822,12 +806,15 @@ public final class SolverBuilder {
 		}
 
 		public String getSolverCommand(final long timeout) {
-			if (mSolverCommandTimeoutFormatString == null) {
-				throw new UnsupportedOperationException(
-						"Unknown or not implemented solver command with timeouts: " + this);
+			if (timeout == -1) {
+				return getSolverCommand();
 			}
 			if (timeout < 0) {
 				throw new IllegalArgumentException("Timeout must be non-negative");
+			}
+			if (mSolverCommandTimeoutFormatString == null) {
+				throw new UnsupportedOperationException(
+						"Unknown or not implemented solver command with timeouts: " + this);
 			}
 			return String.format(mSolverCommandTimeoutFormatString, timeout);
 		}

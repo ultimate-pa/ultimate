@@ -51,27 +51,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class BearRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class BearRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public BearRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public BearRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
-			createModules(final StrategyModuleFactory<LETTER> factory) {
+	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
+			createModules(final StrategyModuleFactory<L> factory) {
 		final AssertCodeBlockOrder[] order = { AssertCodeBlockOrder.NOT_INCREMENTALLY };
 		final TermClassifier tc = factory.getTermClassifierForTrace();
-		final List<IIpTcStrategyModule<?, LETTER>> rtr = new ArrayList<>();
+		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
 					order));
 		}
-		rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
-				Logics.ALL));
-		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect, Logics.ALL));
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 

@@ -46,14 +46,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class DachshundRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class DachshundRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public DachshundRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public DachshundRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
-				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-						InterpolationTechnique.Craig_NestedInterpolation), factory.createIpTcStrategyModulePdr() }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+				new IIpTcStrategyModule[] {
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
+								InterpolationTechnique.Craig_NestedInterpolation),
+						factory.createIpTcStrategyModulePdr() },
+				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override

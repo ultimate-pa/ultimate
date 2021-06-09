@@ -45,18 +45,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class CamelSmtAmRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class CamelSmtAmRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public CamelSmtAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public CamelSmtAmRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory,
-				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-								InterpolationTechnique.Craig_NestedInterpolation,
-								new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
-								new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)) },
+		super(factory, new IIpTcStrategyModule[] {
+				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation,
+						new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)),
+				factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates,
+						new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 

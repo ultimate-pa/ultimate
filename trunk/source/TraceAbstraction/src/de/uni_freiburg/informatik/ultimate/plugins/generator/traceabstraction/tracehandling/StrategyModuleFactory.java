@@ -115,28 +115,43 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 				mCounterexample, mAbstraction, mTaskIdentifier, createMcrInterpolantProvider());
 	}
 
-	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(final InterpolationTechnique technique,
+			final AssertCodeBlockOrder... order) {
+		return createIpTcStrategyModuleSmtInterpolCraig(-1, technique, order);
+	}
+
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(final long timeoutInMillis,
 			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolCraig<>(mTaskIdentifier, mServices,
 				mPrefs, mCounterexample, mPrecondition, mPostcondition,
 				new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier, mPredicateFactory,
-				useTimeout, technique));
+				timeoutInMillis, technique));
 	}
 
-	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolSpWp(final boolean useTimeout,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolSpWp(final InterpolationTechnique technique,
+			final AssertCodeBlockOrder... order) {
+		return createIpTcStrategyModuleSmtInterpolSpWp(-1, technique, order);
+	}
+
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolSpWp(final long timeoutInMillis,
 			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolSpWp<>(mTaskIdentifier, mServices,
 				mPrefs, mCounterexample, mPrecondition, mPostcondition,
 				new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier, mPredicateFactory,
-				useTimeout, technique));
+				timeoutInMillis, technique));
 	}
 
-	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleZ3(final boolean useTimeout,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleZ3(final InterpolationTechnique technique,
+			final AssertCodeBlockOrder... order) {
+		return createIpTcStrategyModuleZ3(-1, technique, order);
+	}
+
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleZ3(final long timeoutInMillis,
 			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(
 				new IpTcStrategyModuleZ3<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
 						mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-						mPredicateUnifier, mPredicateFactory, useTimeout, technique));
+						mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
 	}
 
 	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleMathsat(final InterpolationTechnique technique,
@@ -147,12 +162,17 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 						mPredicateUnifier, mPredicateFactory, technique));
 	}
 
-	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC4(final boolean useTimeout,
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC4(final InterpolationTechnique technique,
+			final Logics logic, final AssertCodeBlockOrder... order) {
+		return createIpTcStrategyModuleCVC4(-1, technique, logic, order);
+	}
+
+	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC4(final long timeoutInMillis,
 			final InterpolationTechnique technique, final Logics logic, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(
 				new IpTcStrategyModuleCvc4<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
 						mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-						mPredicateUnifier, mPredicateFactory, useTimeout, technique, logic));
+						mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique, logic));
 	}
 
 	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAbstractInterpretation() {

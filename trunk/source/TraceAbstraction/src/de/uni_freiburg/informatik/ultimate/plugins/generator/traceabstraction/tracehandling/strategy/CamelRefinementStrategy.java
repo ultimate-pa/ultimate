@@ -44,16 +44,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class CamelRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public CamelRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public CamelRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
 								InterpolationTechnique.Craig_NestedInterpolation),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates) },
+						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 

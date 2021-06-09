@@ -36,16 +36,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class SmtInterpolRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class SmtInterpolRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public SmtInterpolRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public SmtInterpolRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
 								InterpolationTechnique.Craig_NestedInterpolation),
-						factory.createIpTcStrategyModuleSmtInterpolSpWp(false, InterpolationTechnique.ForwardPredicates) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+						factory.createIpTcStrategyModuleSmtInterpolSpWp(InterpolationTechnique.ForwardPredicates) },
+				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override

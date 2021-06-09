@@ -42,16 +42,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class BadgerRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class BadgerRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public BadgerRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public BadgerRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
 								InterpolationTechnique.Craig_NestedInterpolation),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates),
+						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates),
 						factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}

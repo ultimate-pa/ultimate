@@ -39,20 +39,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * {@link IRefinementStrategy} similar to {@link CamelRefinementStrategy}, except that it does not modulate the
  * assertion order.
- * 
+ *
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class CamelNoAmRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class CamelNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public CamelNoAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public CamelNoAmRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
-				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(
 						InterpolationTechnique.Craig_NestedInterpolation, AssertCodeBlockOrder.NOT_INCREMENTALLY),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
+						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates,
 								AssertCodeBlockOrder.NOT_INCREMENTALLY) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}

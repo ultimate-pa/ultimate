@@ -45,7 +45,6 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	private static final long DEFAULT_TIMEOUT = 20 * 1000L;
 
 	public RegressionTestSuite() {
-		super();
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
@@ -58,4 +57,5 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		return new SafetyCheckTestResultDecider(runDefinition, false);
 	}
+
 }

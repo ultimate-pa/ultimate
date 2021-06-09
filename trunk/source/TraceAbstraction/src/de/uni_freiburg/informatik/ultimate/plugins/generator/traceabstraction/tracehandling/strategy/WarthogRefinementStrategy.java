@@ -50,12 +50,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class WarthogRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class WarthogRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public WarthogRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public WarthogRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory, createModules(factory),
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -65,13 +64,13 @@ public class WarthogRefinementStrategy<LETTER extends IIcfgTransition<?>> extend
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, LETTER>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoFloats(tc)) {
-			rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.ForwardPredicates,
+			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.ForwardPredicates,
 					SolverBuilder.LOGIC_CVC4_BITVECTORS));
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// floats, but no quantifiers and no extensions
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.ForwardPredicates));
 		}
-		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates));
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 

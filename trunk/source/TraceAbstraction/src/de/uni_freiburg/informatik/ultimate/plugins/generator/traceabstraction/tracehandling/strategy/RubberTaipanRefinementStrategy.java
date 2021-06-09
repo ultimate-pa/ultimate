@@ -55,10 +55,10 @@ public class RubberTaipanRefinementStrategy<L extends IIcfgTransition<?>> extend
 			createModules(final StrategyModuleFactory<L> factory) {
 
 		final IIpTcStrategyModule<?, L> smtinterpol =
-				factory.createIpTcStrategyModuleSmtInterpolCraig(false, InterpolationTechnique.Craig_TreeInterpolation);
-		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP);
-		final IIpTcStrategyModule<?, L> cvc4 = factory.createIpTcStrategyModuleCVC4(false,
-				InterpolationTechnique.FPandBP, SolverBuilder.LOGIC_CVC4_DEFAULT);
+				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation);
+		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP);
+		final IIpTcStrategyModule<?, L> cvc4 =
+				factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP, SolverBuilder.LOGIC_CVC4_DEFAULT);
 
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { smtinterpol, z3, cvc4 };
 		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { smtinterpol, z3, cvc4 };

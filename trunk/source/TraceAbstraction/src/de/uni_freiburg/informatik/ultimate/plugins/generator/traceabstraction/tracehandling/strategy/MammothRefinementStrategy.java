@@ -39,15 +39,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class MammothRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class MammothRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public MammothRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public MammothRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
-				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-						InterpolationTechnique.Craig_TreeInterpolation),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+				new IIpTcStrategyModule[] {
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
+								InterpolationTechnique.Craig_TreeInterpolation),
+						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP) },
+				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override

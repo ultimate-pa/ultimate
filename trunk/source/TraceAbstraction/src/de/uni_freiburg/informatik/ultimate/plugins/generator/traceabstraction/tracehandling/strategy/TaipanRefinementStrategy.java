@@ -63,10 +63,9 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2),
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST) };
 
-		final IIpTcStrategyModule<?, L> smtinterpol = factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-				InterpolationTechnique.Craig_TreeInterpolation, order);
-		final IIpTcStrategyModule<?, L> z3 =
-				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP, order);
+		final IIpTcStrategyModule<?, L> smtinterpol =
+				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation, order);
+		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP, order);
 		final IIpTcStrategyModule<?, L> absint = factory.createIpTcStrategyModuleAbstractInterpretation();
 
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { smtinterpol, z3 };

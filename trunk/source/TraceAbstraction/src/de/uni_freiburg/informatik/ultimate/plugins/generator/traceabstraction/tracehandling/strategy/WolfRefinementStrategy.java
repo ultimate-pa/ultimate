@@ -54,8 +54,7 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>> extends B
 
 	public WolfRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory, createModules(factory),
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -68,8 +67,8 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>> extends B
 			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBP));
 		}
-		rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBP, Logics.ALL));
-		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP));
+		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP, Logics.ALL));
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 
