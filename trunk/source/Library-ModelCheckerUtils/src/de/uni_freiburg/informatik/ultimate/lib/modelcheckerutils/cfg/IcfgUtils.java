@@ -26,11 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
@@ -53,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
  *
@@ -195,6 +200,8 @@ public class IcfgUtils {
 	 * considered enabled, but their counterparts ({@link IIcfgForkTransitionThreadOther} and
 	 * {@link IIcfgJoinTransitionThreadOther}) are.
 	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
 	 * @param <LOC>
 	 *            The type of locations
 	 * @param locs
@@ -225,4 +232,80 @@ public class IcfgUtils {
 		}
 		return locs.contains(edge.getSource());
 	}
+
+	/**
+	 * Performs a DFS to determine if from a given source location, a target edge can be reached. A given cache allows
+	 * re-using results across queries.
+	 *
+	 * @param sourceLoc
+	 *            The source location from which reachability is checked.
+	 * @param isTarget
+	 *            Identifies target edges.
+	 * @param prune
+	 *            Used to prune edges if paths though such an edges should not be considered.
+	 * @param getCachedResult
+	 *            A function that retrieves a cached reachability result. UNSAT represents reachability, SAT represents
+	 *            non-reachability.
+	 * @param setCachedResult
+	 *            A function that updates the cache.
+	 * @return
+	 */
+	public static boolean canReachCached(final IcfgLocation sourceLoc, final Predicate<IcfgEdge> isTarget,
+			final Predicate<IcfgEdge> prune, final Function<IcfgLocation, LBool> getCachedResult,
+			final BiConsumer<IcfgLocation, Boolean> setCachedResult) {
+		// First check if result is cached.
+		final LBool cachedConflict = getCachedResult.apply(sourceLoc);
+		if (cachedConflict != LBool.UNKNOWN) {
+			return cachedConflict == LBool.UNSAT;
+		}
+
+		// Do a DFS search of the CFG.
+		final Set<IcfgLocation> visited = new HashSet<>();
+		final ArrayDeque<IcfgLocation> worklist = new ArrayDeque<>();
+		worklist.add(sourceLoc);
+
+		boolean conflict = false;
+		while (!worklist.isEmpty()) {
+			final IcfgLocation currentLoc = worklist.peek();
+
+			// If the result is cached, retrieve it, mark the location as visited, and start backtracking.
+			final LBool knownConflict = getCachedResult.apply(currentLoc);
+			if (knownConflict != LBool.UNKNOWN) {
+				conflict = knownConflict == LBool.UNSAT;
+				visited.add(currentLoc);
+			}
+
+			// When backtracking, remember the computed result for future queries.
+			if (visited.contains(currentLoc)) {
+				setCachedResult.accept(sourceLoc, conflict);
+				worklist.pop();
+				continue;
+			}
+
+			final Set<IcfgLocation> successors = new HashSet<>();
+			for (final IcfgEdge edge : currentLoc.getOutgoingEdges()) {
+				if (prune.test(edge)) {
+					continue;
+				}
+				// Abort when a conflict is found.
+				if (isTarget.test(edge)) {
+					conflict = true;
+					break;
+				}
+				successors.add(edge.getTarget());
+			}
+			// When a conflict is found, do not search any further.
+			if (!conflict) {
+				successors.stream().forEach(worklist::push);
+			}
+
+			visited.add(currentLoc);
+		}
+
+		final LBool computedConflict = getCachedResult.apply(sourceLoc);
+		assert computedConflict != LBool.UNKNOWN : "Conflict should be clearly determined";
+		assert (computedConflict == LBool.UNSAT) == conflict : "Incoherent conflict result";
+		return conflict;
+	}
+
 }

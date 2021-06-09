@@ -130,6 +130,7 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		case NONE:
 		case PERSISTENT_SETS:
 			return null;
+		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
 		case PERSISTENT_SLEEP_NEW_STATES:
 		case SLEEP_NEW_STATES:
 			return new SleepSetStateFactoryForRefinement<>(predicateFactory);
@@ -164,13 +165,15 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		case PERSISTENT_SETS:
 		case PERSISTENT_SLEEP_DELAY_SET:
 		case PERSISTENT_SLEEP_NEW_STATES:
-			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
-					mServices, icfg, (IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence, null, errorLocs));
+			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
+					new ThreadBasedPersistentSets<>(mServices, icfg,
+							(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence, null, errorLocs));
 		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets(
-					mServices, icfg, (IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence,
-					(IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder, errorLocs));
+			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
+					new ThreadBasedPersistentSets<>(mServices, icfg,
+							(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence,
+							(IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder, errorLocs));
 		case NONE:
 		case SLEEP_DELAY_SET:
 		case SLEEP_NEW_STATES:

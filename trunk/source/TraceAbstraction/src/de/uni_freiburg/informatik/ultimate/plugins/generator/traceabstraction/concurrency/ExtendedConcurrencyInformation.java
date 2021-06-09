@@ -26,35 +26,33 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadCurrentTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ReverseIcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
 /**
  * Collects additional information about concurrent control flow graphs.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <LOC>
+ *            Type of locations in the CFG.
  */
-public class ExtendedConcurrencyInformation {
-	private final IIcfg<? extends IcfgLocation> mIcfg;
-	private final Map<String, Set<IIcfgJoinTransitionThreadOther<IcfgLocation>>> mThreadJoins = new HashMap<>();
+public final class ExtendedConcurrencyInformation<LOC extends IcfgLocation> {
+	private final IIcfg<LOC> mIcfg;
 
-	private final HashRelation<String, String> mComputedReachableJoins = new HashRelation<>();
-	private final HashRelation3<IcfgLocation, String, IIcfgJoinTransitionThreadOther<IcfgLocation>> mReachableJoins =
-			new HashRelation3<>();
+	private final HashRelation<IIcfgForkTransitionThreadCurrent<LOC>, IIcfgForkTransitionThreadOther<LOC>> mForks =
+			new HashRelation<>();
+	private final HashRelation<IIcfgJoinTransitionThreadCurrent<LOC>, IIcfgJoinTransitionThreadOther<LOC>> mJoins =
+			new HashRelation<>();
 
 	/**
 	 * Create a new instance.
@@ -63,13 +61,35 @@ public class ExtendedConcurrencyInformation {
 	 *            The control flow graph for which concurrency information is collected. Procedure calls must be
 	 *            inlined.
 	 */
-	public ExtendedConcurrencyInformation(final IIcfg<?> icfg) {
+	public ExtendedConcurrencyInformation(final IIcfg<LOC> icfg) {
 		mIcfg = icfg;
+
+		for (final String thread : icfg.getCfgSmtToolkit().getProcedures()) {
+			for (final IIcfgForkTransitionThreadOther<LOC> forkOther : getForksOf(thread)) {
+				mForks.addPair(forkOther.getCorrespondingIIcfgForkTransitionCurrentThread(), forkOther);
+			}
+			for (final IIcfgJoinTransitionThreadOther<LOC> joinOther : getJoinsOf(thread)) {
+				mJoins.addPair(joinOther.getCorrespondingIIcfgJoinTransitionCurrentThread(), joinOther);
+			}
+		}
 	}
 
-	private static boolean isThreadLocal(final IcfgEdge edge) {
+	public static boolean isThreadLocal(final IcfgEdge edge) {
 		return !(edge instanceof IIcfgForkTransitionThreadOther<?>)
 				&& !(edge instanceof IIcfgJoinTransitionThreadOther<?>);
+	}
+
+	/**
+	 * Retrieve the fork transitions where a given thread is forked by another thread.
+	 *
+	 * @param forkedThread
+	 *            The procedure name of a thread instance
+	 * @return The set of all fork transitions where the given thread instance is forked by another thread
+	 */
+	public Set<IIcfgForkTransitionThreadOther<LOC>> getForksOf(final String forkedThread) {
+		return mIcfg.getProcedureEntryNodes().get(forkedThread).getIncomingEdges().stream()
+				.filter(e -> e instanceof IIcfgForkTransitionThreadOther<?>)
+				.map(e -> (IIcfgForkTransitionThreadOther<LOC>) e).collect(Collectors.toSet());
 	}
 
 	/**
@@ -79,54 +99,32 @@ public class ExtendedConcurrencyInformation {
 	 *            The procedure name of a thread instance
 	 * @return The set of all join transitions where the given thread instance is joined into another thread
 	 */
-	public Set<IIcfgJoinTransitionThreadOther<IcfgLocation>> getJoinsOf(final String joinedThread) {
-		final Set<IIcfgJoinTransitionThreadOther<IcfgLocation>> cachedJoins = mThreadJoins.get(joinedThread);
-		if (cachedJoins != null) {
-			return cachedJoins;
-		}
-
-		final Set<IIcfgJoinTransitionThreadOther<IcfgLocation>> joins =
-				new IcfgEdgeIterator(mIcfg.getProcedureEntryNodes().get(joinedThread),
-						ExtendedConcurrencyInformation::isThreadLocal).asStream()
-								.filter(edge -> edge instanceof IIcfgJoinTransitionThreadOther<?>)
-								.map(edge -> (IIcfgJoinTransitionThreadOther<IcfgLocation>) edge)
-								.collect(Collectors.toSet());
-		mThreadJoins.put(joinedThread, Collections.unmodifiableSet(joins));
-		return joins;
+	public Set<IIcfgJoinTransitionThreadOther<LOC>> getJoinsOf(final String joinedThread) {
+		return mIcfg.getProcedureExitNodes().get(joinedThread).getOutgoingEdges().stream()
+				.map(e -> (IIcfgJoinTransitionThreadOther<LOC>) e).collect(Collectors.toSet());
 	}
 
-	/**
-	 * Retrieves all joins of a given thread that can be reached from a given source location (within its thread).
-	 *
-	 * @param source
-	 *            the source location from which a join (in the same thread) must be reachable
-	 * @param joinedThread
-	 *            the thread being joined
-	 * @return all join transitions satisfying the above criteria
-	 */
-	public Set<IIcfgJoinTransitionThreadOther<IcfgLocation>> getReachableJoinsOf(final IcfgLocation source,
-			final String joinedThread) {
-		if (!mComputedReachableJoins.containsPair(source.getProcedure(), joinedThread)) {
-			computeReachableJoins(source.getProcedure(), joinedThread);
+	public boolean mayBeForkOf(final String forkedThread, final IcfgEdge edge) {
+		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
+			return mForks.getImage((IIcfgForkTransitionThreadCurrent<LOC>) edge).stream()
+					.anyMatch(e -> e.getSucceedingProcedure() == forkedThread);
 		}
-		return mReachableJoins.projectToTrd(source, joinedThread);
+		return false;
 	}
 
-	private void computeReachableJoins(final String joiningThread, final String joinedThread) {
-		for (final var joinOther : getJoinsOf(joinedThread)) {
-			final var joinCurrent = joinOther.getCorrespondingIIcfgJoinTransitionCurrentThread();
-			if (!joinCurrent.getPrecedingProcedure().equals(joiningThread)) {
-				continue;
-			}
-
-			final var iterator =
-					new ReverseIcfgEdgeIterator(Collections.singleton((IcfgJoinThreadCurrentTransition) joinCurrent),
-							ExtendedConcurrencyInformation::isThreadLocal);
-			while (iterator.hasNext()) {
-				final IcfgEdge edge = iterator.next();
-				mReachableJoins.addTriple(edge.getSource(), joinedThread, joinOther);
-			}
+	public boolean mayBeJoinOf(final String joinedThread, final IcfgEdge edge) {
+		if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+			return mJoins.getImage((IIcfgJoinTransitionThreadCurrent<LOC>) edge).stream()
+					.anyMatch(e -> e.getPrecedingProcedure() == joinedThread);
 		}
-		mComputedReachableJoins.addPair(joiningThread, joinedThread);
+		return false;
+	}
+
+	public boolean mustBeJoinOf(final String joinedThread, final IcfgEdge edge) {
+		if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+			return mJoins.getImage((IIcfgJoinTransitionThreadCurrent<LOC>) edge).stream()
+					.allMatch(e -> e.getPrecedingProcedure() == joinedThread);
+		}
+		return false;
 	}
 }
