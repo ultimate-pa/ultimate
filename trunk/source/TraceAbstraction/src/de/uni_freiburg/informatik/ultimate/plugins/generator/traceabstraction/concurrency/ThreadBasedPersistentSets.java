@@ -153,8 +153,6 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		}
 
 		final Set<IcfgEdge> result = enabledActions.projectToRange(persistentLocs);
-		mLogger.warn("persistent set for: " + mlState);
-		result.stream().forEach(a -> mLogger.warn("\t- " + a));
 		mStatistics.reportQuery();
 		return result;
 	}
