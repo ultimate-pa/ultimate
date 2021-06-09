@@ -282,8 +282,17 @@ public class ProcedureMultiplier {
 		final MultiTermResult newThreadIdArguments =
 				copyMultiTermResult(joinSmtArguments.getThreadIdArguments(), defaultVariableMapping, managedScript);
 		final List<IProgramVar> newAssignmentLhs =
-				joinSmtArguments.getAssignmentLhs().stream().map(map::get).collect(Collectors.toList());
+				joinSmtArguments.getAssignmentLhs().stream().map(x -> getNew(map, x)).collect(Collectors.toList());
 		return new JoinSmtArguments(newThreadIdArguments, newAssignmentLhs);
+	}
+
+	private static IProgramVar getNew(final Map<ILocalProgramVar, ILocalProgramVar> mapOld2New,
+			final IProgramVar variable) {
+		if (mapOld2New instanceof ILocalProgramVar) {
+			return mapOld2New.get(variable);
+		}
+		assert variable.isGlobal() : "Variable is neither local nor global";
+		return variable;
 	}
 
 	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,
