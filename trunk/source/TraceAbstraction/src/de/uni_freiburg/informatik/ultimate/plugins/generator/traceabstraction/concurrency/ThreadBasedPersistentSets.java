@@ -144,7 +144,8 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		}
 
 		final Set<IcfgLocation> active = Set.of(mlState.getProgramPoints());
-		final Set<IcfgLocation> persistentLocs = pickMaximalScc(active, getActiveConflicts(mlState, active));
+		final Set<IcfgLocation> persistentLocs =
+				pickMaximalScc(active, getActiveConflicts(mlState, active, enabledActions));
 		assert persistentLocs.size() <= active.size() : "Non-active locs must not be base for persistent set";
 		if (persistentLocs.containsAll(enabled)) {
 			mStatistics.reportTrivialQuery();
@@ -212,25 +213,25 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	}
 
 	private ISuccessorProvider<IcfgLocation> getActiveConflicts(final IMLPredicate state,
-			final Set<IcfgLocation> active) {
-		final HashRelation<IcfgLocation, IcfgLocation> conflictRelation = computeAllConflicts(state);
+			final Set<IcfgLocation> active, final HashRelation<IcfgLocation, IcfgEdge> enabledActions) {
+		final HashRelation<IcfgLocation, IcfgLocation> conflictRelation = computeAllConflicts(state, enabledActions);
 		return loc -> {
 			assert active.contains(loc) : "Only conflicts between active locations should be considered";
 			return conflictRelation.getImage(loc).stream().filter(active::contains).iterator();
 		};
 	}
 
-	private HashRelation<IcfgLocation, IcfgLocation> computeAllConflicts(final IMLPredicate state) {
+	private HashRelation<IcfgLocation, IcfgLocation> computeAllConflicts(final IMLPredicate state,
+			final HashRelation<IcfgLocation, IcfgEdge> enabledActions) {
 		final Map<String, IcfgLocation> threadLocs = getCurrentThreadLocs(state);
 		final HashRelation<IcfgLocation, IcfgLocation> conflictRelation =
-				getDirectConflicts(state, threadLocs.values());
+				getDirectConflicts(state, threadLocs.values(), enabledActions);
 		saturateForkConflicts(conflictRelation, threadLocs.values());
 		return conflictRelation;
 	}
 
 	private HashRelation<IcfgLocation, IcfgLocation> getDirectConflicts(final IMLPredicate state,
-			final Collection<IcfgLocation> locations) {
-		final HashRelation<IcfgLocation, IcfgEdge> enabledActions = getEnabledActions(state);
+			final Collection<IcfgLocation> locations, final HashRelation<IcfgLocation, IcfgEdge> enabledActions) {
 		final Comparator<IcfgEdge> order = mOrder == null ? null : mOrder.getOrder(state);
 
 		final HashRelation<IcfgLocation, IcfgLocation> result = new HashRelation<>();
