@@ -125,7 +125,7 @@ public class Req2BoogieTranslator {
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 
 		// check for duplicate IDs
-		final List<Entry<String, Integer>> duplicates = requirements.stream().map(PatternType<?>::getId)
+		final List<Entry<String, Integer>> duplicates = requirements.stream().map(PatternType::getId)
 				.collect(Collectors.toMap(k -> k, v -> 1, (v1, v2) -> v1 + v2)).entrySet().stream()
 				.filter(a -> a.getValue() > 1).collect(Collectors.toList());
 		if (!duplicates.isEmpty()) {
