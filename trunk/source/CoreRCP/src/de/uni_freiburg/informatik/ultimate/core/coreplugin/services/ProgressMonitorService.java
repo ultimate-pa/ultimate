@@ -69,7 +69,7 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 	@Override
 	public boolean continueProcessing() {
 		final boolean cancel =
-				mMonitor.isCanceled() || mCancelRequest || (mActiveTimer != null && !mActiveTimer.continueProcessing());
+				mMonitor.isCanceled() || mCancelRequest || mActiveTimer != null && !mActiveTimer.continueProcessing();
 		if (cancel && mLogger.isDebugEnabled()) {
 			mLogger.debug("Do not continue processing!");
 		}
@@ -79,7 +79,7 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 	@Override
 	public boolean continueProcessingRoot() {
 		final boolean cancel =
-				mMonitor.isCanceled() || mCancelRequest || (mRootTimer != null && !mRootTimer.continueProcessing());
+				mMonitor.isCanceled() || mCancelRequest || mRootTimer != null && !mRootTimer.continueProcessing();
 		if (cancel && mLogger.isDebugEnabled()) {
 			mLogger.debug("Do not continue processing!");
 		}
@@ -92,15 +92,15 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 	}
 
 	@Override
-	public void setDeadline(final long deadline) {
+	public void setDeadline(long deadline) {
 		if (System.currentTimeMillis() >= deadline) {
 			mLogger.warn(
 					String.format("Deadline was set to a date in the past, " + "effectively stopping the toolchain. "
 							+ "Is this what you intended? Value of date was %,d", deadline));
-
+			deadline = -1;
 		}
 		if (mActiveTimer != null) {
-			mLogger.warn("Replacing old deadline");
+			mLogger.warn("Replacing all timers with new deadline!");
 		}
 		mTimers.clear();
 		mActiveTimer = null;
@@ -146,7 +146,7 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 	@Override
 	public long getDeadline() {
 		if (mActiveTimer == null) {
-			return ProgressAwareTimer.createWithDeadline(null, Long.MAX_VALUE).getDeadline();
+			return -1;
 		}
 		return mActiveTimer.getDeadline();
 	}
@@ -200,6 +200,14 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 			mActiveTimer = mTimers.peek();
 		}
 		return activeTimer;
+	}
+
+	@Override
+	public long remainingTime() {
+		if (mActiveTimer == null) {
+			return -1;
+		}
+		return mActiveTimer.remainingTime();
 	}
 
 }

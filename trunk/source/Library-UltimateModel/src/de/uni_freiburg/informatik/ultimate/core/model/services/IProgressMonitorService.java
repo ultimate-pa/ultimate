@@ -51,7 +51,8 @@ public interface IProgressMonitorService extends IProgressAwareTimer, IToolchain
 	 *
 	 * @param date
 	 *            A date in the future (aka, the difference, measured in milliseconds, between the current time and
-	 *            midnight, January 1, 1970 UTC) after which a running toolchain should be stopped.
+	 *            midnight, January 1, 1970 UTC) after which a running toolchain should be stopped. Must be non-negative
+	 *            or -1 to disable the deadline.
 	 */
 	void setDeadline(final long date);
 

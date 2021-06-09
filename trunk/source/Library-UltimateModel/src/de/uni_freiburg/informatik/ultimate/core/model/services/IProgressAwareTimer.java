@@ -77,9 +77,16 @@ public interface IProgressAwareTimer {
 	IProgressAwareTimer getParent();
 
 	/**
-	 * @return a long value that should be interpreted as date (i.e., some point in time after midnight January 1 1970
-	 *         UTC in milliseconds).
+	 * @return a non-negative long value that should be interpreted as date (i.e., some point in time after midnight
+	 *         January 1 1970 UTC in milliseconds) at which the {@link IProgressAwareTimer} timeouts, or -1 if no
+	 *         deadline is set.
 	 */
 	long getDeadline();
+
+	/**
+	 * @return milliseconds until the timer expires or -1 if no timer is set. If the timer is already expired, 0 is
+	 *         returned.
+	 */
+	long remainingTime();
 
 }

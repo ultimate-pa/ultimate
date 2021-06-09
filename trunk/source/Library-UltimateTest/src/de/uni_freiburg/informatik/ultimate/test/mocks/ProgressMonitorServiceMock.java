@@ -39,10 +39,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
  */
 final class ProgressMonitorServiceMock implements IProgressMonitorService {
 
-	private long mDeadline = Long.MAX_VALUE;
+	private long mDeadline = -1;
 
 	@Override
 	public boolean continueProcessing() {
+		if (mDeadline == -1) {
+			return true;
+		}
 		return System.currentTimeMillis() < mDeadline;
 	}
 
@@ -78,12 +81,13 @@ final class ProgressMonitorServiceMock implements IProgressMonitorService {
 
 	@Override
 	public long getDeadline() {
-		return 0;
+		return mDeadline;
 	}
 
 	@Override
 	public void addChildTimer(final IProgressAwareTimer timer) {
 		// mock
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -99,6 +103,14 @@ final class ProgressMonitorServiceMock implements IProgressMonitorService {
 
 	@Override
 	public boolean continueProcessingRoot() {
-		return true;
+		return continueProcessing();
+	}
+
+	@Override
+	public long remainingTime() {
+		if (mDeadline == -1) {
+			return -1;
+		}
+		return System.currentTimeMillis() - mDeadline;
 	}
 }

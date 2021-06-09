@@ -44,12 +44,17 @@ final class ProgressAwareTimer implements IProgressAwareTimer {
 	}
 
 	private ProgressAwareTimer(final IProgressAwareTimer parent, final long deadline) {
-		assert deadline > 0;
+		if (deadline <= 0 && deadline != -1) {
+			throw new IllegalArgumentException("deadline must be positive or -1");
+		}
 		mParent = parent;
 		mDeadline = deadline;
 	}
 
 	private boolean isTimeout() {
+		if (mDeadline == -1) {
+			return false;
+		}
 		return System.currentTimeMillis() > mDeadline;
 	}
 
@@ -90,8 +95,16 @@ final class ProgressAwareTimer implements IProgressAwareTimer {
 	}
 
 	static IProgressAwareTimer createWithPercentage(final IProgressAwareTimer parent, final double percentage) {
-		assert parent != null;
-		assert percentage > 0 && percentage <= 1.0;
+		if (parent == null) {
+			throw new IllegalArgumentException("parent may not be null");
+		}
+		if (percentage <= 0 || percentage > 1.0) {
+			throw new IllegalArgumentException(
+					"percentage must be larger than zero and smaller or equal to one, but was " + percentage);
+		}
+		if (parent.getDeadline() == -1) {
+			return createWithDeadline(parent, -1);
+		}
 		final long current = System.currentTimeMillis();
 		final long currenttimeout = parent.getDeadline() - current;
 		final long newtimeout = (long) (currenttimeout * percentage);
@@ -103,4 +116,21 @@ final class ProgressAwareTimer implements IProgressAwareTimer {
 		return mParent;
 	}
 
+	@Override
+	public long remainingTime() {
+		if (mDeadline == -1) {
+			if (mParent != null) {
+				return mParent.remainingTime();
+			}
+			return -1;
+		}
+		final long current = System.currentTimeMillis();
+
+		final long remainingTime = Math.min(0, mDeadline - current);
+		final long parentRemainingTime = mParent == null ? -1 : mParent.remainingTime();
+		if (parentRemainingTime == -1) {
+			return remainingTime;
+		}
+		return Math.min(remainingTime, parentRemainingTime);
+	}
 }
