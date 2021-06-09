@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *
  * @author dietsch@informatik.uni-freiburg.de
  */
-public final class MonitoredProcess implements IStorable {
+public final class MonitoredProcess implements IStorable, AutoCloseable {
 
 	/**
 	 * Time in milliseconds to wait for the termination of a process after sending the exit command.
@@ -96,7 +96,7 @@ public final class MonitoredProcess implements IStorable {
 	private Thread mMonitor;
 	private int mID;
 
-	private volatile Process mProcess;
+	private Process mProcess;
 	private volatile boolean mProcessCompleted;
 	private volatile int mReturnCode;
 
@@ -142,40 +142,48 @@ public final class MonitoredProcess implements IStorable {
 	 */
 	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
 			final IUltimateServiceProvider services) throws IOException {
-		final MonitoredProcess newMonitoredProcess;
-		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).get();
+
+		if (command == null || command.length == 0) {
+			throw new IllegalArgumentException("Cannot execute empty argument");
+		}
 		final ILogger logger = services.getLoggingService().getControllerLogger();
+		final File workingDirFile;
 		if (workingDir == null) {
-			if (command.length > 0) {
-				File f = new File(command[0]);
-				if (f.exists()) {
-					command[0] = f.getAbsolutePath();
-				} else {
-					f = new File(Paths.get(System.getProperty("user.dir"), command[0]).toString());
-					if (f.exists() && f.canExecute()) {
-						command[0] = f.getAbsolutePath();
-					} else {
-						final File absolutePath = CoreUtil.findExecutableBinaryOnPath(command[0]);
-						if (absolutePath == null) {
-							logger.error(
-									"Could not determine absolute path of external process, hoping that OS will resolve "
-											+ command[0]);
-						} else {
-							command[0] = absolutePath.getAbsolutePath();
-						}
-					}
-				}
-			}
-			logger.info("No working directory specified, using " + command[0]);
-			newMonitoredProcess =
-					new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand, services, logger);
+			command[0] = findExecutableBinary(command[0], logger);
+			workingDirFile = null;
 		} else {
-			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command, null, new File(workingDir)),
-					oneLineCmd, exitCommand, services, logger);
+			workingDirFile = new File(workingDir);
 		}
 
+		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).get();
+		final MonitoredProcess newMonitoredProcess = new MonitoredProcess(
+				Runtime.getRuntime().exec(command, null, workingDirFile), oneLineCmd, exitCommand, services, logger);
 		newMonitoredProcess.start(workingDir, services.getStorage(), oneLineCmd);
 		return newMonitoredProcess;
+	}
+
+	private static String findExecutableBinary(final String command, final ILogger logger) {
+		final String binary;
+		File f = new File(command);
+		if (f.exists()) {
+			binary = f.getAbsolutePath();
+		} else {
+			f = new File(Paths.get(System.getProperty("user.dir"), command).toString());
+			if (f.exists() && f.canExecute()) {
+				binary = f.getAbsolutePath();
+			} else {
+				final File absolutePath = CoreUtil.findExecutableBinaryOnPath(command);
+				if (absolutePath == null) {
+					logger.error("Could not determine absolute path of external process, hoping that OS will resolve "
+							+ command);
+					binary = command;
+				} else {
+					binary = absolutePath.getAbsolutePath();
+				}
+			}
+		}
+		logger.info("No working directory specified, using " + binary);
+		return binary;
 	}
 
 	/**
@@ -305,13 +313,14 @@ public final class MonitoredProcess implements IStorable {
 		}
 		mLogger.info(String.format("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand));
 		final IProgressMonitorService progressService = mServices.getProgressMonitorService();
-		while (progressService != null && progressService.continueProcessingRoot()) {
+		while (progressService != null && progressService.continueProcessing()) {
 			try {
 				final MonitoredProcessState state = waitfor(WAIT_BETWEEN_CHECKS_MILLIS);
 				if (!state.isRunning()) {
 					return state;
 				}
 			} catch (final InterruptedException e) {
+				Thread.currentThread().interrupt();
 				break;
 			}
 		}
@@ -324,6 +333,7 @@ public final class MonitoredProcess implements IStorable {
 		} catch (final InterruptedException e) {
 			// ignore interrupted exceptions; they should never occur in this
 			// context anyways.
+			Thread.currentThread().interrupt();
 		}
 
 		mLogger.warn(
@@ -406,6 +416,7 @@ public final class MonitoredProcess implements IStorable {
 				} catch (final InterruptedException e) {
 					// not necessary to do anything here
 					mLogger.debug(getLogStringPrefix() + " Interrupted during join");
+					Thread.currentThread().interrupt();
 				}
 				if (!isRunning()) {
 					return;
@@ -414,13 +425,6 @@ public final class MonitoredProcess implements IStorable {
 			mLogger.warn(getLogStringPrefix() + " Forcibly destroying the process");
 			final List<InputStream> tobeclosed = new ArrayList<>(5);
 			try {
-				// mProcess.destroyForcibly();
-				// mStorage.removeStorable(getKey(mID, mCommand));
-				// mProcess.getErrorStream().close();
-				// mProcess.getInputStream().close();
-				// mProcess.getOutputStream().flush();
-				// mProcess.getOutputStream().close();
-				// mProcess = null;
 				tobeclosed.add(mProcess.getInputStream());
 				tobeclosed.add(mProcess.getErrorStream());
 				tobeclosed.add(mStdInStreamPipe);
@@ -432,9 +436,10 @@ public final class MonitoredProcess implements IStorable {
 							getLogStringPrefix() + " Rare case: The thread was killed right after we checked if it "
 									+ "was killed and before we wanted to kill it manually");
 				}
-			} catch (final Throwable t) {
-				mLogger.fatal(String.format(getLogStringPrefix() + " Something unexpected happened: %s%n%s", t,
-						CoreUtil.getStackTrace(t)));
+			} catch (final Exception ex) {
+				mLogger.fatal(String.format("%s Something unexpected happened: %s%n%s", getLogStringPrefix(), ex,
+						CoreUtil.getStackTrace(ex)));
+				throw ex;
 			}
 
 			for (final InputStream stream : tobeclosed) {
@@ -489,6 +494,11 @@ public final class MonitoredProcess implements IStorable {
 	protected void finalize() throws Throwable {
 		forceShutdown();
 		super.finalize();
+	}
+
+	@Override
+	public void close() throws Exception {
+		forceShutdown();
 	}
 
 	private static String getKey(final int processId, final String command) {
@@ -681,4 +691,5 @@ public final class MonitoredProcess implements IStorable {
 			}
 		}
 	}
+
 }

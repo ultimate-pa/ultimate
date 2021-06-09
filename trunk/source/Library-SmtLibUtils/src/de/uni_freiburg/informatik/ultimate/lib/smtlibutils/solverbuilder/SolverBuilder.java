@@ -320,7 +320,7 @@ public final class SolverBuilder {
 
 		@Override
 		public boolean isTerminationRequested() {
-			return !mMonitor.continueProcessingRoot();
+			return !mMonitor.continueProcessing();
 		}
 	}
 
