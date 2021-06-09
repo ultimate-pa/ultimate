@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -125,9 +125,8 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 			final boolean useAbstractInterpretationPredicates = mPrefs.getUseAbstractInterpretation();
 			final boolean useWpPredicates = mPrefs.getUseWeakestPreconditionForPathInvariants();
 
-			final SolverSettings solverSettings =
-					mPrefs.constructSolverSettings(mTaskIdentifier).setUseFakeIncrementalScript(false)
-							.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_TIMEOUT, null);
+			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
+					.setUseFakeIncrementalScript(false).setUseExternalSolver(ExternalSolver.Z3, 12000);
 
 			final InvariantSynthesisSettings invariantSynthesisSettings = new InvariantSynthesisSettings(solverSettings,
 					useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWpPredicates, true);

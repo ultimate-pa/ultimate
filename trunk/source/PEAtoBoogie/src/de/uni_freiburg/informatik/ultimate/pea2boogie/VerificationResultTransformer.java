@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
@@ -140,7 +141,8 @@ public class VerificationResultTransformer {
 		final Set<Spec> specs = reqCheck.getSpec();
 		if (specs == null || specs.isEmpty()) {
 			throw new AssertionError("Result without specification: " + oldRes.getShortDescription());
-		} else if (specs.size() == 1) {
+		}
+		if (specs.size() == 1) {
 			final Spec spec = specs.iterator().next();
 			dieIfUnsupported(spec);
 
@@ -237,9 +239,8 @@ public class VerificationResultTransformer {
 		final List<ProgramState<Term>> stateSequence =
 				programStates.stream().filter(Objects::nonNull).collect(Collectors.toList());
 
-		final Map<String, Term> vars =
-				new LinkedHashMap<>(stateSequence.stream().flatMap(a -> a.getVariables().stream()).distinct()
-						.collect(Collectors.toMap(a -> a.toString(), a -> a)));
+		final Map<String, Term> vars = new LinkedHashMap<>(stateSequence.stream()
+				.flatMap(a -> a.getVariables().stream()).distinct().collect(Collectors.toMap(Term::toString, a -> a)));
 
 		final Term deltaVar = vars.get(mReqSymbolTable.getDeltaVarName());
 		vars.remove(mReqSymbolTable.getDeltaVarName());
@@ -325,8 +326,7 @@ public class VerificationResultTransformer {
 
 		final String solverName = "RtInconsistencyPostProcessor";
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
-				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, SolverBuilder.LOGIC_Z3)
-				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
+				.setUseExternalSolver(ExternalSolver.Z3).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
 
 		final ManagedScript mgdScriptTc = toolkit.createFreshManagedScript(solverSettings, solverName);
 		final Script scriptTc = mgdScriptTc.getScript();
@@ -473,12 +473,11 @@ public class VerificationResultTransformer {
 				if (branchEncoder == null) {
 					throw new AssertionError("Not enough branch encoders");
 				}
-				final ParallelComposition parallelComposition = ((ParallelComposition) cb);
+				final ParallelComposition parallelComposition = (ParallelComposition) cb;
 				final Map<TermVariable, CodeBlock> bi2cb = parallelComposition.getBranchIndicator2CodeBlock();
 
-				final CodeBlock branch =
-						bi2cb.entrySet().stream().filter(a -> branchEncoder.get(a.getKey())).map(a -> a.getValue())
-								.findFirst().orElseThrow(() -> new AssertionError("No branch was taken!"));
+				final CodeBlock branch = bi2cb.entrySet().stream().filter(a -> branchEncoder.get(a.getKey()))
+						.map(Entry::getValue).findFirst().orElseThrow(() -> new AssertionError("No branch was taken!"));
 				rtr.addAll(extractSequential(Collections.singletonList(branch), branchEncoder));
 			} else {
 				rtr.add(cb);

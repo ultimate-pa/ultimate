@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
  * Wrapper that constructs SMTInterpol or an external SMT solver.
  *
  * @author heizmann@informatik.uni-freiburg.de
- * @author dietsch@informatik.uni-freiburg.de,
+ * @author dietsch@informatik.uni-freiburg.de
  */
 public final class SolverBuilder {
 
@@ -569,6 +569,54 @@ public final class SolverBuilder {
 					mAdditionalOptions, mSolverLogger);
 		}
 
+		/**
+		 * Use an external solver with default command, logic, and no timeout
+		 */
+		public SolverSettings setUseExternalSolver(final ExternalSolver solver) {
+			return setUseExternalSolver(true, solver.getSolverCommand(), solver.getDefaultLogic());
+		}
+
+		/**
+		 * Use an external solver with default command.
+		 *
+		 * @param solver
+		 *            The external solver.
+		 * @param logic
+		 *            The logic we should set in the solver or null if we should not set any logic
+		 * @param timeout
+		 *            A timeout in ms that should be supplied to the solver. Use only non-negative values. Some solvers
+		 *            do not support setting a timeout.
+		 */
+		public SolverSettings setUseExternalSolver(final ExternalSolver solver, final Logics logic,
+				final long timeout) {
+			return setUseExternalSolver(true, solver.getSolverCommand(timeout), logic);
+		}
+
+		/**
+		 * Use an external solver with default command and no timeout.
+		 *
+		 * @param solver
+		 *            The external solver.
+		 * @param logic
+		 *            The logic we should set in the solver or null if we should not set any logic
+		 */
+		public SolverSettings setUseExternalSolver(final ExternalSolver solver, final Logics logic) {
+			return setUseExternalSolver(true, solver.getSolverCommand(), logic);
+		}
+
+		/**
+		 * Use an external solver with default command and default logic.
+		 *
+		 * @param solver
+		 *            The external solver.
+		 * @param timeout
+		 *            A timeout in ms that should be supplied to the solver. Use only non-negative values. Some solvers
+		 *            do not support setting a timeout.
+		 */
+		public SolverSettings setUseExternalSolver(final ExternalSolver solver, final long timeout) {
+			return setUseExternalSolver(true, solver.getSolverCommand(timeout), solver.getDefaultLogic());
+		}
+
 		public SolverSettings setUseFakeIncrementalScript(final boolean enable) {
 			return new SolverSettings(mSolverMode, enable, mUseExternalSolver, mExternalSolverCommand, mSolverLogics,
 					mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark,
@@ -731,6 +779,61 @@ public final class SolverBuilder {
 
 		private String getKey() {
 			return getClass().getSimpleName() + mId;
+		}
+	}
+
+	/**
+	 * Enumeration that provides default command line strings for SMT solvers in different modes as well as their
+	 * default logics and -- if available -- commands for setting a timeout.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum ExternalSolver {
+		Z3(COMMAND_Z3_NO_TIMEOUT, COMMAND_Z3_NO_TIMEOUT + " -t:%d", LOGIC_Z3),
+
+		CVC4(COMMAND_CVC4_NO_TIMEOUT, COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=%d", LOGIC_CVC4_DEFAULT),
+
+		MATHSAT(COMMAND_MATHSAT, null, LOGIC_MATHSAT),
+
+		MATHSAT_INTERPOLATION(COMMAND_MATHSAT_INTERPOLATION, null, LOGIC_MATHSAT),
+
+		SMTINTERPOL(null, null, LOGIC_SMTINTERPOL),
+
+		PRINCESS(null, null, null);
+
+		private final String mSolverCommand;
+		private final String mSolverCommandTimeoutFormatString;
+		private final Logics mDefaultLogic;
+
+		ExternalSolver(final String solverCommand, final String solverCommandTimeoutFormatString,
+				final Logics defaultLogic) {
+			mSolverCommand = solverCommand;
+			mSolverCommandTimeoutFormatString = solverCommandTimeoutFormatString;
+			mDefaultLogic = defaultLogic;
+
+		}
+
+		public String getSolverCommand() {
+			if (mSolverCommand == null) {
+				throw new UnsupportedOperationException("Unknown or not implemented solver command: " + this);
+			}
+			return mSolverCommand;
+		}
+
+		public String getSolverCommand(final long timeout) {
+			if (mSolverCommandTimeoutFormatString == null) {
+				throw new UnsupportedOperationException(
+						"Unknown or not implemented solver command with timeouts: " + this);
+			}
+			if (timeout < 0) {
+				throw new IllegalArgumentException("Timeout must be non-negative");
+			}
+			return String.format(mSolverCommandTimeoutFormatString, timeout);
+		}
+
+		public Logics getDefaultLogic() {
+			return mDefaultLogic;
 		}
 	}
 }

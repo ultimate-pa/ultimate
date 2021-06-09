@@ -13,10 +13,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2S
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
@@ -45,9 +45,8 @@ public class ReqToTestObserver extends BaseObserver {
 	public ReqToTestObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
-		final SolverSettings settings =
-				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
-						.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL);
+		final SolverSettings settings = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3);
 		mScript = SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
 
 		mManagedScript = new ManagedScript(services, mScript);

@@ -68,13 +68,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -200,11 +200,10 @@ public class RtInconcistencyConditionGenerator {
 		for (final Entry<String, Expression> constEntry : constToValue.entrySet()) {
 			final BoogieConst programConst = boogieConsts.get(constEntry.getKey());
 			final Optional<Term> value = LiteralUtils.toTerm(constEntry.getValue(), script);
-			if (value.isPresent()) {
-				rtr.put(programConst.getTerm(), value.get());
-			} else {
+			if (!value.isPresent()) {
 				throw new IllegalArgumentException(BoogiePrettyPrinter.print(constEntry.getValue()) + " is no literal");
 			}
+			rtr.put(programConst.getTerm(), value.get());
 		}
 
 		return rtr;
@@ -254,9 +253,8 @@ public class RtInconcistencyConditionGenerator {
 
 	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
 
-		SolverSettings settings =
-				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
-						.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL);
+		SolverSettings settings = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
 		// SolverSettings settings =
 		// SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
 		// .setSolverLogics(Logics.ALL);
@@ -300,7 +298,7 @@ public class RtInconcistencyConditionGenerator {
 				mLogger.info(pea.getName() + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(pea));
 			}
 			if (automata.length < 4) {
-				final Optional<PhaseEventAutomata> prod = Arrays.stream(automata).reduce((a, b) -> a.parallel(b));
+				final Optional<PhaseEventAutomata> prod = Arrays.stream(automata).reduce(PhaseEventAutomata::parallel);
 				if (prod.isPresent()) {
 					mLogger.info(
 							"PRODUCT" + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(prod.get()));
@@ -474,7 +472,8 @@ public class RtInconcistencyConditionGenerator {
 		final Map<PatternType<?>, Term> terms;
 		if (primedStateInvariants.isEmpty()) {
 			return mTrue;
-		} else if (primedStateInvariants.size() == 1) {
+		}
+		if (primedStateInvariants.size() == 1) {
 			final Entry<PatternType<?>, CDD> entry = primedStateInvariants.entrySet().iterator().next();
 			result = mCddToSmt.toSmt(entry.getValue());
 			terms = Collections.singletonMap(entry.getKey(), result);
@@ -575,13 +574,12 @@ public class RtInconcistencyConditionGenerator {
 		final Set<String> stateVars = mReqSymboltable.getStateVars();
 		for (final TermVariable var : freeVars) {
 			final Expression expr = mBoogie2Smt.getTerm2Expression().translate(var);
-			if (expr instanceof IdentifierExpression) {
-				final String name = ((IdentifierExpression) expr).getIdentifier();
-				if (primedVars.contains(name) || eventVars.contains(name) || stateVars.contains(name)) {
-					rtr.add(var);
-				}
-			} else {
+			if (!(expr instanceof IdentifierExpression)) {
 				throw new AssertionError();
+			}
+			final String name = ((IdentifierExpression) expr).getIdentifier();
+			if (primedVars.contains(name) || eventVars.contains(name) || stateVars.contains(name)) {
+				rtr.add(var);
 			}
 		}
 
@@ -612,7 +610,7 @@ public class RtInconcistencyConditionGenerator {
 
 		private InvariantInfeasibleException(final Collection<PatternType<?>> responsibleRequirements) {
 			super("Some invariants are already infeasible. Responsible requirements: "
-					+ responsibleRequirements.stream().map(a -> a.getId()).collect(Collectors.joining(", ")));
+					+ responsibleRequirements.stream().map(PatternType::getId).collect(Collectors.joining(", ")));
 			mResponsibleRequirements = responsibleRequirements;
 		}
 
