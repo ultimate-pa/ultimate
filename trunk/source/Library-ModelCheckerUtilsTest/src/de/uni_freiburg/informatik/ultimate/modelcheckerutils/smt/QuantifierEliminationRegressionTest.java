@@ -63,6 +63,7 @@ public class QuantifierEliminationRegressionTest {
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
+	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
 	private IUltimateServiceProvider mServices;
@@ -94,7 +95,7 @@ public class QuantifierEliminationRegressionTest {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));
+		final Script solverInstance = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
@@ -465,6 +466,17 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
+	public void antiDerPreprocessing02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "v"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (not (= a b)) (= (store a k1 v) b) (= (select a k2) v)))";
+		final String expectedResultAsString = "(and (= (select b k2) v) (= (select b k1) v) (not (= k1 k2)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void nestedSelfUpdateTest() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "k", "ai", "aj", "ak", "vi", "vj", "vk") };
 		final String formulaAsString =
@@ -650,6 +662,15 @@ public class QuantifierEliminationRegressionTest {
 		final String expectedResult = "(= (bvadd main_~a~0 (_ bv1 32)) (bvadd ~g~0 (_ bv1 32)))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+	@Test
+	public void ird01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo1", "lo2", "eq") };
+		final String inputSTR = "(forall ((x Int)) 	(or (>= (* 7 x) lo1 ) (> x lo2) (= x eq) ))";
+		final String expectedResult = "false";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	@Test
 	public void tirExistsStrict() {
@@ -1001,6 +1022,26 @@ public class QuantifierEliminationRegressionTest {
 		final String expectedResult = inputSTR;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+
+	@Test
+	public void bvTirIrd1() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 32))) (and (bvslt a x) (distinct b x)))";
+		final String expectedResult = inputSTR;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void bvTirIrd3() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "a", "b") };
+		final String inputSTR = "(exists ((x (_ BitVec 32))) (bvult a x)))";
+		final String expectedResult = inputSTR;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 
 	@Test
 	public void greaterTIRNegativeCoef() {

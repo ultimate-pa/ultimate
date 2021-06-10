@@ -81,6 +81,7 @@ public class QuantifierEliminationTest {
 	private static final boolean CHECK_SIMPLIFICATION_POSSIBILITY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
+	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
 	private IUltimateServiceProvider mServices;
@@ -152,7 +153,8 @@ public class QuantifierEliminationTest {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));
+		final Script solverInstance = new HistoryRecordingScript(
+				UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
