@@ -20,7 +20,7 @@
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
-		<tycho-version>1.7.0</tycho-version>
+		<tycho-version>2.3.0</tycho-version>
 		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
 		<sonar-version>3.7.0.1746</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
@@ -339,6 +339,10 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
+					<target>
+						<file>../BA_SiteRepository/Ultimate_E4.17_Java11_Win32.target</file>
+					</target>
+
 					<!-- TODO: I am not sure if this is necessary. -->
 					<environments>
 						<environment>
@@ -352,6 +356,7 @@
 							<arch>x86_64</arch>
 						</environment>
 					</environments>
+					<targetDefinitionIncludeSource>ignore</targetDefinitionIncludeSource>
 				</configuration>
 			</plugin>
 
@@ -411,8 +416,15 @@
 				<artifactId>tycho-compiler-plugin</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
+					<useProjectSettings>false</useProjectSettings>
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.eclipse.tycho.extras</groupId>
+				<artifactId>target-platform-validation-plugin</artifactId>
+				<version>${tycho-version}</version>
 			</plugin>
 		</plugins>
 
@@ -479,21 +491,21 @@
 		<module>../BuchiProgramProduct</module>
 		<module>../CACSL2BoogieTranslator</module>
 		<module>../CDTParser</module>
-		<module>../CDTPlugin</module>
+		<!-- <module>../CDTPlugin</module> -->
 		<module>../ChcSmtPrinter</module>
 		<module>../ChcToBoogie</module>
 		<module>../CodeCheck</module>
 		<module>../CoreRCP</module>
 		<module>../Crocotta</module>
-		<module>../GUIGeneratedPreferencePages</module>
-		<module>../GUILoggingWindow</module>
-		<module>../GuiRCP</module>
+		<!-- <module>../GUIGeneratedPreferencePages</module> -->
+		<!-- <module>../GUILoggingWindow</module> -->
+		<!-- <module>../GuiRCP</module> -->
 		<module>../IcfgToChc</module>
 		<module>../IcfgTransformation</module>
 		<module>../InvariantSynthesis</module>
 		<module>../IRSDependencies</module>
 		<module>../JavaCup</module>
-		<module>../JungVisualization</module>
+		<!-- <module>../JungVisualization</module> -->
 		<module>../LassoRanker</module>
 		<module>../Library-ApacheCommonsCLI</module>
 		<module>../Library-ApacheCommonsLang</module>
@@ -622,7 +634,7 @@
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>true</trimStackTrace>
 							<redirectTestOutputToFile>true</redirectTestOutputToFile>
-							
+
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -632,7 +644,7 @@
 
 							<!-- Use this for global timeouts per class -->
 							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-							
+
 							<includes>
 								<include>**/*.java</include>
 							</includes>
@@ -808,6 +820,7 @@
 						<artifactId>tycho-surefire-plugin</artifactId>
 						<version>${tycho-version}</version>
 						<configuration>
+							<enableAssertions>true</enableAssertions>
 							<providerHint>junit47</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
@@ -835,6 +848,32 @@
 							</includes>
 						</configuration>
 					</plugin>
+
+					<!-- <plugin> -->
+					<!-- <groupId>org.eclipse.tycho</groupId> -->
+					<!-- <artifactId>target-platform-configuration</artifactId> -->
+					<!-- <version>${tycho-version}</version> -->
+					<!-- <configuration> -->
+					<!-- <filters> -->
+					<!-- <filter> -->
+					<!-- <type>eclipse-plugin</type> -->
+					<!-- <id>de.uni_freiburg.informatik.ultimate.cdt</id> -->
+					<!-- <removeAll /> -->
+					<!-- </filter> -->
+					<!-- <filter> -->
+					<!-- <type>eclipse-plugin</type> -->
+					<!-- <id>de.uni_freiburg.informatik.ultimate.gui.preferencepages</id> -->
+					<!-- <removeAll /> -->
+					<!-- </filter> -->
+					<!-- <filter> -->
+					<!-- <type>eclipse-plugin</type> -->
+					<!-- <id>de.uni_freiburg.informatik.ultimate.gui</id> -->
+					<!-- <removeAll /> -->
+					<!-- </filter> -->
+					<!-- </filters> -->
+					<!-- </configuration> -->
+					<!-- </plugin> -->
+
 				</plugins>
 			</build>
 
