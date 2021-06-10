@@ -31,6 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
@@ -133,8 +134,8 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 			final Term term) {
 		final Term result;
 		try {
-			result = TermContextTransformationEngine
-			.transform(new PolyPacSimplificationTermWalker(services, script), context, term);
+			result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(services, script),
+					context, term);
 		} catch (final ToolchainCanceledException tce) {
 			final CondisDepthCode termCdc = new CondisDepthCodeGenerator().transduce(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
@@ -164,9 +165,10 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 			throw new AssertionError(String.format(
 					"Intermediate result not equivalent. Input: %s Output: %s Assumption: %s", input, output, context));
 		case UNKNOWN:
-			System.out.println(String.format(
+			ILogger logger = mServices.getLoggingService().getLogger(this.getClass());
+			logger.info((String.format(
 					"Insufficient ressources to check equivalence of intermediate result. Input: %s Output: %s Assumption: %s",
-					input, output, context));
+					input, output, context)));
 			break;
 		case UNSAT:
 			break;
