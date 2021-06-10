@@ -215,29 +215,22 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					mTraceCheckFinished = true;
 					cleanupAndUnlockSolver();
 				}
-			} else {
-				if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-					final String msg =
-							"Trace is feasible, we will do another trace check, this time with branch encoders.";
-					managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
-					mLogger.info(msg);
+			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
+				final String msg = "Trace is feasible, we will do another trace check, this time with branch encoders.";
+				managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
+				mLogger.info(msg);
 
-					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
-					if (icfgProgramExecution != null) {
-						providesIcfgProgramExecution = true;
-					}
-					mTraceCheckFinished = true;
-				} else {
-					if (!feasibilityResult.isSolverCrashed()) {
-						mTraceCheckFinished = true;
-						cleanupAndUnlockSolver();
-					} else {
-						if (feasibilityResult.getReasonUnknown()
-								.getExceptionHandlingCategory() != ExceptionHandlingCategory.KNOWN_IGNORE) {
-							throw new AssertionError(feasibilityResult.getReasonUnknown().getException());
-						}
-					}
+				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
+				if (icfgProgramExecution != null) {
+					providesIcfgProgramExecution = true;
 				}
+				mTraceCheckFinished = true;
+			} else if (!feasibilityResult.isSolverCrashed()) {
+				mTraceCheckFinished = true;
+				cleanupAndUnlockSolver();
+			} else if (feasibilityResult.getReasonUnknown()
+					.getExceptionHandlingCategory() != ExceptionHandlingCategory.KNOWN_IGNORE) {
+				throw new AssertionError(feasibilityResult.getReasonUnknown().getException());
 			}
 		} catch (final ToolchainCanceledException e) {
 			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
@@ -356,10 +349,19 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
 					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
-			assert tc.isCorrect() != LBool.UNKNOWN : "result of second trace check is UNKNOWN, Reasons: "
-					+ tc.getTraceCheckReasonUnknown();
-			assert tc.isCorrect() == LBool.SAT : "result of second trace check is not SAT, but " + tc.isCorrect();
-			return tc.getRcfgProgramExecution();
+
+			switch (tc.isCorrect()) {
+			case SAT:
+				return tc.getRcfgProgramExecution();
+			case UNKNOWN:
+				throw new UnsupportedOperationException(
+						"result of second trace check is UNKNOWN, Reasons: " + tc.getTraceCheckReasonUnknown());
+			case UNSAT:
+				throw new AssertionError("result of second trace check is not SAT, but " + tc.isCorrect());
+			default:
+				throw new UnsupportedOperationException("unknown trace check result type:" + tc.isCorrect());
+			}
+
 		}
 		return computeRcfgProgramExecution(mNsb);
 	}
@@ -423,12 +425,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		Boolean result;
 		if (SmtUtils.isTrueLiteral(term)) {
 			result = Boolean.TRUE;
+		} else if (SmtUtils.isFalseLiteral(term)) {
+			result = Boolean.FALSE;
 		} else {
-			if (SmtUtils.isFalseLiteral(term)) {
-				result = Boolean.FALSE;
-			} else {
-				throw new AssertionError();
-			}
+			throw new AssertionError();
 		}
 		return result;
 	}
@@ -508,7 +508,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 		public FeasibilityCheckResult(final LBool lBool, final TraceCheckReasonUnknown reasonUnknown,
 				final boolean solverCrashed) {
-			super();
 			assert lBool != LBool.UNKNOWN
 					|| reasonUnknown != null : "if result is unknown you have to specify a reason";
 			assert lBool == LBool.UNKNOWN
