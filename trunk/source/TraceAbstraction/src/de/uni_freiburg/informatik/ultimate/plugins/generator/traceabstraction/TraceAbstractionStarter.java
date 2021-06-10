@@ -160,8 +160,14 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final Collection<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		final int numberOfErrorLocs = errNodesOfAllProc.size();
 		mLogger.info("Applying trace abstraction to program that has " + numberOfErrorLocs + " error locations.");
-
 		mOverallResult = Result.SAFE;
+		if (numberOfErrorLocs <= 0) {
+			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
+					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, numberOfErrorLocs);
+			reportResult(result);
+			return;
+		}
+
 		mArtifact = null;
 		if (isConcurrent(icfg)) {
 			analyseConcurrentProgram(icfg);
