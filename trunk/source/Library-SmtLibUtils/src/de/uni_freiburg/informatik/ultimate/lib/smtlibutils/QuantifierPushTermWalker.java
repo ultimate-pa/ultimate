@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -73,21 +71,13 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	@Override
 	Context constructContextForApplicationTerm(final Context context,
 			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
-		final Term cc = Context.buildCriticalConstraintForConDis(mMgdScript.getScript(),
-				context.getCriticalConstraint(), symb, allParams,  selectedParam);
-		final Context qpc = new Context(cc, context.getBoundByAncestors());
-		return qpc;
+		return context.constructChildContextForConDis(mMgdScript.getScript(), symb, allParams, selectedParam);
 	}
 
 	@Override
 	Context constructContextForQuantifiedFormula(final Context context, final int quant,
 			final List<TermVariable> vars) {
-		final Term cc = Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(),
-				context.getCriticalConstraint(), vars);
-		final Set<TermVariable> bannedForDivCapture = new HashSet<>(context.getBoundByAncestors());
-		bannedForDivCapture.addAll(vars);
-		final Context qpc = new Context(cc, bannedForDivCapture);
-		return qpc;
+		return context.constructChildContextForQuantifiedFormula(mMgdScript.getScript(), vars);
 	}
 
 	@Override
