@@ -59,10 +59,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  * A choice of persistent sets for pthread-like concurrent programs. By analysing the CFG, we compute persistent sets
  * for the concurrent product in polynomial time (in the size of the CFG).
  *
- * Note that this is currently unsound if either (i) the analysed programs has insufficient thread instances (through
- * the fault of persistent set reduction, that fact might be missed), or (ii) the analysed programs has assertions that
- * can be reached while other threads are still running (i.e. it is really mostly intended for postcondition checking).
- *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <LOC>
