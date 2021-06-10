@@ -176,8 +176,9 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 			assert !threadLocs.containsKey(loc.getProcedure()) : "Duplicate location for same thread";
 			threadLocs.put(loc.getProcedure(), loc);
 		}
-		for (final Map.Entry<String, ? extends IcfgLocation> proc : mIcfg.getProcedureEntryNodes().entrySet()) {
-			threadLocs.putIfAbsent(proc.getKey(), proc.getValue());
+		final Map<String, ? extends IcfgLocation> entryNodes = mIcfg.getProcedureEntryNodes();
+		for (final String thread : mInfo.getThreads()) {
+			threadLocs.putIfAbsent(thread, entryNodes.get(thread));
 		}
 		return threadLocs;
 	}
