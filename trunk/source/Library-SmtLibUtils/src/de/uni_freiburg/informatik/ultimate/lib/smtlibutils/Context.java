@@ -125,6 +125,8 @@ public class Context {
 					.collect(Collectors.toList());
 			result = SmtUtils.and(script, otherParamsNegated);
 		} else if (symb.getName().equals("=")) {
+			// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
+			// terms here.
 			result = script.term("true");
 		} else {
 			throw new AssertionError("only conjunction and disjunction are supported");
