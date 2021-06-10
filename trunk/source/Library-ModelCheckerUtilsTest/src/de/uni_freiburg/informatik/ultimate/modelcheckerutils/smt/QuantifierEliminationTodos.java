@@ -59,7 +59,7 @@ public class QuantifierEliminationTodos {
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final boolean CHECK_SIMPLIFICATION_POSSIBILITY = false;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000999;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
@@ -122,7 +122,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void commutingStores() {
+	public void commutingStoresForall() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
 		final String inputSTR = "(forall ((arr (Array Int Int))) (= (store (store arr i 2) j 3) (store (store arr j 3) i 2)))";
 		final String expectedResult = "(distinct i j)";
@@ -149,7 +149,7 @@ public class QuantifierEliminationTodos {
 	public void storeComparisonExistsDer() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
 		final String inputSTR = "(exists ((arr (Array Int Int))) (= (store arr i 42) (store arr j 23)))";
-		final String expectedResult = "(= i j)";
+		final String expectedResult = "(distinct i j)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -265,7 +265,7 @@ public class QuantifierEliminationTodos {
 			new FunDecl(SmtSortUtils::getRealSort, "?x1", "?x2", "?x3"),
 		};
 		final String formulaAsString = "(exists ((?x4 Real)) (and (< (+ (* 47.0 ?x4) 62.0) (+ (* 21.0 ?x1) (* 39.0 ?x3))) (not (= 0.0 (+ (* ?x1 80.0) (* ?x2 (- 65.0)) (* ?x3 3.0) (* ?x4 16.0)))) (< (* 50.0 ?x3) (+ (* 37.0 ?x1) (* 50.0 ?x2) (* 13.0 ?x4))) (< (+ (* 43.0 ?x1) (* 85.0 ?x2)) (+ (* 91.0 ?x4) 34.0)) (or (= (- 66.0) (+ (* ?x1 28.0) (* ?x2 99.0) (* ?x4 77.0))) (not (= 0.0 (+ (* ?x1 (- 67.0)) (* ?x2 32.0) (* ?x3 37.0))))) (not (= 77.0 (+ (* ?x1 29.0) (* ?x4 (- 59.0))))) (< ?x4 (+ (* 38.0 ?x2) 79.0)) (or (and (< 0.0 (+ (* 78.0 ?x3) 97.0)) (< (+ (* 59.0 ?x2) 65.0) (+ (* 16.0 ?x3) (* 62.0 ?x4)))) (and (<= (* 50.0 ?x2) (+ (* 23.0 ?x1) (* 37.0 ?x3) (* 11.0 ?x4) 80.0)) (<= (+ (* 83.0 ?x1) (* 20.0 ?x3) (* 42.0 ?x4)) (+ (* 41.0 ?x2) 74.0))) (and (< (+ (* 99.0 ?x1) (* 26.0 ?x2) (* 56.0 ?x3)) 28.0) (<= 0.0 (+ (* 31.0 ?x1) (* 48.0 ?x3)))) (and (or (and (not (= 0.0 (+ (* ?x1 (- 79.0)) (* ?x2 72.0) (* ?x3 26.0)))) (< (+ (* 64.0 ?x2) (* 3.0 ?x3) (* 97.0 ?x4)) 25.0)) (< (+ (* 27.0 ?x4) 11.0) (* 50.0 ?x3)) (<= 78.0 (+ (* 27.0 ?x1) (* 98.0 ?x2) (* 61.0 ?x3)))) (< (+ (* 66.0 ?x4) 66.0) (* 21.0 ?x2)) (= 0.0 (+ (* ?x3 89.0) (* ?x4 93.0))))) (< (+ (* 65.0 ?x1) (* 51.0 ?x4) 74.0) (* 27.0 ?x3)) (or (and (or (< (+ (* 28.0 ?x1) (* 7.0 ?x2)) (* 38.0 ?x4)) (< (+ (* 24.0 ?x2) (* 47.0 ?x4)) (+ (* 97.0 ?x1) (* 4.0 ?x3))) (= 41.0 (+ (* ?x1 98.0) (* ?x2 8.0) (* ?x3 (- 15.0)))) (< (* 67.0 ?x1) 0.0)) (= 63.0 (+ (* ?x1 18.0) (* ?x4 54.0))) (or (= 0.0 (+ (* ?x1 13.0) (* ?x2 13.0))) (<= (* 14.0 ?x2) (+ (* 47.0 ?x1) 38.0)) (and (<= (+ (* 11.0 ?x1) (* 57.0 ?x3) 46.0) (* 87.0 ?x4)) (< (+ (* 23.0 ?x2) (* 94.0 ?x3)) (+ (* 93.0 ?x1) (* 21.0 ?x4)))) (not (= 48.0 (+ (* ?x1 88.0) (* ?x2 66.0) (* ?x3 65.0) (* ?x4 20.0))))) (= (- 28.0) (+ (* ?x1 (- 97.0)) (* ?x3 96.0) (* ?x4 31.0))) (not (= 90.0 (+ (* ?x2 86.0) (* ?x3 (- 28.0)) (* ?x4 2.0)))) (or (< (+ (* 81.0 ?x4) 35.0) (+ (* 38.0 ?x1) (* 64.0 ?x2))) (not (= (- 55.0) (+ (* ?x2 (- 24.0)) (* ?x3 (- 96.0)) (* ?x4 40.0))))) (or (and (<= (+ (* 59.0 ?x1) (* 50.0 ?x2) (* 37.0 ?x3)) 80.0) (or (<= (+ (* 3.0 ?x1) (* 46.0 ?x2)) (+ (* 3.0 ?x4) 38.0)) (< (* 98.0 ?x3) (+ (* 95.0 ?x1) (* 2.0 ?x4))))) (< (+ (* 95.0 ?x2) (* 25.0 ?x4)) (+ (* 82.0 ?x1) (* 21.0 ?x3) 79.0)) (= 48.0 (+ (* ?x1 45.0) (* ?x2 49.0)))) (or (<= 0.0 (+ (* 99.0 ?x2) (* 9.0 ?x3) (* 25.0 ?x4) 50.0)) (< (+ (* 27.0 ?x1) (* 97.0 ?x2) (* 97.0 ?x3)) 0.0)) (< (+ (* 60.0 ?x1) (* 73.0 ?x4)) (+ (* 71.0 ?x2) (* 94.0 ?x3) 91.0))) (and (or (and (< (* 27.0 ?x4) (+ (* 29.0 ?x1) 1.0)) (< 12.0 (* 71.0 ?x1))) (and (<= (+ (* 73.0 ?x3) (* 45.0 ?x4) 61.0) 0.0) (or (= 15.0 (+ (* ?x1 97.0) (* ?x4 (- 73.0)))) (< 8.0 (+ (* 3.0 ?x1) (* 99.0 ?x2) (* 25.0 ?x3)))))) (or (= (- 42.0) (+ (* ?x1 2.0) (* ?x3 (- 55.0)) (* ?x4 5.0))) (<= (+ (* 12.0 ?x2) 7.0) (+ (* 73.0 ?x3) (* 70.0 ?x4))) (and (< (+ (* 17.0 ?x2) (* 24.0 ?x3) 32.0) (+ (* 63.0 ?x1) (* 14.0 ?x4))) (not (= 0.0 (+ (* ?x1 (- 21.0)) (* ?x2 (- 14.0)) (* ?x3 (- 48.0)) (* ?x4 83.0))))) (< (+ (* 68.0 ?x1) (* 64.0 ?x2) 47.0) (* 14.0 ?x3))))) (<= (* 17.0 ?x2) (+ (* 24.0 ?x3) (* 82.0 ?x4) 35.0)) (<= 0.0 (* 35.0 ?x4)) (or (not (= 0.0 (+ (* ?x1 49.0) (* ?x3 42.0) (* ?x4 50.0)))) (and (= 0.0 (+ (* ?x1 (- 1.0)) (* ?x2 (- 97.0)) (* ?x3 33.0) (* ?x4 84.0))) (<= (+ (* 23.0 ?x1) (* 73.0 ?x2) 19.0) 0.0)))))";
-		final String expectedResultAsString = "true";
+		final String expectedResultAsString = "false";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -364,7 +364,7 @@ public class QuantifierEliminationTodos {
 				"(forall ((|v_#memory_$Pointer$.base_14| (Array Int (Array Int Int))) (|main_#t~mem1.offset| Int)) (or (not (= |v_#memory_$Pointer$.base_14| (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) (select (select |v_#memory_$Pointer$.base_14| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28)))))) (= 1 (select |#valid| (select (select |v_#memory_$Pointer$.base_14| |main_~#p~0.base|) |main_~#p~0.offset|)))))";
 		final String expectedResultAsString =
 				"(forall ((|main_#t~mem1.offset| Int) (v_DerPreprocessor_2 Int)) (= 1 (select |#valid| (select (select (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) v_DerPreprocessor_2)) |main_~#p~0.base|) |main_~#p~0.offset|))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	//@formatter:on
