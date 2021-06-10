@@ -222,18 +222,6 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
-	public void plrTest3() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getBoolSort, "HI", "HJ", "HK", "HL", "HM", "HO", "HP", "HQ", "HS", "HT", "HU", "HW", "HX", "HY", "HZ", "IA", "IB", "IC", "ID", "IE", "IF", "IG", "AA", "II", "IJ", "AC", "IK", "IL", "AE", "AF", "IN", "AG", "AI", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AU", "AW", "AX", "AY", "AZ", "BA", "BC", "BD", "C", "BE", "D", "BF", "BG", "E", "F", "BI", "G", "H", "I", "BK", "J", "BL", "K", "BM", "L", "BO", "BP", "N", "O", "BQ", "BR", "P", "BS", "Q", "R", "BT", "BU", "S", "T", "U", "V", "W", "BY", "BZ", "X", "CB", "CC", "CD", "CE", "CI", "CJ", "CK", "CL", "CN", "CO", "CQ", "CS", "CT", "CW", "CX", "CY", "CZ", "DA", "DB", "DD", "DH", "DI", "DJ", "DK", "DO", "DP", "DQ", "DR", "DS", "DU", "DX", "DZ", "EA", "EB", "ED", "EE", "EF", "EG", "EH", "EI", "EJ", "EK", "EM", "EN", "EO", "EP", "ES", "EU", "EV", "EW", "EX", "EZ", "FA", "FB", "FC", "FE", "FF", "FG", "FH", "FI", "FK", "FL", "FM", "FN", "FP", "FR", "FS", "FT", "FW", "FX", "GA", "GB", "GE", "GF", "GH", "GI", "GJ", "GK", "GO", "GP", "GR", "GS", "GT", "GU", "GV", "GW", "GX", "GY", "GZ", "HA", "HB", "HC", "HE", "HF", "HG"),
-				new FunDecl(SmtSortUtils::getRealSort, "AB", "DE", "CF", "IM", "CH", "AH", "CM", "FQ", "EQ", "HV", "DV", "T1", "GD", "FD"),
-				new FunDecl(SmtSortUtils::getIntSort, "HH", "DF", "DG", "HN", "DL", "DM", "DN", "HR", "DT", "DW", "DY", "EC", "IH", "AD", "EL", "AJ", "ER", "ET", "AT", "EY", "AV", "BB", "A", "B", "FJ", "BH", "BJ", "FO", "BN", "M", "FU", "FV", "FY", "BV", "FZ", "BW", "BX", "Y", "Z", "GC", "CA", "GG", "CG", "GL", "GM", "GN", "GQ", "CP", "CR", "CU", "CV", "HD", "DC"),
-		};
-		final String formulaAsString = "(exists ((A Int) (B Int) (C Bool) (D Bool) (E Bool) (F Bool) (G Bool) (H Bool) (I Bool) (J Bool) (K Bool) (L Bool) (M Int) (N Bool) (O Bool) (P Bool) (Q Bool) (R Bool) (S Bool) (T Bool) (U Bool) (V Bool) (W Bool) (X Bool) (Y Int) (Z Int) (AA Bool) (AB Real) (AC Bool) (AD Int) (AE Bool) (AF Bool) (AG Bool) (AH Real) (AI Bool) (AJ Int) (AK Bool) (AL Bool) (AM Bool) (AN Bool) (AO Bool) (AP Bool) (AQ Bool) (AR Bool) (AS Bool) (AT Int) (AU Bool) (AV Int) (AW Bool) (AX Bool) (AY Bool) (AZ Bool) (BA Bool) (BB Int) (BC Bool) (BD Bool) (BE Bool) (BF Bool) (BG Bool) (BH Int) (BI Bool) (BJ Int) (BK Bool) (BL Bool) (BM Bool) (BN Int) (BO Bool) (BP Bool) (BQ Bool) (BR Bool) (BS Bool) (BT Bool) (BU Bool) (BV Int) (BW Int) (BX Int) (BY Bool) (BZ Bool) (CA Int) (CB Bool) (CC Bool) (CD Bool) (CE Bool) (CF Real) (CG Int) (CH Real) (CI Bool) (CJ Bool) (CK Bool) (CL Bool) (CM Real) (CN Bool) (CO Bool) (CP Int) (CQ Bool) (CR Int) (CS Bool) (CT Bool) (CU Int) (CV Int) (CW Bool) (CX Bool) (CY Bool) (CZ Bool) (DA Bool) (DB Bool) (DC Int) (DD Bool) (DE Real) (DF Int) (DG Int) (DH Bool) (DI Bool) (DJ Bool) (DK Bool) (DL Int) (DM Int) (DN Int) (DO Bool) (DP Bool) (DQ Bool) (DR Bool) (DS Bool) (DT Int) (DU Bool) (DV Real) (DW Int) (DX Bool) (DY Int) (DZ Bool) (EA Bool) (EB Bool) (EC Int) (ED Bool) (EE Bool) (EF Bool) (EG Bool) (EH Bool) (EI Bool) (EJ Bool) (EK Bool) (EL Int) (EM Bool) (EN Bool) (EO Bool) (EP Bool) (EQ Real) (ER Int) (ES Bool) (ET Int) (EU Bool) (EV Bool) (EW Bool) (EX Bool) (EY Int) (EZ Bool) (FA Bool) (FB Bool) (FC Bool) (FD Real) (FE Bool) (FF Bool) (FG Bool) (FH Bool) (FI Bool) (FJ Int) (FK Bool) (FL Bool) (FM Bool) (FN Bool) (FO Int) (FP Bool) (FQ Real) (FR Bool) (FS Bool) (FT Bool) (FU Int) (FV Int) (FW Bool) (FX Bool) (FY Int) (FZ Int) (GA Bool) (GB Bool) (GC Int) (GD Real) (GE Bool) (GF Bool) (GG Int) (GH Bool) (GI Bool) (GJ Bool) (GK Bool) (GL Int) (GM Int) (GN Int) (GO Bool) (GP Bool) (GQ Int) (GR Bool) (GS Bool) (GT Bool) (GU Bool) (GV Bool) (GW Bool) (GX Bool) (GY Bool) (GZ Bool) (HA Bool) (HB Bool) (HC Bool) (HD Int) (HE Bool) (HF Bool) (HG Bool) (HH Int) (HI Bool) (HJ Bool) (HK Bool) (HL Bool) (HM Bool) (HN Int) (HO Bool) (HP Bool) (HQ Bool) (HR Int) (HS Bool) (HT Bool) (HU Bool) (HV Real) (HW Bool) (HX Bool) (HY Bool) (HZ Bool) (IA Bool) (IB Bool) (IC Bool) (ID Bool) (IE Bool) (IF Bool) (IG Bool) (IH Int) (II Bool) (IJ Bool) (IK Bool) (IL Bool) (IM Real) (IN Bool)) (and (<= 0 DG) (= AZ HX) (= FV BJ) (or (not BT) DK) (<= 0 B) (= HA FE) (or FW (not AM)) (= IJ AX) (<= 0 DW) (<= AV 7) (= EF BA) (= AC CE) (= FN HI) (or (not GI) GZ) (or (not BQ) DB) (<= CV 255) (or (not FS) IL) (= AI HP) (or (not (< 0 DN)) (= DY 1)) (= AB (/ 3.0 2.0)) (= 2 Z) (= AT 19) (= HB V) (= N HE) (= AP EB) (or AE (not EZ)) (= GM 3) (<= 0 ER) (= DH AG) (or AK (not BD)) (= HJ P) (<= EY 3) (<= DT 3) (or (not EU) IN) (<= 0 EC) (= GN DC) (= X GY) (<= 0 DC) (<= B 15) (= GD 800.0) (= CS EX) (= HF EP) (<= 0 BW) (or HM (not GA)) (= BK DS) (or (not CQ) CI) (or (= 15 GQ) (= 14 GQ) (and (<= 0 GQ) (<= GQ 10))) (= FO HR) (<= IH 2) (or (= 14 ET) (and (<= ET 10) (<= 0 ET)) (= 15 ET)) (<= BX 3) (or (not ES) HY) (or (and GX IB FG S U G DX GP DJ AU BZ BO EV FR) (not (= CR FY))) (= GF DU) (= BM DR) (= BY O) (<= 0 EY) (= IG BE) (= CY EI) (or BL (not FC)) (= FD 4000.0) (or (not GT) J) (= BN 19) (<= 0 CG) (or (not CL) AO) (<= DW 6) (or DD (not GB)) (<= 0 BB) (= 2 GC) (= 50.0 FQ) (= EJ GS) (<= BB 2) (= EG FX) (= GR BF) (or (not AN) IK) (= HT AR) (= Q CK) (<= DC 255) (or (not (= 0 DN)) (= DY 0)) (or I (not E)) (= HO AS) (<= A 9) (<= 0 BV) (<= DM 9) (or (and (not HQ) (not GP)) (and GP (not HQ))) (or (= AD 126) (= AD 127) (and (<= AD 100) (<= 0 AD))) (= FM EH) (= ED EW) (<= 0 IH) (<= 0 HH) (<= 0 DT) (= AL BU) (= IM (/ 3.0 2.0)) (or HS (not FF)) (= R CJ) (<= 0 FZ) (= K BR) (or IC (not HG)) (<= 0 M) (or CD (not EE)) (<= FU 255) (= AY ID) (<= BV 7) (= AW CX) (= FA CB) (<= FZ 658) (= Y HN) (<= 0 AJ) (= DV (/ 3.0 2.0)) (<= HH 1023) (<= 0 FU) (or (not EA) II) (or (= 15 DL) (and (<= 0 DL) (<= DL 10)) (= 14 DL)) (<= ER 9) (= CW AQ) (= E GW) (<= CU 15) (= HL FP) (= CM 500.0) (= HC W) (= 2 HR) (= GK C) (<= AJ 3) (= 2 BH) (<= EL 3) (= CN L) (<= DG 7) (<= BW 63) (= FK GH) (<= EC 63) (<= 0 CV) (= 50.0 AH) (<= CP 9) (or DO (not FL)) (= 4000.0 EQ) (= EO GO) (= 20.0 CF) (= HZ FT) (<= 0 BX) (= BP F) (or (and GP HQ) (and (< T1 50.0) (not GP) HQ) (and (<= 50.0 T1) (not GP))) (= FB CC) (= DP BI) (= DZ BC) (<= 0 GG) (<= GG 255) (= DI CT) (or T (not AA)) (= DE 50.0) (or (not CZ) IE) (or BS (not D)) (= 800.0 HV) (= HW FH) (or AF (not GJ)) (or HK (not (= CR FY))) (<= 0 AV) (= CA FJ) (= EM GV) (<= 0 DM) (<= M 1023) (<= 0 EL) (<= 0 HD) (<= CG 2) (<= 0 A) (= CH 20.0) (or (not EN) (= CR FY)) (<= DF 3) (<= 0 CU) (= FI DQ) (= IF BG) (or (not GU) IA) (or DA (not EK)) (<= HD 3) (= HU GE) (<= 0 DF) (= 1 GL) (<= 0 CP) (or CO (not H))))";
-		final String expextedResultAsString = "(<= 50.0 T1)";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void plrTest4() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getRealSort, "T1"),
@@ -447,14 +435,6 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
-	public void contextInauguration() {
-		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "k", "i", "x", "y") };
-		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= k i) (or (= (+ 0 (select a k)) (+ x (select a i))) (= (+ 1 (select a k)) (+ y (select a i))))))";
-		final String expectedResultAsString = "(and (= i k) (or (= y 1) (= x 0)))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void antiDerPreprocessing() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "k", "v"),
@@ -559,17 +539,6 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
-	public void arrayEliminationRushingMountaineer02() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
-			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
-		};
-		final String formulaAsString = "(exists ((|v_#valid_34| (Array (_ BitVec 32) (_ BitVec 1))) (|#t~string0.base| (_ BitVec 32)) (|#t~string3.base| (_ BitVec 32)) (|#t~string6.base| (_ BitVec 32)) (|#t~string9.base| (_ BitVec 32)) (|#t~string12.base| (_ BitVec 32)) (|#t~string15.base| (_ BitVec 32))) (= (store (store (store (store (store (store (store |v_#valid_34| (_ bv0 32) (_ bv0 1)) |#t~string0.base| (_ bv1 1)) |#t~string3.base| (_ bv1 1)) |#t~string6.base| (_ bv1 1)) |#t~string9.base| (_ bv1 1)) |#t~string12.base| (_ bv1 1)) |#t~string15.base| (_ bv1 1)) |#valid|))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void arrayEliminationRushingMountaineer03() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~x0~0.base"),
@@ -605,6 +574,77 @@ public class QuantifierEliminationRegressionTest {
 		final String formulaAsString = "(and (exists ((a (Array Int Int)) (v_i_9 Int)) (and (<= i (+ v_i_9 1)) (= 42 (select a end)) (<= v_i_9 0) (not (= 42 (select a v_i_9))))) (<= 0 end))";
 		final String expectedResult = "(and (<= i 1) (< i (+ end 1)) (<= 0 end))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void commutingStoresForall() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
+		final String inputSTR = "(forall ((arr (Array Int Int))) (= (store (store arr i 2) j 3) (store (store arr j 3) i 2)))";
+		final String expectedResult = "(distinct i j)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void commutingStoresExists() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
+		final String inputSTR = "(exists ((arr (Array Int Int))) (not (= (store (store arr i 2) j 3) (store (store arr j 3) i 2))))";
+		final String expectedResult = "(= i j)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void storeComparisonExistsAntider() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
+		final String inputSTR = "(exists ((arr (Array Int Int))) (not (= (store arr i 42) (store arr j 42))))";
+		final String expectedResult = "(distinct i j)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void storeComparisonForallAntider() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
+		final String inputSTR = "(forall ((arr (Array Int Int))) (= (store arr i 42) (store arr j 42)))";
+		final String expectedResult = "(= i j)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void storeComparisonExistsDer() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j") };
+		final String inputSTR = "(exists ((arr (Array Int Int))) (= (store arr i 42) (store arr j 23)))";
+		final String expectedResult = "(distinct i j)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void constArrayDerExists() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "v") };
+		final String inputSTR = "(exists ((arr (Array Int Int))) (= (store arr i v) ((as const (Array Int Int)) 23) ))";
+		final String expectedResult = "(= v 23)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void constArrayAntiDerExists() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getBoolSort, "i", "v") };
+		final String inputSTR = "(exists ((arr (Array Bool Bool))) (and (not (= (store arr i v) ((as const (Array Bool Bool)) true) )) (= (select arr true) true) (= (select arr false) true) ) ))";
+		final String expectedResult = "(= v false)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void derPreprocessingBug() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "main_~#p~0.offset", "main_#t~mem1.base", "main_~#p~0.base"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
+			};
+		final String formulaAsString =
+				"(forall ((|v_#memory_$Pointer$.base_14| (Array Int (Array Int Int))) (|main_#t~mem1.offset| Int)) (or (not (= |v_#memory_$Pointer$.base_14| (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) (select (select |v_#memory_$Pointer$.base_14| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28)))))) (= 1 (select |#valid| (select (select |v_#memory_$Pointer$.base_14| |main_~#p~0.base|) |main_~#p~0.offset|)))))";
+		final String expectedResultAsString =
+				"(forall ((|main_#t~mem1.offset| Int) (v_DerPreprocessor_2 Int)) (= 1 (select |#valid| (select (select (store |#memory_$Pointer$.base| |main_#t~mem1.base| (store (select |#memory_$Pointer$.base| |main_#t~mem1.base|) (+ |main_#t~mem1.offset| 28) v_DerPreprocessor_2)) |main_~#p~0.base|) |main_~#p~0.offset|))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
