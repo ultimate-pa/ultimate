@@ -115,7 +115,7 @@ public class Context {
 		return buildCriticalConstraintForConDis(script, parentContext, symb, otherParams);
 	}
 
-	public static Term buildCriticalConstraintForConDis(final Script script, final Term parentContext,
+	private static Term buildCriticalConstraintForConDis(final Script script, final Term parentContext,
 			final FunctionSymbol symb, final List<Term> otherParams) {
 		Term result;
 		if (symb.getName().equals("and")) {
