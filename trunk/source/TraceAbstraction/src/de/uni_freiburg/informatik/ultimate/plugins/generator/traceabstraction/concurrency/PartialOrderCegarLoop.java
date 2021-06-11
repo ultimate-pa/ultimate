@@ -358,6 +358,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				}
 			}
 
+			// Transfer lockstep order info
+			if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
+				final var lockstep = (BetterLockstepOrder<?, IPredicate>) mPOR.getDfsOrder();
+				lockstep.transferOrder(state1, newState);
+			}
+
+			// Transfer cached persistent sets
 			if (mPOR.getPersistentSets() instanceof CachedPersistentSetChoice<?, ?>) {
 				final var cache = (CachedPersistentSetChoice<?, IPredicate>) mPOR.getPersistentSets();
 				cache.transferCachedInformation(state1, newState);
