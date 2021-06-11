@@ -90,18 +90,12 @@ public final class PersistentSetReduction {
 	 * @param <S>
 	 *            The type of states in the reduced automaton
 	 */
-	private static class PersistentSetVisitor<L, S> implements IDfsVisitor<L, S> {
+	private static class PersistentSetVisitor<L, S> extends WrapperVisitor<L, S, IDfsVisitor<L, S>> {
 		private final IPersistentSetChoice<L, S> mPersistent;
-		private final IDfsVisitor<L, S> mUnderlying;
 
 		public PersistentSetVisitor(final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> underlying) {
+			super(underlying);
 			mPersistent = persistent;
-			mUnderlying = underlying;
-		}
-
-		@Override
-		public boolean addStartState(final S state) {
-			return mUnderlying.addStartState(state);
 		}
 
 		@Override
@@ -110,27 +104,7 @@ public final class PersistentSetReduction {
 			if (persistent != null && !persistent.contains(letter)) {
 				return true;
 			}
-			return mUnderlying.discoverTransition(source, letter, target);
-		}
-
-		@Override
-		public boolean discoverState(final S state) {
-			return mUnderlying.discoverState(state);
-		}
-
-		@Override
-		public void backtrackState(final S state) {
-			mUnderlying.backtrackState(state);
-		}
-
-		@Override
-		public void delayState(final S state) {
-			mUnderlying.delayState(state);
-		}
-
-		@Override
-		public boolean isFinished() {
-			return mUnderlying.isFinished();
+			return super.discoverTransition(source, letter, target);
 		}
 	}
 

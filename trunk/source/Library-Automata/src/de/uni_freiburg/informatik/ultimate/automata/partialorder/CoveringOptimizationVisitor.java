@@ -51,8 +51,7 @@ import java.util.Set;
  * @param <S>
  *            The type of states in the explored automaton
  */
-public class CoveringOptimizationVisitor<L, S> implements IDfsVisitor<L, S> {
-	private final IDfsVisitor<L, S> mUnderlying;
+public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfsVisitor<L, S>> {
 	private final ICoveringRelation<S> mCoveringRelation;
 	private final CoveringMode mMode;
 	private final Map<Object, Set<S>> mCoveringMap = new HashMap<>();
@@ -81,14 +80,9 @@ public class CoveringOptimizationVisitor<L, S> implements IDfsVisitor<L, S> {
 	 */
 	public CoveringOptimizationVisitor(final IDfsVisitor<L, S> underlying, final ICoveringRelation<S> coveringRelation,
 			final CoveringMode mode) {
-		mUnderlying = underlying;
+		super(underlying);
 		mCoveringRelation = coveringRelation;
 		mMode = mode;
-	}
-
-	@Override
-	public boolean addStartState(final S state) {
-		return mUnderlying.addStartState(state);
 	}
 
 	@Override
@@ -97,10 +91,10 @@ public class CoveringOptimizationVisitor<L, S> implements IDfsVisitor<L, S> {
 		switch (mMode) {
 		case REDIRECT:
 			final S old = getCoveringState(target);
-			result = mUnderlying.discoverTransition(source, letter, old == null ? target : old);
+			result = super.discoverTransition(source, letter, old == null ? target : old);
 			return result || old != null;
 		case PRUNE:
-			result = mUnderlying.discoverTransition(source, letter, target);
+			result = super.discoverTransition(source, letter, target);
 			return result || getCoveringState(target) != null;
 		default:
 			throw new UnsupportedOperationException("Unsupported covering mode: " + mMode);
@@ -126,22 +120,7 @@ public class CoveringOptimizationVisitor<L, S> implements IDfsVisitor<L, S> {
 	public boolean discoverState(final S state) {
 		final Object key = mCoveringRelation.getKey(state);
 		mCoveringMap.computeIfAbsent(key, x -> new HashSet<>()).add(state);
-		return mUnderlying.discoverState(state);
-	}
-
-	@Override
-	public void backtrackState(final S state) {
-		mUnderlying.backtrackState(state);
-	}
-
-	@Override
-	public void delayState(final S state) {
-		mUnderlying.delayState(state);
-	}
-
-	@Override
-	public boolean isFinished() {
-		return mUnderlying.isFinished();
+		return super.discoverState(state);
 	}
 
 	/**
