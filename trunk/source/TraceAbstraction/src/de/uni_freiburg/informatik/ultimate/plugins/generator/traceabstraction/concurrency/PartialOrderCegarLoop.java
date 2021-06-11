@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.DistributingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.ThreadSeparatingIndependenceRelation;
@@ -120,7 +119,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
-		mVisitor = supportsDeadStateOptimization(mPartialOrderMode)
+		mVisitor = mPartialOrderMode.supportsDeadStateOptimization()
 				? new DeadEndOptimizingSearchVisitor<>(this::createVisitor)
 				: null;
 
@@ -143,8 +142,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	// Turn off one-shot partial order reduction before initial iteration.
 	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
-			final PartialOrderReductionFacade.PartialOrderMode mode,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
 		return input;
 	}
 
@@ -221,28 +219,22 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			visitor = ((DeadEndOptimizingSearchVisitor<?, ?, IDfsVisitor<L, IPredicate>>) visitor).getUnderlying();
 		}
 
-		if (mPartialOrderMode == PartialOrderReductionFacade.PartialOrderMode.PERSISTENT_SETS
-				|| mPartialOrderMode == PartialOrderReductionFacade.PartialOrderMode.NONE) {
-			return ((AcceptingRunSearchVisitor<L, IPredicate>) visitor).getAcceptingRun();
+		if (mPartialOrderMode.hasSleepSets()) {
+			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
+			return ((SleepSetVisitorSearch<L, IPredicate>) visitor).constructRun();
 		}
-		return ((SleepSetVisitorSearch<L, IPredicate>) visitor).constructRun();
+		return ((AcceptingRunSearchVisitor<L, IPredicate>) visitor).getAcceptingRun();
 	}
 
 	private IDfsVisitor<L, IPredicate> createVisitor() {
-		// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
-		if (mPartialOrderMode == PartialOrderReductionFacade.PartialOrderMode.PERSISTENT_SETS
-				|| mPartialOrderMode == PartialOrderReductionFacade.PartialOrderMode.NONE) {
-			return new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
+		final IDfsVisitor<L, IPredicate> visitor;
+		if (mPartialOrderMode.hasSleepSets()) {
+			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
+			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
+		} else {
+			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
 		}
-		return new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
-	}
-
-	private static final boolean
-			supportsDeadStateOptimization(final PartialOrderReductionFacade.PartialOrderMode mode) {
-		// At the moment, only sleep sets with new states support this optimization.
-		return mode == PartialOrderReductionFacade.PartialOrderMode.SLEEP_NEW_STATES
-				|| mode == PartialOrderReductionFacade.PartialOrderMode.PERSISTENT_SLEEP_NEW_STATES
-				|| mode == PartialOrderReductionFacade.PartialOrderMode.NONE;
+		return visitor;
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructSemanticIndependence(final CfgSmtToolkit csToolkit) {

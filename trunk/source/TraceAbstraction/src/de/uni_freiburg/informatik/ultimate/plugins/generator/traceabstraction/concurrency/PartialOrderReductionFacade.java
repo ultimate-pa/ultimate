@@ -68,52 +68,17 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM
 	}
 
-	/**
-	 * Indicates a kind of partial order reduction.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 */
-	public enum PartialOrderMode {
-		/**
-		 * No partial order reduction is performed.
-		 */
-		NONE,
-		/**
-		 * Sleep set partial order reduction. Delay sets are used to handle loops, and the reduced automaton is a
-		 * sub-structure of the input.
-		 */
-		SLEEP_DELAY_SET,
-		/**
-		 * Sleep set partial order reduction. Unrolling and splitting is performed to achieve a minimal reduction (in
-		 * terms of the language). This duplicates states of the input automaton.
-		 */
-		SLEEP_NEW_STATES,
-		/**
-		 * Persistent set reduction.
-		 */
-		PERSISTENT_SETS,
-		/**
-		 * Combines persistent set reduction with {@link SLEEP_DELAY_SET}.
-		 */
-		PERSISTENT_SLEEP_DELAY_SET, PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER,
-		/**
-		 * Combines persistent set reduction with {@link SLEEP_NEW_STATES}.
-		 */
-		PERSISTENT_SLEEP_NEW_STATES, PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER,
-	}
-
 	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataServices;
 
-	private final PartialOrderReductionFacade.PartialOrderMode mMode;
+	private final PartialOrderMode mMode;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final IIndependenceRelation<IPredicate, L> mIndependence;
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
 	private final IPersistentSetChoice<L, IPredicate> mPersistent;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
-			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs,
-			final PartialOrderReductionFacade.PartialOrderMode mode,
+			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final PartialOrderReductionFacade.OrderType orderType, final long randomOrderSeed,
 			final IIndependenceRelation<IPredicate, L> independence) {
 		mServices = services;
@@ -126,21 +91,13 @@ public class PartialOrderReductionFacade<L extends IAction> {
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate> getSleepFactory(final PredicateFactory predicateFactory) {
-		switch (mMode) {
-		case NONE:
-		case PERSISTENT_SETS:
+		if (!mMode.hasSleepSets()) {
 			return null;
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-		case PERSISTENT_SLEEP_NEW_STATES:
-		case SLEEP_NEW_STATES:
-			return new SleepSetStateFactoryForRefinement<>(predicateFactory);
-		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_DELAY_SET:
-		case SLEEP_DELAY_SET:
-			return new ISleepSetStateFactory.NoUnrolling<>();
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
 		}
+		if (mMode.doesUnrolling()) {
+			return new SleepSetStateFactoryForRefinement<>(predicateFactory);
+		}
+		return new ISleepSetStateFactory.NoUnrolling<>();
 	}
 
 	private static <L extends IAction> IDfsOrder<L, IPredicate>
@@ -161,26 +118,15 @@ public class PartialOrderReductionFacade<L extends IAction> {
 
 	private final IPersistentSetChoice<L, IPredicate> createPersistentSets(final IIcfg<?> icfg,
 			final Collection<? extends IcfgLocation> errorLocs) {
-		switch (mMode) {
-		case PERSISTENT_SETS:
-		case PERSISTENT_SLEEP_DELAY_SET:
-		case PERSISTENT_SLEEP_NEW_STATES:
-			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
-					new ThreadBasedPersistentSets<>(mServices, icfg,
-							(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence, null, errorLocs));
-		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
-					new ThreadBasedPersistentSets<>(mServices, icfg,
-							(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence,
-							(IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder, errorLocs));
-		case NONE:
-		case SLEEP_DELAY_SET:
-		case SLEEP_NEW_STATES:
+		if (!mMode.hasPersistentSets()) {
 			return null;
-		default:
-			throw new UnsupportedOperationException("unsupported POR mode");
 		}
+
+		final IDfsOrder<IcfgEdge, IPredicate> relevantOrder =
+				mMode.hasFixedOrder() ? (IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder : null;
+		return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
+				new ThreadBasedPersistentSets<>(mServices, icfg,
+						(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence, relevantOrder, errorLocs));
 	}
 
 	public IPersistentSetChoice<L, IPredicate> getPersistentSets() {
@@ -221,23 +167,13 @@ public class PartialOrderReductionFacade<L extends IAction> {
 	public AutomatonConstructingVisitor<L, IPredicate> createConstructionVisitor(
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
-		switch (mMode) {
-		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_DELAY_SET:
-		case SLEEP_DELAY_SET:
-		case PERSISTENT_SETS:
-		case NONE:
-			return new AutomatonConstructingVisitor<>(input, mAutomataServices, emptyStackFactory);
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-		case PERSISTENT_SLEEP_NEW_STATES:
-		case SLEEP_NEW_STATES:
+		if (mMode.hasSleepSets() && mMode.doesUnrolling()) {
 			final SleepSetStateFactoryForRefinement<L> factory = (SleepSetStateFactoryForRefinement<L>) mSleepFactory;
 			return new AutomatonConstructingVisitor<>(x -> input.isInitial(factory.getOriginalState(x)),
 					x -> input.isFinal(factory.getOriginalState(x)), input.getVpAlphabet(), mAutomataServices,
 					emptyStackFactory);
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
 		}
+		return new AutomatonConstructingVisitor<>(input, mAutomataServices, emptyStackFactory);
 	}
 
 	public void reportStatistics() {
