@@ -520,32 +520,34 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	private void killProcess() {
-		if (mProcess == null) {
-			return;
-		}
-		final CompletableFuture<Process> onExit = mProcess.onExit();
-		if (!onExit.isDone()) {
-			try {
-				mProcess.destroyForcibly();
-				onExit.get(WAIT_FOR_EXIT_COMMAND_MILLIS, TimeUnit.MILLISECONDS);
-				mReturnCode = mProcess.exitValue();
-				mLogger.info("%s Forceful destruction successful, exit code %d", getLogStringPrefix(), mReturnCode);
-			} catch (final InterruptedException e) {
-				mLogger.fatal("%s Interrupted while destroying process, abandoning it", getLogStringPrefix());
-				Thread.currentThread().interrupt();
-			} catch (final ExecutionException e) {
-				mLogger.fatal("%s Encounted %s destroying process, abandoning process. Exception: %s",
-						getLogStringPrefix(), e.getClass().getSimpleName(), e);
-			} catch (final TimeoutException e) {
-				mLogger.fatal("%s Could not destroy process within %s ms, abandoning it", getLogStringPrefix(),
-						WAIT_FOR_EXIT_COMMAND_MILLIS);
+		synchronized (this) {
+			if (mProcess == null) {
+				return;
 			}
-		} else {
-			mLogger.info("%s Ended with exit code %s", getLogStringPrefix(), mProcess.exitValue());
-			mReturnCode = mProcess.exitValue();
+			final CompletableFuture<Process> onExit = mProcess.onExit();
+			if (!onExit.isDone()) {
+				try {
+					mProcess.destroyForcibly();
+					onExit.get(WAIT_FOR_EXIT_COMMAND_MILLIS, TimeUnit.MILLISECONDS);
+					mReturnCode = mProcess.exitValue();
+					mLogger.info("%s Forceful destruction successful, exit code %d", getLogStringPrefix(), mReturnCode);
+				} catch (final InterruptedException e) {
+					mLogger.fatal("%s Interrupted while destroying process, abandoning it", getLogStringPrefix());
+					Thread.currentThread().interrupt();
+				} catch (final ExecutionException e) {
+					mLogger.fatal("%s Encounted %s destroying process, abandoning process. Exception: %s",
+							getLogStringPrefix(), e.getClass().getSimpleName(), e);
+				} catch (final TimeoutException e) {
+					mLogger.fatal("%s Could not destroy process within %s ms, abandoning it", getLogStringPrefix(),
+							WAIT_FOR_EXIT_COMMAND_MILLIS);
+				}
+			} else {
+				mLogger.info("%s Ended with exit code %s", getLogStringPrefix(), mProcess.exitValue());
+				mReturnCode = mProcess.exitValue();
+			}
+			mProcess = null;
+			removeFromStorage();
 		}
-		mProcess = null;
-		removeFromStorage();
 	}
 
 	private void removeFromStorage() {
