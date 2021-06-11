@@ -63,4 +63,8 @@ public interface IPersistentSetChoice<L, S> {
 			// By default, no statistics are collected.
 		};
 	}
+
+	default boolean ensuresCompatibility(final IDfsOrder<L, S> order) {
+		return false;
+	}
 }

@@ -66,6 +66,11 @@ public class CachedPersistentSetChoice<L, S> implements IPersistentSetChoice<L, 
 		return mUnderlying.getStatistics();
 	}
 
+	@Override
+	public boolean ensuresCompatibility(final IDfsOrder<L, S> order) {
+		return mUnderlying.ensuresCompatibility(order);
+	}
+
 	/**
 	 * Copies cached information from one state to the other.
 	 *

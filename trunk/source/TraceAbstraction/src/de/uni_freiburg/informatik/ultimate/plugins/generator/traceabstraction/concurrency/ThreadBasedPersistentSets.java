@@ -78,7 +78,6 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	private final PartialRelation<IcfgLocation, IcfgLocation> mCommutativityConflicts = new PartialRelation<>();
 	private final PartialRelation<String, IcfgLocation> mErrorConflicts = new PartialRelation<>();
 	private final PartialRelation<IcfgLocation, String> mJoinConflicts = new PartialRelation<>();
-	private final PartialRelation<IcfgLocation, IcfgLocation> mCompatibilityConflicts = new PartialRelation<>();
 	private final PartialRelation<IcfgLocation, String> mForkCache = new PartialRelation<>();
 
 	/**
@@ -156,6 +155,11 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
+	}
+
+	@Override
+	public boolean ensuresCompatibility(final IDfsOrder<IcfgEdge, IPredicate> order) {
+		return order == mOrder;
 	}
 
 	/**
@@ -272,19 +276,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		return newConflicts;
 	}
 
-	private boolean hasCompatibilityConflict(final HashRelation<IcfgLocation, IcfgEdge> enabledActions,
-			final Comparator<IcfgEdge> comp, final IcfgLocation persistentLoc, final IcfgLocation otherLoc) {
-		final LBool cachedResult = mCompatibilityConflicts.contains(persistentLoc, otherLoc);
-		if (cachedResult != LBool.UNKNOWN) {
-			return cachedResult == LBool.UNSAT;
-		}
-
-		final boolean result = checkCompatibilityConflict(enabledActions, comp, persistentLoc, otherLoc);
-		mCompatibilityConflicts.set(persistentLoc, otherLoc, result);
-		return result;
-	}
-
-	private static boolean checkCompatibilityConflict(final HashRelation<IcfgLocation, IcfgEdge> enabledActions,
+	private static boolean hasCompatibilityConflict(final HashRelation<IcfgLocation, IcfgEdge> enabledActions,
 			final Comparator<IcfgEdge> comp, final IcfgLocation persistentLoc, final IcfgLocation otherLoc) {
 		final Set<IcfgEdge> otherActions = enabledActions.getImage(otherLoc);
 		if (otherActions.isEmpty()) {
@@ -293,7 +285,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		final Set<IcfgEdge> persistentActions = enabledActions.getImage(persistentLoc);
 
 		return persistentActions.stream().anyMatch(persistentAction -> otherActions.stream()
-				.anyMatch(otherAction -> comp.compare(persistentAction, otherAction) < 0));
+				.anyMatch(otherAction -> comp.compare(persistentAction, otherAction) >= 0));
 	}
 
 	private boolean hasCommutativityConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc) {

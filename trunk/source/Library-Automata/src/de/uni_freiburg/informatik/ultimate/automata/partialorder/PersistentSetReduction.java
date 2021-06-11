@@ -133,8 +133,14 @@ public final class PersistentSetReduction {
 			final Comparator<L> comparator = mUnderlying.getOrder(state);
 			return (a, b) -> {
 				if (persistent != null && persistent.contains(a) && !persistent.contains(b)) {
+					if (mPersistent.ensuresCompatibility(mUnderlying) && comparator.compare(a, b) >= 0) {
+						throw new IllegalStateException("Guarantee of compatibility failed");
+					}
 					return -1;
 				} else if (persistent != null && persistent.contains(b) && !persistent.contains(a)) {
+					if (mPersistent.ensuresCompatibility(mUnderlying) && comparator.compare(a, b) <= 0) {
+						throw new IllegalStateException("Guarantee of compatibility failed");
+					}
 					return 1;
 				}
 				return comparator.compare(a, b);
