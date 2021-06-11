@@ -79,7 +79,7 @@ class Executor {
 	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
 
 	/**
-	 * 
+	 *
 	 * @param solverCommand
 	 *            The command to execute an external process with all parameters
 	 * @param script
@@ -238,15 +238,16 @@ class Executor {
 			return parser.parse();
 		} catch (final SMTLIBException ex) {
 			if (ex.getMessage().equals(Parser.s_EOF)) {
-				throw new SMTLIBException(getLogStringPrefix() + EOF_ERROR_MSG + " " + generateStderrMessage(stderr),
+				throw new SMTLIBException(
+						String.format("%s %s %s", getLogStringPrefix(), EOF_ERROR_MSG, generateStderrMessage(stderr)),
 						ex);
 			}
 			throw ex;
 		} catch (final UnsupportedOperationException ex) {
 			throw ex;
 		} catch (final Exception ex) {
-			throw new SMTLIBException(
-					getLogStringPrefix() + "Unexpected Exception while parsing. " + generateStderrMessage(stderr), ex);
+			throw new SMTLIBException(String.format("%s %s %s", getLogStringPrefix(),
+					"Unexpected Exception while parsing", generateStderrMessage(stderr)), ex);
 		}
 	}
 
