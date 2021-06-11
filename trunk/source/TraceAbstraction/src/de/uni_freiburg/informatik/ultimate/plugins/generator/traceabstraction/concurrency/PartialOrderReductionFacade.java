@@ -106,7 +106,7 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		case BY_SERIAL_NUMBER:
 			return ConstantDfsOrder.byHashCode();
 		case PSEUDO_LOCKSTEP:
-			return new PseudoLockstepOrder<>();
+			return new BetterLockstepOrder<>();
 		case RANDOM:
 			return new RandomDfsOrder<>(randomOrderSeed, false);
 		case POSITIONAL_RANDOM:
@@ -131,6 +131,10 @@ public class PartialOrderReductionFacade<L extends IAction> {
 
 	public IPersistentSetChoice<L, IPredicate> getPersistentSets() {
 		return mPersistent;
+	}
+
+	public IDfsOrder<L, IPredicate> getDfsOrder() {
+		return mDfsOrder;
 	}
 
 	public void apply(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,

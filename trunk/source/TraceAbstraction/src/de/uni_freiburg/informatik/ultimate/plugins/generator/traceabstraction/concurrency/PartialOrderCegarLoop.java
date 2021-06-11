@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndepend
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -218,6 +219,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		if (visitor instanceof DeadEndOptimizingSearchVisitor<?, ?, ?>) {
 			visitor = ((DeadEndOptimizingSearchVisitor<?, ?, IDfsVisitor<L, IPredicate>>) visitor).getUnderlying();
 		}
+		if (visitor instanceof WrapperVisitor<?, ?, ?>) {
+			visitor = ((WrapperVisitor<L, IPredicate, ?>) visitor).getBaseVisitor();
+		}
 
 		if (mPartialOrderMode.hasSleepSets()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
@@ -233,6 +237,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
 		} else {
 			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
+		}
+		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
+			return ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).getWrapperVisitor(visitor);
 		}
 		return visitor;
 	}
