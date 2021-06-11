@@ -60,11 +60,7 @@ public class MonitoredProcessTest {
 		final long timeoutInSeconds = 300;
 		final MonitoredProcess mp;
 		final long start = System.currentTimeMillis();
-		if (CoreUtil.OS_IS_WINDOWS) {
-			mp = sleepWindows(timeoutInSeconds);
-		} else {
-			mp = sleepLinux(timeoutInSeconds);
-		}
+		mp = sleepExternal(timeoutInSeconds);
 		MatcherAssert.assertThat("Did not create a process", mp != null);
 		MatcherAssert.assertThat("Process is not running", mp.isRunning());
 		final MonitoredProcessState mps = mp.impatientWaitUntilTime(1);
@@ -81,11 +77,7 @@ public class MonitoredProcessTest {
 		final long timeoutInSeconds = 1;
 		final MonitoredProcess mp;
 		final long start = System.currentTimeMillis();
-		if (CoreUtil.OS_IS_WINDOWS) {
-			mp = sleepWindows(timeoutInSeconds);
-		} else {
-			mp = sleepLinux(timeoutInSeconds);
-		}
+		mp = sleepExternal(timeoutInSeconds);
 		MatcherAssert.assertThat("Did not create a process", mp != null);
 		MatcherAssert.assertThat("Process is not running", mp.isRunning());
 		final MonitoredProcessState mps = mp.impatientWaitUntilTime(timeoutInSeconds * 2000);
@@ -103,21 +95,28 @@ public class MonitoredProcessTest {
 		final MonitoredProcess mp;
 		final long start = System.currentTimeMillis();
 		mServices.getProgressMonitorService().setDeadline(start + 1000);
-		if (CoreUtil.OS_IS_WINDOWS) {
-			mp = sleepWindows(timeoutInSeconds);
-		} else {
-			mp = sleepLinux(timeoutInSeconds);
-		}
+		mp = sleepExternal(timeoutInSeconds);
 		MatcherAssert.assertThat("Did not create a process", mp != null);
 		MatcherAssert.assertThat("Process is not running", mp.isRunning());
 		while (mServices.getProgressMonitorService().continueProcessing()) {
 			TimeUnit.MILLISECONDS.sleep(50);
 		}
+		mp.waitfor(50);
 		final long stop = System.currentTimeMillis();
 		MatcherAssert.assertThat("Process is still running", !mp.isRunning());
 		final long killTime = stop - start;
 		MatcherAssert.assertThat("Killing took more than 2s", killTime < 2000);
 		mLogger.info("Took %s ms to kill", killTime);
+	}
+
+	private MonitoredProcess sleepExternal(final long timeoutInSeconds) throws IOException {
+		final MonitoredProcess mp;
+		if (CoreUtil.OS_IS_WINDOWS) {
+			mp = sleepWindows(timeoutInSeconds);
+		} else {
+			mp = sleepLinux(timeoutInSeconds);
+		}
+		return mp;
 	}
 
 	private MonitoredProcess sleepWindows(final long timeoutInS) throws IOException {
