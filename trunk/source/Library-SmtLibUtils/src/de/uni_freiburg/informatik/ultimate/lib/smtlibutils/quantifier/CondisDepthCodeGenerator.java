@@ -63,7 +63,12 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 			}
 			return result;
 		}
+	}
 
+	/**
+	 * Do not instantiate. Use method {@link CondisDepthCode::of} instead.
+	 */
+	private CondisDepthCodeGenerator() {
 	}
 
 	@Override
@@ -142,5 +147,8 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 			return mAdk.getSymbol() + "-" + mDualJuncts.stream().map(Object::toString).collect(Collectors.joining("-"));
 		}
 
+		public static CondisDepthCode of(final Term term) {
+			return new CondisDepthCodeGenerator().transduce(term);
+		}
 	}
 }

@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransforma
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -108,7 +107,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
-			final CondisDepthCode contextCdc = new CondisDepthCodeGenerator().transduce(context);
+			final CondisDepthCode contextCdc = CondisDepthCode.of(context);
 			throw new ToolchainCanceledException(this.getClass(),
 					String.format("simplifying %s xjuncts wrt. a %s context", resultParams.length, contextCdc));
 		}
@@ -137,7 +136,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 			result = TermContextTransformationEngine
 			.transform(new PolyPacSimplificationTermWalker(services, script), context, term);
 		} catch (final ToolchainCanceledException tce) {
-			final CondisDepthCode termCdc = new CondisDepthCodeGenerator().transduce(term);
+			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
 			tce.addRunningTaskInfo(new RunningTaskInfo(PolyPacSimplificationTermWalker.class, taskDescription));
 			throw tce;

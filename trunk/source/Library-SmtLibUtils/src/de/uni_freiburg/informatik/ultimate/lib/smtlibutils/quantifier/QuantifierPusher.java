@@ -423,7 +423,7 @@ public class QuantifierPusher extends TermTransformer {
 			final int rec = DerScout.computeRecommendation(mgdScript.getScript(), et.getEliminatees(), dualFiniteParams,
 					et.getQuantifier());
 			if (rec != -1) {
-				final CondisDepthCode cdc = new CondisDepthCodeGenerator().transduce(et.getTerm());
+				final CondisDepthCode cdc = CondisDepthCode.of(et.getTerm());
 				final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
 				logger.info("Applying distributivity to a " + cdc + " term");
 				final Term correspondingFinite = applyDistributivityAndPushOneStep(services, mgdScript,
