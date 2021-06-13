@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -103,19 +104,37 @@ public class Context {
 		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
-	public static Term buildCriticalContraintForQuantifiedFormula(final Script script, final Term context,
-			final List<TermVariable> boundVars) {
-		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, boundVars, context);
+	public static Term buildCriticalContraintForQuantifiedFormula(final Script script,
+			final Term parentCriticalConstraint, final List<TermVariable> boundVars) {
+		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, boundVars, parentCriticalConstraint);
 	}
 
-	public static Term buildCriticalConstraintForConDis(final Script script, final Term parentContext,
+	/**
+	 * Keep only the conjuncts of the parentCriticalConstraint that do not contain
+	 * any of the bound variables. We assume that the parentCriticalConstraint is a
+	 * conjunction of atoms.
+	 */
+	public static Term buildConjunctiveCriticalContraintForQuantifiedFormula(final Script script,
+			final Term parentCriticalConstraint, final List<TermVariable> boundVars) {
+		final Term[] conjuncts = SmtUtils.getConjuncts(parentCriticalConstraint);
+		final List<Term> resultConjuncts = new ArrayList<>();
+		for (final Term conjunct : conjuncts) {
+			assert SmtUtils.isAtomicFormula(conjunct) : "non-atom in critical constraint";
+			if (!Arrays.stream(conjunct.getFreeVars()).anyMatch(boundVars::contains)) {
+				resultConjuncts.add(conjunct);
+			}
+		}
+		return SmtUtils.and(script, resultConjuncts);
+	}
+
+	public static Term buildCriticalConstraintForConDis(final Script script, final Term parentCriticalConstraint,
 			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
 		final List<Term> otherParams = new ArrayList<>(allParams);
 		otherParams.remove(selectedParam);
-		return buildCriticalConstraintForConDis(script, parentContext, symb, otherParams);
+		return buildCriticalConstraintForConDis(script, parentCriticalConstraint, symb, otherParams);
 	}
 
-	private static Term buildCriticalConstraintForConDis(final Script script, final Term parentContext,
+	private static Term buildCriticalConstraintForConDis(final Script script, final Term parentCriticalConstraint,
 			final FunctionSymbol symb, final List<Term> otherParams) {
 		Term result;
 		if (symb.getName().equals("and")) {
@@ -131,7 +150,35 @@ public class Context {
 		} else {
 			throw new AssertionError("only conjunction and disjunction are supported");
 		}
-		result = SmtUtils.and(script, result, parentContext);
+		result = SmtUtils.and(script, result, parentCriticalConstraint);
+		return result;
+	}
+
+	public static Term buildConjunctiveCriticalConstraintForConDis(final Script script, final Term parentCriticalConstraint,
+			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
+		final List<Term> otherParams = new ArrayList<>(allParams);
+		otherParams.remove(selectedParam);
+		return buildConjunctiveCriticalConstraintForConDis(script, parentCriticalConstraint, symb, otherParams);
+	}
+
+	private static Term buildConjunctiveCriticalConstraintForConDis(final Script script, final Term parentCriticalConstraint,
+			final FunctionSymbol symb, final List<Term> otherParams) {
+		Term result;
+		if (symb.getName().equals("and")) {
+			result = SmtUtils.and(script,
+					otherParams.stream().filter(SmtUtils::isAtomicFormula).collect(Collectors.toList()));
+		} else if (symb.getName().equals("or")) {
+			final List<Term> otherParamsNegated = otherParams.stream().filter(SmtUtils::isAtomicFormula)
+					.map(x -> SmtUtils.not(script, x)).collect(Collectors.toList());
+			result = SmtUtils.and(script, otherParamsNegated);
+		} else if (symb.getName().equals("=")) {
+			// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
+			// terms here.
+			result = script.term("true");
+		} else {
+			throw new AssertionError("only conjunction and disjunction are supported");
+		}
+		result = SmtUtils.and(script, result, parentCriticalConstraint);
 		return result;
 	}
 
