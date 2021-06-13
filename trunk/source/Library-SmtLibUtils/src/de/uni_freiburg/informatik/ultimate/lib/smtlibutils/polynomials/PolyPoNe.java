@@ -90,12 +90,12 @@ public class PolyPoNe {
 		}
 	}
 
-	Term and(final Collection<Term> params) {
+	Term and(final List<Term> params) {
 		add(params, false);
 		return and();
 	}
 
-	Term or(final Collection<Term> params) {
+	Term or(final List<Term> params) {
 		add(params, true);
 		return or();
 	}

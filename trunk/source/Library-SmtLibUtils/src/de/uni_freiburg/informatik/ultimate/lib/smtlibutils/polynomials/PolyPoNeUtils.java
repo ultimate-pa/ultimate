@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
-import java.util.Collection;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -46,7 +46,7 @@ public class PolyPoNeUtils {
 		mScript = script;
 	}
 
-	public static Term and(final Script script, final Collection<Term> params) {
+	public static Term and(final Script script, final List<Term> params) {
 		final Term result = new PolyPoNe(script).and(params);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
@@ -57,7 +57,7 @@ public class PolyPoNeUtils {
 		return result;
 	}
 
-	public static Term and(final Script script, final Term context, final Collection<Term> params) {
+	public static Term and(final Script script, final Term context, final List<Term> params) {
 		final Term result = new PolyPoNeWithContext(script, new PolyPoNe(script)).and(context, params);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
@@ -68,7 +68,7 @@ public class PolyPoNeUtils {
 		return result;
 	}
 
-	public static Term or(final Script script, final Collection<Term> params) {
+	public static Term or(final Script script, final List<Term> params) {
 		final Term result = new PolyPoNe(script).or(params);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
@@ -79,7 +79,7 @@ public class PolyPoNeUtils {
 		return result;
 	}
 
-	public static Term or(final Script script, final Term context, final Collection<Term> params) {
+	public static Term or(final Script script, final Term context, final List<Term> params) {
 		final Term result = new PolyPoNeWithContext(script, new PolyPoNe(script)).or(context, params);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
