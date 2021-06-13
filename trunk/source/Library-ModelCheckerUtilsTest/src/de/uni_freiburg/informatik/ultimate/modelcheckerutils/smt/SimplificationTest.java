@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -508,6 +509,16 @@ public class SimplificationTest {
 		runSimplificationTest(funDecls, formulaAsString, simplified, true, mServices, mLogger, mMgdScript);
 	}
 
+	@Test
+	public void forester_heap_dll_optional() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~head~0.offset", "main_~head~0.base", "v_main_#t~malloc6.base_4", "main_#t~mem7.offset", "v_subst_6", "v_DerPreprocessor_6", "v_DerPreprocessor_7", "v_DerPreprocessor_8"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
+		};
+		final String formulaAsString = "(or (not (= (_ bv0 1) (select |#valid| |v_main_#t~malloc6.base_4|))) (let ((.cse40 (bvadd (_ bv12 32) main_~head~0.offset))) (let ((.cse36 (= v_subst_6 .cse40)) (.cse35 (= |v_main_#t~malloc6.base_4| main_~head~0.base))) (let ((.cse23 (not (= (_ bv0 32) (bvadd v_DerPreprocessor_6 (_ bv4294967294 32))))) (.cse21 (and .cse36 .cse35)) (.cse22 (not (= (_ bv0 32) (bvadd v_DerPreprocessor_8 (_ bv4294967294 32))))) (.cse37 (= (bvadd v_subst_6 (_ bv12 32)) .cse40)) (.cse38 (= (bvadd v_subst_6 (_ bv8 32)) .cse40)) (.cse39 (= .cse40 (bvadd (_ bv4 32) |main_#t~mem7.offset|)))) (let ((.cse9 (and .cse39 .cse35)) (.cse3 (not .cse39)) (.cse4 (and .cse38 .cse35)) (.cse2 (not .cse38)) (.cse12 (not .cse37)) (.cse18 (or .cse21 .cse22)) (.cse0 (and .cse37 .cse35)) (.cse20 (or .cse21 .cse23)) (.cse16 (not .cse36)) (.cse8 (not .cse35))) (let ((.cse1 (or .cse2 .cse8 (let ((.cse34 (or .cse16 .cse8 .cse23))) (let ((.cse33 (and .cse20 .cse34))) (let ((.cse27 (or .cse0 .cse16 .cse8 .cse23)) (.cse29 (or (and .cse18 .cse34) .cse0)) (.cse30 (or .cse0 .cse33))) (and (or (let ((.cse28 (or .cse12 .cse16 .cse8 .cse23))) (let ((.cse26 (or .cse2 (and .cse28 .cse30) .cse8))) (and (or .cse9 (and .cse26 (or .cse4 (and .cse27 .cse28)))) (or .cse3 (and .cse26 (or (and .cse28 .cse29) .cse4)) .cse8)))) .cse4) (or .cse2 .cse8 (let ((.cse31 (or .cse12 .cse33 .cse8))) (let ((.cse32 (or .cse2 .cse8 (and .cse31 .cse30)))) (and (or (and (or (and .cse31 .cse27) .cse4) .cse32) .cse9) (or .cse3 (and .cse32 (or .cse4 (and .cse31 .cse29))) .cse8)))))))))))) (and (or .cse0 (and .cse1 (or (let ((.cse17 (not (= (_ bv0 32) (bvadd v_DerPreprocessor_7 (_ bv4294967294 32)))))) (let ((.cse19 (or .cse16 .cse8 .cse17))) (let ((.cse13 (and .cse20 .cse19))) (let ((.cse10 (or .cse0 .cse16 .cse8 .cse17)) (.cse6 (or .cse0 (and .cse18 .cse19))) (.cse11 (or .cse0 .cse13))) (and (or .cse2 (let ((.cse5 (or .cse12 .cse13 .cse8))) (let ((.cse7 (or .cse2 .cse8 (and .cse5 .cse11)))) (and (or .cse3 (and (or .cse4 (and .cse5 .cse6)) .cse7) .cse8) (or .cse9 (and .cse7 (or .cse4 (and .cse5 .cse10))))))) .cse8) (or (let ((.cse15 (or .cse12 .cse16 .cse8 .cse17))) (let ((.cse14 (or .cse2 (and .cse11 .cse15) .cse8))) (and (or .cse9 (and .cse14 (or .cse4 (and .cse10 .cse15)))) (or .cse3 .cse8 (and .cse14 (or .cse4 (and .cse15 .cse6))))))) .cse4)))))) .cse4))) (or .cse12 .cse8 (and .cse1 (or (and (or .cse4 (and (or .cse3 .cse8 (and (or .cse21 .cse0 .cse4 .cse22) (or .cse2 .cse21 .cse0 .cse8 .cse23))) (or .cse2 .cse21 .cse0 .cse9 .cse8 .cse23))) (or .cse2 .cse8 (let ((.cse25 (or .cse21 .cse12 .cse8 .cse23))) (let ((.cse24 (or .cse2 (and .cse25 (or .cse21 .cse0 .cse23)) .cse8))) (and (or (and (or .cse21 .cse12 .cse8 .cse4 .cse23) .cse24) .cse9) (or .cse3 .cse8 (and .cse24 (or (and (or .cse21 .cse0 .cse22) .cse25) .cse4)))))))) .cse4))))))))))";
+		final String simplified = null;
+		runSimplificationTest(funDecls, formulaAsString, simplified, true, mServices, mLogger, mMgdScript);
+	}
 
 
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString, final String expectedResultAsString,
@@ -525,6 +536,8 @@ public class SimplificationTest {
 		final Term result = esr.getSimplifiedTerm();
 		logger.info("Simplified result: " + esr.getSimplifiedTerm());
 		logger.info(esr.buildSizeReductionMessage());
+		logger.info("CDC code input:  " + CondisDepthCode.of(letFree));
+		logger.info("CDC code output: " + CondisDepthCode.of(result));
 		if (expectedResultAsString != null) {
 			final Term expectedResultAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString);
 			Assert.assertTrue("Not syntactically equivalent to expected result: " + result, result.equals(expectedResultAsTerm));
