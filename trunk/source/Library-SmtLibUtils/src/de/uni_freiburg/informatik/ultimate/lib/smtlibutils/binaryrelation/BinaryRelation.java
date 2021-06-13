@@ -157,7 +157,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 	}
 
 	public Term toTerm(final Script script) {
-		return toTerm(script, getRelationSymbol(), getLhs(), getRhs());
+		return constructLessNormalForm(script, getRelationSymbol(), getLhs(), getRhs());
 	}
 
 	public static Term toTerm(final Script script, final RelationSymbol relationSymbol, final Term lhsTerm,
