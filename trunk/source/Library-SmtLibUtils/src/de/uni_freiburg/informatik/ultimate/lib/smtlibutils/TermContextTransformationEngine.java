@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class TermContextTransformationEngine<C> {
 
 	private static final boolean DEBUG_CHECK_INTERMEDIATE_RESULT = false;
+	private static final boolean DEBUG_NONTERMINATION = false;
 
 	private final TermWalker<C> mTermWalker;
 	private final ArrayDeque<Task> mStack;
@@ -85,7 +86,7 @@ public class TermContextTransformationEngine<C> {
 				mStack.push(newTask);
 			}
 		}
-		throw new AssertionError("empty stack should habe caused return");
+		throw new AssertionError("empty stack should have caused return");
 	}
 
 	private abstract class Task {
@@ -131,12 +132,14 @@ public class TermContextTransformationEngine<C> {
 		final ApplicationTerm mOriginal;
 		final Term[] mResult;
 		boolean mChangeInThisIteration = false;
+		int mRepetitions;
 
 		public ApplicationTermTask(final C context, final ApplicationTerm original) {
 			super(context);
 			mNext = 0;
 			mOriginal = original;
 			mResult = Arrays.copyOf(original.getParameters(), original.getParameters().length);
+			mRepetitions = 0;
 		}
 
 		@Override
@@ -145,6 +148,11 @@ public class TermContextTransformationEngine<C> {
 					&& mTermWalker.applyRepeatedlyUntilNoChange()) {
 				mNext = 0;
 				mChangeInThisIteration = false;
+				mRepetitions++;
+			} else {
+				if (DEBUG_NONTERMINATION && mRepetitions > 0) {
+					System.out.println("Finished after " + mRepetitions + " repetitions for " + mOriginal + " " + Arrays.toString(mResult));
+				}
 			}
 			final Task result;
 			if (mNext == mOriginal.getParameters().length) {
