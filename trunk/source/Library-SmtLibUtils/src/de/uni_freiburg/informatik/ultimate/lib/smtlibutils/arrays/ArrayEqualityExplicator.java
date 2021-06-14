@@ -108,14 +108,15 @@ public class ArrayEqualityExplicator {
 				result = SmtUtils.binaryBooleanNotEquals(mgdScript.getScript(), lhsSelect, rhsSelect);
 			} else {
 				// does not use SmtUtils method because no simplification possible
-				result = mgdScript.getScript().term("not", mgdScript.getScript().term("=", lhsSelect, rhsSelect));
+				result = mgdScript.getScript().term("not",
+						SmtUtils.equality(mgdScript.getScript(), lhsSelect, rhsSelect));
 			}
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			if (SmtSortUtils.isBoolSort(lhsSelect.getSort())) {
 				result = SmtUtils.binaryBooleanEquality(mgdScript.getScript(), lhsSelect, rhsSelect);
 			} else {
 				// does not use SmtUtils method because no simplification possible
-				result = mgdScript.getScript().term("=", lhsSelect, rhsSelect);
+				result = SmtUtils.equality(mgdScript.getScript(), lhsSelect, rhsSelect);
 			}
 		} else {
 			throw new AssertionError("unknown quantifier");
