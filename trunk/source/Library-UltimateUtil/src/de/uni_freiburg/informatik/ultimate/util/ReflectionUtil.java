@@ -90,7 +90,8 @@ public class ReflectionUtil {
 	}
 
 	/**
-	 * Return a String specifying the calling method and its signature up to the given stack depth.
+	 * Return a {@link String} specifying the line number, class name and method name of the caller at the given stack
+	 * depth.
 	 */
 	public static String getCallerSignature(final int callStackDepth) {
 		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
@@ -100,8 +101,8 @@ public class ReflectionUtil {
 		} else {
 			theFrame = callStack[callStackDepth];
 		}
-		return String.format("[L%4s] %15.15s.%s", theFrame.getLineNumber(),
-				getCallerClassName(callStackDepth + 1).getSimpleName(), theFrame.getMethodName());
+		return String.format("[L%4s] %s.%s", theFrame.getLineNumber(), getCallerClassName(callStackDepth + 1).getName(),
+				theFrame.getMethodName());
 	}
 
 	/**

@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  * A MonitoredProcess is a {@link Process} that will be terminated at the end of the toolchain from which it was
@@ -95,17 +97,18 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	private int mID;
 
 	private Process mProcess;
-	private volatile boolean mProcessCompleted;
 	private volatile int mReturnCode;
+
+	private final CompletableFuture<Process> mProcessOnExit;
+
+	private final AtomicBoolean mIsKillProcessCalled;
 
 	private MonitoredProcess(final Process process, final String command, final String exitCommand,
 			final IUltimateServiceProvider services, final ILogger logger) {
-		assert services != null;
-		mServices = services;
-		mLogger = logger;
-		mProcess = process;
-		assert mProcess != null;
-		mProcessCompleted = false;
+		mServices = Objects.requireNonNull(services);
+		mLogger = Objects.requireNonNull(logger);
+		mProcess = Objects.requireNonNull(process);
+		mProcessOnExit = mProcess.onExit();
 		mCommand = command;
 		mExitCommand = exitCommand;
 		mReturnCode = -1;
@@ -114,6 +117,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		mStdErrStreamPipe = new PipedInputStream(DEFAULT_BUFFER_SIZE);
 
 		mTimeoutAttached = new AtomicBoolean(false);
+		mIsKillProcessCalled = new AtomicBoolean(false);
 	}
 
 	/**
@@ -400,61 +404,57 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 * is any.
 	 */
 	public void forceShutdown() {
-		synchronized (this) {
+		if (!isRunning()) {
+			return;
+		}
+		if (mExitCommand != null) {
+			final OutputStream std = mProcess.getOutputStream();
+			final OutputStreamWriter stdWriter = new OutputStreamWriter(std, Charset.defaultCharset());
+			try {
+				stdWriter.write(mExitCommand);
+				stdWriter.close();
+			} catch (final IOException e) {
+				mLogger.error(getLogStringPrefix() + " Exception during sending of exit command " + mExitCommand + ": "
+						+ e.getMessage());
+			}
+			try {
+				mLogger.debug(getLogStringPrefix() + " About to join with the monitor thread... ");
+				mProcessRunner.join(WAIT_FOR_EXIT_COMMAND_MILLIS);
+				mLogger.debug(getLogStringPrefix() + " Successfully joined");
+
+			} catch (final InterruptedException e) {
+				// not necessary to do anything here
+				mLogger.debug(getLogStringPrefix() + " Interrupted during join");
+				Thread.currentThread().interrupt();
+			}
 			if (!isRunning()) {
 				return;
 			}
-			if (mExitCommand != null) {
-				final OutputStream std = mProcess.getOutputStream();
-				final OutputStreamWriter stdWriter = new OutputStreamWriter(std, Charset.defaultCharset());
-				try {
-					stdWriter.write(mExitCommand);
-					stdWriter.close();
-				} catch (final IOException e) {
-					mLogger.error(getLogStringPrefix() + " Exception during sending of exit command " + mExitCommand
-							+ ": " + e.getMessage());
-				}
-				try {
-					mLogger.debug(getLogStringPrefix() + " About to join with the monitor thread... ");
-					mProcessRunner.join(WAIT_FOR_EXIT_COMMAND_MILLIS);
-					mLogger.debug(getLogStringPrefix() + " Successfully joined");
-
-				} catch (final InterruptedException e) {
-					// not necessary to do anything here
-					mLogger.debug(getLogStringPrefix() + " Interrupted during join");
-					Thread.currentThread().interrupt();
-				}
-				if (!isRunning()) {
-					return;
-				}
-			}
-			mLogger.warn(getLogStringPrefix() + " Forcibly destroying the process");
-			final List<InputStream> tobeclosed = new ArrayList<>(5);
-			try {
-				tobeclosed.add(mProcess.getInputStream());
-				tobeclosed.add(mProcess.getErrorStream());
-				tobeclosed.add(mStdInStreamPipe);
-				tobeclosed.add(mStdErrStreamPipe);
-				killProcess();
-			} catch (final NullPointerException ex) {
-				if (mLogger.isWarnEnabled()) {
-					mLogger.warn(
-							getLogStringPrefix() + " Rare case: The thread was killed right after we checked if it "
-									+ "was killed and before we wanted to kill it manually");
-				}
-			} catch (final Exception ex) {
-				mLogger.fatal(String.format("%s Something unexpected happened: %s%n%s", getLogStringPrefix(), ex,
-						CoreUtil.getStackTrace(ex)));
-				throw ex;
-			}
-
-			for (final InputStream stream : tobeclosed) {
-				close(stream);
-			}
-
-			mProcessCompleted = true;
-			mLogger.debug(getLogStringPrefix() + " Forcibly destroyed the process");
 		}
+		mLogger.warn(getLogStringPrefix() + " Forcibly destroying the process");
+		final List<InputStream> tobeclosed = new ArrayList<>(5);
+		try {
+			tobeclosed.add(mProcess.getInputStream());
+			tobeclosed.add(mProcess.getErrorStream());
+			tobeclosed.add(mStdInStreamPipe);
+			tobeclosed.add(mStdErrStreamPipe);
+			killProcess();
+		} catch (final NullPointerException ex) {
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn(getLogStringPrefix() + " Rare case: The thread was killed right after we checked if it "
+						+ "was killed and before we wanted to kill it manually");
+			}
+		} catch (final Exception ex) {
+			mLogger.fatal(String.format("%s Something unexpected happened: %s%n%s", getLogStringPrefix(), ex,
+					CoreUtil.getStackTrace(ex)));
+			throw ex;
+		}
+
+		for (final InputStream stream : tobeclosed) {
+			close(stream);
+		}
+
+		mLogger.debug(getLogStringPrefix() + " Forcibly destroyed the process");
 	}
 
 	private void close(final Closeable pipe) {
@@ -511,43 +511,49 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		return processId + " " + command;
 	}
 
-	public synchronized boolean isRunning() {
-		return !mProcessCompleted;
+	public boolean isRunning() {
+		return !mProcessOnExit.isDone();
 	}
 
 	private String getLogStringPrefix() {
 		return "[MP " + mCommand + " (" + mID + ")]";
 	}
 
+	/**
+	 * Kills the process using {@link Process#destroyForcibly()} and removes it from storage.
+	 */
 	private void killProcess() {
-		synchronized (this) {
-			if (mProcess == null) {
-				return;
+		// only execute this method once
+		if (mIsKillProcessCalled.getAndSet(true)) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("%s Called by %s, but is already killed", getLogStringPrefix(),
+						ReflectionUtil.getCallerSignature(3));
 			}
-			final CompletableFuture<Process> onExit = mProcess.onExit();
-			if (!onExit.isDone()) {
-				try {
-					mProcess.destroyForcibly();
-					onExit.get(WAIT_FOR_EXIT_COMMAND_MILLIS, TimeUnit.MILLISECONDS);
-					mReturnCode = mProcess.exitValue();
-					mLogger.info("%s Forceful destruction successful, exit code %d", getLogStringPrefix(), mReturnCode);
-				} catch (final InterruptedException e) {
-					mLogger.fatal("%s Interrupted while destroying process, abandoning it", getLogStringPrefix());
-					Thread.currentThread().interrupt();
-				} catch (final ExecutionException e) {
-					mLogger.fatal("%s Encounted %s destroying process, abandoning process. Exception: %s",
-							getLogStringPrefix(), e.getClass().getSimpleName(), e);
-				} catch (final TimeoutException e) {
-					mLogger.fatal("%s Could not destroy process within %s ms, abandoning it", getLogStringPrefix(),
-							WAIT_FOR_EXIT_COMMAND_MILLIS);
-				}
-			} else {
-				mLogger.info("%s Ended with exit code %s", getLogStringPrefix(), mProcess.exitValue());
-				mReturnCode = mProcess.exitValue();
-			}
-			mProcess = null;
-			removeFromStorage();
+			return;
 		}
+
+		if (isRunning()) {
+			try {
+				mProcess.destroyForcibly();
+				mProcessOnExit.get(WAIT_FOR_EXIT_COMMAND_MILLIS, TimeUnit.MILLISECONDS);
+				mReturnCode = mProcess.exitValue();
+				mLogger.info("%s Forceful destruction successful, exit code %d", getLogStringPrefix(), mReturnCode);
+			} catch (final InterruptedException e) {
+				mLogger.fatal("%s Interrupted while destroying process, abandoning it", getLogStringPrefix());
+				Thread.currentThread().interrupt();
+			} catch (final ExecutionException e) {
+				mLogger.fatal("%s Encounted %s destroying process, abandoning process. Exception: %s",
+						getLogStringPrefix(), e.getClass().getSimpleName(), e);
+			} catch (final TimeoutException e) {
+				mLogger.fatal("%s Could not destroy process within %s ms, abandoning it", getLogStringPrefix(),
+						WAIT_FOR_EXIT_COMMAND_MILLIS);
+			}
+		} else {
+			mLogger.info("%s Ended with exit code %s", getLogStringPrefix(), mProcess.exitValue());
+			mReturnCode = mProcess.exitValue();
+		}
+		mProcess = null;
+		removeFromStorage();
 	}
 
 	private void removeFromStorage() {
@@ -613,6 +619,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 			final Semaphore endOfPumps = new Semaphore(-INITIAL_SEMAPHORE_COUNT);
 			final PipedOutputStream stdInBufferPipe;
 			final PipedOutputStream stdErrBufferPipe;
+			final ILogger logger = mMonitoredProcess.mLogger;
 			try {
 				stdInBufferPipe = new PipedOutputStream(mStdInStreamPipe);
 				stdErrBufferPipe = new PipedOutputStream(mStdErrStreamPipe);
@@ -620,9 +627,9 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe, endOfPumps, "stdErr");
 
 			} catch (final IOException e) {
-				if (mMonitoredProcess.mLogger.isErrorEnabled()) {
-					mMonitoredProcess.mLogger.error(
-							getLogStringPrefix() + " Failed during stream data buffering. Terminating abnormally.", e);
+				if (logger.isErrorEnabled()) {
+					logger.error(getLogStringPrefix() + " Failed during stream data buffering. Terminating abnormally.",
+							e);
 				}
 				killProcess();
 				// release enough permits for exec to guarantee return
@@ -632,30 +639,23 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 
 			try {
 				mEndOfSetup.release();
-				if (mMonitoredProcess.mLogger.isDebugEnabled()) {
-					mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished thread setup");
-				}
+				logger.debug(getLogStringPrefix() + " Finished thread setup");
 				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
-				mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished waiting for process");
-				mMonitoredProcess.mProcessCompleted = true;
+				logger.debug(getLogStringPrefix() + " Finished waiting for process");
 				if (!endOfPumps.tryAcquire(-INITIAL_SEMAPHORE_COUNT, WAIT_FOR_EXIT_COMMAND_MILLIS,
 						TimeUnit.MILLISECONDS)) {
-					mMonitoredProcess.mLogger
-							.warn(getLogStringPrefix() + " Abandoning pump threads because process wont die");
-				} else if (mMonitoredProcess.mLogger.isDebugEnabled()) {
-					mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished waiting for pump threads");
+					logger.warn(getLogStringPrefix() + " Abandoning pump threads because process wont die");
+				} else if (logger.isDebugEnabled()) {
+					logger.debug(getLogStringPrefix() + " Finished waiting for pump threads");
 					logUnreadPipeContent();
-					mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished dumping unread pipe content");
+					logger.debug(getLogStringPrefix() + " Finished dumping unread pipe content");
 				}
 			} catch (final InterruptedException e) {
-				if (mMonitoredProcess.mLogger.isErrorEnabled()) {
-					mMonitoredProcess.mLogger.error(getLogStringPrefix() + " Pump interrupted. Terminating abnormally.",
-							e);
-				}
+				logger.error(getLogStringPrefix() + " Pump interrupted. Terminating abnormally.", e);
 				Thread.currentThread().interrupt();
 			} finally {
 				killProcess();
-				mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Exiting monitor thread");
+				logger.debug(getLogStringPrefix() + " Exiting monitor thread");
 			}
 		}
 
