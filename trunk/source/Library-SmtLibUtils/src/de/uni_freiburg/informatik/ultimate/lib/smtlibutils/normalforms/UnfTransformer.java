@@ -26,7 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -47,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 public class UnfTransformer extends TermTransformer {
 
 	private final Script mScript;
+	private static Set<String> mRelationSymbols = Arrays.stream(RelationSymbol.values()).map(Object::toString).collect(Collectors.toSet());
 
 	public UnfTransformer(final Script script) {
 		mScript = script;
@@ -82,7 +89,14 @@ public class UnfTransformer extends TermTransformer {
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final FunctionSymbol fun = appTerm.getFunction();
-		final Term result = SmtUtils.termWithLocalSimplification(mScript, fun, newArgs);
+		final String appString = fun.getApplicationString();
+		Term result = SmtUtils.termWithLocalSimplification(mScript, fun, newArgs);
+		if (mRelationSymbols.contains(appString)) {
+			final PolynomialRelation polyPolyRel = PolynomialRelation.convert(mScript, result);
+			if (polyPolyRel != null) {
+				result = polyPolyRel.positiveNormalForm(mScript);
+			}
+		}
 		setResult(result);
 		return;
 	}
