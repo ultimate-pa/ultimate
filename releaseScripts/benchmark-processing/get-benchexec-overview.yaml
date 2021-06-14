@@ -22,7 +22,10 @@
 
 
 known_exceptions:
+  "Received EOF on stdin.":
+  "stderr output: (error \"out of memory\")":
   "AssertionError: Possible infinite loop detected":
+  "Modelproduction for quantifier theory not implemented":
   "IllegalArgumentException: NONLINEAR_UPDATE Monomial contains modified variable.":
   "IllegalArgumentException: NONINTEGER_UPDATE Some updated variables are of non-integer sorts":
   "IllegalArgumentException: UNSUPPORTED_EIGENVALUES":
@@ -112,7 +115,8 @@ known_timeouts:
   "Killed from outside":
 
 known_safe:
-  "AllSpecificationsHoldResult":
+  "We were not able to verify any specifiation because the program does not contain any specification":
+  "specifications checked. All of them hold":
   "TerminationAnalysisResult: Termination proven":
 
 known_unsafe:
