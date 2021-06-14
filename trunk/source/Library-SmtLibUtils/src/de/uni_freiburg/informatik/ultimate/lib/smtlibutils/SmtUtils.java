@@ -472,12 +472,12 @@ public final class SmtUtils {
 			return summands[0];
 		} else {
 			if (SmtSortUtils.isNumericSort(sort)) {
-				return script.term("+", summands);
+				return script.term("+", CommuhashUtils.sortByHashCode(summands.clone()));
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				if (BINARY_BITVECTOR_SUM_WORKAROUND) {
 					return binaryBitvectorSum(script, sort, summands);
 				}
-				return script.term("bvadd", summands);
+				return script.term("bvadd", CommuhashUtils.sortByHashCode(summands.clone()));
 			} else {
 				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 			}
@@ -673,7 +673,7 @@ public final class SmtUtils {
 		if (params.length == 2) {
 			return binaryEquality(script, params[0], params[1]);
 		} else {
-			return script.term("=", params);
+			return script.term("=", CommuhashUtils.sortByHashCode(params));
 		}
 	}
 
@@ -1054,7 +1054,8 @@ public final class SmtUtils {
 			if (applyDistributivity && idjt.getInnerDualJuncts() != null && !idjt.getInnerDualJuncts().isEmpty()) {
 				return applyDistributivity(script, resultJuncts, connective, idjt.getInnerDualJuncts());
 			}
-			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
+			return script.term(connective,
+					CommuhashUtils.sortByHashCode(resultJuncts.toArray(new Term[resultJuncts.size()])));
 		}
 	}
 
@@ -1108,7 +1109,8 @@ public final class SmtUtils {
 		} else if (resultJuncts.size() == 1) {
 			return resultJuncts.iterator().next();
 		} else {
-			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
+			return script.term(connective,
+					CommuhashUtils.sortByHashCode(resultJuncts.toArray(new Term[resultJuncts.size()])));
 		}
 	}
 
