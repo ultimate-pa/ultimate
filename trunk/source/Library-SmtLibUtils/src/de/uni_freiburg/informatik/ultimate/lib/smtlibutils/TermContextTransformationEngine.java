@@ -151,7 +151,8 @@ public class TermContextTransformationEngine<C> {
 				mRepetitions++;
 			} else {
 				if (DEBUG_NONTERMINATION && mRepetitions > 0) {
-					System.out.println("Finished after " + mRepetitions + " repetitions for " + mOriginal + " " + Arrays.toString(mResult));
+					System.out.println("Finished after " + mRepetitions + " repetitions for " + mOriginal + " "
+							+ Arrays.toString(mResult));
 				}
 			}
 			final Task result;
