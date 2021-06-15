@@ -114,7 +114,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
 	}
 
-	private static final boolean USE_ON_DEMAND_RESULT = false;
+	private static final boolean USE_ON_DEMAND_RESULT = true;
 
 	private static final boolean DEBUG_WRITE_NET_HASH_CODES = false;
 

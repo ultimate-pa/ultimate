@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -148,7 +149,7 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 			final Term ghost = mGhostVariables.get(otherPlace).getTerm();
 			terms.add(ghost);
 		}
-		terms.addAll(getAllNotMarking(marking));
+		terms.addAll(getHitNotMarking(marking));
 		terms.add(mFloydHoareAnnotation.get(marking).getFormula());
 		return SmtUtils.and(mScript, terms);
 	}
@@ -156,7 +157,7 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 	/**
 	 *
 	 * @param marking
-	 * @return Formula MethodB:Predicate with GhostVariables of all other places not in marking
+	 * @return Formula MethodA:Predicate with GhostVariables of all other places not in marking
 	 */
 	private Set<Term> getAllNotMarking(final Marking<LETTER, PLACE> marking) {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
@@ -168,7 +169,138 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 		}
 		return predicates;
 	}
+	
+	
+	/**
+	 *
+	 * @param marking
+	 * @return Formula MethodB:Predicate with GhostVariables of hitting set of other places not in marking
+	 */
+	private Set<Term> getHitNotMarking(final Marking<LETTER, PLACE> marking) {
+		//TODO: quitar marking de este Hitting set?
+		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
+		final Set<Set<PLACE>> symmDifference = getSymmDifferences(marking);
+		final Set<PLACE> notMarking = getHittingSet(symmDifference);
+		final Set<Term> predicates = new HashSet<>();
+		for (final PLACE place : notMarking) {
+			final Term ghost = mGhostVariables.get(place).getTerm();
+			predicates.add(SmtUtils.not(mScript, ghost));
+		}
+		return predicates;
+	}
+	
+	/**
+	 * @param marking
+	 * @return set of symmetric differences of marking to all different reachable markings
+	 */
+	private Set<Set<PLACE>> getSymmDifferences(final Marking<LETTER, PLACE> marking){
+		 Set<Set<PLACE>> differences= new HashSet<>();
+		 Set<Marking<LETTER, PLACE>> reachableMarkings = mFloydHoareAnnotation.keySet();
+		 for (final Marking<LETTER, PLACE> reachable : reachableMarkings) {
+			 if (!marking.equals(reachable)) {
+			 differences.add(SymmDiff(marking.stream().collect(Collectors.toSet()), 
+					 	reachable.stream().collect(Collectors.toSet())));}}
+		 return differences;
+	}
+	
+	/**
+	 * @param s1
+	 * @param s2
+	 * @return Symmetric difference of set
+	 * TODO:Already implemented in Ultimate? Guava library?
+	 */
+	private Set<PLACE> SymmDiff(Set<PLACE> s1, Set<PLACE> s2){
+		Set<PLACE> symmetricDiff = new HashSet<PLACE>(s1);
+	    symmetricDiff.addAll(s2);
+	    Set<PLACE> tmp = new HashSet<PLACE>(s1);
+	    tmp.retainAll(s2);
+	    symmetricDiff.removeAll(tmp); // use DataStructre.difference??
+	    return symmetricDiff;
+	}
+	/**	
+	 * 
+	 * @param symmDifference
+	 * @return hitting set of symmetricDifference
+	 */
+	private Set<PLACE> getHittingSet(Set<Set<PLACE>> symmDifference) {
+		Set<PLACE> hittingSet = new HashSet<PLACE>();
+		Set<Set<PLACE>> uncovered = new HashSet<Set<PLACE>>(symmDifference);
+		Set<Set<PLACE>> covered = new HashSet<Set<PLACE>>();
+		Set<Set<PLACE>> unchecked = new HashSet<Set<PLACE>>(symmDifference);//TODO: Order by size, more efficient
 
+		for (Set<PLACE> set : unchecked) {
+			
+			if (!checkHittingSet(hittingSet,symmDifference)) {
+				Set<PLACE> greedySet = getGreedySet(uncovered, unchecked);
+				hittingSet.addAll(greedySet);
+				ArrayList<Set<PLACE>> inter = getIntersections(greedySet, uncovered);
+				covered.addAll(inter);
+				uncovered.removeAll(inter);
+			 }
+			else {
+				break;
+			}
+			unchecked.remove(set);
+		}
+		
+		assert checkHittingSet(hittingSet,symmDifference) : "error hittings set";
+		return hittingSet;
+	}
+	
+	/**
+	 * 
+	 * @param hittingSet
+	 * @param setUniverse
+	 * @return true if hittinSet intersects with all sets in Universe
+	 */
+	
+	private boolean checkHittingSet(Set<PLACE> hittingSet, Set<Set<PLACE>> setUniverse) {
+		Set<Set<PLACE>> universe = new HashSet<Set<PLACE>>(setUniverse);
+		for (Set<PLACE> set : universe) {
+			if (DataStructureUtils.intersection(set, hittingSet).isEmpty()) {
+				return false;
+			}			
+		}		
+		return true;
+	}
+	
+	
+	/**
+	 * 
+	 * @param set
+	 * @param collection
+	 * @return List of sets with which a set intersects
+	 */
+	private ArrayList<Set<PLACE>> getIntersections(Set<PLACE> set, Set<Set<PLACE>> collection){
+		ArrayList<Set<PLACE>> intersections = new ArrayList<Set<PLACE>>();
+		for (Set<PLACE> s : collection) {
+			if (!DataStructureUtils.intersection(set, s).isEmpty()) {
+				intersections.add(s);
+			}
+		}
+		return intersections;
+	}
+
+	/**
+	 * 
+	 * @param uncovered
+	 * @param collection of not selected sets
+	 * @return return set in uncovered
+	 */
+	private Set<PLACE> getGreedySet(Set<Set<PLACE>> uncovered, Set<Set<PLACE>> collection) {
+		Set<PLACE> greedy = new HashSet<PLACE>();
+		ArrayList<Set<PLACE>> intersections = new ArrayList<Set<PLACE>>();
+		for (Set<PLACE> set : collection) {
+			ArrayList<Set<PLACE>> setInter = getIntersections(set,uncovered); //correct getintersections
+			if ( setInter.size() > intersections.size()) {
+				greedy = set;
+				intersections = setInter;
+			}
+		}
+		return greedy;
+		
+	}
+	
 	/**
 	 *
 	 * @param marking
