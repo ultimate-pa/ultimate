@@ -68,7 +68,8 @@ public class RandomDfsOrder<L, S> implements IDfsOrder<L, S> {
 			if (Objects.equals(x, y)) {
 				return 0;
 			}
-			return new Random(getSeed(state, x, y)).nextBoolean() ? -1 : 1;
+			return new Random(getSeed(state, x, y)).nextBoolean() ? (Objects.hashCode(x) - Objects.hashCode(y))
+					: (Objects.hashCode(y) - Objects.hashCode(x));
 		};
 	}
 
