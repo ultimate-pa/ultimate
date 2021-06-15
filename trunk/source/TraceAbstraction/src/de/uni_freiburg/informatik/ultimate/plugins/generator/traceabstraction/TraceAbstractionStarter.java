@@ -335,8 +335,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		final List<Pair<DebugIdentifier, Set<IcfgLocation>>> result = new ArrayList<>();
 
-		if (ERRORS_PER_THREAD) {
-			assert mIsConcurrent : "Cannot analyse errors per thread instance for sequential program";
+		if (ERRORS_PER_THREAD && mIsConcurrent) {
 			for (final Map.Entry<String, Set<IcfgLocation>> entry : icfg.getProcedureErrorNodes().entrySet()) {
 				final Set<IcfgLocation> locs = entry.getValue();
 				if (!locs.isEmpty()) {
