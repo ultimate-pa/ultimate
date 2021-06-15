@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
@@ -140,7 +142,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 		final Set<IcfgLocation> active = Set.of(mlState.getProgramPoints());
 		final Set<IcfgLocation> persistentLocs =
-				pickMaximalScc(active, getActiveConflicts(mlState, active, enabledActions));
+				pickMaximalScc(active, getActiveConflicts(mlState, active, enabledActions), enabled);
 		assert persistentLocs.size() <= active.size() : "Non-active locs must not be base for persistent set";
 		if (persistentLocs.containsAll(enabled)) {
 			mStatistics.reportTrivialQuery();
@@ -149,6 +151,9 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 		final Set<IcfgEdge> result = enabledActions.projectToRange(persistentLocs);
 		mStatistics.reportQuery();
+		if (result.isEmpty()) {
+			throw new AssertionError("Non-trivial persistent set must never be empty");
+		}
 		return result;
 	}
 
@@ -196,19 +201,47 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		return enabledActions;
 	}
 
-	private <N> Set<N> pickMaximalScc(final Set<N> nodes, final ISuccessorProvider<N> edges) {
+	private <N> Set<N> pickMaximalScc(final Set<N> nodes, final ISuccessorProvider<N> edges, final Set<N> required) {
 		assert !nodes.isEmpty() : "Cannot compute SCCs of empty graph";
 
 		final var sccComp = new SccComputationNonRecursive<>(mLogger, edges, StronglyConnectedComponent<N>::new,
 				nodes.size(), nodes);
-		// heuristic: choose smallest maximal SCC
-		final Optional<StronglyConnectedComponent<N>> persistentScc = sccComp.getLeafComponents().stream()
+		final Optional<StronglyConnectedComponent<N>> persistentScc = getLeafsWithRequired(sccComp, required).stream()
 				.min(Comparator
+						// heuristic: choose smallest maximal SCC
 						.<StronglyConnectedComponent<N>> comparingInt(StronglyConnectedComponent::getNumberOfStates)
+						// fix preference among equally large SCCs
 						.thenComparing(Comparator.comparing(StronglyConnectedComponent::toString)));
 
 		assert persistentScc.isPresent() : "There must be always at least one leaf SCC";
 		return persistentScc.get().getNodes();
+	}
+
+	/**
+	 * Get all SCCs that contain at least one required node, such that no (transitive) successors contains a required
+	 * node.
+	 */
+	private <N, COMP extends StronglyConnectedComponent<N>> Set<COMP>
+			getLeafsWithRequired(final SccComputationNonRecursive<N, COMP> sccComp, final Set<N> required) {
+		final var compSucc = sccComp.getComponentsSuccessorsProvider();
+		final Set<COMP> leafs = new HashSet<>();
+		for (final COMP root : sccComp.getRootComponents()) {
+			leafs.addAll(getLeafsWithRequired(compSucc, required, root));
+		}
+		return leafs;
+	}
+
+	private <N, COMP extends StronglyConnectedComponent<N>> Set<COMP>
+			getLeafsWithRequired(final ISuccessorProvider<COMP> compSucc, final Set<N> required, final COMP comp) {
+		final Set<COMP> leafs = new HashSet<>();
+		final Iterator<COMP> it = compSucc.getSuccessors(comp);
+		while (it.hasNext()) {
+			leafs.addAll(getLeafsWithRequired(compSucc, required, it.next()));
+		}
+		if (leafs.isEmpty() && DataStructureUtils.haveNonEmptyIntersection(comp.getNodes(), required)) {
+			leafs.add(comp);
+		}
+		return leafs;
 	}
 
 	private ISuccessorProvider<IcfgLocation> getActiveConflicts(final IMLPredicate state,
