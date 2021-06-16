@@ -59,7 +59,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 
 	@Override
 	protected long getTimeout() {
-		return 10_000;
+		return 1000_000;
 	}
 
 	private static final String TOOLCHAIN = "ReqCheckFailurePathGeneration.xml";
