@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 	private final PartialOrderMode mPartialOrderMode;
 	private final boolean mConditionalPor;
+	private final boolean mSymmetricPor;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final IDfsVisitor<L, IPredicate> mVisitor;
 	private final PartialOrderReductionFacade<L> mPOR;
@@ -125,6 +126,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				: null;
 
 		mConditionalPor = mPref.getConditionalPor();
+		mSymmetricPor = mPref.getSymmetricPor();
 		final IIndependenceRelation<IPredicate, L> semanticIndependence = constructSemanticIndependence(csToolkit);
 		final DefaultIndependenceCache<IPredicate, L> independenceCache = new DefaultIndependenceCache<>();
 		final IIndependenceRelation<IPredicate, L> unconditionalRelation =
@@ -246,7 +248,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private IIndependenceRelation<IPredicate, L> constructSemanticIndependence(final CfgSmtToolkit csToolkit) {
 		return IndependenceBuilder.<L> semantic(mServices, constructIndependenceScript(),
-				csToolkit.getManagedScript().getScript(), mConditionalPor, false).build();
+				csToolkit.getManagedScript().getScript(), mConditionalPor, mSymmetricPor).build();
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructConditionalIndependence(

@@ -371,6 +371,10 @@ public final class TAPreferences {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COND_POR);
 	}
 
+	public boolean getSymmetricPor() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SYMM_POR);
+	}
+
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_SIMPLIFICATION_TECHNIQUE,
 				SimplificationTechnique.class);

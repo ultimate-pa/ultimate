@@ -99,6 +99,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
 	private static final boolean DEF_COND_POR = true;
 
+	public static final String LABEL_SYMM_POR = "Limit POR to symmetric independence in concurrent analysis";
+	private static final boolean DEF_SYMM_POR = false;
+
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
 	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
 
@@ -464,6 +467,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
 				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SYMM_POR, DEF_SYMM_POR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
