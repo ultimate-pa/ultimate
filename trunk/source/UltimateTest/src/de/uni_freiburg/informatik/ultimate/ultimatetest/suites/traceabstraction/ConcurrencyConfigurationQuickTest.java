@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -39,38 +41,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionTestSuite {
 
 	// @formatter:off
-	private static final String[] SETTINGS = {
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-Delay.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-New_States.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-Backfolding.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-Dbo.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe-Backfolding.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe-SemanticLooper.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Lockstep.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random42.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random521.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random7777.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistentFixedOrder-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistent-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-SemanticLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Lockstep.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Random42.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Lockstep.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random42.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepUncond-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-None-NoLbe.epf",
-		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-Persistent-NoLbe.epf",
-	};
+	private static final String SETTINGS_DIR = "automizer/concurrent/";
 
 	private static final String[] BOOGIE_EXAMPLES = {
 		"examples/concurrent/bpl/regression/example_interleaving.bpl",
@@ -94,14 +65,18 @@ public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionT
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final String setting : SETTINGS) {
+		final Path settingsDir = UltimateRunDefinitionGenerator.getFileFromSettingsDir("").toPath();
+		final File[] settings = UltimateRunDefinitionGenerator.getFileFromSettingsDir(SETTINGS_DIR)
+				.listFiles(f -> f.isFile() && f.getName().endsWith(".epf"));
+		for (final File setting : settings) {
+			final Path settingPath = settingsDir.relativize(setting.toPath());
 			for (final String file : BOOGIE_EXAMPLES) {
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, setting, BOOGIE_TOOLCHAIN,
-						getTimeout()));
+				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, settingPath.toString(),
+						BOOGIE_TOOLCHAIN, getTimeout()));
 			}
 			for (final String file : C_EXAMPLES) {
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, setting, C_TOOLCHAIN,
-						getTimeout()));
+				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, settingPath.toString(),
+						C_TOOLCHAIN, getTimeout()));
 			}
 		}
 		return super.createTestCases();
