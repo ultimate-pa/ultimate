@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -91,6 +92,7 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 	private static final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
+	private final Set<PLACE> mHittingSet;
 	private final Map<PLACE, IProgramVar> mGhostVariables;
 	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
 	
@@ -108,6 +110,7 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
 
 		mGhostVariables = getGhostVariables();
+		mHittingSet = getHittingSet();
 		final Map<PLACE, IPredicate> formulaMapping = getFormulaMapping();
 		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
@@ -169,18 +172,16 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 		}
 		return predicates;
 	}
-	
-	
+		
 	/**
 	 *
 	 * @param marking
 	 * @return Formula MethodB:Predicate with GhostVariables of hitting set of other places not in marking
 	 */
 	private Set<Term> getHitNotMarking(final Marking<LETTER, PLACE> marking) {
-		//TODO: quitar marking de este Hitting set?
-		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
-		final Set<Set<PLACE>> symmDifference = getSymmDifferences(marking);
-		final Set<PLACE> notMarking = getHittingSet(symmDifference);
+		//TODO: remove places from hittingSet than are in current marking.		
+		final Set<PLACE> notMarking = DataStructureUtils.difference(mHittingSet, 
+				marking.stream().collect(Collectors.toSet()));
 		final Set<Term> predicates = new HashSet<>();
 		for (final PLACE place : notMarking) {
 			final Term ghost = mGhostVariables.get(place).getTerm();
@@ -189,117 +190,16 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 		return predicates;
 	}
 	
-	/**
-	 * @param marking
-	 * @return set of symmetric differences of marking to all different reachable markings
-	 */
-	private Set<Set<PLACE>> getSymmDifferences(final Marking<LETTER, PLACE> marking){
-		 Set<Set<PLACE>> differences= new HashSet<>();
-		 Set<Marking<LETTER, PLACE>> reachableMarkings = mFloydHoareAnnotation.keySet();
-		 for (final Marking<LETTER, PLACE> reachable : reachableMarkings) {
-			 if (!marking.equals(reachable)) {
-			 differences.add(SymmDiff(marking.stream().collect(Collectors.toSet()), 
-					 	reachable.stream().collect(Collectors.toSet())));}}
-		 return differences;
+	private Set<PLACE> getHittingSet(){
+		final Set<Set<PLACE>> reachableMarkings = new HashSet<Set<PLACE>>();
+		for (Marking<LETTER,PLACE> mark : mFloydHoareAnnotation.keySet()) {
+			reachableMarkings.add(mark.stream().collect(Collectors.toSet()));
+		}
+		final HittingSet<PLACE> hitSet = new HittingSet<PLACE>(reachableMarkings);
+		return hitSet.getSymmHittingSet();
 	}
 	
-	/**
-	 * @param s1
-	 * @param s2
-	 * @return Symmetric difference of set
-	 * TODO:Already implemented in Ultimate? Guava library?
-	 */
-	private Set<PLACE> SymmDiff(Set<PLACE> s1, Set<PLACE> s2){
-		Set<PLACE> symmetricDiff = new HashSet<PLACE>(s1);
-	    symmetricDiff.addAll(s2);
-	    Set<PLACE> tmp = new HashSet<PLACE>(s1);
-	    tmp.retainAll(s2);
-	    symmetricDiff.removeAll(tmp); // use DataStructre.difference??
-	    return symmetricDiff;
-	}
-	/**	
-	 * 
-	 * @param symmDifference
-	 * @return hitting set of symmetricDifference
-	 */
-	private Set<PLACE> getHittingSet(Set<Set<PLACE>> symmDifference) {
-		Set<PLACE> hittingSet = new HashSet<PLACE>();
-		Set<Set<PLACE>> uncovered = new HashSet<Set<PLACE>>(symmDifference);
-		Set<Set<PLACE>> covered = new HashSet<Set<PLACE>>();
-		Set<Set<PLACE>> unchecked = new HashSet<Set<PLACE>>(symmDifference);//TODO: Order by size, more efficient
 
-		for (Set<PLACE> set : unchecked) {
-			
-			if (!checkHittingSet(hittingSet,symmDifference)) {
-				Set<PLACE> greedySet = getGreedySet(uncovered, unchecked);
-				hittingSet.addAll(greedySet);
-				ArrayList<Set<PLACE>> inter = getIntersections(greedySet, uncovered);
-				covered.addAll(inter);
-				uncovered.removeAll(inter);
-			 }
-			else {
-				break;
-			}
-			unchecked.remove(set);
-		}
-		
-		assert checkHittingSet(hittingSet,symmDifference) : "error hittings set";
-		return hittingSet;
-	}
-	
-	/**
-	 * 
-	 * @param hittingSet
-	 * @param setUniverse
-	 * @return true if hittinSet intersects with all sets in Universe
-	 */
-	
-	private boolean checkHittingSet(Set<PLACE> hittingSet, Set<Set<PLACE>> setUniverse) {
-		Set<Set<PLACE>> universe = new HashSet<Set<PLACE>>(setUniverse);
-		for (Set<PLACE> set : universe) {
-			if (DataStructureUtils.intersection(set, hittingSet).isEmpty()) {
-				return false;
-			}			
-		}		
-		return true;
-	}
-	
-	
-	/**
-	 * 
-	 * @param set
-	 * @param collection
-	 * @return List of sets with which a set intersects
-	 */
-	private ArrayList<Set<PLACE>> getIntersections(Set<PLACE> set, Set<Set<PLACE>> collection){
-		ArrayList<Set<PLACE>> intersections = new ArrayList<Set<PLACE>>();
-		for (Set<PLACE> s : collection) {
-			if (!DataStructureUtils.intersection(set, s).isEmpty()) {
-				intersections.add(s);
-			}
-		}
-		return intersections;
-	}
-
-	/**
-	 * 
-	 * @param uncovered
-	 * @param collection of not selected sets
-	 * @return return set in uncovered
-	 */
-	private Set<PLACE> getGreedySet(Set<Set<PLACE>> uncovered, Set<Set<PLACE>> collection) {
-		Set<PLACE> greedy = new HashSet<PLACE>();
-		ArrayList<Set<PLACE>> intersections = new ArrayList<Set<PLACE>>();
-		for (Set<PLACE> set : collection) {
-			ArrayList<Set<PLACE>> setInter = getIntersections(set,uncovered); //correct getintersections
-			if ( setInter.size() > intersections.size()) {
-				greedy = set;
-				intersections = setInter;
-			}
-		}
-		return greedy;
-		
-	}
 	
 	/**
 	 *
