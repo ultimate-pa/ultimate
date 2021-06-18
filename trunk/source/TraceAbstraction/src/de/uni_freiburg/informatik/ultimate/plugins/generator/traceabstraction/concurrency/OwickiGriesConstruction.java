@@ -129,7 +129,6 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 	 */
 	private Map<PLACE, IPredicate> getFormulaMapping() {
 		final Map<PLACE, IPredicate> mapping = new HashMap<>();
-
 		final Set<Marking<LETTER, PLACE>> reachableMarkings = mFloydHoareAnnotation.keySet();
 		for (final PLACE place : mNet.getPlaces()) {
 			final Set<Term> clauses = reachableMarkings.stream().filter(m -> m.contains(place))
@@ -148,11 +147,14 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 	 */
 	private Term getMarkingPredicate(final Marking<LETTER, PLACE> marking) {
 		final Set<Term> terms = new HashSet<>();
-		for (final PLACE otherPlace : marking) {
+		final Set<PLACE> posPlaces = DataStructureUtils.intersection(mHittingSet,
+								marking.stream().collect(Collectors.toSet()));
+		for (final PLACE otherPlace : posPlaces) {
 			final Term ghost = mGhostVariables.get(otherPlace).getTerm();
 			terms.add(ghost);
 		}
 		terms.addAll(getHitNotMarking(marking));
+		//terms.addAll(getAllNotMarking(marking));
 		terms.add(mFloydHoareAnnotation.get(marking).getFormula());
 		return SmtUtils.and(mScript, terms);
 	}
@@ -302,10 +304,12 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 	 */
 	private UnmodifiableTransFormula getTransitionAssignment(final ITransition<LETTER, PLACE> transition) {
 		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		for (final PLACE place : mNet.getPredecessors(transition)) {
+		final Set<PLACE> predecesors = DataStructureUtils.intersection(mNet.getPredecessors(transition), mHittingSet);
+		final Set<PLACE> successors = DataStructureUtils.intersection(mNet.getSuccessors(transition), mHittingSet);
+		for (final PLACE place : predecesors) {
 			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "false"));
 		}
-		for (final PLACE place : mNet.getSuccessors(transition)) {
+		for (final PLACE place : successors) {
 			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "true"));
 		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false, false,
