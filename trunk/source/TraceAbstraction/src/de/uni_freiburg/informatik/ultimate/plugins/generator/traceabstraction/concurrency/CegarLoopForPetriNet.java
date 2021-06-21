@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -705,6 +706,29 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		final OwickiGriesFloydHoare<IPredicate, L> floydHoare =
 				OwickiGriesFloydHoare.create(mServices, mCsToolkit, mFinPrefix, mInitialNet);
 		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
+
+		final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
+		for (final var entry : petriFloydHoare.entrySet()) {
+			final var markPre = entry.getKey();
+			final var pre = entry.getValue();
+			for (final var trans : mInitialNet.getTransitions()) {
+				if (markPre.isTransitionEnabled(trans, mInitialNet)) {
+					Marking<L, IPredicate> markPost;
+					try {
+						markPost = markPre.fireTransition(trans, mInitialNet);
+						final var post = petriFloydHoare.getOrDefault(markPost, mPredicateFactory.or());
+						final Validity valid = htc.checkInternal(pre, (IInternalAction) trans.getSymbol(), post);
+						if (valid != Validity.VALID) {
+							throw new IllegalStateException("");
+						}
+					} catch (final PetriNetNot1SafeException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+				}
+			}
+		}
 
 		final OwickiGriesConstruction<IPredicate, L> construction =
 				new OwickiGriesConstruction<>(mServices, mCsToolkit, mInitialNet, petriFloydHoare);
