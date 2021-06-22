@@ -60,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
- * A MonitoredProcess is a {@link Process} that will be terminated at the end of the toolchain from which it was
- * created.
+ * A MonitoredProcess is a {@link Process} that will be terminated at the end of the toolchain from which it was created
+ * or by a timeout signaled by {@link IProgressMonitorService}.
  *
  * @author dietsch@informatik.uni-freiburg.de
  */
@@ -73,7 +73,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	private static final int WAIT_FOR_EXIT_COMMAND_MILLIS = 200;
 
 	/**
-	 * Time in milliseconds to wait between checks if the toolchain is still running.
+	 * Time in milliseconds to wait between checks if a timeout occurred is still running.
 	 */
 	private static final int WAIT_BETWEEN_CHECKS_MILLIS = 50;
 
@@ -121,11 +121,11 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * Start a new monitored process. The process will be terminated at the end of the toolchain. Note that you should
-	 * not start an external process through some wrapper script, because Java will have trouble terminating this
-	 * processes due to bug <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If
-	 * this occurs, Ultimate may deadlock because it cannot close input and output streams of the unresponsive process
-	 * reliably.
+	 * Start a new monitored process. The process will be terminated at the end of the toolchain or if
+	 * {@link IProgressMonitorService} signals a timeout. Note that you should not start an external process through
+	 * some wrapper script, because Java will have trouble terminating this processes due to bug
+	 * <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If this occurs, Ultimate
+	 * may deadlock because it cannot close input and output streams of the unresponsive process reliably.
 	 *
 	 * @param command
 	 *            A string array containing the command and its possible arguments that will be used to start a new
@@ -191,11 +191,11 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * Start a new monitored process. The process will be terminated at the end of the toolchain. Note that you should
-	 * not start an external process through some wrapper script, because Java will have trouble terminating this
-	 * processes due to bug <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If
-	 * this occurs, Ultimate may deadlock because it cannot close input and output streams of the unresponsive process
-	 * reliably.
+	 * Start a new monitored process. The process will be terminated at the end of the toolchain or if
+	 * {@link IProgressMonitorService} signals a timeout. Note that you should not start an external process through
+	 * some wrapper script, because Java will have trouble terminating this processes due to bug
+	 * <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If this occurs, Ultimate
+	 * may deadlock because it cannot close input and output streams of the unresponsive process reliably.
 	 *
 	 * @param command
 	 *            A command without arguments that will be used to start a new process.
@@ -203,8 +203,9 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 *            A string describing an "exit" command that should be sent to the standard input stream of the running
 	 *            process before trying to shut it down.
 	 * @param services
-	 *            An instance of {@link IUltimateServiceProvider} that should be used to report errors and to register
-	 *            this process for destruction after the current toolchain completes.
+	 *            An instance of {@link IUltimateServiceProvider} that is used to report errors, to register this
+	 *            process for destruction after the current toolchain completes, and to obtain
+	 *            {@link IProgressMonitorService}.
 	 * @return A monitored process instance that represents the started process.
 	 * @throws IOException
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
@@ -309,19 +310,21 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * Wait until the toolchain is cancelled for the termination of the process. If it did not occur, terminate the
-	 * process abnormally.
+	 * Wait until the toolchain is cancelled or {@link IProgressMonitorService} signals timeout for the termination of
+	 * the process. If the process is still running, try sending an exit command if present. If it is still running,
+	 * terminate it abnormally.
 	 *
 	 * @param gracePeriod
-	 *            A time period in milliseconds that this method will wait after a toolchain cancellation request was
-	 *            received before terminating the process. Must be non-negative. 0 means no grace-period.
+	 *            A time period in milliseconds that this method will wait after the toolchain was cancelled or
+	 *            {@link IProgressMonitorService} signaled timeout before terminating the process. Must be non-negative.
+	 *            0 means no grace-period.
 	 * @return A {@link MonitoredProcessState} instance containing the return code of the process or -1
 	 */
-	public MonitoredProcessState impatientWaitUntilToolchainTimeout(final long gracePeriod) {
+	public MonitoredProcessState impatientWaitUntilTimeout(final long gracePeriod) {
 		if (gracePeriod < 0) {
 			throw new IllegalArgumentException("gracePeriod must be non-negative");
 		}
-		mLogger.info("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand);
+		mLogger.info("%s Waiting until timeout for monitored process", getLogStringPrefix());
 		final IProgressMonitorService progressService = mServices.getProgressMonitorService();
 		while (progressService != null && progressService.continueProcessing()) {
 			try {
@@ -334,8 +337,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 				break;
 			}
 		}
-		mLogger.warn(
-				"%s Toolchain was canceled while monitored process is still running, waiting %s ms for graceful end",
+		mLogger.warn("%s Timeout while monitored process is still running, waiting %s ms for graceful end",
 				getLogStringPrefix(), gracePeriod);
 		try {
 			final MonitoredProcessState state = waitfor(gracePeriod);
@@ -375,14 +377,15 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * Calling this method will force the process to terminate if the toolchain terminates, possibly after a grace
-	 * period. This method is non-blocking. You may only call this method once!
+	 * Calling this method will force the process to terminate if the toolchain terminates or
+	 * {@link IProgressMonitorService} signals timeout, possibly after a grace period. This method is non-blocking. You
+	 * may only call this method once!
 	 *
 	 * @param gracePeriod
-	 *            A time period in milliseconds that we will wait after a toolchain cancellation request was received
-	 *            before terminating the process. Must be non-negative. 0 means no grace-period.
+	 *            A time period in milliseconds that we will wait before terminating the process. Must be non-negative.
+	 *            0 means no grace-period.
 	 */
-	public void setTerminationAfterToolchainTimeout(final long gracePeriod) {
+	public void setTerminationAfterTimeout(final long gracePeriod) {
 		synchronized (this) {
 			if (mTimeoutAttached.getAndSet(true)) {
 				throw new ConcurrentModificationException(
@@ -393,8 +396,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 				throw new IllegalArgumentException("millis must be non-negative");
 			}
 
-			new Thread(() -> impatientWaitUntilToolchainTimeout(gracePeriod), "ToolchainTimeout watcher for " + mID)
-					.start();
+			new Thread(() -> impatientWaitUntilTimeout(gracePeriod), "TimeoutWatcher for " + mID).start();
 		}
 	}
 
