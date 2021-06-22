@@ -151,10 +151,7 @@ class Executor {
 			mWriter.write(in + System.lineSeparator() + System.lineSeparator());
 			mWriter.flush();
 		} catch (final IOException e) {
-			if (mServices.getProgressMonitorService().continueProcessingRoot()) {
-				throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
-			}
-			throw new ToolchainCanceledException(getClass());
+			throw convertIOException(e);
 		}
 	}
 
@@ -195,7 +192,7 @@ class Executor {
 			}
 			return result;
 		} catch (final IOException e) {
-			throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
+			throw convertIOException(e);
 		}
 	}
 
@@ -237,14 +234,16 @@ class Executor {
 		try {
 			return parser.parse();
 		} catch (final SMTLIBException ex) {
-			if (ex.getMessage().equals(Parser.s_EOF)) {
-				throw new SMTLIBException(
-						String.format("%s %s %s", getLogStringPrefix(), EOF_ERROR_MSG, generateStderrMessage(stderr)),
-						ex);
+			if (mServices.getProgressMonitorService().continueProcessing()) {
+				if (ex.getMessage().equals(Parser.s_EOF)) {
+					throw new SMTLIBException(String.format("%s %s %s", getLogStringPrefix(), EOF_ERROR_MSG,
+							generateStderrMessage(stderr)), ex);
+				}
+				throw ex;
 			}
-			throw ex;
-		} catch (final UnsupportedOperationException ex) {
-			throw ex;
+			throw new ToolchainCanceledException(getClass());
+		} catch (final IOException e) {
+			throw convertIOException(e);
 		} catch (final Exception ex) {
 			throw new SMTLIBException(String.format("%s %s %s", getLogStringPrefix(),
 					"Unexpected Exception while parsing", generateStderrMessage(stderr)), ex);
@@ -301,6 +300,13 @@ class Executor {
 			return "No stderr output.";
 		}
 		return "stderr output: " + stderr;
+	}
+
+	private RuntimeException convertIOException(final IOException ex) {
+		if (mServices.getProgressMonitorService().continueProcessing()) {
+			return new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", ex);
+		}
+		return new ToolchainCanceledException(getClass());
 	}
 
 }
