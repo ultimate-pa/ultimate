@@ -292,7 +292,10 @@ class Executor {
 	}
 
 	private String getLogStringPrefix() {
-		return mName + " (" + mSolverCmd + ")";
+		if (mProcess != null) {
+			return String.format("%s (%s)", mName, mProcess);
+		}
+		return String.format("%s (dormant, command %s)", mName, mSolverCmd);
 	}
 
 	private static String generateStderrMessage(final String stderr) {

@@ -565,8 +565,10 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 
 	@Override
 	public String toString() {
-		return String.format("%s (%s): %s (exit command is %s)", getClass().getSimpleName(), mID, mCommand,
-				mExitCommand);
+		if (mExitCommand != null) {
+			return String.format("MP %s (%s) with exit command %s", mCommand, mID, mExitCommand);
+		}
+		return String.format("MP %s (%s) without exit command", mCommand, mID);
 	}
 
 	/**
