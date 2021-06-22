@@ -248,7 +248,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS);
 		final boolean useExternalSolver =
 				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_EXTERNAL_SMT_SOLVER);
-		final long timeoutSmtInterpol = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_SOLVER_TIMEOUT);
+		final long timeoutInMsSmtInterpol =
+				prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_SOLVER_TIMEOUT) * 1000;
 
 		// TODO 2017-05-01 Matthias: Add settings if used more often.
 		final boolean fakeNonIncrementalScript = false;
@@ -259,15 +260,15 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 
 		// DD 2019-10-29: These solver settings were only used with SolverMode.External_DefaultMode, in
 		// LinearInequalityInvariantPatternProcessorFactory#produceSmtSolver()
-		SolverSettings solverSettings =
-				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
-						.setUseFakeIncrementalScript(fakeNonIncrementalScript).setSmtInterpolTimeout(timeoutSmtInterpol)
-						.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
+		SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_DefaultMode).setUseFakeIncrementalScript(fakeNonIncrementalScript)
+				.setSmtInterpolTimeout(timeoutInMsSmtInterpol)
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
 		if (useExternalSolver) {
 			// solverCommand = "yices-smt2 --incremental";
 			// commandExternalSolver = "yices-smt2 --incremental -t " + timeoutSmtInterpol;
 			// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
-			final long externalSolverTimeout = timeoutSmtInterpol * 1000; // z3 expects the timeout in msec
+			final long externalSolverTimeout = timeoutInMsSmtInterpol;
 			solverSettings = solverSettings.setUseExternalSolver(ExternalSolver.Z3, externalSolverTimeout);
 		}
 

@@ -134,7 +134,10 @@ public final class SolverBuilder {
 				script = wrapScriptWithLoggingScript(services, script, solverLogger,
 						settings.constructFullPathOfDumpedScript());
 			}
-			script.setOption(":timeout", settings.getTimeoutSmtInterpol());
+			if (settings.getTimeoutSmtInterpol() != -1) {
+				script.setOption(":timeout", settings.getTimeoutSmtInterpol());
+			}
+
 			// ensure that SMTInterpol is exited when toolchain ends
 			script = new SelfDestructingSolverStorable(script, services.getStorage());
 		}
@@ -534,10 +537,19 @@ public final class SolverBuilder {
 					mAdditionalOptions, mSolverLogger);
 		}
 
-		public SolverSettings setSmtInterpolTimeout(final long timeoutSmtInterpol) {
-			final long actualSmtInterpolTimeout = Math.max(0, timeoutSmtInterpol);
+		/**
+		 * Set timeout for SmtInterpol in milliseconds.
+		 *
+		 * @param timeoutInMsSmtInterpol
+		 *            timeout in milliseconds. Must be non-negative or -1 to disable timeout.
+		 */
+		public SolverSettings setSmtInterpolTimeout(final long timeoutInMsSmtInterpol) {
+			if (timeoutInMsSmtInterpol < 0 && timeoutInMsSmtInterpol != -1) {
+				throw new IllegalArgumentException(
+						"Timeout for SMTInterpol must be non-negative or -1 to disable timeout");
+			}
 			return new SolverSettings(mSolverMode, mFakeNonIncrementalScript, mUseExternalSolver,
-					mExternalSolverCommand, mSolverLogics, actualSmtInterpolTimeout, mExternalInterpolator,
+					mExternalSolverCommand, mSolverLogics, timeoutInMsSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript,
 					mBaseNameOfDumpedScript, mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath,
 					mCompressDumpedScript, mAdditionalOptions, mSolverLogger);
@@ -795,7 +807,6 @@ public final class SolverBuilder {
 			mSolverCommand = solverCommand;
 			mSolverCommandTimeoutFormatString = solverCommandTimeoutFormatString;
 			mDefaultLogic = defaultLogic;
-
 		}
 
 		public String getSolverCommand() {
