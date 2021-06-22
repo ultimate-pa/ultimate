@@ -225,8 +225,8 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 
 		final ProcessRunner pr = new ProcessRunner(this);
 		mProcessRunner = new Thread(pr, String.format("MonitoredProcess %s %s", mID, oneLineCmd));
-		mLogger.info(String.format("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID,
-				mCommand, mExitCommand, workingDir));
+		mLogger.info("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID, mCommand,
+				mExitCommand, workingDir);
 		mProcessRunner.start();
 		pr.mEndOfSetup.acquireUninterruptibly();
 	}
@@ -286,7 +286,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		if (millis < 0) {
 			throw new IllegalArgumentException("millis has to be non-negative but was " + millis);
 		}
-		mLogger.info(String.format("%s Waiting %s ms for monitored process", getLogStringPrefix(), millis));
+		mLogger.info("%s Waiting %s ms for monitored process", getLogStringPrefix(), millis);
 		MonitoredProcessState mps = null;
 		try {
 			mps = waitfor(millis);
@@ -296,7 +296,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 			Thread.currentThread().interrupt();
 		}
 		if (mps == null || mps.isRunning()) {
-			mLogger.warn(String.format("%s Timeout reached", getLogStringPrefix()));
+			mLogger.warn("%s Timeout reached", getLogStringPrefix());
 			forceShutdown();
 			try {
 				mProcessRunner.join(WAIT_FOR_EXIT_COMMAND_MILLIS);
@@ -321,7 +321,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		if (gracePeriod < 0) {
 			throw new IllegalArgumentException("gracePeriod must be non-negative");
 		}
-		mLogger.info(String.format("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand));
+		mLogger.info("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand);
 		final IProgressMonitorService progressService = mServices.getProgressMonitorService();
 		while (progressService != null && progressService.continueProcessing()) {
 			try {
@@ -334,7 +334,9 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 				break;
 			}
 		}
-
+		mLogger.warn(
+				"%s Toolchain was canceled while monitored process is still running, waiting %s ms for graceful end",
+				getLogStringPrefix(), gracePeriod);
 		try {
 			final MonitoredProcessState state = waitfor(gracePeriod);
 			if (!state.isRunning()) {
@@ -346,9 +348,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 			Thread.currentThread().interrupt();
 		}
 
-		mLogger.warn(
-				String.format("Toolchain was canceled while waiting for monitored process %s with %s, terminating...",
-						mID, mCommand));
 		forceShutdown();
 		return new MonitoredProcessState(mProcessRunner.getState() != State.TERMINATED, true, mReturnCode);
 	}
@@ -414,24 +413,24 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 				stdWriter.write(mExitCommand);
 				stdWriter.close();
 			} catch (final IOException e) {
-				mLogger.error(getLogStringPrefix() + " Exception during sending of exit command " + mExitCommand + ": "
-						+ e.getMessage());
+				mLogger.error("%s Exception during sending of exit command %s: %s", getLogStringPrefix(), mExitCommand,
+						e.getMessage());
 			}
 			try {
-				mLogger.debug(getLogStringPrefix() + " About to join with the monitor thread... ");
+				mLogger.debug("%s About to join with the monitor thread... ", getLogStringPrefix());
 				mProcessRunner.join(WAIT_FOR_EXIT_COMMAND_MILLIS);
-				mLogger.debug(getLogStringPrefix() + " Successfully joined");
+				mLogger.debug("%s Successfully joined", getLogStringPrefix());
 
 			} catch (final InterruptedException e) {
 				// not necessary to do anything here
-				mLogger.debug(getLogStringPrefix() + " Interrupted during join");
+				mLogger.debug("%s Interrupted during join", getLogStringPrefix());
 				Thread.currentThread().interrupt();
 			}
 			if (!isRunning()) {
 				return;
 			}
 		}
-		mLogger.warn(getLogStringPrefix() + " Forcibly destroying the process");
+		mLogger.warn("%s Forcibly destroying the process", getLogStringPrefix());
 		final List<InputStream> tobeclosed = new ArrayList<>(5);
 		try {
 			tobeclosed.add(mProcess.getInputStream());
@@ -441,12 +440,11 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 			killProcess();
 		} catch (final NullPointerException ex) {
 			if (mLogger.isWarnEnabled()) {
-				mLogger.warn(getLogStringPrefix() + " Rare case: The thread was killed right after we checked if it "
-						+ "was killed and before we wanted to kill it manually");
+				mLogger.warn("%s Process already dead, possible race condition", getLogStringPrefix());
 			}
 		} catch (final Exception ex) {
-			mLogger.fatal(String.format("%s Something unexpected happened: %s%n%s", getLogStringPrefix(), ex,
-					CoreUtil.getStackTrace(ex)));
+			mLogger.fatal("%s Something unexpected happened: %s%n%s", getLogStringPrefix(), ex,
+					CoreUtil.getStackTrace(ex));
 			throw ex;
 		}
 
@@ -454,14 +452,14 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 			close(stream);
 		}
 
-		mLogger.debug(getLogStringPrefix() + " Forcibly destroyed the process");
+		mLogger.debug("%s Forcibly destroyed the process", getLogStringPrefix());
 	}
 
 	private void close(final Closeable pipe) {
 		try {
 			pipe.close();
 		} catch (final IOException e) {
-			mLogger.warn(getLogStringPrefix() + " An error occured during closing: " + e.getMessage());
+			mLogger.warn("%s An error occured during closing: %s", getLogStringPrefix(), e.getMessage());
 		}
 	}
 
