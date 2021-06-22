@@ -114,7 +114,7 @@ class Executor {
 			throw new IllegalStateException(errorMsg);
 		}
 
-		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
+		mProcess.setTerminationAfterToolchainTimeout(1000);
 
 		final OutputStream stdin = mProcess.getOutputStream();
 		final InputStream stdout = mProcess.getInputStream();
