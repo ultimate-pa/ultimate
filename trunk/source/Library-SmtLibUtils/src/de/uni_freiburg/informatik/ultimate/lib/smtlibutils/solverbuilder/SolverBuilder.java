@@ -99,7 +99,6 @@ public final class SolverBuilder {
 	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.ALL;
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
 
-	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 
 	private SolverBuilder() {
@@ -120,18 +119,19 @@ public final class SolverBuilder {
 	 * @return A Script that represents an SMT solver which is defined by settings.
 	 */
 	public static Script buildScript(final IUltimateServiceProvider services, final SolverSettings settings) {
+		final ILogger localLogger = services.getLoggingService().getLogger(SolverBuilder.class);
 		final ILogger solverLogger = getSolverLogger(services, settings);
 		Script script;
 		if (settings.useExternalSolver()) {
-			script = createExternalSolver(services, settings, solverLogger);
+			script = createExternalSolver(services, settings, solverLogger, localLogger);
 		} else {
-			solverLogger.info("constructing new instance of SMTInterpol");
+			localLogger.info("Constructing new instance of SMTInterpol");
 			final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(solverLogger);
 			final TerminationRequest termRequest =
 					new SMTInterpolTerminationRequest(services.getProgressMonitorService());
 			script = new SMTInterpol(loggerWrapper, termRequest);
 			if (settings.dumpSmtScriptToFile()) {
-				script = wrapScriptWithLoggingScript(services, script, solverLogger,
+				script = wrapScriptWithLoggingScript(services, script, localLogger,
 						settings.constructFullPathOfDumpedScript());
 			}
 			if (settings.getTimeoutSmtInterpol() != -1) {
@@ -161,15 +161,15 @@ public final class SolverBuilder {
 	}
 
 	private static Script createExternalSolver(final IUltimateServiceProvider services, final SolverSettings settings,
-			final ILogger solverLogger) {
+			final ILogger solverLogger, final ILogger localLogger) {
 		assert settings.getSolverMode() == null || settings
 				.getSolverMode() != SolverMode.Internal_SMTInterpol : "You set solver mode to Internal* and enabled useExternalSolver";
 		final String command = settings.getCommandExternalSolver();
-		solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
+		localLogger.info("Constructing external solver with command: %s", settings.getCommandExternalSolver());
 		final String fullPathOfDumpedFile;
 		if (settings.dumpSmtScriptToFile()) {
 			fullPathOfDumpedFile = settings.constructFullPathOfDumpedScript();
-			solverLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
+			localLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
 		} else {
 			fullPathOfDumpedFile = null;
 		}
@@ -186,7 +186,7 @@ public final class SolverBuilder {
 					script = new Scriptor(command, solverLogger, services, "External", fullPathOfDumpedFile);
 				}
 			} else {
-				solverLogger.info("external solver will use " + externalInterpolator + " interpolation mode");
+				localLogger.info("external solver will use " + externalInterpolator + " interpolation mode");
 				script = new ScriptorWithGetInterpolants(command, solverLogger, services, externalInterpolator,
 						"ExternalInterpolator", fullPathOfDumpedFile);
 			}
@@ -194,7 +194,7 @@ public final class SolverBuilder {
 				script = new DiffWrapperScript(script);
 			}
 		} catch (final IOException e) {
-			solverLogger.fatal("Unable to construct solver");
+			localLogger.fatal("Unable to construct solver: %s", e.getMessage());
 			throw new RuntimeException(e);
 		}
 		return script;
@@ -229,15 +229,15 @@ public final class SolverBuilder {
 	}
 
 	private static Script wrapScriptWithLoggingScript(final IUltimateServiceProvider services, final Script script,
-			final ILogger solverLogger, final String fullPathOfDumpedFile) {
+			final ILogger localLogger, final String fullPathOfDumpedFile) {
 		final Script wrappedScript;
 		try {
 			// wrap with SelfDestructingSolverStorable to ensure that .gz streams are closed if solver crashes
 			wrappedScript = new SelfDestructingSolverStorable(new LoggingScript(script, fullPathOfDumpedFile, true),
 					services.getStorage());
-			solverLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
+			localLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
 		} catch (final IOException e) {
-			solverLogger.error("Unable dump SMT script to " + fullPathOfDumpedFile);
+			localLogger.error("Unable dump SMT script to " + fullPathOfDumpedFile);
 			throw new RuntimeException(e);
 		}
 		return wrappedScript;
@@ -247,7 +247,7 @@ public final class SolverBuilder {
 		if (settings.getSolverLogger() != null) {
 			return settings.getSolverLogger();
 		}
-		return services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
+		return services.getLoggingService().getLoggerForExternalTool(SolverBuilder.class);
 	}
 
 	private static void setSolverModeDependentOptions(final SolverSettings solverSettings, final Script script)

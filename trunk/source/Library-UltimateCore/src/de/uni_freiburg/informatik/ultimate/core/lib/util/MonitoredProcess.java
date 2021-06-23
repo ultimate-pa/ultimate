@@ -150,7 +150,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		if (services == null) {
 			throw new NullPointerException("services may not be null");
 		}
-		final ILogger logger = services.getLoggingService().getControllerLogger();
+		final ILogger logger = services.getLoggingService().getLogger(MonitoredProcess.class);
 		final File workingDirFile;
 		if (workingDir == null) {
 			command[0] = findExecutableBinary(command[0], logger);
