@@ -86,8 +86,6 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class AbstractCegarLoop<L extends IAction> {
-	private static final String MSG_VERIFICATION_CANCELED = "Verification canceled";
-
 	private static final boolean CONTINUE_AFTER_ERROR_TRACE_FOUND = false;
 
 	/**
@@ -540,7 +538,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 
 	private Result performLimitReachedActions(final IRunningTaskStackProvider e) {
 		mRunningTaskStackProvider = e;
-		mLogger.warn(MSG_VERIFICATION_CANCELED);
+		mLogger.warn("Verification canceled: %s", e.printRunningTaskMessage());
 
 		final Result res;
 		if (e instanceof TaskCanceledException) {
