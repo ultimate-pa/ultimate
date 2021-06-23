@@ -232,7 +232,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
-	public AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
+	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs, final ILogger logger,
 			final Class<L> transitionClazz, final boolean computeHoareAnnotation) {
@@ -251,7 +251,6 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
-		mLogger.info("Starting to check reachability of " + errorLocs.size() + " error locations.");
 	}
 
 	public IRunningTaskStackProvider getRunningTaskStackProvider() {
@@ -374,12 +373,13 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 	}
 
 	private Result iterateInternal() {
-		mLogger.info(ReflectionUtil.instanceFieldsToString(mPref));
 
 		mIteration = 0;
-
-		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
-
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("======== Iteration %s == of CEGAR loop == %s ========", mIteration, mName);
+			mLogger.info("Settings: %s", ReflectionUtil.instanceFieldsToString(mPref));
+			mLogger.info("Starting to check reachability of %s error locations.", mErrorLocs.size());
+		}
 		// initialize dump of debugging output to files if necessary
 		if (mPref.dumpAutomata()) {
 			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
@@ -420,7 +420,7 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 
 			for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 				abortIfTimeout();
-				final String msg = "=== Iteration " + mIteration + " === " + errorLocs() + "===";
+				final String msg = String.format("=== Iteration %s === %s ===", mIteration, errorLocs());
 				mServices.getStorage().pushMarker(msg);
 				mLogger.info(msg);
 				try {
@@ -453,8 +453,8 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 					}
 
 					if (mInterpolAutomaton != null) {
-						mLogger.info(
-								automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
+						mLogger.info("%s automaton has %s states", automatonType,
+								mInterpolAutomaton.getStates().size());
 						if (mIteration <= mPref.watchIteration()
 								&& mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
 							mArtifactAutomaton = mInterpolAutomaton;
