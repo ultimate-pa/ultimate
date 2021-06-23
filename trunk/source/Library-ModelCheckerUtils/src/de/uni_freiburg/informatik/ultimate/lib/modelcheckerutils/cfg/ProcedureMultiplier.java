@@ -96,7 +96,6 @@ public class ProcedureMultiplier {
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads) {
-		super();
 		final IcfgEdgeFactory icfgEdgeFactory = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		final Map<String, List<ILocalProgramVar>> inParams = new HashMap<>(icfg.getCfgSmtToolkit().getInParams());
 		final Map<String, List<ILocalProgramVar>> outParams = new HashMap<>(icfg.getCfgSmtToolkit().getOutParams());
@@ -150,9 +149,7 @@ public class ProcedureMultiplier {
 					}
 				}
 				final List<IProgramNonOldVar> modifiableGlobals = new ArrayList<>();
-				for (final IProgramNonOldVar modifiableGlobal : proc2globals.getImage(proc)) {
-					modifiableGlobals.add(modifiableGlobal);
-				}
+				modifiableGlobals.addAll(proc2globals.getImage(proc));
 				for (final IProgramNonOldVar modifiableGlobal : modifiableGlobals) {
 					proc2globals.addPair(copyIdentifier, modifiableGlobal);
 				}
@@ -165,9 +162,9 @@ public class ProcedureMultiplier {
 		icfg.getCfgSmtToolkit().getManagedScript().unlock(this);
 
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
-		final CfgSmtToolkit newCfgSmtToolkit = new CfgSmtToolkit(icfg.getCfgSmtToolkit().getServices(),
-				modifiableGlobalsTable, managedScript, symbolTable, procedures, inParams, outParams, icfgEdgeFactory,
-				icfg.getCfgSmtToolkit().getConcurrencyInformation(), smtSymbols);
+		final CfgSmtToolkit newCfgSmtToolkit =
+				new CfgSmtToolkit(modifiableGlobalsTable, managedScript, symbolTable, procedures, inParams, outParams,
+						icfgEdgeFactory, icfg.getCfgSmtToolkit().getConcurrencyInformation(), smtSymbols);
 		final Map<IcfgLocation, IcfgLocation> newLoc2OldLoc = new HashMap<>();
 		for (final String proc : copyDirectives.getDomain()) {
 			final IcfgLocation procEntry = icfg.getProcedureEntryNodes().get(proc);

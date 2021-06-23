@@ -39,10 +39,6 @@ final class ProgressAwareTimer implements IProgressAwareTimer {
 	private final IProgressAwareTimer mParent;
 	private final long mDeadline;
 
-	private ProgressAwareTimer(final long deadline) {
-		this(null, deadline);
-	}
-
 	private ProgressAwareTimer(final IProgressAwareTimer parent, final long deadline) {
 		if (deadline <= 0 && deadline != -1) {
 			throw new IllegalArgumentException("deadline must be positive or -1");

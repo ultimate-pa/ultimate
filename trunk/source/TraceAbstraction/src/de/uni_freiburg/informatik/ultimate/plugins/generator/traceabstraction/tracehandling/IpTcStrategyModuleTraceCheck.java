@@ -82,7 +82,8 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 	}
 
 	protected ManagedScript createExternalManagedScript(final SolverSettings solverSettings) {
-		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(solverSettings, getSolverName());
+		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings,
+				getSolverName());
 	}
 
 	/**

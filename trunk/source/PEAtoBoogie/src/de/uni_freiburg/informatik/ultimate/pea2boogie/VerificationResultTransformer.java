@@ -142,49 +142,47 @@ public class VerificationResultTransformer {
 		if (specs == null || specs.isEmpty()) {
 			throw new AssertionError("Result without specification: " + oldRes.getShortDescription());
 		}
-		if (specs.size() == 1) {
-			final Spec spec = specs.iterator().next();
-			dieIfUnsupported(spec);
-
-			if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
-				// a counterexample for consistency and vacuity means that the requirements are consistent or
-				// non-vacuous
-				isPositive = !isPositive;
-			}
-			final IElement element = oldRes.getElement();
-			final String plugin = oldRes.getPlugin();
-			final IBacktranslationService translatorSequence = oldRes.getCurrentBacktranslation();
-
-			if (isPositive) {
-				return new ReqCheckSuccessResult<>(element, plugin, translatorSequence);
-			}
-
-			if (spec == Spec.RTINCONSISTENT) {
-				@SuppressWarnings("unchecked")
-				final IProgramExecution<IAction, Term> newPe = generateRtInconsistencyResult(
-						(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
-								.getProgramExecution(),
-						reqCheck);
-				if (newPe == null) {
-					return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence);
-				}
-
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Result before Pea2Boogie result transformation");
-					mLogger.debug(oldRes);
-					mLogger.debug("PE after Pea2Boogie result transformation");
-					mLogger.debug(newPe);
-				}
-				final List<Entry<Rational, Map<Term, Term>>> delta2var2value =
-						generateTimeSequenceMap(newPe.getProgramStates());
-				final String failurePath = formatTimeSequenceMap(delta2var2value);
-				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
-			}
-			return new ReqCheckFailResult<>(element, plugin, translatorSequence);
-
-		} else {
+		if (specs.size() != 1) {
 			throw new UnsupportedOperationException("Multi-checks of " + specs + " are not yet supported");
 		}
+		final Spec spec = specs.iterator().next();
+		dieIfUnsupported(spec);
+
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
+			// a counterexample for consistency and vacuity means that the requirements are consistent or
+			// non-vacuous
+			isPositive = !isPositive;
+		}
+		final IElement element = oldRes.getElement();
+		final String plugin = oldRes.getPlugin();
+		final IBacktranslationService translatorSequence = oldRes.getCurrentBacktranslation();
+
+		if (isPositive) {
+			return new ReqCheckSuccessResult<>(element, plugin, translatorSequence);
+		}
+
+		if (spec == Spec.RTINCONSISTENT) {
+			@SuppressWarnings("unchecked")
+			final IProgramExecution<IAction, Term> newPe = generateRtInconsistencyResult(
+					(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
+							.getProgramExecution(),
+					reqCheck);
+			if (newPe == null) {
+				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence);
+			}
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Result before Pea2Boogie result transformation");
+				mLogger.debug(oldRes);
+				mLogger.debug("PE after Pea2Boogie result transformation");
+				mLogger.debug(newPe);
+			}
+			final List<Entry<Rational, Map<Term, Term>>> delta2var2value =
+					generateTimeSequenceMap(newPe.getProgramStates());
+			final String failurePath = formatTimeSequenceMap(delta2var2value);
+			return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
+		}
+		return new ReqCheckFailResult<>(element, plugin, translatorSequence);
 	}
 
 	private String formatTimeSequenceMap(final List<Entry<Rational, Map<Term, Term>>> delta2var2value) {
@@ -328,7 +326,7 @@ public class VerificationResultTransformer {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
 				.setUseExternalSolver(ExternalSolver.Z3).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
 
-		final ManagedScript mgdScriptTc = toolkit.createFreshManagedScript(solverSettings, solverName);
+		final ManagedScript mgdScriptTc = toolkit.createFreshManagedScript(mServices, solverSettings, solverName);
 		final Script scriptTc = mgdScriptTc.getScript();
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(mServices, mgdScriptTc, toolkit.getSymbolTable());
 		final BasicPredicate truePred = bpf.newPredicate(scriptTc.term("true"));
@@ -338,7 +336,7 @@ public class VerificationResultTransformer {
 		try {
 			// first, recheck to ensure that we have branch encoders
 			final TraceCheck<IAction> tcl =
-					TraceCheck.createTraceCheck(truePred, falsePred, trace, toolkit, mgdScriptTc);
+					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace);
 			if (!tcl.providesRcfgProgramExecution()) {
 				mLogger.warn("Could not extract reduced program execution from trace: TraceCheck reported "
 						+ tcl.isCorrect());
@@ -349,7 +347,7 @@ public class VerificationResultTransformer {
 					sequentialize(tcl.getRcfgProgramExecution(), mgdScriptTc, mgdScriptAux);
 			final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScriptTc);
 			final TraceCheck<IAction> tc =
-					TraceCheck.createTraceCheck(truePred, falsePred, cleanedTrace, toolkit, mgdScriptTc);
+					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, cleanedTrace);
 			if (tc.isCorrect() == LBool.SAT) {
 				return tc.getRcfgProgramExecution();
 			}

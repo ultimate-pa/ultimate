@@ -251,9 +251,12 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 	/**
 	 * Create new trace check with a fresh solver and default settings.
+	 *
+	 * @param services
 	 */
-	public static TraceCheck<IAction> createTraceCheck(final IPredicate pre, final IPredicate post,
-			final List<? extends IAction> trace, final CfgSmtToolkit toolkit, final ManagedScript mgdScriptTc) {
+	public static TraceCheck<IAction> createTraceCheck(final IUltimateServiceProvider services, final CfgSmtToolkit toolkit,
+			final ManagedScript mgdScriptTc, final IPredicate pre, final IPredicate post,
+			final List<? extends IAction> trace) {
 		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		final NestedWord<IAction> nw = NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()])));
 		final NestedFormulas<IAction, UnmodifiableTransFormula, IPredicate> rv =
@@ -262,7 +265,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		final boolean computeRcfgProgramExecution = true;
 		final boolean collectInterpolatSequenceStatistics = false;
 		final boolean unlockSmtSolverAlsoIfUnsat = true;
-		return new TraceCheck<>(pre, post, pendingContexts, nw, rv, toolkit.getServices(), toolkit, mgdScriptTc, acbo,
+		return new TraceCheck<>(pre, post, pendingContexts, nw, rv, services, toolkit, mgdScriptTc, acbo,
 				computeRcfgProgramExecution, collectInterpolatSequenceStatistics, unlockSmtSolverAlsoIfUnsat);
 	}
 

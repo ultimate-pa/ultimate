@@ -157,7 +157,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 		}
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
 			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier);
-			return mPrefs.getCfgSmtToolkit().createFreshManagedScript(solverSettings);
+			return mPrefs.getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings);
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
 	}

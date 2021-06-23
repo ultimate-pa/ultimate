@@ -31,6 +31,7 @@ import java.util.concurrent.CountDownLatch;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  *
@@ -85,25 +86,8 @@ final class ProgressMonitorServiceMock implements IProgressMonitorService {
 	}
 
 	@Override
-	public void addChildTimer(final IProgressAwareTimer timer) {
-		// mock
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public IProgressAwareTimer removeChildTimer() {
-		// mock
-		return null;
-	}
-
-	@Override
 	public IProgressAwareTimer getTimer(final long timeout) {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean continueProcessingRoot() {
-		return continueProcessing();
 	}
 
 	@Override
@@ -112,5 +96,12 @@ final class ProgressMonitorServiceMock implements IProgressMonitorService {
 			return -1;
 		}
 		return System.currentTimeMillis() - mDeadline;
+	}
+
+	@Override
+	public IUltimateServiceProvider registerChildTimer(final IUltimateServiceProvider services,
+			final IProgressAwareTimer timer) {
+		// mock, does not set timer
+		return services;
 	}
 }

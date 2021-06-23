@@ -301,22 +301,23 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final DebugIdentifier name = partition.getKey();
 			final Set<IcfgLocation> errorLocs = partition.getValue();
 
+			final IUltimateServiceProvider services;
 			if (mPrefs.hasLimitAnalysisTime()) {
-				progmon.addChildTimer(
+				services = progmon.registerChildTimer(mServices,
 						progmon.getTimer(mPrefs.getLimitAnalysisTime() * MILLISECONDS_PER_SECOND * errorLocs.size()));
+			} else {
+				services = mServices;
 			}
 			if (multiplePartitions) {
-				mServices.getProgressMonitorService().setSubtask(name.toString());
+				services.getProgressMonitorService().setSubtask(name.toString());
 			}
 			final TraceAbstractionBenchmarks traceAbstractionBenchmark = getBenchmark(name, icfg);
 
-			final CegarLoopResult<L> clres = executeCegarLoop(name, icfg, traceAbstractionBenchmark, errorLocs);
+			final CegarLoopResult<L> clres =
+					executeCegarLoop(services, name, icfg, traceAbstractionBenchmark, errorLocs);
 			results.add(clres);
 			finishedErrorSets++;
 
-			if (mPrefs.hasLimitAnalysisTime()) {
-				progmon.removeChildTimer();
-			}
 			if (multiplePartitions) {
 				mLogger.info(String.format("Result for error location %s was %s (%s/%s)", name,
 						clres.getOverallResult(), finishedErrorSets, errorPartitions.size()));
@@ -376,9 +377,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return List.of(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, errNodesOfAllProc));
 	}
 
-	private CegarLoopResult<L> executeCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> icfg,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs) {
-		final CegarLoopResult<L> clres = CegarLoopUtils.getCegarLoopResult(mServices, name, icfg, mPrefs,
+	private CegarLoopResult<L> executeCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
+			final IIcfg<IcfgLocation> icfg, final TraceAbstractionBenchmarks taBenchmark,
+			final Collection<IcfgLocation> errorLocs) {
+		final CegarLoopResult<L> clres = CegarLoopUtils.getCegarLoopResult(services, name, icfg, mPrefs,
 				getPredicateFactory(icfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
 				mComputeHoareAnnotation, mPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
 		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());

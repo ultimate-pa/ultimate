@@ -42,12 +42,15 @@ public interface IProgressMonitorService extends IProgressAwareTimer, IToolchain
 	void setSubtask(final String task);
 
 	/**
-	 * Set a time limit after which the toolchain should be stopped.
+	 * <b>Note: This changes the state of this object</b>
+	 * <p>
+	 * Set a time limit after which this monitor signals timeout.
 	 *
 	 * A convenient way of setting this deadline is using System.currentTimeMillis() + time limit (in ms) as value.
 	 *
 	 * This will remove all child timers and only the newly set deadline will be respected. This deadline will also be
 	 * the root deadline.
+	 * </p>
 	 *
 	 * @param date
 	 *            A date in the future (the difference, measured in milliseconds, between the current time and midnight,
@@ -57,25 +60,19 @@ public interface IProgressMonitorService extends IProgressAwareTimer, IToolchain
 	void setDeadline(final long date);
 
 	/**
-	 * Registers a child timer that will queried instead of the regular timer.
+	 * Creates a {@link IUltimateServiceProvider} instance with a different timer for sub-timeouts. The new
+	 * {@link IUltimateServiceProvider} instance will have a {@link IProgressMonitorService} with the timeout specified
+	 * by the supplied {@link IProgressAwareTimer}.
 	 *
+	 * @param services
+	 *            The current {@link IUltimateServiceProvider} instance.
 	 * @param timer
-	 *            The timer with which you want to replace the interval timer.
-	 */
-	void addChildTimer(final IProgressAwareTimer timer);
-
-	/**
-	 * Removes and returns a child timer if one was added. If none is present, does nothing.
+	 *            The new {@link IP<rogressAwareTimer}
 	 *
-	 * @return A child timer that was added previously or null.
+	 * @return An {@link IUltimateServiceProvider} instance that is identical to <code>services</code> except that its
+	 *         {@link IProgressMonitorService} instance will timeout when <code>timer</code> timeouts OR when the old
+	 *         {@link IProgressMonitorService} timeouts.
 	 */
-	IProgressAwareTimer removeChildTimer();
-
-	/**
-	 * Use this instead of {@link #continueProcessing()} if you want to ignore child timers.
-	 *
-	 * @return false iff cancellation of Toolchain is requested or deadline of root timer is exceeded.
-	 */
-	boolean continueProcessingRoot();
-
+	IUltimateServiceProvider registerChildTimer(final IUltimateServiceProvider services,
+			final IProgressAwareTimer timer);
 }

@@ -291,7 +291,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private ManagedScript constructManagedScriptForInterpolation() throws AssertionError {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(false)
 				.setSolverMode(SolverMode.Internal_SMTInterpol);
-		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(solverSettings);
+		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings);
 	}
 
 	/**

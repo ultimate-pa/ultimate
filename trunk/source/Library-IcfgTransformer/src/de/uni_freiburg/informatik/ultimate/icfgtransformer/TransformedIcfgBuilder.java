@@ -350,10 +350,9 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		final SmtFunctionsAndAxioms transformedSymbols =
 				transformSmtFunctionsAndAxioms(oldToolkit.getSmtFunctionsAndAxioms());
-		final CfgSmtToolkit csToolkit =
-				new CfgSmtToolkit(oldToolkit.getServices(), newModifiedGlobals, oldToolkit.getManagedScript(),
-						newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
-						oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
+		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
+				newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
+				oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
 	}
 
