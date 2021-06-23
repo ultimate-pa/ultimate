@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.reqtotest;
 
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -82,7 +82,7 @@ public class ReqToTestObserver extends BaseObserver {
 
 		if (!RETURN_RESULT_AS_COUNTEREXAMPLE) {
 			mResultTransformer = new CounterExampleToTest(mLogger, mServices, reqSymbolTable, auxVarGen);
-			final Function<IResult, IResult> resultTransformer = mResultTransformer::convertCounterExampleToTest;
+			final UnaryOperator<IResult> resultTransformer = mResultTransformer::convertCounterExampleToTest;
 			mServices.getResultService().registerTransformer("CexToTest", resultTransformer);
 		}
 
