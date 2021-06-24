@@ -306,7 +306,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return isErrorState && !isFalseState(state);
 	}
 
-	private static Boolean isFalseState(final IPredicate state) {
+	private static boolean isFalseState(final IPredicate state) {
 		// We assume here that all inconsistent interpolant predicates are syntactically equal to "false".
 		return SmtUtils.isFalseLiteral(state.getFormula());
 	}
