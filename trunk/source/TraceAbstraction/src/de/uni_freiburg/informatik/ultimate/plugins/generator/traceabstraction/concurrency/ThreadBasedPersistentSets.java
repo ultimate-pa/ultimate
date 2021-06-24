@@ -182,7 +182,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 			threadLocs.put(loc.getProcedure(), loc);
 		}
 		final Map<String, ? extends IcfgLocation> entryNodes = mIcfg.getProcedureEntryNodes();
-		for (final String thread : mInfo.getThreads()) {
+		for (final String thread : IcfgUtils.getAllThreadInstances(mIcfg)) {
 			threadLocs.putIfAbsent(thread, entryNodes.get(thread));
 		}
 		return threadLocs;

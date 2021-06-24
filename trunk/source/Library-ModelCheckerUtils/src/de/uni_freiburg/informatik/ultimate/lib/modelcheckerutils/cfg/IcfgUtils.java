@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
@@ -58,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  *
@@ -306,6 +309,15 @@ public class IcfgUtils {
 		assert computedConflict != LBool.UNKNOWN : "Conflict should be clearly determined";
 		assert (computedConflict == LBool.UNSAT) == conflict : "Incoherent conflict result";
 		return conflict;
+	}
+
+	public static <LOC extends IcfgLocation> Set<String> getAllThreadInstances(final IIcfg<LOC> icfg) {
+		final Stream<String> threadInstances =
+				icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().values().stream()
+						.flatMap(Collection::stream).map(ThreadInstance::getThreadInstanceName);
+		final String mainThread =
+				DataStructureUtils.getOneAndOnly(icfg.getInitialNodes(), "main thread").getProcedure();
+		return Stream.concat(Stream.of(mainThread), threadInstances).collect(Collectors.toSet());
 	}
 
 }

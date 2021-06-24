@@ -26,12 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ThreadInstance;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
@@ -39,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -68,7 +65,7 @@ public final class ExtendedConcurrencyInformation<LOC extends IcfgLocation> {
 	public ExtendedConcurrencyInformation(final IIcfg<LOC> icfg) {
 		mIcfg = icfg;
 
-		for (final String thread : getThreads()) {
+		for (final String thread : IcfgUtils.getAllThreadInstances(icfg)) {
 			for (final IIcfgForkTransitionThreadOther<LOC> forkOther : getForksOf(thread)) {
 				mForks.addPair(forkOther.getCorrespondingIIcfgForkTransitionCurrentThread(), forkOther);
 			}
@@ -81,15 +78,6 @@ public final class ExtendedConcurrencyInformation<LOC extends IcfgLocation> {
 	public static boolean isThreadLocal(final IcfgEdge edge) {
 		return !(edge instanceof IIcfgForkTransitionThreadOther<?>)
 				&& !(edge instanceof IIcfgJoinTransitionThreadOther<?>);
-	}
-
-	public Set<String> getThreads() {
-		final Stream<String> threadInstances =
-				mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().values().stream()
-						.flatMap(Collection::stream).map(ThreadInstance::getThreadInstanceName);
-		final String mainThread =
-				DataStructureUtils.getOneAndOnly(mIcfg.getInitialNodes(), "main thread").getProcedure();
-		return Stream.concat(Stream.of(mainThread), threadInstances).collect(Collectors.toSet());
 	}
 
 	/**

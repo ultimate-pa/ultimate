@@ -336,10 +336,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final List<Pair<DebugIdentifier, Set<IcfgLocation>>> result = new ArrayList<>();
 
 		if (ERRORS_PER_THREAD && mIsConcurrent) {
-			for (final Map.Entry<String, Set<IcfgLocation>> entry : icfg.getProcedureErrorNodes().entrySet()) {
-				final Set<IcfgLocation> locs = entry.getValue();
+			for (final String thread : IcfgUtils.getAllThreadInstances(icfg)) {
+				final Set<IcfgLocation> locs = icfg.getProcedureErrorNodes().get(thread);
 				if (!locs.isEmpty()) {
-					final DebugIdentifier ident = new ThreadInstanceDebugIdentifier(entry.getKey());
+					final DebugIdentifier ident = new ThreadInstanceDebugIdentifier(thread);
 					result.add(new Pair<>(ident, locs));
 				}
 			}
