@@ -310,6 +310,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			}
 			mOverallResult = reportResults(errorLocs, clres);
 			mArtifact = clres.getArtifact();
+
+			if (mPrefs.allErrorLocsAtOnce() && mOverallResult == Result.UNSAFE) {
+				break;
+			}
 		}
 
 		return results;
