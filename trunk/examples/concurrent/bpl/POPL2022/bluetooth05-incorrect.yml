@@ -1,6 +1,6 @@
 format_version: '2.0'
 
-input_files: 'bluetooth1-incorrect.bpl'
+input_files: 'bluetooth05-incorrect.bpl'
 
 properties:
   - property_file: ../../../svcomp/properties/unreach-call.prp
