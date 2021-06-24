@@ -15,6 +15,4 @@ labels: bug
 
 
 ### Description 
-Describe the bug you encountered and what you think should have happened. 
-
-s
+Describe the bug you encountered and what you think should have happened.
