@@ -512,7 +512,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 
 		// benchmark stuff
-		benchmarkGenerator.setResult(overallResult);
 		benchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		benchmarkGenerator.addPredicateUnifierData(mPredicateUnifier.getPredicateUnifierBenchmark());
 		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(mOriginalRoot);
