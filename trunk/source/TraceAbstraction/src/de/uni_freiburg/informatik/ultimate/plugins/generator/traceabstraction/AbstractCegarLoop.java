@@ -86,7 +86,7 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class AbstractCegarLoop<L extends IAction> {
-	private static final boolean CONTINUE_AFTER_ERROR_TRACE_FOUND = false;
+	private static final boolean CONTINUE_AFTER_ERROR_TRACE_FOUND = true;
 
 	/**
 	 * Result of CEGAR loop iteration
