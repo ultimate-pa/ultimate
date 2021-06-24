@@ -406,7 +406,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	/**
 	 * Determines if the locations belonging to the given state are all hopeless. In this case, the state can be omitted
-	 * from
+	 * from the program automaton.
 	 */
 	private boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache, final IPredicate state) {
 		if (state instanceof ISLPredicate) {
