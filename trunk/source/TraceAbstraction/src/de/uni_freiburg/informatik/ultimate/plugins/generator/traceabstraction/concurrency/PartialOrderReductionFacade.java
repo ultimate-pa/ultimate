@@ -27,6 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -84,7 +87,7 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 		mMode = mode;
-		mDfsOrder = getDfsOrder(orderType, randomOrderSeed);
+		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, errorLocs);
 		mIndependence = independence;
 		mSleepFactory = getSleepFactory(predicateFactory);
 		mPersistent = createPersistentSets(icfg, errorLocs);
@@ -100,11 +103,29 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		return new ISleepSetStateFactory.NoUnrolling<>();
 	}
 
-	private static <L extends IAction> IDfsOrder<L, IPredicate>
-			getDfsOrder(final PartialOrderReductionFacade.OrderType orderType, final long randomOrderSeed) {
+	private static <L extends IAction> IDfsOrder<L, IPredicate> getDfsOrder(
+			final PartialOrderReductionFacade.OrderType orderType, final long randomOrderSeed,
+			final Collection<? extends IcfgLocation> errorLocs) {
 		switch (orderType) {
 		case BY_SERIAL_NUMBER:
-			return ConstantDfsOrder.byHashCode();
+			final Set<String> errorThreads =
+					errorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
+			final Comparator<L> comp = new Comparator<L>() {
+				@Override
+				public int compare(final L o1, final L o2) {
+					final boolean error1 = errorThreads.contains(o1.getPrecedingProcedure());
+					final boolean error2 = errorThreads.contains(o2.getPrecedingProcedure());
+					if (error1 && !error2) {
+						return -1;
+					} else if (error2 && !error1) {
+						return 1;
+					}
+					return 0;
+
+				}
+			}.thenComparing(Comparator.comparingInt(Object::hashCode));
+			return new ConstantDfsOrder<>(comp);
+		// return ConstantDfsOrder.byHashCode();
 		case PSEUDO_LOCKSTEP:
 			return new BetterLockstepOrder<>();
 		case RANDOM:
@@ -164,7 +185,6 @@ public class PartialOrderReductionFacade<L extends IAction> {
 			break;
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
-
 		}
 	}
 
