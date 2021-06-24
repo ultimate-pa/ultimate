@@ -407,7 +407,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 		} catch (final AutomataLibraryException e1) {
 			mLogger.warn("Verification cancelled");
 			mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
-			mBenchmarkGenerator.setResult(Result.TIMEOUT);
 			mToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
 			if (pldiDump) {
 				BenchmarkRecord.finish();
@@ -416,7 +415,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 		}
 		if (initalAbstractionCorrect) {
 			mMDBenchmark.reportNoRemainderModule();
-			mBenchmarkGenerator.setResult(Result.TERMINATING);
 			if (pldiDump) {
 				BenchmarkRecord.finish();
 			}
@@ -435,7 +433,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 				if (mConstructTermcompProof) {
 					mTermcompProofBenchmark.reportRemainderModule(false);
 				}
-				mBenchmarkGenerator.setResult(Result.TIMEOUT);
 				mToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
 				if (pldiDump) {
 					BenchmarkRecord.finish();
@@ -447,7 +444,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 				if (mConstructTermcompProof) {
 					mTermcompProofBenchmark.reportNoRemainderModule();
 				}
-				mBenchmarkGenerator.setResult(Result.TERMINATING);
 				if (pldiDump) {
 					BenchmarkRecord.finish();
 				}
@@ -493,7 +489,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 								+ " TraceHistMax " + traceHistogramMaxLoop + ")";
 				e.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 				mToolchainCancelledException = e;
-				mBenchmarkGenerator.setResult(Result.TIMEOUT);
 				if (pldiDump) {
 					BenchmarkRecord.finish();
 				}
@@ -561,7 +556,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 					if (mConstructTermcompProof) {
 						mTermcompProofBenchmark.reportRemainderModule(false);
 					}
-					mBenchmarkGenerator.setResult(Result.UNKNOWN);
 					if (pldiDump) {
 						BenchmarkRecord.finish();
 					}
@@ -573,7 +567,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 						if (mConstructTermcompProof) {
 							mTermcompProofBenchmark.reportRemainderModule(false);
 						}
-						mBenchmarkGenerator.setResult(Result.UNKNOWN);
 						if (pldiDump) {
 							BenchmarkRecord.finish();
 						}
@@ -584,7 +577,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 					if (mConstructTermcompProof) {
 						mTermcompProofBenchmark.reportRemainderModule(true);
 					}
-					mBenchmarkGenerator.setResult(Result.NONTERMINATING);
 					if (pldiDump) {
 						BenchmarkRecord.finish();
 					}
@@ -622,14 +614,12 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 			} catch (final AutomataOperationCanceledException e) {
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "performing iteration " + mIteration);
 				mToolchainCancelledException = new ToolchainCanceledException(e, rti);
-				mBenchmarkGenerator.setResult(Result.TIMEOUT);
 				if (pldiDump) {
 					BenchmarkRecord.finish();
 				}
 				return Result.TIMEOUT;
 			} catch (final ToolchainCanceledException e) {
 				mToolchainCancelledException = e;
-				mBenchmarkGenerator.setResult(Result.TIMEOUT);
 				if (pldiDump) {
 					BenchmarkRecord.finish();
 				}
@@ -637,7 +627,6 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 			}
 			mInterpolAutomaton = null;
 		}
-		mBenchmarkGenerator.setResult(Result.TIMEOUT);
 		return Result.TIMEOUT;
 	}
 
@@ -692,7 +681,7 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 
 			if (mAbstraction.size() > 0) {
-				final Function<ISLPredicate, IcfgLocation> locProvider = x -> x.getProgramPoint();
+				final Function<ISLPredicate, IcfgLocation> locProvider = ISLPredicate::getProgramPoint;
 				AutomataMinimization<IcfgLocation, ISLPredicate, L> am;
 				try {
 					am = new AutomataMinimization<>(mServices, mAbstraction, automataMinimization, false, mIteration,

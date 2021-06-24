@@ -549,7 +549,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			mLogger.fatal("IsEmptyHeuristic found a path but IsEmpty did not.");
 			mLogger.fatal("IsEmptyHeuristic: " + toStr.apply(isEmptyHeuristicCex));
 			return false;
-		} else if (isEmptyHeuristicCex == null && isEmptyCex != null) {
+		}
+		if (isEmptyHeuristicCex == null && isEmptyCex != null) {
 			mLogger.fatal("IsEmptyHeuristic found no path but IsEmpty did.");
 			mLogger.fatal("IsEmpty         : " + toStr.apply(isEmptyCex));
 			return false;
@@ -875,7 +876,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				}
 			}
 
-			if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE
+					&& mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
 				final INestedWordAutomaton<L, IPredicate> cfg = CFG2NestedWordAutomaton
@@ -1190,9 +1192,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 		if (mPref.artifact() == Artifact.RCFG) {
 			return mIcfg;
-		} else {
-			throw new IllegalArgumentException();
 		}
+		throw new IllegalArgumentException();
 	}
 
 	protected boolean accepts(final IUltimateServiceProvider services,

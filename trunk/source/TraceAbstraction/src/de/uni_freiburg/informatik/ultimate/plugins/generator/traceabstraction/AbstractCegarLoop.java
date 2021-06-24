@@ -527,8 +527,6 @@ public abstract class AbstractCegarLoop<L extends IAction> {
 	}
 
 	protected Result reportResult(final Result result) {
-		mCegarLoopBenchmark.setResult(result);
-
 		if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
 			reportErrorAutomatonBenchmarks();
 		}
