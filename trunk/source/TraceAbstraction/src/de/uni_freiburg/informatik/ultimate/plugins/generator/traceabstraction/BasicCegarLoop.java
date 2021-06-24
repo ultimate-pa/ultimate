@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -362,15 +363,17 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				net = petrifiedCfg;
 			}
 
+			final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 			if (mPref.getPartialOrderMode() != PartialOrderMode.NONE) {
 				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
-				automaton = new LazyPetriNet2FiniteAutomaton<>(mStateFactoryForRefinement, net,
-						new AutomataLibraryServices(mServices));
+				automaton = new LazyPetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
+						mStateFactoryForRefinement, net, s -> areAllLocationsHopeless(hopelessCache, s));
 			} else {
 				try {
 					automaton = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
-							mStateFactoryForRefinement, net).getResult();
+							mStateFactoryForRefinement, net, s -> areAllLocationsHopeless(hopelessCache, s))
+									.getResult();
 				} catch (final PetriNetNot1SafeException e) {
 					final Collection<?> unsafePlaces = e.getUnsafePlaces();
 					if (unsafePlaces == null) {
@@ -399,6 +402,35 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(mServices, mAbstraction, mWitnessAutomaton,
 					mCsToolkit, mPredicateFactory, mStateFactoryForRefinement, mLogger, Property.NON_REACHABILITY);
 		}
+	}
+
+	/**
+	 * Determines if the locations belonging to the given state are all hopeless. In this case, the state can be omitted
+	 * from
+	 */
+	private boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache, final IPredicate state) {
+		if (state instanceof ISLPredicate) {
+			return isLocationHopeless(hopelessCache, ((ISLPredicate) state).getProgramPoint());
+		} else if (state instanceof IMLPredicate) {
+			return Arrays.stream(((IMLPredicate) state).getProgramPoints())
+					.allMatch(l -> isLocationHopeless(hopelessCache, l));
+		}
+		throw new IllegalArgumentException("Expected a predicate with locations, got " + state);
+	}
+
+	/**
+	 * A location is hopeless if in the CFG there is no path from this location to an error location.
+	 */
+	private boolean isLocationHopeless(final Map<IcfgLocation, Boolean> hopelessCache, final IcfgLocation loc) {
+		if (mErrorLocs.contains(loc)) {
+			return false;
+		}
+		return !IcfgUtils.canReachCached(loc, e -> mErrorLocs.contains(e.getTarget()), e -> false, l -> {
+			if (!hopelessCache.containsKey(l)) {
+				return LBool.UNKNOWN;
+			}
+			return hopelessCache.get(l) ? LBool.UNSAT : LBool.SAT;
+		}, hopelessCache::put);
 	}
 
 	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(

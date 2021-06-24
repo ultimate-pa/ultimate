@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
 	private final IPetriNet<L, S> mOperand;
+	private final Predicate<S> mIsKnownDeadEnd;
 	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
 	private final Map<Marking<L, S>, S> mMarking2State = new HashMap<>();
 	private final Map<S, Marking<L, S>> mState2Marking = new HashMap<>();
@@ -73,19 +75,24 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	/**
 	 * Creates a new instance for a given net.
 	 *
+	 * @param services
+	 *            Automata library services object
 	 * @param factory
 	 *            state factory used to create automaton states
 	 * @param operand
 	 *            Petri Net that is converted to a finite automaton
-	 * @param services
-	 *            Automata library services object
+	 * @param isKnownDeadEnd
+	 *            Function that can identify (some) dead end states. Dead end states will be omitted from constructed
+	 *            automaton. Set to null if not needed.
 	 *
 	 * @throws PetriNetNot1SafeException
 	 *             Petri Net has to be 1Safe
 	 */
-	public LazyPetriNet2FiniteAutomaton(final IPetriNet2FiniteAutomatonStateFactory<S> factory,
-			final IPetriNet<L, S> operand, final AutomataLibraryServices services) throws PetriNetNot1SafeException {
+	public LazyPetriNet2FiniteAutomaton(final AutomataLibraryServices services,
+			final IPetriNet2FiniteAutomatonStateFactory<S> factory, final IPetriNet<L, S> operand,
+			final Predicate<S> isKnownDeadEnd) throws PetriNetNot1SafeException {
 		mOperand = operand;
+		mIsKnownDeadEnd = isKnownDeadEnd;
 		mStateFactory = factory;
 		mCache = new NestedWordAutomatonCache<>(services, new VpAlphabet<>(mOperand.getAlphabet()), factory);
 	}
@@ -146,12 +153,18 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public Set<L> lettersInternal(final S state) {
+		if (isKnownDeadEnd(state)) {
+			return Collections.emptySet();
+		}
 		return getOutgoingNetTransitions(mState2Marking.get(state)).map(ITransition::getSymbol)
 				.collect(Collectors.toSet());
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
+		if (isKnownDeadEnd(state)) {
+			return Collections.emptySet();
+		}
 		if (!mCacheBookkeeping.isCachedInternal(state, letter)) {
 			computeOutgoingTransitions(state, letter);
 		}
@@ -179,8 +192,10 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 		try {
 			final Marking<L, S> succMarking = marking.fireTransition(transition, mOperand);
 			final S succState = getOrConstructState(succMarking);
-			mCache.addInternalTransition(state, transition.getSymbol(), succState);
-			mCacheBookkeeping.reportCachedInternal(state, transition.getSymbol());
+			if (!isKnownDeadEnd(succState)) {
+				mCache.addInternalTransition(state, transition.getSymbol(), succState);
+				mCacheBookkeeping.reportCachedInternal(state, transition.getSymbol());
+			}
 		} catch (final PetriNetNot1SafeException e) {
 			throw new IllegalArgumentException("Petri net must be 1-safe!", e);
 		}
@@ -199,5 +214,12 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	@Override
 	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
 		return Collections.emptySet();
+	}
+
+	private boolean isKnownDeadEnd(final S state) {
+		if (mIsKnownDeadEnd == null) {
+			return false;
+		}
+		return mIsKnownDeadEnd.test(state);
 	}
 }
