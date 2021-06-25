@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -159,7 +160,6 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -266,7 +266,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private final PathProgramDumpController<L> mPathProgramDumpController;
 	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 	private final boolean mStoreFloydHoareAutomata;
-	private final LinkedHashSet<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata =
+	private final Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata =
 			new LinkedHashSet<>();
 
 	protected boolean mFallbackToFpIfInterprocedural = false;
@@ -284,7 +284,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(services, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
@@ -554,7 +554,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			mLogger.fatal("IsEmptyHeuristic found no path but IsEmpty did.");
 			mLogger.fatal("IsEmpty         : " + toStr.apply(isEmptyCex));
 			return false;
-		} else if (isEmptyHeuristicCex != null && isEmptyCex != null) {
+		}
+		if (isEmptyHeuristicCex != null && isEmptyCex != null) {
 			if (!NestedRun.isEqual(isEmptyHeuristicCex, isEmptyCex)) {
 				if (isEmptyHeuristicCex.getLength() > isEmptyCex.getLength()) {
 					mLogger.warn("IsEmptyHeuristic and IsEmpty found a path, but isEmptyHeuristic was longer!");
@@ -598,7 +599,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	@Override
-	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
+	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
+			throws AutomataOperationCanceledException {
 
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
@@ -619,13 +621,13 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
-
+		IProgramExecution<L, Term> rcfgProgramExecution = null;
 		if (feasibility != LBool.UNSAT) {
-			mLogger.info("Counterexample might be feasible");
+			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
 			if (mRefinementEngine.providesIcfgProgramExecution()) {
-				mRcfgProgramExecution = mRefinementEngine.getIcfgProgramExecution();
+				rcfgProgramExecution = mRefinementEngine.getIcfgProgramExecution();
 			} else {
-				mRcfgProgramExecution =
+				rcfgProgramExecution =
 						TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
 			}
 
@@ -638,15 +640,15 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 						mCsToolkit.getModifiableGlobalsTable(), mRefinementEngine.getPredicateUnifier(),
 						mFaultLocalizationMode, mSimplificationTechnique, mXnfConversionTechnique,
 						mIcfg.getCfgSmtToolkit().getSymbolTable(), (IIcfg<IcfgLocation>) mIcfg);
-				if (!(mRcfgProgramExecution instanceof IcfgProgramExecution)) {
+				if (!(rcfgProgramExecution instanceof IcfgProgramExecution)) {
 					throw new UnsupportedOperationException("Program execution is not " + IcfgProgramExecution.class);
 				}
-				mRcfgProgramExecution = ((IcfgProgramExecution<L>) mRcfgProgramExecution)
+				rcfgProgramExecution = ((IcfgProgramExecution<L>) rcfgProgramExecution)
 						.addRelevanceInformation(fl.getRelevanceInformation());
 
 				if (mFaultLocalizationAngelic) {
-					mRcfgProgramExecution =
-							new IcfgAngelicProgramExecution<>(mRcfgProgramExecution, fl.getAngelicStatus());
+					rcfgProgramExecution =
+							new IcfgAngelicProgramExecution<>(rcfgProgramExecution, fl.getAngelicStatus());
 				}
 			}
 		} else if (DUMP_DIFFICULT_PATH_PROGRAMS) {
@@ -655,7 +657,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 
 		mCegarLoopBenchmark.addRefinementEngineStatistics(mRefinementEngine.getRefinementEngineStatistics());
-		return feasibility;
+		return new Pair<>(feasibility, rcfgProgramExecution);
 	}
 
 	@Override
@@ -720,8 +722,12 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	@Override
-	protected void reportErrorAutomatonBenchmarks() {
-		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
+	protected void finish() {
+		if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
+			mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
+		}
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
+
 	}
 
 	protected final IHoareTripleChecker getHoareTripleChecker() {
@@ -1159,7 +1165,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	@Override
-	protected void computeCFGHoareAnnotation() {
+	protected void computeIcfgHoareAnnotation() {
 		if (mCsToolkit.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of Hoare annotation computation");
 		}
@@ -1209,17 +1215,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 	}
 
-	public IStatisticsDataProvider getCegarLoopBenchmark() {
-		return mCegarLoopBenchmark;
-	}
-
-	/**
-	 * method called at the end of the cegar loop
-	 */
-	public void finish() {
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
-	}
-
 	@Override
 	protected boolean isResultUnsafe(final boolean errorGeneralizationEnabled, final Result abstractResult) {
 		if (!errorGeneralizationEnabled) {
@@ -1238,7 +1233,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mWitnessAutomaton = witnessAutomaton;
 	}
 
-	private final static boolean checkStoreCounterExamples(final TAPreferences pref) {
+	private static final boolean checkStoreCounterExamples(final TAPreferences pref) {
 		return pref.getMinimization() == Minimization.NWA_OVERAPPROXIMATION;
 	}
 
@@ -1254,7 +1249,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 	}
 
-	public LinkedHashSet<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata() {
+	@Override
+	public Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata() {
 		if (mStoreFloydHoareAutomata) {
 			return mFloydHoareAutomata;
 		}

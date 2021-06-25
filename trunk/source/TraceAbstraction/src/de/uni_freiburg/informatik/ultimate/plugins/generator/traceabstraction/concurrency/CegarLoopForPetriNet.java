@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -148,9 +147,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	private final CounterexampleCache<L> mCounterexampleCache;
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
+			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
+			final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
 				compositionFactory, transitionClazz);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
@@ -233,7 +232,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			}
 			final BranchingProcess<L, IPredicate> finPrefix = unf.getFinitePrefix();
 			mCoRelationQueries +=
-					(finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo());
+					finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo();
 			mCounterexample = unf.getAcceptingRun();
 		}
 		if (mCounterexample == null) {
@@ -255,7 +254,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			mLogger.info("trace histogram " + traceHistogram.toString());
 		}
 
-		if (mPref.hasLimitTraceHistogram() && (traceHistogram.getMax() > mPref.getLimitTraceHistogram())) {
+		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
 			final String taskDescription =
 					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
@@ -372,7 +371,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 				final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 				final EventOrderEnum eventOrder = mPref.eventOrder();
 				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices),
-						((BoundedPetriNet<L, IPredicate>) mAbstraction), eventOrder, cutOffSameTrans, false);
+						(BoundedPetriNet<L, IPredicate>) mAbstraction, eventOrder, cutOffSameTrans, false);
 			} catch (final PetriNetNot1SafeException e) {
 				throw new UnsupportedOperationException(e.getMessage());
 			} catch (final AutomataOperationCanceledException aoce) {
@@ -452,8 +451,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			default:
 				throw new AssertionError("unknown value " + method);
 			}
-			final int placesAfterwards = (reducedNet.getPlaces()).size();
-			final int transitionsAfterwards = (reducedNet.getTransitions().size());
+			final int placesAfterwards = reducedNet.getPlaces().size();
+			final int transitionsAfterwards = reducedNet.getTransitions().size();
 			final int flowAfterwards = reducedNet.size();
 			statesRemovedByMinimization = placesBefore - placesAfterwards;
 			transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
@@ -521,7 +520,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 						new AutomataLibraryServices(mServices), raw, universalSubtrahendLoopers);
 				dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), awis).getResult();
 				final long end = System.nanoTime();
-				if ((end - start) > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
+				if (end - start > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
 					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
 							+ "_DifferencePairwiseOnDemandInput";
 					final String atsHeaderMessage = "inputs of difference operation in iteration " + mIteration;
@@ -674,7 +673,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	}
 
 	@Override
-	protected void computeCFGHoareAnnotation() {
+	protected void computeIcfgHoareAnnotation() {
 		throw new UnsupportedOperationException("Petri net based analysis cannot compute Hoare annotation.");
 	}
 

@@ -27,12 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -99,7 +99,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 
 	public TAwAFAsCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks traceAbstractionBenchmarks,
-			final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
 			final Class<L> transitionClazz) {

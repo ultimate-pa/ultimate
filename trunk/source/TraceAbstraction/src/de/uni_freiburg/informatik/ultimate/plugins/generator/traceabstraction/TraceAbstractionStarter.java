@@ -43,28 +43,21 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UserSpecifiedLimitReachedResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
@@ -84,7 +77,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
@@ -115,7 +107,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 * Successors of this node exactly the initial nodes of procedures.
 	 */
 	private IElement mRootOfNewModel;
-	private Result mOverallResult;
 	private IElement mArtifact;
 
 	private final List<INestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
@@ -125,11 +116,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final Class<L> mTransitionClazz;
 	private final IPLBECompositionFactory<L> mCompositionFactory;
 
-	private Map<IcfgLocation, IcfgLocation> mLocationMap;
-	private final Map<IcfgLocation, IResult> mResultsPerLocation = new LinkedHashMap<>();
-
 	// list has one entry per analysis restart with increased number of threads (only 1 entry if sequential)
 	private final Map<DebugIdentifier, List<TraceAbstractionBenchmarks>> mStatistics = new LinkedHashMap<>();
+
+	private Map<IcfgLocation, IcfgLocation> mLocationMap;
+	private final Map<IcfgLocation, IResult> mResultsPerLocation;
+	private final CegarLoopResultReporter<L> mResultReporter;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
@@ -140,9 +132,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mTransitionClazz = transitionClazz;
 		mCompositionFactory = compositionFactory;
 		mPrefs = new TAPreferences(mServices);
+		mResultsPerLocation = new LinkedHashMap<>();
 		mWitnessAutomaton = witnessAutomaton;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mIsConcurrent = isConcurrent(icfg);
+		mResultReporter = new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME,
+				this::recordLocationResult);
 
 		if (mPrefs.computeHoareAnnotation() && mIsConcurrent) {
 			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
@@ -160,19 +155,19 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final Collection<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		final int numberOfErrorLocs = errNodesOfAllProc.size();
 		mLogger.info("Applying trace abstraction to program that has " + numberOfErrorLocs + " error locations.");
-		mOverallResult = Result.SAFE;
 		if (numberOfErrorLocs <= 0) {
 			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
 					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, numberOfErrorLocs);
-			reportResult(result);
+			mResultReporter.reportResult(result);
 			return;
 		}
 
 		mArtifact = null;
+		final List<CegarLoopResult<L>> results;
 		if (isConcurrent(icfg)) {
-			analyseConcurrentProgram(icfg);
+			results = analyseConcurrentProgram(icfg);
 		} else {
-			analyseSequentialProgram(icfg);
+			results = analyseSequentialProgram(icfg);
 		}
 
 		// Report results that were buffered because they may be overridden or amended.
@@ -180,34 +175,16 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		reportBenchmarkResults();
 
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
-		if (mOverallResult == Result.SAFE) {
-			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
-					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, numberOfErrorLocs);
-			reportResult(result);
-		}
+		mResultReporter.reportAllSafeResultIfNecessary(results, numberOfErrorLocs);
 
 		final IProgressMonitorService progmon = mServices.getProgressMonitorService();
-		if (mComputeHoareAnnotation && mOverallResult != Result.TIMEOUT
-				&& !Result.USER_LIMIT_RESULTS.contains(mOverallResult) && progmon.continueProcessing()) {
+
+		if (mComputeHoareAnnotation && progmon.continueProcessing() && results.stream().allMatch(
+				a -> a.resultStream().allMatch(r -> r != Result.TIMEOUT && !Result.USER_LIMIT_RESULTS.contains(r)))) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			createInvariantResults(icfg, backTranslatorService);
 			createProcedureContractResults(icfg, backTranslatorService);
 		}
-
-		switch (mOverallResult) {
-		case SAFE:
-		case UNSAFE:
-			break;
-		case TIMEOUT:
-			mLogger.warn("Timeout");
-			break;
-		case UNKNOWN:
-			mLogger.warn("Unable to decide correctness. Please check the following counterexample manually.");
-			break;
-		default:
-			throw new UnsupportedOperationException("Unknown overall result " + mOverallResult);
-		}
-
 		mRootOfNewModel = mArtifact;
 	}
 
@@ -226,8 +203,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 *
 	 * @param icfg
 	 *            The CFG for the program (unpetrified).
+	 * @return
 	 */
-	private void analyseConcurrentProgram(final IIcfg<IcfgLocation> icfg) {
+	private List<CegarLoopResult<L>> analyseConcurrentProgram(final IIcfg<IcfgLocation> icfg) {
 		if (icfg.getInitialNodes().size() > 1) {
 			throw new UnsupportedOperationException("Library mode is not supported for concurrent programs. "
 					+ "There must be a unique entry procedure.");
@@ -239,27 +217,28 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			bumpBenchmarkResults(petrifiedIcfg);
 			mResultsPerLocation.clear();
 
-			final var results = analyseProgram(petrifiedIcfg, TraceAbstractionStarter::hasSufficientThreadInstances);
+			final var results = analyseProgram(petrifiedIcfg, CegarLoopUtils::hasSufficientThreadInstances);
 			// Stop if either every in-use error location is unreachable or any other error locations is reachable
 			if (resultsHaveSufficientInstances(results)) {
-				break;
+				mLogger.info("Analysis of concurrent program completed with " + numberOfThreadInstances
+						+ " thread instances");
+				return results;
 			}
 			assert isConcurrent(icfg) : "Insufficient thread instances for sequential program";
 			mLogger.warn(numberOfThreadInstances
 					+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 			numberOfThreadInstances++;
 		}
-		mLogger.info("Analysis of concurrent program completed with " + numberOfThreadInstances + " thread instances");
 	}
 
 	private static <L extends IIcfgTransition<?>> boolean
 			resultsHaveSufficientInstances(final List<CegarLoopResult<L>> results) {
 		boolean res = true;
 		for (final CegarLoopResult<L> r : results) {
-			if (r.getOverallResult() != Result.UNSAFE) {
+			if (r.resultStream().allMatch(a -> a != Result.UNSAFE)) {
 				continue;
 			}
-			if (hasSufficientThreadInstances(r)) {
+			if (CegarLoopUtils.hasSufficientThreadInstances(r)) {
 				return true;
 			}
 			res = false;
@@ -272,9 +251,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 *
 	 * @param icfg
 	 *            The CFG for the program
+	 * @return
 	 */
-	private void analyseSequentialProgram(final IIcfg<IcfgLocation> icfg) {
-		analyseProgram(icfg, x -> true);
+	private List<CegarLoopResult<L>> analyseSequentialProgram(final IIcfg<IcfgLocation> icfg) {
+		return analyseProgram(icfg, x -> true);
 	}
 
 	/**
@@ -320,7 +300,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 			if (multiplePartitions) {
 				mLogger.info(String.format("Result for error location %s was %s (%s/%s)", name,
-						clres.getOverallResult(), finishedErrorSets, errorPartitions.size()));
+						clres.resultStream().map(Result::toString).collect(Collectors.joining(",")), finishedErrorSets,
+						errorPartitions.size()));
 			}
 			if (!continueAnalysis.test(clres)) {
 				break;
@@ -329,10 +310,11 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 				mFloydHoareAutomataFromErrorLocations.addAll(clres.getFloydHoareAutomata());
 			}
-			mOverallResult = reportResults(errorLocs, clres);
+			mResultReporter.reportCegarLoopResult(clres);
 			mArtifact = clres.getArtifact();
 
-			if (mPrefs.allErrorLocsAtOnce() && mOverallResult == Result.UNSAFE) {
+			if (mPrefs.allErrorLocsAtOnce() && clres.resultStream().anyMatch(a -> a == Result.UNSAFE)) {
+				// TODO: Report for all remaining errorLocs an unknown result
 				break;
 			}
 		}
@@ -363,8 +345,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 			if (isConcurrent(icfg) && mPrefs.insufficientThreadErrorsLast()) {
 				// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
-				errorLocs = errorLocs.sorted(
-						(x, y) -> Boolean.compare(isInsufficientThreadsLocation(x), isInsufficientThreadsLocation(y)));
+				errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(CegarLoopUtils.isInsufficientThreadsLocation(x),
+						CegarLoopUtils.isInsufficientThreadsLocation(y)));
 			}
 			return errorLocs.map(x -> new Pair<>(x.getDebugIdentifier(), Set.of(x))).collect(Collectors.toList());
 		}
@@ -379,7 +361,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 	private CegarLoopResult<L> executeCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<IcfgLocation> icfg, final TraceAbstractionBenchmarks taBenchmark,
-			final Collection<IcfgLocation> errorLocs) {
+			final Set<IcfgLocation> errorLocs) {
 		final CegarLoopResult<L> clres = CegarLoopUtils.getCegarLoopResult(services, name, icfg, mPrefs,
 				getPredicateFactory(icfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
 				mComputeHoareAnnotation, mPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
@@ -440,7 +422,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final Term formula = hoare.getFormula();
 			final InvariantResult<IIcfgElement, Term> invResult =
 					new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
-			reportResult(invResult);
+			mResultReporter.reportResult(invResult);
 
 			if (formula.equals(trueterm)) {
 				continue;
@@ -465,7 +447,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
 						Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
 
-				reportResult(result);
+				mResultReporter.reportResult(result);
 				// TODO: Add setting that controls the generation of those witness invariants
 			}
 		}
@@ -488,18 +470,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mLogger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
 			mLogger.info("WitnessConsidered=" + numberOfCheckedInvariants);
 		}
-	}
-
-	private static <L extends IIcfgTransition<?>> boolean hasSufficientThreadInstances(final CegarLoopResult<L> clres) {
-		if (clres.getOverallResult() != Result.UNSAFE) {
-			return true;
-		}
-		return !isInsufficientThreadsLocation(getErrorPP(clres.getProgramExecution()));
-	}
-
-	private static boolean isInsufficientThreadsLocation(final IcfgLocation loc) {
-		final Check check = Check.getAnnotation(loc);
-		return check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
 	}
 
 	private static boolean isInsufficientThreadsIdentifier(final DebugIdentifier ident) {
@@ -525,110 +495,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return petrifiedIcfg;
 	}
 
-	private IcfgLocation getOriginalLocation(final IcfgLocation loc) {
-		if (mLocationMap == null) {
-			return loc;
-		}
-		return mLocationMap.getOrDefault(loc, loc);
-	}
-
 	private PredicateFactory getPredicateFactory(final IIcfg<IcfgLocation> icfg) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		return new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
-	}
-
-	private Result reportResults(final Collection<IcfgLocation> errorLocs, final CegarLoopResult<L> clres) {
-		final Result result = clres.getOverallResult();
-		switch (result) {
-		case SAFE:
-			reportPositiveResults(errorLocs);
-			return mOverallResult;
-		case UNSAFE:
-			reportCounterexampleResult(clres.getProgramExecution());
-			return result;
-		case TIMEOUT:
-		case USER_LIMIT_ITERATIONS:
-		case USER_LIMIT_PATH_PROGRAM:
-		case USER_LIMIT_TIME:
-		case USER_LIMIT_TRACEHISTOGRAM:
-			reportLimitResult(result, errorLocs, clres.getRunningTaskStackProvider());
-			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
-		case UNKNOWN:
-			final IProgramExecution<L, Term> pe = clres.getProgramExecution();
-			reportUnproveableResult(pe, clres.getUnprovabilityReasons());
-			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
-		default:
-			throw new IllegalArgumentException();
-		}
-	}
-
-	private void reportPositiveResults(final Collection<IcfgLocation> errorLocs) {
-		for (final IcfgLocation errorLoc : errorLocs) {
-			final PositiveResult<IIcfgElement> pResult =
-					new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
-			recordLocationResult(errorLoc, pResult);
-		}
-	}
-
-	private void reportCounterexampleResult(final IProgramExecution<L, Term> pe) {
-		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
-		if (!upreasons.isEmpty()) {
-			reportUnproveableResult(pe, upreasons);
-			return;
-		}
-		if (isAngelicallySafe(pe)) {
-			mLogger.info("Ignoring angelically safe counterexample");
-			return;
-		}
-		final IcfgLocation errorLoc = getErrorPP(pe);
-		recordLocationResult(errorLoc,
-				new CounterExampleResult<>(errorLoc, Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
-	}
-
-	private static <L extends IIcfgTransition<?>> boolean isAngelicallySafe(final IProgramExecution<L, Term> pe) {
-		if (pe instanceof IcfgAngelicProgramExecution) {
-			return !((IcfgAngelicProgramExecution<L>) pe).getAngelicStatus();
-		}
-		return false;
-	}
-
-	private void reportLimitResult(final Result result, final Collection<IcfgLocation> errorLocs,
-			final IRunningTaskStackProvider rtsp) {
-		for (final IcfgLocation errorIpp : errorLocs) {
-			final IResult res = constructLimitResult(mServices, result, rtsp, errorIpp);
-			recordLocationResult(errorIpp, res);
-		}
-	}
-
-	public static IResult constructLimitResult(final IUltimateServiceProvider services, final Result result,
-			final IRunningTaskStackProvider rtsp, final IcfgLocation errorIpp) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Unable to prove that ");
-		sb.append(Check.getAnnotation(errorIpp).getPositiveMessage());
-		if (errorIpp instanceof BoogieIcfgLocation) {
-			final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
-			sb.append(" (line ").append(origin.getStartLine()).append(").");
-		}
-		if (rtsp != null) {
-			sb.append(" Cancelled ").append(rtsp.printRunningTaskMessage());
-		}
-
-		final IResult res;
-		if (result == Result.TIMEOUT) {
-			res = new TimeoutResultAtElement<>(errorIpp, Activator.PLUGIN_NAME, services.getBacktranslationService(),
-					sb.toString());
-		} else {
-			res = new UserSpecifiedLimitReachedResultAtElement<IElement>(result.toString(), errorIpp,
-					Activator.PLUGIN_NAME, services.getBacktranslationService(), sb.toString());
-		}
-		return res;
-	}
-
-	private void reportUnproveableResult(final IProgramExecution<L, Term> pe,
-			final List<UnprovabilityReason> unproabilityReasons) {
-		final IcfgLocation errorPP = getErrorPP(pe);
-		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
-				unproabilityReasons));
 	}
 
 	private TraceAbstractionBenchmarks getBenchmark(final DebugIdentifier ident, final IIcfg<IcfgLocation> icfg) {
@@ -654,8 +523,52 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			int i = 1;
 			for (final TraceAbstractionBenchmarks benchmark : entry.getValue()) {
 				final String shortDescription = getBenchmarkDescription(ident, i);
-				reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark));
+				mResultReporter
+						.reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark));
 				i++;
+			}
+		}
+	}
+
+	private void recordLocationResult(final IcfgLocation loc, final IResult res) {
+		final IcfgLocation original = getOriginalLocation(loc);
+		final IResult old = mResultsPerLocation.get(original);
+		if (old == null) {
+			mResultsPerLocation.put(original, res);
+		} else {
+			mResultsPerLocation.put(original, ResultUtil.combineLocationResults(old, res));
+		}
+	}
+
+	private IcfgLocation getOriginalLocation(final IcfgLocation loc) {
+		if (mLocationMap == null) {
+			return loc;
+		}
+		return mLocationMap.getOrDefault(loc, loc);
+	}
+
+	private void reportLocationResults() {
+		// Determine if we were unable to prove thread instance sufficiency. This could e.g. be due to a counterexample,
+		// a timeout, or a unprovable trace.
+		final boolean couldBeInsufficient = mResultsPerLocation.entrySet().stream()
+				.anyMatch(entry -> CegarLoopUtils.isInsufficientThreadsLocation(entry.getKey())
+						&& !(entry.getValue() instanceof PositiveResult<?>));
+
+		for (final Map.Entry<IcfgLocation, IResult> entry : mResultsPerLocation.entrySet()) {
+			final boolean output;
+			if (couldBeInsufficient) {
+				// Output all non-positive results (for real error locations, and for insufficient threads). Results for
+				// insufficient threads are reported to explain why a determination on some real error locations could
+				// potentially not be made.
+				output = !(entry.getValue() instanceof PositiveResult<?>);
+			} else {
+				// Output only results for real error locations. (If not mentioned, the user can simply assume that
+				// sufficient thread instances were used.)
+				output = !CegarLoopUtils.isInsufficientThreadsLocation(entry.getKey());
+			}
+
+			if (output) {
+				mResultReporter.reportResult(entry.getValue());
 			}
 		}
 	}
@@ -682,79 +595,11 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return ULTIMATE_INIT.equals(proc) || ULTIMATE_START.equals(proc);
 	}
 
-	private void recordLocationResult(final IcfgLocation loc, final IResult res) {
-		final IcfgLocation original = getOriginalLocation(loc);
-		final IResult old = mResultsPerLocation.get(original);
-		if (old == null) {
-			mResultsPerLocation.put(original, res);
-		} else {
-			mResultsPerLocation.put(original, combineLocationResults(old, res));
-		}
-	}
-
-	/**
-	 * Combines results for multiple petrification-created copies of a location, for a fixed number of thread instances.
-	 *
-	 * @param oldResult
-	 *            The first computed result
-	 * @param newResult
-	 *            A new result computed for another copy of the location
-	 * @return the combined result
-	 */
-	private static IResult combineLocationResults(final IResult oldResult, final IResult newResult) {
-		if (newResult instanceof CounterExampleResult<?, ?, ?>) {
-			return newResult;
-		}
-		if (oldResult instanceof TimeoutResultAtElement<?>
-				|| oldResult instanceof UserSpecifiedLimitReachedResultAtElement<?>
-				|| oldResult instanceof CounterExampleResult<?, ?, ?>) {
-			return oldResult;
-		}
-		assert oldResult instanceof PositiveResult<?> : "Unsupported location-specific result: " + oldResult;
-		return newResult;
-	}
-
-	private void reportLocationResults() {
-		// Determine if we were unable to prove thread instance sufficiency. This could e.g. be due to a counterexample,
-		// a timeout, or a unprovable trace.
-		final boolean couldBeInsufficient =
-				mResultsPerLocation.entrySet().stream().anyMatch(entry -> isInsufficientThreadsLocation(entry.getKey())
-						&& !(entry.getValue() instanceof PositiveResult<?>));
-
-		for (final Map.Entry<IcfgLocation, IResult> entry : mResultsPerLocation.entrySet()) {
-			final boolean output;
-			if (couldBeInsufficient) {
-				// Output all non-positive results (for real error locations, and for insufficient threads). Results for
-				// insufficient threads are reported to explain why a determination on some real error locations could
-				// potentially not be made.
-				output = !(entry.getValue() instanceof PositiveResult<?>);
-			} else {
-				// Output only results for real error locations. (If not mentioned, the user can simply assume that
-				// sufficient thread instances were used.)
-				output = !isInsufficientThreadsLocation(entry.getKey());
-			}
-
-			if (output) {
-				reportResult(entry.getValue());
-			}
-		}
-	}
-
-	private void reportResult(final IResult res) {
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
-	}
-
 	/**
 	 * @return the root of the CFG.
 	 */
 	public IElement getRootOfNewModel() {
 		return mRootOfNewModel;
-	}
-
-	private static <L extends IIcfgTransition<?>> IcfgLocation getErrorPP(final IProgramExecution<L, Term> pe) {
-		final int lastPosition = pe.getLength() - 1;
-		final IIcfgTransition<?> last = pe.getTraceElement(lastPosition).getTraceElement();
-		return last.getTarget();
 	}
 
 	public static final class AllErrorsAtOnceDebugIdentifier extends DebugIdentifier {

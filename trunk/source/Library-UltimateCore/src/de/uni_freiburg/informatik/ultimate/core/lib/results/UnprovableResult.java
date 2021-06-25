@@ -31,9 +31,9 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -80,20 +80,18 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 
 	public UnprovableResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence,
 			final IProgramExecution<TE, E> programExecution) {
-		this(plugin, position, translatorSequence, programExecution, new ArrayList<UnprovabilityReason>());
+		this(plugin, position, translatorSequence, programExecution, Collections.emptyList());
 	}
 
 	public UnprovableResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence,
 			final IProgramExecution<TE, E> programExecution, final String unprovabilityReason) {
 		this(plugin, position, translatorSequence, programExecution,
-				Collections.singletonList(new UnprovabilityReason(unprovabilityReason)));
+				Collections.singletonList(new UnprovabilityReason(Objects.requireNonNull(unprovabilityReason))));
 	}
 
 	public UnprovableResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence,
 			final IProgramExecution<TE, E> programExecution, final List<UnprovabilityReason> unprovabilityReasons) {
 		super(position, plugin, translatorSequence);
-		assert unprovabilityReasons != null;
-		assert programExecution != null;
 		final Check check = Check.getAnnotation(position);
 		if (check == null) {
 			mCheckedSpecification = new Check(Spec.UNKNOWN);
@@ -102,7 +100,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		}
 		mProgramExecution = programExecution;
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
-		mUnprovabilityReasons = unprovabilityReasons;
+		mUnprovabilityReasons = Objects.requireNonNull(unprovabilityReasons);
 	}
 
 	public Check getCheckedSpecification() {
@@ -120,10 +118,12 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		sb.append(getShortDescription());
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append(getReasons());
-		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append("Possible FailurePath: ");
-		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append(getProgramExecutionAsString());
+		if (mProgramExecution != null) {
+			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append("Possible FailurePath: ");
+			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append(getProgramExecutionAsString());
+		}
 		return sb.toString();
 	}
 
