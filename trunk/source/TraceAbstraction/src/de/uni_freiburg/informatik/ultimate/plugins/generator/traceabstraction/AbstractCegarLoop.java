@@ -99,7 +99,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
-	protected static final boolean CONTINUE_AFTER_ERROR_TRACE_FOUND = false;
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
@@ -251,7 +250,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	 * <li>accepts only feasible traces.
 	 * </ul>
 	 */
-	protected abstract void constructErrorAutomaton() throws AutomataOperationCanceledException;
+	protected abstract void constructErrorAutomaton(final LBool isCounterexampleFeasible)
+			throws AutomataOperationCanceledException;
 
 	/**
 	 * Construct a new automaton mAbstraction such that
@@ -383,20 +383,27 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 					final IProgramExecution<L, Term> programExecution = isCexResult.getSecond();
 					if (isCounterexampleFeasible == Script.LBool.SAT) {
 						mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
-						if (!CONTINUE_AFTER_ERROR_TRACE_FOUND) {
+						if (mPref.allErrorLocsAtOnce()) {
 							return mResultBuilder.addResultForAllRemaining(Result.UNKNOWN).getResult();
 						}
 						if (mLogger.isInfoEnabled()) {
 							mLogger.info("Generalizing and excluding counterexample to continue analysis");
 						}
 						automatonType = "Error";
-						constructErrorAutomaton();
+						constructErrorAutomaton(isCounterexampleFeasible);
 					} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
 						final UnprovabilityReason reasonUnknown =
 								new UnprovabilityReason("unable to decide satisfiability of path constraint");
 						mResultBuilder.addResultForProgramExecution(Result.UNKNOWN, programExecution, null,
 								reasonUnknown);
-						return mResultBuilder.addResultForAllRemaining(Result.UNKNOWN).getResult();
+						if (mPref.allErrorLocsAtOnce()) {
+							return mResultBuilder.addResultForAllRemaining(Result.UNKNOWN).getResult();
+						}
+						if (mLogger.isInfoEnabled()) {
+							mLogger.warn("Generalizing and excluding unknown counterexample to continue analysis");
+						}
+						automatonType = "Unknown";
+						constructErrorAutomaton(isCounterexampleFeasible);
 					} else {
 						automatonType = "Interpolant";
 						constructInterpolantAutomaton();
@@ -413,14 +420,15 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 					final boolean progress = refineAbstraction();
 					if (!progress) {
-						mLogger.warn("No progress! Counterexample is still accepted by refined abstraction.");
-						throw new AssertionError(
-								"No progress! Counterexample is still accepted by refined abstraction.");
+						final String msgNoProgress =
+								"No progress! Counterexample is still accepted by refined abstraction.";
+						mLogger.fatal(msgNoProgress);
+						throw new AssertionError(msgNoProgress);
 					}
 
 					if (mInterpolAutomaton != null) {
-						mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
-						mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
+						mLogger.info("Abstraction has %s", mAbstraction.sizeInformation());
+						mLogger.info("%s automaton has %s", automatonType, mInterpolAutomaton.sizeInformation());
 					}
 
 					if (mComputeHoareAnnotation

@@ -707,7 +707,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	@Override
-	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
+	protected void constructErrorAutomaton(final LBool isCounterexampleFeasible)
+			throws AutomataOperationCanceledException {
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
 				mRefinementEngine.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique, mXnfConversionTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
@@ -723,9 +724,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	@Override
 	protected void finish() {
-		if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
-			mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
-		}
+		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 	}
