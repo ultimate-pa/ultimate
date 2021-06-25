@@ -99,7 +99,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
-	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
+	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
 	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_LAST = "Check the insufficient thread errors last";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
@@ -228,7 +228,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Try to re-use interpolant automata from input files and/or previous runs. " + FloydHoareAutomataReuse.NONE
 					+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
 					+ " input and the containing NWAs will be treated as additional interpolant automata. When "
-					+ LABEL_ALL_ERRORS_AT_ONCE + " is false, this setting will additionally try to re-use the automata "
+					+ LABEL_STOP_AFTER_FIRST_VIOLATION + " is false, this setting will additionally try to re-use the automata "
 					+ "from previous runs. " + FloydHoareAutomataReuse.EAGER
 					+ " will compute the difference with the initial abstraction and "
 					+ "all additional interpolant automatas before the first iteration of a run. "
@@ -341,7 +341,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, DESC_ALL_ERRORS_AT_ONCE,
+				new UltimatePreferenceItem<>(LABEL_STOP_AFTER_FIRST_VIOLATION, DEF_ALL_ERRORS_AT_ONCE, DESC_ALL_ERRORS_AT_ONCE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_LAST, DEF_INSUFFICIENT_THREAD_ERRORS_LAST,
 						DESC_INSUFFICIENT_THREAD_ERRORS_LAST, PreferenceType.Boolean),

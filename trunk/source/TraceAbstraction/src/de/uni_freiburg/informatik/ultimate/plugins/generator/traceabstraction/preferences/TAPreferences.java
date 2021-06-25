@@ -197,7 +197,7 @@ public final class TAPreferences {
 	}
 
 	public boolean allErrorLocsAtOnce() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_STOP_AFTER_FIRST_VIOLATION);
 	}
 
 	public boolean insufficientThreadErrorsLast() {
