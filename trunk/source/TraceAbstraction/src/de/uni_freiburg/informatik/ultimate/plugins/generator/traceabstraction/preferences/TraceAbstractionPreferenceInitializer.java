@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder.ErrorAutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -100,6 +101,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
+	public static final String LABEL_ERROR_AUTOMATON_MODE = "Error locations removal mode";
 	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_LAST = "Check the insufficient thread errors last";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
@@ -193,6 +195,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_MINIMIZE = true;
 	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
 	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
+	public static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.ERROR_AUTOMATON;
+
 	public static final boolean DEF_INSUFFICIENT_THREAD_ERRORS_LAST = false;
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
@@ -228,9 +232,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Try to re-use interpolant automata from input files and/or previous runs. " + FloydHoareAutomataReuse.NONE
 					+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
 					+ " input and the containing NWAs will be treated as additional interpolant automata. When "
-					+ LABEL_STOP_AFTER_FIRST_VIOLATION + " is false, this setting will additionally try to re-use the automata "
-					+ "from previous runs. " + FloydHoareAutomataReuse.EAGER
-					+ " will compute the difference with the initial abstraction and "
+					+ LABEL_STOP_AFTER_FIRST_VIOLATION
+					+ " is false, this setting will additionally try to re-use the automata " + "from previous runs. "
+					+ FloydHoareAutomataReuse.EAGER + " will compute the difference with the initial abstraction and "
 					+ "all additional interpolant automatas before the first iteration of a run. "
 					+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
 					+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
@@ -240,6 +244,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Specifies how to compute successors on-demand for re-use interpolant automata.";
 
 	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
+	private static final String DESC_ERROR_AUTOMATON_MODE = null;
+
 	private static final String DESC_INSUFFICIENT_THREAD_ERRORS_LAST = null;
 
 	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
@@ -341,8 +347,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_STOP_AFTER_FIRST_VIOLATION, DEF_ALL_ERRORS_AT_ONCE, DESC_ALL_ERRORS_AT_ONCE,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_STOP_AFTER_FIRST_VIOLATION, DEF_ALL_ERRORS_AT_ONCE,
+						DESC_ALL_ERRORS_AT_ONCE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ERROR_AUTOMATON_MODE, DEF_ERROR_AUTOMATON_MODE,
+						DESC_ERROR_AUTOMATON_MODE, PreferenceType.Combo, ErrorAutomatonType.values()),
 				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_LAST, DEF_INSUFFICIENT_THREAD_ERRORS_LAST,
 						DESC_INSUFFICIENT_THREAD_ERRORS_LAST, PreferenceType.Boolean),
 
