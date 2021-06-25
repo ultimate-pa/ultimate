@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,6 @@ import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -62,6 +62,9 @@ public final class ResultUtil {
 	}
 
 	public static <TE extends IElement, E> List<ILocation> getLocationSequence(final IProgramExecution<TE, E> pe) {
+		if (pe == null) {
+			return Collections.emptyList();
+		}
 		final List<ILocation> result = new ArrayList<>();
 		for (int i = 0; i < pe.getLength(); i++) {
 			final AtomicTraceElement<TE> te = pe.getTraceElement(i);
@@ -222,5 +225,27 @@ public final class ResultUtil {
 			}
 		}
 		return filteredList;
+	}
+
+	/**
+	 * Combines results for multiple petrification-created copies of a location, for a fixed number of thread instances.
+	 *
+	 * @param oldResult
+	 *            The first computed result
+	 * @param newResult
+	 *            A new result computed for another copy of the location
+	 * @return the combined result
+	 */
+	public static IResult combineLocationResults(final IResult oldResult, final IResult newResult) {
+		if (newResult instanceof CounterExampleResult<?, ?, ?>) {
+			return newResult;
+		}
+		if (oldResult instanceof TimeoutResultAtElement<?>
+				|| oldResult instanceof UserSpecifiedLimitReachedResultAtElement<?>
+				|| oldResult instanceof CounterExampleResult<?, ?, ?>) {
+			return oldResult;
+		}
+		assert oldResult instanceof PositiveResult<?> : "Unsupported location-specific result: " + oldResult;
+		return newResult;
 	}
 }

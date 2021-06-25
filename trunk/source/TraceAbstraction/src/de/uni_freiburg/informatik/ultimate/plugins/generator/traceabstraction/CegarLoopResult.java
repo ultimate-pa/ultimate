@@ -26,58 +26,41 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 public class CegarLoopResult<L extends IIcfgTransition<?>> {
-	private final Result mOverallResult;
-	private final IProgramExecution<L, Term> mProgramExecution;
-	private final List<UnprovabilityReason> mUnprovabilityReasons;
-	private final IRunningTaskStackProvider mRunningTaskStackProvider;
 	private final IStatisticsDataProvider mCegarLoopStatisticsGenerator;
 	private final IElement mArtifact;
 	private final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata;
+	private final Map<IcfgLocation, CegarLoopLocalResult<L>> mLocalResults;
 
-	public CegarLoopResult(final Result overallResult, final IProgramExecution<L, Term> programExecution,
-			final List<UnprovabilityReason> unprovabilityReasons,
-			final IRunningTaskStackProvider runningTaskStackProvider,
+	public CegarLoopResult(final Map<IcfgLocation, CegarLoopLocalResult<L>> localResults,
 			final IStatisticsDataProvider cegarLoopStatisticsGenerator, final IElement artifact,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata) {
-		super();
-		mOverallResult = overallResult;
-		mProgramExecution = programExecution;
-		mUnprovabilityReasons = unprovabilityReasons;
-		mRunningTaskStackProvider = runningTaskStackProvider;
+		mLocalResults = Collections.unmodifiableMap(localResults);
 		mCegarLoopStatisticsGenerator = cegarLoopStatisticsGenerator;
 		mArtifact = artifact;
 		mFloydHoareAutomata = floydHoareAutomata;
 	}
 
-	public Result getOverallResult() {
-		return mOverallResult;
+	public Stream<Result> resultStream() {
+		return mLocalResults.values().stream().map(CegarLoopLocalResult::getResult);
 	}
 
-	public IProgramExecution<L, Term> getProgramExecution() {
-		return mProgramExecution;
-	}
-
-	public List<UnprovabilityReason> getUnprovabilityReasons() {
-		return mUnprovabilityReasons;
-	}
-
-	public IRunningTaskStackProvider getRunningTaskStackProvider() {
-		return mRunningTaskStackProvider;
+	public Map<IcfgLocation, CegarLoopLocalResult<L>> getResults() {
+		return mLocalResults;
 	}
 
 	public IStatisticsDataProvider getCegarLoopStatisticsGenerator() {
