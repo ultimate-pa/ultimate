@@ -194,6 +194,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			mPOR.apply(abstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
+
+			assert mCounterexample == null || accepts(mServices, abstraction, mCounterexample.getWord(),
+					false) : "Counterexample is not accepted by abstraction";
 			return mCounterexample == null;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);

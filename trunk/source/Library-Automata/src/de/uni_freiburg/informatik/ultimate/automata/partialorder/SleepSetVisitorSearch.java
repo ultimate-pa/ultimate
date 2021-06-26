@@ -85,6 +85,9 @@ public class SleepSetVisitorSearch<L, S> implements IDfsVisitor<L, S> {
 	@Override
 	public boolean discoverTransition(final S source, final L letter, final S target) {
 		assert !mFound : "Search must not continue after target state found";
+		assert mStateStack.size() > 1 || source == mStartState : "Initial transition must begin in start state";
+		assert mStateStack.size() < 2
+				|| mStateStack.toArray(ArrayList[]::new)[1].contains(source) : "Transition source should be on stack";
 
 		// push letter onto Stack
 		mLetterStack.peek().add(letter);
@@ -110,6 +113,9 @@ public class SleepSetVisitorSearch<L, S> implements IDfsVisitor<L, S> {
 
 	@Override
 	public void delayState(final S state) {
+		// Delay is called immediately after discoverTransition.
+		// Hence the delayed state will be the last (just added) in the topmost stack frame.
+		assert state == mStateStack.peek().get(mStateStack.peek().size() - 1) : "Delaying the wrong state";
 		mLetterStack.peek().remove(mLetterStack.peek().size() - 1);
 		mStateStack.peek().remove(mStateStack.peek().size() - 1);
 	}
@@ -130,6 +136,9 @@ public class SleepSetVisitorSearch<L, S> implements IDfsVisitor<L, S> {
 		}
 
 		final ArrayList<L> acceptingTransitionSequence = new ArrayList<>();
+
+		// mFound is set in discoverTransition.
+		// Hence the transition leading to the goal state will be the last in the topmost stack frame.
 		ArrayList<L> currentTransitionList = mLetterStack.pop();
 		L currentTransition = currentTransitionList.get(currentTransitionList.size() - 1);
 		acceptingTransitionSequence.add(0, currentTransition);
@@ -138,6 +147,8 @@ public class SleepSetVisitorSearch<L, S> implements IDfsVisitor<L, S> {
 		acceptingStateSequence.add(0, currentState);
 
 		while (!mStateStack.isEmpty()) {
+			// In other stack frames, the first transition in the stack frame is the one that is currently being
+			// explored and leads to the goal state.
 			currentTransitionList = mLetterStack.pop();
 			currentTransition = currentTransitionList.get(0);
 			acceptingTransitionSequence.add(0, currentTransition);

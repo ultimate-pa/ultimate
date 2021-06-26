@@ -120,6 +120,10 @@ public class SleepSetDelayReduction<L, S, R> {
 	}
 
 	private void search(final AutomataLibraryServices services) throws AutomataOperationCanceledException {
+		// mStateStack does not contain only the states truly "on the stack", but also their siblings.
+		// This makes it unsuitable for detecting loops.
+		final ArrayDeque<R> loopDetectionStack = new ArrayDeque<>();
+
 		while (!mVisitor.isFinished() && !mStateStack.isEmpty()) {
 			if (!services.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
@@ -138,11 +142,17 @@ public class SleepSetDelayReduction<L, S, R> {
 				if (mVisitor.isFinished()) {
 					return;
 				}
+
 				if (prune) {
 					mVisitor.backtrackState(currentRedState);
 					mStateStack.pop();
 					continue;
 				}
+
+				// State is added to stack for first time.
+				assert !loopDetectionStack.contains(currentRedState);
+				loopDetectionStack.push(currentRedState);
+
 				successorTransitionList
 						.addAll(DataStructureUtils.difference(mOperand.lettersInternal(currentState), currentSleepSet));
 			} else if (hasDelaySet(currentRedState)) {
@@ -153,9 +163,16 @@ public class SleepSetDelayReduction<L, S, R> {
 				currentSleepSet = DataStructureUtils.intersection(currentSleepSet, pruned);
 				mSleepSetMap.put(currentRedState, currentSleepSet);
 				mPrunedMap.put(currentRedState, currentSleepSet);
+
+				// If we are processing delay sets, then the state must be at the top of the stack.
+				assert loopDetectionStack.peek() == currentRedState;
 			} else {
-				// State has been visited before through a different path.
+				// Case 1: State has been visited before through a different path.
 				// Explore actions that were previously pruned but are not in current sleep set.
+				//
+				// Case 2: After DFS has searched subtree rooted at this state (including handling all delay sets),
+				// state is again at top of stack. Then it follows that no success will be in old sleep set
+				// but not in current (they are equal). Hence backtrack the state.
 				final boolean prune = mVisitor.discoverState(currentRedState);
 				if (mVisitor.isFinished()) {
 					return;
@@ -166,9 +183,20 @@ public class SleepSetDelayReduction<L, S, R> {
 					mSleepSetMap.put(currentRedState, currentSleepSet);
 					mPrunedMap.put(currentRedState, currentSleepSet);
 				}
+
+				if (loopDetectionStack.peek() != currentRedState) {
+					// Case 1: State not currently on stack, so put it there.
+					loopDetectionStack.push(currentRedState);
+				} else {
+					// Case 2: We are currently backtracking. There should be nothing to explore.
+					assert successorTransitionList.isEmpty();
+				}
+
 				if (successorTransitionList.isEmpty()) {
 					mVisitor.backtrackState(currentRedState);
 					mStateStack.pop();
+					final R popped = loopDetectionStack.pop();
+					assert popped == currentRedState;
 				}
 			}
 
@@ -201,7 +229,7 @@ public class SleepSetDelayReduction<L, S, R> {
 					continue;
 				}
 
-				if (mStateStack.contains(successor)) {
+				if (loopDetectionStack.contains(successor)) {
 					enterDelaySet(successor, succSleepSet);
 					mVisitor.delayState(successor);
 					if (mVisitor.isFinished()) {
