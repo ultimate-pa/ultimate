@@ -68,6 +68,27 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Transitive inequality resolution (TIR).
  *
+ * If the variable x has sort Real, Int, or some bitvector sort and a subformula
+ * has the form ∃. (∑_{i=0}^n t_i ≤ x) ∧ (∑_{j=0}^m x ≤ s_j), we replace this
+ * subformula by the formula ∑_{i=0}^n ∑_{j=0}^m t_i ≤ s_j. In case the
+ * subformula has also conjuncts of the form x ≠ r, we rewrite them to x<r ∨
+ * x>r, transform strict inequalities to non-strict inequalities (for integers),
+ * apply distributivity to move the ∨-operator out and and apply the
+ * transformation above to each disjunct. If relations do not have the form t ≤
+ * x we use our {@link PolynomialRelation}s and {@link SolvedBinaryRelation}s
+ * and try to bring them into this form. For universal quantification we apply
+ * the dual transformation. For each sort we deviate slightly from the general
+ * explanation above. Our transformation is very similar to the "Omega Test"
+ * explained the following paper.
+ *
+ * <pre>
+ * 2003TPHOLs - Norrish - Complete Integer Decision Procedures as Derived Rules in HOL
+ * </pre>
+ *
+ * We did not (yet?) implement all ideas from the Omega Test, our quantifier
+ * elimination is not complete for LIA (but it is complete for LRA).
+ *
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Max Barth
  */
