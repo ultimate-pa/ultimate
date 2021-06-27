@@ -339,21 +339,14 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 *
 	 * Locations (l1, l2) have a join conflict if from l1, it is possible to reach (within the thread) a JoinCurrent
 	 * transition that may correspond to a JoinOther transition belonging to the thread of l2.
-	 *
-	 * TODO (optimization) Is there a conflict if the reached state from which the join is possible has no other
-	 * outgoing transitions?
-	 *
-	 * TODO (soundness) This is asymmetric -- (l2, l1) does not have a join conflict under the above condition. The
-	 * reasoning behind this was that the exit location of thread(l2) would have no other outgoing transitions. This is
-	 * not necessarily true, as other threads may join thread(l2). Does this mean we need to make it symmetric (except,
-	 * as in the condition described in the TODO above, if there truly is only one edge from the exit location) ?
 	 */
 	private boolean hasJoinConflict(final IcfgLocation persistentLoc, final IcfgLocation otherLoc) {
 		final String joinedThread = otherLoc.getProcedure();
 		if (persistentLoc.getProcedure() == joinedThread) {
 			return false;
 		}
-		return IcfgUtils.canReachCached(persistentLoc, e -> mInfo.mayBeJoinOf(joinedThread, e),
+		return IcfgUtils.canReachCached(persistentLoc,
+				e -> mInfo.mayBeJoinOf(joinedThread, e) && !mInfo.mustBeJoinOf(joinedThread, e),
 				e -> !ExtendedConcurrencyInformation.isThreadLocal(e), l -> mJoinConflicts.contains(l, joinedThread),
 				(l, r) -> mJoinConflicts.set(l, joinedThread, r));
 	}
