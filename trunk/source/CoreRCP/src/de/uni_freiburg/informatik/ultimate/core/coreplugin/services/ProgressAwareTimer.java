@@ -122,7 +122,7 @@ final class ProgressAwareTimer implements IProgressAwareTimer {
 		}
 		final long current = System.currentTimeMillis();
 
-		final long remainingTime = Math.min(0, mDeadline - current);
+		final long remainingTime = Math.max(0, mDeadline - current);
 		final long parentRemainingTime = mParent == null ? -1 : mParent.remainingTime();
 		if (parentRemainingTime == -1) {
 			return remainingTime;
