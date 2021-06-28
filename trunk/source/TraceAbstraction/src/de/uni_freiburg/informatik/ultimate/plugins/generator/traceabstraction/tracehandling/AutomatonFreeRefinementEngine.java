@@ -168,6 +168,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		// first, check for feasibility
 		final LBool feasibilityResult = checkFeasibility();
 		if (feasibilityResult == LBool.UNKNOWN) {
+			abortIfTimeout(String.format("Timeout during %s", mStrategy.getName()));
 			mLogger.warn("Strategy %s was unsuccessful and could not determine trace feasibility", mStrategy.getName());
 			return feasibilityResult;
 		}
