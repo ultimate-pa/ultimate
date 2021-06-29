@@ -182,6 +182,10 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 
 		try {
 			switch (mType) {
+			case SIMPLE_ERROR_AUTOMATON:
+				mErrorAutomatonBuilder = new SimpleErrorAutomatonBuilder<>(mServices, predicateFactory,
+						predicateUnifier, csToolkit, stateFactoryForAutomaton, abstraction, trace);
+				break;
 			case ERROR_AUTOMATON:
 				mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
 						csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
