@@ -90,7 +90,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 		final IEmptyStackStateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, mPref.computeHoareAnnotation());
 		final Cfg2Nwa<L> cFG2NestedWordAutomaton = new Cfg2Nwa<>(mIcfg, predicateFactory, mCsToolkit, mPredicateFactory,
-				mServices, mXnfConversionTechnique, mSimplificationTechnique);
+				getServices(), mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2NestedWordAutomaton.getResult();
 
 		if (mIteration <= mPref.watchIteration()
@@ -110,7 +110,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 		final Function<IMLPredicate, Set<IcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());
 		AutomataMinimization<Set<IcfgLocation>, IMLPredicate, L> am;
 		try {
-			am = new AutomataMinimization<>(mServices, (INestedWordAutomaton<L, IPredicate>) mAbstraction, minimization,
+			am = new AutomataMinimization<>(getServices(), (INestedWordAutomaton<L, IPredicate>) mAbstraction, minimization,
 					mComputeHoareAnnotation, mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION,
 					mStoredRawInterpolantAutomata, mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac,
 					lcsProvider, false);
@@ -160,7 +160,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 		if (mRefinementEngine.getHoareTripleChecker() != null) {
 			htc = mRefinementEngine.getHoareTripleChecker();
 		} else {
-			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 					mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
 		}
 		mLogger.debug("Start constructing difference");
@@ -168,7 +168,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 
 		IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 
-		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(mServices,
+		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(getServices(),
 				mCsToolkit, htc, mInterpolAutomaton, predicateUnifier, false, false);
 		// ComplementDeterministicNwa<LETTER, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
@@ -176,15 +176,15 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 				new PowersetDeterminizer<>(determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+			diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 					oldAbstraction, determinized, psd2, false);
 		} else {
-			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, oldAbstraction,
+			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, oldAbstraction,
 					determinized, psd2, explointSigmaStarConcatOfIA);
 		}
 		determinized.switchToReadonlyMode();
 		assert !mCsToolkit.getManagedScript().isLocked();
-		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
@@ -222,7 +222,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 			throw new AssertionError();
 		}
 
-		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
+		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(getServices()),
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 				(NestedWord<L>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;

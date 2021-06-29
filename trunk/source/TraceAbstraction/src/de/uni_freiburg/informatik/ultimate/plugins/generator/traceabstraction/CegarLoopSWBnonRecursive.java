@@ -198,7 +198,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		// automaton
 		mNestedAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 
-		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
+		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(getServices()),
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction).getResult();
 		// (IDoubleDeckerAutomaton<LETTER, IPredicate>) mAbstraction.get;
 
@@ -206,14 +206,14 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		mCounterExamplePath = (NestedRun<L, IPredicate>) mCounterexample;
 
 		// create an new interpolant automaton
-		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
+		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(getServices()),
 				mNestedAbstraction.getVpAlphabet(), mPredicateFactoryInterpolantAutomata);
 
 		// remember some of its properties
 		mAbstractionInitialState = mInterpolantGenerator.getPrecondition();
 		mAbstractionFinalState = mInterpolantGenerator.getPostcondition();
 		mPredicateUnifier = mInterpolantGenerator.getPredicateUnifier();
-		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
+		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(getServices()));
 
 		// // / debugging
 		// {
@@ -328,7 +328,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		mLogger.debug("Epimorphism:");
 		mEpimorphism.print();
 
-		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
@@ -583,7 +583,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		}
 		// test if we found a new path which can be added
 		final InterpolatingTraceCheckCraig<L> traceCheck =
-				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, mServices, mCsToolkit,
+				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, getServices(), mCsToolkit,
 						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
 						mPref.interpolation(), false, mXnfConversionTechnique, mSimplificationTechnique);
 
@@ -706,7 +706,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final SuperDifference<L, IPredicate, PredicateFactoryRefinement> diff =
-				new SuperDifference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+				new SuperDifference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 						mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
 
 		mAbstraction = diff.getResult();
