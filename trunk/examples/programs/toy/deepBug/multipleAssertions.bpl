@@ -9,12 +9,15 @@
  * 
  */
 
-// Variant "1 Cegar, ERROR_AUTOMATON": CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 12395.4ms, OverallIterations: 34, 
-// Variant "1 Cegar, Stop after violation": CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 9311.1ms, OverallIterations: 32
-// Variant "3 Cegar, Do not stop after violation": 
-// CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 7631.7ms, OverallIterations: 31
-// CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 7616.6ms, OverallIterations: 31
-// CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 8968.8ms, OverallIterations: 32
+/*
+    Strategy CAMEL
+    1. [x] Restart CEGAR for each error location, [ ] Stop after first violation was found, Error locations removal mode SIMPLE_ERROR_AUTOMATON
+        CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 31953.0ms
+        CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 29404.0ms, 
+        CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 1659.5ms,
+    2. [ ] Restart CEGAR for each error location, [ ] Stop after first violation was found, Error locations removal mode SIMPLE_ERROR_AUTOMATON
+        CFG has 1 procedures, 7 locations, 3 error locations. Started 1 CEGAR loops. OverallTime: 28342.8ms
+ */
 
 
 procedure main()
