@@ -189,7 +189,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		switchToOnDemandConstructionMode();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(getServices());
 		try {
 			switch (mPartialOrderMode) {
 			case SLEEP_DELAY_SET:
@@ -220,7 +220,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(mIndependenceRelation.getStatistics());
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+		getServices().getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
 
 		super.finish();
@@ -235,7 +235,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final ManagedScript independenceScript = constructIndependenceScript();
 		final TermTransferrer independenceTransferrer =
 				new TermTransferrer(csToolkit.getManagedScript().getScript(), independenceScript.getScript());
-		return new SemanticIndependenceRelation<>(mServices, independenceScript, true, false, independenceTransferrer);
+		return new SemanticIndependenceRelation<>(getServices(), independenceScript, true, false, independenceTransferrer);
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructConditionalIndependence(
@@ -301,8 +301,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private ManagedScript constructIndependenceScript() {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3, 1000);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, settings, "SemanticIndependence");
-		return new ManagedScript(mServices, solver);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(getServices(), settings, "SemanticIndependence");
+		return new ManagedScript(getServices(), solver);
 	}
 
 	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {

@@ -164,7 +164,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
-	protected final IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 
 	protected final TaskIdentifier mTaskIdentifier;
 
@@ -368,7 +368,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 				abortIfTimeout();
 				final String msg = String.format("=== Iteration %s === %s ===", mIteration, errorLocs());
-				mServices.getStorage().pushMarker(msg);
+				getServices().getStorage().pushMarker(msg);
 				mLogger.info(msg);
 				try {
 
@@ -433,7 +433,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 					if (mComputeHoareAnnotation
 							&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-						assert new InductivityCheck<>(mServices, (INestedWordAutomaton<L, IPredicate>) mAbstraction,
+						assert new InductivityCheck<>(getServices(), (INestedWordAutomaton<L, IPredicate>) mAbstraction,
 								false, true, new IncrementalHoareTripleChecker(mCsToolkit, false))
 										.getResult() : "Not inductive";
 					}
@@ -454,7 +454,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 						return mResultBuilder.addResultForAllRemaining(Result.SAFE).getResult();
 					}
 				} finally {
-					final Set<String> destroyedStorables = mServices.getStorage().destroyMarker(msg);
+					final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
 					if (!destroyedStorables.isEmpty()) {
 						mLogger.warn("Destroyed unattended storables created during the last iteration: "
 								+ destroyedStorables.stream().collect(Collectors.joining(",")));
@@ -484,7 +484,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final String filename) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
-		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(getServices()),
 				determineAutomatonName(automaton), mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling,
 				"", automaton);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
@@ -493,7 +493,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	protected void writeAutomataToFile(final String filename, final String atsHeaderMessage, final String atsCommands,
 			final NamedAutomaton<L, IPredicate>... automata) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
-		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(mServices),
+		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(getServices()),
 				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, atsHeaderMessage, atsCommands,
 				automata);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
@@ -513,9 +513,13 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	}
 
 	protected void abortIfTimeout() {
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (!getServices().getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(getClass());
 		}
+	}
+
+	protected IUltimateServiceProvider getServices() {
+		return mServices;
 	}
 
 	/**

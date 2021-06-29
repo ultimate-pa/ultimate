@@ -190,7 +190,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 					// + "################### 2nd AFA: ###################\n"
 					// + alternatingAutomaton + "\n");
 					final AA_MergedUnion<L, IPredicate> mergedUnion = new AA_MergedUnion<>(
-							new AutomataLibraryServices(mServices), alternatingAutomatonUnion, alternatingAutomaton);
+							new AutomataLibraryServices(getServices()), alternatingAutomatonUnion, alternatingAutomaton);
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
@@ -201,11 +201,11 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		}
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
-		final RAFA_Determination<L> determination = new RAFA_Determination<>(new AutomataLibraryServices(mServices),
+		final RAFA_Determination<L> determination = new RAFA_Determination<>(new AutomataLibraryServices(getServices()),
 				alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier, mPredicateFactoryInterpolantAutomata);
 		mInterpolAutomaton = determination.getResult();
 		try {
-			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, (NestedWord<L>) trace)
+			assert new Accepts<>(new AutomataLibraryServices(getServices()), mInterpolAutomaton, (NestedWord<L>) trace)
 					.getResult() : "interpolant automaton does not accept the trace!";
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
@@ -481,7 +481,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 
 		IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 
-		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(mServices,
+		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(getServices(),
 				mCsToolkit, htc, mInterpolAutomaton, mPredicateUnifier, false, false);// change to
 																						// CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<LETTER, IPredicate>
@@ -490,14 +490,14 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 				new PowersetDeterminizer<>(determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+			diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 					oldAbstraction, determinized, psd2, false);
 		} else {
-			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, oldAbstraction,
+			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, oldAbstraction,
 					determinized, psd2, explointSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
-		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
@@ -534,7 +534,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			throw new AssertionError();
 		}
 
-		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
+		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(getServices()),
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 				(NestedWord<L>) mCounterexample.getWord()).getResult();
 		assert !stillAccepted : "stillAccepted --> no progress";
