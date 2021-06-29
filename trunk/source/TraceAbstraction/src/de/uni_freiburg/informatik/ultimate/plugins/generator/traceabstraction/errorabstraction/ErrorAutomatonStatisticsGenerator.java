@@ -189,15 +189,16 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
-	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final IUltimateServiceProvider services,
-			final ILogger logger, final IErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
+	public <L extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final IUltimateServiceProvider services,
+			final ILogger logger, final IErrorAutomatonBuilder<L> errorAutomatonBuilder,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final PredicateFactoryResultChecking predicateFactoryResultChecking,
-			final IRun<LETTER, ?> errorTrace) throws AutomataLibraryException {
-		final NestedWordAutomaton<LETTER, IPredicate> subtrahend;
+			final PredicateFactoryResultChecking predicateFactoryResultChecking, final IRun<L, ?> errorTrace)
+			throws AutomataLibraryException {
+		final NestedWordAutomaton<L, IPredicate> subtrahend;
 		final AutomataLibraryServices alServices = new AutomataLibraryServices(services);
 		switch (errorAutomatonBuilder.getType()) {
+		case SIMPLE_ERROR_AUTOMATON:
 		case ERROR_AUTOMATON:
 			subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
 			break;
@@ -208,18 +209,18 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		default:
 			throw new IllegalArgumentException("Unknown error automaton type: " + errorAutomatonBuilder.getType());
 		}
-		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
+		final NestedWordAutomatonReachableStates<L, IPredicate> errorAutomatonAfterEnhancement =
 				new RemoveUnreachable<>(alServices, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> intersectionWithAbstraction =
+		final INestedWordAutomaton<L, IPredicate> intersectionWithAbstraction =
 				new Intersect<>(alServices, predicateFactoryResultChecking, abstraction, errorAutomatonAfterEnhancement)
 						.getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> withoutDeadEnds =
+		final INestedWordAutomaton<L, IPredicate> withoutDeadEnds =
 				new RemoveDeadEnds<>(alServices, intersectionWithAbstraction).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton =
+		final INestedWordAutomaton<L, IPredicate> effectiveErrorAutomaton =
 				new Determinize<>(alServices, predicateFactoryResultChecking, withoutDeadEnds).getResult();
-		final PowersetDeterminizer<LETTER, IPredicate> psd =
+		final PowersetDeterminizer<L, IPredicate> psd =
 				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
-		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff = new Difference<>(alServices,
+		final IDoubleDeckerAutomaton<L, IPredicate> diff = new Difference<>(alServices,
 				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
 		if (new IsEmpty<>(alServices, diff).getResult()) {
 			mEnhancement = EnhancementType.NONE;
@@ -237,7 +238,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				logger.info("Automaton has an infinite language.");
 			}
 		}
-		final NestedWordAutomatonReachableStates<LETTER, IPredicate> nwars =
+		final NestedWordAutomatonReachableStates<L, IPredicate> nwars =
 				new NestedWordAutomatonReachableStates<>(alServices, effectiveErrorAutomaton);
 		nwars.computeAcceptingComponents();
 		if (logger.isInfoEnabled()) {
@@ -377,9 +378,8 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	private static <LETTER extends IIcfgTransition<?>> NestedWordAutomaton<LETTER, IPredicate>
-			constructStraightLineAutomaton(final IUltimateServiceProvider services,
-					final IRun<LETTER, ?> errorTrace, final VpAlphabet<LETTER> alphabet,
-					final PredicateFactoryForInterpolantAutomata predicateFactory) {
+			constructStraightLineAutomaton(final IUltimateServiceProvider services, final IRun<LETTER, ?> errorTrace,
+					final VpAlphabet<LETTER> alphabet, final PredicateFactoryForInterpolantAutomata predicateFactory) {
 		final IInterpolantGenerator<LETTER> ig = new StraightlineGenerator<>(errorTrace);
 		return new StraightLineInterpolantAutomatonBuilder<>(services, errorTrace.getWord(), alphabet,
 				Collections.singletonList(new TracePredicates(ig)), predicateFactory,
