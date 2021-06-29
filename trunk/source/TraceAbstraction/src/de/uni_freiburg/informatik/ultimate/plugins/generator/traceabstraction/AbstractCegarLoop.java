@@ -59,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -164,7 +166,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
-	private final IUltimateServiceProvider mServices;
+	private IUltimateServiceProvider mServices;
 
 	protected final TaskIdentifier mTaskIdentifier;
 
@@ -377,10 +379,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 						mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 					}
 
-					final String automatonType;
-					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible();
+					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasibleInternal();
 					final LBool isCounterexampleFeasible = isCexResult.getFirst();
 					final IProgramExecution<L, Term> programExecution = isCexResult.getSecond();
+					final String automatonType;
 					if (isCounterexampleFeasible == Script.LBool.SAT) {
 						mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
 						if (mPref.stopAfterFirstViolation()) {
@@ -467,6 +469,30 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		} catch (final AutomataLibraryException e) {
 			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 		}
+	}
+
+	private Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasibleInternal() {
+		final IUltimateServiceProvider parent = mServices;
+		mServices = createTraceCheckTimer();
+		try {
+			return isCounterexampleFeasible();
+		} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
+			mLogger.warn("Timeout during trace check: %s", e.printRunningTaskMessage());
+			return new Pair<>(Script.LBool.UNKNOWN, null);
+		} finally {
+			mServices = parent;
+		}
+	}
+
+	private IUltimateServiceProvider createTraceCheckTimer() {
+		final IProgressMonitorService pms = mServices.getProgressMonitorService();
+		final int remainingLocs = mResultBuilder.remainingErrorLocs();
+		if (remainingLocs == 0) {
+			// no error locs remaining, do nothing
+			return mServices;
+		}
+		final IProgressAwareTimer timer = pms.getChildTimer(1.0 / remainingLocs);
+		return pms.registerChildTimer(mServices, timer);
 	}
 
 	private CegarLoopResult<L> performLimitReachedActions(final IRunningTaskStackProvider e) {
@@ -703,6 +729,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 				mLogger.debug("Omitting computation of Hoare annotation");
 			}
 			return new CegarLoopResult<>(mResults, cegarLoopBenchmarkGenerator, getArtifact(), floydHoareAutomata);
+		}
+
+		public int remainingErrorLocs() {
+			return mErrorLocs.size() - mResults.size();
 		}
 
 		@SuppressWarnings("unchecked")
