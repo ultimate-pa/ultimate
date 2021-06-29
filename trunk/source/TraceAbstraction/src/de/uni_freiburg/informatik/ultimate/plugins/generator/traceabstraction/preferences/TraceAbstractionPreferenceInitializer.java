@@ -101,6 +101,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
+	public static final String LABEL_ONE_ERROR_PER_CEGAR = "Restart CEGAR for each error location";
 	public static final String LABEL_ERROR_AUTOMATON_MODE = "Error locations removal mode";
 	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_LAST = "Check the insufficient thread errors last";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
@@ -194,8 +195,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
 	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
-	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
-	public static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.ERROR_AUTOMATON;
+	public static final boolean DEF_STOP_AFTER_FIRST_VIOLATION = true;
+	private static final boolean DEF_ONE_ERROR_PER_CEGAR = true;
+
+	public static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.SIMPLE_ERROR_AUTOMATON;
 
 	public static final boolean DEF_INSUFFICIENT_THREAD_ERRORS_LAST = false;
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
@@ -243,8 +246,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Specifies how to compute successors on-demand for re-use interpolant automata.";
 
-	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
-	private static final String DESC_ERROR_AUTOMATON_MODE = null;
+	private static final String DESC_STOP_AFTER_FIRST_VIOLATION =
+			"Stop the analysis after the first violation was found.";
+	private static final String DESC_ONE_ERROR_PER_CEGAR = "Use a dedicated CEGAR loop for each error location.";
+	private static final String DESC_ERROR_AUTOMATON_MODE = "If \"" + LABEL_ONE_ERROR_PER_CEGAR
+			+ "\" is false, i.e., if one CEGAR loop analyzes multiple error locations, reachable error locations are "
+			+ "removed by refinining the abstraction with an error automaton specified by this mode.";
 
 	private static final String DESC_INSUFFICIENT_THREAD_ERRORS_LAST = null;
 
@@ -347,8 +354,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_STOP_AFTER_FIRST_VIOLATION, DEF_ALL_ERRORS_AT_ONCE,
-						DESC_ALL_ERRORS_AT_ONCE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_STOP_AFTER_FIRST_VIOLATION, DEF_STOP_AFTER_FIRST_VIOLATION,
+						DESC_STOP_AFTER_FIRST_VIOLATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ONE_ERROR_PER_CEGAR, DEF_ONE_ERROR_PER_CEGAR,
+						DESC_ONE_ERROR_PER_CEGAR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_AUTOMATON_MODE, DEF_ERROR_AUTOMATON_MODE,
 						DESC_ERROR_AUTOMATON_MODE, PreferenceType.Combo, ErrorAutomatonType.values()),
 				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_LAST, DEF_INSUFFICIENT_THREAD_ERRORS_LAST,

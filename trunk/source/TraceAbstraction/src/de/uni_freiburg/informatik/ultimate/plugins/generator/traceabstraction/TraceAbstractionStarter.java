@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -313,7 +314,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mResultReporter.reportCegarLoopResult(clres);
 			mArtifact = clres.getArtifact();
 
-			if (mPrefs.allErrorLocsAtOnce() && clres.resultStream().anyMatch(a -> a == Result.UNSAFE)) {
+			if (mPrefs.stopAfterFirstViolation() && clres.resultStream().anyMatch(a -> a == Result.UNSAFE)) {
 				// TODO: Report for all remaining errorLocs an unknown result
 				break;
 			}
@@ -340,7 +341,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		// TODO (Dominik 2021-04-29) Support other mode: group by original (i.e. all copies of a location together)
 
 		final Set<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
-		if (!mPrefs.allErrorLocsAtOnce()) {
+		final boolean oneErrorPerCegar = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ONE_ERROR_PER_CEGAR);
+		if (oneErrorPerCegar) {
 			Stream<IcfgLocation> errorLocs = errNodesOfAllProc.stream();
 
 			if (isConcurrent(icfg) && mPrefs.insufficientThreadErrorsLast()) {

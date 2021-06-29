@@ -196,7 +196,7 @@ public final class TAPreferences {
 		return mInterprocedural;
 	}
 
-	public boolean allErrorLocsAtOnce() {
+	public boolean stopAfterFirstViolation() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_STOP_AFTER_FIRST_VIOLATION);
 	}
 

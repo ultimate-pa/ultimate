@@ -383,7 +383,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 					final IProgramExecution<L, Term> programExecution = isCexResult.getSecond();
 					if (isCounterexampleFeasible == Script.LBool.SAT) {
 						mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
-						if (mPref.allErrorLocsAtOnce()) {
+						if (mPref.stopAfterFirstViolation()) {
 							return mResultBuilder.addResultForAllRemaining(Result.UNKNOWN).getResult();
 						}
 						if (mLogger.isInfoEnabled()) {
@@ -396,7 +396,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 								new UnprovabilityReason("unable to decide satisfiability of path constraint");
 						mResultBuilder.addResultForProgramExecution(Result.UNKNOWN, programExecution, null,
 								reasonUnknown);
-						if (mPref.allErrorLocsAtOnce()) {
+						if (mPref.stopAfterFirstViolation()) {
 							return mResultBuilder.addResultForAllRemaining(Result.UNKNOWN).getResult();
 						}
 						if (mLogger.isInfoEnabled()) {
