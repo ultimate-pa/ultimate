@@ -174,9 +174,9 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 
 	private final Class<L> mTransitionClazz;
 
-	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final IPredicate precondition, final IPredicate postcondition, final List<L> counterexample,
-			final Class<L> transitionClazz) {
+	public Pdr(final IUltimateServiceProvider services, final ILogger logger, final ITraceCheckPreferences prefs,
+			final IPredicateUnifier predicateUnifier, final IPredicate precondition, final IPredicate postcondition,
+			final List<L> counterexample, final Class<L> transitionClazz) {
 		// from params
 		mLogger = logger;
 		mTrace = counterexample;
@@ -191,7 +191,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			throw new UnsupportedOperationException("Currently, only postcondition false is supported");
 		}
 
-		mServices = prefs.getUltimateServices();
+		mServices = services;
 		mIcfg = prefs.getIcfgContainer();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
@@ -1459,9 +1459,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		}
 		if (isCorrect() == LBool.SAT) {
 			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
-		} else {
-			throw new UnsupportedOperationException();
 		}
+		throw new UnsupportedOperationException();
 	}
 
 	/** End IInterpolantGenerator interface **/

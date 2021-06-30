@@ -342,8 +342,8 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
 						XNF_CONVERSION_TEQCHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg);
-		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs, mIcfg,
-				mPredicateFactory, mDefaultStateFactory, mTransitionClazz);
+		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
+				mDefaultStateFactory, mTransitionClazz);
 	}
 
 	NestedLassoRun<L, IPredicate> getCounterexample() {

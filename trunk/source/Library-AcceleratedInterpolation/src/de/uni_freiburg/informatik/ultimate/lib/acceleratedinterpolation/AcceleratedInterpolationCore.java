@@ -94,8 +94,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
 
-	public AcceleratedInterpolationCore(final ILogger logger, final ManagedScript script,
-			final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
+	public AcceleratedInterpolationCore(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript script, final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
 			final IRun<L, IPredicate> counterexample, final IIcfg<?> icfg,
 			final ILoopdetector<IcfgLocation, L> loopdetector,
 			final ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> loopPreprocessor,
@@ -121,7 +121,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		mPrefs = prefs;
-		mServices = prefs.getUltimateServices();
+		mServices = services;
 		mPredUnifier = predicateUnifier;
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 		mSimplificationTechnique = prefs.getSimplificationTechnique();
