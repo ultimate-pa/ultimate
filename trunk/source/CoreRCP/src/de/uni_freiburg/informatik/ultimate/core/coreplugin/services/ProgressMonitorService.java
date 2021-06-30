@@ -173,25 +173,7 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 		if (services == null) {
 			throw new IllegalArgumentException("services is null");
 		}
-		if (checkParents(parent, timer)) {
-			throw new IllegalArgumentException(
-					"This timer would create a timer cycle, because itself, its parent or its grandparents are this object");
-		}
 		return new UltimateServiceProviderLayer(services, new ProgressMonitorLayer(parent, timer));
-	}
-
-	/**
-	 * @return true if the timer or one of its parents are this, thus creating a timer cycle
-	 */
-	private static boolean checkParents(final IProgressMonitorService parent, final IProgressAwareTimer timer) {
-		IProgressAwareTimer current = timer;
-		while (current != null) {
-			if (current == parent) {
-				return true;
-			}
-			current = current.getParent();
-		}
-		return false;
 	}
 
 	private static final class ProgressMonitorLayer implements IProgressMonitorService {
