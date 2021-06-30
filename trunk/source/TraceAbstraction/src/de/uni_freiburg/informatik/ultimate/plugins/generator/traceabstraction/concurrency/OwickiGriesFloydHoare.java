@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -33,9 +34,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -46,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -69,15 +73,21 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	private final DefaultIcfgSymbolTable mSymbolTable;
 	private final BasicPredicateFactory mFactory;
 	private final Function<PLACE, IPredicate> mPlace2Predicate;
+	//protected final IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>> mRefinementEngine;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
 	private final IPetriNet<LETTER, PLACE> mNet;
+	
+	private final Set<Condition<LETTER, PLACE>> mConditions;
+	private final Set<Condition<LETTER, PLACE>> mOrigConditions;
+	private final Set<Condition<LETTER, PLACE>> mAssertConditions;
 
 	private final Set<Set<PLACE>> mCuts;
 	private final Set<PLACE> mPlaces;
 	private final Set<PLACE> mAssertPlaces;
 	private final Set<PLACE> mOrigPlaces;
 	private final Set<Set<PLACE>> mReach;
+	private  Set<Set<Condition<LETTER,PLACE>>> mMarkingCosets = new HashSet<>();
 
 	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
 
@@ -91,7 +101,7 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	public OwickiGriesFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net,
 			final Function<PLACE, IPredicate> place2Predicate) {
-
+//IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>> refinementEngine
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mManagedScript = csToolkit.getManagedScript();
@@ -99,18 +109,26 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 		mSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
 		mPlace2Predicate = place2Predicate;
+		//mRefinementEngine = refinementEngine;
 
 		mBp = bp;
 		mNet = net;
 
 		mCuts = computeMaximalCosets(mBp);
-
-		mPlaces = getPlaces(mCuts);
+		
 		mOrigPlaces = new HashSet<>(mNet.getPlaces());
+		mConditions =  mBp.getConditions().stream().collect(Collectors.toSet());
+		mOrigConditions = getOrigConditions();
+		mAssertConditions = DataStructureUtils.difference(mConditions, mOrigConditions);
+		
+		
+		mPlaces = getPlaces(mCuts);		
 		mAssertPlaces = getAssertPlaces(mPlaces, mOrigPlaces);
 		mReach = getReach(mCuts);
+		
 
-		mFloydHoareAnnotation = getAnnotation();
+		mFloydHoareAnnotation = getMaximalAnnotation();	
+		getSimpleAnnotation();// to replaceMaximalAnnotation
 
 	}
 
@@ -130,20 +148,81 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 		final Set<Set<PLACE>> maximalCoSets = new LinkedHashSet<>();
 		for (final Event<LETTER, PLACE> event : bp.getEvents()) {
 			// small optimization, cut-off event has same condition mark as companion
-			if (!event.isCutoffEvent()) {
+			//if (!event.isCutoffEvent()) {
 				maximalCoSets.add(event.getMark().stream().collect(Collectors.toSet()));
-			}
+			//}
 		}
 		return maximalCoSets;
 	}
 
-	private Map<Marking<LETTER, PLACE>, IPredicate> getAnnotation() {
+	private Map<Marking<LETTER, PLACE>, IPredicate> getMaximalAnnotation() {
 		final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
 		for (final Set<PLACE> marking : mReach) {
 			mapping.put(new Marking<LETTER, PLACE>(marking), getMarkingAssertion(marking));
 		}
 		return mapping;
 	}
+	 private void getSimpleAnnotation() {
+		final Set<Set<Condition<LETTER,PLACE>>> markingCosets =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), 
+				new HashSet<Condition<LETTER,PLACE>>(),	mOrigConditions, new HashSet<Set<Condition<LETTER,PLACE>>>());
+		final Map<Set<Condition<LETTER,PLACE>>, Set<Set<Condition<LETTER,PLACE>>>> markAssertCond = new HashMap<>();
+		for(Set<Condition<LETTER,PLACE>> markCoset: markingCosets) {
+			Set<Set<Condition<LETTER,PLACE>>> assertConds =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), markCoset,mAssertConditions,
+					new HashSet<Set<Condition<LETTER,PLACE>>>());
+			//simplifyAnnotation(Set<Set<Condition<LETTER,PLACE>>> assertCond);
+		 }
+			//markAssertCond.put(markCoset,);
+		}	
+		
+		
+	 
+
+	 /**	  
+	  * @param coset
+	  * @param conditions
+	  * @param cuts
+	  * @return set successor maximal cosets from given coset
+	  */
+	 private Set<Set<Condition<LETTER,PLACE>>> getCosets(Set<Condition<LETTER, PLACE>> coset, Set<Condition<LETTER, PLACE>> compCoset,
+			 Set<Condition<LETTER, PLACE>> conditions, Set<Set<Condition<LETTER,PLACE>>> cuts){
+		 	Set<Condition<LETTER,PLACE>> toAdd = DataStructureUtils.difference(conditions, coset);
+		 	Set<Set<Condition<LETTER,PLACE>>> cosets = new HashSet<>();
+		 	for(Condition<LETTER,PLACE> cond: toAdd) {
+				 if(mBp.getCoRelation().isCoset(compCoset, cond) & mBp.getCoRelation().isCoset(coset, cond)) {
+					 	Set<Condition<LETTER,PLACE>> imCoset= 
+					 			DataStructureUtils.union(coset,DataStructureUtils.toSet(cond));
+					 	cosets.add(imCoset);
+				 }			 				
+		 	}
+		 	if(!cosets.isEmpty()) {
+		 		for (Set<Condition<LETTER,PLACE>> imcoset: cosets) {
+		 			cuts = DataStructureUtils.union(cuts, getCosets(imcoset, compCoset, conditions,cuts));		 					
+		 		}
+		 	}		 	
+		 	else {
+		 		cuts.add(coset);		 		
+		 	}
+		 	return cuts;		 		 
+	 }
+	 
+	 private Set<Set<Condition<LETTER,PLACE>>> symplifyAnnotation(Set<Set<Condition<LETTER,PLACE>>> assertCoset){
+		 Set<Set<Condition<LETTER,PLACE>>> simpCoset = new HashSet<>();
+		 
+		 //!equal->    weaker
+		 return simpCoset;
+	 }
+
+	
+	 private Set<Condition<LETTER,PLACE>> getOrigConditions(){
+		 Set<Condition<LETTER,PLACE>> conditions = new HashSet<>();
+		 	for(final Condition<LETTER,PLACE>  cond: mBp.getConditions()) {
+		 		if (mOrigPlaces.contains(cond.getPlace())) {
+		 			conditions.add(cond);
+		 		}
+		 	}
+		 return conditions;
+	 }
+	 
 
 	// phi(d) = conjuct(assert(p)) for each p in z(d) (assertion places) -> Cut assertion
 	private IPredicate getCutAssertion(final Set<PLACE> cut) {
@@ -185,6 +264,8 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	private Set<PLACE> getAssertPlaces(final Set<PLACE> places, final Set<PLACE> origPlaces) {
 		return DataStructureUtils.difference(places, origPlaces);
 	}
+	
+
 
 	/**
 	 * @param cut

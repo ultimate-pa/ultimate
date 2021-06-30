@@ -92,7 +92,7 @@ public interface ICoRelation<LETTER, PLACE> {
 
 
 	/**
-	 * All initial Conditions in a branchin process are in co relation. Hence, all pairs of Conditions from
+	 * All initial Conditions in a branching process are in co relation. Hence, all pairs of Conditions from
 	 * <code>initialConditions</code> are added.
 	 *
 	 * @param initialConditions
