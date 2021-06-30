@@ -16,11 +16,11 @@ modifies stoppingFlag, stoppingEvent, stopped, pendingIo;
   stoppingEvent := false;
   stoppingFlag := false;
 
-  fork 00 ServerThread();
+  fork  0 ServerThread();
 
-  fork 01 DeviceThreadWithAssert();
-  fork 02 DeviceThread();
-  fork 03 DeviceThread();
+  fork  1 DeviceThreadWithAssert();
+  fork  2 DeviceThread();
+  fork  3 DeviceThread();
 }
 
 /*

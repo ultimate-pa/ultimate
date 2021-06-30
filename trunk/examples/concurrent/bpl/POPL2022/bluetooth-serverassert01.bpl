@@ -16,9 +16,9 @@ modifies stoppingFlag, stoppingEvent, stopped, pendingIo;
   stoppingEvent := false;
   stoppingFlag := false;
 
-  fork 00 ServerThread();
+  fork  0 ServerThread();
 
-  fork 01 DeviceThread();
+  fork  1 DeviceThread();
 }
 
 /*

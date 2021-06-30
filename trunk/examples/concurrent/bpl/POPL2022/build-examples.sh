@@ -42,7 +42,7 @@ do
   do
     if (( $JOIN_FREE == 1 ))
     then
-      ID=$(printf %02d $j)
+      ID=$(printf % 2d $j)
     else
       ID=$(get_unique_id $j)
     fi
