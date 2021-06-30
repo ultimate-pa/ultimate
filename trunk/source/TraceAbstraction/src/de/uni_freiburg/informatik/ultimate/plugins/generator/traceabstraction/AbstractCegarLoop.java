@@ -394,10 +394,20 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 						automatonType = "Error";
 						constructErrorAutomaton(isCounterexampleFeasible);
 					} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
-						final UnprovabilityReason reasonUnknown =
-								new UnprovabilityReason("unable to decide satisfiability of path constraint");
-						mResultBuilder.addResultForProgramExecution(Result.UNKNOWN, programExecution, null,
-								reasonUnknown);
+						if (programExecution != null) {
+							final UnprovabilityReason reasonUnknown =
+									new UnprovabilityReason("unable to decide satisfiability of path constraint");
+							mResultBuilder.addResultForProgramExecution(Result.UNKNOWN, programExecution, null,
+									reasonUnknown);
+						} else {
+							final IcfgLocation loc =
+									mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
+							final UnprovabilityReason reasonUnknown =
+									new UnprovabilityReason("timeout during trace check");
+
+							mResultBuilder.addResult(loc, Result.UNKNOWN, null, null, reasonUnknown);
+						}
+
 						if (mPref.stopAfterFirstViolation()) {
 							return mResultBuilder.addResultForAllRemaining(Result.UNKNOWN).getResult();
 						}
