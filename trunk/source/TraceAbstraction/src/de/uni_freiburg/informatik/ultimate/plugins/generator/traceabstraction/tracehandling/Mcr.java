@@ -66,13 +66,13 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 
 	private final McrTraceCheckResult<L> mResult;
 
-	public Mcr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<L> trace,
-			final Set<L> alphabet, final IMcrResultProvider<L> resultProvider,
+	public Mcr(final IUltimateServiceProvider services, final ILogger logger, final ITraceCheckPreferences prefs,
+			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
+			final List<L> trace, final Set<L> alphabet, final IMcrResultProvider<L> resultProvider,
 			final IInterpolantProvider<L> interpolantProvider) throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
-		mServices = prefs.getUltimateServices();
+		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(mServices);
 		mAlphabet = new VpAlphabet<>(alphabet);
 		mToolkit = prefs.getCfgSmtToolkit();
@@ -85,8 +85,7 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		mResult = exploreInterleavings(trace);
 	}
 
-	private McrTraceCheckResult<L> exploreInterleavings(final List<L> initialTrace)
-			throws AutomataLibraryException {
+	private McrTraceCheckResult<L> exploreInterleavings(final List<L> initialTrace) throws AutomataLibraryException {
 		final ManagedScript managedScript = mToolkit.getManagedScript();
 		final McrAutomatonBuilder<L> automatonBuilder = new McrAutomatonBuilder<>(initialTrace, mPredicateUnifier,
 				mEmptyStackStateFactory, mLogger, mAlphabet, mServices);
@@ -101,7 +100,8 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		int iteration = 0;
 		McrTraceCheckResult<L> result = null;
 		while (counterexample != null) {
-			mLogger.info("---- MCR iteration " + iteration++ + " ----");
+			mLogger.info("---- MCR iteration " + iteration + " ----");
+			iteration++;
 			result = mResultProvider.getResult(counterexample);
 			final List<L> trace = counterexample.getWord().asList();
 			if (result.isCorrect() != LBool.UNSAT) {
@@ -110,8 +110,8 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			}
 			final INestedWordAutomaton<L, IPredicate> automaton = automatonBuilder.buildInterpolantAutomaton(trace,
 					Arrays.asList(result.getInterpolants()), mInterpolantProvider);
-			final DeterministicInterpolantAutomaton<L> ipAutomaton = new DeterministicInterpolantAutomaton<>(
-					mServices, mToolkit, mHoareTripleChecker, automaton, mPredicateUnifier, false, false);
+			final DeterministicInterpolantAutomaton<L> ipAutomaton = new DeterministicInterpolantAutomaton<>(mServices,
+					mToolkit, mHoareTripleChecker, automaton, mPredicateUnifier, false, false);
 			// TODO: Add ipAutomaton instead?
 			automata.add(automaton);
 			mhbAutomaton = new Difference<>(mAutomataServices, factory, mhbAutomaton, ipAutomaton).getResult();
@@ -122,8 +122,7 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		return result;
 	}
 
-	private NestedWordAutomaton<L, IPredicate>
-			unionAutomata(final List<INestedWordAutomaton<L, IPredicate>> automata) {
+	private NestedWordAutomaton<L, IPredicate> unionAutomata(final List<INestedWordAutomaton<L, IPredicate>> automata) {
 		final NestedWordAutomaton<L, IPredicate> result =
 				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackStateFactory);
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();

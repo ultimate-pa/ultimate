@@ -257,19 +257,17 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
 		} else if (mLassoCheckResult.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
 			assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE;
+		} else // loop not infeasible
+		if (mLassoCheckResult.getLoopTermination() == SynthesisResult.TERMINATING) {
+			assert mBspm.providesPredicates();
 		} else {
-			// loop not infeasible
-			if (mLassoCheckResult.getLoopTermination() == SynthesisResult.TERMINATING) {
-				assert mBspm.providesPredicates();
+			assert mConcatCheck != null;
+			if (mLassoCheckResult.getConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
+				assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
+						|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
+				assert mConcatenatedCounterexample != null;
 			} else {
-				assert mConcatCheck != null;
-				if (mLassoCheckResult.getConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
-					assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
-							|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
-					assert mConcatenatedCounterexample != null;
-				} else {
-					assert mLassoCheckResult.getContinueDirective() != ContinueDirective.REFINE_FINITE;
-				}
+				assert mLassoCheckResult.getContinueDirective() != ContinueDirective.REFINE_FINITE;
 			}
 		}
 	}
@@ -663,9 +661,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 		if (nonTermArgument != null) {
 			return SynthesisResult.NONTERMINATING;
-		} else {
-			return SynthesisResult.UNKNOWN;
 		}
+		return SynthesisResult.UNKNOWN;
 	}
 
 	/**
@@ -918,8 +915,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<L, IPredicate> run, final TaskIdentifier taskIdentifier) {
 			try {
-				final IRefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(run, mAbstraction,
-						taskIdentifier, mStateFactoryForInterpolantAutomaton,
+				final IRefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, run,
+						mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
 						IPreconditionProvider.constructDefaultPreconditionProvider(),
 						IPostconditionProvider.constructDefaultPostconditionProvider());
 				final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =

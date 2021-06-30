@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.IInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrTraceCheckResult;
@@ -45,12 +46,14 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 	private final IInterpolantProvider<L> mInterpolantProvider;
 
 	private final List<QualifiedTracePredicates> mUsedPredicates;
+	private final IUltimateServiceProvider mServices;
 
-	public StrategyModuleMcr(final ILogger logger, final TaCheckAndRefinementPreferences<L> prefs,
-			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final StrategyFactory<L> strategyFactory, final IRun<L, ?> counterexample,
-			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			final IInterpolantProvider<L> interpolantProvider) {
+	public StrategyModuleMcr(final IUltimateServiceProvider services, final ILogger logger,
+			final TaCheckAndRefinementPreferences<L> prefs, final IPredicateUnifier predicateUnifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final StrategyFactory<L> strategyFactory,
+			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final IInterpolantProvider<L> interpolantProvider) {
+		mServices = services;
 		mPrefs = prefs;
 		mStrategyFactory = strategyFactory;
 		mLogger = logger;
@@ -126,7 +129,7 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 	public Mcr<L> getOrConstruct() {
 		if (mMcr == null) {
 			try {
-				mMcr = new Mcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample,
+				mMcr = new Mcr<>(mServices, mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample,
 						mAbstraction.getAlphabet(), this, mInterpolantProvider);
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);
@@ -151,10 +154,11 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
-		final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(counterexample, mAbstraction,
-				mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
-				IPostconditionProvider.constructDefaultPostconditionProvider(), refinementStrategy);
-		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mPrefs.getUltimateServices(), mLogger, strategy);
+		final IRefinementStrategy<L> strategy =
+				mStrategyFactory.constructStrategy(mServices, counterexample, mAbstraction, mTaskIdentifier,
+						mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
+						IPostconditionProvider.constructDefaultPostconditionProvider(), refinementStrategy);
+		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 		final List<L> trace = counterexample.getWord().asList();
 		final RefinementEngineStatisticsGenerator statistics = mRefinementEngine.getRefinementEngineStatistics();
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();

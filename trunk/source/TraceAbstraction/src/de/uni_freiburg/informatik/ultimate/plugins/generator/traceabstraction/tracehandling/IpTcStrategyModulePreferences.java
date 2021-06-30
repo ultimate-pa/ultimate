@@ -137,12 +137,14 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 					invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
 					mPrefs.collectInterpolantStatistics());
 		case PDR:
-			return new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
-					mPrecondition, mPostcondition, mCounterexample.getWord().asList(), mTransitionClazz);
+			return new Pdr<>(mServices, mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
+					mPredicateUnifier, mPrecondition, mPostcondition, mCounterexample.getWord().asList(),
+					mTransitionClazz);
 
 		case AcceleratedInterpolation:
-			return new AcceleratedInterpolation<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
-					managedScript, mPredicateUnifier, (IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
+			return new AcceleratedInterpolation<>(mServices,
+					mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, managedScript,
+					mPredicateUnifier, (IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
 					mPrefs.getLoopAccelerationTechnique().toString());
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);

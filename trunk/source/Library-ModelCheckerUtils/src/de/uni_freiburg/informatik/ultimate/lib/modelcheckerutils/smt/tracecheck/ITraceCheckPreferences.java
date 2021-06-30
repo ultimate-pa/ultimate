@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -105,7 +104,7 @@ public interface ITraceCheckPreferences {
 
 	/**
 	 * Container that holds all settings related to {@link AssertCodeBlockOrderType}.
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
@@ -188,8 +187,6 @@ public interface ITraceCheckPreferences {
 	boolean getUseSeparateSolverForTracechecks();
 
 	AssertCodeBlockOrder getAssertCodeBlockOrder();
-
-	IUltimateServiceProvider getUltimateServices();
 
 	String getPathOfDumpedScript();
 

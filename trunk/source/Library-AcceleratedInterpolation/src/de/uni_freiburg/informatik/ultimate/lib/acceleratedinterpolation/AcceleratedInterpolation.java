@@ -106,14 +106,14 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	 * @param counterexample
 	 * @param transitionClazz
 	 */
-	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
-			final ManagedScript script, final IPredicateUnifier predicateUnifier,
+	public AcceleratedInterpolation(final IUltimateServiceProvider services, final ILogger logger,
+			final ITraceCheckPreferences prefs, final ManagedScript script, final IPredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate> counterexample, final Class<LETTER> transitionClazz,
 			final String accelerationMethod) {
 		mLogger = logger;
 		mScript = script;
 		mTransitionClazz = transitionClazz;
-		mServices = prefs.getUltimateServices();
+		mServices = services;
 		mCounterexampleTrace = counterexample;
 		mCounterexample = mCounterexampleTrace.getWord().asList();
 		mPrefs = prefs;
@@ -157,7 +157,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			throw new UnsupportedOperationException();
 		}
 
-		accelInterpolCore = new AcceleratedInterpolationCore<>(mLogger, mScript, mPredUnifier, mPrefs,
+		accelInterpolCore = new AcceleratedInterpolationCore<>(mServices, mLogger, mScript, mPredUnifier, mPrefs,
 				mCounterexampleTrace, mIcfg, loopdetector, loopPreprocessor, loopAccelerator);
 
 		try {
@@ -207,11 +207,11 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		if (isCorrect() == LBool.UNSAT) {
 			return new InterpolantComputationStatus();
-		} else if (isCorrect() == LBool.SAT) {
-			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
-		} else {
-			throw new UnsupportedOperationException();
 		}
+		if (isCorrect() == LBool.SAT) {
+			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

@@ -111,8 +111,8 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 		if (useInterpolantConsolidation) {
 			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
 		}
-		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory,
-				mCounterexample, mAbstraction, mTaskIdentifier, createMcrInterpolantProvider());
+		return new StrategyModuleMcr<>(mServices, mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory,
+				strategyFactory, mCounterexample, mAbstraction, mTaskIdentifier, createMcrInterpolantProvider());
 	}
 
 	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(final InterpolationTechnique technique,
@@ -188,8 +188,8 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 	}
 
 	public IIpTcStrategyModule<?, L> createIpTcStrategyModulePdr() {
-		return createModuleWrapperIfNecessary(new IpTcStrategyModulePdr<>(mLogger, mPrecondition, mPostcondition,
-				mCounterexample, mPredicateUnifier, mPrefs, mTransitionClazz));
+		return createModuleWrapperIfNecessary(new IpTcStrategyModulePdr<>(mServices, mLogger, mPrecondition,
+				mPostcondition, mCounterexample, mPredicateUnifier, mPrefs, mTransitionClazz));
 	}
 
 	public IIpTcStrategyModule<?, L> createIpTcStrategyModulePreferences() {
