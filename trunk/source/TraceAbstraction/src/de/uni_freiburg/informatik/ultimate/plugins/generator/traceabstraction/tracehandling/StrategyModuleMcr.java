@@ -38,7 +38,6 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 	private final IPredicateUnifier mPredicateUnifier;
 	private Mcr<L> mMcr;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
-	private AutomatonFreeRefinementEngine<L> mRefinementEngine;
 	private IpAbStrategyModuleResult<L> mAutomatonResult;
 	private final List<L> mCounterexample;
 	private final IAutomaton<L, IPredicate> mAbstraction;
@@ -47,6 +46,7 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 
 	private final List<QualifiedTracePredicates> mUsedPredicates;
 	private final IUltimateServiceProvider mServices;
+	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mAfeResult;
 
 	public StrategyModuleMcr(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<L> prefs, final IPredicateUnifier predicateUnifier,
@@ -89,7 +89,7 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 	@Override
 	public IHoareTripleChecker getHoareTripleChecker() {
 		getOrConstruct();
-		return mRefinementEngine.getHoareTripleChecker();
+		return mAfeResult.getHoareTripleChecker();
 	}
 
 	@Override
@@ -158,17 +158,18 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 				mStrategyFactory.constructStrategy(mServices, counterexample, mAbstraction, mTaskIdentifier,
 						mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
 						IPostconditionProvider.constructDefaultPostconditionProvider(), refinementStrategy);
-		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
+		final AutomatonFreeRefinementEngine<L> afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 		final List<L> trace = counterexample.getWord().asList();
-		final RefinementEngineStatisticsGenerator statistics = mRefinementEngine.getRefinementEngineStatistics();
-		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
+		final RefinementEngineStatisticsGenerator statistics = afe.getRefinementEngineStatistics();
+		mAfeResult = afe.getResult();
+		final LBool feasibility = mAfeResult.getCounterexampleFeasibility();
 		// We found a feasible counterexample
 		if (feasibility != LBool.UNSAT) {
 			return McrTraceCheckResult.constructFeasibleResult(trace, feasibility, statistics,
-					mRefinementEngine.getIcfgProgramExecution());
+					mAfeResult.getIcfgProgramExecution());
 		}
 		// Extract interpolants, try to get a perfect sequence
-		final Collection<QualifiedTracePredicates> proof = mRefinementEngine.getInfeasibilityProof();
+		final Collection<QualifiedTracePredicates> proof = mAfeResult.getInfeasibilityProof();
 		mUsedPredicates.addAll(proof);
 		return McrTraceCheckResult.constructInfeasibleResult(trace, proof, statistics);
 	}

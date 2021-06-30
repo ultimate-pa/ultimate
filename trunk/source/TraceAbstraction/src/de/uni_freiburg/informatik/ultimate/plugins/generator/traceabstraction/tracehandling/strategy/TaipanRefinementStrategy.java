@@ -88,7 +88,7 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<L, ?> engine) {
-		if (engine.getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
+		if (engine.getResult().getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
 				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
 			// rather hacky: we now that the absint module is in position 2
 			return getInterpolantGeneratorModules()[2].getHoareTripleChecker();
@@ -98,9 +98,9 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<L, ?> engine) {
-		if (engine.getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
+		if (engine.getResult().getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
 				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
-			// rather hacky: we now that the absint module is in position 2
+			// rather hacky: we know that the absint module is in position 2
 			return getInterpolantGeneratorModules()[2].getPredicateUnifier();
 		}
 		return super.getPredicateUnifier(engine);
