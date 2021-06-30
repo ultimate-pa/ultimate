@@ -1,10 +1,10 @@
 #!/bin/bash
 
-MAX_THREADS=25
-TEMPLATE_FILE=add-sub.template
-THREAD_PROCEDURE=Thread
-MIN_ID=1
-OFFSET=0
+MAX_THREADS=10
+TEMPLATE_FILE=bluetooth-customized.template
+THREAD_PROCEDURE=DeviceThread
+MIN_ID=2
+OFFSET=1
 VERDICT=true
 
 TEMPLATE=$(cat "$TEMPLATE_FILE")
