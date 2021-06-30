@@ -125,7 +125,9 @@ public final class SolverBuilder {
 		if (settings.useExternalSolver()) {
 			script = createExternalSolver(services, settings, solverLogger, localLogger);
 		} else {
-			localLogger.info("Constructing new instance of SMTInterpol");
+			localLogger.info(
+					"Constructing new instance of SMTInterpol with explicit timeout %s ms and remaining time %s ms",
+					settings.getTimeoutSmtInterpol(), services.getProgressMonitorService().remainingTime());
 			final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(solverLogger);
 			final TerminationRequest termRequest =
 					new SMTInterpolTerminationRequest(services.getProgressMonitorService());
