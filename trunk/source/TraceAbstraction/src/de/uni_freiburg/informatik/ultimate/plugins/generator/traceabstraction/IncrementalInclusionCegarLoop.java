@@ -219,10 +219,10 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
-		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
+		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc;
-		if (mRefinementEngine.getHoareTripleChecker() != null) {
-			htc = mRefinementEngine.getHoareTripleChecker();
+		if (mRefinementResult.getHoareTripleChecker() != null) {
+			htc = mRefinementResult.getHoareTripleChecker();
 		} else {
 			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 					HoareTripleChecks.MONOLITHIC, mCsToolkit, predicateUnifier);

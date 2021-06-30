@@ -120,7 +120,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
@@ -342,8 +342,8 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
 						XNF_CONVERSION_TEQCHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg);
-		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
-				mDefaultStateFactory, mTransitionClazz);
+		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg,
+				mPredicateFactory, mDefaultStateFactory, mTransitionClazz);
 	}
 
 	NestedLassoRun<L, IPredicate> getCounterexample() {
@@ -904,7 +904,7 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 	 */
 	private void refineFinite(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> traceCheck;
+		final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> traceCheck;
 		final LassoCheck<L>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
 		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			// if both (stem and loop) are infeasible we take the smaller

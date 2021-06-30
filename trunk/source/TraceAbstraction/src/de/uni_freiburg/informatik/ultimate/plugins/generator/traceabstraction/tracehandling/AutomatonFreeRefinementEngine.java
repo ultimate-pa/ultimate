@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -70,8 +72,6 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private final LBool mFeasibility;
 	private IProgramExecution<L, Term> mIcfgProgramExecution;
-	private IHoareTripleChecker mHoareTripleChecker;
-	private IPredicateUnifier mPredicateUnifier;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
 	private boolean mSomePerfectSequenceFound;
 	private List<QualifiedTracePredicates> mQualifiedTracePredicates;
@@ -89,65 +89,20 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		mRefinementEngineStatistics.finishRefinementEngineRun();
 	}
 
-	@Override
-	public LBool getCounterexampleFeasibility() {
-		return mFeasibility;
-	}
-
-	@Override
-	public Collection<QualifiedTracePredicates> getInfeasibilityProof() {
-		if (mQualifiedTracePredicates == null) {
-			throw new IllegalStateException("There is no infeasiblity proof");
+	private IHoareTripleChecker getHoareTripleChecker() {
+		final IHoareTripleChecker strategyHtc = mStrategy.getHoareTripleChecker(this);
+		if (strategyHtc != null) {
+			mLogger.info("Using hoare triple checker %s provided by strategy", strategyHtc.getClass().getSimpleName());
 		}
-		return mQualifiedTracePredicates;
+		return strategyHtc;
 	}
 
-	@Override
-	public boolean somePerfectSequenceFound() {
-		return mSomePerfectSequenceFound;
-	}
-
-	@Override
-	public boolean providesIcfgProgramExecution() {
-		return mIcfgProgramExecution != null;
-	}
-
-	@Override
-	public IProgramExecution<L, Term> getIcfgProgramExecution() {
-		return mIcfgProgramExecution;
-	}
-
-	@Override
-	public List<QualifiedTracePredicates> getUsedTracePredicates() {
-		if (mUsedTracePredicates == null) {
-			throw new IllegalStateException("There is no infeasiblity proof");
-		}
-		return mUsedTracePredicates;
-	}
-
-	@Override
-	public IHoareTripleChecker getHoareTripleChecker() {
-		if (mHoareTripleChecker == null) {
-			final IHoareTripleChecker strategyHtc = mStrategy.getHoareTripleChecker(this);
-			if (strategyHtc != null) {
-				mLogger.info("Using hoare triple checker %s provided by strategy",
-						strategyHtc.getClass().getSimpleName());
-				mHoareTripleChecker = strategyHtc;
-			}
-		}
-		return mHoareTripleChecker;
-	}
-
-	@Override
-	public IPredicateUnifier getPredicateUnifier() {
-		if (mPredicateUnifier == null) {
-			final IPredicateUnifier strategyUnifier = mStrategy.getPredicateUnifier(this);
-			assert strategyUnifier != null;
-			mLogger.info("Using predicate unifier %s provided by strategy %s",
-					strategyUnifier.getClass().getSimpleName(), mStrategy.getName());
-			mPredicateUnifier = strategyUnifier;
-		}
-		return mPredicateUnifier;
+	private IPredicateUnifier getPredicateUnifier() {
+		final IPredicateUnifier strategyUnifier = mStrategy.getPredicateUnifier(this);
+		assert strategyUnifier != null;
+		mLogger.info("Using predicate unifier %s provided by strategy %s", strategyUnifier.getClass().getSimpleName(),
+				mStrategy.getName());
+		return strategyUnifier;
 	}
 
 	@Override
@@ -379,6 +334,13 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private static String getModuleFingerprintString(final Object obj) {
 		return String.format("%s [%s]", obj.getClass().getSimpleName(), obj.hashCode());
+	}
+
+	@Override
+	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> getResult() {
+		return new BasicRefinementEngineResult<>(mFeasibility, mQualifiedTracePredicates, mIcfgProgramExecution,
+				mSomePerfectSequenceFound, mUsedTracePredicates, new Lazy<>(this::getHoareTripleChecker),
+				new Lazy<>(this::getPredicateUnifier));
 	}
 
 }

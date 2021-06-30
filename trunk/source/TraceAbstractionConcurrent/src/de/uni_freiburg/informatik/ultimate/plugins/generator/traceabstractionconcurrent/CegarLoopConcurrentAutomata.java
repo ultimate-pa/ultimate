@@ -155,10 +155,10 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final INestedWordAutomaton<L, IPredicate> oldAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
-		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
+		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc;
-		if (mRefinementEngine.getHoareTripleChecker() != null) {
-			htc = mRefinementEngine.getHoareTripleChecker();
+		if (mRefinementResult.getHoareTripleChecker() != null) {
+			htc = mRefinementResult.getHoareTripleChecker();
 		} else {
 			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 					mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);

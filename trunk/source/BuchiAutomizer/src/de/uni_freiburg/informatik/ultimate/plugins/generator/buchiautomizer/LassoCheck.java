@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
@@ -177,9 +178,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	// private final BuchiModGlobalVarManager mBuchiModGlobalVarManager;
 
-	private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> mStemCheck;
-	private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> mLoopCheck;
-	private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> mConcatCheck;
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mStemCheck;
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mLoopCheck;
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mConcatCheck;
 
 	private NestedRun<L, IPredicate> mConcatenatedCounterexample;
 
@@ -276,15 +277,15 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return mLassoCheckResult;
 	}
 
-	public IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> getStemCheck() {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getStemCheck() {
 		return mStemCheck;
 	}
 
-	public IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> getLoopCheck() {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getLoopCheck() {
 		return mLoopCheck;
 	}
 
-	public IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> getConcatCheck() {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getConcatCheck() {
 		return mConcatCheck;
 	}
 
@@ -912,7 +913,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			}
 		}
 
-		private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
+		private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<L, IPredicate> run, final TaskIdentifier taskIdentifier) {
 			try {
 				final IRefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, run,
@@ -922,7 +923,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =
 						new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
 				mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());
-				return engine;
+				return engine.getResult();
 			} catch (final ToolchainCanceledException tce) {
 				final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
 				final String taskDescription =
