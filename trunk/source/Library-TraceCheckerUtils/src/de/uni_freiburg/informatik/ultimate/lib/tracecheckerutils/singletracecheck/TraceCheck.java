@@ -35,8 +35,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -254,8 +257,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 *
 	 * @param services
 	 */
-	public static TraceCheck<IAction> createTraceCheck(final IUltimateServiceProvider services, final CfgSmtToolkit toolkit,
-			final ManagedScript mgdScriptTc, final IPredicate pre, final IPredicate post,
+	public static TraceCheck<IAction> createTraceCheck(final IUltimateServiceProvider services,
+			final CfgSmtToolkit toolkit, final ManagedScript mgdScriptTc, final IPredicate pre, final IPredicate post,
 			final List<? extends IAction> trace) {
 		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		final NestedWord<IAction> nw = NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()])));
@@ -357,6 +360,13 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			case SAT:
 				return tc.getRcfgProgramExecution();
 			case UNKNOWN:
+				final Exception ex = tc.getTraceCheckReasonUnknown().getException();
+				if (ex instanceof ToolchainCanceledException || ex instanceof AutomataOperationCanceledException) {
+					// TODO: 20210701 DD: It might be useful to set a higher timeout for a TraceCheck here because the
+					// chance of getting a program execution if the previous TC was already successful is high.
+					throw new ToolchainCanceledException((IRunningTaskStackProvider) ex,
+							new RunningTaskInfo(getClass(), "computing program execution"));
+				}
 				throw new UnsupportedOperationException(
 						"result of second trace check is UNKNOWN, Reasons: " + tc.getTraceCheckReasonUnknown());
 			case UNSAT:
