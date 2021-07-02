@@ -242,6 +242,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		} catch (final SMTLIBException e) {
 			feasibilityResult =
 					new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckReasonUnknown.constructReasonUnknown(e), true);
+		} catch (final InnerTraceCheckException e) {
+			feasibilityResult =
+					new FeasibilityCheckResult(LBool.UNKNOWN, e.getTraceCheckReasonUnknown(), e.hasSolverCrashed());
 		} catch (final Exception e) {
 			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
 					new TraceCheckReasonUnknown(Reason.SOLVER_CRASH_OTHER, e, ExceptionHandlingCategory.UNKNOWN), true);
@@ -367,8 +370,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					throw new ToolchainCanceledException((IRunningTaskStackProvider) ex,
 							new RunningTaskInfo(getClass(), "computing program execution"));
 				}
-				throw new UnsupportedOperationException(
-						"result of second trace check is UNKNOWN, Reasons: " + tc.getTraceCheckReasonUnknown());
+				throw new InnerTraceCheckException("Exception in inner trace check during branch decoding",
+						tc.getTraceCheckReasonUnknown(), tc.mFeasibilityResult.mSolverCrashed);
 			case UNSAT:
 				throw new AssertionError("result of second trace check is not SAT, but " + tc.isCorrect());
 			default:
@@ -539,6 +542,28 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		}
 
 		public boolean isSolverCrashed() {
+			return mSolverCrashed;
+		}
+	}
+
+	private static final class InnerTraceCheckException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+		private final transient TraceCheckReasonUnknown mTCRU;
+		private final transient boolean mSolverCrashed;
+
+		public InnerTraceCheckException(final String msg, final TraceCheckReasonUnknown traceCheckReasonUnknown,
+				final boolean solverCrashed) {
+			super(msg);
+			mTCRU = traceCheckReasonUnknown;
+			mSolverCrashed = solverCrashed;
+		}
+
+		public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
+			return mTCRU;
+		}
+
+		public boolean hasSolverCrashed() {
 			return mSolverCrashed;
 		}
 	}
