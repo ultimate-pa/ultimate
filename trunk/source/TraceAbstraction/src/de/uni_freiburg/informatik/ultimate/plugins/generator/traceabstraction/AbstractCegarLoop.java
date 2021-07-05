@@ -364,7 +364,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 			final boolean initalAbstractionCorrect = isAbstractionEmpty();
 			if (initalAbstractionCorrect) {
-				mResultBuilder.addResultForAllRemaining(Result.SAFE);
+				return mResultBuilder.addResultForAllRemaining(Result.SAFE).getResult();
 			}
 
 			for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
