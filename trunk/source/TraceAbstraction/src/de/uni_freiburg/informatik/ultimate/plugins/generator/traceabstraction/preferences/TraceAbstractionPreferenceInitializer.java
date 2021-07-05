@@ -196,7 +196,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_MINIMIZE = true;
 	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
 	public static final boolean DEF_STOP_AFTER_FIRST_VIOLATION = true;
-	private static final boolean DEF_ONE_ERROR_PER_CEGAR = true;
+	private static final boolean DEF_ONE_ERROR_PER_CEGAR = false;
 
 	public static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.SIMPLE_ERROR_AUTOMATON;
 
