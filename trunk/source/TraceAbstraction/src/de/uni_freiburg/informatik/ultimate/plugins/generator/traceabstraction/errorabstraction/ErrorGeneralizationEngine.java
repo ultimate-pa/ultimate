@@ -100,7 +100,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	public ErrorGeneralizationEngine(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator(services);
+		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator();
 		mErrorTraces = new ErrorTraceContainer<>();
 		mRelevantStatements = new ArrayList<>();
 		mFaultLocalizerStatistics = new ArrayList<>();
