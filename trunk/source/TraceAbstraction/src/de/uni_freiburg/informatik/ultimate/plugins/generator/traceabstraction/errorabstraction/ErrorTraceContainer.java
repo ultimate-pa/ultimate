@@ -37,13 +37,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.er
 
 /**
  * Container for one or more error traces.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER>
+ * @param <L>
  *            letter type in the trace
  */
-public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>> {
-	private final List<ErrorTrace<LETTER>> mTraces = new LinkedList<>();
+public class ErrorTraceContainer<L> implements Iterable<ErrorTrace<L>> {
+	private final List<ErrorTrace<L>> mTraces = new LinkedList<>();
 
 	/**
 	 * @param trace
@@ -51,7 +51,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	 * @param precondition
 	 *            precondition
 	 */
-	public void addTrace(final IRun<LETTER, ?> trace, final IPredicate precondition) {
+	public void addTrace(final IRun<L, ?> trace, final IPredicate precondition) {
 		mTraces.add(new ErrorTrace<>(trace, precondition));
 	}
 
@@ -59,7 +59,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	 * @param trace
 	 *            Error trace.
 	 */
-	public void addTrace(final IRun<LETTER, ?> trace) {
+	public void addTrace(final IRun<L, ?> trace) {
 		addTrace(trace, null);
 	}
 
@@ -75,7 +75,9 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 
 	/**
 	 * TODO remove this and the field after collecting statistics.
-	 * @param enhancement Enhancement type.
+	 *
+	 * @param enhancement
+	 *            Enhancement type.
 	 */
 	public void addEnhancementType(final EnhancementType enhancement) {
 		mTraces.get(mTraces.size() - 1).mEnhancement = enhancement;
@@ -96,21 +98,21 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	}
 
 	@Override
-	public Iterator<ErrorTrace<LETTER>> iterator() {
+	public Iterator<ErrorTrace<L>> iterator() {
 		return mTraces.iterator();
 	}
 
 	/**
 	 * Wrapper for a single error trace.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 * @param <LETTER>
+	 * @param <L>
 	 *            letter type in the trace
 	 */
-	public static final class ErrorTrace<LETTER> {
-		private final IRun<LETTER, ?> mTrace;
+	public static final class ErrorTrace<L> {
+		private final IRun<L, ?> mTrace;
 		private IPredicate mPrecondition;
-		public EnhancementType mEnhancement;
+		private EnhancementType mEnhancement;
 
 		/**
 		 * @param trace
@@ -118,7 +120,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 		 * @param precondition
 		 *            precondition
 		 */
-		public ErrorTrace(final IRun<LETTER, ?> trace, final IPredicate precondition) {
+		public ErrorTrace(final IRun<L, ?> trace, final IPredicate precondition) {
 			mTrace = trace;
 			mPrecondition = precondition;
 			mEnhancement = EnhancementType.UNKNOWN;
@@ -128,11 +130,11 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 		 * @param trace
 		 *            Error trace.
 		 */
-		public ErrorTrace(final IRun<LETTER, ?> trace) {
+		public ErrorTrace(final IRun<L, ?> trace) {
 			this(trace, null);
 		}
 
-		public IRun<LETTER, ?> getTrace() {
+		public IRun<L, ?> getTrace() {
 			return mTrace;
 		}
 
