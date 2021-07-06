@@ -86,6 +86,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  */
 public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements IErrorAutomatonBuilder<L> {
 
+	private static final boolean LOG_EXTENDED_SIZE_INFO = false;
+
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 
@@ -201,7 +203,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
-			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance(true);
+			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 					"constructing error automaton for trace of length " + trace.length() + " (spent "
 							+ mErrorAutomatonStatisticsGenerator.getLastConstructionTime() + " nanoseconds)");
@@ -236,12 +238,14 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			final boolean prematureTermination) throws AutomataLibraryException {
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
 		if (!prematureTermination) {
-			mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger, mErrorAutomatonBuilder,
-					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) abstraction,
-					predicateFactoryInterpolantAutomata, predicateFactoryResultChecking, errorTrace);
+			if (LOG_EXTENDED_SIZE_INFO) {
+				mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger,
+						mErrorAutomatonBuilder, (INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) abstraction,
+						predicateFactoryInterpolantAutomata, predicateFactoryResultChecking, errorTrace);
+			}
 			mErrorTraces.addEnhancementType(mErrorAutomatonStatisticsGenerator.getEnhancement());
 		}
-		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance(prematureTermination);
+		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 	}
 
 	/**

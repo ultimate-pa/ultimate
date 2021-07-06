@@ -270,19 +270,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	protected abstract boolean refineAbstraction() throws AutomataLibraryException;
 
 	/**
-	 * In case error traces are not reported immediately, the analysis may terminate with an empty abstraction or may
-	 * run into termination issues, but it has already found out that the program contains errors. This method can be
-	 * used to ask for such results whenever the analysis terminates.
-	 *
-	 * @param errorGeneralizationEnabled
-	 *            {@code true} iff error generalization is enabled
-	 * @param abstractResult
-	 *            result that would be reported by {@link AbstractCegarLoop}
-	 * @return {@code true} if at least one feasible counterexample was detected
-	 */
-	protected abstract boolean isResultUnsafe(boolean errorGeneralizationEnabled, Result abstractResult);
-
-	/**
 	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
 	 * the control flow graph with invariants.
 	 */
