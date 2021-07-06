@@ -72,6 +72,21 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 	}
 
 	/**
+	 * Counts how many internal transitions have been computed.
+	 *
+	 * @param state
+	 *            The state whose cached internal transitions are counted
+	 * @return the number of distinct letters reported through {{@link #reportCachedInternal(Object, Object)}
+	 */
+	public int countCachedInternal(final STATE state) {
+		final Set<LETTER> cbs = mCachedInternal.get(state);
+		if (cbs == null) {
+			return 0;
+		}
+		return cbs.size();
+	}
+
+	/**
 	 * Checks whether a call transition has been computed.
 	 * 
 	 * @param state

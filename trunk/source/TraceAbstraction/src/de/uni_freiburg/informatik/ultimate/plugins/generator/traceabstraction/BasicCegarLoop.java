@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceS
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
@@ -405,17 +406,20 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	/**
-	 * Determines if the locations belonging to the given state are all hopeless. In this case, the state can be omitted
-	 * from the program automaton.
+	 * Determines if the locations belonging to the given marking are all hopeless. In this case, the state
+	 * corresponding to this marking can be omitted from the program automaton.
 	 */
-	private boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache, final IPredicate state) {
-		if (state instanceof ISLPredicate) {
-			return isLocationHopeless(hopelessCache, ((ISLPredicate) state).getProgramPoint());
-		} else if (state instanceof IMLPredicate) {
-			return Arrays.stream(((IMLPredicate) state).getProgramPoints())
-					.allMatch(l -> isLocationHopeless(hopelessCache, l));
+	private boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
+			final Marking<?, IPredicate> marking) {
+		for (final IPredicate place : marking) {
+			if (place instanceof ISLPredicate) {
+				final IcfgLocation location = ((ISLPredicate) place).getProgramPoint();
+				if (!isLocationHopeless(hopelessCache, location)) {
+					return false;
+				}
+			}
 		}
-		throw new IllegalArgumentException("Expected a predicate with locations, got " + state);
+		return true;
 	}
 
 	/**
