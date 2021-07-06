@@ -864,7 +864,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
 			final boolean useErrorAutomaton, final AutomatonType automatonType)
-			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
+			throws AutomataLibraryException, AssertionError {
 		try {
 			mLogger.debug("Start constructing difference");
 			final PowersetDeterminizer<L, IPredicate> psd =
@@ -896,17 +896,18 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				}
 			}
 
-			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE
-					&& mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
-				final INestedWordAutomaton<L, IPredicate> cfg = CFG2NestedWordAutomaton
-						.constructAutomatonWithSPredicates(getServices(), super.mIcfg, mStateFactoryForRefinement,
-								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
-				mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
-						mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
-						mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,
-						(IIcfg<IcfgLocation>) mIcfg);
+				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
+					final INestedWordAutomaton<L, IPredicate> cfg = CFG2NestedWordAutomaton
+							.constructAutomatonWithSPredicates(getServices(), super.mIcfg, mStateFactoryForRefinement,
+									super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
+					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
+							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
+							mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,
+							(IIcfg<IcfgLocation>) mIcfg);
+				}
 			}
 
 			if (mPref.dumpAutomata()) {
@@ -1227,19 +1228,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
 		}
-	}
-
-	@Override
-	protected boolean isResultUnsafe(final boolean errorGeneralizationEnabled, final Result abstractResult) {
-		if (!errorGeneralizationEnabled) {
-			return false;
-		}
-		final INestedWordAutomaton<L, IPredicate> cfg =
-				CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(getServices(), super.mIcfg,
-						mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
-		return mErrorGeneralizationEngine.isResultUnsafe(abstractResult, cfg, mCsToolkit, mPredicateFactory,
-				mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
-				mIcfg.getCfgSmtToolkit().getSymbolTable());
 	}
 
 	public void setWitnessAutomaton(

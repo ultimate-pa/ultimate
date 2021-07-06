@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ *
  */
 public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvider {
 
@@ -102,7 +103,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		 */
 		INFINITE,
 		/**
-		 * No information, execution was canceled.
+		 * No information.
 		 */
 		UNKNOWN
 	}
@@ -114,7 +115,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private boolean mRunningDifference = false;
 	private int mTraceLength = -1;
 	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
-	private EnhancementType mEnhancement;
+	private EnhancementType mEnhancement = EnhancementType.UNKNOWN;
 	private final Set<Integer> mLetters = new HashSet<>();
 	private int mLettersFirstTrace = -1;
 	private int mRelevantStatements;
@@ -237,22 +238,15 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
-	public void finishAutomatonInstance(final boolean prematureTermination) {
-		final long constructionTime;
-		final long differenceTime;
-		final int traceLength;
-		final EnhancementType enhancement;
-		if (prematureTermination) {
-			enhancement = EnhancementType.UNKNOWN;
-		} else {
-			if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
-				throw new IllegalAccessError("Not all statistics data were provided.");
-			}
-			enhancement = mEnhancement;
+	public void finishAutomatonInstance() {
+		if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
+			throw new IllegalAccessError("Not all statistics data were provided.");
 		}
-		constructionTime = getLastConstructionTime();
-		differenceTime = getLastDifferenceTime();
-		traceLength = mTraceLength;
+
+		final long constructionTime = getLastConstructionTime();
+		final long differenceTime = getLastDifferenceTime();
+		final int traceLength = mTraceLength;
+		final EnhancementType enhancement = mEnhancement;
 		mTraceLength = -1;
 		mAutomatonStatistics
 				.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength, enhancement));
@@ -368,9 +362,9 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return time;
 	}
 
-	private static <L extends IIcfgTransition<?>> NestedWordAutomaton<L, IPredicate>
-			constructStraightLineAutomaton(final IUltimateServiceProvider services, final IRun<L, ?> errorTrace,
-					final VpAlphabet<L> alphabet, final PredicateFactoryForInterpolantAutomata predicateFactory) {
+	private static <L extends IIcfgTransition<?>> NestedWordAutomaton<L, IPredicate> constructStraightLineAutomaton(
+			final IUltimateServiceProvider services, final IRun<L, ?> errorTrace, final VpAlphabet<L> alphabet,
+			final PredicateFactoryForInterpolantAutomata predicateFactory) {
 		final IInterpolantGenerator<L> ig = new StraightlineGenerator<>(errorTrace);
 		return new StraightLineInterpolantAutomatonBuilder<>(services, errorTrace.getWord(), alphabet,
 				Collections.singletonList(new TracePredicates(ig)), predicateFactory,
