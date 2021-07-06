@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inform
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
@@ -367,12 +366,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 				final var lockstep = (BetterLockstepOrder<?, IPredicate>) mPOR.getDfsOrder();
 				lockstep.transferOrder(state1, newState);
-			}
-
-			// Transfer cached persistent sets
-			if (mPOR.getPersistentSets() instanceof CachedPersistentSetChoice<?, ?>) {
-				final var cache = (CachedPersistentSetChoice<?, IPredicate>) mPOR.getPersistentSets();
-				cache.transferCachedInformation(state1, newState);
 			}
 
 			return newState;

@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -147,7 +148,8 @@ public class PartialOrderReductionFacade<L extends IAction> {
 				mMode.hasFixedOrder() ? (IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder : null;
 		return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
 				new ThreadBasedPersistentSets<>(mServices, icfg,
-						(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence, relevantOrder, errorLocs));
+						(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence, relevantOrder, errorLocs),
+				p -> ((IMLPredicate) p).getProgramPoints());
 	}
 
 	public IPersistentSetChoice<L, IPredicate> getPersistentSets() {

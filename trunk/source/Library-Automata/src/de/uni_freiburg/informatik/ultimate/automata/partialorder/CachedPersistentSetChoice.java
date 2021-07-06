@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -43,22 +44,28 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of states for which persistent sets are computed
  */
 public class CachedPersistentSetChoice<L, S> implements IPersistentSetChoice<L, S> {
-	private final Map<S, Set<L>> mCache = new HashMap<>();
+	private final Map<Object, Set<L>> mCache = new HashMap<>();
 	private final IPersistentSetChoice<L, S> mUnderlying;
+	private final Function<S, Object> mNormalizer;
 
 	/**
 	 * Creates a new instance that caches the results of an underlying implementation.
 	 *
 	 * @param underlying
 	 *            The underlying implementation of persistent sets
+	 * @param normalizer
+	 *            A function mapping a state to some object. States mapped to the same object will get the same
+	 *            persistent sets. Set to null if not needed.
 	 */
-	public CachedPersistentSetChoice(final IPersistentSetChoice<L, S> underlying) {
+	public CachedPersistentSetChoice(final IPersistentSetChoice<L, S> underlying,
+			final Function<S, Object> normalizer) {
 		mUnderlying = underlying;
+		mNormalizer = normalizer;
 	}
 
 	@Override
 	public Set<L> persistentSet(final S state) {
-		return mCache.computeIfAbsent(state, mUnderlying::persistentSet);
+		return mCache.computeIfAbsent(normalize(state), x -> mUnderlying.persistentSet(state));
 	}
 
 	@Override
@@ -68,21 +75,15 @@ public class CachedPersistentSetChoice<L, S> implements IPersistentSetChoice<L, 
 
 	@Override
 	public boolean ensuresCompatibility(final IDfsOrder<L, S> order) {
+		// Note: This is only correct if the normalizing function does not map states with different orders to the same
+		// objects.
 		return mUnderlying.ensuresCompatibility(order);
 	}
 
-	/**
-	 * Copies cached information from one state to the other.
-	 *
-	 * @param oldState
-	 *            A state for which a persistent set might already be cached
-	 * @param newState
-	 *            A state for which no persistent set is cached
-	 */
-	public void transferCachedInformation(final S oldState, final S newState) {
-		assert !mCache.containsKey(newState);
-		if (mCache.containsKey(oldState)) {
-			mCache.put(newState, mCache.get(oldState));
+	private Object normalize(final S state) {
+		if (mNormalizer == null) {
+			return state;
 		}
+		return mNormalizer.apply(state);
 	}
 }
