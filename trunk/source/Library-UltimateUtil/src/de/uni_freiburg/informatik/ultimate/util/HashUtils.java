@@ -18,6 +18,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.util;
 
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * This implements Jenkins und Hsieh hash functions. It is based on the code at
  * <a href="http://www.burtleburtle.net/bob/c/lookup3.c">http://www.burtleburtle.net/bob/c/lookup3.c</a>.
@@ -257,6 +261,31 @@ public final class HashUtils {
 		hash ^= hash << 25;
 		hash += hash >>> 6;
 		return hash;
+	}
+
+	/**
+	 * Computes a hash code for a set, that is more unique than Java's default hash code for sets (sum of element
+	 * hashes). This is especially useful when the hashes of set elements are close to each other (e.g. serial numbers),
+	 * to drastically reduce the number of collisions.
+	 *
+	 * Inspired by polynomial rolling hash functions for strings.
+	 *
+	 * @param set
+	 *            The set to hash
+	 * @return a hash code (for equal sets, the same value is returned)
+	 */
+	public static int hashSet(final Set<?> set) {
+		final int prime = 53;
+		final int mod = 1_000_000_009;
+
+		final var hashes = set.stream().map(Objects::hashCode).sorted().collect(Collectors.toList());
+		int result = 0;
+		int pot = 1;
+		for (final int hash : hashes) {
+			result += (hash * pot) % mod;
+			pot = (pot * prime) % mod;
+		}
+		return result;
 	}
 
 }

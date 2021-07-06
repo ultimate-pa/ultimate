@@ -32,10 +32,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * A marking of a Petri Net which is a set of places.
@@ -51,6 +53,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
 	private final Set<PLACE> mPlaces;
+	private final int mHashCode;
 
 	/**
 	 * Constructor.
@@ -59,7 +62,8 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 *            places
 	 */
 	public Marking(final Set<PLACE> places) {
-		mPlaces = places;
+		mPlaces = Objects.requireNonNull(places);
+		mHashCode = HashUtils.hashSet(places);
 	}
 
 	/**
@@ -138,8 +142,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		return prime + ((mPlaces == null) ? 0 : mPlaces.hashCode());
+		return mHashCode;
 	}
 
 	/**
@@ -156,18 +159,6 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 //		}
 		return mPlaces.containsAll(net.getPredecessors(transition));
 	}
-
-	/*
-	/**
-	 * Adds the places of another marking.
-	 *
-	 * @param other
-	 */
-	/*
-	public void add(Marking<LETTER, PLACE> other) {
-		mPlaces.addAll(other.mPlaces);
-	}
-	*/
 
 	/**
 	 * @param transition
@@ -190,22 +181,6 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 		return new Marking<>(resultSet);
 	}
 
-	/**
-	 * Revokes the occurrence of the specified transition if valid.
-	 *
-	 * @param transition
-	 *            transition
-	 * @return {@code true} iff all successor places are contained.
-	 */
-	public boolean undoTransition(final ITransition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
-		if (!mPlaces.containsAll(net.getSuccessors(transition))) {
-			return false;
-		}
-		mPlaces.removeAll(net.getSuccessors(transition));
-		mPlaces.addAll(net.getPredecessors(transition));
-		return true;
-	}
-
 	@Override
 	public String toString() {
 		return this.mPlaces.toString();
@@ -214,6 +189,4 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	public Stream<PLACE> stream() {
 		return mPlaces.stream();
 	}
-
-
 }
