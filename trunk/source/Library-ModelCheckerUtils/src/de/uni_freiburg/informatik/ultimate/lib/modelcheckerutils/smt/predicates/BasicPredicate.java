@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnno
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -91,7 +92,7 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 
 	@Override
 	public final int hashCode() {
-		return mSerialNumber;
+		return HashUtils.hashJenkins(31, mSerialNumber);
 	}
 
 	@Override

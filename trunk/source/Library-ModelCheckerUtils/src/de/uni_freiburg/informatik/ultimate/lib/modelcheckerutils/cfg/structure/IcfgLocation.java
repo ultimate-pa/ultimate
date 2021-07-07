@@ -55,6 +55,8 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 	@Visualizable
 	private final DebugIdentifier mDebugIdentifier;
 
+	private final int mHashCode;
+
 	/**
 	 *
 	 * @param debugIdentifier
@@ -67,6 +69,7 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 		super(payload);
 		mProcedure = procedure;
 		mDebugIdentifier = Objects.requireNonNull(debugIdentifier);
+		mHashCode = 3 * mDebugIdentifier.hashCode() + 5 * mProcedure.hashCode();
 	}
 
 	public IcfgLocation(final DebugIdentifier debugIdentifier, final String procedure) {
@@ -93,7 +96,7 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 
 	@Override
 	public int hashCode() {
-		return 3 * mDebugIdentifier.hashCode() + 5 * mProcedure.hashCode();
+		return mHashCode;
 	}
 
 	@Override
