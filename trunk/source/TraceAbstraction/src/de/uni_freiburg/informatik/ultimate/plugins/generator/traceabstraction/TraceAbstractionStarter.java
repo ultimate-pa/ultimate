@@ -283,9 +283,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final Set<IcfgLocation> errorLocs = partition.getValue();
 
 			final IUltimateServiceProvider services;
-			if (mPrefs.hasLimitAnalysisTime()) {
+			if (mPrefs.hasErrorLocTimeLimit()) {
 				services = progmon.registerChildTimer(mServices,
-						progmon.getTimer(mPrefs.getLimitAnalysisTime() * MILLISECONDS_PER_SECOND * errorLocs.size()));
+						progmon.getTimer(mPrefs.getErrorLocTimeLimit() * MILLISECONDS_PER_SECOND * errorLocs.size()));
 			} else {
 				services = mServices;
 			}

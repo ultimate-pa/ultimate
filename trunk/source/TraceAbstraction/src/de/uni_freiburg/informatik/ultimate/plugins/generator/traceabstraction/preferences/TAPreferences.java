@@ -75,7 +75,7 @@ public final class TAPreferences {
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
 	private final boolean mDumpOnlyReuseAutomata;
 	private final int mLimitTraceHistogram;
-	private final int mLimitAnalysisTime;
+	private final int mErrorLocTimeLimit;
 	private final int mLimitPathProgramCount;
 	private final boolean mCollectInterpolantStatistics;
 	private final boolean mHeuristicEmptinessCheck;
@@ -146,7 +146,7 @@ public final class TAPreferences {
 		mConcurrency = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
 
 		mLimitTraceHistogram = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TRACE_HISTOGRAM);
-		mLimitAnalysisTime = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
+		mErrorLocTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
 		mLimitPathProgramCount = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_PATH_PROGRAM);
 
 		mCollectInterpolantStatistics =
@@ -401,8 +401,8 @@ public final class TAPreferences {
 		return mLimitTraceHistogram;
 	}
 
-	public boolean hasLimitAnalysisTime() {
-		return mLimitAnalysisTime > 0;
+	public boolean hasErrorLocTimeLimit() {
+		return mErrorLocTimeLimit > 0;
 	}
 
 	public AcceleratedInterpolationLoopAccelerationTechnique getLoopAccelerationTechnique() {
@@ -414,8 +414,8 @@ public final class TAPreferences {
 	 * @return A positive integer that specifies a time limit in seconds for the analysis of an error location or zero
 	 *         if no limit is set.
 	 */
-	public int getLimitAnalysisTime() {
-		return mLimitAnalysisTime;
+	public int getErrorLocTimeLimit() {
+		return mErrorLocTimeLimit;
 	}
 
 	public boolean hasLimitPathProgramCount() {

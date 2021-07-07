@@ -482,6 +482,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	}
 
 	private IUltimateServiceProvider createTraceCheckTimer() {
+		if (!mPref.hasErrorLocTimeLimit()) {
+			// do not limit single counterexample if there is no limit on assert
+			return mServices;
+		}
 		final IProgressMonitorService pms = mServices.getProgressMonitorService();
 		final int remainingLocs = mResultBuilder.remainingErrorLocs();
 		if (remainingLocs == 0) {
