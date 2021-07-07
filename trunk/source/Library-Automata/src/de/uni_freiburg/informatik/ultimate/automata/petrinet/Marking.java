@@ -37,8 +37,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-
 /**
  * A marking of a Petri Net which is a set of places.
  *
@@ -63,7 +61,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 */
 	public Marking(final Set<PLACE> places) {
 		mPlaces = Objects.requireNonNull(places);
-		mHashCode = HashUtils.hashSet(places);
+		mHashCode = places.hashCode();
 	}
 
 	/**
