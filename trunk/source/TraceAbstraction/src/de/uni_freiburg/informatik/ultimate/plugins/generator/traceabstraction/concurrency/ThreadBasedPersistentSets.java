@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -264,15 +265,13 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 	private HashRelation<IcfgLocation, IcfgLocation> getDirectConflicts(final IMLPredicate state,
 			final Collection<IcfgLocation> locations, final HashRelation<IcfgLocation, IcfgEdge> enabledActions) {
-		final Comparator<IcfgEdge> order = mOrder == null ? null : mOrder.getOrder(state);
-
 		final HashRelation<IcfgLocation, IcfgLocation> result = new HashRelation<>();
+		collectCompatibilityConflicts(state, enabledActions, result);
+
 		for (final IcfgLocation persistentLoc : locations) {
 			for (final IcfgLocation otherLoc : locations) {
-				final boolean compConflict =
-						order != null && hasCompatibilityConflict(enabledActions, order, persistentLoc, otherLoc);
-				if (compConflict || hasCommutativityConflict(persistentLoc, otherLoc)
-						|| hasErrorConflict(persistentLoc, otherLoc) || hasJoinConflict(persistentLoc, otherLoc)) {
+				if (hasCommutativityConflict(persistentLoc, otherLoc) || hasErrorConflict(persistentLoc, otherLoc)
+						|| hasJoinConflict(persistentLoc, otherLoc)) {
 					result.addPair(persistentLoc, otherLoc);
 				}
 			}
@@ -309,16 +308,23 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		return newConflicts;
 	}
 
-	private static boolean hasCompatibilityConflict(final HashRelation<IcfgLocation, IcfgEdge> enabledActions,
-			final Comparator<IcfgEdge> comp, final IcfgLocation persistentLoc, final IcfgLocation otherLoc) {
-		final Set<IcfgEdge> otherActions = enabledActions.getImage(otherLoc);
-		if (otherActions.isEmpty()) {
-			return false;
+	private void collectCompatibilityConflicts(final IPredicate state,
+			final HashRelation<IcfgLocation, IcfgEdge> enabledActions,
+			final HashRelation<IcfgLocation, IcfgLocation> conflicts) {
+		if (mOrder == null) {
+			return;
 		}
-		final Set<IcfgEdge> persistentActions = enabledActions.getImage(persistentLoc);
 
-		return persistentActions.stream().anyMatch(persistentAction -> otherActions.stream()
-				.anyMatch(otherAction -> comp.compare(persistentAction, otherAction) >= 0));
+		final Comparator<IcfgEdge> order = mOrder.getOrder(state);
+		final ArrayList<IcfgEdge> list = new ArrayList<>();
+		for (final Map.Entry<?, HashSet<IcfgEdge>> entry : enabledActions.entrySet()) {
+			list.addAll(entry.getValue());
+		}
+		list.sort(order);
+
+		for (int i = 0; i < list.size() - 1; ++i) {
+			conflicts.addPair(list.get(i + 1).getSource(), list.get(i).getSource());
+		}
 	}
 
 	private boolean hasCommutativityConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc) {
