@@ -1186,14 +1186,17 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 		final INestedWordAutomaton<L, IPredicate> abstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		new HoareAnnotationExtractor<>(getServices(), abstraction, mHaf);
-		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf,
-				getServices(), mSimplificationTechnique, mXnfConversionTechnique);
-		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
-				getServices(), mSimplificationTechnique, mXnfConversionTechnique);
-		writer.addHoareAnnotationToCFG();
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
+		try {
+			new HoareAnnotationExtractor<>(getServices(), abstraction, mHaf);
+			final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf,
+					getServices(), mSimplificationTechnique, mXnfConversionTechnique);
+			final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
+					getServices(), mSimplificationTechnique, mXnfConversionTechnique);
+			writer.addHoareAnnotationToCFG();
+			mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
+		}
 	}
 
 	@Override
