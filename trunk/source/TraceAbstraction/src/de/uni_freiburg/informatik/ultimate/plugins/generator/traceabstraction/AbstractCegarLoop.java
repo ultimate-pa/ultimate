@@ -381,22 +381,22 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 						automatonType = "Error";
 						constructErrorAutomaton(isCounterexampleFeasible);
 					} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
+						final Result actualResult;
 						if (programExecution != null) {
 							final UnprovabilityReason reasonUnknown =
 									new UnprovabilityReason("unable to decide satisfiability of path constraint");
-							mResultBuilder.addResultForProgramExecution(Result.UNKNOWN, programExecution, null,
+							actualResult = Result.UNKNOWN;
+							mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null,
 									reasonUnknown);
 						} else {
 							final IcfgLocation loc =
 									mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
-							final UnprovabilityReason reasonUnknown =
-									new UnprovabilityReason("timeout during trace check");
-
-							mResultBuilder.addResult(loc, Result.UNKNOWN, null, null, reasonUnknown);
+							actualResult = Result.TIMEOUT;
+							mResultBuilder.addResult(loc, actualResult, null, null, null);
 						}
 
 						if (mPref.stopAfterFirstViolation()) {
-							return mResultBuilder.addResultForAllRemaining(Result.UNKNOWN).getResult();
+							return mResultBuilder.addResultForAllRemaining(actualResult).getResult();
 						}
 						if (mLogger.isInfoEnabled()) {
 							mLogger.warn("Generalizing and excluding unknown counterexample to continue analysis");
@@ -612,6 +612,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		public static final Set<Result> USER_LIMIT_RESULTS =
 				EnumSet.of(USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM);
 
+		public boolean isLimit() {
+			return this == TIMEOUT || USER_LIMIT_RESULTS.contains(this);
+		}
+
 		public static final Result convert(final TaskCanceledException.UserDefinedLimit limit) {
 			switch (limit) {
 			case ITERATIONS:
@@ -655,7 +659,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		public CegarLoopResultBuilder addResult(final IcfgLocation loc, final Result result,
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
-
 			final IProgramExecution<L, Term> programExecution;
 			if (result == Result.UNSAFE || result == Result.UNKNOWN) {
 				programExecution = rcfgProgramExecution;
@@ -685,9 +688,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			}
 
 			final IRunningTaskStackProvider runningTaskStackProvider;
-			if (result == Result.TIMEOUT || result == Result.USER_LIMIT_ITERATIONS
-					|| result == Result.USER_LIMIT_PATH_PROGRAM || result == Result.USER_LIMIT_TIME
-					|| result == Result.USER_LIMIT_TRACEHISTOGRAM) {
+			if (result.isLimit()) {
 				runningTaskStackProvider = rtsp;
 			} else {
 				runningTaskStackProvider = null;
