@@ -82,6 +82,8 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	protected final ArrayList<COMP> mSCCs = new ArrayList<>();
 	private int mNumberOfNonBallSCCs = 0;
 
+	private Map<COMP, Set<COMP>> mAdjacenceMatrix;
+
 	public SccComputation(final ILogger logger, final ISuccessorProvider<NODE> successorProvider,
 			final IStronglyConnectedComponentFactory<NODE, COMP> sccFac, final int numberOfAllNodes,
 			final Set<NODE> startNodes) {
@@ -105,10 +107,11 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 
 	/***
 	 * Get a map of nodes to their corresponding components in the SCCs.
+	 *
 	 * @return
 	 */
 	public Map<NODE, COMP> getNodeToComponents() {
-		final Map<NODE, COMP>componentOf = new HashMap<>();
+		final Map<NODE, COMP> componentOf = new HashMap<>();
 		for (final COMP comp : getSCCs()) {
 			for (final NODE pred : comp.getNodes()) {
 				componentOf.put(pred, comp);
@@ -129,31 +132,40 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	 * @return
 	 */
 	public ISuccessorProvider<COMP> getComponentsSuccessorsProvider() {
+		if (mAdjacenceMatrix == null) {
+			mAdjacenceMatrix = computeAdjacenceMatrix();
+		}
+		return node -> mAdjacenceMatrix.get(node).iterator();
+	}
 
+	private Map<COMP, Set<COMP>> computeAdjacenceMatrix() {
 		final Map<NODE, COMP> componentOf = getNodeToComponents();
 		final Map<COMP, Set<COMP>> adjComp = new HashMap<>();
 
-		for (final COMP comp : getSCCs()) {
-			if (!adjComp.containsKey(comp)) {
-				adjComp.put(comp, new HashSet<>());
-			}
-		}
-		for (final NODE source : mIndices.keySet()) {
-			final COMP comp = componentOf.get(source);
-			for (final NODE target : CombinatoricsUtils.iterateAll(mSuccessorProvider.getSuccessors(source))) {
-				final COMP targetComp = componentOf.get(target);
-				if (!comp.equals(targetComp)) {
-					adjComp.get(comp).add(targetComp);
+		final List<COMP> sccs = getSCCs();
+		final int maxNeighbours = sccs.size() - 1;
+
+		for (final COMP comp : sccs) {
+			assert !adjComp.containsKey(comp);
+			final HashSet<COMP> successors = new HashSet<>();
+			adjComp.put(comp, successors);
+
+			for (final NODE source : comp.getNodes()) {
+				for (final NODE target : CombinatoricsUtils.iterateAll(mSuccessorProvider.getSuccessors(source))) {
+					final COMP targetComp = componentOf.get(target);
+					if (!comp.equals(targetComp)) {
+						successors.add(targetComp);
+					}
+				}
+
+				if (successors.size() >= maxNeighbours) {
+					// already connected to all components
+					break;
 				}
 			}
 		}
-		return new ISuccessorProvider<COMP>() {
 
-			@Override
-			public Iterator<COMP> getSuccessors(final COMP node) {
-				return adjComp.get(node).iterator();
-			}
-		};
+		return adjComp;
 	}
 
 	/***
