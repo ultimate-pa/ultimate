@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
  */
 public class ReflectionUtil {
 
-	private final static ExposedSecurityManager EXPOSED_SECURITY_MANAGER = new ExposedSecurityManager();
+	private static final ExposedSecurityManager EXPOSED_SECURITY_MANAGER = new ExposedSecurityManager();
 
 	private ReflectionUtil() {
 		// do not instantiate utility class
@@ -279,6 +279,10 @@ public class ReflectionUtil {
 			val = "IAcE";
 		}
 		return String.format("%s=%s", f.getName(), val);
+	}
+
+	public static String printableStackTrace() {
+		return Arrays.toString(Thread.currentThread().getStackTrace());
 	}
 
 	/**
