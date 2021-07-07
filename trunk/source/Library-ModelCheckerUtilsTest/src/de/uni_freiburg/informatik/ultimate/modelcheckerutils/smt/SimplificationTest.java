@@ -39,6 +39,7 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -584,8 +585,11 @@ public class SimplificationTest {
 		logger.info("CDC code input:  " + CondisDepthCode.of(unf));
 		logger.info("CDC code output: " + CondisDepthCode.of(result));
 		if (expectedResultAsString != null) {
+			final CommuhashNormalForm cnft = new CommuhashNormalForm(services, mgdScript.getScript());
+			final Term cnfResult = cnft.transform(result);
 			final Term expectedResultAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString);
-			MatcherAssert.assertThat(result, IsEqual.equalTo(expectedResultAsTerm));
+			final Term cnfExpectedResultAsTerm = cnft.transform(expectedResultAsTerm);
+			MatcherAssert.assertThat(cnfResult, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
 		checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
 	}
