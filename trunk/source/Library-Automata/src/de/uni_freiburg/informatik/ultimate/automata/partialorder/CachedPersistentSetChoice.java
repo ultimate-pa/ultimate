@@ -65,7 +65,16 @@ public class CachedPersistentSetChoice<L, S> implements IPersistentSetChoice<L, 
 
 	@Override
 	public Set<L> persistentSet(final S state) {
-		return mCache.computeIfAbsent(normalize(state), x -> mUnderlying.persistentSet(state));
+		final Object key = normalize(state);
+
+		// Note: Must not be replaced with mCache.computeIfAbsent - need to distinguish between "not cached" and "null".
+		if (mCache.containsKey(key)) {
+			return mCache.get(key);
+		}
+
+		final Set<L> result = mUnderlying.persistentSet(state);
+		mCache.put(key, result);
+		return result;
 	}
 
 	@Override
