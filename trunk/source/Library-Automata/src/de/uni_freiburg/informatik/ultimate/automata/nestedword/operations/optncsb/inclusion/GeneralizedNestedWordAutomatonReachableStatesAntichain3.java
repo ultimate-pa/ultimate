@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 
-
 /**
  * A nested word automaton with reachable states information.
  *
@@ -65,26 +64,28 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
  * @param <STATE>
  *            state type
  */
-public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STATE> extends AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> {
-	
+public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STATE>
+		extends AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> {
+
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
 	private final ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> mSndOperand;
 
 	private final Map<STATE, ProductStateContainer> mStates = new HashMap<>();
-	
+
 	private final Map<STATE, Map<STATE, ProductStateContainer>> mFst2snd2res = new HashMap<>();
-	
+
 	private final ReachableStatesComputation mReach;
-		
+
 	private final IBuchiIntersectStateFactory<STATE> mStateFactory;
 	private final STATE mEmptyStackState;
 	private final int mAcceptanceSize;
 	private static int mNumber = 0;
-	
-	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedNestedWordAutomatonReachableStatesAntichain3(final AutomataLibraryServices services,
+
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedNestedWordAutomatonReachableStatesAntichain3(
+			final AutomataLibraryServices services,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
-			final ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> sndOperand,
-			final FACTORY stateFactory) throws AutomataLibraryException {
+			final ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> sndOperand, final FACTORY stateFactory)
+			throws AutomataLibraryException {
 		super(services, fstOperand.getVpAlphabet());
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
@@ -108,99 +109,102 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(stateContainerInformation());
 		}
-		
+
 		final boolean dumpFile = true;
-		if(dumpFile) {
-			mNumber ++;
+		if (dumpFile) {
+			mNumber++;
 			GeneralizedBuchiToBuchi<LETTER, STATE> gba2ba = new GeneralizedBuchiToBuchi<>(stateFactory, mFstOperand);
-			new AutomatonDefinitionPrinter<String, String>(mServices, "Program",
-					"./program" + mNumber, Format.BA, "", gba2ba);
-			new AutomatonDefinitionPrinter<String, String>(mServices, "Complement",
-					"./complement" + mNumber, Format.BA, "", mSndOperand);
+			new AutomatonDefinitionPrinter<String, String>(mServices, "Program", "./program" + mNumber, Format.BA, "",
+					gba2ba);
+			new AutomatonDefinitionPrinter<String, String>(mServices, "Complement", "./complement" + mNumber, Format.BA,
+					"", mSndOperand);
 			gba2ba = new GeneralizedBuchiToBuchi<>(stateFactory, this);
-			new AutomatonDefinitionPrinter<String, String>(mServices, "Difference",
-					"./difference" + mNumber, Format.BA, "", gba2ba);
+			new AutomatonDefinitionPrinter<String, String>(mServices, "Difference", "./difference" + mNumber, Format.BA,
+					"", gba2ba);
 		}
 	}
-	
+
 	@Override
-	protected StateContainer<LETTER, STATE> getStateContainer(STATE state) {
+	protected StateContainer<LETTER, STATE> getStateContainer(final STATE state) {
 		return mStates.get(state);
 	}
-	
+
 	private String stateContainerInformation() {
 		return mStates.size() + " StateContainers ";
 	}
-	
+
 	@Override
 	public Boolean isEmpty() {
 		return mReach.mIsEmpty;
 	}
-	
+
 	private NestedLassoRun<LETTER, STATE> mLasso = null;
-	
+
 	// have to use information in tarjan
+	@Override
 	public NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws AutomataOperationCanceledException {
-		if(mReach.mIsEmpty) return null;
+		if (mReach.mIsEmpty) {
+			return null;
+		}
 		// construct lasso run
-		if(mLasso == null) {
-			for(List<STATE> scc : mReach.mSccList) {
-				LassoConstructor<LETTER, STATE> lc = new LassoConstructor<>(mServices, this, scc);
-				NestedLassoRun<LETTER, STATE> lasso = lc.getNestedLassoRun();
-				if(mLasso == null
-				|| (mLasso.getStem().getLength() + mLasso.getLoop().getLength()
-						> lasso.getStem().getLength() + lasso.getLoop().getLength())) {
+		if (mLasso == null) {
+			for (final List<STATE> scc : mReach.mSccList) {
+				final LassoConstructor<LETTER, STATE> lc = new LassoConstructor<>(mServices, this, scc);
+				final NestedLassoRun<LETTER, STATE> lasso = lc.getNestedLassoRun();
+				if (mLasso == null || mLasso.getStem().getLength()
+						+ mLasso.getLoop().getLength() > lasso.getStem().getLength() + lasso.getLoop().getLength()) {
 					mLasso = lasso;
 				}
 			}
 		}
 		return mLasso;
 	}
-	
+
 	@Override
-	protected void removeStates(STATE state) {
-		
+	protected void removeStates(final STATE state) {
+
 	}
+
 	/**
 	 * We use Antichain to reduce some states in reachability analysis
-	 * */
+	 */
 	class ReachableStatesComputation {
-		
-        private int mDepth;
-        private final Stack<AsccPair<LETTER, STATE>> mRootsStack;
-        private final Map<STATE, Integer> mDfsNum;
-        private final Stack<STATE> mActiveStack;
-        private List<LinkedList<STATE>> mSccList; 
-        private Boolean mIsEmpty = null;
-                
-        private final Antichain mAntichain; // some kind of empty sets
-        
+
+		private int mDepth;
+		private final Stack<AsccPair<LETTER, STATE>> mRootsStack;
+		private final Map<STATE, Integer> mDfsNum;
+		private final Stack<STATE> mActiveStack;
+		private final List<LinkedList<STATE>> mSccList;
+		private Boolean mIsEmpty = null;
+
+		private final Antichain mAntichain; // some kind of empty sets
+
 		public ReachableStatesComputation() throws AutomataOperationCanceledException {
 			mNumberOfConstructedStates = 0;
 			computeInitialStates();
-			
+
 			mDepth = 0;
 			mDfsNum = new HashMap<>();
 			mActiveStack = new Stack<>();
 			mSccList = new ArrayList<>();
 			mRootsStack = new Stack<>();
 			mAntichain = new Antichain();
-			
+
 			// initialize
-			for(STATE state : getInitialStates()) {
-                if(! mDfsNum.containsKey(state)){
-                    construct(state);
-                }
-            }
-			
-			if(mIsEmpty == null) {
+			for (final STATE state : getInitialStates()) {
+				if (!mDfsNum.containsKey(state)) {
+					construct(state);
+				}
+			}
+
+			if (mIsEmpty == null) {
 				mIsEmpty = true;
 			}
-			
-			for(STATE state : mAntichain.getStates()) {
+
+			for (final STATE state : mAntichain.getStates()) {
 				mStates.remove(state);
 			}
-			
+
 		}
 
 		private void computeInitialStates() {
@@ -214,165 +218,167 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 
 		/**
 		 * Use the kind of style by Matthias to get or construct new state
-		 * */
-		private STATE getOrConstructState(STATE fst, STATE snd) {
+		 */
+		private STATE getOrConstructState(final STATE fst, final STATE snd) {
 			Map<STATE, ProductStateContainer> snd2Res = mFst2snd2res.get(fst);
-			if(snd2Res == null) {
+			if (snd2Res == null) {
 				snd2Res = new HashMap<>();
 				mFst2snd2res.put(fst, snd2Res);
 			}
 			ProductStateContainer prodStateCont = snd2Res.get(snd);
-			if(prodStateCont == null) {
+			if (prodStateCont == null) {
 				final STATE res = mStateFactory.intersectBuchi(fst, snd, 1);
-				ProductState prodState = new ProductState(fst, snd, res);
+				final ProductState prodState = new ProductState(fst, snd, res);
 				prodState.setAcceptanceSet(computeAcceptance(fst, snd));
-				prodStateCont = new ProductStateContainer(res, prodState); 
+				prodStateCont = new ProductStateContainer(res, prodState);
 				snd2Res.put(snd, prodStateCont);
 				mStates.put(res, prodStateCont);
-				if(!prodState.mAcceptanceSet.isEmpty()) {
+				if (!prodState.mAcceptanceSet.isEmpty()) {
 					mFinalStates.add(res);
 				}
-				mNumberOfConstructedStates ++;
+				mNumberOfConstructedStates++;
 			}
 			return prodStateCont.getState();
 		}
-		
-		private Set<Integer> computeAcceptance(STATE fst, STATE snd) {
+
+		private Set<Integer> computeAcceptance(final STATE fst, final STATE snd) {
 			final Set<Integer> acc = new HashSet<>();
-			Set<Integer> fstAcc = mFstOperand.getAcceptanceLabels(fst);		
-			for(Integer index : fstAcc) {
-				acc.add(index);
+			final Set<Integer> fstAcc = mFstOperand.getAcceptanceLabels(fst);
+			acc.addAll(fstAcc);
+			final int fstSize = mFstOperand.getAcceptanceSize();
+			if (mSndOperand.isFinal(snd)) {
+				acc.add(fstSize);
 			}
-			int fstSize = mFstOperand.getAcceptanceSize();
-			if(mSndOperand.isFinal(snd)) acc.add(fstSize);
-			
-			if(acc.isEmpty()) return Collections.emptySet();
+
+			if (acc.isEmpty()) {
+				return Collections.emptySet();
+			}
 			return acc;
 		}
+
 		// here the local variable is_nonempty is useful to identify states which have empty languages
 		// empty is Antichain to store empty states (have empty languages)
-		// 
-		boolean construct(STATE state) throws AutomataOperationCanceledException {
-            
-			ProductStateContainer prodStateCont = mStates.get(state);
+		//
+		boolean construct(final STATE state) throws AutomataOperationCanceledException {
+
+			final ProductStateContainer prodStateCont = mStates.get(state);
 			boolean notEmpty = false;
-			mDepth ++;
-            mDfsNum.put(state, mDepth);
-            mActiveStack.push(state);
-            mRootsStack.push(new AsccPair<>(state, prodStateCont.mProdState.getAcceptanceSet()));
-            
-            for(final OutgoingInternalTransition<LETTER, STATE> fstTrans : mFstOperand
-            		.internalSuccessors(prodStateCont.mProdState.getFst())) {
-            	for(final OutgoingInternalTransition<LETTER, STATE> sndTrans : mSndOperand
-            				.internalSuccessors(prodStateCont.mProdState.getSnd(), fstTrans.getLetter())) {
-            		if (! getServices().getProgressAwareTimer().continueProcessing()) {
+			mDepth++;
+			mDfsNum.put(state, mDepth);
+			mActiveStack.push(state);
+			mRootsStack.push(new AsccPair<>(state, prodStateCont.mProdState.getAcceptanceSet()));
+
+			for (final OutgoingInternalTransition<LETTER, STATE> fstTrans : mFstOperand
+					.internalSuccessors(prodStateCont.mProdState.getFst())) {
+				for (final OutgoingInternalTransition<LETTER, STATE> sndTrans : mSndOperand
+						.internalSuccessors(prodStateCont.mProdState.getSnd(), fstTrans.getLetter())) {
+					if (!getServices().getProgressAwareTimer().continueProcessing()) {
 						final RunningTaskInfo rti = constructRunningTaskInfo();
 						throw new AutomataOperationCanceledException(rti);
 					}
-            		STATE succState = getOrConstructState(fstTrans.getSucc(), sndTrans.getSucc());
-            		ProductState succProd = mStates.get(succState).getProd();
-            		prodStateCont.addInternalOutgoing(new OutgoingInternalTransition<>(fstTrans.getLetter(), succState));
-            		mStates.get(succState).addInternalIncoming(new IncomingInternalTransition<>(state, fstTrans.getLetter()));
-            		if(mAntichain.covers(succProd)) {
-            			continue;
-            		}
-            		if(! mDfsNum.containsKey(succState)) {
-            			// whether there is accepting loop in the following
-//            			notEmpty |= construct(succState);
-            			notEmpty = construct(succState) || notEmpty;
-            		}else if(mActiveStack.contains(succState)) {
-            			Set<Integer> labels = new HashSet<>();
-                        STATE topState;
-                        do {
-                        	AsccPair<LETTER, STATE> pair = mRootsStack.pop();
-                        	topState = pair.mState;
-                        	labels.addAll(pair.mLabels);
-                            if(labels.size() == getAcceptanceSize()) {
-                                notEmpty = true;
-                            }
-                        }while(mDfsNum.get(topState) > mDfsNum.get(succState));
-                        mRootsStack.push(new AsccPair<>(topState, labels));
-            		}
-            	}
-            }
-            if(mRootsStack.peek().mState.equals(state)){
-                AsccPair<LETTER, STATE> pair = mRootsStack.pop(); // remove the root
-                STATE topState;
-                LinkedList<STATE> scc = new LinkedList<>();
-                do {
-                    if(mActiveStack.isEmpty()) break;
-                    // pop all states in the same SCC
-                    topState = mActiveStack.pop();
-                    scc.add(topState);
-                    if(!notEmpty) { // empty language
-                    	mAntichain.addState(mStates.get(topState).mProdState);
-//                    	// remove all incoming transitions to topState
-                    	ProductStateContainer cont = mStates.get(topState);
-                    	Set<STATE> pred = new HashSet<>();
-                    	for(IncomingInternalTransition<LETTER, STATE> trans : cont.internalPredecessors()) {
-                    		ProductStateContainer predCont = mStates.get(trans.getPred());
-                    		predCont.removeSuccessor(topState);
-                    		pred.add(trans.getPred());
-                    	}
-                    	cont.removePredecessors(pred);
-                    }
-                }while(!topState.equals(state)); 
-                // whether there is accepting loop
-                if(pair.mLabels.size() == getAcceptanceSize()) {
-                	if(scc.size() > 1
-                	|| prodStateCont.hashSelfloop()) {
-                		mSccList.add(scc);
-                        mIsEmpty = false;
-                	}
-                }
-            }
-            return notEmpty;
+					final STATE succState = getOrConstructState(fstTrans.getSucc(), sndTrans.getSucc());
+					final ProductState succProd = mStates.get(succState).getProd();
+					prodStateCont
+							.addInternalOutgoing(new OutgoingInternalTransition<>(fstTrans.getLetter(), succState));
+					mStates.get(succState)
+							.addInternalIncoming(new IncomingInternalTransition<>(state, fstTrans.getLetter()));
+					if (mAntichain.covers(succProd)) {
+						continue;
+					}
+					if (!mDfsNum.containsKey(succState)) {
+						// whether there is accepting loop in the following
+						// notEmpty |= construct(succState);
+						notEmpty = construct(succState) || notEmpty;
+					} else if (mActiveStack.contains(succState)) {
+						final Set<Integer> labels = new HashSet<>();
+						STATE topState;
+						do {
+							final AsccPair<LETTER, STATE> pair = mRootsStack.pop();
+							topState = pair.mState;
+							labels.addAll(pair.mLabels);
+							if (labels.size() == getAcceptanceSize()) {
+								notEmpty = true;
+							}
+						} while (mDfsNum.get(topState) > mDfsNum.get(succState));
+						mRootsStack.push(new AsccPair<>(topState, labels));
+					}
+				}
+			}
+			if (mRootsStack.peek().mState.equals(state)) {
+				final AsccPair<LETTER, STATE> pair = mRootsStack.pop(); // remove the root
+				STATE topState;
+				final LinkedList<STATE> scc = new LinkedList<>();
+				do {
+					if (mActiveStack.isEmpty()) {
+						break;
+					}
+					// pop all states in the same SCC
+					topState = mActiveStack.pop();
+					scc.add(topState);
+					if (!notEmpty) { // empty language
+						mAntichain.addState(mStates.get(topState).mProdState);
+						// // remove all incoming transitions to topState
+						final ProductStateContainer cont = mStates.get(topState);
+						final Set<STATE> pred = new HashSet<>();
+						for (final IncomingInternalTransition<LETTER, STATE> trans : cont.internalPredecessors()) {
+							final ProductStateContainer predCont = mStates.get(trans.getPred());
+							predCont.removeSuccessor(topState);
+							pred.add(trans.getPred());
+						}
+						cont.removePredecessors(pred);
+					}
+				} while (!topState.equals(state));
+				// whether there is accepting loop
+				if (pair.mLabels.size() == getAcceptanceSize()) {
+					if (scc.size() > 1 || prodStateCont.hashSelfloop()) {
+						mSccList.add(scc);
+						mIsEmpty = false;
+					}
+				}
+			}
+			return notEmpty;
 		}
 	}
-	
+
 	private class AsccPair<LETTER, STATE> {
 		final STATE mState;
 		final Set<Integer> mLabels;
-		
-		AsccPair(STATE state, Set<Integer> labels) {
+
+		AsccPair(final STATE state, final Set<Integer> labels) {
 			this.mState = state;
 			this.mLabels = labels;
 		}
-		
+
 		@Override
-		public boolean equals(Object obj) {
-			if(this == obj) return true;
-			if(!(obj instanceof AsccPair)) {
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (!(obj instanceof AsccPair)) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")
-			AsccPair<LETTER, STATE> other = (AsccPair<LETTER, STATE>)obj;
-			return mState.equals(other.mState)
-			   &&  mLabels.equals(other.mLabels);
+			final AsccPair<LETTER, STATE> other = (AsccPair<LETTER, STATE>) obj;
+			return mState.equals(other.mState) && mLabels.equals(other.mLabels);
 		}
-		
+
 		@Override
 		public int hashCode() {
 			return mState.hashCode() + mLabels.hashCode();
 		}
 	}
-	
-	// -----------------------------------------------------------
 
+	// -----------------------------------------------------------
 
 	private AutomataLibraryServices getServices() {
 		return mServices;
 	}
 
-
 	private RunningTaskInfo constructRunningTaskInfo() {
-		final String taskDescription = "computing reachable states (" + mNumberOfConstructedStates
-				+ " states constructed" + "input type " + this.getClass().getSimpleName() + ")";
-		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-		return rti;
+		final String taskDescription = constructRunningTaskInfoMessage(mNumberOfConstructedStates, getClass());
+		return new RunningTaskInfo(getClass(), taskDescription);
 	}
 
-	
 	@Override
 	public Set<STATE> getStates() {
 		return mStates.keySet();
@@ -388,25 +394,25 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 		return Collections.unmodifiableSet(mFinalStates);
 	}
 
-
 	@Override
-	public Set<LETTER> lettersInternalIncoming(STATE state) {
+	public Set<LETTER> lettersInternalIncoming(final STATE state) {
 		return mStates.get(state).lettersInternalIncoming();
 	}
 
-
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(STATE succ, LETTER letter) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
+			final LETTER letter) {
 		return mStates.get(succ).internalPredecessors(letter);
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(STATE succ) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
 		return mStates.get(succ).internalPredecessors();
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(STATE state, LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		return mStates.get(state).internalSuccessors(letter);
 	}
 
@@ -431,10 +437,9 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 	}
 
 	@Override
-	public boolean isInitial(STATE state) {
+	public boolean isInitial(final STATE state) {
 		return mInitialStates.contains(state);
 	}
-
 
 	@Override
 	public int getAcceptanceSize() {
@@ -442,38 +447,37 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 	}
 
 	@Override
-	public boolean isFinal(STATE state, int index) {
+	public boolean isFinal(final STATE state, final int index) {
 		return mStates.get(state).mProdState.mAcceptanceSet.contains(index);
 	}
 
 	@Override
-	public Set<Integer> getAcceptanceLabels(STATE state) {
+	public Set<Integer> getAcceptanceLabels(final STATE state) {
 		return mStates.get(state).mProdState.mAcceptanceSet;
 	}
-	
 
 	@Override
-	public boolean isFinal(STATE state) {
+	public boolean isFinal(final STATE state) {
 		return !getAcceptanceLabels(state).isEmpty();
 	}
 
-	
-	//------------------------------------------------------
+	// ------------------------------------------------------
 	private class ProductStateContainer extends StateContainer<LETTER, STATE> {
 		ProductState mProdState;
-		public ProductStateContainer(STATE state, ProductState prod) {
+
+		public ProductStateContainer(final STATE state, final ProductState prod) {
 			super(state);
 			mProdState = prod;
 		}
-		
+
 		ProductState getProd() {
 			return mProdState;
 		}
 	}
-	
+
 	/**
 	 * Product state for Generalized Buchi automata.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @author liyong
 	 */
@@ -500,85 +504,87 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 		public STATE getRes() {
 			return mRes;
 		}
-		
-		public void setAcceptanceSet(Set<Integer> acceptance) {
+
+		public void setAcceptanceSet(final Set<Integer> acceptance) {
 			mAcceptanceSet = acceptance;
 		}
-		
-		public boolean coveredBy(ProductState other) {
-			return mFst.equals(other.mFst)
-			   && mSndOperand.coveredBy(mSnd, other.mSnd);
+
+		public boolean coveredBy(final ProductState other) {
+			return mFst.equals(other.mFst) && mSndOperand.coveredBy(mSnd, other.mSnd);
 		}
-		
+
 		public Set<Integer> getAcceptanceSet() {
 			return mAcceptanceSet;
 		}
 
 		@Override
 		public String toString() {
-			return "<" + mFst.toString() + "," + mSnd.toString() + "," + mAcceptanceSet.toString() +  ">";
+			return "<" + mFst.toString() + "," + mSnd.toString() + "," + mAcceptanceSet.toString() + ">";
 		}
 	}
-	
+
 	// ----------------------------------------------------
 	private class Antichain {
-	    private final Map<STATE, List<ProductState>> mResStateMap;
-	    
-	    public Antichain() {
-	    	mResStateMap = new HashMap<>();
-	    }
-	    
-	    Set<STATE> getStates() {
-	    	return mResStateMap.keySet();
-	    }
-	    
-	    public boolean addState(ProductState state) {
-	        
-	        final STATE fstState = state.getFst();
-	        List<ProductState> sndElem = mResStateMap.get(fstState);
-	        
-	        if(sndElem == null) {
-	            sndElem = new ArrayList<>();
-	        }
-	        List<ProductState> copy = new ArrayList<>();
-	        //avoid to add pairs are covered by other pairs
-	        for(int i = 0; i < sndElem.size(); i ++) {
-	            ProductState elem = sndElem.get(i);
-	            //pairs covered by the new pair
-	            //will not be kept in copy
-	            if(elem.coveredBy(state)) {
-	                continue;
-	            }else if(state.coveredBy(elem)) {
-	                return false;
-	            }
-	            copy.add(elem);
-	        }
-	        
-	        copy.add(state); // should add snd
-	        mResStateMap.put(fstState, copy);
-	        return true;
-	    }
-	    
-	    public boolean covers(ProductState state) {
-	        List<ProductState> sndElem = mResStateMap.get(state.getFst());
-	        if(sndElem == null) return false;
-	        for(int i = 0; i < sndElem.size(); i ++) {
-	        	ProductState elem = sndElem.get(i);
-	            if(state.coveredBy(elem)) { // no need to add it
-	                return true;
-	            }
-	        }
-	        return false;
-	    }
-	    
-	    public String toString() {
-	        StringBuilder sb = new StringBuilder();
-	        for(Entry<STATE, List<ProductState>> entry : mResStateMap.entrySet()) {
-	            sb.append(entry.getKey() + " -> " + entry.getValue() + "\n");
-	        }
-	        return sb.toString();
-	    }
-	}
+		private final Map<STATE, List<ProductState>> mResStateMap;
 
+		public Antichain() {
+			mResStateMap = new HashMap<>();
+		}
+
+		Set<STATE> getStates() {
+			return mResStateMap.keySet();
+		}
+
+		public boolean addState(final ProductState state) {
+
+			final STATE fstState = state.getFst();
+			List<ProductState> sndElem = mResStateMap.get(fstState);
+
+			if (sndElem == null) {
+				sndElem = new ArrayList<>();
+			}
+			final List<ProductState> copy = new ArrayList<>();
+			// avoid to add pairs are covered by other pairs
+			for (int i = 0; i < sndElem.size(); i++) {
+				final ProductState elem = sndElem.get(i);
+				// pairs covered by the new pair
+				// will not be kept in copy
+				if (elem.coveredBy(state)) {
+					continue;
+				}
+				if (state.coveredBy(elem)) {
+					return false;
+				}
+				copy.add(elem);
+			}
+
+			copy.add(state); // should add snd
+			mResStateMap.put(fstState, copy);
+			return true;
+		}
+
+		public boolean covers(final ProductState state) {
+			final List<ProductState> sndElem = mResStateMap.get(state.getFst());
+			if (sndElem == null) {
+				return false;
+			}
+			for (int i = 0; i < sndElem.size(); i++) {
+				final ProductState elem = sndElem.get(i);
+				if (state.coveredBy(elem)) { // no need to add it
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			for (final Entry<STATE, List<ProductState>> entry : mResStateMap.entrySet()) {
+				sb.append(entry.getKey() + " -> " + entry.getValue() + "\n");
+			}
+			return sb.toString();
+		}
+	}
 
 }

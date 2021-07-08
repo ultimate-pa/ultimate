@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccept
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.AbstractGeneralizedAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.AcceptingComponentsAnalysis.StronglyConnectedComponentWithAcceptanceInformation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
@@ -85,7 +86,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		implements IDoubleDeckerAutomaton<LETTER, STATE>, IAutomatonWithSccComputation<LETTER, STATE> {
 
-	public enum DoubleDeckerReachability { CAN_REACH_PRECIOUS, REACHABLE_AFTER_REMOVAL_OF_PRECIOUS_NOT_REACHERS }
+	public enum DoubleDeckerReachability {
+		CAN_REACH_PRECIOUS, REACHABLE_AFTER_REMOVAL_OF_PRECIOUS_NOT_REACHERS
+	}
 
 	/**
 	 * Construct a run for each accepting state. Use this only while developing/debugging/testing the construction of
@@ -119,12 +122,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum ReachProp {
-		REACHABLE,
-		NODEADEND_AD,
-		NODEADEND_SD,
-		FINANC,
-		LIVE_AD,
-		LIVE_SD
+		REACHABLE, NODEADEND_AD, NODEADEND_SD, FINANC, LIVE_AD, LIVE_SD
 	}
 
 	/**
@@ -133,10 +131,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	enum InCaRe {
-		INTERNAL,
-		CALL,
-		RETURN,
-		SUMMARY
+		INTERNAL, CALL, RETURN, SUMMARY
 	}
 
 	/**
@@ -323,8 +318,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		String result = states + " states and " + mNumberTransitions + " transitions.";
 		if (mAcceptingComponentsAnalysis != null) {
 			final int transitions = mNumberTransitions.getSum();
-			final int cyclomaticComplexity =
-					computeCyclomaticComplexity(transitions, states, mAcceptingComponentsAnalysis.getSccComputation().getBalls().size());
+			final int cyclomaticComplexity = computeCyclomaticComplexity(transitions, states,
+					mAcceptingComponentsAnalysis.getSccComputation().getBalls().size());
 			result += " cyclomatic complexity: " + cyclomaticComplexity;
 		}
 		return result;
@@ -907,19 +902,18 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	/**
 	 * Auxiliary method for checking that we do not waste memory.
+	 *
 	 * @return true iff the locally stored worklist of state's {@link StateContainer} was removed
 	 */
 	public boolean checkWorklistEmpty(final STATE state) {
 		final StateContainer<LETTER, STATE> cont = mStates.get(state);
-		return (cont.getUnpropagatedDownStates() == null);
+		return cont.getUnpropagatedDownStates() == null;
 	}
 
-	@SuppressWarnings("squid:S1698")
 	boolean checkStateEquality(final STATE state1, final STATE state2) {
 		return state1 == state2;
 	}
 
-	@SuppressWarnings("squid:S1698")
 	boolean checkStateContainerEquality(final StateContainer<LETTER, STATE> cont,
 			final StateContainer<LETTER, STATE> succCont) {
 		return cont == succCont;
@@ -1016,10 +1010,9 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		}
 
 		private RunningTaskInfo constructRunningTaskInfo() {
-			final String taskDescription = "computing reachable states (" + mNumberOfConstructedStates
-					+ " states constructed" + "input type " + mOperand.getClass().getSimpleName() + ")";
-			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-			return rti;
+			final String taskDescription = AbstractGeneralizedAutomatonReachableStates
+					.constructRunningTaskInfoMessage(mNumberOfConstructedStates, mOperand.getClass());
+			return new RunningTaskInfo(getClass(), taskDescription);
 		}
 
 		private void addInitialStates(final Iterable<STATE> initialStates) {
@@ -1059,7 +1052,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			return true;
 		}
 
-		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont) throws AutomataOperationCanceledException {
+		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont)
+				throws AutomataOperationCanceledException {
 			final STATE state = cont.getState();
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
 				if (!getServices().getProgressAwareTimer().continueProcessing()) {
@@ -1081,7 +1075,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			}
 		}
 
-		private Set<STATE> addCallsAndSuccessors(final StateContainer<LETTER, STATE> cont) throws AutomataOperationCanceledException {
+		private Set<STATE> addCallsAndSuccessors(final StateContainer<LETTER, STATE> cont)
+				throws AutomataOperationCanceledException {
 			boolean addedSelfloop = false;
 			final STATE state = cont.getState();
 			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(cont.getState())) {
@@ -1115,7 +1110,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			return null;
 		}
 
-		private Set<STATE> addReturnsAndSuccessors(final StateContainer<LETTER, STATE> cont, final STATE down) throws AutomataOperationCanceledException {
+		private Set<STATE> addReturnsAndSuccessors(final StateContainer<LETTER, STATE> cont, final STATE down)
+				throws AutomataOperationCanceledException {
 			boolean addedSelfloop = false;
 			final STATE state = cont.getState();
 			StateContainer<LETTER, STATE> downCont = null;
@@ -1184,7 +1180,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			}
 		}
 
-		private void propagateNewDownStates(final StateContainer<LETTER, STATE> cont) throws AutomataOperationCanceledException {
+		private void propagateNewDownStates(final StateContainer<LETTER, STATE> cont)
+				throws AutomataOperationCanceledException {
 			final Set<STATE> unpropagatedDownStates = cont.getUnpropagatedDownStates();
 			if (unpropagatedDownStates == null) {
 				return;
@@ -1533,13 +1530,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			boolean result;
 			if (up.getReachProp() == rpAllDown) {
 				result = true;
+			} else if (up.getReachProp() == rpSomeDown) {
+				assert up.getDownStates().containsKey(down);
+				result = up.hasDownProp(down, dspReachPrecious);
 			} else {
-				if (up.getReachProp() == rpSomeDown) {
-					assert up.getDownStates().containsKey(down);
-					result = up.hasDownProp(down, dspReachPrecious);
-				} else {
-					throw new AssertionError("DoubleDecker cannot reach precious");
-				}
+				throw new AssertionError("DoubleDecker cannot reach precious");
 			}
 			return result;
 		}
@@ -1567,23 +1562,19 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 					if (succCont.hasDownProp(down, mDspReachPrecious)
 							|| succCont.hasDownProp(down, mDspReachableAfterRemoval)) {
 						// do nothing
-					} else {
-						// check if we can propagate some down state
-						if (cont.getDownStates().containsKey(down)) {
-							if (cont.getReachProp() == mRpAllDown) {
-								modified |= succCont.setDownProp(down, mDspReachableAfterRemoval);
-							} else {
-								if (cont.hasDownProp(down, mDspReachPrecious)
-										|| cont.hasDownProp(down, mDspReachableAfterRemoval)) {
-									modified |= succCont.setDownProp(down, mDspReachableAfterRemoval);
-								} else {
-									// DoubleDecker (cont,down) has neither
-									// mDspReachPrecious nor
-									// mDspReachableAfterRemoval property
-								}
-							}
-
+					} else // check if we can propagate some down state
+					if (cont.getDownStates().containsKey(down)) {
+						if (cont.getReachProp() == mRpAllDown) {
+							modified |= succCont.setDownProp(down, mDspReachableAfterRemoval);
+						} else if (cont.hasDownProp(down, mDspReachPrecious)
+								|| cont.hasDownProp(down, mDspReachableAfterRemoval)) {
+							modified |= succCont.setDownProp(down, mDspReachableAfterRemoval);
+						} else {
+							// DoubleDecker (cont,down) has neither
+							// mDspReachPrecious nor
+							// mDspReachableAfterRemoval property
 						}
+
 					}
 				}
 			} else {
@@ -1601,6 +1592,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 		/**
 		 * FIXME: documentation incorrect
+		 *
 		 * @param upState
 		 *            up state
 		 * @param downState
@@ -1624,8 +1616,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 					return canReachPrecious;
 				}
 				case REACHABLE_AFTER_REMOVAL_OF_PRECIOUS_NOT_REACHERS: {
-					final boolean notRemoved = canReachPrecious
-							|| cont.hasDownProp(downState, mDspReachableAfterRemoval);
+					final boolean notRemoved =
+							canReachPrecious || cont.hasDownProp(downState, mDspReachableAfterRemoval);
 					return notRemoved;
 				}
 				default:
@@ -1637,6 +1629,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 		/**
 		 * FIXME: documentation incorrect
+		 *
 		 * @param state
 		 *            up state
 		 * @return The set of all down states such that (up,down) is reachable DoubleDecker in original automaton
@@ -1663,8 +1656,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 						break;
 					}
 					case REACHABLE_AFTER_REMOVAL_OF_PRECIOUS_NOT_REACHERS: {
-						final boolean notRemoved = canReachPrecious
-								|| cont.hasDownProp(downState, mDspReachableAfterRemoval);
+						final boolean notRemoved =
+								canReachPrecious || cont.hasDownProp(downState, mDspReachableAfterRemoval);
 						if (notRemoved) {
 							downStates.add(downState);
 						}
@@ -1769,7 +1762,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 					final Set<STATE> callSuccs = computeState2CallSuccs(mDown);
 					if (callSuccs.size() > 1) {
 						throw new UnsupportedOperationException("State has more than one call successor");
-					} else if (callSuccs.size() == 1) {
+					}
+					if (callSuccs.size() == 1) {
 						entry = callSuccs.iterator().next();
 					} else {
 						entry = null;

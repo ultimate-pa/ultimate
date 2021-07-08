@@ -48,10 +48,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-
 /**
- * A generalized nested word automaton with reachable states information.
- * For now, we only support generalized word automata.
+ * A generalized nested word automaton with reachable states information. For now, we only support generalized word
+ * automata.
  *
  * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
@@ -59,50 +58,50 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> implements IGeneralizedNestedWordAutomaton<LETTER, STATE>
-                                  , IDoubleDeckerAutomaton<LETTER, STATE> {
+public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
+		implements IGeneralizedNestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 
-	
 	protected abstract StateContainer<LETTER, STATE> getStateContainer(STATE state);
-	
+
 	public abstract Boolean isEmpty();
-	
+
 	protected NestedLassoRun<LETTER, STATE> mLasso = null;
-	
+
 	public abstract NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws AutomataOperationCanceledException;
-	
+
 	protected final Set<LETTER> mEmptyLetterSet = new HashSet<>();
 	protected final Set<STATE> mDownStates = new HashSet<>();
 	protected final Set<STATE> mInitialStates = new HashSet<>();
 	protected final Set<STATE> mFinalStates = new HashSet<>();
-	
+
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
-	
+
 	protected final VpAlphabet<LETTER> mVpAlphabet;
-	
+
 	protected int mNumberOfConstructedStates;
-	
-	public AbstractGeneralizedAutomatonReachableStates(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet) {
+
+	public AbstractGeneralizedAutomatonReachableStates(final AutomataLibraryServices services,
+			final VpAlphabet<LETTER> vpAlphabet) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mVpAlphabet = vpAlphabet;
 	}
-	
-	protected void removeStates(STATE state) {
-		
+
+	protected void removeStates(final STATE state) {
+
 	}
 
 	@Override
-	public boolean isDoubleDecker(STATE upState, STATE downState) {
+	public boolean isDoubleDecker(final STATE upState, final STATE downState) {
 		return mDownStates.contains(downState);
 	}
 
 	@Override
-	public Set<STATE> getDownStates(STATE upState) {
+	public Set<STATE> getDownStates(final STATE upState) {
 		return Collections.unmodifiableSet(mDownStates);
 	}
-	
+
 	@Override
 	public Set<STATE> getInitialStates() {
 		return Collections.unmodifiableSet(mInitialStates);
@@ -112,42 +111,40 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 	public Collection<STATE> getFinalStates() {
 		return Collections.unmodifiableSet(mFinalStates);
 	}
-	
 
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mVpAlphabet.getInternalAlphabet();
 	}
-	
 
 	@Override
 	public VpAlphabet<LETTER> getVpAlphabet() {
 		return mVpAlphabet;
 	}
-	
+
 	// ---------------------------------------------------------------------
 	@Override
-	public Set<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(final STATE state) {
 		return mEmptyLetterSet;
 	}
 
 	@Override
-	public Set<LETTER> lettersCallIncoming(STATE state) {
+	public Set<LETTER> lettersCallIncoming(final STATE state) {
 		return mEmptyLetterSet;
 	}
 
 	@Override
-	public Set<LETTER> lettersReturnIncoming(STATE state) {
+	public Set<LETTER> lettersReturnIncoming(final STATE state) {
 		return mEmptyLetterSet;
 	}
 
 	@Override
-	public Set<LETTER> lettersSummary(STATE state) {
+	public Set<LETTER> lettersSummary(final STATE state) {
 		return mEmptyLetterSet;
 	}
-	
+
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(STATE state, LETTER letter) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
 			@Override
 			public boolean hasNext() {
@@ -162,17 +159,18 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state, STATE hier, LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		return returnSuccessors(state);
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(STATE succ, LETTER letter) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
 		return callPredecessors(succ);
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(STATE succ) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
 		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
 			@Override
 			public boolean hasNext() {
@@ -187,17 +185,18 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ, STATE hier, LETTER letter) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
+			final LETTER letter) {
 		return returnPredecessors(succ);
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ, LETTER letter) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
 		return returnPredecessors(succ);
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
 		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
 			@Override
 			public boolean hasNext() {
@@ -212,7 +211,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 			@Override
 			public boolean hasNext() {
@@ -227,12 +226,12 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(STATE hier, LETTER letter) {
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier, final LETTER letter) {
 		return summarySuccessors(hier);
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(STATE hier) {
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
 		return () -> new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
 			@Override
 			public boolean hasNext() {
@@ -245,7 +244,11 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 			}
 		};
 	}
-	
 
+	public static String constructRunningTaskInfoMessage(final int numberOfConstructedStates,
+			final Class<?> operandClazz) {
+		return String.format("computing reachable states (%s states constructed, input type %s)",
+				numberOfConstructedStates, operandClazz.getSimpleName());
+	}
 
 }
