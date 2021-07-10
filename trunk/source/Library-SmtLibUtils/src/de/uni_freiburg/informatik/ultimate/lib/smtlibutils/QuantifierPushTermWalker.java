@@ -71,7 +71,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	@Override
 	Context constructContextForApplicationTerm(final Context context,
 			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
-		return context.constructChildContextForConDis(mMgdScript.getScript(), symb, allParams, selectedParam);
+		return context.constructChildContextForConDis(mServices, mMgdScript, symb, allParams, selectedParam);
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	@Override
 	DescendResult convert(final Context context, final Term term) {
 		FormulaClassification classification = null;
-		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript.getScript(), context.getCriticalConstraint(), term);
+		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context.getCriticalConstraint(), term);
 				//PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(), Collections.singleton(term));
 		int iterations = 0;
 		while (true) {

@@ -35,6 +35,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierOverapproximator;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -52,6 +56,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class Context {
+	private static final boolean OVERAPPOXIMATE_QUANTIFIERS_IN_CRITICAL_CONSTRAINT = true;
+
 	private final Term mCriticalConstraint;
 	/**
 	 * Contains the variables that are bound in {@link QuantifiedFormula}s that are
@@ -90,23 +96,33 @@ public class Context {
 		return new Context(criticalConstraint, boundByAncestors);
 	}
 
-	public Context constructChildContextForConDis(final Script script, final FunctionSymbol symb,
+	public Context constructChildContextForConDis(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final FunctionSymbol symb,
 			final List<Term> allParams, final int selectedParam) {
-		final Term criticalConstraint = buildCriticalConstraintForConDis(script, mCriticalConstraint, symb, allParams,
-				selectedParam);
+		final Term criticalConstraint = buildCriticalConstraintForConDis(services, mgdScript, mCriticalConstraint, symb,
+				allParams, selectedParam);
 		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
-	public Context constructChildContextForConDis(final Script script, final FunctionSymbol symb,
+	public Context constructChildContextForConDis(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final FunctionSymbol symb,
 			final List<Term> otherParams) {
-		final Term criticalConstraint = buildCriticalConstraintForConDis(script, mCriticalConstraint, symb,
+		final Term criticalConstraint = buildCriticalConstraintForConDis(services, mgdScript, mCriticalConstraint, symb,
 				otherParams);
 		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
 	public static Term buildCriticalContraintForQuantifiedFormula(final Script script,
 			final Term parentCriticalConstraint, final List<TermVariable> boundVars) {
-		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, boundVars, parentCriticalConstraint);
+		final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, boundVars,
+				parentCriticalConstraint);
+		Term result;
+		if (OVERAPPOXIMATE_QUANTIFIERS_IN_CRITICAL_CONSTRAINT) {
+			result = QuantifierOverapproximator.apply(script, quantified);
+		} else {
+			result = quantified;
+		}
+		return result;
 	}
 
 	/**
@@ -127,58 +143,75 @@ public class Context {
 		return SmtUtils.and(script, resultConjuncts);
 	}
 
-	public static Term buildCriticalConstraintForConDis(final Script script, final Term parentCriticalConstraint,
-			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
+	public static Term buildCriticalConstraintForConDis(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final Term parentCriticalConstraint, final FunctionSymbol symb,
+			final List<Term> allParams, final int selectedParam) {
 		final List<Term> otherParams = new ArrayList<>(allParams);
 		otherParams.remove(selectedParam);
-		return buildCriticalConstraintForConDis(script, parentCriticalConstraint, symb, otherParams);
-	}
-
-	private static Term buildCriticalConstraintForConDis(final Script script, final Term parentCriticalConstraint,
-			final FunctionSymbol symb, final List<Term> otherParams) {
+		final Term tmp = buildCriticalConstraintForConDis(services, mgdScript, parentCriticalConstraint, symb,
+				otherParams);
 		Term result;
-		if (symb.getName().equals("and")) {
-			result = SmtUtils.and(script, otherParams);
-		} else if (symb.getName().equals("or")) {
-			final List<Term> otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(script, x))
-					.collect(Collectors.toList());
-			result = SmtUtils.and(script, otherParamsNegated);
-		} else if (symb.getName().equals("=")) {
-			// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
-			// terms here.
-			result = script.term("true");
+		if (OVERAPPOXIMATE_QUANTIFIERS_IN_CRITICAL_CONSTRAINT) {
+			result = QuantifierOverapproximator.apply(mgdScript.getScript(), tmp);
 		} else {
-			throw new AssertionError("only conjunction and disjunction are supported");
+			result = tmp;
 		}
-		result = SmtUtils.and(script, result, parentCriticalConstraint);
 		return result;
 	}
 
-	public static Term buildConjunctiveCriticalConstraintForConDis(final Script script, final Term parentCriticalConstraint,
-			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
-		final List<Term> otherParams = new ArrayList<>(allParams);
-		otherParams.remove(selectedParam);
-		return buildConjunctiveCriticalConstraintForConDis(script, parentCriticalConstraint, symb, otherParams);
-	}
-
-	private static Term buildConjunctiveCriticalConstraintForConDis(final Script script, final Term parentCriticalConstraint,
-			final FunctionSymbol symb, final List<Term> otherParams) {
+	private static Term buildCriticalConstraintForConDis(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final Term parentCriticalConstraint, final FunctionSymbol symb,
+			final List<Term> otherParams) {
 		Term result;
 		if (symb.getName().equals("and")) {
-			result = SmtUtils.and(script,
-					otherParams.stream().filter(SmtUtils::isAtomicFormula).collect(Collectors.toList()));
+			result = SmtUtils.and(mgdScript.getScript(), otherParams);
 		} else if (symb.getName().equals("or")) {
-			final List<Term> otherParamsNegated = otherParams.stream().filter(SmtUtils::isAtomicFormula)
-					.map(x -> SmtUtils.not(script, x)).collect(Collectors.toList());
-			result = SmtUtils.and(script, otherParamsNegated);
+			final List<Term> otherParamsNegated = otherParams.stream()
+					.map(x -> new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+							.transform(SmtUtils.not(mgdScript.getScript(), x)))
+					.collect(Collectors.toList());
+			result = SmtUtils.and(mgdScript.getScript(), otherParamsNegated);
 		} else if (symb.getName().equals("=")) {
 			// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
 			// terms here.
-			result = script.term("true");
+			result = mgdScript.getScript().term("true");
 		} else {
 			throw new AssertionError("only conjunction and disjunction are supported");
 		}
-		result = SmtUtils.and(script, result, parentCriticalConstraint);
+		result = SmtUtils.and(mgdScript.getScript(), result, parentCriticalConstraint);
+		return result;
+	}
+
+	public static Term buildConjunctiveCriticalConstraintForConDis(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final Term parentCriticalConstraint, final FunctionSymbol symb,
+			final List<Term> allParams, final int selectedParam) {
+		final List<Term> otherParams = new ArrayList<>(allParams);
+		otherParams.remove(selectedParam);
+		return buildConjunctiveCriticalConstraintForConDis(services, mgdScript, parentCriticalConstraint, symb,
+				otherParams);
+	}
+
+	private static Term buildConjunctiveCriticalConstraintForConDis(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final Term parentCriticalConstraint, final FunctionSymbol symb,
+			final List<Term> otherParams) {
+		Term result;
+		if (symb.getName().equals("and")) {
+			result = SmtUtils.and(mgdScript.getScript(),
+					otherParams.stream().filter(SmtUtils::isAtomicFormula).collect(Collectors.toList()));
+		} else if (symb.getName().equals("or")) {
+			final List<Term> otherParamsNegated = otherParams.stream().filter(SmtUtils::isAtomicFormula)
+					.map(x -> new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+							.transform(SmtUtils.not(mgdScript.getScript(), x)))
+					.collect(Collectors.toList());
+			result = SmtUtils.and(mgdScript.getScript(), otherParamsNegated);
+		} else if (symb.getName().equals("=")) {
+			// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
+			// terms here.
+			result = mgdScript.getScript().term("true");
+		} else {
+			throw new AssertionError("only conjunction and disjunction are supported");
+		}
+		result = SmtUtils.and(mgdScript.getScript(), result, parentCriticalConstraint);
 		return result;
 	}
 

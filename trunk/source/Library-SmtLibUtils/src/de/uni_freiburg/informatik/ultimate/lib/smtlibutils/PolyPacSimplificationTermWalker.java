@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDept
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -69,25 +68,25 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
  */
 public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	private final IUltimateServiceProvider mServices;
-	private final Script mScript;
+	private final ManagedScript mMgdScript;
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
-	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final Script script) {
+	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
 		mServices = services;
-		mScript = script;
+		mMgdScript = mgdScript;
 	}
 
 	@Override
 	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb, final List<Term> allParams,
 			final int selectedParam) {
-		return Context.buildCriticalConstraintForConDis(mScript, context, symb, allParams, selectedParam);
+		return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams, selectedParam);
 	}
 
 	@Override
 	Term constructContextForQuantifiedFormula(final Term context, final int quant, final List<TermVariable> vars) {
-		return Context.buildCriticalContraintForQuantifiedFormula(mScript, context, vars);
+		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars);
 	}
 
 	@Override
@@ -112,31 +111,34 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 					String.format("simplifying %s xjuncts wrt. a %s context", resultParams.length, contextCdc));
 		}
 		if (originalApplicationTerm.getFunction().getName().equals("and")) {
-			return PolyPoNeUtils.and(mScript, context, Arrays.asList(resultParams));
+			return PolyPoNeUtils.and(mMgdScript.getScript(), context, Arrays.asList(resultParams));
 		}
 		if (originalApplicationTerm.getFunction().getName().equals("or")) {
-			return PolyPoNeUtils.or(mScript, context, Arrays.asList(resultParams));
+			return PolyPoNeUtils.or(mMgdScript.getScript(), context, Arrays.asList(resultParams));
 		}
 		throw new AssertionError();
 	}
 
-	public static Term simplify(final IUltimateServiceProvider services, final Script script, final Term term) {
-		final Term result = simplify(services, script, script.term("true"), term);
+	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term term) {
+		final Term result = simplify(services, mgdScript, mgdScript.getScript().term("true"), term);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
-			SmtUtils.checkLogicalEquivalenceForDebugging(script, result, term, PolyPoNeUtils.class, tolerateUnknown);
+			SmtUtils.checkLogicalEquivalenceForDebugging(mgdScript.getScript(), result, term, PolyPoNeUtils.class,
+					tolerateUnknown);
 		}
 		return result;
 	}
 
-	public static Term simplify(final IUltimateServiceProvider services, final Script script, final Term context,
+	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term context,
 			final Term term) {
 		final Term result;
+		final CondisDepthCode termCdc = CondisDepthCode.of(term);
+		System.out.println(termCdc);
 		try {
 			result = TermContextTransformationEngine
-			.transform(new PolyPacSimplificationTermWalker(services, script), context, term);
+			.transform(new PolyPacSimplificationTermWalker(services, mgdScript), context, term);
 		} catch (final ToolchainCanceledException tce) {
-			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
 			tce.addRunningTaskInfo(new RunningTaskInfo(PolyPacSimplificationTermWalker.class, taskDescription));
 			throw tce;
@@ -147,7 +149,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	@Override
 	Term constructResultForQuantifiedFormula(final Term context, final QuantifiedFormula originalQuantifiedFormula,
 			final Term resultSubformula) {
-		return SmtUtils.quantifier(mScript, originalQuantifiedFormula.getQuantifier(),
+		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
 				Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
 	}
 
@@ -158,7 +160,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 
 	@Override
 	void checkIntermediateResult(final Term context, final Term input, final Term output) {
-		final LBool lBool = SmtUtils.checkEquivalenceUnderAssumption(input, output, context, mScript);
+		final LBool lBool = SmtUtils.checkEquivalenceUnderAssumption(input, output, context, mMgdScript.getScript());
 		switch (lBool) {
 		case SAT:
 			throw new AssertionError(String.format(

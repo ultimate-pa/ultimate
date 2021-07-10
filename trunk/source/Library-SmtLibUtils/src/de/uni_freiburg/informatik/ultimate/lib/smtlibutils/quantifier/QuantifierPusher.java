@@ -456,10 +456,10 @@ public class QuantifierPusher extends TermTransformer {
 					return correspondingFinite;
 				}
 				// TODO remove if no bug
-				final Term criticalConstraint = Context.buildCriticalConstraintForConDis(mgdScript.getScript(),
+				final Term criticalConstraint = Context.buildCriticalConstraintForConDis(services, mgdScript,
 						et.getContext().getCriticalConstraint(), ((ApplicationTerm) et.getTerm()).getFunction(),
 						Arrays.asList(dualFiniteParams), i);
-				final Context childContext = et.getContext().constructChildContextForConDis(mgdScript.getScript(),
+				final Context childContext = et.getContext().constructChildContextForConDis(services, mgdScript,
 						((ApplicationTerm) et.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
 				assert criticalConstraint.equals(childContext.getCriticalConstraint());
 				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, et.getContext(),
@@ -493,11 +493,11 @@ public class QuantifierPusher extends TermTransformer {
 		final List<Term> resultDualFiniteParams = new ArrayList<Term>();
 		for (int i = 0; i < dualFiniteParams.length; i++) {
 			if (dualFiniteParams[i] instanceof QuantifiedFormula) {
-				final Context childContext = inputEt.getContext().constructChildContextForConDis(mgdScript.getScript(),
+				final Context childContext = inputEt.getContext().constructChildContextForConDis(services, mgdScript,
 						((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
 				{
 					// TODO remove if no bug
-					final Term criticalConstraint = Context.buildCriticalConstraintForConDis(mgdScript.getScript(),
+					final Term criticalConstraint = Context.buildCriticalConstraintForConDis(services, mgdScript,
 							inputEt.getContext().getCriticalConstraint(),
 							((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
 					assert criticalConstraint.equals(childContext.getCriticalConstraint());
@@ -604,7 +604,7 @@ public class QuantifierPusher extends TermTransformer {
 				context = parentContext.constructChildContextForQuantifiedFormula(mgdScript.getScript(),
 						nonMinionEliminatees);
 			}
-			context = context.constructChildContextForConDis(mgdScript.getScript(),
+			context = context.constructChildContextForConDis(services, mgdScript,
 					((ApplicationTerm) et.getTerm()).getFunction(), finiteParamsWithoutEliminatee);
 			Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, context, quantified);
 			if (pushed instanceof QuantifiedFormula) {
