@@ -133,12 +133,11 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term context,
 			final Term term) {
 		final Term result;
-		final CondisDepthCode termCdc = CondisDepthCode.of(term);
-		System.out.println(termCdc);
 		try {
 			result = TermContextTransformationEngine
 			.transform(new PolyPacSimplificationTermWalker(services, mgdScript), context, term);
 		} catch (final ToolchainCanceledException tce) {
+			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
 			tce.addRunningTaskInfo(new RunningTaskInfo(PolyPacSimplificationTermWalker.class, taskDescription));
 			throw tce;
