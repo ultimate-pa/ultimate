@@ -423,11 +423,8 @@ public class QuantifierPusher extends TermTransformer {
 			final int rec = DerScout.computeRecommendation(mgdScript.getScript(), et.getEliminatees(), dualFiniteParams,
 					et.getQuantifier());
 			if (rec != -1) {
-				final CondisDepthCode cdc = CondisDepthCode.of(et.getTerm());
-				final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
-				logger.info("Applying distributivity to a " + cdc + " term");
 				final Term correspondingFinite = applyDistributivityAndPushOneStep(services, mgdScript,
-						et.getQuantifier(), et.getEliminatees(), dualFiniteParams, rec);
+						et.getQuantifier(), et.getEliminatees(), et.getContext(), dualFiniteParams, rec);
 				return correspondingFinite;
 			}
 		}
@@ -451,7 +448,7 @@ public class QuantifierPusher extends TermTransformer {
 			// allows us to apply DER
 			if (isCorrespondingFinite(dualFiniteParams[i], et.getQuantifier())) {
 				final Term correspondingFinite = applyDistributivityAndPushOneStep(services, mgdScript,
-						et.getQuantifier(), et.getEliminatees(), dualFiniteParams, i);
+						et.getQuantifier(), et.getEliminatees(), et.getContext(), dualFiniteParams, i);
 				if (!EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION) {
 					return correspondingFinite;
 				}
@@ -707,7 +704,7 @@ public class QuantifierPusher extends TermTransformer {
 
 	private static Term applyDistributivityAndPushOneStep(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final int quantifier, final Set<TermVariable> eliminatees,
-			final Term[] dualFiniteParams, final int i) {
+			final Context context, final Term[] dualFiniteParams, final int i) {
 		final Term[] correspondingFiniteParams =
 				QuantifierUtils.getCorrespondingFiniteJunction(quantifier, dualFiniteParams[i]);
 		final List<Term> otherDualFiniteParams = new ArrayList<>(dualFiniteParams.length - 1);
@@ -729,9 +726,15 @@ public class QuantifierPusher extends TermTransformer {
 			offset++;
 		}
 		final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
-		logger.info("Distributing " + resultOuterParams.length + " "
-				+ QuantifierUtils.getNameOfCorrespondingJuncts(quantifier) + " over " + dualFiniteParams.length + " "
-				+ QuantifierUtils.getNameOfDualJuncts(quantifier));
+		if (logger.isDebugEnabled()) {
+			final CondisDepthCode cdc = CondisDepthCode
+					.of(QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, dualFiniteParams));
+			final String message = "Distributing " + resultOuterParams.length + " "
+					+ QuantifierUtils.getNameOfCorrespondingJuncts(quantifier) + " over " + dualFiniteParams.length
+					+ " " + QuantifierUtils.getNameOfDualJuncts(quantifier) + ". " + "Applying distributivity to a "
+					+ cdc + " term";
+			logger.info(message);
+		}
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(), quantifier,
 				resultOuterParams);
 		final ExtendedSimplificationResult esr =
