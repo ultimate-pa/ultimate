@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimp
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -270,10 +272,12 @@ public class QuantifierEliminationTest {
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+		Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+//		letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
+		letFree = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(letFree);
 		csvWriter.reportEliminationBegin(letFree);
-		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, letFree,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,
+				SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
 		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
@@ -316,7 +320,6 @@ public class QuantifierEliminationTest {
 			throw new AssertionError("unknown value " + lbool);
 		}
 		Assert.assertTrue(errorMessage, lbool == LBool.UNSAT);
-
 	}
 
 	@Test
