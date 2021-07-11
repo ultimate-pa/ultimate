@@ -46,6 +46,8 @@ import java.util.function.Predicate;
 public final class ImmutableSet<E> implements Set<E> {
 	private static final String ERROR_MSG = "Set is immutable";
 
+	private static ImmutableSet mEmptySet;
+
 	private final Set<E> mUnderlying;
 	private final int mHash;
 
@@ -69,7 +71,10 @@ public final class ImmutableSet<E> implements Set<E> {
 	 * @return empty, immutable set
 	 */
 	public static <E> ImmutableSet<E> empty() {
-		return new ImmutableSet<>(Collections.emptySet());
+		if (mEmptySet == null) {
+			mEmptySet = new ImmutableSet<>(Collections.emptySet());
+		}
+		return mEmptySet;
 	}
 
 	/**
@@ -83,6 +88,9 @@ public final class ImmutableSet<E> implements Set<E> {
 	 * @return an immutable view of the given set
 	 */
 	public static <E> ImmutableSet<E> of(final Set<E> set) {
+		if (set.isEmpty()) {
+			return empty();
+		}
 		if (set instanceof ImmutableSet<?>) {
 			return (ImmutableSet<E>) set;
 		}
@@ -106,6 +114,9 @@ public final class ImmutableSet<E> implements Set<E> {
 	 * @return an immutable copy of the given set's current contents
 	 */
 	public static <E> ImmutableSet<E> copyOf(final Collection<E> set) {
+		if (set.isEmpty()) {
+			return empty();
+		}
 		if (set instanceof ImmutableSet<?>) {
 			return (ImmutableSet<E>) set;
 		}
