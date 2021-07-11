@@ -105,7 +105,7 @@ public final class ImmutableSet<E> implements Set<E> {
 	 *            The set of which an immutable copy is made.
 	 * @return an immutable copy of the given set's current contents
 	 */
-	public static <E> ImmutableSet<E> copyOf(final Set<E> set) {
+	public static <E> ImmutableSet<E> copyOf(final Collection<E> set) {
 		if (set instanceof ImmutableSet<?>) {
 			return (ImmutableSet<E>) set;
 		}
