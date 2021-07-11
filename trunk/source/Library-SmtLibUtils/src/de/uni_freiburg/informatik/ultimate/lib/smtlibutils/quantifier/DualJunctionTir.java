@@ -101,21 +101,17 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	/**
 	 * @see constructor
 	 */
-	private final boolean mExpensiveEliminations;
+	private final boolean mSupportAntiDerTerms;
 
 	/**
-	 * @param expensiveEliminations
-	 *            If set to true we do expensive eliminations where auxiliary
-	 *            variables and case distinctions are allowed. If set to false
-	 *            we do only inexpensive eliminations where non of the above is
-	 *            allowed. Note that in the first case we will not do all simple
-	 *            eliminations. If you want the full elimination power you
-	 *            should two instances of this class.
+	 * @param supportAntiDerTerms If we support AntiDerTerms the result can become
+	 *                            large because distributivity transformations will
+	 *                            be applied.
 	 */
 	public DualJunctionTir(final ManagedScript script, final IUltimateServiceProvider services,
-			final boolean expensiveEliminations) {
+			final boolean supportAntiDerTerms) {
 		super(script, services);
-		mExpensiveEliminations = expensiveEliminations;
+		mSupportAntiDerTerms = supportAntiDerTerms;
 	}
 
 	@Override
@@ -179,7 +175,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			final Set<TermVariable> bannedForDivCapture = new HashSet<>(inputEt.getEliminatees());
 			bannedForDivCapture.addAll(inputEt.getContext().getBoundByAncestors());
 			final Term resultTerm = tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
-					inputEt.getTerm(), eliminatee, bannedForDivCapture);
+					inputEt.getTerm(), eliminatee, bannedForDivCapture, mSupportAntiDerTerms);
 			if (resultTerm != null) {
 				if (COMPARE_TO_OLD_RESULT) {
 					final Term old = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
@@ -211,7 +207,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final Term disjunct, final TermVariable eliminatee,
-			final Set<TermVariable> bannedForDivCapture) {
+			final Set<TermVariable> bannedForDivCapture, final boolean supportAntiDerTerms) {
 		final Term[] inputAtoms = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
 		final List<Term> withEliminatee = Arrays.stream(inputAtoms)
 				.filter(x -> Arrays.asList(x.getFreeVars()).contains(eliminatee)).collect(Collectors.toList());
@@ -219,6 +215,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				.filter(x -> !Arrays.asList(x.getFreeVars()).contains(eliminatee)).collect(Collectors.toList());
 		final ExplicitLhsPolynomialRelations elprs = convert(withEliminatee, script, eliminatee, quantifier);
 		if (elprs == null) {
+			return null;
+		}
+		if (!supportAntiDerTerms && !elprs.getAntiDerRelations().isEmpty()) {
 			return null;
 		}
 		final ExplicitLhsPolynomialRelations bestElprs =
