@@ -40,13 +40,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Eliminatio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.SimplificationOccasion;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class QuantifierPushTermWalker extends TermWalker<Context> {
 	private final ManagedScript mMgdScript;
@@ -54,6 +54,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	private final IUltimateServiceProvider mServices;
 
 	private final PqeTechniques mPqeTechniques;
+
+	private final SimplificationTechnique mSimplificationTechnique;
 
 	private final boolean mApplyDistributivity;
 
@@ -68,6 +70,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		mApplyDistributivity = applyDistributivity;
 		mPqeTechniques = pqeTechniques;
 		mMgdScript = mgdScript;
+		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	}
 
 	@Override
@@ -94,22 +97,18 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			case NOT_QUANTIFIED: {
 				// let's recurse, there may be quantifiers in subformulas
 				if (SmtUtils.isAtomicFormula(currentTerm)) {
-					final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript,
-							currentTerm, context.getCriticalConstraint(), mServices,
-							SimplificationTechnique.SIMPLIFY_DDA);
-					final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
-					logger.info(esr.buildSizeReductionMessage());
-					currentTerm = esr.getSimplifiedTerm();
+					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
+							SimplificationTechnique.POLY_PAC, context, currentTerm);
+					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
+							mSimplificationTechnique, context, currentTerm);
 					return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
 				} else {
 					final Term negated = SmtUtils.unzipNot(currentTerm);
 					if (negated != null && SmtUtils.isAtomicFormula(negated)) {
-						final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript,
-								currentTerm, context.getCriticalConstraint(), mServices,
-								SimplificationTechnique.SIMPLIFY_DDA);
-						final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
-						logger.info(esr.buildSizeReductionMessage());
-						currentTerm = esr.getSimplifiedTerm();
+						currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
+								SimplificationTechnique.POLY_PAC, context, currentTerm);
+						currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
+								mSimplificationTechnique, context, currentTerm);
 						return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
 					} else {
 						return new TermContextTransformationEngine.IntermediateResultForDescend(currentTerm);
@@ -192,6 +191,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 //		}
 //		return new TermContextTransformationEngine.FinalResultForAscend<Term>(term);
 	}
+
+
 
 	@Override
 	Term constructResultForApplicationTerm(final Context context, final ApplicationTerm originalApplicationTerm,

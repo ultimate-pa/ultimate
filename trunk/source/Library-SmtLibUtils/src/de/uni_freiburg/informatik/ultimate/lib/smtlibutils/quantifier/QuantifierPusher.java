@@ -99,6 +99,30 @@ public class QuantifierPusher extends TermTransformer {
 		NOT_QUANTIFIED, CORRESPONDING_FINITE_CONNECTIVE, DUAL_FINITE_CONNECTIVE, SAME_QUANTIFIER, DUAL_QUANTIFIER, ATOM,
 	}
 
+	public enum SimplificationOccasion {
+		ATOM,
+		AFTER_ELIMINATION_TECHNIQUES,
+		AFTER_DISTRIBTIVITY;
+
+		public String getLogString() {
+			final String result;
+			switch (this) {
+			case AFTER_ELIMINATION_TECHNIQUES:
+				result = "after elimination techniques";
+				break;
+			case AFTER_DISTRIBTIVITY:
+				result = "after distributivity";
+				break;
+			case ATOM:
+				result = "of atom";
+				break;
+			default:
+				throw new AssertionError("unknown value " + this);
+			}
+			return result;
+		}
+	}
+
 	/**
 	 * If set to true we check after applying distributivity if we were able to eliminate some quantified variables. If
 	 * elimination failed for all variables then we return the original term without applying distributivity.
@@ -737,10 +761,8 @@ public class QuantifierPusher extends TermTransformer {
 		}
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(), quantifier,
 				resultOuterParams);
-		final ExtendedSimplificationResult esr =
-				SmtUtils.simplifyWithStatistics(mgdScript, result, services, SimplificationTechnique.SIMPLIFY_QUICK);
-		logger.info(esr.buildSizeReductionMessage());
-		return result;
+		final Term simplifiedResult = simplify(services, mgdScript, SimplificationOccasion.AFTER_DISTRIBTIVITY, SimplificationTechnique.POLY_PAC, context, result);
+		return simplifiedResult;
 	}
 
 	private static boolean isCorrespondingFinite(final Term term, final int quantifier) {
@@ -842,6 +864,10 @@ public class QuantifierPusher extends TermTransformer {
 				if (!currentEt.getBoundByAncestors().equals(inputEt.getBoundByAncestors())) {
 					throw new AssertionError("Illegal modification of banned variables.");
 				}
+				final Term simplifiedTerm = simplify(services, mgdScript,
+						SimplificationOccasion.AFTER_ELIMINATION_TECHNIQUES, SimplificationTechnique.POLY_PAC,
+						currentEt.getContext(), er.getEliminationTask().getTerm());
+				currentEt = currentEt.update(simplifiedTerm);
 				if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(), currentEt.getTerm())) {
 					return currentEt.toTerm(mgdScript.getScript());
 				}
@@ -1023,6 +1049,20 @@ public class QuantifierPusher extends TermTransformer {
 		final Term result = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
 				new HashSet<>(et.getEliminatees()), quantifiedSubFormulaPushed);
 		return result;
+	}
+
+	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final SimplificationOccasion occasion, final SimplificationTechnique simplificationTechnique,
+			final Context context, final Term term) {
+		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, term,
+				context.getCriticalConstraint(), services, simplificationTechnique);
+		final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
+		if (logger.isDebugEnabled()) {
+			final CondisDepthCode termCdc = CondisDepthCode.of(term);
+			logger.info("Simplification " + occasion.getLogString() + " via " + String.valueOf(simplificationTechnique)
+					+ ": " + esr.buildSizeReductionMessage() + " CDC code " + termCdc);
+		}
+		return esr.getSimplifiedTerm();
 	}
 
 	@Override
