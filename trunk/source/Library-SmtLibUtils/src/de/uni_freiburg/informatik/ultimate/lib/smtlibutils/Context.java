@@ -176,7 +176,7 @@ public class Context {
 			// terms here.
 			result = mgdScript.getScript().term("true");
 		} else {
-			throw new AssertionError("only conjunction and disjunction are supported");
+			throw new AssertionError("Supported: conjunction and disjunction. Got: " + symb);
 		}
 		result = SmtUtils.and(mgdScript.getScript(), result, parentCriticalConstraint);
 		return result;
