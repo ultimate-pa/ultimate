@@ -189,7 +189,8 @@ public final class SmtUtils {
 			}
 			final long endTime = System.nanoTime();
 			final long overallTimeMs = (endTime - startTime) / 1_000_000;
-			if (overallTimeMs >= 100) {
+			// write warning if simplification takes more than 5 seconds
+			if (overallTimeMs >= 5000) {
 				final StringBuilder sb = new StringBuilder();
 				sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
 						.append(" on a formula simplification");
