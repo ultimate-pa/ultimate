@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.Ca
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.MultipleImplementationsException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.ProcedureAlreadyDeclaredException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Builds a call graph of a boogie program.
@@ -89,7 +90,7 @@ public class CallGraphBuilder {
 	 * components are similar the the strongly connected components of the graph, ignoring "call forall" edges and
 	 * singleton components without self-loops.
 	 */
-	private Set<Set<String>> mRecursiveComponents;
+	private ImmutableSet<ImmutableSet<String>> mRecursiveComponents;
 
 	/** Flat view of {@link #mRecursiveComponents}. */
 	private Set<String> mRecursiveProcedures;
@@ -213,17 +214,18 @@ public class CallGraphBuilder {
 	}
 
 	private void findRecursiveComponents() {
-		mRecursiveComponents = new HashSet<>();
+		final Set<ImmutableSet<String>> recursiveComponents = new HashSet<>();
 		mRecursiveProcedures = new HashSet<>();
-		for (final Set<String> stronglyConnectedComponent : new TarjanSCC().getSCCs(buildSimpleGraphRepresentation())) {
+		for (final ImmutableSet<String> stronglyConnectedComponent : new TarjanSCC()
+				.getSCCs(buildSimpleGraphRepresentation())) {
 			// components aren't empty, therefore this is equal to: (size==1) --> isDirectlyRecursive
 			if (stronglyConnectedComponent.size() > 1
 					|| isDirectlyRecursive(stronglyConnectedComponent.iterator().next())) {
-				mRecursiveComponents.add(Collections.unmodifiableSet(stronglyConnectedComponent));
+				mRecursiveComponents.add(stronglyConnectedComponent);
 				mRecursiveProcedures.addAll(stronglyConnectedComponent);
 			}
 		}
-		mRecursiveComponents = Collections.unmodifiableSet(mRecursiveComponents);
+		mRecursiveComponents = ImmutableSet.of(recursiveComponents);
 		mRecursiveProcedures = Collections.unmodifiableSet(mRecursiveProcedures);
 	}
 

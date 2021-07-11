@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
 
@@ -62,7 +63,7 @@ public final class TarjanSCC {
 	/**
 	 * The SCCs to return.
 	 */
-	private Set<Set<String>> mSccs;
+	private Set<ImmutableSet<String>> mSccs;
 	/**
 	 * The Tarjan indices for the vertices.
 	 */
@@ -79,7 +80,7 @@ public final class TarjanSCC {
 	 *            the graph to work on
 	 * @return a list of SCCs
 	 */
-	public Set<Set<String>> getSCCs(final Map<String, Set<String>> graph) {
+	public ImmutableSet<ImmutableSet<String>> getSCCs(final Map<String, Set<String>> graph) {
 		if (graph == null || graph.values().contains(null)) {
 			throw new IllegalArgumentException();
 		}
@@ -94,7 +95,7 @@ public final class TarjanSCC {
 				strongConnect(v);
 			}
 		}
-		return mSccs;
+		return ImmutableSet.of(mSccs);
 	}
 
 	/**
@@ -125,13 +126,13 @@ public final class TarjanSCC {
 			}
 		}
 		if (mLowLink.get(v).equals(mIndices.get(v))) {
-			final LinkedHashSet<String> set = new LinkedHashSet<>();
+			final Set<String> set = new LinkedHashSet<>();
 			String s;
 			do {
 				s = mStack.pop();
 				set.add(s);
 			} while (!s.equals(v));
-			mSccs.add(set);
+			mSccs.add(ImmutableSet.of(set));
 		}
 	}
 }
