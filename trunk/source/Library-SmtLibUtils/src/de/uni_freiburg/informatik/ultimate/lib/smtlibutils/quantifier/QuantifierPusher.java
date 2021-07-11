@@ -92,7 +92,12 @@ public class QuantifierPusher extends TermTransformer {
 		/**
 		 * Include also elimination techniques that need to know the context of subterms.
 		 */
-		ALL
+		ALL,
+		/**
+		 * Apply only eliminations that will not enlarge the boolean structure of the
+		 * formula and that do not use an SMT-solve.
+		 */
+		LIGHT,
 	}
 
 	public enum FormulaClassification {
@@ -965,6 +970,11 @@ public class QuantifierPusher extends TermTransformer {
 		case ONLY_DER:
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			break;
+		case LIGHT:
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
 			break;
 		default:
 			throw new AssertionError("unknown value " + pqeTechniques);
