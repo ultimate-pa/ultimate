@@ -59,6 +59,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
+	private static final boolean CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = true;
+
 	public QuantifierPushTermWalker(final IUltimateServiceProvider services, final boolean applyDistributivity,
 			final PqeTechniques pqeTechniques, final ManagedScript mgdScript) {
 		super();
@@ -232,13 +234,27 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final Context context, final Term inputTerm) {
-		final ExtendedSimplificationResult esr1 = SmtUtils.simplifyWithStatistics(script, inputTerm, services, SimplificationTechnique.POLY_PAC);
-		services.getLoggingService().getLogger(QuantifierPusher.class).warn(esr1.buildSizeReductionMessage());
+		if (CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, inputTerm, services,
+					SimplificationTechnique.POLY_PAC);
+			final String message = "Quantifier elimination called on non-simplified input: "
+					+ esr.buildSizeReductionMessage();
+			if (esr.getReductionRatioInPercent() < 100) {
+				services.getLoggingService().getLogger(QuantifierPusher.class).warn(message);
+			}
+		}
 		final Term result = TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services,
 				applyDistributivity, quantifierEliminationTechniques, script), context,
-				esr1.getSimplifiedTerm());
-		final ExtendedSimplificationResult esr2 = SmtUtils.simplifyWithStatistics(script, result, services, SimplificationTechnique.POLY_PAC);
-		services.getLoggingService().getLogger(QuantifierPusher.class).warn(esr1.buildSizeReductionMessage() + " " + new DAGSize().treesize(esr1.getSimplifiedTerm()));
+				inputTerm);
+		if (CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, inputTerm, services,
+					SimplificationTechnique.POLY_PAC);
+			final String message = "Quantifier elimination failed to simlify output: "
+					+ esr.buildSizeReductionMessage();
+			if (esr.getReductionRatioInPercent() < 100) {
+				services.getLoggingService().getLogger(QuantifierPusher.class).warn(message);
+			}
+		}
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
 			SmtUtils.checkLogicalEquivalenceForDebugging(script.getScript(), result, inputTerm, QuantifierPusher.class,
