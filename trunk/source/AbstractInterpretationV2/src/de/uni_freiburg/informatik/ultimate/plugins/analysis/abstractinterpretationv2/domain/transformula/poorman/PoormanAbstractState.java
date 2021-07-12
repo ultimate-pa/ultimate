@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
@@ -40,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Abstract state type for the poorman's abstract domain that enables transformula support in abstract interpretation.
@@ -107,7 +107,7 @@ public class PoormanAbstractState<BACKING extends IAbstractState<BACKING>>
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
 		return mBackingState.getVariables();
 	}
 
