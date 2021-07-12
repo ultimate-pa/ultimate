@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 public class RandomDfsOrder<L, S> implements IDfsOrder<L, S> {
 	private final long mSeed;
 	private final boolean mPositional;
+	private final Function<S, Object> mNormalizer;
 
 	/**
 	 * Creates a new instance.
@@ -58,26 +60,85 @@ public class RandomDfsOrder<L, S> implements IDfsOrder<L, S> {
 	 *            state.
 	 */
 	public RandomDfsOrder(final long seed, final boolean positional) {
+		this(seed, positional, null);
+	}
+
+	/**
+	 * Creates a new instance.
+	 *
+	 * @param seed
+	 *            The base seed for random values.
+	 * @param positional
+	 *            Whether or not the created order should be positional, i.e., if the order on letters may depend on the
+	 *            state.
+	 * @param normalizer
+	 *            A function mapping a state to some object. States mapped to the same object will get the same order.
+	 *            Set to null if not needed, e.g. for non-positional instances.
+	 */
+	public RandomDfsOrder(final long seed, final boolean positional, final Function<S, Object> normalizer) {
 		mSeed = seed;
 		mPositional = positional;
+		mNormalizer = normalizer;
+
+		assert positional || normalizer == null : "Normalization for non-positional order does not make sense";
 	}
 
 	@Override
 	public Comparator<L> getOrder(final S state) {
-		return (x, y) -> {
-			if (Objects.equals(x, y)) {
-				return 0;
-			}
-			return new Random(getSeed(state, x, y)).nextBoolean() ? (Objects.hashCode(x) - Objects.hashCode(y))
-					: (Objects.hashCode(y) - Objects.hashCode(x));
-		};
+		final long positionalSeed =
+				(mPositional && state != null) ? (mSeed * Objects.hashCode(normalize(state))) : mSeed;
+		return new RandomComparator<>(positionalSeed);
 	}
 
-	private long getSeed(final S state, final L x, final L y) {
-		final long seed = mSeed * Objects.hashCode(x) * Objects.hashCode(y);
-		if (mPositional) {
-			return seed * Objects.hashCode(state);
+	private Object normalize(final S state) {
+		if (mNormalizer == null) {
+			return state;
 		}
-		return seed;
+		return mNormalizer.apply(state);
+	}
+
+	@Override
+	public boolean isPositional() {
+		return mPositional;
+	}
+
+	private static class RandomComparator<L> implements Comparator<L> {
+		private final long mSeed;
+
+		public RandomComparator(final long seed) {
+			mSeed = seed;
+		}
+
+		@Override
+		public int compare(final L x, final L y) {
+			if (x == y) {
+				return 0;
+			}
+			return getRepresentative(x) - getRepresentative(y);
+		}
+
+		private int getRepresentative(final L x) {
+			return new Random(mSeed * Objects.hashCode(x)).nextInt();
+		}
+
+		@Override
+		public int hashCode() {
+			return Long.hashCode(mSeed);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final RandomComparator<L> other = (RandomComparator<L>) obj;
+			return mSeed == other.mSeed;
+		}
 	}
 }

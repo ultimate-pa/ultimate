@@ -243,7 +243,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
 		}
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
-			return ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).getWrapperVisitor(visitor);
+			return ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
 		}
 		return visitor;
 	}
@@ -360,12 +360,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				if (deadEndVisitor.isDeadEndState(state1)) {
 					deadEndVisitor.addDeadEndState(newState);
 				}
-			}
-
-			// Transfer lockstep order info
-			if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
-				final var lockstep = (BetterLockstepOrder<?, IPredicate>) mPOR.getDfsOrder();
-				lockstep.transferOrder(state1, newState);
 			}
 
 			return newState;

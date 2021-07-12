@@ -60,6 +60,11 @@ public class ConstantDfsOrder<L, S> implements IDfsOrder<L, S> {
 		return mComparator;
 	}
 
+	@Override
+	public boolean isPositional() {
+		return false;
+	}
+
 	public static <L, S, U extends Comparable<U>> ConstantDfsOrder<L, S> comparing(final Function<L, U> keyExtractor) {
 		return new ConstantDfsOrder<>(Comparator.comparing(keyExtractor));
 	}

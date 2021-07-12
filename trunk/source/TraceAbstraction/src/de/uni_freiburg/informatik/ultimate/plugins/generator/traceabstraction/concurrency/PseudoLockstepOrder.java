@@ -129,4 +129,9 @@ public class PseudoLockstepOrder<L extends IAction> implements IDfsOrder<L, IPre
 
 		return locations.get(firstLocIndex).getProcedure();
 	}
+
+	@Override
+	public boolean isPositional() {
+		return true;
+	}
 }

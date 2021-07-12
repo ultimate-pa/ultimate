@@ -50,4 +50,11 @@ public interface IDfsOrder<L, S> {
 	 * @return the order as a {@link Comparator}
 	 */
 	Comparator<L> getOrder(S state);
+
+	/**
+	 * Determines if the order is positional or not.
+	 *
+	 * @return true if the ordering may differ between states, false if it is guaranteed to be the same for all states.
+	 */
+	boolean isPositional();
 }

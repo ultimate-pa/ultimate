@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
@@ -52,14 +54,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  *            The type of states in the automaton.
  */
 public class BetterLockstepOrder<L extends IAction, S> implements IDfsOrder<L, S> {
-	private final Map<S, L> mEntryEdge = new HashMap<>();
+	private final Map<Object, L> mEntryEdge = new HashMap<>();
+	private final Function<S, Object> mNormalizer;
 
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
+	public BetterLockstepOrder() {
+		this(null);
+	}
+
+	public BetterLockstepOrder(final Function<S, Object> normalizer) {
+		mNormalizer = normalizer;
+	}
+
 	@Override
 	public Comparator<L> getOrder(final S state) {
-		final L entryEdge = mEntryEdge.get(state);
+		final Object key = normalize(state);
+		final L entryEdge = mEntryEdge.get(key);
 
 		if (entryEdge == null) {
 			// should only happen for the initial state
@@ -67,50 +79,86 @@ public class BetterLockstepOrder<L extends IAction, S> implements IDfsOrder<L, S
 		}
 
 		final String lastThread = entryEdge.getPrecedingProcedure();
-		return (x, y) -> {
-			final String xThread = x.getPrecedingProcedure();
-			final boolean xBefore = lastThread.compareTo(xThread) >= 0;
-			final String yThread = y.getPrecedingProcedure();
-			final boolean yBefore = lastThread.compareTo(yThread) >= 0;
-			if (xBefore && !yBefore) {
-				return 1;
-			}
-			if (yBefore && !xBefore) {
-				return -1;
-			}
-			return mDefaultComparator.compare(x, y);
-		};
+		return new RoundRobinComparator<>(lastThread, mDefaultComparator);
 	}
 
-	public void transferOrder(final S oldState, final S newState) {
-		final L oldEdge = mEntryEdge.get(oldState);
-		final L newEdge = mEntryEdge.get(newState);
-		assert newEdge == null || newEdge == oldEdge : "Must not overwrite recorded order";
-		if (oldEdge != null) {
-			mEntryEdge.put(newState, oldEdge);
+	private Object normalize(final S state) {
+		if (mNormalizer == null) {
+			return state;
 		}
+		return mNormalizer.apply(state);
+	}
+
+	@Override
+	public boolean isPositional() {
+		return true;
 	}
 
 	/**
-	 * Gets a visitor that wraps a given visitor and delegates all calls to it. The wrapper visitor is needed for the
+	 * Creates a visitor that wraps a given visitor and delegates all calls to it. The wrapper visitor is needed for the
 	 * round robin order to work.
 	 *
 	 * @param underlying
 	 *            The underlying visitor
 	 * @return a newly created wrapper visitor
 	 */
-	public IDfsVisitor<L, S> getWrapperVisitor(final IDfsVisitor<L, S> underlying) {
-		return new Visitor(underlying);
+	public <V extends IDfsVisitor<L, S>> WrapperVisitor<L, S, V> wrapVisitor(final V underlying) {
+		return new Visitor<>(underlying);
 	}
 
-	public class Visitor extends WrapperVisitor<L, S, IDfsVisitor<L, S>> {
-		private Visitor(final IDfsVisitor<L, S> underlying) {
+	private static final class RoundRobinComparator<L extends IAction> implements Comparator<L> {
+		private final String mLastThread;
+		private final Comparator<L> mFallback;
+
+		public RoundRobinComparator(final String lastThread, final Comparator<L> fallback) {
+			mLastThread = Objects.requireNonNull(lastThread);
+			mFallback = fallback;
+		}
+
+		@Override
+		public int compare(final L x, final L y) {
+			final String xThread = x.getPrecedingProcedure();
+			final boolean xBefore = mLastThread.compareTo(xThread) >= 0;
+			final String yThread = y.getPrecedingProcedure();
+			final boolean yBefore = mLastThread.compareTo(yThread) >= 0;
+			if (xBefore && !yBefore) {
+				return 1;
+			}
+			if (yBefore && !xBefore) {
+				return -1;
+			}
+			return mFallback.compare(x, y);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(mFallback, mLastThread);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final RoundRobinComparator other = (RoundRobinComparator) obj;
+			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread);
+		}
+	}
+
+	private final class Visitor<V extends IDfsVisitor<L, S>> extends WrapperVisitor<L, S, V> {
+		private Visitor(final V underlying) {
 			super(underlying);
 		}
 
 		@Override
 		public boolean discoverTransition(final S source, final L letter, final S target) {
-			mEntryEdge.putIfAbsent(target, letter);
+			mEntryEdge.putIfAbsent(normalize(target), letter);
 			return super.discoverTransition(source, letter, target);
 		}
 	}

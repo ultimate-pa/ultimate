@@ -126,13 +126,12 @@ public class PartialOrderReductionFacade<L extends IAction> {
 				}
 			}.thenComparing(Comparator.comparingInt(Object::hashCode));
 			return new ConstantDfsOrder<>(comp);
-		// return ConstantDfsOrder.byHashCode();
 		case PSEUDO_LOCKSTEP:
-			return new BetterLockstepOrder<>();
+			return new BetterLockstepOrder<>(PartialOrderReductionFacade::normalizePredicate);
 		case RANDOM:
 			return new RandomDfsOrder<>(randomOrderSeed, false);
 		case POSITIONAL_RANDOM:
-			return new RandomDfsOrder<>(randomOrderSeed, true);
+			return new RandomDfsOrder<>(randomOrderSeed, true, PartialOrderReductionFacade::normalizePredicate);
 		default:
 			throw new UnsupportedOperationException("Unknown order type: " + orderType);
 		}
@@ -149,7 +148,11 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
 				new ThreadBasedPersistentSets<>(mServices, icfg,
 						(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence, relevantOrder, errorLocs),
-				p -> ((IMLPredicate) p).getProgramPoints());
+				PartialOrderReductionFacade::normalizePredicate);
+	}
+
+	private static Object normalizePredicate(final IPredicate state) {
+		return ((IMLPredicate) state).getProgramPoints();
 	}
 
 	public IPersistentSetChoice<L, IPredicate> getPersistentSets() {

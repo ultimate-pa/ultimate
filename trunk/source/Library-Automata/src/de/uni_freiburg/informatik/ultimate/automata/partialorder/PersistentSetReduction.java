@@ -52,7 +52,7 @@ public final class PersistentSetReduction {
 	public static <L, S> void applyWithoutSleepSets(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IDfsOrder<L, S> dfsOrder, final IPersistentSetChoice<L, S> persistent,
 			final IDfsVisitor<L, S> visitor) {
-		final IDfsOrder<L, S> combinedOrder = new CompliantDfsOrder<>(persistent, dfsOrder);
+		final IDfsOrder<L, S> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new DepthFirstTraversal<>(operand, combinedOrder, combinedVisitor);
 	}
@@ -62,7 +62,7 @@ public final class PersistentSetReduction {
 			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, R> dfsOrder,
 			final ISleepSetStateFactory<L, S, R> factory, final IPersistentSetChoice<L, R> persistent,
 			final IDfsVisitor<L, R> visitor) throws AutomataOperationCanceledException {
-		final IDfsOrder<L, R> combinedOrder = new CompliantDfsOrder<>(persistent, dfsOrder);
+		final IDfsOrder<L, R> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetNewStateReduction<>(services, operand, factory, independenceRelation, combinedOrder,
 				combinedVisitor);
@@ -73,7 +73,7 @@ public final class PersistentSetReduction {
 			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, S> dfsOrder,
 			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor)
 			throws AutomataOperationCanceledException {
-		final IDfsOrder<L, S> combinedOrder = new CompliantDfsOrder<>(persistent, dfsOrder);
+		final IDfsOrder<L, S> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new SleepSetDelayReduction<>(services, operand, new ISleepSetStateFactory.NoUnrolling<>(), independenceRelation,
 				combinedOrder, combinedVisitor);
@@ -118,11 +118,11 @@ public final class PersistentSetReduction {
 	 * @param <S>
 	 *            The type of states in the reduced automaton
 	 */
-	private static class CompliantDfsOrder<L, S> implements IDfsOrder<L, S> {
+	private static class CompatibleDfsOrder<L, S> implements IDfsOrder<L, S> {
 		private final IPersistentSetChoice<L, S> mPersistent;
 		private final IDfsOrder<L, S> mUnderlying;
 
-		public CompliantDfsOrder(final IPersistentSetChoice<L, S> persistent, final IDfsOrder<L, S> underlying) {
+		public CompatibleDfsOrder(final IPersistentSetChoice<L, S> persistent, final IDfsOrder<L, S> underlying) {
 			mPersistent = persistent;
 			mUnderlying = underlying;
 		}
@@ -146,6 +146,11 @@ public final class PersistentSetReduction {
 				return comparator.compare(a, b);
 			};
 		}
+
+		@Override
+		public boolean isPositional() {
+			return mUnderlying.isPositional() || !mPersistent.ensuresCompatibility(mUnderlying);
+		}
 	}
 
 	/**
@@ -158,12 +163,12 @@ public final class PersistentSetReduction {
 	 * @param <S>
 	 *            The type of states in the reduced automaton
 	 */
-	private static class CompliantPersistentSetChoice<L, S> implements IPersistentSetChoice<L, S> {
+	private static class CompatiblePersistentSetChoice<L, S> implements IPersistentSetChoice<L, S> {
 		private final IPersistentSetChoice<L, S> mUnderlying;
 		private final IDfsOrder<L, S> mOrder;
 		private final Function<S, Set<L>> mEnabledLetters;
 
-		public CompliantPersistentSetChoice(final IPersistentSetChoice<L, S> underlying, final IDfsOrder<L, S> order,
+		public CompatiblePersistentSetChoice(final IPersistentSetChoice<L, S> underlying, final IDfsOrder<L, S> order,
 				final Function<S, Set<L>> enabledLetters) {
 			mUnderlying = underlying;
 			mOrder = order;
