@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
@@ -274,43 +275,35 @@ public class QuantClause {
 	private void collectVarInfos() {
 		for (final QuantLiteral lit : mQuantLits) {
 			final QuantLiteral atom = lit.getAtom();
-			final boolean isNegated = lit.isNegated();
-
 			if (atom instanceof QuantBoundConstraint) {
-				final QuantBoundConstraint constr = (QuantBoundConstraint) atom;
-				final SMTAffineTerm lhs = constr.getAffineTerm();
-				for (final Term smd : lhs.getSummands().keySet()) {
-					if (smd instanceof TermVariable) {
-						final Rational fac = lhs.getSummands().get(smd);
-						if (fac.abs() == Rational.ONE) {
-							final SMTAffineTerm remainder = new SMTAffineTerm();
-							remainder.add(lhs);
-							remainder.add(fac.negate(), smd);
-							if (!fac.isNegative()) {
-								remainder.mul(Rational.MONE);
-							}
-							final Term remainderTerm = remainder.toTerm(smd.getSort());
-							if (remainderTerm.getFreeVars().length == 0) {
-								final int pos = getVarIndex((TermVariable) smd);
-								final VarInfo varInfo = mVarInfos[pos];
-								if (fac.isNegative()) {
-									varInfo.addUpperGroundBound(remainderTerm);
-								} else {
-									varInfo.addLowerGroundBound(remainderTerm);
-								}
-							} else if (remainderTerm instanceof TermVariable) {
-								final int pos = getVarIndex((TermVariable) smd);
-								final VarInfo varInfo = mVarInfos[pos];
-								if (fac.isNegative()) {
-									varInfo.addUpperVarBound((TermVariable) remainderTerm);
-								} else {
-									varInfo.addLowerVarBound((TermVariable) remainderTerm);
-								}
-							}
+				if (lit.isArithmetical()) {
+					Term[] termLtTerm =
+							QuantUtil.getArithmeticalTermLtTerm(lit, mQuantTheory.getClausifier().getTermCompiler());
+					if (termLtTerm[0] instanceof TermVariable) {
+						final TermVariable lowerVar = (TermVariable) termLtTerm[0];
+						final VarInfo info = mVarInfos[getVarIndex(lowerVar)];
+						if (termLtTerm[1] instanceof TermVariable) {
+							info.addUpperVarBound((TermVariable) termLtTerm[1]);
+						} else {
+							assert termLtTerm[1].getFreeVars().length == 0;
+							info.addUpperGroundBound(termLtTerm[1]);
 						}
-					} else if (smd.getFreeVars().length != 0) {
-						assert smd instanceof ApplicationTerm;
-						addAllVarPos((ApplicationTerm) smd);
+					}
+					if (termLtTerm[1] instanceof TermVariable) {
+						final TermVariable upperVar = (TermVariable) termLtTerm[1];
+						final VarInfo info = mVarInfos[getVarIndex(upperVar)];
+						if (termLtTerm[0] instanceof TermVariable) {
+							info.addLowerVarBound((TermVariable) termLtTerm[0]);
+						} else {
+							assert termLtTerm[0].getFreeVars().length == 0;
+							info.addLowerGroundBound(termLtTerm[0]);
+						}
+					}
+				} else {
+					for (final Term smd : ((QuantBoundConstraint) atom).getAffineTerm().getSummands().keySet()) {
+						if (smd instanceof ApplicationTerm && smd.getFreeVars().length != 0) {
+							addAllVarPos((ApplicationTerm) smd);
+						}
 					}
 				}
 			} else {
@@ -318,29 +311,29 @@ public class QuantClause {
 				final QuantEquality eq = (QuantEquality) atom;
 				final Term lhs = eq.getLhs();
 				final Term rhs = eq.getRhs();
-				if (lhs instanceof TermVariable) {
-					if (lhs.getSort().getName() == "Int" && !isNegated) {
-						if (rhs.getFreeVars().length == 0) { // (x = t) -> add t-1, t+1
-							final int pos = getVarIndex((TermVariable) lhs);
-							final VarInfo varInfo = mVarInfos[pos];
-							final SMTAffineTerm lowerAffine = new SMTAffineTerm(rhs);
-							lowerAffine.add(Rational.MONE);
-							final SMTAffineTerm upperAffine = new SMTAffineTerm(rhs);
-							upperAffine.add(Rational.ONE);
-							final Term lowerBound = lowerAffine.toTerm(rhs.getSort());
-							final Term upperBound = upperAffine.toTerm(rhs.getSort());
-							varInfo.addLowerGroundBound(lowerBound);
-							varInfo.addUpperGroundBound(upperBound);
-						}
+				if (lit.isArithmetical()) { // (x = t) -> add t-1, t+1
+					assert lhs instanceof TermVariable && lhs.getSort().getName() == "Int"
+							&& rhs.getFreeVars().length == 0;
+					final int pos = getVarIndex((TermVariable) lhs);
+					final VarInfo varInfo = mVarInfos[pos];
+					final SMTAffineTerm lowerAffine = new SMTAffineTerm(rhs);
+					lowerAffine.add(Rational.MONE);
+					final SMTAffineTerm upperAffine = new SMTAffineTerm(rhs);
+					upperAffine.add(Rational.ONE);
+					final TermCompiler compiler = mQuantTheory.getClausifier().getTermCompiler();
+					final Term lowerBound = lowerAffine.toTerm(compiler, rhs.getSort());
+					final Term upperBound = upperAffine.toTerm(compiler, rhs.getSort());
+					varInfo.addLowerGroundBound(lowerBound);
+					varInfo.addUpperGroundBound(upperBound);
+				} else {
+					if (!(lhs instanceof TermVariable) && lhs.getFreeVars().length != 0) {
+						assert lhs instanceof ApplicationTerm;
+						addAllVarPos((ApplicationTerm) lhs);
 					}
-				}
-				else if (lhs.getFreeVars().length != 0) {
-					assert lhs instanceof ApplicationTerm;
-					addAllVarPos((ApplicationTerm) lhs);
-				}
-				if (!(rhs instanceof TermVariable) && rhs.getFreeVars().length != 0) {
-					assert rhs instanceof ApplicationTerm;
-					addAllVarPos((ApplicationTerm) rhs);
+					if (!(rhs instanceof TermVariable) && rhs.getFreeVars().length != 0) {
+						assert rhs instanceof ApplicationTerm;
+						addAllVarPos((ApplicationTerm) rhs);
+					}
 				}
 			}
 		}
@@ -458,7 +451,8 @@ public class QuantClause {
 							final Term idxTerm = idx.getFlatTerm();
 							final SMTAffineTerm idxPlusMinusOneAff = new SMTAffineTerm(idxTerm);
 							idxPlusMinusOneAff.add(offset);
-							final Term shared = idxPlusMinusOneAff.toTerm(idxTerm.getSort());
+							final Term shared = idxPlusMinusOneAff
+									.toTerm(mQuantTheory.getClausifier().getTermCompiler(), idxTerm.getSort());
 							interestingTerms.add(shared);
 						}
 					}

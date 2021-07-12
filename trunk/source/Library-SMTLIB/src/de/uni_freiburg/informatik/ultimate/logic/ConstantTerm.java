@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 
 /**
@@ -78,21 +79,38 @@ public class ConstantTerm extends Term {
 
 	@Override
 	public String toString() {
+		if (mValue instanceof BigInteger) {
+			final BigInteger value = (BigInteger) mValue;
+			String result = value.abs().toString();
+			if (value.signum() < 0) {
+				result = "(- " + result + ")";
+			}
+			return result;
+		}
 		if (mValue instanceof BigDecimal) {
 			final BigDecimal decimal = (BigDecimal) mValue;
-			final String str = decimal.toPlainString();
-			return str;
+			String result = decimal.abs().toPlainString();
+			if (decimal.signum() < 0) {
+				result = "(- " + result + ")";
+			}
+			return result;
 		}
 		if (mValue instanceof Rational) {
 			final Rational rat = (Rational) mValue;
-			final String dotZero = getSort().getName() == "Real" ? ".0" : "";
-			String result = rat.numerator().abs().toString() + dotZero;
-			if (rat.isNegative()) {
-				result = "(- " + result + ")";
-			}
-			if (!rat.isIntegral()) {
-				assert dotZero == ".0";
-				result = "(/ " + result + " " + rat.denominator() + ".0)";
+			String result = rat.numerator().abs().toString();
+			if (rat.isIntegral()) {
+				if (getSort().getName() == "Real") {
+					result += ".0";
+				}
+				if (rat.isNegative()) {
+					result = "(- " + result + ")";
+				}
+			} else {
+				assert getSort().getName() == "Real";
+				if (rat.isNegative()) {
+					result = "(- " + result + ")";
+				}
+				result = "(/ " + result + " " + rat.denominator() + ")";
 			}
 			return result;
 		}

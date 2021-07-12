@@ -54,7 +54,7 @@ public class SystemTest {
 		final TestEnvironment testEnv = new TestEnvironment(solver, options);
 		if (!f.getAbsolutePath().contains("epr")) {
 			solver.setOption(":proof-check-mode", true);
-			if (!f.getAbsolutePath().contains("quant")) {
+			if (!f.getAbsolutePath().contains("quant") && !f.getAbsolutePath().contains("datatype")) {
 				solver.setOption(":model-check-mode", true);
 			}
 			solver.setOption(":interpolant-check-mode", true);
@@ -88,7 +88,7 @@ public class SystemTest {
 			return false;
 		} else if (f.getParent().contains("test" + separator + "epr")) {
 			return false;
-		} else if (f.getParent().contains("test" + separator + "datatype")) {
+		} else if (f.getParent().contains("test" + separator + "datatype" + separator + "quantified")) {
 			return false;
 		}
 		return true;
