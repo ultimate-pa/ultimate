@@ -49,7 +49,8 @@ public final class ImmutableSet<E> implements Set<E> {
 	private static ImmutableSet mEmptySet;
 
 	private final Set<E> mUnderlying;
-	private final int mHash;
+	private int mHash;
+	private boolean mHashCached;
 
 	/**
 	 * Creates a new immutable set, with the given underlying set of elements. The caller must guarantee to prevent any
@@ -60,7 +61,6 @@ public final class ImmutableSet<E> implements Set<E> {
 	 */
 	private ImmutableSet(final Set<E> underlying) {
 		mUnderlying = Objects.requireNonNull(underlying);
-		mHash = mUnderlying.hashCode();
 	}
 
 	/**
@@ -135,11 +135,32 @@ public final class ImmutableSet<E> implements Set<E> {
 
 	@Override
 	public boolean equals(final Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (this == obj) {
+			return true;
+		}
+
+		if (obj instanceof ImmutableSet<?>) {
+			// Optimized #equals for immutable sets
+			final ImmutableSet<E> other = (ImmutableSet<E>) obj;
+			if (mHashCached && other.mHashCached && mHash != other.mHash) {
+				return false;
+			}
+			return mUnderlying.equals(other.mUnderlying);
+		}
+
+		// fall back to normal Set#equals
 		return mUnderlying.equals(obj);
 	}
 
 	@Override
 	public int hashCode() {
+		if (!mHashCached) {
+			mHash = mUnderlying.hashCode();
+			mHashCached = true;
+		}
 		assert mUnderlying.hashCode() == mHash : "Immutable set was modified";
 		return mHash;
 	}
