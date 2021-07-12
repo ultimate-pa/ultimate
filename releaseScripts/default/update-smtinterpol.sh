@@ -12,8 +12,9 @@ exitOnFail() {
     return $status
 }
 
-dir_smtinterpol="/mnt/crypto-storage/firefox/repo/smtinterpol"
-dir_ultimate="/mnt/crypto-storage/firefox/repo/ultimate"
+repo_dir="${UPDATE_SMTINTERPOL_REPO_DIR:-"/mnt/crypto-storage/firefox"}"
+dir_smtinterpol="${UPDATE_SMTINTERPOL_SMTINTERPOL_DIR:-"${repo_dir}/smtinterpol"}"
+dir_ultimate="${UPDATE_SMTINTERPOL_ULTIMATE_DIR:-"${repo_dir}/ultimate"}"
 diff_file="smtinterpol.diff"
 changed_files="smtinterpol.changed"
 
@@ -29,6 +30,7 @@ fi
 
 echo "Updating $dir_smtinterpol..."
 pushd "$dir_smtinterpol" > /dev/null
+exitOnFail git checkout master
 exitOnFail git fetch
 exitOnFail git rebase
 exitOnFail git clean -f -d
