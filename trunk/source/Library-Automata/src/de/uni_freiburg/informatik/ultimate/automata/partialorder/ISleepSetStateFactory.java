@@ -27,9 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -55,7 +54,7 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	 *            The given sleep set
 	 * @return The corresponding sleep set state
 	 */
-	R createSleepSetState(S state, Set<L> sleepset);
+	R createSleepSetState(S state, ImmutableSet<L> sleepset);
 
 	/**
 	 * Default implementation of the interface, which represents the sleep set state as a pair.
@@ -68,14 +67,15 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	 * @param <S>
 	 *            The type of states in the original automaton
 	 */
-	public static class DefaultSleepSetStateFactory<L, S> implements ISleepSetStateFactory<L, S, Pair<S, Set<L>>> {
+	public static class DefaultSleepSetStateFactory<L, S>
+			implements ISleepSetStateFactory<L, S, Pair<S, ImmutableSet<L>>> {
 		@Override
-		public Pair<S, Set<L>> createEmptyStackState() {
+		public Pair<S, ImmutableSet<L>> createEmptyStackState() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public Pair<S, Set<L>> createSleepSetState(final S state, final Set<L> sleepset) {
+		public Pair<S, ImmutableSet<L>> createSleepSetState(final S state, final ImmutableSet<L> sleepset) {
 			return new Pair<>(state, sleepset);
 		}
 	}

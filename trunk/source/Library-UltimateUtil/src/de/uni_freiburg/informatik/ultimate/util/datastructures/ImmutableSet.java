@@ -83,7 +83,7 @@ public final class ImmutableSet<E> implements Set<E> {
 	 *
 	 * This method automatically prevents instances of {@link ImmutableSet} from being nested.
 	 *
-	 * @param underlying
+	 * @param set
 	 *            The underlying set of elements
 	 * @return an immutable view of the given set
 	 */

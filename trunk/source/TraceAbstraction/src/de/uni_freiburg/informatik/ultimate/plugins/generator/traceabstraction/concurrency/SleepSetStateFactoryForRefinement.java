@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateF
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * An implementation of an {@link ISleepSetStateFactory} for {@link IPredicate} states. Currently only works with
@@ -50,7 +51,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mEmptyStack;
-	private final Map<IPredicate, Map<Set<L>, IPredicate>> mKnownStates = new HashMap<>();
+	private final Map<IPredicate, Map<ImmutableSet<L>, IPredicate>> mKnownStates = new HashMap<>();
 	private final Map<IPredicate, IPredicate> mOriginalStates = new HashMap<>();
 
 	/**
@@ -71,8 +72,8 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	}
 
 	@Override
-	public IPredicate createSleepSetState(final IPredicate state, final Set<L> sleepset) {
-		final Map<Set<L>, IPredicate> sleep2State = mKnownStates.computeIfAbsent(state, x -> new HashMap<>());
+	public IPredicate createSleepSetState(final IPredicate state, final ImmutableSet<L> sleepset) {
+		final Map<ImmutableSet<L>, IPredicate> sleep2State = mKnownStates.computeIfAbsent(state, x -> new HashMap<>());
 		return sleep2State.computeIfAbsent(sleepset, x -> createFreshCopy(state));
 	}
 
