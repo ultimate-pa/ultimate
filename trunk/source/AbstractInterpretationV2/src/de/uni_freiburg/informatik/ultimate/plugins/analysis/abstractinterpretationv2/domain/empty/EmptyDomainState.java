@@ -204,7 +204,7 @@ public final class EmptyDomainState implements IAbstractState<EmptyDomainState> 
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
 		return mVarDecls;
 	}
 

@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -249,8 +250,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
-		return Collections.unmodifiableSet(mVariables);
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
+		return ImmutableSet.of(mVariables);
 	}
 
 	/**

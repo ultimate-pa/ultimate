@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class LiveVariableState<ACTION extends IAction>
-		implements IAbstractState<LiveVariableState<ACTION>> {
+public class LiveVariableState<ACTION extends IAction> implements IAbstractState<LiveVariableState<ACTION>> {
 
 	private static int sId;
 	private final int mId;
@@ -216,8 +216,8 @@ public class LiveVariableState<ACTION extends IAction>
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
-		return Collections.emptySet();
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
+		return ImmutableSet.empty();
 	}
 
 	@Override

@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQua
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * 
@@ -95,9 +95,9 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		final Term trueTerm = csToolkit.getManagedScript().term(this, "true");
 		final Term falseTerm = csToolkit.getManagedScript().term(this, "false");
 		csToolkit.getManagedScript().unlock(this);
-		mTopState = getOrConstructState(trueTerm, Collections.emptySet());
+		mTopState = getOrConstructState(trueTerm, ImmutableSet.empty());
 		mFalsePredicate = mBasicPredicateFactory.newPredicate(falseTerm);
-		mBottomState = new SMTTheoryState(mFalsePredicate, Collections.emptySet(), this);
+		mBottomState = new SMTTheoryState(mFalsePredicate, ImmutableSet.empty(), this);
 	}
 
 	/**
@@ -105,8 +105,8 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 	 * @param variables
 	 * @return
 	 */
-	public SMTTheoryState getOrConstructState(Term resTerm, Set<IProgramVarOrConst> variables) {
-		
+	public SMTTheoryState getOrConstructState(final Term resTerm, final ImmutableSet<IProgramVarOrConst> variables) {
+
 		final IPredicate pred = getOrConstructPredicate(resTerm, variables);
 
 		return getOrConstructState(pred, variables);
@@ -140,7 +140,8 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		return pred;
 	}
 
-	public SMTTheoryState getOrConstructState(IPredicate predicate, Set<IProgramVarOrConst> newPvocs) {
+	public SMTTheoryState getOrConstructState(final IPredicate predicate,
+			final ImmutableSet<IProgramVarOrConst> newPvocs) {
 		if (predicate == mFalsePredicate) {
 			return mBottomState;
 		}
@@ -174,7 +175,7 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		newPvocs.addAll(first.getVariables());
 		newPvocs.addAll(second.getVariables());
 
-		return getOrConstructState(conjunction, newPvocs);
+		return getOrConstructState(conjunction, ImmutableSet.of(newPvocs));
 
 	}
 
@@ -211,7 +212,7 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		final Term intersectedConjunction = 
 				SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjunctsThatHoldInBoth);
 
-		return getOrConstructState(intersectedConjunction, newPvocs);
+		return getOrConstructState(intersectedConjunction, ImmutableSet.of(newPvocs));
 	}
 
 	public IPredicate projectExistentially(Set<TermVariable> varsToProject, IPredicate predicate) {
