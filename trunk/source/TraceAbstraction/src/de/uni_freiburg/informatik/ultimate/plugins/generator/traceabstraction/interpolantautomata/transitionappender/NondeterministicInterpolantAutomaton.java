@@ -39,8 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Nondeterministic interpolant automaton with on-demand construction. The set of successor states S for a given state ψ
@@ -73,7 +74,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	 * change the language it only determines the amount of nondeterminism.
 	 */
 	protected final boolean mSecondChance;
-	
+
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
@@ -216,7 +217,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 
 	@Override
 	protected void constructSuccessorsAndTransitions(final IPredicate resPred, final IPredicate resHier,
-			final LETTER letter, final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
+			final LETTER letter, final SuccessorComputationHelper sch, final ImmutableSet<IPredicate> inputSuccs) {
 		for (final IPredicate succ : inputSuccs) {
 			sch.addTransition(resPred, resHier, letter, succ);
 		}

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Implementation of AbstractInterpolantAutomaton that already provides basic operations for successor computation.
@@ -75,7 +76,7 @@ public abstract class BasicAbstractInterpolantAutomaton<LETTER extends IAction>
 		}
 		// check all other predicates
 		addOtherSuccessors(resPred, resHier, letter, sch, inputSuccs);
-		constructSuccessorsAndTransitions(resPred, resHier, letter, sch, inputSuccs);
+		constructSuccessorsAndTransitions(resPred, resHier, letter, sch, ImmutableSet.of(inputSuccs));
 	}
 
 	protected void addTransitionToFalse(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
@@ -113,6 +114,6 @@ public abstract class BasicAbstractInterpolantAutomaton<LETTER extends IAction>
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs);
 
 	protected abstract void constructSuccessorsAndTransitions(IPredicate resPred, IPredicate resHier, LETTER letter,
-			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs);
+			SuccessorComputationHelper sch, ImmutableSet<IPredicate> inputSuccs);
 
 }

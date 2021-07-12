@@ -37,13 +37,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * A {@link DeterministicInterpolantAutomaton} that only tries to add successors on demand for letters that are not in a
  * pre-defined alphabet.
- * 
+ *
  * This automaton type is used during verification with reuse.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -73,7 +74,7 @@ public class ReusingDeterministicInterpolantAutomaton<LETTER extends IAction>
 			}
 			final Set<IPredicate> inputSuccs = new HashSet<>();
 			addInputAutomatonSuccs(resPred, resHier, letter, sch, inputSuccs);
-			constructSuccessorsAndTransitions(resPred, resHier, letter, sch, inputSuccs);
+			constructSuccessorsAndTransitions(resPred, resHier, letter, sch, ImmutableSet.of(inputSuccs));
 			return;
 		}
 		super.computeSuccs(resPred, resHier, letter, sch);
