@@ -28,11 +28,16 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Collector.Characteristics;
+import java.util.stream.Collectors;
 
 /**
  * Represents an immutable set, i.e., a set that cannot be modified. Immutable sets are suitable as elements of sets of
@@ -121,6 +126,52 @@ public final class ImmutableSet<E> implements Set<E> {
 			return (ImmutableSet<E>) set;
 		}
 		return new ImmutableSet<>(new HashSet<>(set));
+	}
+
+	/**
+	 * Creates a new collector to collect elements of a stream to an immutable set.
+	 *
+	 * @param <T>
+	 *            The type of elements in the stream
+	 * @return the collector
+	 */
+	public static <T> Collector<T, ?, ImmutableSet<T>> collector() {
+		return collector(Collectors.toSet(), new Characteristics[] { Characteristics.UNORDERED }, true);
+	}
+
+	/**
+	 * Wraps an existing set collector in order to create an immutable set. The given collector can be used to customize
+	 * the type of the underlying set.
+	 *
+	 * @param <T>
+	 *            the type of stream elements
+	 * @param <A>
+	 *            An intermediate type used by the given collector
+	 * @param coll
+	 *            the underlying set collector
+	 * @return A collector that wraps the set returned by the given collector in an immutable set
+	 */
+	public static <T, A> Collector<T, A, ImmutableSet<T>> collector(final Collector<T, A, Set<T>> coll) {
+		final Set<Characteristics> characteristics = EnumSet.noneOf(Characteristics.class);
+		if (coll.characteristics().contains(Characteristics.UNORDERED)) {
+			characteristics.add(Characteristics.UNORDERED);
+		}
+		if (coll.characteristics().contains(Characteristics.CONCURRENT)) {
+			characteristics.add(Characteristics.CONCURRENT);
+		}
+		final boolean elideFinish = coll.characteristics().contains(Characteristics.IDENTITY_FINISH);
+		return collector(coll, characteristics.toArray(Characteristics[]::new), elideFinish);
+	}
+
+	private static <T, A> Collector<T, A, ImmutableSet<T>> collector(final Collector<T, A, Set<T>> coll,
+			final Characteristics[] characteristics, final boolean elideFinish) {
+		final Function<A, ImmutableSet<T>> finisher;
+		if (elideFinish) {
+			finisher = s -> ImmutableSet.of((Set<T>) s);
+		} else {
+			finisher = coll.finisher().andThen(ImmutableSet::of);
+		}
+		return Collector.of(coll.supplier(), coll.accumulator(), coll.combiner(), finisher, characteristics);
 	}
 
 	@Override
