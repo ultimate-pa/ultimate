@@ -34,7 +34,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -178,10 +177,10 @@ public class SleepSetNewStateReduction<L, S, R> {
 				}
 
 				final S succState = currentTransition.getSucc();
-				final ImmutableSet<L> succSleepSet =
-						ImmutableSet.of(Stream.concat(currentSleepSet.stream(), explored.stream())
-								.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
-								.collect(Collectors.toSet())); // TODO factor out
+				// TODO factor out sleep set successor computation
+				final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
+						.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
+						.collect(ImmutableSet.collector());
 				final R succSleepSetState = getSleepSetState(succState, succSleepSet);
 
 				final boolean prune =
