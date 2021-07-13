@@ -27,8 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -53,13 +51,13 @@ public class LiveVariableState<ACTION extends IAction> implements IAbstractState
 	private static int sId;
 	private final int mId;
 
-	private final Set<IProgramVarOrConst> mLive;
+	private final ImmutableSet<IProgramVarOrConst> mLive;
 
 	LiveVariableState() {
-		this(new HashSet<>());
+		this(ImmutableSet.empty());
 	}
 
-	LiveVariableState(final Set<IProgramVarOrConst> live) {
+	LiveVariableState(final ImmutableSet<IProgramVarOrConst> live) {
 		mLive = Objects.requireNonNull(live);
 		mId = getFreshId();
 	}
@@ -140,7 +138,7 @@ public class LiveVariableState<ACTION extends IAction> implements IAbstractState
 		} else if (intersection.equals(other.mLive)) {
 			return other;
 		}
-		return new LiveVariableState<>(intersection);
+		return new LiveVariableState<>(ImmutableSet.of(intersection));
 	}
 
 	@Override
@@ -151,7 +149,7 @@ public class LiveVariableState<ACTION extends IAction> implements IAbstractState
 		} else if (union.equals(other.mLive)) {
 			return other;
 		}
-		return new LiveVariableState<>(union);
+		return new LiveVariableState<>(ImmutableSet.of(union));
 	}
 
 	@Override
@@ -200,8 +198,8 @@ public class LiveVariableState<ACTION extends IAction> implements IAbstractState
 		return other.mId == mId;
 	}
 
-	public Set<IProgramVarOrConst> getLiveVariables() {
-		return Collections.unmodifiableSet(mLive);
+	public ImmutableSet<IProgramVarOrConst> getLiveVariables() {
+		return mLive;
 	}
 
 	public Set<IProgramVar> getLiveVariablesAsProgramVars() {
