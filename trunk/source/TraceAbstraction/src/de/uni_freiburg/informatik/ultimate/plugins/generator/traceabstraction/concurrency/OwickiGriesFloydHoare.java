@@ -25,7 +25,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -45,9 +48,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -64,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of statements in the Petri program
  */
 
-public class OwickiGriesFloydHoare<PLACE, LETTER> {
+public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -73,7 +78,7 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	private final DefaultIcfgSymbolTable mSymbolTable;
 	private final BasicPredicateFactory mFactory;
 	private final Function<PLACE, IPredicate> mPlace2Predicate;
-	//protected final IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>> mRefinementEngine;
+	private final ArrayList <IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> mRefinementEngines;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
 	private final IPetriNet<LETTER, PLACE> mNet;
@@ -100,8 +105,9 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 	 */
 	public OwickiGriesFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net,
-			final Function<PLACE, IPredicate> place2Predicate) {
-//IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>> refinementEngine
+			final Function<PLACE, IPredicate> place2Predicate, 
+			ArrayList <IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines){
+        
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mManagedScript = csToolkit.getManagedScript();
@@ -109,7 +115,7 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 		mSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
 		mPlace2Predicate = place2Predicate;
-		//mRefinementEngine = refinementEngine;
+		mRefinementEngines = refinementEngines;
 
 		mBp = bp;
 		mNet = net;
@@ -128,15 +134,16 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 		
 
 		mFloydHoareAnnotation = getMaximalAnnotation();	
-		getSimpleAnnotation();// to replaceMaximalAnnotation
+		getCosetAnnotation();// to replaceMaximalAnnotation
 
 	}
 
-	public static <LETTER> OwickiGriesFloydHoare<IPredicate, LETTER> create(final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final BranchingProcess<LETTER, IPredicate> bp,
-			final IPetriNet<LETTER, IPredicate> net) {
-		return new OwickiGriesFloydHoare<>(services, csToolkit, bp, net, x -> x);
-	}
+//	public static <LETTER> OwickiGriesFloydHoare<IPredicate, LETTER> create(final IUltimateServiceProvider services,
+//			final CfgSmtToolkit csToolkit, final BranchingProcess<LETTER, IPredicate> bp,
+//			final IPetriNet<LETTER, IPredicate> net, 
+//			ArrayList <IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines) {
+//		return new OwickiGriesFloydHoare<>(services, csToolkit, bp, net, x -> x, refinementEngines);
+//	}
 
 	/**
 	 * @param branching
@@ -162,19 +169,91 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 		}
 		return mapping;
 	}
-	 private void getSimpleAnnotation() {
+	/**
+	 * Return mapping of 
+	 */
+	 private void getCosetAnnotation() {		
+		final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
 		final Set<Set<Condition<LETTER,PLACE>>> markingCosets =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), 
 				new HashSet<Condition<LETTER,PLACE>>(),	mOrigConditions, new HashSet<Set<Condition<LETTER,PLACE>>>());
 		final Map<Set<Condition<LETTER,PLACE>>, Set<Set<Condition<LETTER,PLACE>>>> markAssertCond = new HashMap<>();
 		for(Set<Condition<LETTER,PLACE>> markCoset: markingCosets) {
-			Set<Set<Condition<LETTER,PLACE>>> assertConds =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), markCoset,mAssertConditions,
-					new HashSet<Set<Condition<LETTER,PLACE>>>());
-			//simplifyAnnotation(Set<Set<Condition<LETTER,PLACE>>> assertCond);
-		 }
+			Set<PLACE> markPlaces = getCosetPlaces(markCoset);
+			Set<Set<Condition<LETTER,PLACE>>> assertConds =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), 
+					markCoset,mAssertConditions, new HashSet<Set<Condition<LETTER,PLACE>>>());		
+			 Set<Set<PLACE>> markAssertPlaces = new HashSet<>();
+			for(Set<Condition<LETTER,PLACE>> assertCond: assertConds) {
+				markAssertPlaces.add(getCosetPlaces(simplifyAssertions(assertCond)));				
+			}
+			//add to mapping
 			//markAssertCond.put(markCoset,);
+		 }
+			
 		}	
-		
-		
+	 
+	 private Set<PLACE> getCosetPlaces (Set<Condition<LETTER,PLACE>> coset){
+		 Set<PLACE> placeCoset = new HashSet<>();
+		 for(Condition<LETTER,PLACE> condition: coset) {
+			 placeCoset.add(condition.getPlace());
+		 }	 
+		 return placeCoset;
+		 
+	 }
+	 
+		//Set of conditions to set of places
+	 private Set<Condition<LETTER,PLACE>> simplifyAssertions(Set<Condition<LETTER,PLACE>> assertConds){
+		 Set<Condition<LETTER,PLACE>> simpleAssertions = assertConds;
+		 //Check if equiv to false, set all to false;
+		 for (Condition<LETTER,PLACE> cond: assertConds) {
+			 if (!thereIsStronger(cond, simpleAssertions)) {				 
+				 Set<Condition<LETTER,PLACE>> weakerConditions = getWeakerConditions(cond, assertConds);
+				 simpleAssertions = cleanWeakConditions(simpleAssertions, weakerConditions);
+			 }
+			 else {					 		 
+				 simpleAssertions = DataStructureUtils.difference(simpleAssertions, 
+						 Collections.singleton(cond));
+			 }
+		 }
+		 return simpleAssertions;
+	 }
+	 
+	 private Set<Condition<LETTER, PLACE>> getWeakerConditions(Condition<LETTER,PLACE> condition, 
+			 Set<Condition<LETTER,PLACE>> assertConditions) {
+		 Set<Condition<LETTER, PLACE>> condImplications = new HashSet<>();
+		 IPredicate condPredicate = condition.getPlace();		 
+		 for (IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>> refEngine : mRefinementEngines) {
+			  for(Condition<LETTER,PLACE> assertCond: assertConditions) {
+				 if(Validity.VALID == refEngine.getPredicateUnifier().getCoverageRelation().isCovered
+						 (condPredicate, assertCond.getPlace())) {
+					condImplications.add(assertCond);
+				 }
+			 }	
+		 }	 
+		 
+		 return condImplications;
+	 }
+	 
+	 private Set<Condition<LETTER, PLACE>> cleanWeakConditions(Set<Condition<LETTER,PLACE>> assertConditions,
+			 Set<Condition<LETTER, PLACE>> condImplications){
+		 if (!condImplications.isEmpty()) {
+			 assertConditions = DataStructureUtils.difference(assertConditions, condImplications);
+		 }
+		 return assertConditions;
+	 }
+	 
+	 
+	 //is there an stronger condition already in the set?	 
+	 private boolean thereIsStronger(Condition<LETTER,PLACE> condition, 
+			 Set<Condition<LETTER,PLACE>> assertConditions) {
+		 IPredicate predCondition = condition.getPlace();
+		 for (IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>> refEngine : mRefinementEngines) {
+			 if(!refEngine.getPredicateUnifier().getCoverageRelation().getCoveredPredicates(condition.getPlace()).isEmpty()) {
+				 return true;
+			 }
+		}		 
+		 return false;
+	 }
+	 
 	 
 
 	 /**	  
@@ -205,12 +284,6 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 		 	return cuts;		 		 
 	 }
 	 
-	 private Set<Set<Condition<LETTER,PLACE>>> symplifyAnnotation(Set<Set<Condition<LETTER,PLACE>>> assertCoset){
-		 Set<Set<Condition<LETTER,PLACE>>> simpCoset = new HashSet<>();
-		 
-		 //!equal->    weaker
-		 return simpCoset;
-	 }
 
 	
 	 private Set<Condition<LETTER,PLACE>> getOrigConditions(){
@@ -240,6 +313,7 @@ public class OwickiGriesFloydHoare<PLACE, LETTER> {
 		}
 		return mFactory.or(predicates);
 	}
+	//
 
 	/**
 	 * @param cuts

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -73,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -103,6 +105,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pe
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -151,6 +154,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	private final CounterexampleCache<L> mCounterexampleCache;
 	private BranchingProcess<L, IPredicate> mFinPrefix;
 	private IPetriNet<L, IPredicate> mInitialNet;
+	protected ArrayList <IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>>> mRefinementEngines = new ArrayList<>();
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -274,6 +278,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final BoundedPetriNet<L, IPredicate> abstraction = (BoundedPetriNet<L, IPredicate>) mAbstraction;
+		mRefinementEngines.add(mRefinementEngine);
 		final IHoareTripleChecker htc;
 		if (mRefinementEngine.getHoareTripleChecker() != null) {
 			htc = mRefinementEngine.getHoareTripleChecker();
@@ -703,8 +708,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}
-		final OwickiGriesFloydHoare<IPredicate, L> floydHoare =
-				OwickiGriesFloydHoare.create(mServices, mCsToolkit, mFinPrefix, mInitialNet);
+		final OwickiGriesFloydHoare<IPredicate, L> floydHoare = 
+				new	OwickiGriesFloydHoare(mServices, mCsToolkit, mFinPrefix, mInitialNet, x -> x, mRefinementEngines);
 		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 
 		final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
@@ -730,8 +735,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			}
 		}
 
-		final OwickiGriesConstruction<IPredicate, L> construction =
-				new OwickiGriesConstruction<>(mServices, mCsToolkit, mInitialNet, petriFloydHoare);
+		final OwickiGriesConstruction<IPredicate, L>construction =
+				new OwickiGriesConstruction<>(mServices, mCsToolkit, mInitialNet, petriFloydHoare, mRefinementEngines);
 		// TODO: simplify
 		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
 				construction.getResult(), construction.getCoMarkedPlaces());

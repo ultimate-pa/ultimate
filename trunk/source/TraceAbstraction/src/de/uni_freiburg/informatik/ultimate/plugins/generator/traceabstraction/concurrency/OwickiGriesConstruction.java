@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -46,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -61,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -76,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <LETTER>
  *            The type of statements in the Petri program
  */
-public class OwickiGriesConstruction<PLACE, LETTER> {
+public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -86,6 +90,7 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
+	private final ArrayList <IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> mRefinementEngines;
 	private final DefaultIcfgSymbolTable mSymbolTable;
 
 	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
@@ -98,14 +103,16 @@ public class OwickiGriesConstruction<PLACE, LETTER> {
 	
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final IPetriNet<LETTER, PLACE> net, final Map<Marking<LETTER, PLACE>, IPredicate> floydHoare) {
+			final IPetriNet<LETTER, PLACE> net, final Map<Marking<LETTER, PLACE>, IPredicate> floydHoare, 
+			ArrayList <IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mManagedScript = csToolkit.getManagedScript();
 		mScript = mManagedScript.getScript();
 
-		mNet = net;
+		mNet = net;                                                                                                                                                                                                                         
 		mFloydHoareAnnotation = floydHoare;
+		mRefinementEngines = refinementEngines;
 		mSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
 

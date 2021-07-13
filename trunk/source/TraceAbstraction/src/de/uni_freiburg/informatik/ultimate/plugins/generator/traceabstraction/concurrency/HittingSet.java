@@ -89,6 +89,7 @@ public class HittingSet <T>{
 	 */
 	private boolean checkHittingSet(Set<T> hittingSet, Set<Set<T>> setUniverse) {
 		Set<Set<T>> universe = new HashSet<Set<T>>(setUniverse);
+		System.out.print(multiply(-14,30));
 		for (Set<T> set : universe) {
 			if (DataStructureUtils.intersection(set, hittingSet).isEmpty()) {
 				return false;
@@ -96,6 +97,23 @@ public class HittingSet <T>{
 		}		
 		return true;
 	}
+	
+    public static int multiply ( int x , int y )
+    {
+        assert x >= 0 & y>= 0: "Out of range";
+        int r = 0 ;
+        int i = 0 ;
+        assert r == y * i  & i < x: "Failed Loop invariant (pre)";
+        while ( i < x )
+        {
+            assert r == y * i  & i <= x: "Failed Loop invariant";
+            r = r + y ; 
+            i = i + 1 ; 
+            
+        }
+        assert r == y * i  & i == x: "Failed Loop invariant (post)";
+        return r;
+    }
 	
 	/**
 	 * @param s1
