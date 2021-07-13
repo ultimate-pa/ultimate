@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.S
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -400,7 +401,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				petriNetPlaces.add(place);
 			}
 		}
-		final Marking<LETTER, PLACE> filteredMarking = new Marking<>(petriNetPlaces);
+		final Marking<LETTER, PLACE> filteredMarking = new Marking<>(ImmutableSet.of(petriNetPlaces));
 		return mMinuend.isAccepting(filteredMarking);
 	}
 

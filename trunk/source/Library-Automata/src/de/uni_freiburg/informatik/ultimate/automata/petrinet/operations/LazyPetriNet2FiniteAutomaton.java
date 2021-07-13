@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * On-the-fly construction of a finite Automaton from a Petri Net.
@@ -108,7 +109,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public Iterable<S> getInitialStates() {
-		return Arrays.asList(getOrConstructState(new Marking<>(mOperand.getInitialPlaces())));
+		return Arrays.asList(getOrConstructState(new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()))));
 	}
 
 	private S getOrConstructState(final Marking<L, S> marking) {
@@ -116,7 +117,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 			final S state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
 			mState2Marking.put(state, marking);
 
-			final boolean isInitial = new Marking<>(mOperand.getInitialPlaces()).equals(marking);
+			final boolean isInitial = new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces())).equals(marking);
 			final boolean isFinal = mOperand.isAccepting(marking);
 			mCache.addState(isInitial, isFinal, state);
 
