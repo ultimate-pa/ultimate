@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -51,7 +52,7 @@ import java.util.stream.Collectors;
 public final class ImmutableSet<E> implements Set<E> {
 	private static final String ERROR_MSG = "Set is immutable";
 
-	private static ImmutableSet mEmptySet;
+	private static ImmutableSet sEmptySet;
 
 	private final Set<E> mUnderlying;
 	private int mHash;
@@ -76,12 +77,21 @@ public final class ImmutableSet<E> implements Set<E> {
 	 * @return empty, immutable set
 	 */
 	public static <E> ImmutableSet<E> empty() {
-		if (mEmptySet == null) {
-			mEmptySet = new ImmutableSet<>(Collections.emptySet());
+		if (sEmptySet == null) {
+			sEmptySet = new ImmutableSet<>(Collections.emptySet());
 		}
-		return mEmptySet;
+		return sEmptySet;
 	}
 
+	/**
+	 * Creates a new immutable singleton set.
+	 *
+	 * @param <E>
+	 *            The element type
+	 * @param elem
+	 *            The single element in the set
+	 * @return the newly created set
+	 */
 	public static <E> ImmutableSet<E> singleton(final E elem) {
 		return of(Collections.singleton(elem));
 	}
@@ -130,6 +140,32 @@ public final class ImmutableSet<E> implements Set<E> {
 			return (ImmutableSet<E>) set;
 		}
 		return new ImmutableSet<>(new HashSet<>(set));
+	}
+
+	/**
+	 * Creates a new immutable set, with the given underlying set of elements, and preserving the iteration order. In
+	 * contrast to {@link ImmutableSet#ImmutableSet(Set)}, a copy is made, and hence the caller can make modifications
+	 * to the given set (that will not be reflected by the immutable copy).
+	 *
+	 * Beware that creating a copy of a set is performance-intensive. Thus, if a caller can guarantee that the given set
+	 * will never be modified, it is recommended to use {@link #of(Set)} instead.
+	 *
+	 * If the given set is already immutable, it is returned immediately and no copy is made.
+	 *
+	 * @param <E>
+	 *            The type of elements in the set
+	 * @param set
+	 *            The set of which an immutable copy is made.
+	 * @return an immutable copy of the given set's current contents
+	 */
+	public static <E> ImmutableSet<E> orderedCopyOf(final Collection<E> set) {
+		if (set.isEmpty()) {
+			return empty();
+		}
+		if (set instanceof ImmutableSet<?>) {
+			return (ImmutableSet<E>) set;
+		}
+		return new ImmutableSet<>(new LinkedHashSet<>(set));
 	}
 
 	/**
