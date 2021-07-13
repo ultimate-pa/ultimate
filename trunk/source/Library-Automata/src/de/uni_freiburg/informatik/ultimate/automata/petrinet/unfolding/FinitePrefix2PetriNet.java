@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -54,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
@@ -73,7 +73,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNetAndAutomataInclusionStateFactory<PLACE>> {
 	private final BranchingProcess<LETTER, PLACE> mInput;
 	private final BoundedPetriNet<LETTER, PLACE> mNet;
-	private final Queue<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> mMergingCandidates;
+	private final HashDeque<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> mMergingCandidates;
 	private final HashRelation<Event<LETTER, PLACE>, Condition<LETTER, PLACE>> mConditionPredecessors =
 			new HashRelation<>();
 	private final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mEventSuccessors = new HashRelation<>();
@@ -130,7 +130,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		}
 	}
 
-	@SuppressWarnings("squid:S1698")
 	private void constructNet(final BranchingProcess<LETTER, PLACE> bp, final BoundedPetriNet<LETTER, PLACE> oldNet) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("CONDITIONS:");
@@ -305,7 +304,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				succs.add(placeMap.get(representative));
 			}
 			final ITransition<LETTER, PLACE> newTransition =
-					mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
+					mNet.addTransition(e.getTransition().getSymbol(), ImmutableSet.of(preds), ImmutableSet.of(succs));
 			mOldToNewTransitions.addPair(newTransition, e.getTransition());
 		}
 		// }
@@ -491,9 +490,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 					final Set<PLACE> predset = entry2.getKey();
 					final Set<Set<PLACE>> succsets = entry2.getValue();
 					for (final Set<PLACE> succset : succsets) {
-						final Set<PLACE> predList = new HashSet<>(predset);
-						final Set<PLACE> succList = new HashSet<>(succset);
-						net.addTransition(letter, predList, succList);
+						net.addTransition(letter, ImmutableSet.copyOf(predset), ImmutableSet.copyOf(succset));
 					}
 				}
 			}
@@ -557,7 +554,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				computeEquivalenceClasses(relevantConditions);
 		final Map<Condition<LETTER, PLACE>, PLACE> condition2Place =
 				computeCondition2Place(equivalenceClasses, mStateFactory);
-		final HashRelation3<LETTER, Set<PLACE>, Set<PLACE>> letterPredecessorsSuccessors =
+		final HashRelation3<LETTER, ImmutableSet<PLACE>, ImmutableSet<PLACE>> letterPredecessorsSuccessors =
 				computeTransitions(bp.getEvents(), condition2Place);
 
 		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(mServices, bp.getAlphabet(), false);
@@ -572,33 +569,34 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				}
 			}
 		}
-		for (final Triple<LETTER, Set<PLACE>, Set<PLACE>> triple : letterPredecessorsSuccessors) {
+		for (final Triple<LETTER, ImmutableSet<PLACE>, ImmutableSet<PLACE>> triple : letterPredecessorsSuccessors) {
 			result.addTransition(triple.getFirst(), triple.getSecond(), triple.getThird());
 		}
 		return result;
 	}
 
-	private HashRelation3<LETTER, Set<PLACE>, Set<PLACE>> computeTransitions(
+	private HashRelation3<LETTER, ImmutableSet<PLACE>, ImmutableSet<PLACE>> computeTransitions(
 			final Collection<Event<LETTER, PLACE>> events, final Map<Condition<LETTER, PLACE>, PLACE> condition2Place) {
-		final HashRelation3<LETTER, Set<PLACE>, Set<PLACE>> letterPredecessorsSuccessors = new HashRelation3<>();
+		final HashRelation3<LETTER, ImmutableSet<PLACE>, ImmutableSet<PLACE>> letterPredecessorsSuccessors =
+				new HashRelation3<>();
 		for (final Event<LETTER, PLACE> event : events) {
 			// skip auxiliary initial event
 			if (event.getTransition() != null) {
 				final LETTER letter = event.getTransition().getSymbol();
-				final Set<PLACE> predecessors =
-						event.getPredecessorConditions().stream().map(condition2Place::get).collect(Collectors.toSet());
+				final ImmutableSet<PLACE> predecessors = event.getPredecessorConditions().stream()
+						.map(condition2Place::get).collect(ImmutableSet.collector());
 				assert !predecessors.contains(null);
-				final Set<PLACE> successors;
+				final ImmutableSet<PLACE> successors;
 				if (event.getCompanion() != null) {
 					final Event<LETTER, PLACE> companion = event.getCompanion();
 					if (companion.getTransition() != event.getTransition()) {
 						throw new UnsupportedOperationException("finite prefix with same transition cut-off required");
 					}
 					successors = companion.getSuccessorConditions().stream().map(condition2Place::get)
-							.collect(Collectors.toSet());
+							.collect(ImmutableSet.collector());
 				} else {
 					successors = event.getSuccessorConditions().stream().map(condition2Place::get)
-							.collect(Collectors.toSet());
+							.collect(ImmutableSet.collector());
 				}
 				assert !successors.contains(null);
 				letterPredecessorsSuccessors.addTriple(letter, predecessors, successors);

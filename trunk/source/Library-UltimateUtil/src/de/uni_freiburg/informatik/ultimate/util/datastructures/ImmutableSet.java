@@ -82,6 +82,10 @@ public final class ImmutableSet<E> implements Set<E> {
 		return mEmptySet;
 	}
 
+	public static <E> ImmutableSet<E> singleton(final E elem) {
+		return of(Collections.singleton(elem));
+	}
+
 	/**
 	 * Creates a new immutable set, with the given underlying set of elements. The caller must guarantee to prevent any
 	 * modification of the underlying set.

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -71,7 +72,8 @@ public class ProjectToSubnet<LETTER, PLACE> {
 			final HashSet<PLACE> succs = new HashSet<>(operand.getSuccessors(t));
 			succs.removeAll(flowToRemove.getImage(t));
 			succs.removeAll(placesToRemove);
-			final Transition<LETTER, PLACE> newTransition = mResult.addTransition(t.getSymbol(), preds, succs);
+			final Transition<LETTER, PLACE> newTransition =
+					mResult.addTransition(t.getSymbol(), ImmutableSet.of(preds), ImmutableSet.of(succs));
 			mInput2Projected.put(t, newTransition);
 		}
 	}
