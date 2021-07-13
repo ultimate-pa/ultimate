@@ -146,7 +146,7 @@ public class BetterLockstepOrder<L extends IAction, S> implements IDfsOrder<L, S
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			final RoundRobinComparator other = (RoundRobinComparator) obj;
+			final RoundRobinComparator<L> other = (RoundRobinComparator<L>) obj;
 			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread);
 		}
 	}
