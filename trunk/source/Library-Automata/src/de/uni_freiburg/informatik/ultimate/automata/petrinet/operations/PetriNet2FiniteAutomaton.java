@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Given a Petri net, this class constructs a finite automaton that recognizes the same language.
@@ -105,7 +106,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 		final VpAlphabet<LETTER> vpAlphabet = new VpAlphabet<LETTER>(alphabet, Collections.emptySet(),
 				Collections.emptySet());
 		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
-		getState(new Marking(operand.getInitialPlaces()), true);
+		getState(new Marking<>(ImmutableSet.of(operand.getInitialPlaces())), true);
 		while (!mWorklist.isEmpty()) {
 			final Marking<LETTER, PLACE> marking = mWorklist.remove(0);
 			constructOutgoingTransitions(marking);
