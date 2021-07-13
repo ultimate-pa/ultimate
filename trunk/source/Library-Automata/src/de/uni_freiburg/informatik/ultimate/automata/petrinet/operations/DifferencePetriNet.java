@@ -125,7 +125,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	}
 
 	@Override
-	public Set<PLACE> getSuccessors(final ITransition<LETTER, PLACE> transition) {
+	public ImmutableSet<PLACE> getSuccessors(final ITransition<LETTER, PLACE> transition) {
 		final Transition<LETTER, PLACE> casted = mTransitions.get(transition);
 		if (casted == null) {
 			throw new IllegalArgumentException("unknown transition " + transition);
@@ -135,7 +135,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	}
 
 	@Override
-	public Set<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition) {
+	public ImmutableSet<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition) {
 		final Transition<LETTER, PLACE> casted = mTransitions.get(transition);
 		if (casted == null) {
 			throw new IllegalArgumentException("unknown transition " + transition);
@@ -408,7 +408,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	private class DifferenceSuccessorTransitionProvider implements ISuccessorTransitionProvider<LETTER, PLACE> {
 		private final ISuccessorTransitionProvider<LETTER, PLACE> mPetriNetPredecessors;
 		private final PLACE mAutomatonPredecessor;
-		private final LinkedHashSet<PLACE> mAllPredecessors;
+		private final ImmutableSet<PLACE> mAllPredecessors;
 
 		public DifferenceSuccessorTransitionProvider(
 				final ISuccessorTransitionProvider<LETTER, PLACE> petriNetPredecessors,
@@ -416,13 +416,14 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			super();
 			mPetriNetPredecessors = petriNetPredecessors;
 			mAutomatonPredecessor = automatonPredecessor;
-			mAllPredecessors = new LinkedHashSet<>(petriNetPredecessors.getPredecessorPlaces());
-			mAllPredecessors.add(automatonPredecessor);
+			final Set<PLACE> predecessors = new LinkedHashSet<>(petriNetPredecessors.getPredecessorPlaces());
+			predecessors.add(automatonPredecessor);
+			mAllPredecessors = ImmutableSet.of(predecessors);
 		}
 
 		@Override
 		public Set<PLACE> getPredecessorPlaces() {
-			return Collections.unmodifiableSet(mAllPredecessors);
+			return mAllPredecessors;
 		}
 
 		@Override
@@ -466,7 +467,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 					final int totalOrderId = mNumberOfConstructedTransitions;
 					mNumberOfConstructedTransitions++;
-					result = mYetConstructedResult.addTransition(inputTransition.getSymbol(), mAllPredecessors, successors, totalOrderId);
+					result = mYetConstructedResult.addTransition(inputTransition.getSymbol(), mAllPredecessors,
+							ImmutableSet.of(successors), totalOrderId);
 					mInputTransition2State2OutputTransition.put(inputTransition, automatonPredecessor, result);
 					mNewTransition2AutomatonPredecessorState.put(result, automatonPredecessor);
 					mTransitions.put(result, (Transition<LETTER, PLACE>) result);
@@ -620,7 +622,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				final int totalOrderId = mNumberOfConstructedTransitions;
 				mNumberOfConstructedTransitions++;
 				result = mYetConstructedResult.addTransition(inputTransition.getSymbol(),
-						mMinuend.getPredecessors(inputTransition), successors, totalOrderId);
+						mMinuend.getPredecessors(inputTransition), ImmutableSet.of(successors), totalOrderId);
 				mInputTransition2State2OutputTransition.put(inputTransition, null, result);
 				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
 				final ITransition<LETTER, PLACE> valueBefore = mNew2Old.put(result, inputTransition);
