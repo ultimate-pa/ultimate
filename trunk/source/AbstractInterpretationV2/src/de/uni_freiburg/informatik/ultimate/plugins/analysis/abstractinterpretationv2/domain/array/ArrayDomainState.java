@@ -470,7 +470,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				result = intersectionResult.getSecond();
 				segmentation = intersectionResult.getFirst();
 			}
-			result.mSegmentationMap.addEquivalenceClass(equivalenceClass, segmentation);
+			result.mSegmentationMap.addEquivalenceClass(ImmutableSet.of(equivalenceClass), segmentation);
 		}
 		return result.simplify();
 	}
@@ -783,7 +783,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			newVariables.addAll(result.getNewVariables());
 			removeVariablesThis.addAll(result.getRemoveVariablesFirstState());
 			removeVariablesOther.addAll(result.getRemoveVariablesSecondState());
-			segmentationMap.addEquivalenceClass(equivalenceClass, result.getSegmentation());
+			segmentationMap.addEquivalenceClass(ImmutableSet.of(equivalenceClass), result.getSegmentation());
 			final Map<IProgramVar, Segmentation> newSegmentations = result.getNewSegmentations();
 			for (final Entry<IProgramVar, EqClassSegmentation> entry : unificationResult.getAuxVarSegmentations()
 					.entrySet()) {
@@ -1455,7 +1455,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final SegmentationMap newSegmentationMap = new SegmentationMap();
 		for (final IProgramVarOrConst rep : mSegmentationMap.getAllRepresentatives()) {
 			final Segmentation newSegmentation = simplifySegmentation(getSegmentation(rep));
-			final Set<IProgramVarOrConst> eqClass = mSegmentationMap.getEquivalenceClass(rep);
+			final ImmutableSet<IProgramVarOrConst> eqClass = mSegmentationMap.getEquivalenceClass(rep);
 			newSegmentationMap.addEquivalenceClass(eqClass, newSegmentation);
 		}
 		return updateState(newSegmentationMap).removeUnusedAuxVars();
