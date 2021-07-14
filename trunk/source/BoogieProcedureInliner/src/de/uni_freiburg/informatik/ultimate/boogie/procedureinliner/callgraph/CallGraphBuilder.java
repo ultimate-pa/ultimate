@@ -70,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class CallGraphBuilder {
 
 	/**
-	 * Program corresponding to the last built graph contained a fork statement.
-	 * Fork statements in dead code do count too.
+	 * Program corresponding to the last built graph contained a fork statement. Fork statements in dead code do count
+	 * too.
 	 */
 	private boolean mProgramIsConcurrent;
 
@@ -119,8 +119,8 @@ public class CallGraphBuilder {
 	}
 
 	/**
-	 * Returns the last built call graph, containing all Boogie Procedures from the last run.
-	 * The procedure identifiers are used as keys. The values are the nodes from the call graph.
+	 * Returns the last built call graph, containing all Boogie Procedures from the last run. The procedure identifiers
+	 * are used as keys. The values are the nodes from the call graph.
 	 *
 	 * @return Call graph from the last run.
 	 */
@@ -134,7 +134,7 @@ public class CallGraphBuilder {
 	public boolean getProgramIsConcurrent() {
 		return mProgramIsConcurrent;
 	}
-	
+
 	/**
 	 * Gets all the Boogie declarations from the last run, other than Procedures.
 	 *
@@ -163,19 +163,17 @@ public class CallGraphBuilder {
 		final String procedureId = procedure.getIdentifier();
 		final CallGraphNode node = getOrCreateNode(procedureId);
 		if (procedure.getSpecification() != null) {
-			if (node.getProcedureWithSpecification() == null) {
-				node.setProcedureWithSpecification(procedure);
-			} else {
+			if (node.getProcedureWithSpecification() != null) {
 				throw new ProcedureAlreadyDeclaredException(procedure);
 			}
+			node.setProcedureWithSpecification(procedure);
 		}
 		if (procedure.getBody() != null) {
-			if (node.getProcedureWithBody() == null) {
-				node.setProcedureWithBody(procedure);
-				registerCallStatementsInGraph(node, procedure.getBody().getBlock());
-			} else {
+			if (node.getProcedureWithBody() != null) {
 				throw new MultipleImplementationsException(procedure);
 			}
+			node.setProcedureWithBody(procedure);
+			registerCallStatementsInGraph(node, procedure.getBody().getBlock());
 		}
 	}
 
@@ -207,7 +205,7 @@ public class CallGraphBuilder {
 		}
 	}
 
-	private void addEdge(CallGraphNode callerNode, EdgeType edgeType, String calleeMethodName) {
+	private void addEdge(final CallGraphNode callerNode, final EdgeType edgeType, final String calleeMethodName) {
 		final CallGraphNode calleeNode = getOrCreateNode(calleeMethodName);
 		callerNode.addOutgoingNode(calleeNode, new CallGraphEdgeLabel(calleeNode.getId(), edgeType));
 		calleeNode.addIncomingNode(callerNode);
@@ -221,7 +219,7 @@ public class CallGraphBuilder {
 			// components aren't empty, therefore this is equal to: (size==1) --> isDirectlyRecursive
 			if (stronglyConnectedComponent.size() > 1
 					|| isDirectlyRecursive(stronglyConnectedComponent.iterator().next())) {
-				mRecursiveComponents.add(stronglyConnectedComponent);
+				recursiveComponents.add(stronglyConnectedComponent);
 				mRecursiveProcedures.addAll(stronglyConnectedComponent);
 			}
 		}
