@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  */
 public class SmtFeatureExtractionTest {
 
+	private static final String ABCDE = "ABCDE";
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ILogger mLogger;
@@ -65,12 +66,10 @@ public class SmtFeatureExtractionTest {
 	}
 
 	@Test
-	public void CheckSingleTerm() {
+	public void checkSingleTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
-
-		final String names = "ABCDE";
-		for (int i = 0; i < names.length(); ++i) {
-			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+		for (int i = 0; i < ABCDE.length(); ++i) {
+			declareVar(String.valueOf(ABCDE.charAt(i)), intSort);
 		}
 
 		final Term input = TermParseUtils.parseTerm(mScript, "(= A 0)");
@@ -82,9 +81,9 @@ public class SmtFeatureExtractionTest {
 		mLogger.info("Original isSat:         " + isSat);
 		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses());
 		mLogger.info("Original #Vars:         " + tc.getNumberOfVariables());
-		mLogger.info("Original Functions:         " + tc.getOccuringFunctionNames());
+		mLogger.info("Original Functions:     " + tc.getOccuringFunctionNames());
 		mLogger.info("Original Sorts:         " + tc.getOccuringSortNames());
-		mLogger.info("Original Quantifiers:         " + tc.getNumberOfQuantifiers());
+		mLogger.info("Original Quantifiers:   " + tc.getNumberOfQuantifiers());
 		Assert.assertEquals(tc.getEquivalenceClasses().toString(), "{[A]=A}");
 		Assert.assertEquals(tc.getNumberOfVariables(), 1);
 		Assert.assertEquals(tc.getOccuringFunctionNames().toString(), "{==1}");
@@ -96,9 +95,8 @@ public class SmtFeatureExtractionTest {
 	public void CheckAdditionTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final String names = "ABCDE";
-		for (int i = 0; i < names.length(); ++i) {
-			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+		for (int i = 0; i < ABCDE.length(); ++i) {
+			declareVar(String.valueOf(ABCDE.charAt(i)), intSort);
 		}
 
 		final Term input = TermParseUtils.parseTerm(mScript, "(= A (+ B 1))");
@@ -124,7 +122,7 @@ public class SmtFeatureExtractionTest {
 	public void CheckSubtractionTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final String names = "ABCDE";
+		final String names = ABCDE;
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 		}
@@ -152,7 +150,7 @@ public class SmtFeatureExtractionTest {
 	public void CheckMultiplicationTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final String names = "ABCDE";
+		final String names = ABCDE;
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 		}
@@ -180,7 +178,7 @@ public class SmtFeatureExtractionTest {
 	public void CheckAndTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final String names = "ABCDE";
+		final String names = ABCDE;
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 		}
@@ -208,7 +206,7 @@ public class SmtFeatureExtractionTest {
 	public void CheckOrTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final String names = "ABCDE";
+		final String names = ABCDE;
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 		}
@@ -236,7 +234,7 @@ public class SmtFeatureExtractionTest {
 	public void CheckOrAndTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final String names = "ABCDE";
+		final String names = ABCDE;
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 		}
@@ -264,7 +262,7 @@ public class SmtFeatureExtractionTest {
 	public void CheckOrOrTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final String names = "ABCDE";
+		final String names = ABCDE;
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 		}
@@ -292,7 +290,7 @@ public class SmtFeatureExtractionTest {
 	public void CheckOrOrAndTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
-		final String names = "ABCDE";
+		final String names = ABCDE;
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
 		}
