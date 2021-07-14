@@ -94,8 +94,11 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 			result = super.discoverTransition(source, letter, old == null ? target : old);
 			return result || old != null;
 		case PRUNE:
-			result = super.discoverTransition(source, letter, target);
-			return result || getCoveringState(target) != null;
+			final S cover = getCoveringState(target);
+			if (cover != null) {
+				return true;
+			}
+			return super.discoverTransition(source, letter, target);
 		default:
 			throw new UnsupportedOperationException("Unsupported covering mode: " + mMode);
 		}
