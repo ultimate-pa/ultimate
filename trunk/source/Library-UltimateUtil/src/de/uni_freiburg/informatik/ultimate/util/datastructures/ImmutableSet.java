@@ -296,6 +296,11 @@ public final class ImmutableSet<E> implements Set<E> {
 		return mUnderlying.toArray(a);
 	}
 
+	@Override
+	public String toString() {
+		return mUnderlying.toString();
+	}
+
 	// Mutating methods below
 
 	@Override
