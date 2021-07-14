@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * Abstract superclass of *IcfgTransition.
@@ -62,7 +61,7 @@ public abstract class AbstractIcfgTransition extends IcfgEdge {
 
 	@Override
 	public int hashCode() {
-		return HashUtils.hashJenkins(31, mId);
+		return mId;
 	}
 
 	@Override
@@ -85,7 +84,7 @@ public abstract class AbstractIcfgTransition extends IcfgEdge {
 
 	protected String toDebugString(final String suffix) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("[").append(hashCode()).append("] ");
+		sb.append("[").append(mId).append("] ");
 		sb.append(getSource());
 		sb.append("-->");
 		sb.append(getTarget());
