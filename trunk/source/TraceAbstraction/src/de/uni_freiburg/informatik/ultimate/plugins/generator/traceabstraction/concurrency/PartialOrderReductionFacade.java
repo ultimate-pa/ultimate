@@ -90,11 +90,12 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		mMode = mode;
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, errorLocs);
 		mIndependence = independence;
-		mSleepFactory = getSleepFactory(predicateFactory);
+		mSleepFactory = createSleepFactory(predicateFactory);
 		mPersistent = createPersistentSets(icfg, errorLocs);
 	}
 
-	private ISleepSetStateFactory<L, IPredicate, IPredicate> getSleepFactory(final PredicateFactory predicateFactory) {
+	private ISleepSetStateFactory<L, IPredicate, IPredicate>
+			createSleepFactory(final PredicateFactory predicateFactory) {
 		if (!mMode.hasSleepSets()) {
 			return null;
 		}
@@ -102,6 +103,10 @@ public class PartialOrderReductionFacade<L extends IAction> {
 			return new SleepSetStateFactoryForRefinement<>(predicateFactory);
 		}
 		return new ISleepSetStateFactory.NoUnrolling<>();
+	}
+
+	public ISleepSetStateFactory<L, IPredicate, IPredicate> getSleepFactory() {
+		return mSleepFactory;
 	}
 
 	private static <L extends IAction> IDfsOrder<L, IPredicate> getDfsOrder(

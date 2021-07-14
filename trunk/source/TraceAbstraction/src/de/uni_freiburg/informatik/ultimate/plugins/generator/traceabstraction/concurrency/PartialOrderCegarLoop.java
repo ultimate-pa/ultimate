@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inform
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
@@ -90,6 +92,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  *            The type of statements in the program.
  */
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
+	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
+
 	private final PartialOrderMode mPartialOrderMode;
 	private final boolean mConditionalPor;
 	private final boolean mSymmetricPor;
@@ -231,7 +236,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	}
 
 	private IDfsVisitor<L, IPredicate> createVisitor() {
-		final IDfsVisitor<L, IPredicate> visitor;
+		IDfsVisitor<L, IPredicate> visitor;
 		if (mPartialOrderMode.hasSleepSets()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
 			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
@@ -239,7 +244,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
 		}
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
-			return ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
+			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
+		}
+
+		if (ENABLE_COVERING_OPTIMIZATION) {
+			visitor = new CoveringOptimizationVisitor<>(visitor,
+					new SleepSetStateFactoryForRefinement.FactoryCoveringRelation<>(
+							(SleepSetStateFactoryForRefinement<L>) mPOR.getSleepFactory()),
+					CoveringMode.PRUNE);
 		}
 		return visitor;
 	}

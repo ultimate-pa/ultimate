@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.ICoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -53,6 +54,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	private final IPredicate mEmptyStack;
 	private final Map<IPredicate, Map<Set<L>, IPredicate>> mKnownStates = new HashMap<>();
 	private final Map<IPredicate, IPredicate> mOriginalStates = new HashMap<>();
+	private final Map<IPredicate, Set<L>> mSleepSets;
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -64,6 +66,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		super();
 		mPredicateFactory = predicateFactory;
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
+		mSleepSets = PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION ? new HashMap<>() : null;
 	}
 
 	@Override
@@ -74,7 +77,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	@Override
 	public IPredicate createSleepSetState(final IPredicate state, final Set<L> sleepset) {
 		final Map<Set<L>, IPredicate> sleep2State = mKnownStates.computeIfAbsent(state, x -> new HashMap<>());
-		return sleep2State.computeIfAbsent(sleepset, x -> createFreshCopy(state));
+		return sleep2State.computeIfAbsent(sleepset, x -> createFreshCopy(state, sleepset));
 	}
 
 	/**
@@ -91,20 +94,53 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		return mOriginalStates.get(sleepState);
 	}
 
-	private IPredicate createFreshCopy(final IPredicate original) {
+	private Set<L> getSleepSet(final IPredicate sleepState) {
+		return mSleepSets.get(sleepState);
+	}
+
+	private IPredicate createFreshCopy(final IPredicate original, final Set<L> sleepset) {
 		if (original instanceof MLPredicateWithConjuncts) {
 			final MLPredicateWithConjuncts mlPred = (MLPredicateWithConjuncts) original;
 			final MLPredicateWithConjuncts copy = mPredicateFactory.construct(
 					id -> new MLPredicateWithConjuncts(id, mlPred.getProgramPoints(), mlPred.getConjuncts()));
 			mOriginalStates.put(copy, original);
+			if (PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION) {
+				mSleepSets.put(copy, sleepset);
+				if (mSleepSets.size() % 1000 == 0) {
+					System.out.println(mSleepSets.size() + " states created");
+				}
+			}
 			return copy;
 		}
 		if (original instanceof IMLPredicate) {
 			final IMLPredicate mlPred = (IMLPredicate) original;
 			final IMLPredicate copy = mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());
 			mOriginalStates.put(copy, original);
+			if (PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION) {
+				mSleepSets.put(copy, sleepset);
+			}
 			return copy;
 		}
 		throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
+	}
+
+	public static class FactoryCoveringRelation<L> implements ICoveringRelation<IPredicate> {
+		private final SleepSetStateFactoryForRefinement<L> mFactory;
+
+		public FactoryCoveringRelation(final SleepSetStateFactoryForRefinement<L> factory) {
+			mFactory = factory;
+			assert PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION : "Covering optimization turned off";
+		}
+
+		@Override
+		public boolean covers(final IPredicate oldState, final IPredicate newState) {
+			assert getKey(oldState) == getKey(newState);
+			return mFactory.getSleepSet(newState).containsAll(mFactory.getSleepSet(oldState));
+		}
+
+		@Override
+		public Object getKey(final IPredicate state) {
+			return mFactory.getOriginalState(state);
+		}
 	}
 }
