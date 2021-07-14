@@ -52,7 +52,8 @@ import java.util.stream.Collectors;
 public final class ImmutableSet<E> implements Set<E> {
 	private static final String ERROR_MSG = "Set is immutable";
 
-	private static ImmutableSet sEmptySet;
+	@SuppressWarnings("rawtypes")
+	private static final ImmutableSet EMPTY_SET = new ImmutableSet<>(Collections.emptySet());
 
 	private final Set<E> mUnderlying;
 	private int mHash;
@@ -76,11 +77,9 @@ public final class ImmutableSet<E> implements Set<E> {
 	 *            The element type
 	 * @return empty, immutable set
 	 */
+	@SuppressWarnings("unchecked")
 	public static <E> ImmutableSet<E> empty() {
-		if (sEmptySet == null) {
-			sEmptySet = new ImmutableSet<>(Collections.emptySet());
-		}
-		return sEmptySet;
+		return EMPTY_SET;
 	}
 
 	/**
@@ -191,7 +190,7 @@ public final class ImmutableSet<E> implements Set<E> {
 	 *            the underlying set collector
 	 * @return A collector that wraps the set returned by the given collector in an immutable set
 	 */
-	public static <T, A> Collector<T, A, ImmutableSet<T>> collector(final Collector<T, A, Set<T>> coll) {
+	public static <T, A extends Set<T>> Collector<T, A, ImmutableSet<T>> collector(final Collector<T, A, Set<T>> coll) {
 		final Set<Characteristics> characteristics = EnumSet.noneOf(Characteristics.class);
 		if (coll.characteristics().contains(Characteristics.UNORDERED)) {
 			characteristics.add(Characteristics.UNORDERED);
@@ -203,11 +202,11 @@ public final class ImmutableSet<E> implements Set<E> {
 		return collector(coll, characteristics.toArray(Characteristics[]::new), elideFinish);
 	}
 
-	private static <T, A> Collector<T, A, ImmutableSet<T>> collector(final Collector<T, A, Set<T>> coll,
+	private static <T, A extends Set<T>> Collector<T, A, ImmutableSet<T>> collector(final Collector<T, A, Set<T>> coll,
 			final Characteristics[] characteristics, final boolean elideFinish) {
 		final Function<A, ImmutableSet<T>> finisher;
 		if (elideFinish) {
-			finisher = s -> ImmutableSet.of((Set<T>) s);
+			finisher = ImmutableSet::of;
 		} else {
 			finisher = coll.finisher().andThen(ImmutableSet::of);
 		}
@@ -235,7 +234,7 @@ public final class ImmutableSet<E> implements Set<E> {
 
 		if (obj instanceof ImmutableSet<?>) {
 			// Optimized #equals for immutable sets
-			final ImmutableSet<E> other = (ImmutableSet<E>) obj;
+			final ImmutableSet<?> other = (ImmutableSet<?>) obj;
 			if (mHashCached && other.mHashCached && mHash != other.mHash) {
 				return false;
 			}
