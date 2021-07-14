@@ -49,14 +49,12 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 	private final int mSize;
 	private final X mHead;
 	private final ImmutableList<X> mTail;
-	private final int mHash;
 
 	// NIL constructor
 	private ImmutableList() {
 		mSize = 0;
 		mHead = null;
 		mTail = null;
-		mHash = 1;
 	}
 
 	/**
@@ -71,7 +69,6 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 		mSize = tail.mSize + 1;
 		mHead = head;
 		mTail = Objects.requireNonNull(tail);
-		mHash = primePower(mTail.size()) * Objects.hashCode(mHead) + mTail.hashCode();
 	}
 
 	/**
@@ -100,23 +97,11 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 			mHead = it.next();
 			mTail = it.hasNext() ? new ImmutableList<>(it) : empty();
 			mSize = mTail.mSize + 1;
-			mHash = primePower(mTail.size()) * Objects.hashCode(mHead) + mTail.hashCode();
 		} else {
 			mHead = null;
 			mTail = null;
 			mSize = 0;
-			mHash = 1;
 		}
-	}
-
-	private static int primePower(final int n) {
-		// TODO Can the hash be computed more cheaply, while adhering to the List#hashCode contract? If not, lazily?
-		final int prime = 31;
-		int power = 1;
-		for (int i = 0; i < n; ++i) {
-			power = prime * power;
-		}
-		return power;
 	}
 
 	/**
@@ -147,9 +132,8 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 
 	@Override
 	public int hashCode() {
-		// TODO (Dominik 2021-07-14) Eventually remove this assertion if it never fails.
-		assert mHash == super.hashCode();
-		return mHash;
+		// Super class properly implements List#hashCode().
+		return super.hashCode();
 	}
 
 	@Override
@@ -160,15 +144,12 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 		}
 		if (o instanceof ImmutableList<?>) {
 			final ImmutableList<?> other = (ImmutableList<?>) o;
-			if (other.mHash != mHash) {
-				return false;
-			}
 			if (mTail == other.mTail) {
 				return Objects.equals(mHead, other.mHead);
 			}
 		}
 
-		// Super class properly implements #equals() on lists.
+		// Super class properly implements List#equals().
 		return super.equals(o);
 	}
 
@@ -234,7 +215,7 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 
 	@Override
 	public ListIterator<X> listIterator(final int index) {
-		if (index < 0 || index >= mSize) {
+		if (index < 0 || index > mSize) {
 			throw new IndexOutOfBoundsException();
 		}
 
