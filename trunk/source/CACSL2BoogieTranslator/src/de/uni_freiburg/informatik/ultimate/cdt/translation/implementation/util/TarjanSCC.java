@@ -27,113 +27,111 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
+
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
 
 /**
- * Class to calculate SCCs using tarjans algorithm.
+ * Class to calculate SCCs using Tarjans algorithm. An alternative with support for generic graphs is
+ * {@link SccComputation} or {@link SccComputationNonRecursive}.
  *
  * @author Markus Lindenmann
  * @date 08.08.2012
+ * @see SccComputation
  *
- * (Alexander Nutz Feb 2018:) deprecated, use class de.uni_freiburg.informatik.ultimate.util.scc.SccComputation instead
  */
-@Deprecated
 public final class TarjanSCC {
-    /**
-     * The maximum index for Tarjans algorithm.
-     */
-    private int maxIndex;
-    /**
-     * The stack for Tarjans algorithm.
-     */
-    private Stack<String> stack;
-    /**
-     * The graph to work on. Map of vertex id to its successor ids.
-     */
-    private Map<String, Set<String>> graph;
-    /**
-     * The SCCs to return.
-     */
-    private Set<Set<String>> sccs;
-    /**
-     * The Tarjan indices for the vertices.
-     */
-    private Map<String, Integer> indices;
-    /**
-     * The Tarjan lowlinks for the vertices.
-     */
-    private Map<String, Integer> lowLink;
+	/**
+	 * The maximum index for Tarjans algorithm.
+	 */
+	private int mMaxIndex;
+	/**
+	 * The stack for Tarjans algorithm.
+	 */
+	private Deque<String> mStack;
+	/**
+	 * The graph to work on. Map of vertex id to its successor ids.
+	 */
+	private Map<String, Set<String>> mGraph;
+	/**
+	 * The SCCs to return.
+	 */
+	private Set<Set<String>> mSccs;
+	/**
+	 * The Tarjan indices for the vertices.
+	 */
+	private Map<String, Integer> mIndices;
+	/**
+	 * The Tarjan lowlinks for the vertices.
+	 */
+	private Map<String, Integer> mLowLink;
 
-    /**
-     * Calculate SCCs for the given graph.
-     *
-     * @param graph
-     *            the graph to work on
-     * @return a list of SCCs
-     */
-    public Set<Set<String>> getSCCs(
-            final Map<String, Set<String>> graph) {
-        if (graph == null || graph.values().contains(null)) {
-            throw new IllegalArgumentException();
-        }
-        this.graph = graph;
-        maxIndex = 0;
-        stack = new Stack<String>();
-        sccs = new LinkedHashSet<Set<String>>();
-        indices = new LinkedHashMap<String, Integer>();
-        lowLink = new LinkedHashMap<String, Integer>();
-        for (final String v : this.graph.keySet()) {
-            if (!indices.containsKey(v)) {
-                strongConnect(v);
-            }
-        }
-        return sccs;
-    }
+	/**
+	 * Calculate SCCs for the given graph.
+	 *
+	 * @param graph
+	 *            the graph to work on
+	 * @return a list of SCCs
+	 */
+	public Set<Set<String>> getSCCs(final Map<String, Set<String>> graph) {
+		if (graph == null || graph.values().contains(null)) {
+			throw new IllegalArgumentException();
+		}
+		mGraph = graph;
+		mMaxIndex = 0;
+		mStack = new ArrayDeque<>();
+		mSccs = new LinkedHashSet<>();
+		mIndices = new LinkedHashMap<>();
+		mLowLink = new LinkedHashMap<>();
+		for (final String v : mGraph.keySet()) {
+			if (!mIndices.containsKey(v)) {
+				strongConnect(v);
+			}
+		}
+		return mSccs;
+	}
 
-    /**
-     * Tarjans algorithm as described in <a href=
-     * "http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm"
-     * >Wikipedia_en</a>.
-     *
-     * @param v
-     *            the vertex to visit.
-     */
-    private void strongConnect(final String v) {
-        if (!graph.containsKey(v)) {
-            return; // skip undeclared methods!
-        }
-        assert (!indices.containsKey(v));
-        assert (!indices.containsKey(v));
-        indices.put(v, maxIndex);
-        lowLink.put(v, maxIndex);
-        maxIndex++;
-        stack.push(v);
-        for (final String s : graph.get(v)) {
-            if (!graph.containsKey(s)) {
-                stack.remove(s);
-                continue; // skip undeclared methods!
-            }
-            if (!indices.containsKey(s)) {
-                strongConnect(s);
-                lowLink.put(v,
-                        Math.min(lowLink.get(v), lowLink.get(s)));
-            } else if (stack.contains(s)) {
-                lowLink.put(v,
-                        Math.min(lowLink.get(v), indices.get(s)));
-            }
-        }
-        if (lowLink.get(v).equals(indices.get(v))) {
-            final LinkedHashSet<String> set = new LinkedHashSet<String>();
-            String s;
-            do {
-                s = stack.pop();
-                set.add(s);
-            } while (!s.equals(v));
-            sccs.add(set);
-        }
-    }
+	/**
+	 * Tarjans algorithm as described in
+	 * <a href= "http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm" >Wikipedia_en</a>.
+	 *
+	 * @param v
+	 *            the vertex to visit.
+	 */
+	private void strongConnect(final String v) {
+		if (!mGraph.containsKey(v)) {
+			return; // skip undeclared methods!
+		}
+		mIndices.put(v, mMaxIndex);
+		mLowLink.put(v, mMaxIndex);
+		mMaxIndex++;
+		mStack.push(v);
+		for (final String s : mGraph.get(v)) {
+			if (!mGraph.containsKey(s)) {
+				mStack.remove(s);
+				continue; // skip undeclared methods!
+			}
+			if (!mIndices.containsKey(s)) {
+				strongConnect(s);
+				mLowLink.put(v, Math.min(mLowLink.get(v), mLowLink.get(s)));
+			} else if (mStack.contains(s)) {
+				mLowLink.put(v, Math.min(mLowLink.get(v), mIndices.get(s)));
+			}
+		}
+		if (mLowLink.get(v).equals(mIndices.get(v))) {
+			final LinkedHashSet<String> set = new LinkedHashSet<>();
+			String s;
+			do {
+				s = mStack.pop();
+				set.add(s);
+			} while (!s.equals(v));
+			mSccs.add(set);
+		}
+	}
 }
