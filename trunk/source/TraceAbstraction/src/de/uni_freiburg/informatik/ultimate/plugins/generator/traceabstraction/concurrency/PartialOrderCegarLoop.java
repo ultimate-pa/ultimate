@@ -30,10 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -61,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.DistributingIndependenceRelation;
@@ -78,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 /**
  * A CEGAR loop for concurrent programs, based on finite automata, which uses Partial Order Reduction (POR) in every
@@ -96,10 +96,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final IDfsVisitor<L, IPredicate> mVisitor;
 	private final PartialOrderReductionFacade<L> mPOR;
-
-	// Maps an IPredicate built through refinement rounds to the sequence of conjuncts it was built from.
-	// This is used to distribute an independence query across conjuncts.
-	private final Map<IPredicate, IPredicate[]> mPredicateConjuncts = new HashMap<>();
 
 	// The list of independence relations to which independence queries for the different conjuncts of an IPredicate are
 	// distributed. In every iteration, a relation is appended to deal with the additional conjunct.
@@ -238,9 +234,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final IDfsVisitor<L, IPredicate> visitor;
 		if (mPartialOrderMode.hasSleepSets()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
-			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
+			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
 		} else {
-			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isFalseState);
+			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
 		}
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			return ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
@@ -305,7 +301,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		} else {
 			isErrorState = Arrays.stream(((IMLPredicate) state).getProgramPoints()).anyMatch(mErrorLocs::contains);
 		}
-		return isErrorState && !isFalseState(state);
+		return isErrorState && !isProvenState(state);
+	}
+
+	private static boolean isProvenState(final IPredicate state) {
+		if (state instanceof MLPredicateWithConjuncts) {
+			// TODO possibly optimize and store this directly in the predicate?
+			return ((MLPredicateWithConjuncts) state).getConjuncts().stream()
+					.anyMatch(PartialOrderCegarLoop::isFalseState);
+		}
+		return isFalseState(state);
 	}
 
 	private static boolean isFalseState(final IPredicate state) {
@@ -313,11 +318,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return SmtUtils.isFalseLiteral(state.getFormula());
 	}
 
-	private IPredicate[] getConjuncts(final IPredicate conjunction) {
+	private List<IPredicate> getConjuncts(final IPredicate conjunction) {
 		if (conjunction == null) {
-			return new IPredicate[mIteration + 1];
+			return Collections.nCopies(mIteration + 1, null);
 		}
-		return mPredicateConjuncts.getOrDefault(conjunction, new IPredicate[] { conjunction });
+		ImmutableList<IPredicate> tail;
+		if (conjunction instanceof MLPredicateWithConjuncts) {
+			tail = ((MLPredicateWithConjuncts) conjunction).getConjuncts();
+		} else {
+			tail = ImmutableList.empty();
+		}
+		return new ImmutableList<>(null, tail);
 	}
 
 	private ManagedScript constructIndependenceScript() {
@@ -337,22 +348,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		@Override
 		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
 			// Create the actual predicate
-			final Term formula;
-			if (mPredicateFactory.isDontCare(state1)) {
-				formula = state2.getFormula();
-			} else {
-				formula = mPredicateFactory.and(state1, state2).getFormula();
-			}
-			final IcfgLocation[] locations = ((IMLPredicate) state1).getProgramPoints();
-			final IPredicate newState = mPredicateFactory.newMLPredicate(locations, formula);
-
-			// Update the map back to individual conjuncts
-			if (mConditionalPor) {
-				final IPredicate[] oldDistribution = getConjuncts(state1);
-				final IPredicate[] newDistribution = Arrays.copyOf(oldDistribution, oldDistribution.length + 1);
-				newDistribution[newDistribution.length - 1] = state2;
-				mPredicateConjuncts.put(newState, newDistribution);
-			}
+			final IPredicate newState =
+					mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
 
 			// Transfer dead state info
 			if (mVisitor instanceof DeadEndOptimizingSearchVisitor<?, ?, ?>) {

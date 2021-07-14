@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 
 /**
@@ -86,10 +87,18 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 *         state
 	 */
 	public IPredicate getOriginalState(final IPredicate sleepState) {
+		// TODO replace and only store relevant info (set of initial, set of accepting)
 		return mOriginalStates.get(sleepState);
 	}
 
 	private IPredicate createFreshCopy(final IPredicate original) {
+		if (original instanceof MLPredicateWithConjuncts) {
+			final MLPredicateWithConjuncts mlPred = (MLPredicateWithConjuncts) original;
+			final MLPredicateWithConjuncts copy = mPredicateFactory.construct(
+					id -> new MLPredicateWithConjuncts(id, mlPred.getProgramPoints(), mlPred.getConjuncts()));
+			mOriginalStates.put(copy, original);
+			return copy;
+		}
 		if (original instanceof IMLPredicate) {
 			final IMLPredicate mlPred = (IMLPredicate) original;
 			final IMLPredicate copy = mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());

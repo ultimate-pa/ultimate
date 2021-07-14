@@ -48,13 +48,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
  */
 public class DistributingIndependenceRelation<S, L> implements IIndependenceRelation<S, L> {
 	private final List<IIndependenceRelation<S, L>> mRelations;
-	private final Function<S, S[]> mDistribution;
+	private final Function<S, List<S>> mDistribution;
 	private final boolean mSymmetric;
 	private final boolean mConditional;
 	private final DistributingStatistics mStatistics;
 
 	public DistributingIndependenceRelation(final List<IIndependenceRelation<S, L>> relations,
-			final Function<S, S[]> distribution) {
+			final Function<S, List<S>> distribution) {
 		mRelations = relations;
 		mDistribution = distribution;
 		mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
@@ -74,14 +74,17 @@ public class DistributingIndependenceRelation<S, L> implements IIndependenceRela
 
 	@Override
 	public boolean contains(final S state, final L a, final L b) {
-		final S[] conjuncts = mDistribution.apply(state);
-		assert conjuncts.length == mRelations.size() : "Number of conjuncts must be equal to number of relations";
-		for (int i = 0; i < mRelations.size(); ++i) {
+		final List<S> conjuncts = mDistribution.apply(state);
+		assert conjuncts.size() == mRelations.size() : "Number of conjuncts must be equal to number of relations";
+
+		int i = 0;
+		for (final S conjunct : conjuncts) {
 			mStatistics.reportQueriedIndex(i);
-			if (mRelations.get(i).contains(conjuncts[i], a, b)) {
+			if (mRelations.get(i).contains(conjunct, a, b)) {
 				mStatistics.reportPositiveQuery(state != null);
 				return true;
 			}
+			i++;
 		}
 		mStatistics.reportNegativeQuery(state != null);
 		return false;
