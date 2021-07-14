@@ -216,7 +216,13 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	}
 
 	private S getOrConstructState(final Marking<L, S> marking) {
-		return mMarking2State.computeIfAbsent(marking, x -> constructState(marking, false));
+		// Do not use computeIfAbsent, because constructState may return null.
+		if (!mMarking2State.containsKey(marking)) {
+			final S state = constructState(marking, false);
+			mMarking2State.put(marking, state);
+			return state;
+		}
+		return mMarking2State.get(marking);
 	}
 
 	private S constructState(final Marking<L, S> marking, final boolean isInitial) {
