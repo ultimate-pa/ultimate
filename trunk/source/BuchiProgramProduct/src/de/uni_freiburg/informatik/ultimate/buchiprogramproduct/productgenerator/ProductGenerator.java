@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
@@ -150,8 +149,6 @@ public final class ProductGenerator {
 		collectRcfgLocations();
 		createProductStates();
 		createEdges();
-
-		pruneNonProductSinks();
 
 		generateTransFormulas();
 	}
@@ -458,49 +455,6 @@ public final class ProductGenerator {
 		} else {
 			throw new AssertionError("Did not expect edge of type " + rcfgEdge.getClass().getSimpleName());
 		}
-	}
-
-	private void pruneNonProductSinks() {
-		// all helper states that have edges to non-product states receive a
-		// self-loop that keeps them in the same product state as the LTL NWA
-
-		for (final BoogieIcfgLocation helper : new HashSet<>(mHelperProductStates)) {
-			// we only consider helpers that lead from product parts to
-			// non-product parts, and those helpers have only return edges as
-			// incoming edge
-			if (areAllIncomingEdgesReturn(helper) && areAllDirectPredecessorsProductNodes(helper)
-					&& areAllDirectSuccessorsNonProductNodes(helper)) {
-				pruneNonProductSink(helper);
-			}
-		}
-	}
-
-	private void pruneNonProductSink(final BoogieIcfgLocation helper) {
-		final List<IcfgEdge> outEdges = new ArrayList<>(helper.getOutgoingEdges());
-		final Set<IcfgLocation> successors = new HashSet<>(helper.getOutgoingNodes());
-
-		for (final IcfgEdge outgoing : outEdges) {
-			// remove all outgoing edges
-			outgoing.disconnectSource();
-			outgoing.disconnectTarget();
-		}
-
-		// remove the targets and all the nodes that can be reached from the
-		// target
-		for (final IcfgLocation successor : successors) {
-			removeProductProgramPointAndSuccessors((BoogieIcfgLocation) successor);
-		}
-
-		// we add a self loop that will be used later
-		final StatementSequence seq = mCodeblockFactory.constructStatementSequence(helper, helper,
-				generateNeverClaimAssumeStatement(new BooleanLiteral(null, BoogieType.TYPE_BOOL, true)));
-		mapNewEdge2OldEdge(seq, null);
-
-		// hacky shit: the ss is now useless; we remove it
-		// if (added) {
-		seq.disconnectSource();
-		seq.disconnectTarget();
-		// }
 	}
 
 	private static boolean areAllIncomingEdgesReturn(final BoogieIcfgLocation helper) {
