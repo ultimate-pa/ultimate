@@ -20,7 +20,7 @@ void main() {
 	NLocBuffer = 2;
 	
 	A = 0;
-	if (istemp==1)
+	if (istemp == 1)
 	{
 		 for (int i = 0; i < NLocBuffer; i++)
 		{
