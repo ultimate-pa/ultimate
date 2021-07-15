@@ -116,21 +116,9 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		case BY_SERIAL_NUMBER:
 			final Set<String> errorThreads =
 					errorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
-			final Comparator<L> comp = new Comparator<L>() {
-				@Override
-				public int compare(final L o1, final L o2) {
-					final boolean error1 = errorThreads.contains(o1.getPrecedingProcedure());
-					final boolean error2 = errorThreads.contains(o2.getPrecedingProcedure());
-					if (error1 && !error2) {
-						return -1;
-					} else if (error2 && !error1) {
-						return 1;
-					}
-					return 0;
-
-				}
-			}.thenComparing(Comparator.comparingInt(Object::hashCode));
-			return new ConstantDfsOrder<>(comp);
+			return new ConstantDfsOrder<>(
+					Comparator.<L, Boolean> comparing(x -> !errorThreads.contains(x.getPrecedingProcedure()))
+							.thenComparing(Comparator.comparingInt(Object::hashCode)));
 		case PSEUDO_LOCKSTEP:
 			return new BetterLockstepOrder<>(PartialOrderReductionFacade::normalizePredicate);
 		case RANDOM:
