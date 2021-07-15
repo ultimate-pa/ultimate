@@ -26,13 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.Set;
+import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 
 /**
- * An independence relation which checks if any condition in a given set of conditions leads to independence of the
- * given letters. For an empty set of conditions, checks for unconditional independence of the given letters.
+ * An independence relation which checks if any condition in a given collection of conditions leads to independence of
+ * the given letters. For an empty collection of conditions, checks for unconditional independence of the given letters.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -40,9 +42,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of letters
  * @param <S>
  *            The type of conditions
+ * @param <C>
+ *            The type of collection
  */
-public class DisjunctiveConditionalIndependenceRelation<L, S> implements IIndependenceRelation<Set<S>, L> {
+public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collection<S>>
+		implements IIndependenceRelation<C, L> {
 	private final IIndependenceRelation<S, L> mUnderlying;
+	private final DisjunctiveStatistics mStatistics;
 
 	/**
 	 * Creates a new instance.
@@ -53,6 +59,7 @@ public class DisjunctiveConditionalIndependenceRelation<L, S> implements IIndepe
 	public DisjunctiveConditionalIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
 		assert underlying.isConditional() : "Only makes sense for conditional independence relations";
 		mUnderlying = underlying;
+		mStatistics = new DisjunctiveStatistics();
 	}
 
 	@Override
@@ -66,21 +73,46 @@ public class DisjunctiveConditionalIndependenceRelation<L, S> implements IIndepe
 	}
 
 	@Override
-	public boolean contains(final Set<S> state, final L a, final L b) {
+	public boolean contains(final C state, final L a, final L b) {
 		if (state == null || state.isEmpty()) {
-			return mUnderlying.contains(null, a, b);
+			final boolean result = mUnderlying.contains(null, a, b);
+			mStatistics.reportQuery(result, false);
+			return result;
 		}
 
+		int i = 0;
 		for (final S condition : state) {
+			mStatistics.reportQueriedIndex(i);
 			if (mUnderlying.contains(condition, a, b)) {
+				mStatistics.reportPositiveQuery(true);
 				return true;
 			}
+			i++;
 		}
+
+		mStatistics.reportNegativeQuery(true);
 		return false;
 	}
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		return mUnderlying.getStatistics();
+		return mStatistics;
+	}
+
+	private class DisjunctiveStatistics extends IndependenceStatisticsDataProvider {
+		public static final String MAX_QUERIED_INDEX = "Maximal queried relation";
+
+		private int mMaxQueriedIndex = -1;
+
+		public DisjunctiveStatistics() {
+			super(DisjunctiveConditionalIndependenceRelation.class, mUnderlying);
+			declare(MAX_QUERIED_INDEX, () -> mMaxQueriedIndex, Aggregate::intMax, PrettyPrint::keyColonData);
+		}
+
+		private void reportQueriedIndex(final int index) {
+			if (mMaxQueriedIndex < index) {
+				mMaxQueriedIndex = index;
+			}
+		}
 	}
 }
