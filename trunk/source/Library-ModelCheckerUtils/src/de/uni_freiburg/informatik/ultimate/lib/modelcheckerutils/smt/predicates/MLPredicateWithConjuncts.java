@@ -34,11 +34,27 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
+/**
+ * A predicate with multiple locations (used in concurrency analysis) and a list of conjuncts. The conjunction formula
+ * is not computed eagerly.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public final class MLPredicateWithConjuncts implements IMLPredicate {
 	private final int mSerial;
 	private final IcfgLocation[] mProgramPoints;
 	private final ImmutableList<IPredicate> mConjuncts;
 
+	/**
+	 * Create a new instance from scratch.
+	 *
+	 * @param serialNumber
+	 *            The predicate's serial number
+	 * @param programPoints
+	 *            The array of locations
+	 * @param conjuncts
+	 *            The list of conjuncts
+	 */
 	public MLPredicateWithConjuncts(final int serialNumber, final IcfgLocation[] programPoints,
 			final ImmutableList<IPredicate> conjuncts) {
 		mSerial = serialNumber;
@@ -46,6 +62,17 @@ public final class MLPredicateWithConjuncts implements IMLPredicate {
 		mConjuncts = conjuncts;
 	}
 
+	/**
+	 * Creates a new instance as conjunction of two given predicates.
+	 *
+	 * @param serialNumber
+	 *            The predicate's serial number
+	 * @param old
+	 *            The first conjunct, which also contains the predicate's locations. May itself be another instance of
+	 *            this class.
+	 * @param newConjunct
+	 *            A new conjunct to be added. Should not be an instance of this class (otherwise, nesting occurs).
+	 */
 	public MLPredicateWithConjuncts(final int serialNumber, final IMLPredicate old, final IPredicate newConjunct) {
 		mSerial = serialNumber;
 		mProgramPoints = old.getProgramPoints();
@@ -85,25 +112,25 @@ public final class MLPredicateWithConjuncts implements IMLPredicate {
 
 	@Override
 	public Term getFormula() {
-		// TODO compute on-demand
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Term getClosedFormula() {
-		// TODO compute on-demand
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String[] getProcedures() {
-		// TODO compute on-demand
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Set<IProgramVar> getVars() {
-		// TODO compute on-demand
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
 		throw new UnsupportedOperationException();
 	}
 
