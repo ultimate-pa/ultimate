@@ -240,6 +240,18 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	}
 
 	/**
+	 * Filters the conditions passed to the relation. Conditions not matching the filter criterion are replaced by
+	 * {@code null}, i.e., unconditional independence checks.
+	 *
+	 * @param filter
+	 *            The filter criterion applied to conditions.
+	 */
+	public B withFilteredConditions(final Predicate<S> filter) {
+		return mCreator
+				.apply(new ConditionTransformingIndependenceRelation<>(mRelation, x -> filter.test(x) ? x : null));
+	}
+
+	/**
 	 * Sub-class needed for the fluent API. Callers typically do not refer to this type explicitly, but may call its
 	 * methods.
 	 */
@@ -415,7 +427,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 */
 			public Impl<L> ignoreDebugPredicates() {
 				if (mRelation.isConditional()) {
-					return withTransformedPredicates(p -> p instanceof DebugPredicate ? null : p);
+					return withFilteredConditions(p -> p instanceof DebugPredicate);
 				}
 				return this;
 			}
