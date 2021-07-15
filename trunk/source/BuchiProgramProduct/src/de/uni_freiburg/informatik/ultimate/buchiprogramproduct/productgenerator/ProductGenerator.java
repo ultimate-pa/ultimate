@@ -72,14 +72,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
- * This class is implementing the Buchi program product, i.e. interleaving a
- * BuchiAutomaton with the CFG.
+ * This class is implementing the Buchi program product, i.e. interleaving a BuchiAutomaton with the CFG.
  *
  * @author dietsch@informatik.uni-freiburg.de
  * @author Langenfeld
  *
- * @see Masterarbeit Langenfeld,
- *      "Fairness Modulo Theory: A New Approach to LTL Software Model Checking"
+ * @see Masterarbeit Langenfeld, "Fairness Modulo Theory: A New Approach to LTL Software Model Checking"
  *
  */
 public final class ProductGenerator {
@@ -185,7 +183,8 @@ public final class ProductGenerator {
 				}
 			}
 
-			// collect all sinks and add self loops to them
+			// add self loops to all locations where the analysed program is exited (into Ultimate init functions)
+			// to keep next operators intact.
 			if (!isNonProductNode(currentPoint)
 					&& !currentPoint.getOutgoingEdges().stream()
 					.filter(a -> !isNonProductNode((BoogieIcfgLocation) a.getTarget()))
@@ -498,10 +497,10 @@ public final class ProductGenerator {
 		mapNewEdge2OldEdge(seq, null);
 
 		// hacky shit: the ss is now useless; we remove it
-		//		if (added) {
+		// if (added) {
 		seq.disconnectSource();
 		seq.disconnectTarget();
-		//		}
+		// }
 	}
 
 	private static boolean areAllIncomingEdgesReturn(final BoogieIcfgLocation helper) {
