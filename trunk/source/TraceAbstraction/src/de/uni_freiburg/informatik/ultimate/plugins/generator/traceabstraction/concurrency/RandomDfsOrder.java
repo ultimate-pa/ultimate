@@ -114,7 +114,7 @@ public class RandomDfsOrder<L, S> implements IDfsOrder<L, S> {
 			if (x == y) {
 				return 0;
 			}
-			return getRepresentative(x) - getRepresentative(y);
+			return Integer.compare(getRepresentative(x), getRepresentative(y));
 		}
 
 		private int getRepresentative(final L x) {
