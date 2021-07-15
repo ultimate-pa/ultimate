@@ -116,6 +116,19 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 		return NIL;
 	}
 
+	/**
+	 * Creates a singleton list.
+	 *
+	 * @param <X>
+	 *            The element type
+	 * @param elem
+	 *            The single element in the list
+	 * @return the new list
+	 */
+	public static <X> ImmutableList<X> singleton(final X elem) {
+		return new ImmutableList<>(elem, empty());
+	}
+
 	public X getHead() {
 		if (mSize == 0) {
 			throw new NoSuchElementException();
@@ -144,6 +157,9 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 		}
 		if (o instanceof ImmutableList<?>) {
 			final ImmutableList<?> other = (ImmutableList<?>) o;
+			if (mSize != other.mSize) {
+				return false;
+			}
 			if (mTail == other.mTail) {
 				return Objects.equals(mHead, other.mHead);
 			}
@@ -156,11 +172,6 @@ public final class ImmutableList<X> extends AbstractSequentialList<X> {
 	@Override
 	public int size() {
 		return mSize;
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return mSize == 0;
 	}
 
 	@Override
