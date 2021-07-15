@@ -98,19 +98,17 @@ public class ConstantTerm extends Term {
 		if (mValue instanceof Rational) {
 			final Rational rat = (Rational) mValue;
 			String result = rat.numerator().abs().toString();
-			if (rat.isIntegral()) {
-				if (getSort().getName() == "Real") {
-					result += ".0";
-				}
-				if (rat.isNegative()) {
-					result = "(- " + result + ")";
-				}
-			} else {
-				assert getSort().getName() == "Real";
-				if (rat.isNegative()) {
-					result = "(- " + result + ")";
-				}
-				result = "(/ " + result + " " + rat.denominator() + ")";
+			final boolean isReal = "Real".equals(getSort().getName());
+			if (isReal) {
+				result += ".0";
+			}
+			if (rat.isNegative()) {
+				result = "(- " + result + ")";
+			}
+
+			if (!rat.isIntegral()) {
+				assert isReal : "non-integral Rational is not real";
+				result = "(/ " + result + " " + rat.denominator() + ".0)";
 			}
 			return result;
 		}
