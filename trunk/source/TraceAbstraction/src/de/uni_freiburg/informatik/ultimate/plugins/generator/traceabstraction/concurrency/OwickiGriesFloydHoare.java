@@ -133,8 +133,9 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		mReach = getReach(mCuts);
 		
 
-		mFloydHoareAnnotation = getMaximalAnnotation();	
-		getCosetAnnotation();// to replaceMaximalAnnotation
+		mFloydHoareAnnotation = getCosetAnnotation();
+		//mFloydHoareAnnotation = getMaximalAnnotation();	
+		
 
 	}
 
@@ -148,8 +149,7 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	/**
 	 * @param branching
 	 *            process
-	 * @return set of all maximal co-set (cuts) TODO: Set<Set<PLACE>>, no set of conditions?? labelling function? cCheck
-	 *         branching def
+	 * @return set of all maximal co-set (cuts)
 	 */
 	private static <LETTER, PLACE> Set<Set<PLACE>> computeMaximalCosets(final BranchingProcess<LETTER, PLACE> bp) {
 		final Set<Set<PLACE>> maximalCoSets = new LinkedHashSet<>();
@@ -169,29 +169,28 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		}
 		return mapping;
 	}
+	
 	/**
-	 * Return mapping of 
+	 *
 	 */
-	 private void getCosetAnnotation() {		
-		final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
-		final Set<Set<Condition<LETTER,PLACE>>> markingCosets =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), 
-				new HashSet<Condition<LETTER,PLACE>>(),	mOrigConditions, new HashSet<Set<Condition<LETTER,PLACE>>>());
-		final Map<Set<Condition<LETTER,PLACE>>, Set<Set<Condition<LETTER,PLACE>>>> markAssertCond = new HashMap<>();
-		for(Set<Condition<LETTER,PLACE>> markCoset: markingCosets) {
-			Set<PLACE> markPlaces = getCosetPlaces(markCoset);
-			Set<Set<Condition<LETTER,PLACE>>> assertConds =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), 
-					markCoset,mAssertConditions, new HashSet<Set<Condition<LETTER,PLACE>>>());		
-			 Set<Set<PLACE>> markAssertPlaces = new HashSet<>();
-			for(Set<Condition<LETTER,PLACE>> assertCond: assertConds) {
-				markAssertPlaces.add(getCosetPlaces(simplifyAssertions(assertCond)));				
-			}
-			//add to mapping
-			//markAssertCond.put(markCoset,);
-		 }
-			
+	 private Map<Marking<LETTER, PLACE>, IPredicate> getCosetAnnotation() {		
+			final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
+			final Set<Set<Condition<LETTER,PLACE>>> markingCosets =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), 
+					new HashSet<Condition<LETTER,PLACE>>(),	mOrigConditions, new HashSet<Set<Condition<LETTER,PLACE>>>());
+			for(Set<Condition<LETTER,PLACE>> markCoset: markingCosets) {
+				Set<PLACE> markPlaces = getCosetPlaces(markCoset);
+				Set<Set<Condition<LETTER,PLACE>>> assertConds =  getCosets(new HashSet<Condition<LETTER,PLACE>>(), 
+						markCoset,mAssertConditions, new HashSet<Set<Condition<LETTER,PLACE>>>());		
+				 Set<Set<IPredicate>> markAssertPlaces = new HashSet<>();
+				for(Set<Condition<LETTER,PLACE>> assertCond: assertConds) {
+					markAssertPlaces.add(simplifyAssertions(getCosetPredicates(assertCond)));				
+				}
+				mapping.put(new Marking<LETTER, PLACE>(markPlaces), getMarkingAssertion(markPlaces, markAssertPlaces));
+			}			
+			return mapping;			
 		}	
 	 
-	 private Set<PLACE> getCosetPlaces (Set<Condition<LETTER,PLACE>> coset){
+	 private Set<PLACE> getCosetPlaces (final Set<Condition<LETTER,PLACE>> coset){
 		 Set<PLACE> placeCoset = new HashSet<>();
 		 for(Condition<LETTER,PLACE> condition: coset) {
 			 placeCoset.add(condition.getPlace());
@@ -200,13 +199,22 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		 
 	 }
 	 
+	 private Set<IPredicate> getCosetPredicates (final Set<Condition<LETTER,PLACE>> coset){
+		 Set<IPredicate> predCoset = new HashSet<>();
+		 for(Condition<LETTER,PLACE> condition: coset) {
+			 predCoset.add(condition.getPlace());
+		 }	 
+		 return predCoset;
+		 
+	 }
+	 
 		//Set of conditions to set of places
-	 private Set<Condition<LETTER,PLACE>> simplifyAssertions(Set<Condition<LETTER,PLACE>> assertConds){
-		 Set<Condition<LETTER,PLACE>> simpleAssertions = assertConds;
+	 private Set<IPredicate> simplifyAssertions(Set<IPredicate> assertConds){
+		 Set<IPredicate> simpleAssertions = assertConds;
 		 //Check if equiv to false, set all to false;
-		 for (Condition<LETTER,PLACE> cond: assertConds) {
+		 for (IPredicate cond: assertConds) {
 			 if (!thereIsStronger(cond, simpleAssertions)) {				 
-				 Set<Condition<LETTER,PLACE>> weakerConditions = getWeakerConditions(cond, assertConds);
+				 Set<IPredicate> weakerConditions = getWeakerConditions(cond, assertConds);
 				 simpleAssertions = cleanWeakConditions(simpleAssertions, weakerConditions);
 			 }
 			 else {					 		 
@@ -217,37 +225,32 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		 return simpleAssertions;
 	 }
 	 
-	 private Set<Condition<LETTER, PLACE>> getWeakerConditions(Condition<LETTER,PLACE> condition, 
-			 Set<Condition<LETTER,PLACE>> assertConditions) {
-		 Set<Condition<LETTER, PLACE>> condImplications = new HashSet<>();
-		 IPredicate condPredicate = condition.getPlace();		 
+	 private Set<IPredicate> getWeakerConditions(final IPredicate condition, Set<IPredicate> assertConditions) {
+		 Set<IPredicate> condImplications = new HashSet<>();
+		 assertConditions = DataStructureUtils.difference(assertConditions, Collections.singleton(condition));
 		 for (IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>> refEngine : mRefinementEngines) {
-			  for(Condition<LETTER,PLACE> assertCond: assertConditions) {
-				 if(Validity.VALID == refEngine.getPredicateUnifier().getCoverageRelation().isCovered
-						 (condPredicate, assertCond.getPlace())) {
-					condImplications.add(assertCond);
-				 }
-			 }	
-		 }	 
-		 
+			 condImplications.addAll(DataStructureUtils.intersection(assertConditions, 
+					 refEngine.getPredicateUnifier().getCoverageRelation().getCoveringPredicates(condition)));
+		 }		 
 		 return condImplications;
 	 }
 	 
-	 private Set<Condition<LETTER, PLACE>> cleanWeakConditions(Set<Condition<LETTER,PLACE>> assertConditions,
-			 Set<Condition<LETTER, PLACE>> condImplications){
+	 private Set<IPredicate> cleanWeakConditions(Set<IPredicate> assertConditions,
+			 final Set<IPredicate> condImplications){
 		 if (!condImplications.isEmpty()) {
 			 assertConditions = DataStructureUtils.difference(assertConditions, condImplications);
 		 }
 		 return assertConditions;
 	 }
 	 
-	 
-	 //is there an stronger condition already in the set?	 
-	 private boolean thereIsStronger(Condition<LETTER,PLACE> condition, 
-			 Set<Condition<LETTER,PLACE>> assertConditions) {
-		 IPredicate predCondition = condition.getPlace();
+ 
+	 private boolean thereIsStronger(final IPredicate condition, final Set<IPredicate> assertConditions) {		 
+			final Set<IPredicate> assertPredicates= 
+				 DataStructureUtils.difference(assertConditions, Collections.singleton(condition));
 		 for (IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>> refEngine : mRefinementEngines) {
-			 if(!refEngine.getPredicateUnifier().getCoverageRelation().getCoveredPredicates(condition.getPlace()).isEmpty()) {
+			 final Set<IPredicate> coveredPlaces = 
+					 refEngine.getPredicateUnifier().getCoverageRelation().getCoveredPredicates(condition);					 			 
+			 if(!DataStructureUtils.intersection(coveredPlaces, assertPredicates).isEmpty()) {
 				 return true;
 			 }
 		}		 
@@ -297,23 +300,44 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 }
 	 
 
-	// phi(d) = conjuct(assert(p)) for each p in z(d) (assertion places) -> Cut assertion
-	private IPredicate getCutAssertion(final Set<PLACE> cut) {
-		final Set<IPredicate> predicates = new HashSet<>();
-		for (final PLACE place : getAssertPlaces(cut)) {
-			predicates.add(mPlace2Predicate.apply(place));
-		}
-		return mFactory.and(predicates);
-	}
+
 
 	private IPredicate getMarkingAssertion(final Set<PLACE> marking) {
 		final Set<IPredicate> predicates = new HashSet<>();
 		for (final Set<PLACE> cut : getCuts(marking)) {
+			predicates.add(getCutAssertion(cut, getAssertPlaces(cut)));
+		}
+		return mFactory.or(predicates);
+	}
+	private IPredicate getCutAssertion(final Set<PLACE> cut, final Set<PLACE> assertPlaces) {
+		final Set<IPredicate> predicates = new HashSet<>();
+		for (final IPredicate place : assertPlaces) {
+			predicates.add(place);
+		}
+		return mFactory.and(predicates);
+	}
+	
+
+	
+	//Call this for simpleAnnotation
+	private IPredicate getMarkingAssertion(final Set<PLACE> marking, final Set<Set<IPredicate>> cuts) {
+		final Set<IPredicate> predicates = new HashSet<>();
+		for (final Set<IPredicate> cut : cuts) {
 			predicates.add(getCutAssertion(cut));
 		}
 		return mFactory.or(predicates);
 	}
-	//
+	
+	
+	// phi(d) = conjuct(assert(p)) for each p in z(d) (assertion places) -> Cut assertion
+	private IPredicate getCutAssertion(final Set<IPredicate> cut) {
+		final Set<IPredicate> predicates = new HashSet<>();
+		for (final IPredicate place : cut) {
+			predicates.add(place);
+		}
+		return mFactory.and(predicates);
+	}
+	
 
 	/**
 	 * @param cuts
