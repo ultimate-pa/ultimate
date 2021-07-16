@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -291,7 +292,25 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	}
 
 	public String errorLocs() {
-		return mErrorLocs.toString();
+		final Iterator<? extends IcfgLocation> it = mErrorLocs.iterator();
+		if (!it.hasNext()) {
+			return "[]";
+		}
+		final StringBuilder sb = new StringBuilder();
+		int i = 0;
+		sb.append('[');
+		for (;;) {
+			sb.append(it.next().toString());
+			++i;
+			if (!it.hasNext()) {
+				return sb.append(']').toString();
+			}
+			if (sb.length() > 120) {
+				sb.append(" (and ").append(mErrorLocs.size() - i).append(" more)]");
+				return sb.toString();
+			}
+			sb.append(',').append(' ');
+		}
 	}
 
 	public IStatisticsDataProvider getCegarLoopBenchmark() {
