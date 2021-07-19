@@ -50,7 +50,7 @@ public class CegarLoopUtils {
 		final BasicCegarLoop<L> cegarLoop = constructCegarLoop(services, name, root, taPrefs, root.getCfgSmtToolkit(),
 				predicateFactory, errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, automataType,
 				compositionFactory, transitionClazz, witnessAutomaton);
-		return cegarLoop.iterate();
+		return cegarLoop.runCegar();
 	}
 
 	public static <L extends IIcfgTransition<?>> BasicCegarLoop<L> constructCegarLoop(

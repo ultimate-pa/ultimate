@@ -29,13 +29,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -90,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -179,6 +183,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	 */
 	private final DebugIdentifier mName;
 	protected final CegarLoopResultBuilder mResultBuilder;
+	private Map<IcfgLocation, Long> mTimeBudget;
 
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -253,8 +258,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	 * <li>accepts only feasible traces.
 	 * </ul>
 	 */
-	protected abstract void constructErrorAutomaton(final LBool isCounterexampleFeasible)
-			throws AutomataOperationCanceledException;
+	protected abstract void constructErrorAutomaton() throws AutomataOperationCanceledException;
 
 	/**
 	 * Construct a new automaton mAbstraction such that
@@ -318,17 +322,17 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	}
 
 	/**
-	 * Method that is called at the end of {@link #iterate()}.
+	 * Method that is called at the end of {@link #runCegar()}.
 	 */
 	protected abstract void finish();
 
-	public final CegarLoopResult<L> iterate() {
-		final CegarLoopResult<L> r = iterateInternal();
+	public final CegarLoopResult<L> runCegar() {
+		final CegarLoopResult<L> r = startCegar();
 		finish();
 		return r;
 	}
 
-	public final CegarLoopResult<L> iterateInternal() {
+	public final CegarLoopResult<L> startCegar() {
 		mIteration = 0;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("======== Iteration %s == of CEGAR loop == %s ========", mIteration, mName);
@@ -340,145 +344,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 		}
 		try {
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
-			try {
-				abortIfTimeout();
-				getInitialAbstraction();
-			} catch (final AutomataOperationCanceledException aoce) {
-				final RunningTaskInfo runningTaskInfo =
-						new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
-				aoce.addRunningTaskInfo(runningTaskInfo);
-				throw aoce;
-			} catch (final ToolchainCanceledException tce) {
-				final RunningTaskInfo runningTaskInfo =
-						new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
-				tce.addRunningTaskInfo(runningTaskInfo);
-				throw tce;
-			} finally {
-				mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
+			if (!computeInitialAbstraction()) {
+				iterate();
 			}
-
-			if (mIteration <= mPref.watchIteration()
-					&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
-				mArtifactAutomaton = mAbstraction;
-			}
-			if (mPref.dumpAutomata()) {
-				final String filename = mTaskIdentifier + "_InitialAbstraction";
-				writeAutomatonToFile(mAbstraction, filename);
-			}
-			mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
-
-			final boolean initalAbstractionCorrect = isAbstractionEmpty();
-			if (initalAbstractionCorrect) {
-				return mResultBuilder.addResultForAllRemaining(Result.SAFE).getResult();
-			}
-
-			for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
-				abortIfTimeout();
-				final String msg = String.format("=== Iteration %s === %s ===", mIteration, errorLocs());
-				getServices().getStorage().pushMarker(msg);
-				mLogger.info(msg);
-				try {
-
-					mCegarLoopBenchmark.announceNextIteration();
-					if (mPref.dumpAutomata()) {
-						mDumper = new Dumper(mLogger, mPref, mName, mIteration);
-					}
-
-					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasibleInternal();
-					final LBool isCounterexampleFeasible = isCexResult.getFirst();
-					final IProgramExecution<L, Term> programExecution = isCexResult.getSecond();
-					final String automatonType;
-					if (isCounterexampleFeasible == Script.LBool.SAT) {
-						mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
-						if (mPref.stopAfterFirstViolation()) {
-							return mResultBuilder.addResultForAllRemaining(Result.UNKNOWN).getResult();
-						}
-						if (mLogger.isInfoEnabled()) {
-							mLogger.info("Generalizing and excluding counterexample to continue analysis");
-						}
-						automatonType = "Error";
-						constructErrorAutomaton(isCounterexampleFeasible);
-					} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
-						final Result actualResult;
-						if (programExecution != null) {
-							final UnprovabilityReason reasonUnknown =
-									new UnprovabilityReason("unable to decide satisfiability of path constraint");
-							actualResult = Result.UNKNOWN;
-							mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null,
-									reasonUnknown);
-						} else {
-							final IcfgLocation loc = getErrorLocFromCounterexample();
-							actualResult = Result.TIMEOUT;
-							mResultBuilder.addResult(loc, actualResult, null, null, null);
-						}
-
-						if (mPref.stopAfterFirstViolation()) {
-							return mResultBuilder.addResultForAllRemaining(actualResult).getResult();
-						}
-						if (mLogger.isInfoEnabled()) {
-							mLogger.warn("Generalizing and excluding unknown counterexample to continue analysis");
-						}
-						automatonType = "Unknown";
-						constructErrorAutomaton(isCounterexampleFeasible);
-					} else {
-						automatonType = "Interpolant";
-						constructInterpolantAutomaton();
-					}
-
-					if (mInterpolAutomaton != null) {
-						mLogger.info("%s automaton has %s states", automatonType,
-								mInterpolAutomaton.getStates().size());
-						if (mIteration <= mPref.watchIteration()
-								&& mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
-							mArtifactAutomaton = mInterpolAutomaton;
-						}
-					}
-
-					final boolean progress = refineAbstraction();
-					if (!progress) {
-						final String msgNoProgress =
-								"No progress! Counterexample is still accepted by refined abstraction.";
-						mLogger.fatal(msgNoProgress);
-						throw new AssertionError(msgNoProgress);
-					}
-
-					if (mInterpolAutomaton != null) {
-						mLogger.info("Abstraction has %s", mAbstraction.sizeInformation());
-						mLogger.info("%s automaton has %s", automatonType, mInterpolAutomaton.sizeInformation());
-					}
-
-					if (mComputeHoareAnnotation
-							&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-						assert new InductivityCheck<>(getServices(), (INestedWordAutomaton<L, IPredicate>) mAbstraction,
-								false, true, new IncrementalHoareTripleChecker(mCsToolkit, false))
-										.getResult() : "Not inductive";
-					}
-
-					if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
-						mArtifactAutomaton = mAbstraction;
-					}
-
-					final boolean newMaximumReached =
-							mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
-					if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-						final String filename = mIcfg.getIdentifier() + "_BiggestAutomaton";
-						writeAutomatonToFile(mAbstraction, filename);
-					}
-
-					final boolean isAbstractionCorrect = isAbstractionEmpty();
-					if (isAbstractionCorrect) {
-						return mResultBuilder.addResultForAllRemaining(Result.SAFE).getResult();
-					}
-				} finally {
-					final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
-					if (!destroyedStorables.isEmpty()) {
-						mLogger.warn("Destroyed unattended storables created during the last iteration: "
-								+ destroyedStorables.stream().collect(Collectors.joining(",")));
-					}
-				}
-			}
-			return mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS).getResult();
+			return mResultBuilder.getResult();
 		} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
 			return performLimitReachedActions(e);
 		} catch (final AutomataLibraryException e) {
@@ -486,24 +355,214 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	/**
+	 * @return true iff the initial abstraction is empty, false otherwise
+	 * @throws AutomataLibraryException
+	 */
+	private boolean computeInitialAbstraction() throws AutomataLibraryException {
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
+		try {
+			abortIfTimeout();
+			getInitialAbstraction();
+		} catch (AutomataOperationCanceledException | ToolchainCanceledException ex) {
+			final RunningTaskInfo runningTaskInfo =
+					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
+			ex.addRunningTaskInfo(runningTaskInfo);
+			throw ex;
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
+		}
+
+		if (mIteration <= mPref.watchIteration()
+				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
+			mArtifactAutomaton = mAbstraction;
+		}
+		if (mPref.dumpAutomata()) {
+			final String filename = mTaskIdentifier + "_InitialAbstraction";
+			writeAutomatonToFile(mAbstraction, filename);
+		}
+		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+
+		final boolean initalAbstractionCorrect = isAbstractionEmpty();
+		if (initalAbstractionCorrect) {
+			mResultBuilder.addResultForAllRemaining(Result.SAFE);
+			return true;
+		}
+		return false;
+	}
+
+	private void iterate() throws AutomataLibraryException {
+		mTimeBudget = initializeTimeBudget();
+		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
+			abortIfTimeout();
+			final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
+			final String msg = String.format("=== Iteration %s === Targeting %s === %s ===", mIteration,
+					currentErrorLoc, errorLocs());
+			getServices().getStorage().pushMarker(msg);
+			mLogger.info(msg);
+			final IUltimateServiceProvider parentServices = mServices;
+			final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
+			mServices = iterationServices;
+			boolean updateBudget = true;
+			try {
+				mCegarLoopBenchmark.announceNextIteration();
+				if (mPref.dumpAutomata()) {
+					mDumper = new Dumper(mLogger, mPref, mName, mIteration);
+				}
+				try {
+					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible();
+					final AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
+							isCexResult.getSecond(), currentErrorLoc);
+					if (mPref.stopAfterFirstViolation() && automatonType != AutomatonType.INTERPOLANT) {
+						return;
+					}
+					constructRefinementAutomaton(automatonType);
+					refineAbstractionInternal(automatonType);
+
+				} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
+					mServices = updateTimeBudget(currentErrorLoc, parentServices, iterationServices);
+					updateBudget = false;
+					if (!mServices.getProgressMonitorService().continueProcessing()) {
+						mResultBuilder.addResult(currentErrorLoc, Result.TIMEOUT, null, e, null);
+						throw e;
+					}
+					mResultBuilder.addResult(currentErrorLoc, Result.USER_LIMIT_TIME, null, e, null);
+					mLogger.warn("Local timeout during iteration targeting %s: %s", currentErrorLoc,
+							e.printRunningTaskMessage());
+					final long remainingTime = mServices.getProgressMonitorService().remainingTime();
+					if (remainingTime > 0) {
+						mLogger.warn("Still %s left, trying to recover",
+								CoreUtil.humanReadableTime(remainingTime, TimeUnit.MILLISECONDS, 2));
+					}
+					constructRefinementAutomaton(AutomatonType.UNKNOWN);
+					refineAbstractionInternal(AutomatonType.UNKNOWN);
+				}
+				final boolean isAbstractionCorrect = isAbstractionEmpty();
+				if (isAbstractionCorrect) {
+					mResultBuilder.addResultForAllRemaining(Result.SAFE);
+					return;
+				}
+
+			} finally {
+				if (updateBudget) {
+					mServices = updateTimeBudget(currentErrorLoc, parentServices, iterationServices);
+				}
+				final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
+				if (!destroyedStorables.isEmpty()) {
+					mLogger.warn("Destroyed unattended storables created during the last iteration: "
+							+ destroyedStorables.stream().collect(Collectors.joining(",")));
+				}
+			}
+		}
+		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
+	}
+
+	private void refineAbstractionInternal(final AutomatonType automatonType)
+			throws AutomataLibraryException, AssertionError {
+		final boolean progress = refineAbstraction();
+		if (!progress) {
+			final String msgNoProgress = "No progress! Counterexample is still accepted by refined abstraction.";
+			mLogger.fatal(msgNoProgress);
+			throw new AssertionError(msgNoProgress);
+		}
+
+		if (mInterpolAutomaton != null) {
+			mLogger.info("Abstraction has %s", mAbstraction.sizeInformation());
+			mLogger.info("%s automaton has %s", automatonType, mInterpolAutomaton.sizeInformation());
+		}
+
+		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+			assert new InductivityCheck<>(getServices(), (INestedWordAutomaton<L, IPredicate>) mAbstraction, false,
+					true, new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
+		}
+
+		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
+			mArtifactAutomaton = mAbstraction;
+		}
+
+		final boolean newMaximumReached = mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+		if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
+			final String filename = mIcfg.getIdentifier() + "_BiggestAutomaton";
+			writeAutomatonToFile(mAbstraction, filename);
+		}
+	}
+
 	private IcfgLocation getErrorLocFromCounterexample() {
 		return mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 	}
 
-	private Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasibleInternal() {
-		final IUltimateServiceProvider parent = mServices;
-		mServices = createIterationTimer();
-		try {
-			return isCounterexampleFeasible();
-		} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
-			mLogger.warn("Timeout during trace check: %s", e.printRunningTaskMessage());
-			return new Pair<>(Script.LBool.UNKNOWN, null);
-		} finally {
-			mServices = parent;
+	/**
+	 * Report results from a feasibility check if necessary and return the type of the refinement automaton
+	 */
+	private AutomatonType processFeasibilityCheckResult(final LBool isCounterexampleFeasible,
+			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
+		if (isCounterexampleFeasible == Script.LBool.SAT) {
+			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
+			if (mPref.stopAfterFirstViolation()) {
+				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
+			}
+			return AutomatonType.ERROR;
+		}
+		if (isCounterexampleFeasible != Script.LBool.UNKNOWN) {
+			return AutomatonType.INTERPOLANT;
+		}
+		final Result actualResult;
+		if (programExecution != null) {
+			final UnprovabilityReason reasonUnknown =
+					new UnprovabilityReason("unable to decide satisfiability of path constraint");
+			actualResult = Result.UNKNOWN;
+			mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
+		} else {
+			actualResult = Result.TIMEOUT;
+			mResultBuilder.addResult(currentErrorLoc, actualResult, null, null, null);
+		}
+
+		if (mPref.stopAfterFirstViolation()) {
+			mResultBuilder.addResultForAllRemaining(actualResult);
+		}
+
+		return AutomatonType.UNKNOWN;
+	}
+
+	private void constructRefinementAutomaton(final AutomatonType automatonType)
+			throws AutomataOperationCanceledException {
+		switch (automatonType) {
+		case ERROR:
+		case UNKNOWN:
+			if (mPref.stopAfterFirstViolation()) {
+				return;
+			}
+			mLogger.info("Excluding counterexample to continue analysis with %s automaton", automatonType);
+			constructErrorAutomaton();
+			break;
+		case INTERPOLANT:
+			constructInterpolantAutomaton();
+			break;
+		default:
+			throw new UnsupportedOperationException("Unknown automaton type: " + automatonType);
+		}
+
+		if (mInterpolAutomaton != null) {
+			mLogger.info("%s automaton has %s states", automatonType, mInterpolAutomaton.getStates().size());
+			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
+				mArtifactAutomaton = mInterpolAutomaton;
+			}
 		}
 	}
 
-	private IUltimateServiceProvider createIterationTimer() {
+	private Map<IcfgLocation, Long> initializeTimeBudget() {
+		if (!mPref.hasErrorLocTimeLimit()) {
+			return Collections.emptyMap();
+		}
+		final Map<IcfgLocation, Long> rtr = new HashMap<>();
+		final long timePerLoc = mServices.getProgressMonitorService().remainingTime() / mErrorLocs.size();
+		mErrorLocs.stream().forEach(a -> rtr.put(a, timePerLoc));
+		mLogger.info("Timelimit per error location is %s",
+				CoreUtil.humanReadableTime(timePerLoc, TimeUnit.MILLISECONDS, 2));
+		return rtr;
+	}
+
+	private IUltimateServiceProvider createIterationTimer(final IcfgLocation currentErrorLoc) {
 		if (!mPref.hasErrorLocTimeLimit()) {
 			// do not limit single counterexample if there is no limit on assert
 			return mServices;
@@ -514,8 +573,21 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			// no error locs remaining, do nothing
 			return mServices;
 		}
-		final IProgressAwareTimer timer = pms.getChildTimer(1.0 / remainingLocs);
+		final long remainingTime = mTimeBudget.get(currentErrorLoc);
+		final IProgressAwareTimer timer = pms.getChildTimer(remainingTime);
 		return pms.registerChildTimer(mServices, timer);
+	}
+
+	private IUltimateServiceProvider updateTimeBudget(final IcfgLocation currentErrorLoc,
+			final IUltimateServiceProvider parentServices, final IUltimateServiceProvider iterationServices) {
+		if (!mPref.hasErrorLocTimeLimit()) {
+			// do not limit single counterexample if there is no limit on assert
+			return parentServices;
+		}
+		final long remainingTime = iterationServices.getProgressMonitorService().remainingTime();
+		final long oldBudget = mTimeBudget.put(currentErrorLoc, remainingTime);
+		mLogger.info("Used %s ms for %s, %s ms remaining", oldBudget - remainingTime, currentErrorLoc, remainingTime);
+		return parentServices;
 	}
 
 	private CegarLoopResult<L> performLimitReachedActions(final IRunningTaskStackProvider e) {
@@ -569,6 +641,14 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 	protected IUltimateServiceProvider getServices() {
 		return mServices;
+	}
+
+	/**
+	 * Type of automaton that can occur during refinement.
+	 *
+	 */
+	public enum AutomatonType {
+		ERROR, UNKNOWN, INTERPOLANT
 	}
 
 	/**

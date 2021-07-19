@@ -125,7 +125,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException();
 		}
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(petrifiedIcfg);
-		final CegarLoopResult<IcfgEdge> result = abstractCegarLoop.iterate();
+		final CegarLoopResult<IcfgEdge> result = abstractCegarLoop.runCegar();
 		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = abstractCegarLoop.getCegarLoopBenchmark();
 		traceAbstractionBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		reportBenchmark(traceAbstractionBenchmark);
