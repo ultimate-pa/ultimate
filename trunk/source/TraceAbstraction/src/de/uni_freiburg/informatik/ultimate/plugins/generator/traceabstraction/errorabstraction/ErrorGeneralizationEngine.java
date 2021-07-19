@@ -144,6 +144,15 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 		return mLastIteration == iteration;
 	}
 
+	public void constructErrorAutomaton(final IRun<L, ?> counterexample, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IIcfgSymbolTable symbolTable, final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton,
+			final INestedWordAutomaton<L, IPredicate> abstraction, final int iteration) {
+		constructErrorAutomaton(counterexample, predicateFactory, predicateUnifier, csToolkit, simplificationTechnique,
+				xnfConversionTechnique, symbolTable, stateFactoryForAutomaton, abstraction, iteration, mType);
+	}
+
 	/**
 	 * @param counterexample
 	 *            Counterexample.
@@ -170,20 +179,20 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable, final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton,
-			final INestedWordAutomaton<L, IPredicate> abstraction, final int iteration) {
+			final INestedWordAutomaton<L, IPredicate> abstraction, final int iteration, final ErrorAutomatonType type) {
 		mErrorTraces.addTrace(counterexample);
 		mLastIteration = iteration;
 
 		final NestedWord<L> trace = (NestedWord<L>) counterexample.getWord();
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Constructing %s automaton for trace of length %s", mType, trace.length());
+			mLogger.info("Constructing %s automaton for trace of length %s", type, trace.length());
 		}
 
 		mErrorAutomatonStatisticsGenerator.reportTrace(trace);
 		mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
 
 		try {
-			switch (mType) {
+			switch (type) {
 			case SIMPLE_ERROR_AUTOMATON:
 				mErrorAutomatonBuilder = new SimpleErrorAutomatonBuilder<>(mServices, predicateFactory,
 						predicateUnifier, csToolkit, stateFactoryForAutomaton, abstraction, trace);
@@ -199,7 +208,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 						stateFactoryForAutomaton, abstraction, trace);
 				break;
 			default:
-				throw new IllegalArgumentException("Unknown automaton type: " + mType);
+				throw new IllegalArgumentException("Unknown automaton type: " + type);
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
