@@ -97,7 +97,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 						csToolkit, predicateFactory, taBenchmarks, taPrefs, errNodesOfAllProc, taPrefs.interpolation(),
 						taPrefs.computeHoareAnnotation(), mServices, compositionFactory, IcfgEdge.class);
 
-		final CegarLoopResult<IcfgEdge> result = cegarLoop.iterate();
+		final CegarLoopResult<IcfgEdge> result = cegarLoop.runCegar();
 
 		final CegarLoopResultReporter<IcfgEdge> clrReporter =
 				new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
