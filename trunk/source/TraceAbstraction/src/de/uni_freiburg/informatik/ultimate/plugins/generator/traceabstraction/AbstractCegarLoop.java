@@ -408,8 +408,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 							mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null,
 									reasonUnknown);
 						} else {
-							final IcfgLocation loc =
-									mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
+							final IcfgLocation loc = getErrorLocFromCounterexample();
 							actualResult = Result.TIMEOUT;
 							mResultBuilder.addResult(loc, actualResult, null, null, null);
 						}
@@ -487,9 +486,13 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	private IcfgLocation getErrorLocFromCounterexample() {
+		return mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
+	}
+
 	private Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasibleInternal() {
 		final IUltimateServiceProvider parent = mServices;
-		mServices = createTraceCheckTimer();
+		mServices = createIterationTimer();
 		try {
 			return isCounterexampleFeasible();
 		} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
@@ -500,7 +503,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private IUltimateServiceProvider createTraceCheckTimer() {
+	private IUltimateServiceProvider createIterationTimer() {
 		if (!mPref.hasErrorLocTimeLimit()) {
 			// do not limit single counterexample if there is no limit on assert
 			return mServices;
@@ -678,6 +681,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		public CegarLoopResultBuilder addResult(final IcfgLocation loc, final Result result,
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
+			mLogger.info("Registering result %s for location %s", result, loc);
 			final IProgramExecution<L, Term> programExecution;
 			if (result == Result.UNSAFE || result == Result.UNKNOWN) {
 				programExecution = rcfgProgramExecution;
