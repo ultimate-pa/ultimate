@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternTU;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEdgeResponsePattern;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain12Pa
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponsePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPatternDelayed;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 parser ReqParser;
 option symbols = ReqSymbols;
@@ -164,7 +166,7 @@ non terminal PatternType<?> property;
 non terminal PatternBuilder pattern, opattern, rtpattern;
 non terminal SrParseScope<?> scope;
 non terminal PatternType<?>[] patternset;
-non terminal Integer num;
+non terminal Rational num;
 non terminal boolean bool;
 non terminal List<Expression> exprCommaPlus, exprCommaStar;
 non terminal Expression exprImplies, exprImpliesNI, exprAnd, exprAndNI, exprOr, exprOrNI;
@@ -389,16 +391,16 @@ bool ::= TRUE {: RESULT = true; :}
 		|FALSE {: RESULT = false; :}
 		;
 		
-duration ::= num:n TIME UNITS {: RESULT = String.valueOf(n); :}
-           | num:n USEC {: RESULT = String.valueOf(n); :}
-           | num:n MSEC {: RESULT = String.valueOf(n*1000); :}
-           | num:n SEC {: RESULT = String.valueOf(n*1000000); :}
+duration ::= num:n TIME UNITS {: RESULT = n.toString(); :}
+           | num:n USEC {: RESULT = n.toString(); :}
+           | num:n MSEC {: RESULT = n.mul(Rational.valueOf(1000,1)).toString(); :}
+           | num:n SEC {: RESULT = n.mul(Rational.valueOf(1000000,1)).toString(); :}
            | cid:i TIME UNITS {: RESULT = i; :}
            | QUOTE cid:i QUOTE TIME UNITS {: RESULT = i; :}
            ;
            
-num ::= NUMBER:n {: RESULT = Integer.parseInt(n); :}
-	  | REALNUMBER:n {: RESULT = BigDecimal.valueOf(Double.parseDouble(n)).intValueExact(); :}
-      | QUOTE NUMBER:n QUOTE {: RESULT = Integer.parseInt(n); :}
-      | QUOTE REALNUMBER:n QUOTE {: RESULT = BigDecimal.valueOf(Double.parseDouble(n)).intValueExact(); :}
+num ::= NUMBER:n {: RESULT = SmtUtils.toRational(Integer.parseInt(n)); :}
+	  | REALNUMBER:n {: RESULT = SmtUtils.toRational(BigDecimal.valueOf(Double.parseDouble(n))); :}
+      | QUOTE NUMBER:n QUOTE {: RESULT = SmtUtils.toRational(Integer.parseInt(n)); :}
+      | QUOTE REALNUMBER:n QUOTE {: RESULT = SmtUtils.toRational(BigDecimal.valueOf(Double.parseDouble(n))); :}
       ;
