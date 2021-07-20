@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -257,9 +258,9 @@ public class IcfgUtils {
 			final Predicate<IcfgEdge> prune, final Function<IcfgLocation, LBool> getCachedResult,
 			final BiConsumer<IcfgLocation, Boolean> setCachedResult) {
 		// First check if result is cached.
-		final LBool cachedConflict = getCachedResult.apply(sourceLoc);
-		if (cachedConflict != LBool.UNKNOWN) {
-			return cachedConflict == LBool.UNSAT;
+		final LBool cachedCanReach = getCachedResult.apply(sourceLoc);
+		if (cachedCanReach != LBool.UNKNOWN) {
+			return cachedCanReach == LBool.UNSAT;
 		}
 
 		// Do a DFS search of the CFG.
@@ -267,48 +268,65 @@ public class IcfgUtils {
 		final ArrayDeque<IcfgLocation> worklist = new ArrayDeque<>();
 		worklist.add(sourceLoc);
 
-		boolean conflict = false;
-		while (!worklist.isEmpty()) {
+		boolean canReach = false;
+		while (!worklist.isEmpty() && !canReach) {
 			final IcfgLocation currentLoc = worklist.peek();
 
 			// If the result is cached, retrieve it, mark the location as visited, and start backtracking.
-			final LBool knownConflict = getCachedResult.apply(currentLoc);
-			if (knownConflict != LBool.UNKNOWN) {
-				conflict = knownConflict == LBool.UNSAT;
+			final LBool knownCanReach = getCachedResult.apply(currentLoc);
+			if (knownCanReach != LBool.UNKNOWN) {
+				canReach = knownCanReach == LBool.UNSAT;
 				visited.add(currentLoc);
 			}
 
 			// When backtracking, remember the computed result for future queries.
 			if (visited.contains(currentLoc)) {
-				setCachedResult.accept(sourceLoc, conflict);
+				setCachedResult.accept(currentLoc, canReach);
 				worklist.pop();
 				continue;
 			}
 
-			final Set<IcfgLocation> successors = new HashSet<>();
-			for (final IcfgEdge edge : currentLoc.getOutgoingEdges()) {
-				if (prune.test(edge)) {
+			// Mark location as visited.
+			visited.add(currentLoc);
+
+			final List<IcfgEdge> outgoing = currentLoc.getOutgoingEdges();
+			final List<IcfgLocation> successors = new ArrayList<>(outgoing.size());
+			for (final IcfgEdge edge : outgoing) {
+				// Ignore edges leading back to visited states: They must either be on the stack (and we don't want to
+				// follow loops), or are already marked as non-reachable (otherwise we would have aborted the search).
+				// Also, ignore explicitly pruned edges.
+				if (visited.contains(edge.getTarget()) || prune.test(edge)) {
 					continue;
 				}
-				// Abort when a conflict is found.
+				// Abort when reachability is confirmed.
 				if (isTarget.test(edge)) {
-					conflict = true;
+					canReach = true;
 					break;
 				}
 				successors.add(edge.getTarget());
 			}
-			// When a conflict is found, do not search any further.
-			if (!conflict) {
+			// When reachability was confirmed, do not search any further.
+			if (!canReach) {
 				successors.stream().forEach(worklist::push);
 			}
-
-			visited.add(currentLoc);
 		}
 
-		final LBool computedConflict = getCachedResult.apply(sourceLoc);
-		assert computedConflict != LBool.UNKNOWN : "Conflict should be clearly determined";
-		assert (computedConflict == LBool.UNSAT) == conflict : "Incoherent conflict result";
-		return conflict;
+		// Fast-backtrack: If we exited the previous loop because reachability was confirmed,
+		// we only backtrack, and no longer explore states on the work list.
+		while (!worklist.isEmpty()) {
+			assert canReach : "Fast-backtracking must only happen in case of reachability";
+			final IcfgLocation currentLoc = worklist.pop();
+			if (visited.contains(currentLoc)) {
+				// If a state on the worklist is marked as visited, it is on the stack.
+				// Hence mark it as being able to reach the target.
+				setCachedResult.accept(currentLoc, canReach);
+			}
+		}
+
+		final LBool computedReachability = getCachedResult.apply(sourceLoc);
+		assert computedReachability != LBool.UNKNOWN : "Reachability should be clearly determined";
+		assert (computedReachability == LBool.UNSAT) == canReach : "Incoherent reachability result";
+		return canReach;
 	}
 
 	public static <LOC extends IcfgLocation> Set<String> getAllThreadInstances(final IIcfg<LOC> icfg) {
@@ -316,7 +334,7 @@ public class IcfgUtils {
 				icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().values().stream()
 						.flatMap(Collection::stream).map(ThreadInstance::getThreadInstanceName);
 		final String mainThread =
-				DataStructureUtils.getOneAndOnly(icfg.getInitialNodes(), "main thread").getProcedure();
+				DataStructureUtils.getOneAndOnly(icfg.getInitialNodes(), "initial node").getProcedure();
 		return Stream.concat(Stream.of(mainThread), threadInstances).collect(Collectors.toSet());
 	}
 
