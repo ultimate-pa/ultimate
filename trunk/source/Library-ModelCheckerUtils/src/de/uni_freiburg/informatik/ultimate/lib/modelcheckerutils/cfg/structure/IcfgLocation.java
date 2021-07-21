@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdg
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * Node of an interprocedureal control flow graph.
@@ -69,7 +70,7 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 		super(payload);
 		mProcedure = procedure;
 		mDebugIdentifier = Objects.requireNonNull(debugIdentifier);
-		mHashCode = 3 * mDebugIdentifier.hashCode() + 5 * mProcedure.hashCode();
+		mHashCode = HashUtils.hashJenkins(31, mDebugIdentifier, mProcedure);
 	}
 
 	public IcfgLocation(final DebugIdentifier debugIdentifier, final String procedure) {

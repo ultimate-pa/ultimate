@@ -168,14 +168,23 @@ public class DataStructureUtils {
 	 * @return
 	 */
 	public static <T> boolean haveNonEmptyIntersection(final Set<T> set1, final Set<T> set2) {
-		return getSomeCommonElement(set1, set2).isPresent();
+		final Set<T> larger;
+		final Set<T> smaller;
+		if (set1.size() > set2.size()) {
+			larger = set1;
+			smaller = set2;
+		} else {
+			larger = set2;
+			smaller = set1;
+		}
+		return smaller.stream().anyMatch(larger::contains);
 	}
 
 	/**
 	 * @return Both sets are disjunct
 	 */
 	public static <T> boolean haveEmptyIntersection(final Set<T> set1, final Set<T> set2) {
-		return !getSomeCommonElement(set1, set2).isPresent();
+		return !haveNonEmptyIntersection(set1, set2);
 	}
 
 	public static <E> String prettyPrint(final Set<E> set) {

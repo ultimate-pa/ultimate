@@ -323,7 +323,11 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		list.sort(order);
 
 		for (int i = 0; i < list.size() - 1; ++i) {
-			conflicts.addPair(list.get(i + 1).getSource(), list.get(i).getSource());
+			final IcfgLocation first = list.get(i).getSource();
+			final IcfgLocation second = list.get(i + 1).getSource();
+			if (first != second) {
+				conflicts.addPair(second, first);
+			}
 		}
 	}
 
