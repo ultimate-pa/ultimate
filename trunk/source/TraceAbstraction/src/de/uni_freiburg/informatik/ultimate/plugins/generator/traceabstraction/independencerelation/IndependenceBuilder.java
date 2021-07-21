@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndepende
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransformingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DisjunctiveConditionalIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -66,6 +68,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	protected final IIndependenceRelation<S, L> mRelation;
 	protected final Function<IIndependenceRelation<S, L>, B> mCreator;
+
+	private static final String UNCONDITIONAL_ERROR = "Condition transformation for unconditional relation is useless";
 
 	private IndependenceBuilder(final IIndependenceRelation<S, L> relation,
 			final Function<IIndependenceRelation<S, L>, B> creator) {
@@ -281,7 +285,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedPredicates(Function)
 		 */
 		public <T> Impl<L, T> withTransformedConditions(final Function<T, S> transformer) {
-			assert mRelation.isConditional() : "Condition transformation for unconditional relation is useless";
+			assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 			return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
 		}
 	}
@@ -343,7 +347,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedPredicates(Function)
 			 */
 			public <T> Impl<L, T> withTransformedConditions(final Function<T, S> transformer) {
-				assert mRelation.isConditional() : "Condition transformation for unconditional relation is useless";
+				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 				return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
 			}
 		}
@@ -362,13 +366,17 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		}
 
 		/**
-		 * Adds a condition elimination layer to the current independence relation.
+		 * Adds a condition elimination layer to the current independence relation, if it is conditional. Does nothing
+		 * if the current relation is unconditional.
 		 *
 		 * @param isInconsistent
 		 *            An efficient check for inconsistency.
 		 */
 		public B withConditionElimination(final Predicate<IPredicate> isInconsistent) {
-			return mCreator.apply(new SemanticConditionEliminator<>(mRelation, isInconsistent));
+			if (mRelation.isConditional()) {
+				return mCreator.apply(new SemanticConditionEliminator<>(mRelation, isInconsistent));
+			}
+			return mCreator.apply(mRelation);
 		}
 
 		/**
@@ -403,7 +411,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 */
 			public <T> ActionIndependenceBuilder.Impl<L, T>
 					withTransformedConditions(final Function<T, IPredicate> transformer) {
-				assert mRelation.isConditional() : "Condition transformation for unconditional relation is useless";
+				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 				return new ActionIndependenceBuilder.Impl<>(
 						new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
 			}
@@ -417,7 +425,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedConditions(Function)
 			 */
 			public Impl<L> withTransformedPredicates(final Function<IPredicate, IPredicate> transformer) {
-				assert mRelation.isConditional() : "Condition transformation for unconditional relation is useless";
+				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 				return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
 			}
 
@@ -428,6 +436,20 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			public Impl<L> ignoreDebugPredicates() {
 				if (mRelation.isConditional()) {
 					return withFilteredConditions(p -> p instanceof DebugPredicate);
+				}
+				return this;
+			}
+
+			/**
+			 * Splits a condition into multiple parts ("disjuncts"), and checks independence for each disjunct
+			 * separately. If any disjunct induces independence, then the original condition is considered to induce
+			 * independence.
+			 */
+			public <C extends Collection<IPredicate>> Impl<L>
+					withDisjunctivePredicates(final Function<IPredicate, C> getDisjuncts) {
+				if (mRelation.isConditional()) {
+					return new Impl<>(new ConditionTransformingIndependenceRelation<>(
+							new DisjunctiveConditionalIndependenceRelation<>(mRelation), getDisjuncts));
 				}
 				return this;
 			}

@@ -27,10 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -41,11 +39,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
@@ -73,9 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.DistributingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.ThreadSeparatingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -96,18 +90,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
 	private final PartialOrderMode mPartialOrderMode;
-	private final boolean mConditionalPor;
-	private final boolean mSymmetricPor;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
 	private final IDfsVisitor<L, IPredicate> mVisitor;
 	private final PartialOrderReductionFacade<L> mPOR;
-
-	// The list of independence relations to which independence queries for the different conjuncts of an IPredicate are
-	// distributed. In every iteration, a relation is appended to deal with the additional conjunct.
-	private final List<IIndependenceRelation<IPredicate, L>> mConjunctIndependenceRelations = new ArrayList<>();
-
-	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
-	private final IIndependenceRelation<IPredicate, L> mConditionalRelation;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
@@ -125,21 +110,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				? new DeadEndOptimizingSearchVisitor<>(this::createVisitor)
 				: null;
 
-		mConditionalPor = mPref.getConditionalPor();
-		mSymmetricPor = mPref.getSymmetricPor();
-		final IIndependenceRelation<IPredicate, L> semanticIndependence = constructSemanticIndependence(csToolkit);
-		final DefaultIndependenceCache<IPredicate, L> independenceCache = new DefaultIndependenceCache<>();
-		final IIndependenceRelation<IPredicate, L> unconditionalRelation =
-				constructUnconditionalIndependence(semanticIndependence, independenceCache);
-		if (mConditionalPor) {
-			mConditionalRelation = constructConditionalIndependence(semanticIndependence, independenceCache);
-		} else {
-			mConditionalRelation = null;
-		}
-		mIndependenceRelation = constructIndependenceRelation(unconditionalRelation);
-
+		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
-				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), mIndependenceRelation);
+				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), independenceRelation);
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.
@@ -172,11 +145,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
-
-		// Update independence relation
-		if (mConditionalPor) {
-			mConjunctIndependenceRelations.add(mConditionalRelation);
-		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -256,39 +224,38 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return visitor;
 	}
 
-	private IIndependenceRelation<IPredicate, L> constructSemanticIndependence(final CfgSmtToolkit csToolkit) {
-		return IndependenceBuilder.<L> semantic(mServices, constructIndependenceScript(),
-				csToolkit.getManagedScript().getScript(), mConditionalPor, mSymmetricPor).build();
+	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
+		return IndependenceBuilder
+				// Semantic independence forms the base.
+				.<L> semantic(mServices, constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
+						mPref.getConditionalPor(), mPref.getSymmetricPor())
+				// Add syntactic independence check (cheaper sufficient condition).
+				.withSyntacticCheck()
+				// Cache independence query results.
+				.cached()
+				// Setup condition optimization (if conditional independence is enabled).
+				// =========================================================================
+				// NOTE: Soundness of the condition elimination here depends on the fact that all inconsistent
+				// predicates are syntactically equal to "false". Here, this is achieved by usage of
+				// #withDisjunctivePredicates: The only predicates we use as conditions are the original interpolants
+				// (i.e., not conjunctions of them), where we assume this constraint holds.
+				.withConditionElimination(PartialOrderCegarLoop::isFalseLiteral)
+				// We ignore "don't care" conditions stemming from the initial program automaton states.
+				.withFilteredConditions(p -> !mPredicateFactory.isDontCare(p))
+				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
+				// =========================================================================
+				// Never consider letters of the same thread to be independent.
+				.threadSeparated()
+				// Retrieve the constructed relation.
+				.build();
 	}
 
-	private IIndependenceRelation<IPredicate, L> constructConditionalIndependence(
-			final IIndependenceRelation<IPredicate, L> semanticIndependence,
-			final IIndependenceCache<IPredicate, L> independenceCache) {
-		// Note: Soundness of the SemanticConditionEliminator depends on the fact that all inconsistent predicates are
-		// syntactically equal to "false". Here, this is achieved by usage of DistributingIndependenceRelation: The only
-		// predicates we use as conditions are the original interpolants (i.e., not conjunctions of them), where we
-		// assume this constraint holds.
-		return IndependenceBuilder.fromPredicateActionIndependence(semanticIndependence).cached(independenceCache)
-				.withConditionElimination(PartialOrderCegarLoop::isFalseState).build();
-	}
-
-	private IIndependenceRelation<IPredicate, L> constructUnconditionalIndependence(
-			final IIndependenceRelation<IPredicate, L> semanticIndependence,
-			final IIndependenceCache<IPredicate, L> independenceCache) {
-		return IndependenceBuilder.fromActionIndependence(semanticIndependence).ensureUnconditional()
-				.withSyntacticCheck().cached(independenceCache).build();
-	}
-
-	private IIndependenceRelation<IPredicate, L>
-			constructIndependenceRelation(final IIndependenceRelation<IPredicate, L> unconditionalRelation) {
-		final IIndependenceRelation<IPredicate, L> independence;
-		if (mConditionalPor) {
-			mConjunctIndependenceRelations.add(unconditionalRelation);
-			independence = new DistributingIndependenceRelation<>(mConjunctIndependenceRelations, this::getConjuncts);
-		} else {
-			independence = unconditionalRelation;
-		}
-		return new ThreadSeparatingIndependenceRelation<>(independence);
+	private ManagedScript constructIndependenceScript() {
+		final SolverSettings settings = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_DefaultMode)
+				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT + " -t:1000", SolverBuilder.LOGIC_Z3);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, settings, "SemanticIndependence");
+		return new ManagedScript(mServices, solver);
 	}
 
 	private void switchToOnDemandConstructionMode() {
@@ -318,37 +285,27 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private static boolean isProvenState(final IPredicate state) {
 		if (state instanceof MLPredicateWithConjuncts) {
-			// TODO possibly optimize and store this directly in the predicate?
-			return ((MLPredicateWithConjuncts) state).getConjuncts().stream()
-					.anyMatch(PartialOrderCegarLoop::isFalseState);
+			// By the way we create conjunctions in the state factory below, any conjunction that contains the conjunct
+			// "false" will contain no other conjuncts.
+			final ImmutableList<IPredicate> conjuncts = ((MLPredicateWithConjuncts) state).getConjuncts();
+			return conjuncts.size() == 1 && isFalseLiteral(conjuncts.getHead());
 		}
-		return isFalseState(state);
+		return isFalseLiteral(state);
 	}
 
-	private static boolean isFalseState(final IPredicate state) {
+	private static boolean isFalseLiteral(final IPredicate state) {
 		// We assume here that all inconsistent interpolant predicates are syntactically equal to "false".
 		return SmtUtils.isFalseLiteral(state.getFormula());
 	}
 
-	private List<IPredicate> getConjuncts(final IPredicate conjunction) {
+	private static List<IPredicate> getConjuncts(final IPredicate conjunction) {
 		if (conjunction == null) {
-			return Collections.nCopies(mIteration + 1, null);
+			return ImmutableList.empty();
 		}
-		ImmutableList<IPredicate> tail;
 		if (conjunction instanceof MLPredicateWithConjuncts) {
-			tail = ((MLPredicateWithConjuncts) conjunction).getConjuncts();
-		} else {
-			tail = ImmutableList.empty();
+			return ((MLPredicateWithConjuncts) conjunction).getConjuncts();
 		}
-		return new ImmutableList<>(null, tail);
-	}
-
-	private ManagedScript constructIndependenceScript() {
-		final SolverSettings settings = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_DefaultMode)
-				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT + " -t:1000", SolverBuilder.LOGIC_Z3);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, settings, "SemanticIndependence");
-		return new ManagedScript(mServices, solver);
+		return ImmutableList.singleton(conjunction);
 	}
 
 	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {
@@ -359,9 +316,21 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		@Override
 		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
-			// Create the actual predicate
-			final IPredicate newState =
-					mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
+			if (isProvenState(state1)) {
+				// If state1 is "false", we add no other conjuncts, and do not create a new state.
+				return state1;
+			}
+
+			final IPredicate newState;
+			if (isFalseLiteral(state2)) {
+				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isProvenState.
+				newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
+						((IMLPredicate) state1).getProgramPoints(), ImmutableList.singleton(state2)));
+			} else {
+				// In the normal case, we simply add state2 as conjunct.
+				newState = mPredicateFactory
+						.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
+			}
 
 			// Transfer dead state info
 			if (mVisitor instanceof DeadEndOptimizingSearchVisitor<?, ?, ?>) {

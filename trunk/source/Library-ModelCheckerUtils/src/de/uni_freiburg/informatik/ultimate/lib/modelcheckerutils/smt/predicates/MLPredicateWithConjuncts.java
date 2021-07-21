@@ -81,7 +81,7 @@ public final class MLPredicateWithConjuncts implements IMLPredicate {
 		if (old instanceof MLPredicateWithConjuncts) {
 			oldConjuncts = ((MLPredicateWithConjuncts) old).mConjuncts;
 		} else {
-			oldConjuncts = ImmutableList.empty();
+			oldConjuncts = ImmutableList.singleton(old);
 		}
 		mConjuncts = new ImmutableList<>(newConjunct, oldConjuncts);
 	}
