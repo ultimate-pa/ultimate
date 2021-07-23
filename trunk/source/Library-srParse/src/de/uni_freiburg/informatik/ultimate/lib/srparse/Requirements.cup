@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternTU;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEdgeResponsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEdgeResponsePatternTU;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEdgeResponsePatternDelayed;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEntryConditionPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndExistencePattern;
@@ -260,6 +261,8 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(r).addDuration(c1); :}
 			| ONCE expression:r BECOMES SATISFIED COMMA? expression:s HOLDS FOR AT LEAST duration:c1
 				{: RESULT = new PatternBuilder().setType(BndEdgeResponsePattern.class).addCdd(s,r).addDuration(c1); :}
+			| ONCE expression:r BECOMES SATISFIED AND HOLDS FOR AT MOST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS
+				{: RESULT = new PatternBuilder().setType(BndEdgeResponsePatternTU.class).addCdd(s,r).addDuration(c1); :}
 			| ONCE expression:r BECOMES SATISFIED COMMA? expression:s HOLDS AFTER AT MOST duration:c1
 				{: RESULT = new PatternBuilder().setType(EdgeResponsePatternDelayed.class).addCdd(s,r).addDuration(c1); :}	
 			| ONCE expression:r BECOMES SATISFIED COMMA? expression:s HOLDS AFTER AT MOST duration:c1 FOR AT LEAST duration:c2
