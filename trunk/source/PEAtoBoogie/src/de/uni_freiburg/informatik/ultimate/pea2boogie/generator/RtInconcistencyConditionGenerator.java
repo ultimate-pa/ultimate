@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -81,10 +82,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.EpsilonTransformer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.IEpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -141,7 +145,7 @@ public class RtInconcistencyConditionGenerator {
 	private final Substitution mConstInliner;
 
 	private final ILogger mPQELogger;
-	private final EpsilonTransformer mEpsilonTransformer;
+	private final IEpsilonTransformer mEpsilonTransformer;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable, final List<ReqPeas> reqPeas,
@@ -178,8 +182,15 @@ public class RtInconcistencyConditionGenerator {
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
-		mLogger.info("Using epsilon=%s for rt-consistency checks", SmtUtils.toString(durations.computeEpsilon()));
-		mEpsilonTransformer = new EpsilonTransformer(mScript, durations.computeEpsilon(), mReqSymboltable);
+
+		final boolean useEpsilon =
+				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(Pea2BoogiePreferences.LABEL_USE_EPSILON);
+		if (useEpsilon) {
+			mLogger.info("Using epsilon=%s for rt-consistency checks", SmtUtils.toString(durations.computeEpsilon()));
+			mEpsilonTransformer = new EpsilonTransformer(mScript, durations.computeEpsilon(), mReqSymboltable);
+		} else {
+			mEpsilonTransformer = IEpsilonTransformer.identity();
+		}
 		final Map<Term, Term> constToValue = createConst2Value(mScript, mReqSymboltable, mBoogie2Smt);
 		mConstInliner = new Substitution(mScript, constToValue);
 
@@ -426,11 +437,11 @@ public class RtInconcistencyConditionGenerator {
 				mEpsilonTransformer::transformClockInvariant, "clock invariant");
 	}
 
-	private Term transformAndLog(final CDD org, final Function<Term, Term> funTrans, final String msg) {
+	private Term transformAndLog(final CDD org, final UnaryOperator<Term> funTrans, final String msg) {
 		final Term orgTerm = mCddToSmt.toSmt(org);
 		final Term transTerm = funTrans.apply(orgTerm);
 		if (orgTerm != transTerm) {
-			mLogger.info("Transformed %s %s to %s", msg, orgTerm, transTerm);
+			mLogger.info("Epsilon-transformed %s %s to %s", msg, orgTerm, transTerm);
 		}
 		return transTerm;
 	}
