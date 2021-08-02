@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -136,11 +137,14 @@ public class PartialOrderReductionFacade<L extends IAction> {
 			return null;
 		}
 
+		final IIndependenceRelation<IPredicate, L> independence =
+				IndependenceBuilder.fromIndependence(mIndependence).ensureUnconditional().build();
 		final IDfsOrder<IcfgEdge, IPredicate> relevantOrder =
 				mMode.hasFixedOrder() ? (IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder : null;
+
 		return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
 				new ThreadBasedPersistentSets<>(mServices, icfg,
-						(IIndependenceRelation<IPredicate, IcfgEdge>) mIndependence, relevantOrder, errorLocs),
+						(IIndependenceRelation<IPredicate, IcfgEdge>) independence, relevantOrder, errorLocs),
 				PartialOrderReductionFacade::normalizePredicate);
 	}
 
