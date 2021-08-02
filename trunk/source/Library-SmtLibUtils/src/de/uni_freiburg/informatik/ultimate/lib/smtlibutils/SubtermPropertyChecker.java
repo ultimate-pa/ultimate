@@ -124,7 +124,7 @@ public class SubtermPropertyChecker extends NonRecursive {
 	/**
 	 * Returns true iff this term contains the subterm of this ContainsSubterm object.
 	 */
-	public boolean isPropertySatisfied(final Term term) {
+	public boolean isSatisfiedForSomeSubterm(final Term term) {
 		mFoundInCurrentSeach = false;
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
 		run(new MyWalker(term));

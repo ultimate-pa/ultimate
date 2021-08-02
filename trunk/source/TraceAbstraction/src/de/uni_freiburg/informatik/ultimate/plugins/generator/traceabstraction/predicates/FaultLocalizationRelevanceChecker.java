@@ -354,6 +354,6 @@ public class FaultLocalizationRelevanceChecker {
 
 	private static boolean containsArraySort(final Term formula) {
 		final Predicate<Term> hasArraySort = (x -> SmtSortUtils.isArraySort(x.getSort()));
-		return new SubtermPropertyChecker(hasArraySort).isPropertySatisfied(formula);
+		return new SubtermPropertyChecker(hasArraySort).isSatisfiedForSomeSubterm(formula);
 	}
 }

@@ -214,7 +214,7 @@ public final class TransFormulaUtils {
 		}
 
 		assert !new SubtermPropertyChecker(a -> a instanceof LetTerm)
-				.isPropertySatisfied(formula) : "formula contains LetTerm";
+				.isSatisfiedForSomeSubterm(formula) : "formula contains LetTerm";
 
 		if (simplify) {
 			try {
