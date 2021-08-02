@@ -152,7 +152,8 @@ public final class SmtUtils {
 					ReflectionUtil.getCallerClassName(3).getSimpleName()));
 		}
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
-				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA) {
+				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
+				&& simplificationTechnique != SimplificationTechnique.NONE) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
 		}
