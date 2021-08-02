@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -247,18 +248,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS);
 		final boolean useExternalSolver =
 				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_EXTERNAL_SMT_SOLVER);
-		final long timeoutSmtInterpol = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_SOLVER_TIMEOUT);
-		final String externalSolverTimeout = timeoutSmtInterpol + "000"; // z3 expects the timeout in msec
-		final String commandExternalSolver;
-		if (useNonlinearConstraints) {
-			// solverCommand = "yices-smt2 --incremental";
-			// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
-			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:" + externalSolverTimeout;
-			// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
-		} else {
-			// commandExternalSolver = "yices-smt2 --incremental -t " + timeoutSmtInterpol;
-			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:" + externalSolverTimeout;
-		}
+		final long timeoutInMsSmtInterpol =
+				prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_SOLVER_TIMEOUT) * 1000;
 
 		// TODO 2017-05-01 Matthias: Add settings if used more often.
 		final boolean fakeNonIncrementalScript = false;
@@ -269,11 +260,17 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 
 		// DD 2019-10-29: These solver settings were only used with SolverMode.External_DefaultMode, in
 		// LinearInequalityInvariantPatternProcessorFactory#produceSmtSolver()
-		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+		SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_DefaultMode).setUseFakeIncrementalScript(fakeNonIncrementalScript)
-				.setUseExternalSolver(useExternalSolver, commandExternalSolver, null)
-				.setSmtInterpolTimeout(timeoutSmtInterpol)
+				.setSmtInterpolTimeout(timeoutInMsSmtInterpol)
 				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
+		if (useExternalSolver) {
+			// solverCommand = "yices-smt2 --incremental";
+			// commandExternalSolver = "yices-smt2 --incremental -t " + timeoutSmtInterpol;
+			// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
+			final long externalSolverTimeout = timeoutInMsSmtInterpol;
+			solverSettings = solverSettings.setUseExternalSolver(ExternalSolver.Z3, externalSolverTimeout);
+		}
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
 		final boolean useLBE = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_LARGE_BLOCK_ENCODING);
@@ -312,10 +309,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 					initialConjuncts, disjunctsStep, conjunctsStep);
 		}
 
-		final InvariantSynthesisSettings invSynthSettings =
-				new InvariantSynthesisSettings(solverSettings, templateIncrDimensionsStrat, useNonlinearConstraints,
-						useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
-		return invSynthSettings;
+		return new InvariantSynthesisSettings(solverSettings, templateIncrDimensionsStrat, useNonlinearConstraints,
+				useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
 	}
 
 	private void createInvariantResults(final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,

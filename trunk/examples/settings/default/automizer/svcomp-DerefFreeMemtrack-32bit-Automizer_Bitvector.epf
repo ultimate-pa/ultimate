@@ -1,5 +1,6 @@
 #Mon Nov 27 17:23:30 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ class=de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher\=ERROR;
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.core=0.1.22
 

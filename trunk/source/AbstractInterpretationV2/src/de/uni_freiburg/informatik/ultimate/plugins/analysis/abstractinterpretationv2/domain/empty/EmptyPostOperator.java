@@ -27,12 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -46,7 +46,7 @@ public final class EmptyPostOperator<ACTION> implements IAbstractPostOperator<Em
 	@Override
 	public List<EmptyDomainState> apply(final EmptyDomainState oldstate, final ACTION concrete) {
 		final List<EmptyDomainState> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState(new HashSet<>(oldstate.getVariables())));
+		returnList.add(new EmptyDomainState(ImmutableSet.copyOf(oldstate.getVariables())));
 		return returnList;
 	}
 
@@ -54,7 +54,7 @@ public final class EmptyPostOperator<ACTION> implements IAbstractPostOperator<Em
 	public List<EmptyDomainState> apply(final EmptyDomainState oldstate,
 			final EmptyDomainState oldstateWithFreshVariables, final ACTION transition) {
 		final List<EmptyDomainState> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState(new HashSet<>(oldstateWithFreshVariables.getVariables())));
+		returnList.add(new EmptyDomainState(ImmutableSet.copyOf(oldstateWithFreshVariables.getVariables())));
 		return returnList;
 	}
 

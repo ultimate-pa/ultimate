@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -61,8 +62,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  */
 public class NnfTransformer {
 
+	private static final String FRESH_VARIABLE_PREFIX = "nnf";
 	protected final Script mScript;
-	private static final String s_FreshVariableString = "nnf";
 	private final ManagedScript mMgdScript;
 	protected final ILogger mLogger;
 	private final NnfTransformerHelper mNnfTransformerHelper;
@@ -276,7 +277,7 @@ public class NnfTransformer {
 					final Map<Term, Term> substitutionMapping = new HashMap<>();
 					for (final TermVariable oldTv : qf.getVariables()) {
 						final TermVariable freshTv =
-								mMgdScript.constructFreshTermVariable(s_FreshVariableString, oldTv.getSort());
+								mMgdScript.constructFreshTermVariable(FRESH_VARIABLE_PREFIX, oldTv.getSort());
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}

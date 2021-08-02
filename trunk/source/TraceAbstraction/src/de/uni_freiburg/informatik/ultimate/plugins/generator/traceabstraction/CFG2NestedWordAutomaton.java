@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	private static final boolean DEBUG_STORE_HISTORY = false;
@@ -321,10 +322,11 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 							final Set<IPredicate> successors = new HashSet<>(threadInUse);
 							predecessors.add(state);
 							successors.add(succState);
-							net.addTransition((LETTER) edge, predecessors, successors);
+							net.addTransition((LETTER) edge, ImmutableSet.of(predecessors),
+									ImmutableSet.of(successors));
 						} else {
-							net.addTransition((LETTER) edge, Collections.singleton(state),
-									Collections.singleton(succState));
+							net.addTransition((LETTER) edge, ImmutableSet.singleton(state),
+									ImmutableSet.singleton(succState));
 						}
 					} else if (edge instanceof IIcfgForkTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgForkTransitionOtherThread
@@ -350,7 +352,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 							predecessors = Collections.singleton(state);
 							successors = new HashSet<>(Arrays.asList(succCurrentThread, succState));
 						}
-						net.addTransition((LETTER) edge, predecessors, successors);
+						net.addTransition((LETTER) edge, ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 					} else if (edge instanceof IIcfgJoinTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
 					} else if (edge instanceof IIcfgJoinTransitionThreadOther) {
@@ -373,7 +375,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 								predecessors = new HashSet<>(Arrays.asList(predCurrentThread, state));
 								successors = Collections.singleton(succState);
 							}
-							net.addTransition((LETTER) edge, predecessors, successors);
+							net.addTransition((LETTER) edge, ImmutableSet.of(predecessors),
+									ImmutableSet.of(successors));
 						}
 					} else if (edge instanceof IIcfgCallTransition<?>) {
 						throw new UnsupportedOperationException(

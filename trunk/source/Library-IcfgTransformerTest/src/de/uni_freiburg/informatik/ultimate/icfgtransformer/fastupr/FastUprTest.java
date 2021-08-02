@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -85,12 +86,12 @@ public class FastUprTest {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = new ConsoleLogger(LogLevel.DEBUG);
 
-		final SolverSettings solverSettingsZ3 = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setSolverLogics(Logics.ALL)
-				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL)
-				.setSolverLogger(UltimateMocks.createUltimateServiceProviderMock(LogLevel.WARN).getLoggingService()
-						.getLogger(getClass()))
-				.setDumpSmtScriptToFile(DUMP, DUMP_PATH, getClass().getSimpleName() + "_z3", false);
+		final SolverSettings solverSettingsZ3 =
+				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
+						.setSolverLogics(Logics.ALL).setUseExternalSolver(ExternalSolver.Z3)
+						.setSolverLogger(UltimateMocks.createUltimateServiceProviderMock(LogLevel.WARN)
+								.getLoggingService().getLogger(getClass()))
+						.setDumpSmtScriptToFile(DUMP, DUMP_PATH, getClass().getSimpleName() + "_z3", false);
 
 		mZ3 = SolverBuilder.buildAndInitializeSolver(mServices, solverSettingsZ3, "Z3");
 		mMgdZ3 = new ManagedScript(mServices, mZ3);

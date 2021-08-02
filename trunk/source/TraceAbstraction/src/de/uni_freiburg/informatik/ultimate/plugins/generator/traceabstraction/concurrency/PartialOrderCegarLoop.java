@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -98,7 +99,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
@@ -125,7 +126,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		// Compute the enhanced interpolant automaton
-		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
+		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
@@ -163,7 +164,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 
-			assert mCounterexample == null || accepts(mServices, abstraction, mCounterexample.getWord(),
+			assert mCounterexample == null || accepts(getServices(), abstraction, mCounterexample.getWord(),
 					false) : "Counterexample is not accepted by abstraction";
 			return mCounterexample == null;
 		} finally {
@@ -227,7 +228,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
 		return IndependenceBuilder
 				// Semantic independence forms the base.
-				.<L> semantic(mServices, constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
+				.<L> semantic(getServices(), constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
 						mPref.getConditionalPor(), mPref.getSymmetricPor())
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
@@ -252,10 +253,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private ManagedScript constructIndependenceScript() {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_DefaultMode)
-				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT + " -t:1000", SolverBuilder.LOGIC_Z3);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, settings, "SemanticIndependence");
-		return new ManagedScript(mServices, solver);
+				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3, 1000);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(getServices(), settings, "SemanticIndependence");
+		return new ManagedScript(getServices(), solver);
 	}
 
 	private void switchToOnDemandConstructionMode() {

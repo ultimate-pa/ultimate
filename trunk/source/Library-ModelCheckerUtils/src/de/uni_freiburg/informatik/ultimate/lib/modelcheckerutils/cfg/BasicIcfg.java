@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -76,17 +76,17 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		mIdentifier = Objects.requireNonNull(identifier);
 		mCfgSmtToolkit = Objects.requireNonNull(cfgSmtToolkit);
 
-		mInitialNodes = new HashSet<>();
-		mLoopLocations = new HashSet<>();
-		mProgramPoints = new HashMap<>();
-		mEntryNodes = new HashMap<>();
-		mExitNodes = new HashMap<>();
-		mErrorNodes = new HashMap<>();
+		mInitialNodes = new LinkedHashSet<>();
+		mLoopLocations = new LinkedHashSet<>();
+		mProgramPoints = new LinkedHashMap<>();
+		mEntryNodes = new LinkedHashMap<>();
+		mExitNodes = new LinkedHashMap<>();
+		mErrorNodes = new LinkedHashMap<>();
 
 		// initialize all maps with the known procedures
 		for (final String proc : mCfgSmtToolkit.getProcedures()) {
-			mProgramPoints.put(proc, new HashMap<>());
-			mErrorNodes.put(proc, new HashSet<>());
+			mProgramPoints.put(proc, new LinkedHashMap<>());
+			mErrorNodes.put(proc, new LinkedHashSet<>());
 		}
 	}
 
@@ -94,8 +94,8 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 * TODO: Documentation
 	 */
 	public void addProcedure(final String proc) {
-		mProgramPoints.put(proc, new HashMap<>());
-		mErrorNodes.put(proc, new HashSet<>());
+		mProgramPoints.put(proc, new LinkedHashMap<>());
+		mErrorNodes.put(proc, new LinkedHashSet<>());
 	}
 
 	/**
@@ -163,12 +163,12 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 * Convenience method for {@link #addLocation(IcfgLocation, boolean, boolean, boolean, boolean, boolean)} without
 	 * any true.
 	 *
-	 * TODO 2018-09-23 Matthias: I think methods like these are bad practice
-	 * because the increase the overall complexity of the code
-	 * <li> more methods == higher complexity of this class
-	 * <li> method only used once
-	 * <li> method introduces new terminology (what is an "ordinary" location)
-	 * <li> if you use this method you have to read and understand the addLocation method anyway
+	 * TODO 2018-09-23 Matthias: I think methods like these are bad practice because the increase the overall complexity
+	 * of the code
+	 * <li>more methods == higher complexity of this class
+	 * <li>method only used once
+	 * <li>method introduces new terminology (what is an "ordinary" location)
+	 * <li>if you use this method you have to read and understand the addLocation method anyway
 	 *
 	 * @param loc
 	 *            The location to add.

@@ -107,6 +107,8 @@ public class Interpolator extends NonRecursive {
 	HashMap<Term, Term[]> mInterpolants;
 	HashMap<Term, InterpolatorClauseTermInfo> mClauseTermInfos;
 	HashMap<Term, InterpolatorAtomInfo> mLiteralTermInfos;
+	HashMap<FunctionSymbol, Occurrence> mFunctionSymbolOccurrenceInfos;
+	HashMap<Term, TermVariable> mMixedTermAuxEq;
 
 	/**
 	 * The interpolants which have already been computed. Used to store the interpolants preceding a resolution before
@@ -210,6 +212,8 @@ public class Interpolator extends NonRecursive {
 		mInterpolants = new HashMap<>();
 		mClauseTermInfos = new HashMap<>();
 		mLiteralTermInfos = new HashMap<>();
+		mFunctionSymbolOccurrenceInfos = new HashMap<>();
+		mMixedTermAuxEq = new HashMap<>();
 	}
 
 	public LogProxy getLogger() {
@@ -438,16 +442,24 @@ public class Interpolator extends NonRecursive {
 	class Occurrence {
 		BitSet mInA;
 		BitSet mInB;
+		BitSet mContainsMixedTerm;
 
 		public Occurrence() {
 			mInA = new BitSet(mNumInterpolants + 1);
 			mInA.set(mNumInterpolants);
 			mInB = new BitSet(mNumInterpolants + 1);
+			mContainsMixedTerm = new BitSet(mNumInterpolants + 1);
 		}
 
 		public Occurrence(final BitSet inA, final BitSet inB) {
 			mInA = inA;
 			mInB = inB;
+		}
+
+		public Occurrence(final BitSet inA, final BitSet inB, final BitSet containsMixedTerm) {
+			mInA = inA;
+			mInB = inB;
+			mContainsMixedTerm = containsMixedTerm;
 		}
 
 		public void occursIn(final int partition) {
@@ -502,9 +514,11 @@ public class Interpolator extends NonRecursive {
 		public Occurrence intersect(final Occurrence other) {
 			final BitSet inA = (BitSet) mInA.clone();
 			final BitSet inB = (BitSet) mInB.clone();
+			final BitSet containsMixedTerm = (BitSet) mContainsMixedTerm.clone();
 			inA.and(other.mInA);
 			inB.and(other.mInB);
-			return new Occurrence(inA, inB);
+			containsMixedTerm.and(other.mContainsMixedTerm);
+			return new Occurrence(inA, inB, containsMixedTerm);
 		}
 
 		public boolean isAorShared(final int partition) {
@@ -571,6 +585,10 @@ public class Interpolator extends NonRecursive {
 
 		public LitInfo(final BitSet inA, final BitSet inB) {
 			super(inA, inB);
+		}
+
+		public LitInfo(final BitSet inA, final BitSet inB, final BitSet containsMixedTerm) {
+			super(inA, inB, containsMixedTerm);
 		}
 
 		public TermVariable getMixedVar() {
@@ -671,9 +689,9 @@ public class Interpolator extends NonRecursive {
 					if (!term.getFunction().isIntern()) {
 						if (term.getFreeVars().length == 0) {
 							addOccurrence(term, mPart);
-						} else {
-							// TODO Color function symbol for quantified interpolation
 						}
+						// Color function symbol for quantified interpolation
+						addOccurrence(fsym, mPart);
 					}
 					for (final Term param : ((ApplicationTerm) mTerm).getParameters()) {
 						walker.enqueueWalker(new ColorTerm(param, mPart));
@@ -768,9 +786,13 @@ public class Interpolator extends NonRecursive {
 		}
 		Occurrence result = mSymbolPartition.get(term);
 		if (result == null) {
-			if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()) {
+			if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()
+					&& !((ApplicationTerm) term).getFunction().getName().startsWith("@AUX")) {
 				final Term[] subTerms = ((ApplicationTerm) term).getParameters();
 				result = mFullOccurrence;
+				if (result.mContainsMixedTerm == null) {
+					result.mContainsMixedTerm = new BitSet(mNumInterpolants + 1);
+				}
 				if (subTerms.length == 0) {
 					return result;
 				}
@@ -779,7 +801,8 @@ public class Interpolator extends NonRecursive {
 					result = result.intersect(occ);
 				}
 			} else {
-				result = new Occurrence();
+				// Compute occurrence of unknown term.
+				result = getOccurrenceOfUnknownTerm(term);
 			}
 			mSymbolPartition.put(term, result);
 		}
@@ -802,15 +825,80 @@ public class Interpolator extends NonRecursive {
 			for (final Term p : at.getParameters()) {
 				addOccurrence(p, part);
 			}
-			if (at.getFunction().isIntern()) {
-				return;
+			/* AUX and skolem functions must be colored for the quantifier interpolation */
+			final FunctionSymbol fsym = at.getFunction();
+			if (fsym.isIntern() && (fsym.getName().startsWith("@AUX") || fsym.getName().contains("skolem"))) {
+				Occurrence focc = mFunctionSymbolOccurrenceInfos.get(fsym);
+				if (focc != null && focc.contains(part)) {
+					/* Already colored correctly */
+					return;
+				}
+				addOccurrence(fsym, part);
 			}
+			return;
 		}
 		/* Create occurrence if it is *not* an internal function and if it does not exists yet */
 		if (occ == null) {
 			occ = getOccurrence(term);
 		}
 		occ.occursIn(part);
+	}
+
+	/**
+	 * Compute the occurrence of a term seen for the first time.
+	 */
+	Occurrence getOccurrenceOfUnknownTerm(final Term term) {
+		/* Collect all function symbols occurring in a term */
+		final SymbolCollector collector = new SymbolCollector();
+		collector.collect(term);
+		final Set<FunctionSymbol> fsyms = collector.getSymbols();
+		Occurrence result = mFullOccurrence;
+		for (FunctionSymbol fsym : fsyms) {
+			if (!mFunctionSymbolOccurrenceInfos.containsKey(fsym)) {
+				/* If symbol is unknown, set symbol occurrence to root partition. */
+				mFunctionSymbolOccurrenceInfos.put(fsym, new Occurrence());
+			}
+			result = result.intersect(mFunctionSymbolOccurrenceInfos.get(fsym));
+		}
+
+		BitSet mixed = new BitSet(mNumInterpolants);
+		for (int part = 0; part < mNumInterpolants; part++) {
+			/*
+			 * For a mixed term, set its occurrence to the occurrence of the outermost
+			 * function symbol.
+			 */
+			if (result.isMixed(part)) {
+				Occurrence purOcc = mFunctionSymbolOccurrenceInfos.get(((ApplicationTerm) term).getFunction());
+				if (purOcc.mInA.get(part)) {
+					result.mInA.set(part);
+				}
+				if (purOcc.mInB.get(part)) {
+					result.mInB.set(part);
+				}
+				mixed.set(part);
+			}
+		}
+		result.mContainsMixedTerm = mixed;
+
+		return result;
+	}
+
+	/**
+	 * Add the occurrence of non-intern function symbols and of the intern AUX and
+	 * skolem function symbols, needed for quantifier interpolation.
+	 */
+	void addOccurrence(final FunctionSymbol symbol, final int part) {
+		Occurrence occ = mFunctionSymbolOccurrenceInfos.get(symbol);
+		if (occ != null && occ.contains(part)) {
+			/* Already colored correctly */
+			return;
+		}
+		/* Create occurrence if it does not exist yet */
+		if (occ == null) {
+			occ = new Occurrence();
+		}
+		occ.occursIn(part);
+		mFunctionSymbolOccurrenceInfos.put(symbol, occ);
 	}
 
 	HashSet<Term> getSubTerms(final Term literal) {
@@ -916,12 +1004,14 @@ public class Interpolator extends NonRecursive {
 		inA.set(0, mNumInterpolants + 1);
 		final BitSet inB = new BitSet(mNumInterpolants + 1);
 		inB.set(0, mNumInterpolants);
+		final BitSet containsMixedTerm = new BitSet(mNumInterpolants + 1);
 		for (final Term st : subterms) {
 			final Occurrence occInfo = getOccurrence(st);
 			inA.and(occInfo.mInA);
 			inB.and(occInfo.mInB);
+			containsMixedTerm.or(occInfo.mContainsMixedTerm);
 		}
-		info = new LitInfo(inA, inB);
+		info = new LitInfo(inA, inB, containsMixedTerm);
 		return info;
 	}
 

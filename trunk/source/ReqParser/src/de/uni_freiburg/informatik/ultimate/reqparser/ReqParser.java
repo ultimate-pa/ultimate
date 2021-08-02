@@ -96,11 +96,31 @@ public class ReqParser implements ISource {
 				final List<PatternType<?>> nonNullPatterns =
 						pattern.stream().filter(Objects::nonNull).collect(Collectors.toList());
 				if (nonNullPatterns.size() != pattern.size()) {
-					mReporter.unexpectedParserFailure(filePath);
+					int i = 0;
+					PatternType<?> last = null;
+					final StringBuilder sb = new StringBuilder();
+					for (final PatternType<?> p : pattern) {
+						if (p == null) {
+							sb.append(i).append(' ');
+							if (last == null) {
+								sb.append("(at the beginning)");
+							} else {
+								sb.append("(after ").append(last.getId()).append("),");
+							}
+						} else {
+							last = p;
+						}
+						++i;
+					}
+					mReporter.unexpectedParserFailure(filePath,
+							String.format("%s of %s patterns could not be parsed, positions %s",
+									pattern.size() - nonNullPatterns.size(), pattern.size(),
+									sb.deleteCharAt(sb.length() - 1)));
 				}
 				rawPatterns.addAll(nonNullPatterns);
 			} catch (final Exception ex) {
-				mReporter.unexpectedParserFailure(filePath);
+				mReporter.unexpectedParserFailure(filePath,
+						String.format("%s: %s", ex.getClass().getSimpleName(), ex.getMessage()));
 				throw ex;
 			}
 		}

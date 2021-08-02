@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2017 University of Freiburg
+ * Copyright (C) 2017-2021 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2017-2021 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -34,18 +35,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 /**
  * Creates an error automaton which is a generalization of an error trace.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER>
+ * @param <L>
  *            letter type
  */
-public interface IErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
+public interface IErrorAutomatonBuilder<L extends IIcfgTransition<?>> {
 	/**
 	 * Type of automaton that is constructed.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	public enum ErrorAutomatonType {
+		/**
+		 * 2-state error automaton that just removes the direct transition to an error location.
+		 */
+		SIMPLE_ERROR_AUTOMATON,
 		/**
 		 * Error automaton.
 		 */
@@ -59,13 +65,13 @@ public interface IErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * @return Raw automaton before (on-demand) enhancement.
 	 */
-	NestedWordAutomaton<LETTER, IPredicate> getResultBeforeEnhancement();
+	NestedWordAutomaton<L, IPredicate> getResultBeforeEnhancement();
 
 	/**
 	 * @return Automaton after (on-demand) enhancement. The additional transitions are not explicitly added. They will
 	 *         be computed when asking for successors.
 	 */
-	INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getResultAfterEnhancement();
+	INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getResultAfterEnhancement();
 
 	/**
 	 * @return Type of error automaton.

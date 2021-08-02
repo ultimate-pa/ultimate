@@ -37,6 +37,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+
 /**
  * A marking of a Petri Net which is a set of places.
  *
@@ -50,8 +52,7 @@ import java.util.stream.Stream;
 public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
-	private final Set<PLACE> mPlaces;
-	private final int mHashCode;
+	private final ImmutableSet<PLACE> mPlaces;
 
 	/**
 	 * Constructor.
@@ -59,9 +60,8 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @param places
 	 *            places
 	 */
-	public Marking(final Set<PLACE> places) {
+	public Marking(final ImmutableSet<PLACE> places) {
 		mPlaces = Objects.requireNonNull(places);
-		mHashCode = places.hashCode();
 	}
 
 	/**
@@ -140,7 +140,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 
 	@Override
 	public int hashCode() {
-		return mHashCode;
+		return mPlaces.hashCode();
 	}
 
 	/**
@@ -148,13 +148,8 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
-//		if (transition instanceof InhibitorTransition<?, ?>) {
-//			final InhibitorTransition<LETTER, PLACE> it = (InhibitorTransition<LETTER, PLACE>) transition;
-//			if (containsAny(it.getInhibitors())) {
-//				return false;
-//			}
-//		}
+	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
+			final IPetriNet<LETTER, PLACE> net) {
 		return mPlaces.containsAll(net.getPredecessors(transition));
 	}
 
@@ -176,7 +171,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 					.filter(successors::contains).collect(Collectors.toList());
 			throw new PetriNetNot1SafeException(getClass(), unsafePlaces);
 		}
-		return new Marking<>(resultSet);
+		return new Marking<>(ImmutableSet.of(resultSet));
 	}
 
 	@Override

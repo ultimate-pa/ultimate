@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -48,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -69,15 +72,16 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private final LBool mFeasibility;
 	private IProgramExecution<L, Term> mIcfgProgramExecution;
-	private IHoareTripleChecker mHoareTripleChecker;
-	private IPredicateUnifier mPredicateUnifier;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
 	private boolean mSomePerfectSequenceFound;
 	private List<QualifiedTracePredicates> mQualifiedTracePredicates;
 
 	private String mUsedTraceCheckFingerprint;
+	private final IUltimateServiceProvider mServices;
 
-	public AutomatonFreeRefinementEngine(final ILogger logger, final IRefinementStrategy<L> strategy) {
+	public AutomatonFreeRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
+			final IRefinementStrategy<L> strategy) {
+		mServices = services;
 		mLogger = logger;
 		mStrategy = strategy;
 		mRefinementEngineStatistics = new RefinementEngineStatisticsGenerator();
@@ -85,65 +89,20 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		mRefinementEngineStatistics.finishRefinementEngineRun();
 	}
 
-	@Override
-	public LBool getCounterexampleFeasibility() {
-		return mFeasibility;
-	}
-
-	@Override
-	public Collection<QualifiedTracePredicates> getInfeasibilityProof() {
-		if (mQualifiedTracePredicates == null) {
-			throw new IllegalStateException("There is no infeasiblity proof");
+	private IHoareTripleChecker getHoareTripleChecker() {
+		final IHoareTripleChecker strategyHtc = mStrategy.getHoareTripleChecker(this);
+		if (strategyHtc != null) {
+			mLogger.info("Using hoare triple checker %s provided by strategy", strategyHtc.getClass().getSimpleName());
 		}
-		return mQualifiedTracePredicates;
+		return strategyHtc;
 	}
 
-	@Override
-	public boolean somePerfectSequenceFound() {
-		return mSomePerfectSequenceFound;
-	}
-
-	@Override
-	public boolean providesIcfgProgramExecution() {
-		return mIcfgProgramExecution != null;
-	}
-
-	@Override
-	public IProgramExecution<L, Term> getIcfgProgramExecution() {
-		return mIcfgProgramExecution;
-	}
-
-	@Override
-	public List<QualifiedTracePredicates> getUsedTracePredicates() {
-		if (mUsedTracePredicates == null) {
-			throw new IllegalStateException("There is no infeasiblity proof");
-		}
-		return mUsedTracePredicates;
-	}
-
-	@Override
-	public IHoareTripleChecker getHoareTripleChecker() {
-		if (mHoareTripleChecker == null) {
-			final IHoareTripleChecker strategyHtc = mStrategy.getHoareTripleChecker(this);
-			if (strategyHtc != null) {
-				mLogger.info("Using hoare triple checker %s provided by strategy",
-						strategyHtc.getClass().getSimpleName());
-				mHoareTripleChecker = strategyHtc;
-			}
-		}
-		return mHoareTripleChecker;
-	}
-
-	@Override
-	public IPredicateUnifier getPredicateUnifier() {
-		if (mPredicateUnifier == null) {
-			final IPredicateUnifier strategyUnifier = mStrategy.getPredicateUnifier(this);
-			assert strategyUnifier != null;
-			mLogger.info("Using predicate unifier %s provided by strategy %s",
-					strategyUnifier.getClass().getSimpleName(), mStrategy.getName());
-			mPredicateUnifier = strategyUnifier;
-		}
-		return mPredicateUnifier;
+	private IPredicateUnifier getPredicateUnifier() {
+		final IPredicateUnifier strategyUnifier = mStrategy.getPredicateUnifier(this);
+		assert strategyUnifier != null;
+		mLogger.info("Using predicate unifier %s provided by strategy %s", strategyUnifier.getClass().getSimpleName(),
+				mStrategy.getName());
+		return strategyUnifier;
 	}
 
 	@Override
@@ -164,6 +123,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		// first, check for feasibility
 		final LBool feasibilityResult = checkFeasibility();
 		if (feasibilityResult == LBool.UNKNOWN) {
+			abortIfTimeout(String.format("Timeout during %s", mStrategy.getName()));
 			mLogger.warn("Strategy %s was unsuccessful and could not determine trace feasibility", mStrategy.getName());
 			return feasibilityResult;
 		}
@@ -243,7 +203,10 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 	private LBool checkFeasibility() {
 		while (mStrategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<L, ?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
+			abortIfTimeout("Timeout during feasibility check between " + mUsedTraceCheckFingerprint + " and "
+					+ getModuleFingerprintString(currentTraceCheck));
 			mUsedTraceCheckFingerprint = getModuleFingerprintString(currentTraceCheck);
+
 			logModule("Using trace check", currentTraceCheck);
 			final LBool feasibilityResult = currentTraceCheck.isCorrect();
 			if (feasibilityResult == LBool.SAT) {
@@ -262,6 +225,12 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		}
 		// no trace checker could determine the feasibility of the trace, need to abort
 		return LBool.UNKNOWN;
+	}
+
+	private void abortIfTimeout(final String taskDesc) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), taskDesc);
+		}
 	}
 
 	private void abortIfNecessaryOnUnknown(final TraceCheckReasonUnknown tcra) {
@@ -291,6 +260,8 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private IIpgStrategyModule<?, L> tryExecuteInterpolantGenerator() {
 		final IIpgStrategyModule<?, L> interpolantGenerator = mStrategy.nextInterpolantGenerator();
+		abortIfTimeout(
+				"Timeout during proof generation before using " + getModuleFingerprintString(interpolantGenerator));
 		final InterpolantComputationStatus status;
 		try {
 			logModule("Using interpolant generator", interpolantGenerator);
@@ -363,6 +334,13 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private static String getModuleFingerprintString(final Object obj) {
 		return String.format("%s [%s]", obj.getClass().getSimpleName(), obj.hashCode());
+	}
+
+	@Override
+	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> getResult() {
+		return new BasicRefinementEngineResult<>(mFeasibility, mQualifiedTracePredicates, mIcfgProgramExecution,
+				mSomePerfectSequenceFound, mUsedTracePredicates, new Lazy<>(this::getHoareTripleChecker),
+				new Lazy<>(this::getPredicateUnifier));
 	}
 
 }

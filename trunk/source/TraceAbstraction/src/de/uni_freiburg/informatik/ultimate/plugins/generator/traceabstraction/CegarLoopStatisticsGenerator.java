@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
 public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwatches
 		implements IStatisticsDataProvider {
 
-	private Object mResult;
 	private final StatisticsData mReuseStats = new StatisticsData();
 	private final StatisticsData mEcData = new StatisticsData();
 	private final StatisticsData mPredicateUnifierData = new StatisticsData();
@@ -58,10 +57,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	@Override
 	public Collection<String> getKeys() {
 		return getBenchmarkType().getKeys();
-	}
-
-	public void setResult(final Object result) {
-		mResult = result;
 	}
 
 	public void addReuseStats(final IStatisticsDataProvider reuseStats) {
@@ -129,8 +124,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public Object getValue(final String key) {
 		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case VerificationResult:
-			return mResult;
 		case OverallTime:
 		case EmptinessCheckTime:
 		case AutomataDifference:

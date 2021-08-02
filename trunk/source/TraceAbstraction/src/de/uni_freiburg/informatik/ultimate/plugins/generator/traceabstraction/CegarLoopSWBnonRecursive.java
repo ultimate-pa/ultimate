@@ -31,8 +31,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -172,10 +172,10 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 	 * @param transitionClazz
 	 */
 	public CegarLoopSWBnonRecursive(final DebugIdentifier name, final IIcfg<?> icfg, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
+			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
+			final Class<L> transitionClazz) {
 		super(name, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
 		mErrorPathHistory = new ArrayList<>();
@@ -198,7 +198,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		// automaton
 		mNestedAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 
-		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
+		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(getServices()),
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction).getResult();
 		// (IDoubleDeckerAutomaton<LETTER, IPredicate>) mAbstraction.get;
 
@@ -206,14 +206,14 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		mCounterExamplePath = (NestedRun<L, IPredicate>) mCounterexample;
 
 		// create an new interpolant automaton
-		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
+		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(getServices()),
 				mNestedAbstraction.getVpAlphabet(), mPredicateFactoryInterpolantAutomata);
 
 		// remember some of its properties
 		mAbstractionInitialState = mInterpolantGenerator.getPrecondition();
 		mAbstractionFinalState = mInterpolantGenerator.getPostcondition();
 		mPredicateUnifier = mInterpolantGenerator.getPredicateUnifier();
-		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
+		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(getServices()));
 
 		// // / debugging
 		// {
@@ -328,13 +328,14 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		mLogger.debug("Epimorphism:");
 		mEpimorphism.print();
 
-		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;
 		for (final Integer i : mnofStates) {
-			mLogger.debug(ii++ + ":" + i);
+			mLogger.debug(ii + ":" + i);
+			ii++;
 		}
 	}
 
@@ -426,20 +427,19 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 						// predecessors yet
 						hierPreds = mDoubleDeckerAbstraction.getDownStates(s).iterator();
 					}
-					if (hierPreds.hasNext()) {
-						final IPredicate hier = hierPreds.next();
-						if (mAnnotatedStates.contains(hier)) {
-							mLogger.debug("iterate through hier" + hier.toString());
-							iter = mNestedAbstraction.returnSuccessorsGivenHier(s, hier).iterator();
-							edgeType = 0; // there might still be hierPreds left
-						} else {
-							continue;
-						}
-					} else {
+					if (!hierPreds.hasNext()) {
 						// if we gone through all hierPreds we set to null for
 						// the next
 						// iteration
 						hierPreds = null;
+						continue;
+					}
+					final IPredicate hier = hierPreds.next();
+					if (mAnnotatedStates.contains(hier)) {
+						mLogger.debug("iterate through hier" + hier.toString());
+						iter = mNestedAbstraction.returnSuccessorsGivenHier(s, hier).iterator();
+						edgeType = 0; // there might still be hierPreds left
+					} else {
 						continue;
 					}
 					/*
@@ -583,7 +583,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		}
 		// test if we found a new path which can be added
 		final InterpolatingTraceCheckCraig<L> traceCheck =
-				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, mServices, mCsToolkit,
+				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, getServices(), mCsToolkit,
 						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
 						mPref.interpolation(), false, mXnfConversionTechnique, mSimplificationTechnique);
 
@@ -676,24 +676,22 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 				if (!exists) {
 					mInterpolAutomaton.addInternalTransition(sourceI, e, targetI);
 				}
-			} else {
-				if (edges.isCallPosition(i)) {
-					// pendingContexts.put(arg0, arg1)
-					callPredecessors.add(sourceI);
-					mInterpolAutomaton.addCallTransition(sourceI, e, targetI);
-				} else // isReturnPosition(i)
-				{
-					IPredicate hier;
-					if (callPredecessors.isEmpty()) {
-						hier = pendingContexts.get(i);
-					} else {
-						final int lastIndex = callPredecessors.size() - 1;
-						hier = callPredecessors.get(lastIndex);
-						callPredecessors.remove(lastIndex);
-					}
-					mLogger.debug("hier is: " + hier);
-					mInterpolAutomaton.addReturnTransition(sourceI, hier, e, targetI);
+			} else if (edges.isCallPosition(i)) {
+				// pendingContexts.put(arg0, arg1)
+				callPredecessors.add(sourceI);
+				mInterpolAutomaton.addCallTransition(sourceI, e, targetI);
+			} else // isReturnPosition(i)
+			{
+				IPredicate hier;
+				if (callPredecessors.isEmpty()) {
+					hier = pendingContexts.get(i);
+				} else {
+					final int lastIndex = callPredecessors.size() - 1;
+					hier = callPredecessors.get(lastIndex);
+					callPredecessors.remove(lastIndex);
 				}
+				mLogger.debug("hier is: " + hier);
+				mInterpolAutomaton.addReturnTransition(sourceI, hier, e, targetI);
 			}
 		}
 	}
@@ -708,7 +706,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final SuperDifference<L, IPredicate, PredicateFactoryRefinement> diff =
-				new SuperDifference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+				new SuperDifference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 						mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
 
 		mAbstraction = diff.getResult();

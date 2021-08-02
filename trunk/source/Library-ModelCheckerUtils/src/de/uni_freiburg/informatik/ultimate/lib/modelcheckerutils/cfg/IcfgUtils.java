@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -56,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -91,9 +91,11 @@ public class IcfgUtils {
 	public static <T extends IIcfgTransition<?>> UnmodifiableTransFormula getTransformula(final T transition) {
 		if (transition instanceof IInternalAction) {
 			return ((IInternalAction) transition).getTransformula();
-		} else if (transition instanceof ICallAction) {
+		}
+		if (transition instanceof ICallAction) {
 			return ((ICallAction) transition).getLocalVarsAssignment();
-		} else if (transition instanceof IReturnAction) {
+		}
+		if (transition instanceof IReturnAction) {
 			return ((IReturnAction) transition).getAssignmentOfReturn();
 		} else {
 			throw new UnsupportedOperationException(
@@ -102,9 +104,8 @@ public class IcfgUtils {
 	}
 
 	public static <LOC extends IcfgLocation> Set<LOC> getErrorLocations(final IIcfg<LOC> icfg) {
-		final Map<String, Set<LOC>> proc2ErrorLocations = icfg.getProcedureErrorNodes();
-		final Set<LOC> errorLocs = new HashSet<>();
-		for (final Entry<String, Set<LOC>> entry : proc2ErrorLocations.entrySet()) {
+		final Set<LOC> errorLocs = new LinkedHashSet<>();
+		for (final Entry<String, Set<LOC>> entry : icfg.getProcedureErrorNodes().entrySet()) {
 			errorLocs.addAll(entry.getValue());
 		}
 		return errorLocs;
@@ -146,9 +147,7 @@ public class IcfgUtils {
 			result.add(oldVar);
 		}
 		for (final String proc : csToolkit.getProcedures()) {
-			for (final ILocalProgramVar local : csToolkit.getSymbolTable().getLocals(proc)) {
-				result.add(local);
-			}
+			result.addAll(csToolkit.getSymbolTable().getLocals(proc));
 		}
 		return result;
 	}

@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -84,7 +84,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 
 	public IncrementalInclusionCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final LanguageOperation languageOperation, final IPLBECompositionFactory<L> compositionFactory,
 			final Class<L> transitionClazz) {
@@ -104,7 +104,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		case DIFFERENCE:
 			throw new AssertionError("wrong cegar loop for this");
 		case INCREMENTAL_INCLUSION_VIA_DIFFERENCE: {
-			mInclusionCheck = new InclusionViaDifference<>(new AutomataLibraryServices(mServices),
+			mInclusionCheck = new InclusionViaDifference<>(new AutomataLibraryServices(getServices()),
 					mStateFactoryForRefinement, mPredicateFactoryInterpolantAutomata,
 					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction);
 		}
@@ -112,13 +112,13 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		case INCREMENTAL_INCLUSION_2: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
 			mInclusionCheck =
-					new IncrementalInclusionCheck2<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					new IncrementalInclusionCheck2<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 							(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, empty);
 		}
 			break;
 		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck2DeadEndRemoval<>(new AutomataLibraryServices(mServices),
+			mInclusionCheck = new IncrementalInclusionCheck2DeadEndRemoval<>(new AutomataLibraryServices(getServices()),
 					mStateFactoryForRefinement, (INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 					empty);
 		}
@@ -126,14 +126,14 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
 			mInclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<>(
-					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, empty);
 		}
 			break;
 		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
 			mInclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<>(
-					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, empty);
 		}
 			break;
@@ -141,20 +141,20 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
 			mInclusionCheck =
 					new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce<>(
-							new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+							new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 							(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, empty);
 		}
 			break;
 		case INCREMENTAL_INCLUSION_3: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
 			mInclusionCheck =
-					new IncrementalInclusionCheck3<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					new IncrementalInclusionCheck3<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 							(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, empty);
 		}
 			break;
 		case INCREMENTAL_INCLUSION_3_2: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck3_2<>(new AutomataLibraryServices(mServices),
+			mInclusionCheck = new IncrementalInclusionCheck3_2<>(new AutomataLibraryServices(getServices()),
 					mStateFactoryForRefinement, (INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 					empty);
 		}
@@ -162,13 +162,13 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		case INCREMENTAL_INCLUSION_4: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
 			mInclusionCheck =
-					new IncrementalInclusionCheck4<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					new IncrementalInclusionCheck4<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 							(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, empty);
 		}
 			break;
 		case INCREMENTAL_INCLUSION_4_2: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck4_2<>(new AutomataLibraryServices(mServices),
+			mInclusionCheck = new IncrementalInclusionCheck4_2<>(new AutomataLibraryServices(getServices()),
 					mStateFactoryForRefinement, (INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 					empty);
 		}
@@ -176,13 +176,13 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		case INCREMENTAL_INCLUSION_5: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
 			mInclusionCheck =
-					new IncrementalInclusionCheck5<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					new IncrementalInclusionCheck5<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 							(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, empty);
 		}
 			break;
 		case INCREMENTAL_INCLUSION_5_2: {
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck5_2<>(new AutomataLibraryServices(mServices),
+			mInclusionCheck = new IncrementalInclusionCheck5_2<>(new AutomataLibraryServices(getServices()),
 					mStateFactoryForRefinement, (INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 					empty);
 		}
@@ -219,12 +219,12 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
-		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
+		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc;
-		if (mRefinementEngine.getHoareTripleChecker() != null) {
-			htc = mRefinementEngine.getHoareTripleChecker();
+		if (mRefinementResult.getHoareTripleChecker() != null) {
+			htc = mRefinementResult.getHoareTripleChecker();
 		} else {
-			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 					HoareTripleChecks.MONOLITHIC, mCsToolkit, predicateUnifier);
 		}
 
@@ -243,7 +243,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				final boolean cannibalize = mPref
 						.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 				final DeterministicInterpolantAutomaton<L> determinized =
-						new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, mInterpolAutomaton,
+						new DeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, mInterpolAutomaton,
 								predicateUnifier, conservativeSuccessorCandidateSelection, cannibalize);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(determinized);
@@ -251,8 +251,8 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				mHoareTripleChecker.add(htc);
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<L, IPredicate> test =
-						new RemoveUnreachable<>(new AutomataLibraryServices(mServices), determinized).getResult();
-				assert new InductivityCheck<>(mServices, test, false, true,
+						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), determinized).getResult();
+				assert new InductivityCheck<>(getServices(), test, false, true,
 						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false)).getResult();
 				progress = true;
 				break;
@@ -265,7 +265,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				final boolean secondChance =
 						mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 				final NondeterministicInterpolantAutomaton<L> nondet =
-						new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, mInterpolAutomaton,
+						new NondeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, mInterpolAutomaton,
 								predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(nondet);
@@ -273,15 +273,15 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				mHoareTripleChecker.add(htc);
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<L, IPredicate> test =
-						new RemoveUnreachable<>(new AutomataLibraryServices(mServices), nondet).getResult();
-				assert new InductivityCheck<>(mServices, test, false, true,
+						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), nondet).getResult();
+				assert new InductivityCheck<>(getServices(), test, false, true,
 						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false)).getResult();
 				progress = true;
 				break;
 			}
 			case NONE:
 				mInclusionCheck.addSubtrahend(mInterpolAutomaton);
-				final boolean acceptedByIA = new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton,
+				final boolean acceptedByIA = new Accepts<>(new AutomataLibraryServices(getServices()), mInterpolAutomaton,
 						(NestedWord<L>) mCounterexample.getWord()).getResult();
 				progress = acceptedByIA;
 				break;

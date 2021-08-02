@@ -29,14 +29,19 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.util.Arrays;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
@@ -62,24 +67,26 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
  *
  */
 public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
-	private final Script mScript;
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mMgdScript;
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
-	public PolyPacSimplificationTermWalker(final Script script) {
+	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
-		mScript = script;
+		mServices = services;
+		mMgdScript = mgdScript;
 	}
 
 	@Override
 	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb, final List<Term> allParams,
 			final int selectedParam) {
-		return Context.buildCriticalConstraintForConDis(mScript, context, symb, allParams, selectedParam);
+		return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams, selectedParam);
 	}
 
 	@Override
 	Term constructContextForQuantifiedFormula(final Term context, final int quant, final List<TermVariable> vars) {
-		return Context.buildCriticalContraintForQuantifiedFormula(mScript, context, vars);
+		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars);
 	}
 
 	@Override
@@ -92,47 +99,82 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		} else if (term instanceof QuantifiedFormula) {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
-		return new TermContextTransformationEngine.FinalResultForAscend<Term>(term);
+		return new TermContextTransformationEngine.FinalResultForAscend(term);
 	}
 
 	@Override
 	Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			final CondisDepthCode contextCdc = CondisDepthCode.of(context);
+			throw new ToolchainCanceledException(this.getClass(),
+					String.format("simplifying %s xjuncts wrt. a %s context", resultParams.length, contextCdc));
+		}
 		if (originalApplicationTerm.getFunction().getName().equals("and")) {
-			return PolyPoNeUtils.and(mScript, context, Arrays.asList(resultParams));
+			return PolyPoNeUtils.and(mMgdScript.getScript(), context, Arrays.asList(resultParams));
 		}
 		if (originalApplicationTerm.getFunction().getName().equals("or")) {
-			return PolyPoNeUtils.or(mScript, context, Arrays.asList(resultParams));
+			return PolyPoNeUtils.or(mMgdScript.getScript(), context, Arrays.asList(resultParams));
 		}
 		throw new AssertionError();
 	}
 
-	public static Term simplify(final Script script, final Term term) {
-		final Term result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(script),
-				script.term("true"), term);
+	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term term) {
+		final Term result = simplify(services, mgdScript, mgdScript.getScript().term("true"), term);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
-			SmtUtils.checkLogicalEquivalenceForDebugging(script, result, term, PolyPoNeUtils.class, tolerateUnknown);
+			SmtUtils.checkLogicalEquivalenceForDebugging(mgdScript.getScript(), result, term, PolyPoNeUtils.class,
+					tolerateUnknown);
 		}
 		return result;
 	}
 
-	public static Term simplify(final Script script, final Term context, final Term term) {
-		final Term result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(script),
-				context, term);
+	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term context,
+			final Term term) {
+		final Term result;
+		try {
+			result = TermContextTransformationEngine
+			.transform(new PolyPacSimplificationTermWalker(services, mgdScript), context, term);
+		} catch (final ToolchainCanceledException tce) {
+			final CondisDepthCode termCdc = CondisDepthCode.of(term);
+			final String taskDescription = String.format("simplifying a %s term", termCdc);
+			tce.addRunningTaskInfo(new RunningTaskInfo(PolyPacSimplificationTermWalker.class, taskDescription));
+			throw tce;
+		}
 		return result;
 	}
 
 	@Override
 	Term constructResultForQuantifiedFormula(final Term context, final QuantifiedFormula originalQuantifiedFormula,
 			final Term resultSubformula) {
-		return SmtUtils.quantifier(mScript, originalQuantifiedFormula.getQuantifier(),
+		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
 				Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
 	}
 
 	@Override
 	boolean applyRepeatedlyUntilNoChange() {
 		return true;
+	}
+
+	@Override
+	void checkIntermediateResult(final Term context, final Term input, final Term output) {
+		final LBool lBool = SmtUtils.checkEquivalenceUnderAssumption(input, output, context, mMgdScript.getScript());
+		switch (lBool) {
+		case SAT:
+			throw new AssertionError(String.format(
+					"Intermediate result not equivalent. Input: %s Output: %s Assumption: %s", input, output, context));
+		case UNKNOWN:
+			final ILogger logger = mServices.getLoggingService().getLogger(this.getClass());
+			logger.info((String.format(
+					"Insufficient ressources to check equivalence of intermediate result. Input: %s Output: %s Assumption: %s",
+					input, output, context)));
+			break;
+		case UNSAT:
+			break;
+		default:
+			throw new AssertionError("unknown value: " + lBool);
+		}
 	}
 
 }

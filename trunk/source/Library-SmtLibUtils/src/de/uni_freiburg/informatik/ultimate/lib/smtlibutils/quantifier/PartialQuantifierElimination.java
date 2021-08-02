@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -79,11 +80,44 @@ public class PartialQuantifierElimination {
 	private static final boolean DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION = false;
 	private static final boolean THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED = false;
 
+	private static final boolean CORONA_QUANTIFIER_ELIMINATION = true;
+
+
+	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term term, final SimplificationTechnique simplificationTechnique) {
+		if (CORONA_QUANTIFIER_ELIMINATION) {
+			final Term tmp = eliminateLight(services, mgdScript, term);
+			return QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, tmp);
+		} else {
+			final ILogger logger = services.getLoggingService().getLogger(PartialQuantifierElimination.class);
+			return tryToEliminate(services, logger, mgdScript, term, simplificationTechnique,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		}
+	}
+
+	public static Term eliminateLight(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term term) {
+		if (CORONA_QUANTIFIER_ELIMINATION) {
+			return QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT, term);
+		} else {
+			return QuantifierPusher.eliminate(services, mgdScript, false, PqeTechniques.ONLY_DER, term);
+		}
+	}
+
+
+	/**
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
+	 */
+	@Deprecated
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final Term term, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+		if (CORONA_QUANTIFIER_ELIMINATION) {
+			final Term tmp = eliminateLight(services, mgdScript, nnf);
+			return QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, tmp);
+		}
 		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
@@ -114,10 +148,15 @@ public class PartialQuantifierElimination {
 		return result;
 	}
 
+
 	/**
-	 * Returns equivalent formula. Quantifier is dropped if quantified variable not in formula. Quantifier is eliminated
-	 * if this can be done by the complete quantifier elimination.
+	 * Returns equivalent formula. Quantifier is dropped if quantified variable not
+	 * in formula. Quantifier is eliminated if this can be done by the complete
+	 * quantifier elimination.
+	 *
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
 	 */
+	@Deprecated
 	public static Term quantifier(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final int quantifier,
@@ -159,10 +198,14 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Returns formula equivalent to the one constructed by {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula
-	 * is not quantified if quantified variables are not in the formula or if quantifiers can be eliminated by using the
-	 * specified {@link PqeTechniques}.
+	 * Returns formula equivalent to the one constructed by
+	 * {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula is not
+	 * quantified if quantified variables are not in the formula or if quantifiers
+	 * can be eliminated by using the specified {@link PqeTechniques}.
+	 *
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
 	 */
+	@Deprecated
 	public static Term quantifierCustom(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final PqeTechniques techniques, final int quantifier,
 			final Collection<TermVariable> vars, final Term body, final Term[]... patterns) {
@@ -190,6 +233,11 @@ public class PartialQuantifierElimination {
 		return occurringVars;
 	}
 
+
+	/**
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
+	 */
+	@Deprecated
 	public static Term elimPushPull(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final Term term, final IUltimateServiceProvider services,
 			final ILogger logger) {
@@ -211,6 +259,10 @@ public class PartialQuantifierElimination {
 		return pnf;
 	}
 
+	/**
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
+	 */
+	@Deprecated
 	public static Term elim(final ManagedScript mgdScript, final int quantifier, final Set<TermVariable> eliminatees,
 			final Term term, final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique,

@@ -48,17 +48,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class PenguinRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public PenguinRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public PenguinRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
 								InterpolationTechnique.Craig_TreeInterpolation),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP),
-						factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBP,
+						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP),
+						factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP,
 								SolverBuilder.LOGIC_CVC4_DEFAULT), },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}

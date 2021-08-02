@@ -29,12 +29,10 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -42,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Implementation of the Sleep Set Reduction with new states. This variant explores a reduction automaton that partially
@@ -104,7 +103,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 		mVisitor = visitor;
 
 		final S startState = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
-		final R newStartState = getSleepSetState(startState, Collections.emptySet());
+		final R newStartState = getSleepSetState(startState, ImmutableSet.empty());
 		mStateStack.push(newStartState);
 		final boolean prune = mVisitor.addStartState(newStartState);
 		if (!prune) {
@@ -163,9 +162,10 @@ public class SleepSetNewStateReduction<L, S, R> {
 				final var currentTransition = currentTransitionOpt.get();
 
 				final S succState = currentTransition.getSucc();
-				final Set<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
+				// TODO factor out sleep set successor computation
+				final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
 						.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
-						.collect(Collectors.toSet()); // TODO factor out
+						.collect(ImmutableSet.collector());
 				final R succSleepSetState = getSleepSetState(succState, succSleepSet);
 
 				final boolean prune =
@@ -184,7 +184,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 		}
 	}
 
-	private R getSleepSetState(final S state, final Set<L> sleepset) {
+	private R getSleepSetState(final S state, final ImmutableSet<L> sleepset) {
 		final R newState = mStateFactory.createSleepSetState(state, sleepset);
 		mStateMap.put(newState, state);
 		mSleepMap.put(newState, sleepset);

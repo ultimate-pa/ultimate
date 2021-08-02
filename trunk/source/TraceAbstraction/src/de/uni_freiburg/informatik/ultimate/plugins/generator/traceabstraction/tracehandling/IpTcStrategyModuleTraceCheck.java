@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
@@ -81,7 +82,29 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 	}
 
 	protected ManagedScript createExternalManagedScript(final SolverSettings solverSettings) {
-		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(solverSettings, getSolverName());
+		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings,
+				getSolverName());
+	}
+
+	/**
+	 * For a given timeout, compare with {@link IProgressMonitorService}s timeout and return the more restrictive one.
+	 *
+	 * @param timeoutInMillis
+	 *            The given timeout in milliseconds
+	 * @return A non-negative timeout in milliseconds or -1 if there is no timeout.
+	 */
+	protected long computeTimeout(final long timeoutInMillis) {
+		if (timeoutInMillis < 0 && timeoutInMillis != -1) {
+			throw new IllegalArgumentException("timeout must be non-negative or -1");
+		}
+		final long remainingTime = mServices.getProgressMonitorService().remainingTime();
+		if (timeoutInMillis == -1) {
+			return remainingTime;
+		}
+		if (remainingTime == -1) {
+			return timeoutInMillis;
+		}
+		return Math.min(remainingTime, timeoutInMillis);
 	}
 
 	private String getSolverName() {

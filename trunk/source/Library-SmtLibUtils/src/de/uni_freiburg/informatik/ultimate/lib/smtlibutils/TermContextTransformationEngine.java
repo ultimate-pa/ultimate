@@ -45,6 +45,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class TermContextTransformationEngine<C> {
 
+	private static final boolean DEBUG_CHECK_INTERMEDIATE_RESULT = false;
+	private static final boolean DEBUG_NONTERMINATION = false;
+
 	private final TermWalker<C> mTermWalker;
 	private final ArrayDeque<Task> mStack;
 
@@ -60,6 +63,9 @@ public class TermContextTransformationEngine<C> {
 
 	private Term transform(final C context, final Term term) {
 		final DescendResult dr = mTermWalker.convert(context, term);
+		if (DEBUG_CHECK_INTERMEDIATE_RESULT) {
+			mTermWalker.checkIntermediateResult(context, term, dr.getTerm());
+		}
 		final Task initialTask = constructTaskForDescendResult(context, dr);
 		if (initialTask instanceof TermContextTransformationEngine.AscendResultTask) {
 			final AscendResultTask art = (TermContextTransformationEngine<C>.AscendResultTask) initialTask;
@@ -80,7 +86,7 @@ public class TermContextTransformationEngine<C> {
 				mStack.push(newTask);
 			}
 		}
-		throw new AssertionError("empty stack should habe caused return");
+		throw new AssertionError("empty stack should have caused return");
 	}
 
 	private abstract class Task {
@@ -126,12 +132,14 @@ public class TermContextTransformationEngine<C> {
 		final ApplicationTerm mOriginal;
 		final Term[] mResult;
 		boolean mChangeInThisIteration = false;
+		int mRepetitions;
 
 		public ApplicationTermTask(final C context, final ApplicationTerm original) {
 			super(context);
 			mNext = 0;
 			mOriginal = original;
 			mResult = Arrays.copyOf(original.getParameters(), original.getParameters().length);
+			mRepetitions = 0;
 		}
 
 		@Override
@@ -140,6 +148,12 @@ public class TermContextTransformationEngine<C> {
 					&& mTermWalker.applyRepeatedlyUntilNoChange()) {
 				mNext = 0;
 				mChangeInThisIteration = false;
+				mRepetitions++;
+			} else {
+				if (DEBUG_NONTERMINATION && mRepetitions > 0) {
+					System.out.println("Finished after " + mRepetitions + " repetitions for " + mOriginal + " "
+							+ Arrays.toString(mResult));
+				}
 			}
 			final Task result;
 			if (mNext == mOriginal.getParameters().length) {
@@ -153,6 +167,9 @@ public class TermContextTransformationEngine<C> {
 				final C currentContext = mTermWalker.constructContextForApplicationTerm(super.mContext,
 						mOriginal.getFunction(), Arrays.asList(mResult), mNext);
 				final DescendResult res = mTermWalker.convert(currentContext, mResult[mNext]);
+				if (DEBUG_CHECK_INTERMEDIATE_RESULT) {
+					mTermWalker.checkIntermediateResult(currentContext, mResult[mNext], res.getTerm());
+				}
 				result = constructTaskForDescendResult(currentContext, res);
 			}
 			return result;
@@ -180,15 +197,14 @@ public class TermContextTransformationEngine<C> {
 			return builder.toString();
 		}
 
-
 	}
 
 	private Task constructTaskForDescendResult(final C currentContext, final DescendResult res) {
 		final Task result;
 		if (res instanceof IntermediateResultForDescend) {
-			result = constructTask(currentContext, ((IntermediateResultForDescend) res).getIntermediateResult());
+			result = constructTask(currentContext, ((IntermediateResultForDescend) res).getTerm());
 		} else if (res instanceof FinalResultForAscend) {
-			result = new AscendResultTask(currentContext, ((FinalResultForAscend<Term>) res).getFinalResult());
+			result = new AscendResultTask(currentContext, ((FinalResultForAscend) res).getTerm());
 		} else {
 			throw new AssertionError("unknown result " + res);
 		}
@@ -217,6 +233,9 @@ public class TermContextTransformationEngine<C> {
 				final C currentContext = mTermWalker.constructContextForQuantifiedFormula(super.mContext,
 						mOriginal.getQuantifier(), Arrays.asList(mOriginal.getVariables()));
 				final DescendResult res = mTermWalker.convert(currentContext, mOriginal.getSubformula());
+				if (DEBUG_CHECK_INTERMEDIATE_RESULT) {
+					mTermWalker.checkIntermediateResult(currentContext, mOriginal.getSubformula(), res.getTerm());
+				}
 				result = constructTaskForDescendResult(currentContext, res);
 			}
 			return result;
@@ -231,9 +250,6 @@ public class TermContextTransformationEngine<C> {
 		public String toString() {
 			return mOriginal.toStringDirect();
 		}
-
-
-
 	}
 
 	private Task constructTask(final C context, final Term term) {
@@ -266,9 +282,18 @@ public class TermContextTransformationEngine<C> {
 
 		abstract Term constructResultForQuantifiedFormula(C context, QuantifiedFormula originalQuantifiedFormula,
 				Term resultSubformula);
+
+		/**
+		 * Auxiliary method for checking intermediate results. Only called if
+		 * {@link DEBUG_CHECK_INTERMEDIATE_RESULT} is set.
+		 *
+		 */
+		abstract void checkIntermediateResult(C context, Term input, Term output);
 	}
 
 	public interface DescendResult {
+
+		public Term getTerm();
 
 	}
 
@@ -280,13 +305,14 @@ public class TermContextTransformationEngine<C> {
 			mIntermediateResult = intermediateResult;
 		}
 
-		public Term getIntermediateResult() {
+		@Override
+		public Term getTerm() {
 			return mIntermediateResult;
 		}
 
 	}
 
-	public static class FinalResultForAscend<Term> implements DescendResult {
+	public static class FinalResultForAscend implements DescendResult {
 		private final Term mFinalResult;
 
 		public FinalResultForAscend(final Term finalResult) {
@@ -294,7 +320,8 @@ public class TermContextTransformationEngine<C> {
 			mFinalResult = finalResult;
 		}
 
-		public Term getFinalResult() {
+		@Override
+		public Term getTerm() {
 			return mFinalResult;
 		}
 

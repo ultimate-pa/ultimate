@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -72,13 +73,13 @@ public final class PatternUtil {
 		final int count = 10;
 		int duration = 5;
 		final CDD[] patternObs = new CDD[count];
-		final String[] durations = new String[count];
+		final Rational[] durations = new Rational[count];
 
 		final Durations duration2bounds = new Durations(PatternUtil::dummyConsumer);
 
 		for (int i = 0; i < count; ++i) {
 			patternObs[i] = BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16));
-			durations[i] = String.valueOf(duration);
+			durations[i] = Rational.valueOf(duration, 1);
 			duration += 5;
 		}
 
@@ -120,7 +121,7 @@ public final class PatternUtil {
 			for (final SrParseScope<?> scope : scopes) {
 				final List<CDD> currentCdds =
 						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
-				final List<String> currentDurations =
+				final List<Rational> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
 				final PatternType<?> pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
 						"ID_" + String.valueOf(id), currentCdds, currentDurations, null);
