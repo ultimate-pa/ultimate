@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -137,5 +138,10 @@ public final class MLPredicateWithConjuncts implements IMLPredicate {
 	@Override
 	public IcfgLocation[] getProgramPoints() {
 		return mProgramPoints;
+	}
+
+	@Override
+	public String toString() {
+		return mSerial + "#" + Arrays.toString(mProgramPoints) + mConjuncts.toString();
 	}
 }
