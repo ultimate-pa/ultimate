@@ -29,14 +29,12 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -44,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Implementation of Partial Order Reduction for Deterministic Finite Automata using Sleep Sets for reduction and a
@@ -104,7 +103,7 @@ public class SleepSetDelayReduction<L, S, R> {
 		mVisitor = visitor;
 
 		final S startState = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
-		final R redStartState = getReductionState(startState, Collections.emptySet());
+		final R redStartState = getReductionState(startState, ImmutableSet.empty());
 		mStateStack.push(redStartState);
 		final boolean prune = mVisitor.addStartState(redStartState);
 		if (!prune) {
@@ -112,7 +111,7 @@ public class SleepSetDelayReduction<L, S, R> {
 		}
 	}
 
-	private R getReductionState(final S state, final Set<L> sleepSet) {
+	private R getReductionState(final S state, final ImmutableSet<L> sleepSet) {
 		final R result = mFactory.createSleepSetState(state, sleepSet);
 		mStateMap.put(result, state);
 		mSleepSetMap.put(result, sleepSet);
@@ -215,9 +214,10 @@ public class SleepSetDelayReduction<L, S, R> {
 				final var currentTransition = currentTransitionOpt.get();
 
 				final S succState = currentTransition.getSucc();
-				final Set<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
+				// TODO factor out sleep set successor computation
+				final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
 						.filter(l -> mIndependenceRelation.contains(currentRedState, currentLetter, l))
-						.collect(Collectors.toSet()); // TODO factor out
+						.collect(ImmutableSet.collector());
 				final R successor = getReductionState(succState, succSleepSet);
 
 				final boolean prune = mVisitor.discoverTransition(currentRedState, currentLetter, successor);
