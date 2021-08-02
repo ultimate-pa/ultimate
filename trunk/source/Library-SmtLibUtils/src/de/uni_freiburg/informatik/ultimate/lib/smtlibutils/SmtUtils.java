@@ -2464,7 +2464,7 @@ public final class SmtUtils {
 	}
 
 	public static boolean isSubterm(final Term term, final Term subterm) {
-		return new SubtermPropertyChecker(x -> x.equals(subterm)).isSatisfiedForSomeSubterm(term);
+		return new SubtermPropertyChecker(x -> x.equals(subterm)).isSatisfiedBySomeSubterm(term);
 	}
 
 	public static Rational toRational(final long val) {

@@ -220,7 +220,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 					}
 				} else {
 					final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == subject)
-							.isSatisfiedForSomeSubterm((Term) abstractVar);
+							.isSatisfiedBySomeSubterm((Term) abstractVar);
 					if (subjectOccursAsSubterm) {
 						return null;
 					}

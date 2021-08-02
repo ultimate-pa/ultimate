@@ -157,7 +157,7 @@ public class Monomial {
 				}
 			} else {
 				final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == var)
-						.isSatisfiedForSomeSubterm(var2exp.getKey());
+						.isSatisfiedBySomeSubterm(var2exp.getKey());
 				if (subjectOccursAsSubterm) {
 					return Occurrence.NON_EXCLUSIVE_OR_SUBTERM;
 				}
