@@ -186,16 +186,20 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		}
 	}
 
-	public AutomatonConstructingVisitor<L, IPredicate> createConstructionVisitor(
+	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> constructReduction(
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) throws AutomataOperationCanceledException {
+		final AutomatonConstructingVisitor<L, IPredicate> visitor;
 		if (mMode.hasSleepSets() && mMode.doesUnrolling()) {
 			final SleepSetStateFactoryForRefinement<L> factory = (SleepSetStateFactoryForRefinement<L>) mSleepFactory;
-			return new AutomatonConstructingVisitor<>(x -> input.isInitial(factory.getOriginalState(x)),
+			visitor = new AutomatonConstructingVisitor<>(x -> input.isInitial(factory.getOriginalState(x)),
 					x -> input.isFinal(factory.getOriginalState(x)), input.getVpAlphabet(), mAutomataServices,
 					emptyStackFactory);
+		} else {
+			visitor = new AutomatonConstructingVisitor<>(input, mAutomataServices, emptyStackFactory);
 		}
-		return new AutomatonConstructingVisitor<>(input, mAutomataServices, emptyStackFactory);
+		apply(input, visitor);
+		return visitor.getReductionAutomaton();
 	}
 
 	public void reportStatistics() {

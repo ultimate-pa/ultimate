@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -455,13 +454,10 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			final PartialOrderReductionFacade<L> por =
 					new PartialOrderReductionFacade<>(getServices(), mPredicateFactory, mIcfg, mErrorLocs,
 							mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), indep);
-			final AutomatonConstructingVisitor<L, IPredicate> automatonConstructor =
-					por.createConstructionVisitor(input, mStateFactoryForRefinement);
 
 			// actually apply POR to automaton
-			por.apply(input, automatonConstructor);
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =
-					automatonConstructor.getReductionAutomaton();
+					por.constructReduction(input, mStateFactoryForRefinement);
 
 			por.reportStatistics();
 			return result;
