@@ -285,7 +285,7 @@ public class ProcedureMultiplier {
 
 	private static IProgramVar getNew(final Map<ILocalProgramVar, ILocalProgramVar> mapOld2New,
 			final IProgramVar variable) {
-		if (mapOld2New instanceof ILocalProgramVar) {
+		if (variable instanceof ILocalProgramVar) {
 			return mapOld2New.get(variable);
 		}
 		assert variable.isGlobal() : "Variable is neither local nor global";
