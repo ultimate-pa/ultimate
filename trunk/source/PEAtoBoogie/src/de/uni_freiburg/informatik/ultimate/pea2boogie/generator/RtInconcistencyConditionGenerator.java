@@ -62,12 +62,13 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -462,7 +463,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term simplify(final Term term) {
-		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.POLY_PAC);
 	}
 
 	private Term constructPrimedStateInvariant(final List<ReqPeas> reqPeas) throws InvariantInfeasibleException {
@@ -544,9 +545,7 @@ public class RtInconcistencyConditionGenerator {
 		mQelimQuery++;
 		final Term afterQelimFormula;
 		try {
-			afterQelimFormula = PartialQuantifierElimination.tryToEliminate(mServices, mPQELogger, mManagedScript,
-					quantifiedFormula, SimplificationTechnique.NONE,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			afterQelimFormula = tryToEliminate(quantifiedFormula);
 		} catch (final SMTLIBException ex) {
 			mLogger.fatal("Exception occured during PQE of " + term);
 			throw ex;
@@ -612,6 +611,15 @@ public class RtInconcistencyConditionGenerator {
 
 	private Term getPcPhaseEquality(final String pcName, final int phaseIndex) {
 		return SmtUtils.binaryEquality(mScript, getTermVarTerm(pcName), mScript.numeral(Integer.toString(phaseIndex)));
+	}
+
+	private Term tryToEliminate(final QuantifiedFormula quantified) {
+		final Term lightResult =
+				QuantifierPushTermWalker.eliminate(mServices, mManagedScript, false, PqeTechniques.LIGHT, quantified);
+		if (new SubtermPropertyChecker(QuantifiedFormula.class::isInstance).isSatisfiedBySomeSubterm(lightResult)) {
+			return QuantifierPushTermWalker.eliminate(mServices, mManagedScript, true, PqeTechniques.ALL, lightResult);
+		}
+		return lightResult;
 	}
 
 	public static final class InvariantInfeasibleException extends Exception {
