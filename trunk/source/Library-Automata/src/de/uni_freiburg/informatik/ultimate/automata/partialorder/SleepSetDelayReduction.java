@@ -188,7 +188,8 @@ public class SleepSetDelayReduction<L, S, R> {
 					loopDetectionStack.push(currentRedState);
 				} else {
 					// Case 2: We are currently backtracking. There should be nothing to explore.
-					assert successorTransitionList.isEmpty();
+					assert successorTransitionList.isEmpty() : "I was backtracking, but found new transitions: "
+							+ successorTransitionList;
 				}
 
 				if (successorTransitionList.isEmpty()) {
