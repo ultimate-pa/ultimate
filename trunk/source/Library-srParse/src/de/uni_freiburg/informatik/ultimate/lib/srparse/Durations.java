@@ -26,12 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
+import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -42,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
 /**
  *
@@ -54,19 +61,51 @@ public class Durations {
 	private final Set<Rational> mKnownNumericValues;
 	private final Consumer<String> mFunAddError;
 
-	private int mKnownValues;
-	private Rational mEpsilon;
+	private final DirtyLazy<Rational> mEpsilon;
+	private final DirtyLazy<Rational> mScalingFactor;
 
 	public Durations(final Consumer<String> funAddError) {
 		mKnownNumericConstants = new LinkedHashMap<>();
 		mKnownNumericValues = new HashSet<>();
 		mFunAddError = funAddError;
+		mEpsilon = new DirtyLazy<>(this::computeEpsilonInternal);
+		mScalingFactor = new DirtyLazy<>(this::computeScalingFactorInternal);
 	}
 
 	public Durations() {
 		this(a -> {
 			// dummy consumer
 		});
+	}
+
+	private Rational computeEpsilonInternal() {
+		return mKnownNumericValues.isEmpty() ? Rational.ZERO : SmtUtils.gcd(mKnownNumericValues).div(Rational.TWO);
+	}
+
+	private Rational computeScalingFactorInternal() {
+		if (mKnownNumericValues.isEmpty()) {
+			return Rational.ONE;
+		}
+		final List<Rational> nonIntegral =
+				mKnownNumericValues.stream().filter(a -> !a.isIntegral()).collect(Collectors.toList());
+		if (nonIntegral.isEmpty()) {
+			return Rational.ONE;
+		}
+		if (nonIntegral.size() == 1) {
+			return Rational.valueOf(nonIntegral.get(0).denominator().abs(), BigInteger.ONE);
+		}
+		final Iterator<BigInteger> iter = nonIntegral.stream().map(a -> a.denominator().abs()).iterator();
+		final BigInteger a = iter.next();
+		final BigInteger b = iter.next();
+		BigInteger gcd = Rational.gcd(a, b);
+		BigInteger mul = a.multiply(b);
+		while (iter.hasNext()) {
+			final BigInteger next = iter.next();
+			gcd = Rational.gcd(gcd, next);
+			mul = mul.multiply(next);
+		}
+		final BigInteger lcm = mul.abs().divide(gcd);
+		return Rational.valueOf(lcm, BigInteger.ONE);
 	}
 
 	public void addInitPattern(final InitializationPattern init) {
@@ -86,7 +125,10 @@ public class Durations {
 	}
 
 	public void addNonInitPattern(final PatternType<?> p) {
-		mKnownNumericValues.addAll(p.getDurations());
+		if (mKnownNumericValues.addAll(p.getDurations())) {
+			mEpsilon.markDirty();
+			mScalingFactor.markDirty();
+		}
 
 	}
 
@@ -113,15 +155,44 @@ public class Durations {
 	}
 
 	public Rational computeEpsilon() {
-		if (mEpsilon == null || mKnownNumericValues.size() != mKnownValues) {
-			mKnownValues = mKnownNumericValues.size();
-			if (mKnownValues == 0) {
-				mEpsilon = Rational.ZERO;
-			} else {
-				mEpsilon = SmtUtils.gcd(mKnownNumericValues).div(Rational.TWO);
-			}
-		}
-		return mEpsilon;
+		return mEpsilon.get();
 	}
 
+	public Rational computeScalingFactor() {
+		return mScalingFactor.get();
+	}
+
+	public Durations merge(final Collection<Durations> durations) {
+		final Consumer<String> funAddError =
+				durations.stream().map(d -> d.mFunAddError).reduce(mFunAddError, Consumer::andThen);
+		final Durations rtr = new Durations(funAddError);
+
+		rtr.mKnownNumericConstants.putAll(mKnownNumericConstants);
+		rtr.mKnownNumericValues.addAll(mKnownNumericValues);
+
+		for (final Durations d : durations) {
+			rtr.mKnownNumericConstants.putAll(d.mKnownNumericConstants);
+			rtr.mKnownNumericValues.addAll(d.mKnownNumericValues);
+		}
+		return rtr;
+	}
+
+	private static final class DirtyLazy<V> {
+		private Lazy<V> mValue;
+		private final Supplier<V> mFun;
+
+		public DirtyLazy(final Supplier<V> fun) {
+			mValue = new Lazy<>(fun);
+			mFun = fun;
+		}
+
+		public V get() {
+			return mValue.get();
+		}
+
+		public void markDirty() {
+			mValue = new Lazy<>(mFun);
+		}
+
+	}
 }
