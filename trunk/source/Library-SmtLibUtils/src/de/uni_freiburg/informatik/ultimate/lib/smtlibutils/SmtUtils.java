@@ -1847,7 +1847,7 @@ public final class SmtUtils {
 
 	public static BigInteger toInt(final Rational integralRational) {
 		if (!integralRational.isIntegral()) {
-			throw new IllegalArgumentException("divident has to be integral");
+			throw new IllegalArgumentException("dividend has to be integral");
 		}
 		if (!integralRational.denominator().equals(BigInteger.ONE)) {
 			throw new IllegalArgumentException("denominator has to be zero");
