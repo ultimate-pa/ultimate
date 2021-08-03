@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
@@ -115,9 +116,7 @@ public class ThreadInstanceAdder {
 						TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
 				final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
 						new Payload(), errorTransformula, errorTransformula);
-				callerNode.addOutgoing(errorTransition);
-				errorNode.addIncoming(errorTransition);
-				// integrateEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
+				integrateForkEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
 			}
 			for (final ThreadInstance ti : threadInstanceMap.get(fct)) {
 				addForkOtherThreadTransition(fct, ti.getIdVars(), icfg, ti.getThreadInstanceName(), backtranslator,
@@ -245,7 +244,7 @@ public class ThreadInstanceAdder {
 
 		final IcfgForkThreadOtherTransition forkThreadOther =
 				ef.createForkThreadOtherTransition(callerNode, calleeEntryLoc, null, forkTransformula, fct);
-		integrateEdge(fct, backtranslator, callerNode, calleeEntryLoc, forkThreadOther);
+		integrateForkEdge(fct, backtranslator, callerNode, calleeEntryLoc, forkThreadOther);
 
 		// TODO Matthias 2018-09-15: Set overapproximations for both edges
 		final Map<String, ILocation> overapproximations = new HashMap<>();
@@ -254,14 +253,23 @@ public class ThreadInstanceAdder {
 		}
 	}
 
-	private void integrateEdge(final IIcfgForkTransitionThreadCurrent<IcfgLocation> originProvider,
+	private void integrateForkEdge(final IIcfgForkTransitionThreadCurrent<IcfgLocation> originProvider,
 			final BlockEncodingBacktranslator backtranslator, final IcfgLocation source, final IcfgLocation target,
 			final IcfgEdge newEdge) {
 		source.addOutgoing(newEdge);
 		target.addIncoming(newEdge);
+
 		// hack to get the original fork
 		final IIcfgTransition<IcfgLocation> originalEdge = getOriginalEdge(originProvider, backtranslator);
 		backtranslator.mapEdges(newEdge, originalEdge);
+
+		backtranslator.addAteTransformer(newEdge, builder -> {
+			builder.addStepInfo(StepInfo.FORK);
+			if (builder.getForkedThreadId() == null) {
+				// For "insufficient thread" edges, there is no valid ID for the forked thread. Set to -1 instead.
+				builder.setForkedThreadId(-1);
+			}
+		});
 	}
 
 	private IIcfgTransition<IcfgLocation> getOriginalEdge(final IIcfgTransition<IcfgLocation> newEdge,

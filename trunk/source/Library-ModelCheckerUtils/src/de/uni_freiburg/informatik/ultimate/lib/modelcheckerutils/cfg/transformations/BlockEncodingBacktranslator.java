@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -69,6 +70,9 @@ public class BlockEncodingBacktranslator extends
 	private final Map<IIcfgTransition<IcfgLocation>, Set<IIcfgTransition<IcfgLocation>>> mParallelCompositions =
 			new HashMap<>();
 	private final Map<IIcfgTransition<IcfgLocation>, TermVariable> mBranchEncoderMapping = new HashMap<>();
+
+	private final Map<IIcfgTransition<IcfgLocation>, Consumer<AtomicTraceElementBuilder<IIcfgTransition<IcfgLocation>>>> mAteTransformer =
+			new HashMap<>();
 
 	private final Map<IcfgLocation, IcfgLocation> mLocationMapping = new HashMap<>();
 	private final ILogger mLogger;
@@ -128,7 +132,13 @@ public class BlockEncodingBacktranslator extends
 			final Iterator<IIcfgTransition<IcfgLocation>> iter = mappedEdges.iterator();
 			while (iter.hasNext()) {
 				final IIcfgTransition<IcfgLocation> currentEdge = iter.next();
-				newTrace.add(AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, currentEdge).build());
+				final AtomicTraceElementBuilder<IIcfgTransition<IcfgLocation>> builder =
+						AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, currentEdge);
+				final var transformer = mAteTransformer.get(currentATE.getTraceElement());
+				if (transformer != null) {
+					transformer.accept(builder);
+				}
+				newTrace.add(builder.build());
 				if (iter.hasNext()) {
 					newValues.add(null);
 					newBranchEncoders.add(oldBranchEncoders[i]);
@@ -324,6 +334,11 @@ public class BlockEncodingBacktranslator extends
 	private static String getCollectionString(final Collection<IIcfgTransition<IcfgLocation>> originalEdges) {
 		return originalEdges.stream().map(a -> markCodeblock(a) + String.valueOf(a.hashCode()))
 				.collect(Collectors.joining(","));
+	}
+
+	public void addAteTransformer(final IIcfgTransition<IcfgLocation> newEdge,
+			final Consumer<AtomicTraceElementBuilder<IIcfgTransition<IcfgLocation>>> transformer) {
+		mAteTransformer.merge(newEdge, transformer, Consumer::andThen);
 	}
 
 	private static String markCodeblock(final IIcfgTransition<IcfgLocation> newEdge) {
