@@ -94,7 +94,22 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
-				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+				if (SmtUtils.isFalseLiteral(context)) {
+					// Optimization for cases in which context is "false"
+					// TODO 20210802 Matthias: check if this optimization
+					// is still needed
+					final Term result;
+					if (appTerm.getFunction().getName().equals("and")) {
+						result = mMgdScript.getScript().term("true");
+					} else if (appTerm.getFunction().getName().equals("or")) {
+						result = mMgdScript.getScript().term("false");
+					} else {
+						throw new AssertionError();
+					}
+					return new TermContextTransformationEngine.FinalResultForAscend(result);
+				} else {
+					return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+				}
 			}
 		} else if (term instanceof QuantifiedFormula) {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
