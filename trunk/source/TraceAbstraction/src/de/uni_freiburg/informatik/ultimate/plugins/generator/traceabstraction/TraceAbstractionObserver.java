@@ -119,10 +119,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 		final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile =
 				constructRawNestedWordAutomata(mAutomataTestFileAsts);
-		final IcfgCompositionFactory compositionFactory =
-				new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit());
-		final TraceAbstractionStarter<IcfgEdge> tas = new TraceAbstractionStarter<>(mServices, rcfgRootNode,
-				witnessAutomaton, rawFloydHoareAutomataFromFile, compositionFactory, IcfgEdge.class);
+		final TraceAbstractionStarter<IcfgEdge> tas =
+				new TraceAbstractionStarter<>(mServices, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile,
+						() -> new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit()), IcfgEdge.class);
 		mRootOfNewModel = tas.getRootOfNewModel();
 	}
 

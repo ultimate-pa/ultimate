@@ -343,8 +343,8 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 		}
 		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(snfBody);
 
-		final Term cnfWConstraintsReplaced =
-				new CnfTransformer(mManagedScript, mServices, true).transform(bodyWithConstraintsReplaced);
+		final Term cnfWConstraintsReplaced = new CnfTransformer(mManagedScript, mServices)
+				.transform(bodyWithConstraintsReplaced);
 
 		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
 

@@ -152,7 +152,8 @@ public final class SmtUtils {
 					ReflectionUtil.getCallerClassName(3).getSimpleName()));
 		}
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
-				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA) {
+				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
+				&& simplificationTechnique != SimplificationTechnique.NONE) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
 		}
@@ -2464,7 +2465,7 @@ public final class SmtUtils {
 	}
 
 	public static boolean isSubterm(final Term term, final Term subterm) {
-		return new SubtermPropertyChecker(x -> x.equals(subterm)).isPropertySatisfied(term);
+		return new SubtermPropertyChecker(x -> x.equals(subterm)).isSatisfiedBySomeSubterm(term);
 	}
 
 	public static Rational toRational(final long val) {

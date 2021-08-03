@@ -354,7 +354,7 @@ public class QuantifierUtils {
 	 * @return false iff some subformula is a {@link QuantifiedFormula}.
 	 */
 	public static boolean isQuantifierFree(final Term term) {
-		return !new SubtermPropertyChecker(x -> (x instanceof QuantifiedFormula)).isPropertySatisfied(term);
+		return !new SubtermPropertyChecker(x -> (x instanceof QuantifiedFormula)).isSatisfiedBySomeSubterm(term);
 	}
 
 	public static String getNameOfCorrespondingJuncts(final int quantifier) {

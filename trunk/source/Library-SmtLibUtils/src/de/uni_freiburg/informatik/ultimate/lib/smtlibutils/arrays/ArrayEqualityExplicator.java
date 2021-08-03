@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -72,6 +73,8 @@ public class ArrayEqualityExplicator {
 			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), elementwiseComparison);
 		}
 		mResultTerm = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(inputTerm);
+		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm, "and", "or",
+				"=") : "input not in commuhash normal form";
 		if (mResultTerm.equals(inputTerm)) {
 			throw new AssertionError("Substitution failed: " + substitutionMapping);
 		}

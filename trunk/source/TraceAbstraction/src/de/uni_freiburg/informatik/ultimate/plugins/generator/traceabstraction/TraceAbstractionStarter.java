@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -119,7 +120,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			new ArrayList<>();
 
 	private final Class<L> mTransitionClazz;
-	private final IPLBECompositionFactory<L> mCompositionFactory;
+	private final Supplier<IPLBECompositionFactory<L>> mCreateCompositionFactory;
 
 	// list has one entry per analysis restart with increased number of threads (only 1 entry if sequential)
 	private final Map<DebugIdentifier, List<TraceAbstractionBenchmarks>> mStatistics = new LinkedHashMap<>();
@@ -131,11 +132,11 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory, final Class<L> transitionClazz) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mTransitionClazz = transitionClazz;
-		mCompositionFactory = compositionFactory;
+		mCreateCompositionFactory = createCompositionFactory;
 		mPrefs = new TAPreferences(mServices);
 		mResultsPerLocation = new LinkedHashMap<>();
 		mWitnessAutomaton = witnessAutomaton;
@@ -383,7 +384,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final Set<IcfgLocation> errorLocs) {
 		final CegarLoopResult<L> clres = CegarLoopUtils.getCegarLoopResult(services, name, icfg, mPrefs,
 				getPredicateFactory(icfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
-				mComputeHoareAnnotation, mPrefs.getConcurrency(), mCompositionFactory, mTransitionClazz);
+				mComputeHoareAnnotation, mPrefs.getConcurrency(), mCreateCompositionFactory.get(), mTransitionClazz);
 		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
 		return clres;
 	}

@@ -63,6 +63,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 public class NnfTransformer {
 
 	private static final String FRESH_VARIABLE_PREFIX = "nnf";
+	/**
+	 * Check whether input and output are logically equivalent. Sometimes we need to
+	 * omit the soundness check which does a checksat on mManagedScript. For
+	 * example, this is the case when mManagedScript.getScript is
+	 * HornClauseParserScript (in which case the soundness check would lead to
+	 * nontermination)
+	 */
+	private static final boolean DEBUG_CHECK_SOUNDNESS = false;
 	protected final Script mScript;
 	private final ManagedScript mMgdScript;
 	protected final ILogger mLogger;
@@ -95,33 +103,24 @@ public class NnfTransformer {
 
 	protected Function<Integer, Boolean> mFunAbortIfExponential;
 
-	/**
-	 * Sometimes we need to omit the soundness check which does a checksat on mManagedScript. For example, this is the
-	 * case when mManagedScript.getScript is HornClauseParserScript (in which case the soundness check would lead to
-	 * nontermination)
-	 */
-	private final boolean mOmitSoundnessCheck;
-
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling) {
-		this(mgdScript, services, quantifierHandling, false, a -> false);
+		this(mgdScript, services, quantifierHandling, a -> false);
 	}
 
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck) {
-		this(mgdScript, services, quantifierHandling, omitSoundnessCheck, a -> false);
+		this(mgdScript, services, quantifierHandling, a -> false);
 	}
 
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
-			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck,
-			final Function<Integer, Boolean> funAbortIfExponential) {
+			final QuantifierHandling quantifierHandling, final Function<Integer, Boolean> funAbortIfExponential) {
 		mFunAbortIfExponential = Objects.requireNonNull(funAbortIfExponential);
 		mQuantifierHandling = quantifierHandling;
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		mNnfTransformerHelper = getNnfTransformerHelper(services);
-		mOmitSoundnessCheck = omitSoundnessCheck;
 	}
 
 	protected NnfTransformerHelper getNnfTransformerHelper(final IUltimateServiceProvider services) {
@@ -147,7 +146,7 @@ public class NnfTransformer {
 			}
 			mQuantifiedVariables = null;
 		}
-		assert mOmitSoundnessCheck || Util.checkSat(mScript,
+		assert !DEBUG_CHECK_SOUNDNESS || Util.checkSat(mScript,
 				mScript.term("distinct", term, result)) != LBool.SAT : "Nnf transformation unsound";
 		return result;
 	}
