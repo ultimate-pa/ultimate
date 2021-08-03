@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
@@ -536,8 +536,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
-			final Term pushed = QuantifierPusher.eliminate(mServices, mCfgManagedScript, false, PqeTechniques.ONLY_DER,
-					projectedT);
+			final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mCfgManagedScript, false,
+					PqeTechniques.ONLY_DER, SimplificationTechnique.NONE, projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
@@ -561,8 +561,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
-			final Term pushed = QuantifierPusher.eliminate(mServices, mCfgManagedScript, false, PqeTechniques.ONLY_DER,
-					projectedT);
+			final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mCfgManagedScript, false,
+					PqeTechniques.ONLY_DER, SimplificationTechnique.NONE, projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;

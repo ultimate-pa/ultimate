@@ -581,8 +581,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
 					Term lessQuantifiers;
 					try {
-						lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScriptCfg,
-								withoutIndicesNormalized, mSimplificationTechnique, mXnfConversionTechnique);
+						lessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScriptCfg, mSimplificationTechnique, withoutIndicesNormalized);
 					} catch (final AssertionError ae) {
 						if (IGNORE_PQE_ERROR) {
 							lessQuantifiers = withoutIndicesNormalized;
