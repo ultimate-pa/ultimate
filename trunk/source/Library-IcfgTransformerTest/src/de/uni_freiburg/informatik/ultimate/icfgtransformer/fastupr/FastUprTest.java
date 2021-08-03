@@ -193,10 +193,11 @@ public class FastUprTest {
 
 		final Script z3 = mMgdZ3.getScript();
 		final Script smtInterpol = mMgdSmtInterpol.getScript();
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdZ3;
 
-		final Term pqeZ3 = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdZ3,
-				acceleratedZ3.getClosedFormula(), SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term pqeZ3 = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, acceleratedZ3.getClosedFormula());
 		final Term z3SimpTerm = SmtUtils.simplify(mMgdZ3, pqeZ3, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 		final Term smtInterpolSimpTerm = SmtUtils.simplify(mMgdSmtInterpol, acceleratedSmtInterpol.getClosedFormula(),
 				mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -395,8 +396,9 @@ public class FastUprTest {
 		final Script script = managedScript.getScript();
 		if (PQE_AND_SIMPLIFY) {
 			mLogger.info("Running PQE");
-			final Term pqe = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript, actualT,
-					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final IUltimateServiceProvider services = mServices;
+			final ILogger logger = mLogger;
+			final Term pqe = PartialQuantifierElimination.eliminateCompat(services, managedScript, SimplificationTechnique.SIMPLIFY_DDA, actualT);
 			mLogger.info("Running simplify");
 			final Term simpTerm =
 					SmtUtils.simplify(managedScript, pqe, mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -436,9 +438,9 @@ public class FastUprTest {
 				script.term("=", x, script.term("+", script.term("*", k, script.numeral("3")), script.numeral("6")));
 		final Term quantified =
 				script.quantifier(Script.EXISTS, new TermVariable[] { k }, script.term("and", con1, con2, con3));
-		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript,
-				quantified, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final Term eliminated = PartialQuantifierElimination.eliminateCompat(services, managedScript, SimplificationTechnique.SIMPLIFY_DDA, quantified);
 
 		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", quantified, eliminated));
 		mLogger.info("Term     : %s", quantified.toStringDirect());
@@ -476,9 +478,10 @@ public class FastUprTest {
 				script.quantifier(Script.EXISTS, new TermVariable[] { k }, script.term("and", qcon1, qcon2, qcon3));
 
 		final Term term = script.term("or", disj1, disj2);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
 
-		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript, term,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term eliminated = PartialQuantifierElimination.eliminateCompat(services, managedScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 
 		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", term, eliminated));
 		mLogger.info("Term     : %s", term.toStringDirect());

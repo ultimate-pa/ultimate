@@ -64,13 +64,14 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	private static final boolean CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = true;
 
 	public QuantifierPushTermWalker(final IUltimateServiceProvider services, final boolean applyDistributivity,
-			final PqeTechniques pqeTechniques, final ManagedScript mgdScript) {
+			final PqeTechniques pqeTechniques, final SimplificationTechnique simplificationTechnique,
+			final ManagedScript mgdScript) {
 		super();
 		mServices = services;
 		mApplyDistributivity = applyDistributivity;
 		mPqeTechniques = pqeTechniques;
 		mMgdScript = mgdScript;
-		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+		mSimplificationTechnique = simplificationTechnique;
 	}
 
 	@Override
@@ -124,7 +125,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 						Arrays.asList(((QuantifiedFormula) currentTerm).getVariables()));
 				final EliminationTask et = new EliminationTask((QuantifiedFormula) currentTerm, childContext);
 				final Term tmp = QuantifierPusher.processDualQuantifier(mServices, mMgdScript,
-						mApplyDistributivity, mPqeTechniques, et,
+						mApplyDistributivity, mPqeTechniques, mSimplificationTechnique, et,
 						QuantifierPushTermWalker::eliminate);
 				final FormulaClassification tmpClassification = QuantifierPusher.classify(tmp);
 				if (tmpClassification == FormulaClassification.DUAL_QUANTIFIER) {
@@ -147,8 +148,9 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 					// no more eliminations possible
 					// let's recurse, there may be quantifiers in subformulas
 					final Term res = QuantifierPusher.pushInner(mServices, mMgdScript, mApplyDistributivity,
-							mPqeTechniques, context.getBoundByAncestors(), (QuantifiedFormula) currentTerm,
-							context.getCriticalConstraint(), QuantifierPushTermWalker::eliminate);
+							mPqeTechniques, mSimplificationTechnique, context.getBoundByAncestors(),
+							(QuantifiedFormula) currentTerm, context.getCriticalConstraint(),
+							QuantifierPushTermWalker::eliminate);
 					return new TermContextTransformationEngine.FinalResultForAscend(res);
 				} else {
 					currentTerm = tmp;
@@ -158,13 +160,15 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			case DUAL_FINITE_CONNECTIVE: {
 				final EliminationTask et = new EliminationTask((QuantifiedFormula) currentTerm, context);
 				final Term tmp = QuantifierPusher.tryToPushOverDualFiniteConnective(mServices, mMgdScript,
-						mApplyDistributivity, mPqeTechniques, et, QuantifierPushTermWalker::eliminate);
+						mApplyDistributivity, mPqeTechniques, mSimplificationTechnique, et,
+						QuantifierPushTermWalker::eliminate);
 				if (tmp == null) {
 					// no more eliminations possible
 					// let's recurse, there may be quantifiers in subformulas
 					final Term res = QuantifierPusher.pushInner(mServices, mMgdScript, mApplyDistributivity,
-							mPqeTechniques, context.getBoundByAncestors(), (QuantifiedFormula) currentTerm,
-							context.getCriticalConstraint(), QuantifierPushTermWalker::eliminate);
+							mPqeTechniques, mSimplificationTechnique, context.getBoundByAncestors(),
+							(QuantifiedFormula) currentTerm, context.getCriticalConstraint(),
+							QuantifierPushTermWalker::eliminate);
 					return new TermContextTransformationEngine.FinalResultForAscend(res);
 				} else {
 					currentTerm = tmp;
@@ -227,14 +231,14 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-			final Term inputTerm) {
+			final SimplificationTechnique simplificationTechnique, final Term inputTerm) {
 		return eliminate(services, script, applyDistributivity, quantifierEliminationTechniques,
-				new Context(script.getScript()), inputTerm);
+				simplificationTechnique, new Context(script.getScript()), inputTerm);
 	}
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-			final Context context, final Term inputTerm) {
+			final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm) {
 		if (CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, inputTerm, services,
 					SimplificationTechnique.POLY_PAC);
@@ -245,7 +249,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			}
 		}
 		final Term result = TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services,
-				applyDistributivity, quantifierEliminationTechniques, script), context,
+				applyDistributivity, quantifierEliminationTechniques, simplificationTechnique, script), context,
 				inputTerm);
 		if (CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, inputTerm, services,

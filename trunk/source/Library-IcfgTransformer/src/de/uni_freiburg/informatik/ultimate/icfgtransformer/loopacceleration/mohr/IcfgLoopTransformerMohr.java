@@ -293,9 +293,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
 		final Set<TermVariable> aux = symbolicMemory.getKappas();
 		aux.addAll(symbolicMemory.getTaus());
-		final Term quantFreeFormula = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
-				loopSummary, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term quantFreeFormula = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, SimplificationTechnique.SIMPLIFY_DDA, loopSummary);
 		tfb.setFormula(quantFreeFormula);
 		tfb.addAuxVarsButRenameToFreshCopies(aux, mManagedScript);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);

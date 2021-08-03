@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocal
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -234,7 +233,7 @@ public final class TransFormulaUtils {
 //					formula, services, logger, simplificationTechnique, xnfConversionTechnique);
 			final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, formula);
 			auxVars.clear();
-			final Term partiallyEliminated = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, quantified, simplificationTechnique, xnfConversionTechnique);
+			final Term partiallyEliminated = PartialQuantifierElimination.eliminateCompat(services, mgdScript, simplificationTechnique, quantified);
 			final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
 			if (pnf instanceof QuantifiedFormula && ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
 				final QuantifiedFormula qf = (QuantifiedFormula) pnf;
@@ -679,8 +678,8 @@ public final class TransFormulaUtils {
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
 		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
-		resultComposition = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
-				resultComposition);
+		resultComposition = PartialQuantifierElimination.eliminateCompat(services, mgdScript, true,
+				PqeTechniques.ALL_LOCAL, SimplificationTechnique.NONE, resultComposition);
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
 		IPredicate beforeCallPredicate = truePredicate;
 		for (final UnmodifiableTransFormula tf : beforeCall) {
@@ -691,7 +690,8 @@ public final class TransFormulaUtils {
 				oldVarsAssignment, modifiableGlobalsOfEndProcedure);
 		final IPredicate afterCallPredicate = bpf.newPredicate(afterCallTerm);
 		Term endTerm = pt.strongestPostcondition(afterCallPredicate, afterCallTf);
-		endTerm = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, endTerm);
+		endTerm = PartialQuantifierElimination.eliminateCompat(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
+				SimplificationTechnique.NONE, endTerm);
 		final IPredicate endPredicate = bpf.newPredicate(endTerm);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(endPredicate, false, resultCompositionPredicate, false);
@@ -849,8 +849,8 @@ public final class TransFormulaUtils {
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
 		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
-		resultComposition = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
-				resultComposition);
+		resultComposition = PartialQuantifierElimination.eliminateCompat(services, mgdScript, true,
+				PqeTechniques.ALL_LOCAL, SimplificationTechnique.NONE, resultComposition);
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
 		final Term afterCallTerm = pt.strongestPostconditionCall(truePredicate, callTf, globalVarsAssignment,
 				oldVarsAssignment, modifiableGlobals);
@@ -859,8 +859,8 @@ public final class TransFormulaUtils {
 		final IPredicate beforeReturnPredicate = bpf.newPredicate(beforeReturnTerm);
 		Term afterReturnTerm = pt.strongestPostconditionReturn(beforeReturnPredicate, truePredicate, returnTf, callTf,
 				oldVarsAssignment, modifiableGlobals);
-		afterReturnTerm = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
-				afterReturnTerm);
+		afterReturnTerm = PartialQuantifierElimination.eliminateCompat(services, mgdScript, true,
+				PqeTechniques.ALL_LOCAL, SimplificationTechnique.NONE, afterReturnTerm);
 		final IPredicate afterReturnPredicate = bpf.newPredicate(afterReturnTerm);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);

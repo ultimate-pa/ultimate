@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
+package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -32,10 +32,6 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -75,7 +71,7 @@ public class CommuhashNormalForm {
 	}
 
 	public Term transform(final Term term) {
-		final ILogger logger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(CommuhashNormalForm.class.getSimpleName());
 		if (DEBUG_LOG_SIZES) {
 			logger.debug(new DebugMessage("applying CommuhashNormalForm to formula of DAG size {0}",
 					new DagSizePrinter(term)));

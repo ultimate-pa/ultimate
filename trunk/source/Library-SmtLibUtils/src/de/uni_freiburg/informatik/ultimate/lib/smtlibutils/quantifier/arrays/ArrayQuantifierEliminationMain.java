@@ -142,7 +142,8 @@ public class ArrayQuantifierEliminationMain {
 	private EliminationTaskSimple recursivCall(final EliminationTaskSimple eTask, final Term quantifiedTerm) {
 
 		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(quantifiedTerm);
-		final Term pushed = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
+		final Term pushed = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ALL_LOCAL,
+				SimplificationTechnique.SIMPLIFY_DDA, nnf);
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
 		Term matrix = qs.getInnerTerm();
@@ -156,7 +157,8 @@ public class ArrayQuantifierEliminationMain {
 				recResult = elimAllRec(recResult);
 				matrix = recResult.getTerm();
 				matrix = SmtUtils.quantifier(mMgdScript.getScript(), qv.getQuantifier(), eliminatees, matrix);
-				matrix = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ONLY_DER, matrix);
+				matrix = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ONLY_DER,
+						SimplificationTechnique.SIMPLIFY_DDA, matrix);
 			}
 		}
 		return new EliminationTaskSimple(eTask.getQuantifier(), mEliminatees, matrix);

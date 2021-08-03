@@ -494,9 +494,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 					 */
 					if (res == LBool.SAT) {
 						Term pre = mPredTrans.pre(toBeBlocked, predTF);
-						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
-								SimplificationTechnique.SIMPLIFY_DDA,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						final Term term = pre;
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 						final IPredicate prePred = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						final ProofObligation newProofObligation =
@@ -587,9 +586,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						final IPredicate callPred = mTruePred;
 						Term pre =
 								mPredTrans.preReturn(toBeBlocked, callPred, assOfRet, assOfCall, oldVarAssign, modVars);
-						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
-								SimplificationTechnique.SIMPLIFY_DDA,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						final Term term = pre;
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 						poPostReturn = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						// Other idea: create formula of old(y) = y and add that to the frames.
@@ -640,9 +638,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						final IPredicate callPred = mTruePred;
 						Term pre = mPredTrans.preReturn(newProofObligation.getToBeBlocked(), callPred, assOfRet,
 								assOfCall, oldVarAssign, modVars);
-						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
-								SimplificationTechnique.SIMPLIFY_DDA,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						final Term term = pre;
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 						poPostReturn = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						final ProofObligation newLocalProofObligation;
@@ -1232,9 +1229,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 					final Term pdrTerm = interpolants[l - 1].getFormula();
 					withPdr = SmtUtils.and(mScript.getScript(), pred.getFormula(), pdrTerm);
 				}
-				final Term afterQuantElim = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
-						withPdr, SimplificationTechnique.SIMPLIFY_QUICK,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				final Term term = withPdr;
+				final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_QUICK, term);
 				final IPredicate result = mLocalPredicateUnifier.getOrConstructPredicate(afterQuantElim);
 				assert result != null;
 				return result;

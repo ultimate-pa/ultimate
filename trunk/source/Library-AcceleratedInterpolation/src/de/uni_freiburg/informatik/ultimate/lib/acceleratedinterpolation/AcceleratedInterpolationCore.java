@@ -188,8 +188,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				}
 				accelerationFinishedCorrectly = true;
 				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
-				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
-						mSimplificationTechnique, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				final Term term = t;
+				t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
 
 				if (mLogger.isDebugEnabled()) {
@@ -435,8 +435,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			}
 			accelerationFinishedCorrectly = true;
 			Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
-			t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t, mSimplificationTechnique,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term term = t;
+			t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
 			final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
 			mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
 			accelerations.add(tf);
