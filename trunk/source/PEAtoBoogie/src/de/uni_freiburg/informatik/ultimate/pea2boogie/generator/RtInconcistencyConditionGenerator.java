@@ -614,10 +614,11 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term tryToEliminate(final QuantifiedFormula quantified) {
-		final Term lightResult =
-				QuantifierPushTermWalker.eliminate(mServices, mManagedScript, false, PqeTechniques.LIGHT, quantified);
+		final Term lightResult = QuantifierPushTermWalker.eliminate(mServices, mManagedScript, false,
+				PqeTechniques.LIGHT, SimplificationTechnique.POLY_PAC, quantified);
 		if (new SubtermPropertyChecker(QuantifiedFormula.class::isInstance).isSatisfiedBySomeSubterm(lightResult)) {
-			return QuantifierPushTermWalker.eliminate(mServices, mManagedScript, true, PqeTechniques.ALL, lightResult);
+			return QuantifierPushTermWalker.eliminate(mServices, mManagedScript, true, PqeTechniques.ALL,
+					SimplificationTechnique.POLY_PAC, lightResult);
 		}
 		return lightResult;
 	}
