@@ -162,6 +162,9 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		return maximalCoSets;
 	}
 
+	/**
+	 *	 Annotation with MaximalCosets computation
+	 */
 	private Map<Marking<LETTER, PLACE>, IPredicate> getMaximalAnnotation() {
 		final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
 		for (final Set<PLACE> marking : mReach) {
@@ -171,7 +174,8 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	}
 	
 	/**
-	 *
+	 * Cuts computation from "greedy" algorithm
+	 * With simplification
 	 */
 	 private Map<Marking<LETTER, PLACE>, IPredicate> getCosetAnnotation() {		
 			final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
@@ -183,7 +187,8 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 						markCoset,mAssertConditions, new HashSet<Set<Condition<LETTER,PLACE>>>());		
 				 Set<Set<IPredicate>> markAssertPlaces = new HashSet<>();
 				for(Set<Condition<LETTER,PLACE>> assertCond: assertConds) {
-					markAssertPlaces.add(simplifyAssertions(getCosetPredicates(assertCond)));				
+					markAssertPlaces.add(simplifyAssertions(getCosetPredicates(assertCond)));
+					//markAssertPlaces.add((getCosetPredicates(assertCond));		
 				}
 				mapping.put(new Marking<LETTER, PLACE>(markPlaces), getMarkingAssertion(markPlaces, markAssertPlaces));
 			}			
@@ -319,7 +324,7 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	
 
 	
-	//Call this for simpleAnnotation
+	//Call this for simple and "greedy" cuts Annotation
 	private IPredicate getMarkingAssertion(final Set<PLACE> marking, final Set<Set<IPredicate>> cuts) {
 		final Set<IPredicate> predicates = new HashSet<>();
 		for (final Set<IPredicate> cut : cuts) {

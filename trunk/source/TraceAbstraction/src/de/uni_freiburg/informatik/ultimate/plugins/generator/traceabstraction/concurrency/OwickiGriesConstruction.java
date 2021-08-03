@@ -156,6 +156,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 		final Set<Term> terms = new HashSet<>();
 		final Set<PLACE> posPlaces = DataStructureUtils.intersection(mHittingSet,
 								marking.stream().collect(Collectors.toSet()));
+		//final Set<PLACE> posPlaces = marking.stream().collect(Collectors.toSet());
 		for (final PLACE otherPlace : posPlaces) {
 			final Term ghost = mGhostVariables.get(otherPlace).getTerm();
 			terms.add(ghost);
