@@ -216,7 +216,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		int numberOfThreadInstances = 1;
 		while (true) {
 			final IIcfg<IcfgLocation> petrifiedIcfg = petrify(icfg, numberOfThreadInstances);
-			bumpBenchmarkResults(petrifiedIcfg);
 			mResultsPerLocation.clear();
 
 			final var results = analyseProgram(petrifiedIcfg, CegarLoopUtils::hasSufficientThreadInstances);
@@ -293,7 +292,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (multiplePartitions) {
 				services.getProgressMonitorService().setSubtask(name.toString());
 			}
-			final TraceAbstractionBenchmarks traceAbstractionBenchmark = getBenchmark(name, icfg);
+			final TraceAbstractionBenchmarks traceAbstractionBenchmark = createNewBenchmark(name, icfg);
 
 			final CegarLoopResult<L> clres =
 					executeCegarLoop(services, name, icfg, traceAbstractionBenchmark, errorLocs);
@@ -504,20 +503,11 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
 
-	private TraceAbstractionBenchmarks getBenchmark(final DebugIdentifier ident, final IIcfg<IcfgLocation> icfg) {
+	private TraceAbstractionBenchmarks createNewBenchmark(final DebugIdentifier ident, final IIcfg<IcfgLocation> icfg) {
 		final List<TraceAbstractionBenchmarks> benchmarks = mStatistics.computeIfAbsent(ident, x -> new ArrayList<>());
-		if (benchmarks.isEmpty()) {
-			final TraceAbstractionBenchmarks bench = new TraceAbstractionBenchmarks(icfg);
-			benchmarks.add(bench);
-			return bench;
-		}
-		return benchmarks.get(benchmarks.size() - 1);
-	}
-
-	private void bumpBenchmarkResults(final IIcfg<IcfgLocation> icfg) {
-		for (final List<TraceAbstractionBenchmarks> allStats : mStatistics.values()) {
-			allStats.add(new TraceAbstractionBenchmarks(icfg));
-		}
+		final TraceAbstractionBenchmarks bench = new TraceAbstractionBenchmarks(icfg);
+		benchmarks.add(bench);
+		return bench;
 	}
 
 	private void reportBenchmarkResults() {
