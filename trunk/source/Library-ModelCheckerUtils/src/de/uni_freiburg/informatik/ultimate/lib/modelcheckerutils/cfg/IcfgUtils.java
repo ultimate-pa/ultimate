@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -256,32 +256,58 @@ public class IcfgUtils {
 	public static boolean canReachCached(final IcfgLocation sourceLoc, final Predicate<IcfgEdge> isTarget,
 			final Predicate<IcfgEdge> prune, final Function<IcfgLocation, LBool> getCachedResult,
 			final BiConsumer<IcfgLocation, Boolean> setCachedResult) {
+		final LBool REACHABLE = LBool.UNSAT;
+		final LBool UNREACHABLE = LBool.SAT;
+		final LBool UNKNOWN = LBool.UNKNOWN;
+
 		// First check if result is cached.
 		final LBool cachedCanReach = getCachedResult.apply(sourceLoc);
-		if (cachedCanReach != LBool.UNKNOWN) {
-			return cachedCanReach == LBool.UNSAT;
+		if (cachedCanReach != UNKNOWN) {
+			return cachedCanReach == REACHABLE;
 		}
 
 		// Do a DFS search of the CFG.
 		final Set<IcfgLocation> visited = new HashSet<>();
-		final ArrayDeque<IcfgLocation> worklist = new ArrayDeque<>();
+		final LinkedList<IcfgLocation> worklist = new LinkedList<>();
 		worklist.add(sourceLoc);
 
-		boolean canReach = false;
-		while (!worklist.isEmpty() && !canReach) {
-			final IcfgLocation currentLoc = worklist.peek();
+		LBool canReach = UNREACHABLE;
+		int loopHeadIndex = -1;
+		IcfgLocation loopHead = null;
+
+		while (!worklist.isEmpty() && canReach != REACHABLE) {
+			assert loopHeadIndex == -1 || canReach != UNREACHABLE : "Inside a loop unreachability cannot be confirmed";
+			assert loopHeadIndex != -1 || canReach != UNKNOWN : "Reachability should be known unless in a loop";
+			assert (loopHeadIndex < 0) == (loopHead == null) : "Inconsistent loop head tracking";
+			assert loopHeadIndex < 0 || worklist.get(loopHeadIndex) == loopHead : "Inconsistent loop head tracking";
+
+			final IcfgLocation currentLoc = worklist.getLast();
 
 			// If the result is cached, retrieve it, mark the location as visited, and start backtracking.
 			final LBool knownCanReach = getCachedResult.apply(currentLoc);
-			if (knownCanReach != LBool.UNKNOWN) {
-				canReach = knownCanReach == LBool.UNSAT;
+			if (knownCanReach != UNKNOWN) {
+				// Do not replace UNKNOWN by UNREACHABLE, as we must not propagate this unreachability to predecessors.
+				canReach = knownCanReach == REACHABLE || canReach != UNKNOWN ? knownCanReach : canReach;
 				visited.add(currentLoc);
 			}
 
 			// When backtracking, remember the computed result for future queries.
 			if (visited.contains(currentLoc)) {
-				setCachedResult.accept(currentLoc, canReach);
-				worklist.pop();
+				worklist.removeLast();
+				// When backtracking the outermost encountered loop head, reachability must be either REACHABLE or
+				// UNKNOWN. In the latter case, we can now set it to UNREACHABLE.
+				// TODO Theoretically, we could even store UNREACHABLE for all nodes reached from the loop head.
+				if (loopHeadIndex == worklist.size()) {
+					assert canReach != UNREACHABLE : "Can not determine unreachability within loop";
+					assert loopHead == currentLoc : "Unexpected loop head: expected " + loopHead + ", got "
+							+ currentLoc;
+					loopHeadIndex = -1;
+					loopHead = null;
+					canReach = canReach == UNKNOWN ? UNREACHABLE : canReach;
+				}
+				if (canReach != UNKNOWN) {
+					setCachedResult.accept(currentLoc, canReach == REACHABLE);
+				}
 				continue;
 			}
 
@@ -291,41 +317,60 @@ public class IcfgUtils {
 			final List<IcfgEdge> outgoing = currentLoc.getOutgoingEdges();
 			final List<IcfgLocation> successors = new ArrayList<>(outgoing.size());
 			for (final IcfgEdge edge : outgoing) {
-				// Ignore edges leading back to visited states: They must either be on the stack (and we don't want to
-				// follow loops), or are already marked as non-reachable (otherwise we would have aborted the search).
-				// Also, ignore explicitly pruned edges.
-				if (visited.contains(edge.getTarget()) || prune.test(edge)) {
+				final IcfgLocation succ = edge.getTarget();
+
+				// Ignore explicitly pruned edges.
+				if (prune.test(edge)) {
 					continue;
 				}
+
 				// Abort when reachability is confirmed.
 				if (isTarget.test(edge)) {
-					canReach = true;
+					canReach = REACHABLE;
 					break;
 				}
-				successors.add(edge.getTarget());
+
+				final boolean succVisited = visited.contains(succ);
+				final int stackIndex;
+				if (succVisited && (stackIndex = worklist.indexOf(succ)) != -1) {
+					// If the edge leads back to the stack, reachability is unknown until succ (or an even earlier loop
+					// head) is backtracked. To avoid infinite looping, we do not explore succ.
+					assert getCachedResult.apply(succ) == UNKNOWN;
+					canReach = UNKNOWN;
+					loopHeadIndex = loopHeadIndex < 0 ? stackIndex : Integer.min(loopHeadIndex, stackIndex);
+					loopHead = loopHeadIndex == stackIndex ? succ : loopHead;
+				} else if (succVisited) {
+					// If the successor has been visited before, but is not on the stack, then we know its reachability
+					// is either UNREACHABLE or UNKNOWN. In either case, we do not need to explore it again.
+					assert getCachedResult.apply(succ) != REACHABLE;
+				} else {
+					// If the successor has not been visited before, explore it now.
+					successors.add(succ);
+				}
 			}
+
 			// When reachability was confirmed, do not search any further.
-			if (!canReach) {
-				successors.stream().forEach(worklist::push);
+			if (canReach != REACHABLE) {
+				successors.stream().forEach(worklist::add);
 			}
 		}
 
 		// Fast-backtrack: If we exited the previous loop because reachability was confirmed,
 		// we only backtrack, and no longer explore states on the work list.
 		while (!worklist.isEmpty()) {
-			assert canReach : "Fast-backtracking must only happen in case of reachability";
-			final IcfgLocation currentLoc = worklist.pop();
+			assert canReach == REACHABLE : "Fast-backtracking must only happen in case of reachability";
+			final IcfgLocation currentLoc = worklist.removeLast();
 			if (visited.contains(currentLoc)) {
 				// If a state on the worklist is marked as visited, it is on the stack.
 				// Hence mark it as being able to reach the target.
-				setCachedResult.accept(currentLoc, canReach);
+				setCachedResult.accept(currentLoc, true);
 			}
 		}
 
 		final LBool computedReachability = getCachedResult.apply(sourceLoc);
-		assert computedReachability != LBool.UNKNOWN : "Reachability should be clearly determined";
-		assert (computedReachability == LBool.UNSAT) == canReach : "Incoherent reachability result";
-		return canReach;
+		assert computedReachability != UNKNOWN : "Reachability should be clearly determined";
+		assert computedReachability == canReach : "Incoherent reachability result";
+		return canReach == REACHABLE;
 	}
 
 	public static <LOC extends IcfgLocation> Set<String> getAllThreadInstances(final IIcfg<LOC> icfg) {
@@ -336,5 +381,4 @@ public class IcfgUtils {
 				DataStructureUtils.getOneAndOnly(icfg.getInitialNodes(), "initial node").getProcedure();
 		return Stream.concat(Stream.of(mainThread), threadInstances).collect(Collectors.toSet());
 	}
-
 }

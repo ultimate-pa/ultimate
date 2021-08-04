@@ -436,7 +436,11 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				return LBool.UNKNOWN;
 			}
 			return hopelessCache.get(l) ? LBool.UNSAT : LBool.SAT;
-		}, hopelessCache::put);
+		}, (l, res) -> {
+			assert hopelessCache.getOrDefault(l, res) == res : "contradictory reachability";
+			assert res != null;
+			hopelessCache.put(l, res);
+		});
 	}
 
 	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
