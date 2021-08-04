@@ -219,11 +219,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					cleanupAndUnlockSolver();
 				}
 			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-				final String msg = "Trace is feasible, we will do another trace check, this time with branch encoders.";
-				managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
-				mLogger.info(msg);
-
-				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
+				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
 				if (icfgProgramExecution != null) {
 					providesIcfgProgramExecution = true;
 				}
@@ -343,15 +339,20 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 * the specification (however, this can still be partial program states e.g., no values assigned to arrays) and that
 	 * contains information which branch of a parallel composed CodeBlock violates the specification.
 	 *
+	 * @param managedScriptTc
+	 *
 	 * @return
 	 */
-	private IcfgProgramExecution<L> computeRcfgProgramExecutionAndDecodeBranches() {
+	private IcfgProgramExecution<L> computeRcfgProgramExecutionAndDecodeBranches(final ManagedScript managedScriptTc) {
 		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
 			throw new AssertionError(
 					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
 		}
 		if (!((DefaultTransFormulas<L>) mNestedFormulas).hasBranchEncoders()) {
 			cleanupAndUnlockSolver();
+			final String msg = "Trace is feasible, we will do another trace check, this time with branch encoders.";
+			managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
+			mLogger.info(msg);
 			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getTrace(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
