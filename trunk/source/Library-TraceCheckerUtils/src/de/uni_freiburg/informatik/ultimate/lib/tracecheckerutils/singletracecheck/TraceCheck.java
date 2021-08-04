@@ -349,10 +349,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
 		}
 		if (!((DefaultTransFormulas<L>) mNestedFormulas).hasBranchEncoders()) {
-			cleanupAndUnlockSolver();
 			final String msg = "Trace is feasible, we will do another trace check, this time with branch encoders.";
 			managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
 			mLogger.info(msg);
+			cleanupAndUnlockSolver();
 			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getTrace(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
