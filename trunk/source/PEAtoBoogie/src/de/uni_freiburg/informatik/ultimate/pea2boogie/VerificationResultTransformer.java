@@ -73,10 +73,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -164,13 +166,15 @@ public class VerificationResultTransformer {
 
 		if (spec == Spec.RTINCONSISTENT) {
 			@SuppressWarnings("unchecked")
-			final IProgramExecution<IAction, Term> newPe = generateRtInconsistencyResult(
+			final IcfgProgramExecution<? extends IAction> oldPe =
 					(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
-							.getProgramExecution(),
-					reqCheck);
+							.getProgramExecution();
+			final IProgramExecution<IAction, Term> newPe = reduceRtInconsistencyProgramExecution(oldPe, reqCheck);
 			if (newPe == null) {
 				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence);
 			}
+			mLogger.info("Old program execution had length %s, new has length %s", oldPe.getLength(),
+					newPe.getLength());
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Result before Pea2Boogie result transformation");
@@ -314,7 +318,7 @@ public class VerificationResultTransformer {
 		return sb;
 	}
 
-	private IProgramExecution<IAction, Term> generateRtInconsistencyResult(final IcfgProgramExecution<?> pe,
+	private IProgramExecution<IAction, Term> reduceRtInconsistencyProgramExecution(final IcfgProgramExecution<?> pe,
 			final ReqCheck reqCheck) {
 
 		final List<CodeBlock> trace = new ArrayList<>(pe.getLength());
@@ -338,17 +342,26 @@ public class VerificationResultTransformer {
 
 		try {
 			// first, recheck to ensure that we have branch encoders
-			final TraceCheck<IAction> tcl =
-					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace);
-			if (!tcl.providesRcfgProgramExecution()) {
-				mLogger.warn("Could not extract reduced program execution from trace: TraceCheck reported "
-						+ tcl.isCorrect());
-				return null;
+			final IcfgProgramExecution<IAction> peWithBE;
+			if (pe.getBranchEncoders() == null || pe.getBranchEncoders().length == 0) {
+				mLogger.info("Computing branch encoders");
+				final TraceCheck<IAction> tcl =
+						TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace);
+				if (!tcl.providesRcfgProgramExecution()) {
+					mLogger.warn("Could not extract reduced program execution from trace: TraceCheck reported "
+							+ tcl.isCorrect());
+					return null;
+				}
+				peWithBE = tcl.getRcfgProgramExecution();
+			} else {
+				peWithBE = (IcfgProgramExecution<IAction>) pe;
 			}
 
-			final List<IAction> sequentialTrace =
-					sequentialize(tcl.getRcfgProgramExecution(), mgdScriptTc, mgdScriptAux);
+			mLogger.info("Sequentializing");
+			final List<IAction> sequentialTrace = sequentialize(peWithBE, mgdScriptTc, mgdScriptAux);
 			final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScriptTc);
+
+			mLogger.info("Computing reduced program execution");
 			final TraceCheck<IAction> tc =
 					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, cleanedTrace);
 			if (tc.isCorrect() == LBool.SAT) {
@@ -405,10 +418,16 @@ public class VerificationResultTransformer {
 
 			// TODO: Use values from Programexecution as patterns?
 
-			final Term projected = PartialQuantifierElimination.quantifier(mServices, mLogger, mgdScript,
-					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-					QuantifiedFormula.EXISTS, toRemove, oldFormula);
-			tfb.setFormula(projected);
+			if (toRemove.isEmpty()) {
+				tfb.setFormula(oldFormula);
+			} else {
+				mLogger.info("Removing %s variables", toRemove.size());
+				final Term quantifiedFormula =
+						SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, toRemove, oldFormula);
+
+				final Term projected = tryToEliminate(mgdScript, quantifiedFormula);
+				tfb.setFormula(projected);
+			}
 
 			final UnmodifiableTransFormula newTf = tfb.finishConstruction(mgdScript);
 			rtr.add(new BasicInternalAction(action.getPrecedingProcedure(), action.getSucceedingProcedure(), newTf));
@@ -459,7 +478,7 @@ public class VerificationResultTransformer {
 					.collect(Collectors.toList());
 
 			final UnmodifiableTransFormula sc = TransFormulaUtils.sequentialComposition(mLogger, mServices, mgdScriptTc,
-					false, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					false, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					SimplificationTechnique.NONE, transFormulas);
 			rtr.add(new BasicInternalAction(null, null, sc));
 		}
@@ -486,6 +505,16 @@ public class VerificationResultTransformer {
 			}
 		}
 		return rtr;
+	}
+
+	private Term tryToEliminate(final ManagedScript managedScript, final Term quantified) {
+		final Term lightResult = QuantifierPushTermWalker.eliminate(mServices, managedScript, false,
+				PqeTechniques.LIGHT, SimplificationTechnique.NONE, quantified);
+		if (new SubtermPropertyChecker(QuantifiedFormula.class::isInstance).isSatisfiedBySomeSubterm(lightResult)) {
+			return QuantifierPushTermWalker.eliminate(mServices, managedScript, true, PqeTechniques.ALL,
+					SimplificationTechnique.NONE, lightResult);
+		}
+		return lightResult;
 	}
 
 	private static void dieIfUnsupported(final Spec spec) {
