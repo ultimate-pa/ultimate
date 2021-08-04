@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -315,9 +316,11 @@ public class VerificationResultTransformer {
 
 	private IProgramExecution<IAction, Term> generateRtInconsistencyResult(final IcfgProgramExecution<?> pe,
 			final ReqCheck reqCheck) {
-		mLogger.info("Analyzing reasons for rt-inconsistency");
+
 		final List<CodeBlock> trace = new ArrayList<>(pe.getLength());
 		pe.stream().map(a -> (CodeBlock) a.getTraceElement()).forEach(trace::add);
+		final IcfgLocation errorLoc = trace.get(trace.size() - 1).getTarget();
+		mLogger.info("Analyzing reasons for rt-inconsistency for %s", errorLoc);
 
 		final CodeBlockFactory cbf = CodeBlockFactory.getFactory((IToolchainStorage) mServices);
 		final CfgSmtToolkit toolkit = cbf.getToolkit();
@@ -401,6 +404,7 @@ public class VerificationResultTransformer {
 			}
 
 			// TODO: Use values from Programexecution as patterns?
+
 			final Term projected = PartialQuantifierElimination.quantifier(mServices, mLogger, mgdScript,
 					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					QuantifiedFormula.EXISTS, toRemove, oldFormula);

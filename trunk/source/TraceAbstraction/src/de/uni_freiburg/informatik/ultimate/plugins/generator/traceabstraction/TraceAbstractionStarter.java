@@ -172,6 +172,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			results = analyseSequentialProgram(icfg);
 		}
 
+		mLogger.info("Computing trace abstraction results");
 		// Report results that were buffered because they may be overridden or amended.
 		reportLocationResults();
 		reportBenchmarkResults();
