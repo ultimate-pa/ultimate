@@ -95,9 +95,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class TransFormulaUtils {
 
-	public static final String TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS = "TransFormula of return must not contain auxVars";
-	public static final String OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS = "oldVarAssignments must not contain auxVars";
-	public static final String GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS = "globalVarsAssignments must not contain auxVars";
+	public static final String TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS =
+			"TransFormula of return must not contain auxVars";
+	public static final String OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS =
+			"oldVarAssignments must not contain auxVars";
+	public static final String GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS =
+			"globalVarsAssignments must not contain auxVars";
 
 	private TransFormulaUtils() {
 		// do not instantiate utility class
@@ -212,7 +215,7 @@ public final class TransFormulaUtils {
 			formula = SmtUtils.and(script, formula, updatedFormula);
 		}
 
-		assert !new SubtermPropertyChecker(a -> a instanceof LetTerm)
+		assert !new SubtermPropertyChecker(LetTerm.class::isInstance)
 				.isSatisfiedBySomeSubterm(formula) : "formula contains LetTerm";
 
 		if (simplify) {
@@ -229,13 +232,15 @@ public final class TransFormulaUtils {
 
 		if (tryAuxVarElimination) {
 			final Term eliminated;
-//			eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars,
-//					formula, services, logger, simplificationTechnique, xnfConversionTechnique);
+			// eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars,
+			// formula, services, logger, simplificationTechnique, xnfConversionTechnique);
 			final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, formula);
 			auxVars.clear();
-			final Term partiallyEliminated = PartialQuantifierElimination.eliminateCompat(services, mgdScript, simplificationTechnique, quantified);
+			final Term partiallyEliminated = PartialQuantifierElimination.eliminateCompat(services, mgdScript,
+					simplificationTechnique, quantified);
 			final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
-			if (pnf instanceof QuantifiedFormula && ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
+			if (pnf instanceof QuantifiedFormula
+					&& ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
 				final QuantifiedFormula qf = (QuantifiedFormula) pnf;
 				auxVars.addAll(Arrays.asList(qf.getVariables()));
 				eliminated = qf.getSubformula();
@@ -395,7 +400,7 @@ public final class TransFormulaUtils {
 			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
 				final TermVariable outVar = transFormulas[i].getOutVars().get(bv);
-				if ((inVar == null && outVar == null) || inVar == outVar) {
+				if (inVar == null && outVar == null || inVar == outVar) {
 					// bv does not occur in transFormula or bv is not modified in transFormula
 					final TermVariable termInVar = tfb.getInVar(bv);
 					final TermVariable termOutVar = tfb.getOutVar(bv);
@@ -572,7 +577,7 @@ public final class TransFormulaUtils {
 
 		final UnmodifiableTransFormula preliminaryResult = sequentialComposition(logger, services, mgdScript, simplify,
 				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
-				Arrays.asList(new UnmodifiableTransFormula[] { callAndBeforeTF, globalVarAssignAndAfterTF }));
+				Arrays.asList(callAndBeforeTF, globalVarAssignAndAfterTF));
 
 		// If the procedure does not change after the call, we already have
 		// the result. Otherwise we have to remove the inparams since they
@@ -621,13 +626,12 @@ public final class TransFormulaUtils {
 		final boolean isInterfaceVariable;
 		if (bv.isGlobal()) {
 			if (bv.isOldvar()) {
-				if (oldVarsAssignment.getOutVars().containsKey(bv)) {
-					// is a modifiable oldvar
-					isInterfaceVariable = true;
-				} else {
+				if (!oldVarsAssignment.getOutVars().containsKey(bv)) {
 					// has to be renamed to non-old var
 					throw new AssertionError("oldvars not yet implemented");
 				}
+				// is a modifiable oldvar
+				isInterfaceVariable = true;
 			} else {
 				if (oldVarsAssignment.getInVars().containsKey(bv)) {
 					isInterfaceVariable = false;
@@ -636,31 +640,27 @@ public final class TransFormulaUtils {
 					isInterfaceVariable = true;
 				}
 			}
-		} else {
-			if (bv.getProcedure().equals(procAfterCall)) {
-				if (callTf.getAssignedVars().contains(bv)) {
-					// is an inparam
-					isInterfaceVariable = true;
+		} else if (bv.getProcedure().equals(procAfterCall)) {
+			if (callTf.getAssignedVars().contains(bv)) {
+				// is an inparam
+				isInterfaceVariable = true;
+			} else {
+				if (tolerateLocalVarsOfCallee) {
+					// no AssertionError
 				} else {
-					if (tolerateLocalVarsOfCallee) {
-						// no AssertionError
-					} else {
-						if (procBeforeCall.equals(procAfterCall) && tolerateLocalVarsOfCaller) {
-							// no AssertionError
-						} else {
-							throw new AssertionError("local var of callee is no inparam " + bv);
-						}
+					if (!procBeforeCall.equals(procAfterCall) || !tolerateLocalVarsOfCaller) {
+						throw new AssertionError("local var of callee is no inparam " + bv);
 					}
-					isInterfaceVariable = false;
-				}
-			} else if (bv.getProcedure().equals(procBeforeCall)) {
-				if (!tolerateLocalVarsOfCaller) {
-					throw new AssertionError("local var of caller " + bv);
 				}
 				isInterfaceVariable = false;
-			} else {
-				throw new AssertionError("local var neither from caller nor callee " + bv);
 			}
+		} else if (bv.getProcedure().equals(procBeforeCall)) {
+			if (!tolerateLocalVarsOfCaller) {
+				throw new AssertionError("local var of caller " + bv);
+			}
+			isInterfaceVariable = false;
+		} else {
+			throw new AssertionError("local var neither from caller nor callee " + bv);
 		}
 		return isInterfaceVariable;
 	}
@@ -724,9 +724,9 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula returnTf, final ILogger logger, final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final IIcfgSymbolTable symbolTable, final Set<IProgramNonOldVar> modifiableGlobalsOfCallee) {
-//		if (!callTf.getAuxVars().isEmpty()) {
-//			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
-//		}
+		// if (!callTf.getAuxVars().isEmpty()) {
+		// throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
+		// }
 		if (!returnTf.getAuxVars().isEmpty()) {
 			throw new AssertionError(TransFormulaUtils.TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
 		}
@@ -737,12 +737,10 @@ public final class TransFormulaUtils {
 			throw new AssertionError(TransFormulaUtils.GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
 		}
 
-
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
-		final UnmodifiableTransFormula composition =
-				sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
-						xnfConversionTechnique, simplificationTechnique, Arrays.asList(new UnmodifiableTransFormula[] {
-								callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf }));
+		final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify,
+				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
+				Arrays.asList(callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf));
 
 		// remove invars except for
 		// local vars that occur in arguments of the call
@@ -798,11 +796,9 @@ public final class TransFormulaUtils {
 				} else {
 					// keep
 				}
-			} else {
-				if (!returnTf.getOutVars().containsKey(bv)) {
-					// bv is local var of callee
-					outVarsToRemove.add(bv);
-				}
+			} else if (!returnTf.getOutVars().containsKey(bv)) {
+				// bv is local var of callee
+				outVarsToRemove.add(bv);
 			}
 		}
 		// our composition might have introduced arguments of the caller as
@@ -919,24 +915,20 @@ public final class TransFormulaUtils {
 	}
 
 	/**
-	 * The "guarded havoc" is the transition relation in which we keep the guard
-	 * (for all inVars) but havoc all variables that are updated.
+	 * The "guarded havoc" is the transition relation in which we keep the guard (for all inVars) but havoc all
+	 * variables that are updated.
 	 * <p>
-	 * TODO Matthias 2018-12-22: This could be improved to a result where we keep
-	 * also guards on outVars. E.g., the forumula that corresponds to the sequence
-	 * <code>x := 0 havoc y; assume y>=0</code> would be translated to 'true'.
-	 * However since only outVars are affected we would like to keep this
-	 * information. This could be achieved by taking the conjunction of the current
-	 * implementation together with a copy of this formula in which all inVars have
-	 * been existentially quantified.
+	 * TODO Matthias 2018-12-22: This could be improved to a result where we keep also guards on outVars. E.g., the
+	 * forumula that corresponds to the sequence <code>x := 0 havoc y; assume y>=0</code> would be translated to 'true'.
+	 * However since only outVars are affected we would like to keep this information. This could be achieved by taking
+	 * the conjunction of the current implementation together with a copy of this formula in which all inVars have been
+	 * existentially quantified.
 	 * <p>
-	 * We would afterwards change the documentation as follows.
-	 * The idea of this method is to provide an {@link UnmodifiableTransFormula} in
-	 * which all information about the connection between inVars and outVars is
-	 * dropped, with one exception: the information that a variable does not changes
-	 * its value may be kept. (We cannot guarantee that this information is kept
-	 * because the equality of two variables might be hidden in complicated formula
-	 * and we cannot detect the equality without using an SMT solver.
+	 * We would afterwards change the documentation as follows. The idea of this method is to provide an
+	 * {@link UnmodifiableTransFormula} in which all information about the connection between inVars and outVars is
+	 * dropped, with one exception: the information that a variable does not changes its value may be kept. (We cannot
+	 * guarantee that this information is kept because the equality of two variables might be hidden in complicated
+	 * formula and we cannot detect the equality without using an SMT solver.
 	 */
 	public static UnmodifiableTransFormula computeGuardedHavoc(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger,
@@ -1027,8 +1019,8 @@ public final class TransFormulaUtils {
 		final UnmodifiableTransFormula guard = computeGuard(tf, maScript, services, logger);
 		final UnmodifiableTransFormula negGuard =
 				negate(guard, maScript, services, logger, xnfConversionTechnique, simplificationTechnique);
-		final UnmodifiableTransFormula markhor = parallelComposition(logger, services, maScript, null,
-				false, xnfConversionTechnique, tf, negGuard);
+		final UnmodifiableTransFormula markhor =
+				parallelComposition(logger, services, maScript, null, false, xnfConversionTechnique, tf, negGuard);
 		return markhor;
 	}
 
@@ -1082,14 +1074,14 @@ public final class TransFormulaUtils {
 	}
 
 	public static boolean eachFreeVarIsInvar(final TransFormula tf, final Term term) {
-		final Set<TermVariable> inVars = tf.getInVars().entrySet().stream().map(x -> x.getValue())
-				.collect(Collectors.toSet());
+		final Set<TermVariable> inVars =
+				tf.getInVars().entrySet().stream().map(Entry::getValue).collect(Collectors.toSet());
 		return Arrays.stream(term.getFreeVars()).allMatch(inVars::contains);
 	}
 
 	public static boolean eachFreeVarIsOutvar(final TransFormula tf, final Term term) {
-		final Set<TermVariable> outVars = tf.getOutVars().entrySet().stream().map(x -> x.getValue())
-				.collect(Collectors.toSet());
+		final Set<TermVariable> outVars =
+				tf.getOutVars().entrySet().stream().map(Entry::getValue).collect(Collectors.toSet());
 		return Arrays.stream(term.getFreeVars()).allMatch(outVars::contains);
 	}
 
@@ -1117,7 +1109,6 @@ public final class TransFormulaUtils {
 		return new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(tf.getFormula());
 	}
 
-
 	public static UnmodifiableTransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
 				tf.getNonTheoryConsts(), true, null, false);
@@ -1129,8 +1120,8 @@ public final class TransFormulaUtils {
 	public static UnmodifiableTransFormula constructHavoc(final Set<IProgramVar> havocedVars,
 			final ManagedScript mgdScript) {
 		final Function<IProgramVar, TermVariable> valueMap = x -> mgdScript.constructFreshCopy(x.getTermVariable());
-		final Map<IProgramVar, TermVariable> outVars = havocedVars.stream()
-				.collect(Collectors.toMap(Function.identity(), valueMap));
+		final Map<IProgramVar, TermVariable> outVars =
+				havocedVars.stream().collect(Collectors.toMap(Function.identity(), valueMap));
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), outVars, false,
 				Collections.emptySet(), true, null, false);
 		tfb.setFormula(mgdScript.getScript().term("true"));
@@ -1160,8 +1151,8 @@ public final class TransFormulaUtils {
 	public static UnmodifiableTransFormula constructRemainderGuard(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final UnmodifiableTransFormula... transFormulas) {
-		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, mgdScript,
-				null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
+		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, mgdScript, null, false,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
 		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services, logger);
 		return negate(guardOfDisjunction, mgdScript, services, logger,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA);
@@ -1198,16 +1189,14 @@ public final class TransFormulaUtils {
 		return builder.finishConstruction(mgdScript);
 	}
 
-
 	/**
-	 * Checks if for a pair of {@link UnmodifiableTransFormula}s (lhs,rhs) if lhs
-	 * implies rhs, i.e., if the relation represented by lhs is a subset of the
-	 * relation by rhs.
+	 * Checks if for a pair of {@link UnmodifiableTransFormula}s (lhs,rhs) if lhs implies rhs, i.e., if the relation
+	 * represented by lhs is a subset of the relation by rhs.
 	 *
 	 * @param mgdScript
 	 *            {@link ManagedScript} that is not locked.
-	 * @return UNSAT if the implication holds, SAT if the implication does not hold,
-	 *         UNKNOWN if the SMT solver was unable to check satisfiability.
+	 * @return UNSAT if the implication holds, SAT if the implication does not hold, UNKNOWN if the SMT solver was
+	 *         unable to check satisfiability.
 	 */
 	public static LBool checkImplication(final UnmodifiableTransFormula lhs, final UnmodifiableTransFormula rhs,
 			final ManagedScript mgdScript) {
@@ -1219,20 +1208,20 @@ public final class TransFormulaUtils {
 		// Get the core part of the transition formulas.
 		// The RHS formula must be explicitly quantified, as it will be negated.
 		final Term lhsClosedFormula = lhs.getClosedFormula();
-		final Term rhsQuantFormula = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, rhs.getAuxVars(),
-				rhs.getFormula());
+		final Term rhsQuantFormula =
+				SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, rhs.getAuxVars(), rhs.getFormula());
 		final Term rhsClosedFormula = UnmodifiableTransFormula.computeClosedFormula(rhsQuantFormula, rhs.getInVars(),
 				rhs.getOutVars(), new HashSet<>(), mgdScript);
 
 		// Add explicit equalities for variables mentioned in one, but not the other,
 		// transition formula.
-		final Set<IProgramVar> lhsUnmodified = DataStructureUtils.difference(rhs.getAssignedVars(),
-				lhs.getAssignedVars());
+		final Set<IProgramVar> lhsUnmodified =
+				DataStructureUtils.difference(rhs.getAssignedVars(), lhs.getAssignedVars());
 		final Term lhsEqualities = constructExplicitEqualities(script, lhsUnmodified);
 		final Term lhsFormula = SmtUtils.and(script, lhsClosedFormula, lhsEqualities);
 
-		final Set<IProgramVar> rhsUnmodified = DataStructureUtils.difference(lhs.getAssignedVars(),
-				rhs.getAssignedVars());
+		final Set<IProgramVar> rhsUnmodified =
+				DataStructureUtils.difference(lhs.getAssignedVars(), rhs.getAssignedVars());
 		final Term rhsEqualities = constructExplicitEqualities(script, rhsUnmodified);
 		final Term rhsFormula = SmtUtils.and(script, rhsClosedFormula, rhsEqualities);
 
@@ -1250,8 +1239,8 @@ public final class TransFormulaUtils {
 	private static Term constructExplicitEqualities(final Script script, final Set<IProgramVar> variables) {
 		final List<Term> equalities = new ArrayList<>(variables.size());
 		for (final IProgramVar progVar : variables) {
-			final Term equality = SmtUtils.binaryEquality(script, progVar.getDefaultConstant(),
-					progVar.getPrimedConstant());
+			final Term equality =
+					SmtUtils.binaryEquality(script, progVar.getDefaultConstant(), progVar.getPrimedConstant());
 			equalities.add(equality);
 		}
 		return SmtUtils.and(script, equalities);
@@ -1269,7 +1258,8 @@ public final class TransFormulaUtils {
 	public static IProgramVarOrConst getProgramVarOrConstForTerm(final TransFormula tf, final Term term) {
 		if (term instanceof TermVariable) {
 			return getProgramVarForTerm(tf, (TermVariable) term);
-		} else if (term instanceof ApplicationTerm) {
+		}
+		if (term instanceof ApplicationTerm) {
 			for (final IProgramConst ntc : tf.getNonTheoryConsts()) {
 				if (ntc.getDefaultConstant().equals(term)) {
 					return ntc;
