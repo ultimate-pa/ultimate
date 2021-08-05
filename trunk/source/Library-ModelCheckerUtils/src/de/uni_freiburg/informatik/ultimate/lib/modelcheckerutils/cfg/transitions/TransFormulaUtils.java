@@ -541,13 +541,11 @@ public final class TransFormulaUtils {
 				}
 				// is a modifiable oldvar
 				isInterfaceVariable = true;
+			} else if (oldVarsAssignment.getInVars().containsKey(bv)) {
+				isInterfaceVariable = false;
 			} else {
-				if (oldVarsAssignment.getInVars().containsKey(bv)) {
-					isInterfaceVariable = false;
-				} else {
-					// global and not modified by procedure
-					isInterfaceVariable = true;
-				}
+				// global and not modified by procedure
+				isInterfaceVariable = true;
 			}
 		} else if (bv.getProcedure().equals(procAfterCall)) {
 			if (callTf.getAssignedVars().contains(bv)) {
@@ -556,10 +554,8 @@ public final class TransFormulaUtils {
 			} else {
 				if (tolerateLocalVarsOfCallee) {
 					// no AssertionError
-				} else {
-					if (!procBeforeCall.equals(procAfterCall) || !tolerateLocalVarsOfCaller) {
-						throw new AssertionError("local var of callee is no inparam " + bv);
-					}
+				} else if (!procBeforeCall.equals(procAfterCall) || !tolerateLocalVarsOfCaller) {
+					throw new AssertionError("local var of callee is no inparam " + bv);
 				}
 				isInterfaceVariable = false;
 			}
@@ -812,7 +808,7 @@ public final class TransFormulaUtils {
 		// yes! outVars of result are indeed the inVars of input
 
 		final Pair<Term, Set<TermVariable>> termAndAuxVars =
-				tryToEliminateAuxVars(services, logger, mgdScript, tf.getFormula(), auxVars);
+				tryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
 
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
@@ -871,7 +867,7 @@ public final class TransFormulaUtils {
 		}
 		final Term term = new Substitution(mgdScript, substitutionMapping).transform(tf.getFormula());
 		final Pair<Term, Set<TermVariable>> termAndAuxVars =
-				tryToEliminateAuxVars(services, logger, mgdScript, term, auxVars);
+				tryToEliminateAuxVars(services, mgdScript, term, auxVars);
 
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), tf.getNonTheoryConsts().isEmpty(),
@@ -890,7 +886,7 @@ public final class TransFormulaUtils {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
 		final Pair<Term, Set<TermVariable>> termAndAuxVars =
-				tryToEliminateAuxVars(services, logger, maScript, tf.getFormula(), tf.getAuxVars());
+				tryToEliminateAuxVars(services, maScript, tf.getFormula(), tf.getAuxVars());
 		if (!termAndAuxVars.getSecond().isEmpty()) {
 			throw new UnsupportedOperationException("cannot negate if there are auxVars");
 		}
@@ -910,15 +906,14 @@ public final class TransFormulaUtils {
 	 * @return new term and set of remaining auxvars.
 	 */
 	private static Pair<Term, Set<TermVariable>> tryToEliminateAuxVars(final IUltimateServiceProvider services,
-			final ILogger logger, final ManagedScript maScript, final Term formula,
-			final Set<TermVariable> oldAuxVars) {
-		final Term resultTerm = PartialQuantifierElimination.quantifier(services, logger, maScript,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				QuantifiedFormula.EXISTS, oldAuxVars, formula);
+			final ManagedScript maScript, final Term formula, final Set<TermVariable> oldAuxVars) {
+		final Term quantifiedTerm =
+				SmtUtils.quantifier(maScript.getScript(), QuantifiedFormula.EXISTS, oldAuxVars, formula);
+		final Term resultTerm = PartialQuantifierElimination.eliminate(services, maScript, quantifiedTerm,
+				SimplificationTechnique.POLY_PAC);
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(resultTerm.getFreeVars()));
 		freeVars.retainAll(oldAuxVars);
-		final Pair<Term, Set<TermVariable>> result = new Pair<>(resultTerm, freeVars);
-		return result;
+		return new Pair<>(resultTerm, freeVars);
 	}
 
 	public static UnmodifiableTransFormula computeMarkhorTransFormula(final UnmodifiableTransFormula tf,
