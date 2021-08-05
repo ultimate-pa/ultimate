@@ -70,17 +70,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -133,7 +132,6 @@ public class Statements2TransFormula {
 
 	public Statements2TransFormula(final Boogie2SMT boogie2smt, final IUltimateServiceProvider services,
 			final Expression2Term expression2Term, final boolean simplePartialSkolemization) {
-		super();
 		mServices = services;
 		mSimplePartialSkolemization = simplePartialSkolemization;
 		mBoogie2SMT = boogie2smt;
@@ -198,9 +196,6 @@ public class Statements2TransFormula {
 		Infeasibility infeasibility = null;
 		if (simplify) {
 			formula = SmtUtils.simplify(mMgdScript, formula, mServices, simplicationTechnique);
-			if (formula == mScript.term("false")) {
-				infeasibility = Infeasibility.INFEASIBLE;
-			}
 		}
 
 		if (feasibilityKnown) {
@@ -208,16 +203,12 @@ public class Statements2TransFormula {
 		}
 
 		if (infeasibility == null) {
-			if (simplify) {
+			if (formula == mScript.term("false")) {
+				infeasibility = Infeasibility.INFEASIBLE;
+			} else if (simplify) {
 				infeasibility = Infeasibility.UNPROVEABLE;
 			} else {
-				final LBool isSat = Util.checkSat(mScript, formula);
-				if (isSat == LBool.UNSAT) {
-					formula = mScript.term("false");
-					infeasibility = Infeasibility.INFEASIBLE;
-				} else {
-					infeasibility = Infeasibility.UNPROVEABLE;
-				}
+				infeasibility = Infeasibility.NOT_DETERMINED;
 			}
 		}
 
@@ -331,21 +322,20 @@ public class Statements2TransFormula {
 
 	@SuppressWarnings("unused")
 	private void addAssert(final AssertStatement assertstmt) {
-		if (COMPUTE_ASSERTS) {
-			final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-			final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assertstmt.getFormula());
-			mAuxVars.addAll(tlres.getAuxiliaryVars());
-			mOverapproximations.putAll(tlres.getOverappoximations());
-			final Term f = tlres.getTerm();
-
-			mAssumes = SmtUtils.and(mScript, f, mAssumes);
-			eliminateAuxVarsViaDer();
-
-			mAsserts = SmtUtils.and(mScript, f, mAsserts);
-			assert assertTermContainsNoNull(mAssumes);
-		} else {
+		if (!COMPUTE_ASSERTS) {
 			throw new AssertionError(MSG_COMPUTE_ASSERTS_NOT_AVAILABLE);
 		}
+		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
+		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assertstmt.getFormula());
+		mAuxVars.addAll(tlres.getAuxiliaryVars());
+		mOverapproximations.putAll(tlres.getOverappoximations());
+		final Term f = tlres.getTerm();
+
+		mAssumes = SmtUtils.and(mScript, f, mAssumes);
+		eliminateAuxVarsViaDer();
+
+		mAsserts = SmtUtils.and(mScript, f, mAsserts);
+		assert assertTermContainsNoNull(mAssumes);
 	}
 
 	private static boolean assertTermContainsNoNull(final Term result) {
@@ -420,7 +410,8 @@ public class Statements2TransFormula {
 		offset = 0;
 		for (final VarList vl : procedure.getInParams()) {
 			for (final String id : vl.getIdentifiers()) {
-				substitution.put(id, argumentTerms[offset++]);
+				substitution.put(id, argumentTerms[offset]);
+				offset++;
 			}
 		}
 
@@ -621,7 +612,6 @@ public class Statements2TransFormula {
 		private final Map<String, Term> mSubstitution;
 
 		public SubstitutionTranslatorId(final Map<String, Term> substitution) {
-			super();
 			mSubstitution = substitution;
 		}
 
@@ -636,7 +626,6 @@ public class Statements2TransFormula {
 		private final Map<IProgramVar, Term> mSubstitution;
 
 		public SubstitutionTranslatorBoogieVar(final Map<IProgramVar, Term> substitution) {
-			super();
 			mSubstitution = substitution;
 		}
 
@@ -934,7 +923,6 @@ public class Statements2TransFormula {
 
 		public TranslationResult(final UnmodifiableTransFormula transFormula,
 				final Map<String, ILocation> overapproximations) {
-			super();
 			mTransFormula = transFormula;
 			mOverapproximations = overapproximations;
 		}

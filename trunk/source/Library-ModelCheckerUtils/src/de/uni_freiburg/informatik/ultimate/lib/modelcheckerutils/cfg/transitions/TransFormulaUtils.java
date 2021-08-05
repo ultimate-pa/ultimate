@@ -83,7 +83,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -143,7 +142,7 @@ public final class TransFormulaUtils {
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<UnmodifiableTransFormula> transFormula) {
 		if (logger.isDebugEnabled()) {
-			logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
+			logger.debug("sequential composition with%s formula simplification", simplify ? "" : "out");
 		}
 		final Script script = mgdScript.getScript();
 		final Set<TermVariable> auxVars = new HashSet<>();
@@ -154,10 +153,11 @@ public final class TransFormulaUtils {
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (int i = transFormula.size() - 1; i >= 0; i--) {
-			for (final IProgramVar var : transFormula.get(i).getOutVars().keySet()) {
-
-				final TermVariable outVar = transFormula.get(i).getOutVars().get(var);
-				TermVariable newOutVar;
+			final UnmodifiableTransFormula currentTf = transFormula.get(i);
+			for (final Entry<IProgramVar, TermVariable> entry : currentTf.getOutVars().entrySet()) {
+				final IProgramVar var = entry.getKey();
+				final TermVariable outVar = entry.getValue();
+				final TermVariable newOutVar;
 				if (tfb.containsInVar(var)) {
 					newOutVar = tfb.getInVar(var);
 				} else {
@@ -169,7 +169,7 @@ public final class TransFormulaUtils {
 				if (!tfb.containsOutVar(var)) {
 					tfb.addOutVar(var, newOutVar);
 				}
-				final TermVariable inVar = transFormula.get(i).getInVars().get(var);
+				final TermVariable inVar = currentTf.getInVars().get(var);
 				if (inVar == null) {
 					// case: var is assigned without reading or havoced
 					if (tfb.getOutVar(var) != newOutVar) {
@@ -193,17 +193,18 @@ public final class TransFormulaUtils {
 				}
 			}
 			final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript
-					.constructFreshCopies(transFormula.get(i).getAuxVars());
+					.constructFreshCopies(currentTf.getAuxVars());
 			substitutionMapping.putAll(oldAuxVar2newAuxVar);
 			auxVars.addAll(oldAuxVar2newAuxVar.values());
-			tfb.addBranchEncoders(transFormula.get(i).getBranchEncoders());
+			tfb.addBranchEncoders(currentTf.getBranchEncoders());
 
-			for (final IProgramVar var : transFormula.get(i).getInVars().keySet()) {
-				if (transFormula.get(i).getOutVars().containsKey(var)) {
+			for (final Entry<IProgramVar, TermVariable> entry : currentTf.getInVars().entrySet()) {
+				final IProgramVar var = entry.getKey();
+				if (currentTf.getOutVars().containsKey(var)) {
 					// nothing do to, this var was already considered above
 				} else {
 					// case var occurs only as inVar: var is not modfied.
-					final TermVariable inVar = transFormula.get(i).getInVars().get(var);
+					final TermVariable inVar = entry.getValue();
 					TermVariable newInVar;
 					if (tfb.containsInVar(var)) {
 						newInVar = tfb.getInVar(var);
@@ -215,10 +216,10 @@ public final class TransFormulaUtils {
 					substitutionMapping.put(inVar, newInVar);
 				}
 			}
-			final Term originalFormula = transFormula.get(i).getFormula();
+			final Term originalFormula = currentTf.getFormula();
 			final Term updatedFormula =
 					new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(originalFormula);
-			nonTheoryConsts.addAll(transFormula.get(i).getNonTheoryConsts());
+			nonTheoryConsts.addAll(currentTf.getNonTheoryConsts());
 			formula = SmtUtils.and(script, formula, updatedFormula);
 		}
 
@@ -227,8 +228,7 @@ public final class TransFormulaUtils {
 
 		if (simplify) {
 			try {
-				final Term simplified = SmtUtils.simplify(mgdScript, formula, services, simplificationTechnique);
-				formula = simplified;
+				formula = SmtUtils.simplify(mgdScript, formula, services, simplificationTechnique);
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription =
 						"doing sequential composition of " + transFormula.size() + " TransFormulas";
@@ -243,8 +243,8 @@ public final class TransFormulaUtils {
 			// formula, services, logger, simplificationTechnique, xnfConversionTechnique);
 			final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, formula);
 			auxVars.clear();
-			final Term partiallyEliminated = PartialQuantifierElimination.eliminateCompat(services, mgdScript,
-					simplificationTechnique, quantified);
+			final Term partiallyEliminated =
+					PartialQuantifierElimination.eliminate(services, mgdScript, quantified, simplificationTechnique);
 			final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
 			if (pnf instanceof QuantifiedFormula
 					&& ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
@@ -254,8 +254,10 @@ public final class TransFormulaUtils {
 			} else {
 				eliminated = pnf;
 			}
-			logger.debug(new DebugMessage("DAG size before PQE {0}, DAG size after PQE {1}",
-					new DagSizePrinter(formula), new DagSizePrinter(eliminated)));
+			if (logger.isDebugEnabled()) {
+				logger.debug("DAG size before PQE %s, DAG size after PQE %s", new DagSizePrinter(formula),
+						new DagSizePrinter(eliminated));
+			}
 			formula = eliminated;
 		} else {
 			final XnfDer xnfDer = new XnfDer(mgdScript, services);
@@ -264,21 +266,11 @@ public final class TransFormulaUtils {
 		}
 		if (simplify) {
 			formula = SmtUtils.simplify(mgdScript, formula, services, simplificationTechnique);
-		} else if (checkSat) {
-			final LBool isSat = Util.checkSat(script, formula);
-			if (isSat == LBool.UNSAT) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("CodeBlock already infeasible");
-				}
-				formula = script.term("false");
-			}
 		}
 
 		Infeasibility infeasibility;
 		if (formula == script.term("false")) {
 			infeasibility = Infeasibility.INFEASIBLE;
-		} else if (simplify || checkSat) {
-			infeasibility = Infeasibility.UNPROVEABLE;
 		} else {
 			infeasibility = Infeasibility.NOT_DETERMINED;
 		}
@@ -338,14 +330,15 @@ public final class TransFormulaUtils {
 
 		final Term[] renamedFormulas = new Term[transFormulas.length];
 		for (int i = 0; i < transFormulas.length; i++) {
-			tfb.addBranchEncoders(transFormulas[i].getBranchEncoders());
+			final UnmodifiableTransFormula currentTf = transFormulas[i];
+			tfb.addBranchEncoders(currentTf.getBranchEncoders());
 			final Term unifiedFormula = unification.getUnifiedFormula(i);
 			if (useBranchEncoders) {
 				renamedFormulas[i] = Util.implies(mgdScript.getScript(), branchIndicators[i], unifiedFormula);
-			} else {
+				} else {
 				renamedFormulas[i] = unifiedFormula;
+				}
 			}
-		}
 
 		Term resultFormula;
 		if (useBranchEncoders) {
@@ -355,13 +348,7 @@ public final class TransFormulaUtils {
 		} else {
 			resultFormula = SmtUtils.or(mgdScript.getScript(), renamedFormulas);
 		}
-		final LBool termSat = Util.checkSat(mgdScript.getScript(), resultFormula);
-		Infeasibility inFeasibility;
-		if (termSat == LBool.UNSAT) {
-			inFeasibility = Infeasibility.INFEASIBLE;
-		} else {
-			inFeasibility = Infeasibility.UNPROVEABLE;
-		}
+
 		if (tranformToCNF) {
 			resultFormula = SmtUtils.toCnf(services, mgdScript, resultFormula, xnfConversionTechnique);
 		}
@@ -371,7 +358,7 @@ public final class TransFormulaUtils {
 		TransFormulaUtils.addConstantsIfInFormula(tfb, resultFormula, nonTheoryConsts);
 
 		tfb.setFormula(resultFormula);
-		tfb.setInfeasibility(inFeasibility);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(mgdScript);
 	}
 
@@ -516,10 +503,9 @@ public final class TransFormulaUtils {
 			}
 		}
 
-		assert !result.getBranchEncoders().isEmpty()
-				|| predicateBasedResultCheck(services, mgdScript, xnfConversionTechnique, simplificationTechnique,
-						beforeCall, callTf, oldVarsAssignment, globalVarsAssignment, afterCall, result, symbolTable,
-						modifiableGlobalsOfEndProcedure) : "sequentialCompositionWithPendingCall - incorrect result";
+		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, mgdScript, beforeCall,
+				callTf, oldVarsAssignment, globalVarsAssignment, afterCall, result, symbolTable,
+				modifiableGlobalsOfEndProcedure) : "sequentialCompositionWithPendingCall - incorrect result";
 		return result;
 	}
 
@@ -571,8 +557,7 @@ public final class TransFormulaUtils {
 	}
 
 	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique, final List<UnmodifiableTransFormula> beforeCall,
+			final ManagedScript mgdScript, final List<UnmodifiableTransFormula> beforeCall,
 			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula afterCallTf,
 			final UnmodifiableTransFormula result, final IIcfgSymbolTable symbolTable,
@@ -730,16 +715,14 @@ public final class TransFormulaUtils {
 		assert SmtUtils.neitherKeyNorValueIsNull(
 				result.getOutVars()) : "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert isIntraprocedural(result);
-		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, logger, mgdScript,
-				xnfConversionTechnique, simplificationTechnique, callTf, oldVarsAssignment, globalVarsAssignment,
-				procedureTf, returnTf, result, symbolTable,
+		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, logger, mgdScript, callTf,
+				oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, result, symbolTable,
 				modifiableGlobalsOfCallee) : "sequentialCompositionWithCallAndReturn - incorrect result";
 		return result;
 	}
 
 	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique, final UnmodifiableTransFormula callTf,
+			final ManagedScript mgdScript, final UnmodifiableTransFormula callTf,
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula procedureTf, final UnmodifiableTransFormula returnTf,
 			final UnmodifiableTransFormula result, final IIcfgSymbolTable symbolTable,
@@ -794,7 +777,7 @@ public final class TransFormulaUtils {
 	}
 
 	public static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
-			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger) {
+			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
@@ -836,7 +819,7 @@ public final class TransFormulaUtils {
 	 * formula and we cannot detect the equality without using an SMT solver.
 	 */
 	public static UnmodifiableTransFormula computeGuardedHavoc(final UnmodifiableTransFormula tf,
-			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final boolean cellPrecisionForArrays) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -866,8 +849,7 @@ public final class TransFormulaUtils {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
 		final Term term = new Substitution(mgdScript, substitutionMapping).transform(tf.getFormula());
-		final Pair<Term, Set<TermVariable>> termAndAuxVars =
-				tryToEliminateAuxVars(services, mgdScript, term, auxVars);
+		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, mgdScript, term, auxVars);
 
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), tf.getNonTheoryConsts().isEmpty(),
@@ -879,9 +861,7 @@ public final class TransFormulaUtils {
 	}
 
 	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
-			final IUltimateServiceProvider services, final ILogger logger,
-			final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) {
+			final IUltimateServiceProvider services) {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
@@ -918,26 +898,17 @@ public final class TransFormulaUtils {
 
 	public static UnmodifiableTransFormula computeMarkhorTransFormula(final UnmodifiableTransFormula tf,
 			final ManagedScript maScript, final IUltimateServiceProvider services, final ILogger logger,
-			final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) {
-		final UnmodifiableTransFormula guard = computeGuard(tf, maScript, services, logger);
-		final UnmodifiableTransFormula negGuard =
-				negate(guard, maScript, services, logger, xnfConversionTechnique, simplificationTechnique);
-		final UnmodifiableTransFormula markhor =
-				parallelComposition(logger, services, maScript, null, false, xnfConversionTechnique, tf, negGuard);
-		return markhor;
+			final XnfConversionTechnique xnfConversionTechnique) {
+		final UnmodifiableTransFormula guard = computeGuard(tf, maScript, services);
+		final UnmodifiableTransFormula negGuard = negate(guard, maScript, services);
+		return parallelComposition(logger, services, maScript, null, false, xnfConversionTechnique, tf, negGuard);
 	}
 
 	public static UnmodifiableTransFormula computeEncodedBranchFormula(final UnmodifiableTransFormula tf,
 			final UnmodifiableTransFormula altPath, final ManagedScript maScript,
 			final IUltimateServiceProvider services, final ILogger logger,
-			final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) {
-
-		final UnmodifiableTransFormula blockEnoded =
-				parallelComposition(logger, services, maScript, null, false, xnfConversionTechnique, tf, altPath);
-		return blockEnoded;
-
+			final XnfConversionTechnique xnfConversionTechnique) {
+		return parallelComposition(logger, services, maScript, null, false, xnfConversionTechnique, tf, altPath);
 	}
 
 	/**
@@ -1057,9 +1028,8 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula... transFormulas) {
 		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, mgdScript, null, false,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
-		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services, logger);
-		return negate(guardOfDisjunction, mgdScript, services, logger,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA);
+		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services);
+		return negate(guardOfDisjunction, mgdScript, services);
 	}
 
 	/**
