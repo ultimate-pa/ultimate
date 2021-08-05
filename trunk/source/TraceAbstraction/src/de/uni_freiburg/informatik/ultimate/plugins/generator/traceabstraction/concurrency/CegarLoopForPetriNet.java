@@ -74,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -84,7 +83,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -712,28 +710,27 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 				new	OwickiGriesFloydHoare(mServices, mCsToolkit, mFinPrefix, mInitialNet, x -> x, mRefinementEngines);
 		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 
-		final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
-		for (final var entry : petriFloydHoare.entrySet()) {
-			final var markPre = entry.getKey();
-			final var pre = entry.getValue();
-			for (final var trans : mInitialNet.getTransitions()) {
-				if (markPre.isTransitionEnabled(trans, mInitialNet)) {
-					Marking<L, IPredicate> markPost;
-					try {
-						markPost = markPre.fireTransition(trans, mInitialNet);
-						final var post = petriFloydHoare.getOrDefault(markPost, mPredicateFactory.or());
-						final Validity valid = htc.checkInternal(pre, (IInternalAction) trans.getSymbol(), post);
-						if (valid != Validity.VALID) {
-							throw new IllegalStateException("");
-						}
-					} catch (final PetriNetNot1SafeException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-				}
-			}
-		}
+		// final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
+		// for (final var entry : petriFloydHoare.entrySet()) {
+		// final var markPre = entry.getKey();
+		// final var pre = entry.getValue();
+		// for (final var trans : mInitialNet.getTransitions()) {
+		// if (markPre.isTransitionEnabled(trans, mInitialNet)) {
+		// Marking<L, IPredicate> markPost;
+		// try {
+		// markPost = markPre.fireTransition(trans, mInitialNet);
+		// final var post = petriFloydHoare.getOrDefault(markPost, mPredicateFactory.or());
+		// final Validity valid = htc.checkInternal(pre, (IInternalAction) trans.getSymbol(), post);
+		// if (valid != Validity.VALID) {
+		// throw new IllegalStateException("");
+		// }
+		// } catch (final PetriNetNot1SafeException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+		// }
+		// }
+		// }
 
 		final OwickiGriesConstruction<IPredicate, L>construction =
 				new OwickiGriesConstruction<>(mServices, mCsToolkit, mInitialNet, petriFloydHoare, mRefinementEngines);
