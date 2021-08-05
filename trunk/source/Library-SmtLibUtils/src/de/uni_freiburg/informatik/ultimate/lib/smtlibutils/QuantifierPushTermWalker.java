@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public class QuantifierPushTermWalker extends TermWalker<Context> {
 	private final ManagedScript mMgdScript;
@@ -66,7 +68,6 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	public QuantifierPushTermWalker(final IUltimateServiceProvider services, final boolean applyDistributivity,
 			final PqeTechniques pqeTechniques, final SimplificationTechnique simplificationTechnique,
 			final ManagedScript mgdScript) {
-		super();
 		mServices = services;
 		mApplyDistributivity = applyDistributivity;
 		mPqeTechniques = pqeTechniques;
@@ -75,8 +76,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	}
 
 	@Override
-	Context constructContextForApplicationTerm(final Context context,
-			final FunctionSymbol symb, final List<Term> allParams, final int selectedParam) {
+	Context constructContextForApplicationTerm(final Context context, final FunctionSymbol symb,
+			final List<Term> allParams, final int selectedParam) {
 		return context.constructChildContextForConDis(mServices, mMgdScript, symb, allParams, selectedParam);
 	}
 
@@ -89,8 +90,9 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	@Override
 	DescendResult convert(final Context context, final Term term) {
 		FormulaClassification classification = null;
-		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context.getCriticalConstraint(), term);
-				//PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(), Collections.singleton(term));
+		Term currentTerm =
+				PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context.getCriticalConstraint(), term);
+		// PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(), Collections.singleton(term));
 		int iterations = 0;
 		while (true) {
 			classification = QuantifierPusher.classify(currentTerm);
@@ -103,41 +105,39 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
 							mSimplificationTechnique, context, currentTerm);
 					return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
-				} else {
-					final Term negated = SmtUtils.unzipNot(currentTerm);
-					if (negated != null && SmtUtils.isAtomicFormula(negated)) {
-						currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
-								SimplificationTechnique.POLY_PAC, context, currentTerm);
-						currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
-								mSimplificationTechnique, context, currentTerm);
-						return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
-					} else {
-						return new TermContextTransformationEngine.IntermediateResultForDescend(currentTerm);
-					}
 				}
+				final Term negated = SmtUtils.unzipNot(currentTerm);
+				if (negated != null && SmtUtils.isAtomicFormula(negated)) {
+					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
+							SimplificationTechnique.POLY_PAC, context, currentTerm);
+					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
+							mSimplificationTechnique, context, currentTerm);
+					return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
+				}
+				return new TermContextTransformationEngine.IntermediateResultForDescend(currentTerm);
 			}
 			case SAME_QUANTIFIER: {
-				currentTerm = QuantifierUtils.flattenQuantifiers(mMgdScript.getScript(), (QuantifiedFormula) currentTerm);
+				currentTerm =
+						QuantifierUtils.flattenQuantifiers(mMgdScript.getScript(), (QuantifiedFormula) currentTerm);
 				break;
 			}
 			case DUAL_QUANTIFIER: {
 				final Context childContext = context.constructChildContextForQuantifiedFormula(mMgdScript.getScript(),
 						Arrays.asList(((QuantifiedFormula) currentTerm).getVariables()));
 				final EliminationTask et = new EliminationTask((QuantifiedFormula) currentTerm, childContext);
-				final Term tmp = QuantifierPusher.processDualQuantifier(mServices, mMgdScript,
-						mApplyDistributivity, mPqeTechniques, mSimplificationTechnique, et,
-						QuantifierPushTermWalker::eliminate);
+				final Term tmp = QuantifierPusher.processDualQuantifier(mServices, mMgdScript, mApplyDistributivity,
+						mPqeTechniques, mSimplificationTechnique, et, QuantifierPushTermWalker::eliminate);
 				final FormulaClassification tmpClassification = QuantifierPusher.classify(tmp);
 				if (tmpClassification == FormulaClassification.DUAL_QUANTIFIER) {
 					// unable to push, we have to take this subformula as result
 					return new TermContextTransformationEngine.FinalResultForAscend(tmp);
-				} else {
-					currentTerm = tmp;
-					break;
 				}
+				currentTerm = tmp;
+				break;
 			}
 			case CORRESPONDING_FINITE_CONNECTIVE: {
-				currentTerm = QuantifierPusher.pushOverCorrespondingFiniteConnective(mMgdScript.getScript(), (QuantifiedFormula) currentTerm);
+				currentTerm = QuantifierPusher.pushOverCorrespondingFiniteConnective(mMgdScript.getScript(),
+						(QuantifiedFormula) currentTerm);
 				assert currentTerm != null : "corresponding connective case must never fail";
 				break;
 			}
@@ -152,16 +152,15 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 							(QuantifiedFormula) currentTerm, context.getCriticalConstraint(),
 							QuantifierPushTermWalker::eliminate);
 					return new TermContextTransformationEngine.FinalResultForAscend(res);
-				} else {
-					currentTerm = tmp;
-					break;
 				}
+				currentTerm = tmp;
+				break;
 			}
 			case DUAL_FINITE_CONNECTIVE: {
 				final EliminationTask et = new EliminationTask((QuantifiedFormula) currentTerm, context);
-				final Term tmp = QuantifierPusher.tryToPushOverDualFiniteConnective(mServices, mMgdScript,
-						mApplyDistributivity, mPqeTechniques, mSimplificationTechnique, et,
-						QuantifierPushTermWalker::eliminate);
+				final Term tmp =
+						QuantifierPusher.tryToPushOverDualFiniteConnective(mServices, mMgdScript, mApplyDistributivity,
+								mPqeTechniques, mSimplificationTechnique, et, QuantifierPushTermWalker::eliminate);
 				if (tmp == null) {
 					// no more eliminations possible
 					// let's recurse, there may be quantifiers in subformulas
@@ -170,43 +169,42 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 							(QuantifiedFormula) currentTerm, context.getCriticalConstraint(),
 							QuantifierPushTermWalker::eliminate);
 					return new TermContextTransformationEngine.FinalResultForAscend(res);
-				} else {
-					currentTerm = tmp;
-					break;
 				}
+				currentTerm = tmp;
+				break;
 			}
 			default:
 				throw new AssertionError("unknown value " + classification);
 			}
 			iterations++;
 		}
-//		throw new AssertionError();
-//
-//
-//
-//
-//		if (term instanceof ApplicationTerm) {
-//			final ApplicationTerm appTerm = (ApplicationTerm) term;
-//			if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
-//				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-//			}
-//		} else if (term instanceof QuantifiedFormula) {
-//			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-//		}
-//		return new TermContextTransformationEngine.FinalResultForAscend<Term>(term);
+		// throw new AssertionError();
+		//
+		//
+		//
+		//
+		// if (term instanceof ApplicationTerm) {
+		// final ApplicationTerm appTerm = (ApplicationTerm) term;
+		// if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
+		// return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+		// }
+		// } else if (term instanceof QuantifiedFormula) {
+		// return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+		// }
+		// return new TermContextTransformationEngine.FinalResultForAscend<Term>(term);
 	}
-
-
 
 	@Override
 	Term constructResultForApplicationTerm(final Context context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
 		// TODO: Maybe full simplification with solver, maybe no simplification
 		if (originalApplicationTerm.getFunction().getName().equals("and")) {
-			return PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(), Arrays.asList(resultParams));
+			return PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(),
+					Arrays.asList(resultParams));
 		}
 		if (originalApplicationTerm.getFunction().getName().equals("or")) {
-			return PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(), Arrays.asList(resultParams));
+			return PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(),
+					Arrays.asList(resultParams));
 		}
 		// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
 		// terms here.
@@ -239,33 +237,36 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm) {
-		if (DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, inputTerm, services,
-					SimplificationTechnique.POLY_PAC);
-			final String message = "Quantifier elimination called on non-simplified input: "
-					+ esr.buildSizeReductionMessage();
-			if (esr.getReductionRatioInPercent() < 100) {
-				services.getLoggingService().getLogger(QuantifierPusher.class).warn(message);
-			}
-		}
-		final Term result = TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services,
-				applyDistributivity, quantifierEliminationTechniques, simplificationTechnique, script), context,
+		checkSimplificationPotential(services, script, "Quantifier elimination called on non-simplified input",
 				inputTerm);
-		if (DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, result, services,
-					SimplificationTechnique.POLY_PAC);
-			final String message = "Quantifier elimination failed to simlify output: "
-					+ esr.buildSizeReductionMessage();
-			if (esr.getReductionRatioInPercent() < 100) {
-				services.getLoggingService().getLogger(QuantifierPusher.class).warn(message);
-			}
-		}
+		final Term result =
+				TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services, applyDistributivity,
+						quantifierEliminationTechniques, simplificationTechnique, script), context, inputTerm);
+		checkSimplificationPotential(services, script, "Quantifier elimination failed to simlify output", inputTerm);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
 			SmtUtils.checkLogicalEquivalenceForDebugging(script.getScript(), result, inputTerm, QuantifierPusher.class,
 					tolerateUnknown);
 		}
 		return result;
+	}
+
+	private static void checkSimplificationPotential(final IUltimateServiceProvider services,
+			final ManagedScript script, final String msg, final Term inputTerm) {
+		if (!DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
+			return;
+		}
+		final ExtendedSimplificationResult esr =
+				SmtUtils.simplifyWithStatistics(script, inputTerm, services, SimplificationTechnique.POLY_PAC);
+		final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
+		if (esr.getReductionRatioInPercent() < 100) {
+			logger.warn("%s: %s (took %s)", msg, esr.buildSizeReductionMessage(),
+					CoreUtil.humanReadableTime(esr.getSimplificationTimeNano(), TimeUnit.NANOSECONDS, 2));
+		} else if (esr.getSimplificationTimeNano() > 5000000) {
+			logger.warn("Useless simplification took %s: %s",
+					CoreUtil.humanReadableTime(esr.getSimplificationTimeNano(), TimeUnit.NANOSECONDS, 2),
+					esr.buildSizeReductionMessage());
+		}
 	}
 
 	@Override
