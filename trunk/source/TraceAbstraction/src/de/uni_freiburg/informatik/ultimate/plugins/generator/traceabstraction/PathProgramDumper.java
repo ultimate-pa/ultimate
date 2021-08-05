@@ -629,7 +629,7 @@ public class PathProgramDumper {
 		addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
 		final ManagedScript mgdScript = mPathProgram.getCfgSmtToolkit().getManagedScript();
 		final UnmodifiableTransFormula guardTf =
-				TransFormulaUtils.computeGuard(action.getTransformula(), mgdScript, mServices, mLogger);
+				TransFormulaUtils.computeGuard(action.getTransformula(), mgdScript, mServices);
 		final Term guardTerm = renameInvarsToDefaultVars(mgdScript, guardTf);
 		final Expression guardExpression = mTerm2Expression.translate(guardTerm);
 		final AssumeStatement assume = new AssumeStatement(constructNewLocation(), guardExpression);

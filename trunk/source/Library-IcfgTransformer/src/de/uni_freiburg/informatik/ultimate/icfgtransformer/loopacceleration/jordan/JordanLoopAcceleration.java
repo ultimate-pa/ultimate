@@ -151,7 +151,7 @@ public class JordanLoopAcceleration {
 
 		final boolean isAlternatingClosedFormRequired = isAlternatingClosedFormRequired(jordanUpdate);
 		final UnmodifiableTransFormula guardTf =
-				TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services, logger);
+				TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services);
 		final UnmodifiableTransFormula loopAccelerationFormula =
 				createLoopAccelerationFormula(logger, services, mgdScript, su, varMatrixIndexMap, jordanUpdate,
 						loopTransFormula, guardTf, true, quantifyItFinExplicitly, isAlternatingClosedFormRequired);

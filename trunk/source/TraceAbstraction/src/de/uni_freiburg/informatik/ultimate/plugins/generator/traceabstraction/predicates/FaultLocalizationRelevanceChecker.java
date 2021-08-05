@@ -345,7 +345,7 @@ public class FaultLocalizationRelevanceChecker {
 			final UnmodifiableTransFormula tf, final ManagedScript mgdScript) {
 		UnmodifiableTransFormula result;
 		if (containsArraySort(tf.getFormula())) {
-			result = TransFormulaUtils.computeGuardedHavoc(tf, mgdScript, services, mLogger, true); 
+			result = TransFormulaUtils.computeGuardedHavoc(tf, mgdScript, services, true); 
 		} else {
 			result = TransFormulaUtils.constructHavoc(tf, mgdScript);
 		}
