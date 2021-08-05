@@ -326,6 +326,17 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS =
 			RcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
 
+	public static final String LABEL_OG_ITERATIVE_COSETS = "Compute co-sets for OwickiGries annotation iteratively";
+	public static final boolean DEF_OG_ITERATIVE_COSETS = false;
+
+	public static final String LABEL_OG_COVERING_SIMPLIFICATION =
+			"Simplify away covered predicates in OwickiGries annotation";
+	public static final boolean DEF_OG_COVERING_SIMPLIFICATION = false;
+
+	public static final String LABEL_OG_HITTING_SET_OPTIMIZATION =
+			"Use hitting sets in computation of OwickiGries annotation";
+	public static final boolean DEF_OG_HITTING_SET_OPTIMIZATION = false;
+
 	/**
 	 * Constructor.
 	 */
@@ -499,7 +510,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH, DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH,
 						PreferenceType.Directory),
 				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
-						PreferenceType.KeyValue), };
+						PreferenceType.KeyValue),
+				new UltimatePreferenceItem<>(LABEL_OG_ITERATIVE_COSETS, DEF_OG_ITERATIVE_COSETS,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_OG_COVERING_SIMPLIFICATION, DEF_OG_COVERING_SIMPLIFICATION,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_OG_HITTING_SET_OPTIMIZATION, DEF_OG_HITTING_SET_OPTIMIZATION,
+						PreferenceType.Boolean), };
 	}
 
 	/**

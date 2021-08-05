@@ -455,4 +455,16 @@ public final class TAPreferences {
 	public McrInterpolantMethod getMcrInterpolantMethod() {
 		return mMcrInterpolantMethod;
 	}
+
+	public boolean owickiGriesIterativeCosets() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OG_ITERATIVE_COSETS);
+	}
+
+	public boolean owickiGriesCoveringSimplification() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OG_COVERING_SIMPLIFICATION);
+	}
+
+	public boolean owickiGriesHittingSets() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OG_HITTING_SET_OPTIMIZATION);
+	}
 }

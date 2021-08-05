@@ -99,7 +99,8 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IPetriNet<LETTER, PLACE> net, final Map<Marking<LETTER, PLACE>, IPredicate> floydHoare,
-			final ArrayList<IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines) {
+			final ArrayList<IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines,
+			final boolean useHittingSets) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mManagedScript = csToolkit.getManagedScript();
@@ -112,7 +113,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
 
 		mGhostVariables = getGhostVariables();
-		mHittingSet = getHittingSet();
+		mHittingSet = useHittingSets ? getHittingSet() : null;
 		final Map<PLACE, IPredicate> formulaMapping = getFormulaMapping();
 		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
@@ -147,15 +148,19 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 */
 	private Term getMarkingPredicate(final Marking<LETTER, PLACE> marking) {
 		final Set<Term> terms = new HashSet<>();
-		final Set<PLACE> posPlaces =
-				DataStructureUtils.intersection(mHittingSet, marking.stream().collect(Collectors.toSet()));
-		// final Set<PLACE> posPlaces = marking.stream().collect(Collectors.toSet());
+		Set<PLACE> posPlaces = marking.stream().collect(Collectors.toSet());
+		if (mHittingSet != null) {
+			posPlaces = DataStructureUtils.intersection(mHittingSet, posPlaces);
+		}
 		for (final PLACE otherPlace : posPlaces) {
 			final Term ghost = mGhostVariables.get(otherPlace).getTerm();
 			terms.add(ghost);
 		}
-		terms.addAll(getHitNotMarking(marking));
-		// terms.addAll(getAllNotMarking(marking));
+		if (mHittingSet == null) {
+			terms.addAll(getAllNotMarking(marking));
+		} else {
+			terms.addAll(getHitNotMarking(marking));
+		}
 		terms.add(mFloydHoareAnnotation.get(marking).getFormula());
 		return SmtUtils.and(mScript, terms);
 	}

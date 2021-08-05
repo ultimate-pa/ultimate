@@ -76,6 +76,7 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	private final BasicPredicateFactory mFactory;
 	private final Function<PLACE, IPredicate> mPlace2Predicate;
 	private final ArrayList<IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> mRefinementEngines;
+	private final boolean mCoveringSimplification;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
 	private final IPetriNet<LETTER, PLACE> mNet;
@@ -103,7 +104,8 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	public OwickiGriesFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net,
 			final Function<PLACE, IPredicate> place2Predicate,
-			final ArrayList<IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines) {
+			final ArrayList<IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines,
+			final boolean iterativeCosets, final boolean coveringSimplification) {
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -128,8 +130,12 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		mAssertPlaces = getAssertPlaces(mPlaces, mOrigPlaces);
 		mReach = getReach(mCuts);
 
-		mFloydHoareAnnotation = getCosetAnnotation();
-		// mFloydHoareAnnotation = getMaximalAnnotation();
+		if (iterativeCosets) {
+			mFloydHoareAnnotation = getCosetAnnotation();
+		} else {
+			mFloydHoareAnnotation = getMaximalAnnotation();
+		}
+		mCoveringSimplification = coveringSimplification;
 
 	}
 
@@ -180,8 +186,11 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 					markCoset, mAssertConditions, new HashSet<Set<Condition<LETTER, PLACE>>>());
 			final Set<Set<IPredicate>> markAssertPlaces = new HashSet<>();
 			for (final Set<Condition<LETTER, PLACE>> assertCond : assertConds) {
-				markAssertPlaces.add(simplifyAssertions(getCosetPredicates(assertCond)));
-				// markAssertPlaces.add((getCosetPredicates(assertCond));
+				Set<IPredicate> cosetPredicates = getCosetPredicates(assertCond);
+				if (mCoveringSimplification) {
+					cosetPredicates = simplifyAssertions(cosetPredicates);
+				}
+				markAssertPlaces.add(cosetPredicates);
 			}
 			mapping.put(new Marking<LETTER, PLACE>(markPlaces), getMarkingAssertion(markPlaces, markAssertPlaces));
 		}

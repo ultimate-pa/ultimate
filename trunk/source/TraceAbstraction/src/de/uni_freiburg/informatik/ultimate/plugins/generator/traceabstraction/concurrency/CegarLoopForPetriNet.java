@@ -706,8 +706,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}
+
+		final long startTime = System.nanoTime();
 		final OwickiGriesFloydHoare<IPredicate, L> floydHoare =
-				new OwickiGriesFloydHoare<>(mServices, mCsToolkit, mFinPrefix, mInitialNet, x -> x, mRefinementEngines);
+				new OwickiGriesFloydHoare<>(mServices, mCsToolkit, mFinPrefix, mInitialNet, x -> x, mRefinementEngines,
+						mPref.owickiGriesIterativeCosets(), mPref.owickiGriesCoveringSimplification());
 		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 
 		// final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
@@ -732,12 +735,22 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		// }
 		// }
 
-		final OwickiGriesConstruction<IPredicate, L> construction =
-				new OwickiGriesConstruction<>(mServices, mCsToolkit, mInitialNet, petriFloydHoare, mRefinementEngines);
+		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(mServices, mCsToolkit,
+				mInitialNet, petriFloydHoare, mRefinementEngines, mPref.owickiGriesHittingSets());
 		// TODO: simplify
+		final long constructionTime = System.nanoTime();
+		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().getSize() + " in "
+				+ (constructionTime - startTime) + "ns");
+
 		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
 				construction.getResult(), construction.getCoMarkedPlaces());
-		assert check.isValid() : "Invalid Owicki-Gries annotation";
+		final long endTime = System.nanoTime();
+		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in "
+				+ (endTime - constructionTime) + "ns");
+
+		if (!check.isValid()) {
+			throw new AssertionError("Invalid Owicki-Gries annotation");
+		}
 	}
 
 	@Override
