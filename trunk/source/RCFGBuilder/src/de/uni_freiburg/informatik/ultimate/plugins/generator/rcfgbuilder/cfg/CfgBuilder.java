@@ -175,8 +175,8 @@ public class CfgBuilder {
 
 	private int mRemovedAssumeTrueStatements = 0;
 
-	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique =
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final Set<String> mAllGotoTargets;
@@ -270,7 +270,7 @@ public class CfgBuilder {
 
 		// Transform CFGs to a recursive CFG
 		for (final Summary se : mImplementationSummarys) {
-			addCallTransitionAndReturnTransition(se, mSimplificationTechnique);
+			addCallTransitionAndReturnTransition(se, SIMPLIFICATION_TECHNIQUE);
 		}
 
 		switch (mCodeBlockSize) {
@@ -721,8 +721,7 @@ public class CfgBuilder {
 			}
 
 			for (final CodeBlock transEdge : mEdges) {
-				mTransFormulaAdder.addTransitionFormulas(transEdge, procName, mXnfConversionTechnique,
-						mSimplificationTechnique);
+				mTransFormulaAdder.addTransitionFormulas(transEdge, procName, SIMPLIFICATION_TECHNIQUE);
 			}
 
 			// Remove unreachable nodes and unreachable edges
@@ -1217,24 +1216,25 @@ public class CfgBuilder {
 			}
 			if (st instanceof AssignmentStatement) {
 				return true;
-			} else if (st instanceof HavocStatement) {
+			}
+			if (st instanceof HavocStatement) {
 				return true;
-			} else if (st instanceof CallStatement) {
-				final CallStatement call = (CallStatement) st;
-				if (mBoogieDeclarations.getProcImplementation().containsKey(call.getMethodName())) {
-					// procedure has implementation
-					return false;
-				}
-				if (mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()) == null
-						|| mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()).isEmpty()) {
-					// procedure does not have non-free requires
-					// and hence does not require an additional branch into an error location
-					return true;
-				}
-				return false;
-			} else {
+			}
+			if (!(st instanceof CallStatement)) {
 				return false;
 			}
+			final CallStatement call = (CallStatement) st;
+			if (mBoogieDeclarations.getProcImplementation().containsKey(call.getMethodName())) {
+				// procedure has implementation
+				return false;
+			}
+			if (mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()) == null
+					|| mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()).isEmpty()) {
+				// procedure does not have non-free requires
+				// and hence does not require an additional branch into an error location
+				return true;
+			}
+			return false;
 		}
 
 		private void processAssertStatement(final AssertStatement st) {
@@ -1740,7 +1740,7 @@ public class CfgBuilder {
 					final List<CodeBlock> sequence = Arrays.asList((CodeBlock) incoming, (CodeBlock) outgoing);
 
 					final SequentialComposition comp = mCbf.constructSequentialComposition(predecessor, successor,
-							mSimplifyCodeBlocks, false, sequence, mXnfConversionTechnique, mSimplificationTechnique);
+							mSimplifyCodeBlocks, false, sequence, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE);
 					ModelUtils.copyAnnotations(incoming, comp);
 					ModelUtils.copyAnnotations(outgoing, comp);
 					newEdges.add(comp);
@@ -1779,7 +1779,7 @@ public class CfgBuilder {
 		private void composeParallel(final BoogieIcfgLocation pp, final List<CodeBlock> outgoing) {
 			final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.get(0).getTarget();
 			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
-					mXnfConversionTechnique, mSimplificationTechnique);
+					XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE);
 			considerCompositionCandidate(pp, false);
 			considerCompositionCandidate(successor, false);
 		}

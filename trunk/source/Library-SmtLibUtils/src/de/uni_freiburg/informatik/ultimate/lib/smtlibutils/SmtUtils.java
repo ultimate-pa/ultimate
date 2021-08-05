@@ -142,6 +142,9 @@ public final class SmtUtils {
 
 	public static Term simplify(final ManagedScript mgScript, final Term formula, final Term context,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		if (simplificationTechnique == SimplificationTechnique.NONE) {
+			return formula;
+		}
 		Objects.requireNonNull(context);
 		final ILogger logger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
