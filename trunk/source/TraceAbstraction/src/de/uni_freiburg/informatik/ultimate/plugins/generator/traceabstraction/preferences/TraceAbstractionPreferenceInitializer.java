@@ -326,7 +326,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS =
 			RcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
 
-	public static final String LABEL_OG_ITERATIVE_COSETS = "Compute co-sets for OwickiGries annotation iteratively";
+	public static final String LABEL_OG_ITERATIVE_COSETS = "Compute cosets for OwickiGries annotation iteratively";
 	public static final boolean DEF_OG_ITERATIVE_COSETS = false;
 
 	public static final String LABEL_OG_COVERING_SIMPLIFICATION =
