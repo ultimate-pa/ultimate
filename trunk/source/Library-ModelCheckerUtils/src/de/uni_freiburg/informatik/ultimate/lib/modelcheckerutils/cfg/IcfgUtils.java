@@ -270,6 +270,7 @@ public class IcfgUtils {
 		final Set<IcfgLocation> visited = new HashSet<>();
 		final LinkedList<IcfgLocation> worklist = new LinkedList<>();
 		worklist.add(sourceLoc);
+		final Set<IcfgLocation> stackNodes = new HashSet<>();
 
 		LBool canReach = UNREACHABLE;
 		int loopHeadIndex = -1;
@@ -294,6 +295,8 @@ public class IcfgUtils {
 			// When backtracking, remember the computed result for future queries.
 			if (visited.contains(currentLoc)) {
 				worklist.removeLast();
+				stackNodes.remove(currentLoc);
+
 				// When backtracking the outermost encountered loop head, reachability must be either REACHABLE or
 				// UNKNOWN. In the latter case, we can now set it to UNREACHABLE.
 				// TODO Theoretically, we could even store UNREACHABLE for all nodes reached from the loop head.
@@ -313,6 +316,8 @@ public class IcfgUtils {
 
 			// Mark location as visited.
 			visited.add(currentLoc);
+			final boolean added = stackNodes.add(currentLoc);
+			assert added : "Stack must not contain duplicate elements";
 
 			final List<IcfgEdge> outgoing = currentLoc.getOutgoingEdges();
 			final List<IcfgLocation> successors = new ArrayList<>(outgoing.size());
@@ -330,16 +335,20 @@ public class IcfgUtils {
 					break;
 				}
 
-				final boolean succVisited = visited.contains(succ);
-				final int stackIndex;
-				if (succVisited && (stackIndex = worklist.indexOf(succ)) != -1) {
+				if (stackNodes.contains(succ)) {
 					// If the edge leads back to the stack, reachability is unknown until succ (or an even earlier loop
 					// head) is backtracked. To avoid infinite looping, we do not explore succ.
-					assert getCachedResult.apply(succ) == UNKNOWN;
+					final int worklistIndex = worklist.indexOf(succ);
+					assert worklistIndex != -1 : "Nodes on stack must be on worklist";
+					assert visited.contains(succ) : "Nodes on stack must have been visited";
+
+					final LBool cachedResult = getCachedResult.apply(succ);
+					assert cachedResult == UNKNOWN : "Loop heads must have UNKNOWN status";
+
 					canReach = UNKNOWN;
-					loopHeadIndex = loopHeadIndex < 0 ? stackIndex : Integer.min(loopHeadIndex, stackIndex);
-					loopHead = loopHeadIndex == stackIndex ? succ : loopHead;
-				} else if (succVisited) {
+					loopHeadIndex = loopHeadIndex < 0 ? worklistIndex : Integer.min(loopHeadIndex, worklistIndex);
+					loopHead = loopHeadIndex == worklistIndex ? succ : loopHead;
+				} else if (visited.contains(succ)) {
 					// If the successor has been visited before, but is not on the stack, then we know its reachability
 					// is either UNREACHABLE or UNKNOWN. In either case, we do not need to explore it again.
 					assert getCachedResult.apply(succ) != REACHABLE;
@@ -360,9 +369,8 @@ public class IcfgUtils {
 		while (!worklist.isEmpty()) {
 			assert canReach == REACHABLE : "Fast-backtracking must only happen in case of reachability";
 			final IcfgLocation currentLoc = worklist.removeLast();
-			if (visited.contains(currentLoc)) {
-				// If a state on the worklist is marked as visited, it is on the stack.
-				// Hence mark it as being able to reach the target.
+			if (stackNodes.contains(currentLoc)) {
+				// If a state is on the stack, mark it as being able to reach the target.
 				setCachedResult.accept(currentLoc, true);
 			}
 		}
