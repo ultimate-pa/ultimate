@@ -322,7 +322,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		symbolicMemory.updateVars(update.getDeterministicAssignment());
 
 		final UnmodifiableTransFormula condition = symbolicMemory.updateCondition(
-				TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices, mLogger));
+				TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices));
 
 		final TermVariable backbonePathCounter =
 				mScript.constructFreshTermVariable("kappa", mScript.getScript().sort(SmtSortUtils.INT_SORT));

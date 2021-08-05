@@ -802,8 +802,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				// First, negate predicate WP
 				final UnmodifiableTransFormula negatedWp =
 						TransFormulaUtils.negate(mLoc2OverApproximation.get(loc), super.mCsToolkit.getManagedScript(),
-								mServices, mLogger, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-								SimplificationTechnique.SIMPLIFY_DDA);
+								mServices);
 				// Then convert the tranformula to linear inequalities
 				final Dnf<AbstractLinearInvariantPattern> negatedWpTemplate =
 						convertTransFormulaToPatternsForLinearInequalities(negatedWp);
@@ -1030,11 +1029,9 @@ public final class LinearInequalityInvariantPatternProcessor
 				final UnmodifiableTransFormula substitutedTf = TransFormulaUtils.substituteTermVars(
 						transition.getTransformula(), mCsToolkit.getManagedScript(), subsitutionMapping);
 				final UnmodifiableTransFormula guard = TransFormulaUtils.computeGuard(substitutedTf,
-						mCsToolkit.getManagedScript(), mServices, mLogger);
+						mCsToolkit.getManagedScript(), mServices);
 				final UnmodifiableTransFormula negatedGuard =
-						TransFormulaUtils.negate(guard, mCsToolkit.getManagedScript(), mServices, mLogger,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-								SimplificationTechnique.SIMPLIFY_DDA);
+						TransFormulaUtils.negate(guard, mCsToolkit.getManagedScript(), mServices);
 				final LinearTransition linearTransition = mLinearizer.linearize(negatedGuard);
 				final Dnf<LinearInequality> negatedTransitionDnf = convertTransitionToPattern(linearTransition);
 
