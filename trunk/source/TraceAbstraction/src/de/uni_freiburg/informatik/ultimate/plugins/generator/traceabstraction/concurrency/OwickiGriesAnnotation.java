@@ -137,14 +137,14 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		return mGhostInitAssignment;
 	}
 
-	public int getSize() {
+	public long size() {
 		final DAGSize sizeComputation = new DAGSize();
-		final int initSize = mGhostInitAssignment.entrySet().stream()
-				.collect(Collectors.summingInt(x -> sizeComputation.size(x.getValue())));
-		final int formulaSize = mFormulaMapping.entrySet().stream()
-				.collect(Collectors.summingInt(x -> sizeComputation.size(x.getValue().getFormula())));
-		final int assignSize = mAssignmentMapping.entrySet().stream()
-				.collect(Collectors.summingInt(x -> sizeComputation.size(x.getValue().getFormula())));
+		final long initSize = mGhostInitAssignment.entrySet().stream()
+				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue())));
+		final long formulaSize = mFormulaMapping.entrySet().stream()
+				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
+		final long assignSize = mAssignmentMapping.entrySet().stream()
+				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
 		return initSize + formulaSize + assignSize;
 	}
 }

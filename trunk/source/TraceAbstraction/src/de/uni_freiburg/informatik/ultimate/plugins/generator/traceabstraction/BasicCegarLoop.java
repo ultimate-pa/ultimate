@@ -1278,7 +1278,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				new OwickiGriesConstruction<>(mServices, mCsToolkit, mPetriNet, petriFloydHoare, null, false);
 		// TODO: simplify
 		final long constructionTime = System.nanoTime();
-		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().getSize() + " in "
+		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "
 				+ (constructionTime - startTime) + "ns");
 
 		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
