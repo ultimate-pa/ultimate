@@ -152,7 +152,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	private final CounterexampleCache<L> mCounterexampleCache;
 	private BranchingProcess<L, IPredicate> mFinPrefix;
 	private IPetriNet<L, IPredicate> mInitialNet;
-	protected ArrayList <IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>>> mRefinementEngines = new ArrayList<>();
+	protected ArrayList<IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>>> mRefinementEngines =
+			new ArrayList<>();
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -702,12 +703,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 	@Override
 	public void computeOwickiGries() {
-
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}
-		final OwickiGriesFloydHoare<IPredicate, L> floydHoare = 
-				new	OwickiGriesFloydHoare(mServices, mCsToolkit, mFinPrefix, mInitialNet, x -> x, mRefinementEngines);
+		final OwickiGriesFloydHoare<IPredicate, L> floydHoare =
+				new OwickiGriesFloydHoare<>(mServices, mCsToolkit, mFinPrefix, mInitialNet, x -> x, mRefinementEngines);
 		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 
 		// final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
@@ -732,7 +732,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		// }
 		// }
 
-		final OwickiGriesConstruction<IPredicate, L>construction =
+		final OwickiGriesConstruction<IPredicate, L> construction =
 				new OwickiGriesConstruction<>(mServices, mCsToolkit, mInitialNet, petriFloydHoare, mRefinementEngines);
 		// TODO: simplify
 		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
