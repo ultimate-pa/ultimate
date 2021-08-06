@@ -57,9 +57,8 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		}
 		if (mode == PEATransformerMode.REQ_TEST) {
 			return generateReqTestBoogie(patterns);
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	private IElement generateReqCheckBoogie(final List<PatternType<?>> patterns) {

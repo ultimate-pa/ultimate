@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
@@ -243,8 +242,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
-			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript,
-					pred.getFormula(), mSimplificationTechnique, mXnfConversionTechnique);
+			final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, mSimplificationTechnique, pred.getFormula());
 			// 2016-05-14 Matthias: Which structure of the resulting
 			// formula is better? 1. Prenex normal form (quantifiers outside)
 			// or 2. a form where quantifiers are pushed inside.
@@ -253,8 +251,8 @@ public class IterativePredicateTransformer<L extends IAction> {
 			// However, SimplifyDDA may waste a lot of time.
 			// A small evaluation that I did today (using Z3) shows that
 			// there is not much difference between both variants.
-			final Term resultTerm = QuantifierPusher.eliminate(mServices, mMgdScript, false, PqeTechniques.ONLY_DER,
-					lessQuantifier);
+			final Term resultTerm = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, false,
+					PqeTechniques.ONLY_DER, SimplificationTechnique.NONE, lessQuantifier);
 			// resultTerm = new PrenexNormalForm(mMgdScript).transform(lessQuantifier);
 			final IPredicate result = mPredicateFactory.newPredicate(resultTerm);
 			return result;

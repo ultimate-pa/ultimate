@@ -12,6 +12,8 @@ cp ../../../trunk/examples/settings/UltimateEliminator/mathsat.epf StarExecArchi
 
 cp -LR mathsat StarExecArchive/Ultimate
 
+cp -a java/jdk-11.0.2 StarExecArchive/Ultimate/
+
 
 cd StarExecArchive
 zip ../UltimateCommandline.zip -r *

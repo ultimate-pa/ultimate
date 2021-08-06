@@ -54,9 +54,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -820,8 +821,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		freeVars.remove(newTv);
 		final Term quantified =
 				SmtUtils.quantifier(mToolkit.getScript(), QuantifiedFormula.EXISTS, freeVars, substituted);
-		return QuantifierPusher.eliminate(mToolkit.getServices(), mToolkit.getManagedScript(), false,
-				PqeTechniques.ALL_LOCAL, quantified);
+		return PartialQuantifierElimination.eliminateCompat(mToolkit.getServices(), mToolkit.getManagedScript(), false,
+				PqeTechniques.ALL_LOCAL, SimplificationTechnique.NONE, quantified);
 	}
 
 	@Override

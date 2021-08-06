@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -270,7 +271,7 @@ public class QuantifierEliminationTest {
 			final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
 		Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-		// letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
+		letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
 		letFree = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(letFree);
 		csvWriter.reportEliminationBegin(letFree);
 		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,

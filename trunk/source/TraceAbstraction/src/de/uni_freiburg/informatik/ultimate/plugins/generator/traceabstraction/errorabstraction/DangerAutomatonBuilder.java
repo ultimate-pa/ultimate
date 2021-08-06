@@ -171,9 +171,7 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 			final IValueConstruction<Pair<IPredicate, L>, Term> valueConstruction = key -> {
 				final Term wp = mPt.weakestPrecondition(predicateFactory.not(key.getFirst()),
 						key.getSecond().getTransformula());
-				final Term wpLessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
-						csToolkit.getManagedScript(), wp, SimplificationTechnique.SIMPLIFY_DDA,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
 				final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
 				return pre;
 			};

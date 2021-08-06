@@ -144,6 +144,7 @@ public class QuantifierPusher extends TermTransformer {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final PqeTechniques mPqeTechniques;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final Set<TermVariable> mBannedForDivCapture;
 	/**
 	 * Try to apply distributivity rules to get connectives over which we can push quantifiers. E.g. if we have a
@@ -154,12 +155,14 @@ public class QuantifierPusher extends TermTransformer {
 
 	private QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
+			final SimplificationTechnique simplificationTechnique,
 			final Set<TermVariable> bannedForDivCapture) {
 		mServices = services;
 		mMgdScript = script;
 		mScript = script.getScript();
 		mApplyDistributivity = applyDistributivity;
 		mPqeTechniques = quantifierEliminationTechniques;
+		mSimplificationTechnique = simplificationTechnique;
 		mBannedForDivCapture = bannedForDivCapture;
 	}
 
@@ -169,13 +172,14 @@ public class QuantifierPusher extends TermTransformer {
 	@Deprecated
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-			final Set<TermVariable> bannedForDivCapture, final Term inputTerm) {
+			final SimplificationTechnique simplificationTechnique, final Set<TermVariable> bannedForDivCapture,
+			final Term inputTerm) {
 		final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
 		final ExtendedSimplificationResult esr1 =
 				SmtUtils.simplifyWithStatistics(script, inputTerm, services, SimplificationTechnique.POLY_PAC);
 		logger.info(esr1.buildSizeReductionMessage());
 		final Term result = new QuantifierPusher(script, services, applyDistributivity, quantifierEliminationTechniques,
-				bannedForDivCapture).transform(esr1.getSimplifiedTerm());
+				simplificationTechnique, bannedForDivCapture).transform(esr1.getSimplifiedTerm());
 		final ExtendedSimplificationResult esr2 =
 				SmtUtils.simplifyWithStatistics(script, result, services, SimplificationTechnique.POLY_PAC);
 		logger.info(esr2.buildSizeReductionMessage() + " " + new DAGSize().treesize(esr2.getSimplifiedTerm()));
@@ -189,16 +193,17 @@ public class QuantifierPusher extends TermTransformer {
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-			final Context context, final Term inputTerm) {
+			final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm) {
 		services.getLoggingService().getLogger(QuantifierPusher.class).warn("Ignoring assumption.");
-		return eliminate(services, script, applyDistributivity, quantifierEliminationTechniques, inputTerm);
+		return eliminate(services, script, applyDistributivity, quantifierEliminationTechniques,
+				simplificationTechnique, inputTerm);
 	}
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-			final Term inputTerm) {
-		return eliminate(services, script, applyDistributivity, quantifierEliminationTechniques, Collections.emptySet(),
-				inputTerm);
+			final SimplificationTechnique simplificationTechnique, final Term inputTerm) {
+		return eliminate(services, script, applyDistributivity, quantifierEliminationTechniques,
+				simplificationTechnique, Collections.emptySet(), inputTerm);
 	}
 
 	@Override
@@ -221,8 +226,8 @@ public class QuantifierPusher extends TermTransformer {
 			case DUAL_QUANTIFIER: {
 				final EliminationTask et = new EliminationTask((QuantifiedFormula) currentTerm,
 						new Context(mMgdScript.term(null, "true"), mBannedForDivCapture));
-				final Term tmp = processDualQuantifier(mServices, mMgdScript, mApplyDistributivity, mPqeTechniques, et,
-						QuantifierPusher::eliminate);
+				final Term tmp = processDualQuantifier(mServices, mMgdScript, mApplyDistributivity, mPqeTechniques,
+						mSimplificationTechnique, et, QuantifierPusher::eliminate);
 				final FormulaClassification tmpClassification = classify(tmp);
 				if (tmpClassification == FormulaClassification.DUAL_QUANTIFIER) {
 					// unable to push, we have to take this subformula as result
@@ -246,8 +251,8 @@ public class QuantifierPusher extends TermTransformer {
 					// no more eliminations possible
 					// let's recurse, there may be quantifiers in subformulas
 					final Term res = pushInner(mServices, mMgdScript, mApplyDistributivity, mPqeTechniques,
-							mBannedForDivCapture, (QuantifiedFormula) currentTerm, mMgdScript.term(null, "true"),
-							QuantifierPusher::eliminate);
+							mSimplificationTechnique, mBannedForDivCapture, (QuantifiedFormula) currentTerm,
+							mMgdScript.term(null, "true"), QuantifierPusher::eliminate);
 					setResult(res);
 					return;
 				} else {
@@ -259,13 +264,13 @@ public class QuantifierPusher extends TermTransformer {
 				final EliminationTask et = new EliminationTask((QuantifiedFormula) currentTerm,
 						new Context(mMgdScript.term(null, "true"), mBannedForDivCapture));
 				final Term tmp = tryToPushOverDualFiniteConnective(mServices, mMgdScript, mApplyDistributivity,
-						mPqeTechniques, et, QuantifierPusher::eliminate);
+						mPqeTechniques, mSimplificationTechnique, et, QuantifierPusher::eliminate);
 				if (tmp == null) {
 					// no more eliminations possible
 					// let's recurse, there may be quantifiers in subformulas
 					final Term res = pushInner(mServices, mMgdScript, mApplyDistributivity, mPqeTechniques,
-							mBannedForDivCapture, (QuantifiedFormula) currentTerm, mMgdScript.term(null, "true"),
-							QuantifierPusher::eliminate);
+							mSimplificationTechnique, mBannedForDivCapture, (QuantifiedFormula) currentTerm,
+							mMgdScript.term(null, "true"), QuantifierPusher::eliminate);
 					setResult(res);
 					return;
 				} else {
@@ -282,13 +287,13 @@ public class QuantifierPusher extends TermTransformer {
 
 	public static Term pushInner(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final Set<TermVariable> bannedForDivCapture, final QuantifiedFormula quantifiedFormula,
-			final Term criticalConstraint, final IQuantifierEliminator qe) {
+			final SimplificationTechnique simplificationTechnique, final Set<TermVariable> bannedForDivCapture,
+			final QuantifiedFormula quantifiedFormula, final Term criticalConstraint, final IQuantifierEliminator qe) {
 		final Context context = new Context(criticalConstraint, bannedForDivCapture);
 		final Context childContext = context.constructChildContextForQuantifiedFormula(mgdScript.getScript(),
 				Arrays.asList(quantifiedFormula.getVariables()));
 		final Term subFormulaPushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
-				childContext, quantifiedFormula.getSubformula());
+				simplificationTechnique, childContext, quantifiedFormula.getSubformula());
 		final Term res = SmtUtils.quantifier(mgdScript.getScript(), quantifiedFormula.getQuantifier(),
 				new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())), subFormulaPushed);
 		return res;
@@ -325,7 +330,7 @@ public class QuantifierPusher extends TermTransformer {
 
 	public static Term tryToPushOverDualFiniteConnective(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final EliminationTask et, final IQuantifierEliminator qe) {
+			final SimplificationTechnique simplificationTechnique, final EliminationTask et, final IQuantifierEliminator qe) {
 		final Term flattened1 =
 				flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
 		if (!(flattened1 instanceof QuantifiedFormula)) {
@@ -333,8 +338,8 @@ public class QuantifierPusher extends TermTransformer {
 			return flattened1;
 		}
 		final EliminationTask res1Et = new EliminationTask((QuantifiedFormula) flattened1, et.getContext());
-		final EliminationTask pushed =
-				pushDualQuantifiersInParams(services, mgdScript, applyDistributivity, pqeTechniques, res1Et, qe);
+		final EliminationTask pushed = pushDualQuantifiersInParams(services, mgdScript, applyDistributivity,
+				pqeTechniques, simplificationTechnique, res1Et, qe);
 		final Term pushedTerm = pushed.toTerm(mgdScript.getScript());
 		if (!(pushedTerm instanceof QuantifiedFormula)) {
 			// outer quantifiers removed for trivial reason after removal of inner quantifier
@@ -347,7 +352,8 @@ public class QuantifierPusher extends TermTransformer {
 			return flattened2;
 		}
 		final EliminationTask res2Et = new EliminationTask((QuantifiedFormula) flattened2, et.getContext());
-		return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques, res2Et, qe);
+		return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques,
+				simplificationTechnique, res2Et, qe);
 	}
 
 	private static boolean isDualFiniteConnective(final EliminationTask et) {
@@ -362,7 +368,8 @@ public class QuantifierPusher extends TermTransformer {
 
 	private static Term tryToPushOverDualFiniteConnective2(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final EliminationTask et, final IQuantifierEliminator qe) {
+			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
+			final IQuantifierEliminator qe) {
 		if (!isDualFiniteConnective(et)) {
 			throw new AssertionError(NOT_DUAL_FINITE_CONNECTIVE);
 		}
@@ -436,7 +443,7 @@ public class QuantifierPusher extends TermTransformer {
 
 		if (et.getEliminatees().size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
 			final EliminationTaskSimple etSequentialization =
-					doit(services, mgdScript, applyDistributivity, pqeTechniques, et, qe);
+					doit(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
 			// return if something was eliminated
 			if (!etSequentialization.getEliminatees().containsAll(et.getEliminatees())) {
 				return etSequentialization.toTerm(mgdScript.getScript());
@@ -493,8 +500,8 @@ public class QuantifierPusher extends TermTransformer {
 				final Context childContext = et.getContext().constructChildContextForConDis(services, mgdScript,
 						((ApplicationTerm) et.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
 				assert criticalConstraint.equals(childContext.getCriticalConstraint());
-				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, et.getContext(),
-						correspondingFinite);
+				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
+						simplificationTechnique, et.getContext(), correspondingFinite);
 				if (allStillQuantified(et.getEliminatees(), pushed)) {
 					// we should not pay the high price for applying distributivity if we do not get
 					// a formula with less quantified variales in return
@@ -517,7 +524,8 @@ public class QuantifierPusher extends TermTransformer {
 
 	private static EliminationTask pushDualQuantifiersInParams(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final EliminationTask inputEt, final IQuantifierEliminator qe) {
+			final SimplificationTechnique simplificationTechnique, final EliminationTask inputEt,
+			final IQuantifierEliminator qe) {
 		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(),
 				inputEt.getTerm());
 		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
@@ -534,7 +542,7 @@ public class QuantifierPusher extends TermTransformer {
 					assert criticalConstraint.equals(childContext.getCriticalConstraint());
 				}
 				final Term resultDualFiniteParamI = qe.eliminate(services, mgdScript, applyDistributivity,
-						pqeTechniques, childContext, dualFiniteParams[i]);
+						pqeTechniques, simplificationTechnique, childContext, dualFiniteParams[i]);
 				resultDualFiniteParams.add(resultDualFiniteParamI);
 			} else {
 				resultDualFiniteParams.add(dualFiniteParams[i]);
@@ -596,7 +604,8 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private static EliminationTask doit(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final boolean applyDistributivity, final PqeTechniques pqeTechniques, final EliminationTask et,
+			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
+			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
 		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
@@ -637,7 +646,8 @@ public class QuantifierPusher extends TermTransformer {
 			}
 			context = context.constructChildContextForConDis(services, mgdScript,
 					((ApplicationTerm) et.getTerm()).getFunction(), finiteParamsWithoutEliminatee);
-			Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, context, quantified);
+			Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique,
+					context, quantified);
 			if (pushed instanceof QuantifiedFormula) {
 				final QuantifiedFormula qf = (QuantifiedFormula) pushed;
 				for (final TermVariable var : Arrays.asList(qf.getVariables())) {
@@ -1050,15 +1060,16 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	public static Term processDualQuantifier(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final boolean applyDistributivity, final PqeTechniques pqeTechniques, final EliminationTask et,
+			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
+			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
 		assert et.getTerm() instanceof QuantifiedFormula;
 		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) et.getTerm();
 		assert quantifiedSubFormula.getQuantifier() == SmtUtils.getOtherQuantifier(et.getQuantifier());
 		final Context childContext = et.getContext().constructChildContextForQuantifiedFormula(mgdScript.getScript(),
 				Arrays.asList(quantifiedSubFormula.getVariables()));
-		final Term quantifiedSubFormulaPushed =
-				qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, childContext, et.getTerm());
+		final Term quantifiedSubFormulaPushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
+				simplificationTechnique, childContext, et.getTerm());
 		final Term result = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
 				new HashSet<>(et.getEliminatees()), quantifiedSubFormulaPushed);
 		return result;

@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.LoggingScriptForMainTrackBenchmarks;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -646,8 +646,7 @@ public class PolynomialRelationTest {
 			final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 			final ManagedScript mgdScript = new ManagedScript(services, mScript);
 			final ILogger logger = services.getLoggingService().getLogger(this.getClass().getSimpleName());
-			tmp = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, solvedAsTerm,
-					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			tmp = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.NONE, solvedAsTerm);
 		} else {
 			tmp = solvedAsTerm;
 		}

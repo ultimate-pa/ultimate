@@ -779,8 +779,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 			final PredicateTransformer<Term, IPredicate, TransFormula> pt, final boolean applyQuantifierElimination) {
 		Term result = pt.weakestPrecondition(successor, tf);
 		if (applyQuantifierElimination) {
-			result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, freshTermVariableConstructor,
-					result, mSimplificationTechnique, mXnfConversionTechnique);
+			final Term term = result;
+			result = PartialQuantifierElimination.eliminateCompat(mServices, freshTermVariableConstructor, mSimplificationTechnique, term);
 		}
 		return result;
 	}

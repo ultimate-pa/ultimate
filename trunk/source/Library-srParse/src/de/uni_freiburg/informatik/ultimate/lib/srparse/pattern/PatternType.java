@@ -63,11 +63,11 @@ public abstract class PatternType<T extends PatternType<?>> {
 
 	public PatternType(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		mScope = scope;
-		mId = id;
-		mCdds = cdds;
-		mDurations = durations;
-		mDurationNames = durationNames;
+		mScope = Objects.requireNonNull(scope);
+		mId = Objects.requireNonNull(id);
+		mCdds = Objects.requireNonNull(cdds);
+		mDurations = Objects.requireNonNull(durations);
+		mDurationNames = Objects.requireNonNull(durationNames);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -100,7 +100,6 @@ public abstract class PatternType<T extends PatternType<?>> {
 	}
 
 	private int[] getDurationsAsIntArray() {
-
 		final int[] rtr = new int[mDurations.size()];
 		for (int i = 0; i < mDurations.size(); ++i) {
 			final Rational val = mDurations.get(i);

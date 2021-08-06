@@ -482,9 +482,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 							mScript.getScript().term("<", loopIterators.get(i), loopCounters.get(i)));
 			term = Util.implies(mScript.getScript(), iteratorCondition, term);
 			term = mScript.getScript().quantifier(Script.FORALL, new TermVariable[] { loopIterators.get(i) }, term);
+			final Term term1 = term;
 
-			term = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, term,
-					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			term = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term1);
 			terms[i] = term;
 		}
 
@@ -496,9 +496,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		}
 
 		resultTerm = SmtUtils.and(mScript.getScript(), resultTerm, iteratedSymbolicMemory.toTerm());
+		final Term term = resultTerm;
 
-		resultTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, resultTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		resultTerm = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 
 		final TransFormulaBuilder builder = new TransFormulaBuilder(iteratedSymbolicMemory.getInVars(),
 				iteratedSymbolicMemory.getOutVars(), true, null, true, null, false);

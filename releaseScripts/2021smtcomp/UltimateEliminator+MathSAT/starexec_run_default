@@ -9,11 +9,9 @@
 #    echo "No data provided..."
 #fi
 
-
 [ $# -ge 1 -a -f "$1" ] && input="$1" || input="--"
-
 pushd ../Ultimate > /dev/null
-java \
+./jdk-11.0.2/bin/java \
 -Dosgi.configuration.area=config/ \
 -Xmx40G \
 -Xss4m \

@@ -192,7 +192,7 @@ public class TermContextTransformationEngine<C> {
 			builder.append(mNext);
 			builder.append(" (");
 			builder.append(mOriginal.getFunction().toString());
-			builder.append(Arrays.stream(mResult).map(Term::toStringDirect).collect(Collectors.joining(" ")));
+			builder.append(Arrays.stream(mResult).map(Term::toString).collect(Collectors.joining(" ")));
 			builder.append(")");
 			return builder.toString();
 		}

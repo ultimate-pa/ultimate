@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -34,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
@@ -45,12 +47,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  */
 public class InitializationPattern extends PatternType<InitializationPattern> {
 
+	private static final SrParseScopeGlobally INIT_SCOPE = new SrParseScopeGlobally();
+
 	public enum VariableCategory {
 		IN("Input"), OUT("Output"), HIDDEN("???"), CONST("CONST");
 
 		private final String mKeyword;
 
-		private VariableCategory(final String keyword) {
+		VariableCategory(final String keyword) {
 			mKeyword = keyword;
 		}
 
@@ -69,7 +73,7 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 
 	public InitializationPattern(final String ident, final String type, final VariableCategory visibility,
 			final Expression expr) {
-		super(null, ident, null, null, null);
+		super(INIT_SCOPE, ident, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 		mType = type;
 		mVisibility = visibility;
 		mExpression = expr;
@@ -111,10 +115,10 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mExpression == null) ? 0 : mExpression.hashCode());
-		result = prime * result + ((mType == null) ? 0 : mType.hashCode());
-		result = prime * result + ((mVisibility == null) ? 0 : mVisibility.hashCode());
-		result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
+		result = prime * result + (mExpression == null ? 0 : mExpression.hashCode());
+		result = prime * result + (mType == null ? 0 : mType.hashCode());
+		result = prime * result + (mVisibility == null ? 0 : mVisibility.hashCode());
+		result = prime * result + (getId() == null ? 0 : getId().hashCode());
 		return result;
 	}
 

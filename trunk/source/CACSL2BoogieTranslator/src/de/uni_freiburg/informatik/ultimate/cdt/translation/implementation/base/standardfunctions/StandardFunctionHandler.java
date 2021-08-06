@@ -1529,6 +1529,8 @@ public class StandardFunctionHandler {
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		erb.addDeclaration(auxvar.getVarDec());
+		erb.addAuxVar(auxvar);
+
 		final MemoryArea memArea;
 		if (methodName.equals("malloc")) {
 			memArea = MemoryArea.HEAP;
