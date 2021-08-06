@@ -308,8 +308,12 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 */
 	private UnmodifiableTransFormula getTransitionAssignment(final ITransition<LETTER, PLACE> transition) {
 		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		final Set<PLACE> predecesors = DataStructureUtils.intersection(mNet.getPredecessors(transition), mHittingSet);
-		final Set<PLACE> successors = DataStructureUtils.intersection(mNet.getSuccessors(transition), mHittingSet);
+		Set<PLACE> predecesors = mNet.getPredecessors(transition);
+		Set<PLACE> successors = mNet.getSuccessors(transition);
+		if (mHittingSet != null) {
+			predecesors = DataStructureUtils.intersection(predecesors, mHittingSet);
+			successors = DataStructureUtils.intersection(successors, mHittingSet);
+		}
 		for (final PLACE place : predecesors) {
 			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "false"));
 		}
