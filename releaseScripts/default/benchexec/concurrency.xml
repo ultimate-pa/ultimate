@@ -69,29 +69,29 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
 	</rundefinition>
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.Symm">
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.Symm">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Symm.epf</option>
-	</rundefinition-->
+	</rundefinition>
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderLockstep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Lockstep.epf</option>
 	</rundefinition>
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom42">
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom42">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Random42.epf</option>
-	</rundefinition-->
+	</rundefinition>
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom521">
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom521">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Random521.epf</option>
-	</rundefinition-->
+	</rundefinition>
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom7777">
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom7777">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Random7777.epf</option>
-	</rundefinition-->
+	</rundefinition>
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepUncond">
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepUncond">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepUncond-NoLbe.epf</option>
-	</rundefinition-->
+	</rundefinition>
 
 
 	<!-- === Persistent Set Reduction integrated in TAR === -->
