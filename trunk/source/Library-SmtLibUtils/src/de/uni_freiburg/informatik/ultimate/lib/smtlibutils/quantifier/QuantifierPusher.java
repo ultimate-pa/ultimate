@@ -493,13 +493,6 @@ public class QuantifierPusher extends TermTransformer {
 				if (!EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION) {
 					return correspondingFinite;
 				}
-				// TODO remove if no bug
-				final Term criticalConstraint = Context.buildCriticalConstraintForConDis(services, mgdScript,
-						et.getContext().getCriticalConstraint(), ((ApplicationTerm) et.getTerm()).getFunction(),
-						Arrays.asList(dualFiniteParams), i);
-				final Context childContext = et.getContext().constructChildContextForConDis(services, mgdScript,
-						((ApplicationTerm) et.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
-				assert criticalConstraint.equals(childContext.getCriticalConstraint());
 				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
 						simplificationTechnique, et.getContext(), correspondingFinite);
 				if (allStillQuantified(et.getEliminatees(), pushed)) {
@@ -534,13 +527,6 @@ public class QuantifierPusher extends TermTransformer {
 			if (dualFiniteParams[i] instanceof QuantifiedFormula) {
 				final Context childContext = inputEt.getContext().constructChildContextForConDis(services, mgdScript,
 						((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
-				{
-					// TODO remove if no bug
-					final Term criticalConstraint = Context.buildCriticalConstraintForConDis(services, mgdScript,
-							inputEt.getContext().getCriticalConstraint(),
-							((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
-					assert criticalConstraint.equals(childContext.getCriticalConstraint());
-				}
 				final Term resultDualFiniteParamI = qe.eliminate(services, mgdScript, applyDistributivity,
 						pqeTechniques, simplificationTechnique, childContext, dualFiniteParams[i]);
 				resultDualFiniteParams.add(resultDualFiniteParamI);
