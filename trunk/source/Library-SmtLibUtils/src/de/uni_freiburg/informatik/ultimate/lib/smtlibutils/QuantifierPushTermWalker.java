@@ -61,7 +61,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
-	private static final boolean CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = true;
+	private static final boolean DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = false;
 
 	public QuantifierPushTermWalker(final IUltimateServiceProvider services, final boolean applyDistributivity,
 			final PqeTechniques pqeTechniques, final SimplificationTechnique simplificationTechnique,
@@ -239,7 +239,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm) {
-		if (CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
+		if (DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, inputTerm, services,
 					SimplificationTechnique.POLY_PAC);
 			final String message = "Quantifier elimination called on non-simplified input: "
@@ -251,7 +251,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		final Term result = TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services,
 				applyDistributivity, quantifierEliminationTechniques, simplificationTechnique, script), context,
 				inputTerm);
-		if (CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
+		if (DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, result, services,
 					SimplificationTechnique.POLY_PAC);
 			final String message = "Quantifier elimination failed to simlify output: "
