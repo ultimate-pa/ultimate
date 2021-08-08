@@ -58,7 +58,25 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class Context {
 	private static final boolean OVERAPPOXIMATE_QUANTIFIERS_IN_CRITICAL_CONSTRAINT = true;
 
+	/**
+	 * Transformations that can be done with the critical constraint.
+	 *
+	 */
+	public enum CcTransformation {
+		NONE,
+		/**
+		 * Bring negated siblings in for critical constraint in NNF. Allows us in some
+		 * cases to get a smaller result. Comes with small additional consts because of
+		 * the NNF transformation.
+		 */
+		TO_NNF,
+		/**
+		 * Bring siblings to NNF and replace all quantified formulas by true.
+		 */
+		OVERAPPROXIMATE_QUANTIFIERS };
+
 	private final Term mCriticalConstraint;
+	private final CcTransformation mCcTransformation;
 	/**
 	 * Contains the variables that are bound in {@link QuantifiedFormula}s that are
 	 * ancestors of this context's subformula.
@@ -67,12 +85,14 @@ public class Context {
 
 	public Context(final Script script) {
 		super();
+		mCcTransformation = CcTransformation.OVERAPPROXIMATE_QUANTIFIERS;
 		mCriticalConstraint = script.term("true");
 		mBoundByAncestors = Collections.emptySet();
 	}
 
 	public Context(final Term criticalConstraint, final Set<TermVariable> boundByAncestors) {
 		super();
+		mCcTransformation = CcTransformation.OVERAPPROXIMATE_QUANTIFIERS;
 		Objects.requireNonNull(criticalConstraint);
 		Objects.requireNonNull(boundByAncestors);
 		mCriticalConstraint = criticalConstraint;
@@ -90,7 +110,7 @@ public class Context {
 	public Context constructChildContextForQuantifiedFormula(final Script script,
 			final List<TermVariable> quantifiedVars) {
 		final Term criticalConstraint = buildCriticalContraintForQuantifiedFormula(script, mCriticalConstraint,
-				quantifiedVars);
+				quantifiedVars, mCcTransformation);
 		final Set<TermVariable> boundByAncestors = new HashSet<>(mBoundByAncestors);
 		boundByAncestors.addAll(quantifiedVars);
 		return new Context(criticalConstraint, boundByAncestors);
@@ -100,7 +120,7 @@ public class Context {
 			final ManagedScript mgdScript, final FunctionSymbol symb,
 			final List<Term> allParams, final int selectedParam) {
 		final Term criticalConstraint = buildCriticalConstraintForConDis(services, mgdScript, mCriticalConstraint, symb,
-				allParams, selectedParam);
+				allParams, selectedParam, mCcTransformation);
 		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
@@ -108,16 +128,17 @@ public class Context {
 			final ManagedScript mgdScript, final FunctionSymbol symb,
 			final List<Term> otherParams) {
 		final Term criticalConstraint = buildCriticalConstraintForConDis(services, mgdScript, mCriticalConstraint, symb,
-				otherParams);
+				otherParams, mCcTransformation);
 		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
 	public static Term buildCriticalContraintForQuantifiedFormula(final Script script,
-			final Term parentCriticalConstraint, final List<TermVariable> boundVars) {
+			final Term parentCriticalConstraint, final List<TermVariable> boundVars,
+			final CcTransformation ccTransformation) {
 		final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, boundVars,
 				parentCriticalConstraint);
-		Term result;
-		if (OVERAPPOXIMATE_QUANTIFIERS_IN_CRITICAL_CONSTRAINT) {
+		final Term result;
+		if (ccTransformation == CcTransformation.OVERAPPROXIMATE_QUANTIFIERS) {
 			result = QuantifierOverapproximator.apply(script, quantified);
 		} else {
 			result = quantified;
@@ -145,40 +166,52 @@ public class Context {
 
 	public static Term buildCriticalConstraintForConDis(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final Term parentCriticalConstraint, final FunctionSymbol symb,
-			final List<Term> allParams, final int selectedParam) {
+			final List<Term> allParams, final int selectedParam, final CcTransformation ccTransformation) {
 		final List<Term> otherParams = new ArrayList<>(allParams);
 		otherParams.remove(selectedParam);
-		final Term tmp = buildCriticalConstraintForConDis(services, mgdScript, parentCriticalConstraint, symb,
-				otherParams);
-		Term result;
-		if (OVERAPPOXIMATE_QUANTIFIERS_IN_CRITICAL_CONSTRAINT) {
-			result = QuantifierOverapproximator.apply(mgdScript.getScript(), tmp);
-		} else {
-			result = tmp;
-		}
-		return result;
+		return  buildCriticalConstraintForConDis(services, mgdScript, parentCriticalConstraint, symb,
+				otherParams, ccTransformation);
 	}
 
 	private static Term buildCriticalConstraintForConDis(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final Term parentCriticalConstraint, final FunctionSymbol symb,
-			final List<Term> otherParams) {
-		Term result;
+			final List<Term> otherParams, final CcTransformation ccTransformation) {
+		final Term tmp;
 		if (symb.getName().equals("and")) {
-			result = SmtUtils.and(mgdScript.getScript(), otherParams);
+			tmp = SmtUtils.and(mgdScript.getScript(), otherParams);
 		} else if (symb.getName().equals("or")) {
-			final List<Term> otherParamsNegated = otherParams.stream()
-					.map(x -> new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
-							.transform(SmtUtils.not(mgdScript.getScript(), x)))
-					.collect(Collectors.toList());
-			result = SmtUtils.and(mgdScript.getScript(), otherParamsNegated);
+			final List<Term> otherParamsNegated;
+			switch (ccTransformation) {
+			case NONE:
+				otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(mgdScript.getScript(), x))
+						.collect(Collectors.toList());
+				break;
+			case OVERAPPROXIMATE_QUANTIFIERS:
+			case TO_NNF:
+				otherParamsNegated = otherParams.stream()
+						.map(x -> new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+								.transform(SmtUtils.not(mgdScript.getScript(), x)))
+						.collect(Collectors.toList());
+				break;
+			default:
+				throw new AssertionError("unknown value " + ccTransformation);
+
+			}
+			tmp = SmtUtils.and(mgdScript.getScript(), otherParamsNegated);
 		} else if (symb.getName().equals("=")) {
 			// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
 			// terms here.
-			result = mgdScript.getScript().term("true");
+			tmp = mgdScript.getScript().term("true");
 		} else {
 			throw new AssertionError("Supported: conjunction and disjunction. Got: " + symb);
 		}
-		result = SmtUtils.and(mgdScript.getScript(), result, parentCriticalConstraint);
+		final Term tmpWithParent = SmtUtils.and(mgdScript.getScript(), tmp, parentCriticalConstraint);
+		final Term result;
+		if (ccTransformation == CcTransformation.OVERAPPROXIMATE_QUANTIFIERS) {
+			result = QuantifierOverapproximator.apply(mgdScript.getScript(), tmpWithParent);
+		} else {
+			result = tmp;
+		}
 		return result;
 	}
 
