@@ -252,7 +252,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 				applyDistributivity, quantifierEliminationTechniques, simplificationTechnique, script), context,
 				inputTerm);
 		if (CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, inputTerm, services,
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(script, result, services,
 					SimplificationTechnique.POLY_PAC);
 			final String message = "Quantifier elimination failed to simlify output: "
 					+ esr.buildSizeReductionMessage();
