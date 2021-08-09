@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -45,69 +46,52 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 public class EfficientIgnoringHoareTripleChecker implements IHoareTripleChecker {
 
 	private final IHoareTripleChecker mSmtBasedHoareTripleChecker;
-	private final SdHoareTripleChecker mSdHoareTripleChecker;
-	private final boolean mAllowSdForProtectedActions;
+	private final IHoareTripleChecker mSdHoareTripleChecker;
 	private final Set<? extends IAction> mProtectedActions;
 
 	public EfficientIgnoringHoareTripleChecker(final IHoareTripleChecker smtBasedHoareTripleChecker,
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier,
 			final Set<? extends IAction> protectedActions, final boolean allowSdForProtectedActions) {
-		mSmtBasedHoareTripleChecker = ProtectiveHoareTripleChecker
-				.protectionFromIntricatePredicates(smtBasedHoareTripleChecker, predicateUnifier);
-		mSdHoareTripleChecker = new SdHoareTripleChecker(csToolkit, predicateUnifier,
-				mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark());
-		mAllowSdForProtectedActions = allowSdForProtectedActions;
+
 		mProtectedActions = protectedActions;
+
+		final Predicate<IPredicate> predPredicateProtection = predicateUnifier::isIntricatePredicate;
+		final Predicate<IAction> predActionProtection = mProtectedActions::contains;
+		mSmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier,
+				predPredicateProtection, predActionProtection);
+		mSdHoareTripleChecker = new ProtectiveHoareTripleChecker(
+				new SdHoareTripleChecker(csToolkit, predicateUnifier,
+						mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark()),
+				predicateUnifier, a -> true, allowSdForProtectedActions ? a -> true : predActionProtection);
+
 	}
 
 	@Override
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-		if (mProtectedActions.contains(act)) {
-			if (mAllowSdForProtectedActions) {
-				return mSdHoareTripleChecker.checkInternal(pre, act, succ);
-			}
-			return Validity.NOT_CHECKED;
-		}
-
 		final Validity sdResult = mSdHoareTripleChecker.checkInternal(pre, act, succ);
-		if (sdResult != Validity.UNKNOWN) {
+		if (sdResult != Validity.UNKNOWN && sdResult != Validity.NOT_CHECKED) {
 			return sdResult;
 		}
-		final Validity result = mSmtBasedHoareTripleChecker.checkInternal(pre, act, succ);
-		return result;
+		return mSmtBasedHoareTripleChecker.checkInternal(pre, act, succ);
 	}
 
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-		if (mProtectedActions.contains(act)) {
-			if (mAllowSdForProtectedActions) {
-				return mSdHoareTripleChecker.checkCall(pre, act, succ);
-			}
-			return Validity.NOT_CHECKED;
-		}
 		final Validity sdResult = mSdHoareTripleChecker.checkCall(pre, act, succ);
-		if (sdResult != Validity.UNKNOWN) {
+		if (sdResult != Validity.UNKNOWN && sdResult != Validity.NOT_CHECKED) {
 			return sdResult;
 		}
-		final Validity result = mSmtBasedHoareTripleChecker.checkCall(pre, act, succ);
-		return result;
+		return mSmtBasedHoareTripleChecker.checkCall(pre, act, succ);
 	}
 
 	@Override
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate succ) {
-		if (mProtectedActions.contains(act)) {
-			if (mAllowSdForProtectedActions) {
-				return mSdHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
-			}
-			return Validity.NOT_CHECKED;
-		}
 		final Validity sdResult = mSdHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
-		if (sdResult != Validity.UNKNOWN) {
+		if (sdResult != Validity.UNKNOWN && sdResult != Validity.NOT_CHECKED) {
 			return sdResult;
 		}
-		final Validity result = mSmtBasedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
-		return result;
+		return mSmtBasedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 	}
 
 	@Override
