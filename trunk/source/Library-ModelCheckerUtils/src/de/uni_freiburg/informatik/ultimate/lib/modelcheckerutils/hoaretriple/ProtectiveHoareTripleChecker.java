@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2021 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2021 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -26,6 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
+import java.util.function.Predicate;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -34,28 +38,49 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 
 /**
- * IHoareTripleChecker that "protects" another IHoareTripleChecker from intricate predicates. The mPredicateUnifer
- * defines what an intricate predicates is. If the Hoare triple that should be checked contains an intricate predicate
- * we return Validity.NOT_CHECKED. Otherwise we ask the "protected" IHoareTripleChecker.
+ * {@link IHoareTripleChecker} that "protects" another {@link IHoareTripleChecker} from Hoare triples satisfying some
+ * condition expressed by {@link Predicate}s over {@link IPredicate}s (for pre, post, and hierachical pre conditions)
+ * and {@link IAction} (for all actions of the Hoare triple). If the Hoare triple that should be checked satisfies such
+ * a condition, we return {@link Validity#NOT_CHECKED}. Otherwise we ask the "protected" {@link IHoareTripleChecker}.
  *
  * @author Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 
 	private final IHoareTripleChecker mProtectedHoareTripleChecker;
-	private final IPredicateUnifier mPredicateUnifer;
+	private final Predicate<IPredicate> mPredicateProtection;
+	private final Predicate<IAction> mActionProtection;
 
+	/**
+	 * see {@link ProtectiveHoareTripleChecker}
+	 */
 	public ProtectiveHoareTripleChecker(final IHoareTripleChecker protectedHoareTripleChecker,
-			final IPredicateUnifier predicateUnifer) {
-		super();
+			final Predicate<IPredicate> predPredicateProtection, final Predicate<IAction> predActionProtection) {
 		mProtectedHoareTripleChecker = protectedHoareTripleChecker;
-		mPredicateUnifer = predicateUnifer;
+		mPredicateProtection = predPredicateProtection;
+		mActionProtection = predActionProtection;
+	}
+
+	/**
+	 * Create an {@link IHoareTripleChecker} that "protects" another {@link IHoareTripleChecker} from intricate
+	 * predicates provided by an {@link IPredicateUnifier}.
+	 *
+	 * If the Hoare triple that should be checked contains an intricate predicate we return
+	 * {@link Validity#NOT_CHECKED}. Otherwise we ask the "protected" IHoareTripleChecker.
+	 */
+	public static ProtectiveHoareTripleChecker protectionFromIntricatePredicates(
+			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifier) {
+		final Predicate<IPredicate> predPredicateProtection = predicateUnifier::isIntricatePredicate;
+		final Predicate<IAction> predActionProtection = a -> true;
+		return new ProtectiveHoareTripleChecker(protectedHoareTripleChecker, predPredicateProtection,
+				predActionProtection);
 	}
 
 	@Override
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-		if (mPredicateUnifer.isIntricatePredicate(pre) || mPredicateUnifer.isIntricatePredicate(succ)) {
+		if (mPredicateProtection.test(pre) || mPredicateProtection.test(succ) || mActionProtection.test(act)) {
 			return Validity.NOT_CHECKED;
 		}
 		return mProtectedHoareTripleChecker.checkInternal(pre, act, succ);
@@ -63,7 +88,7 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-		if (mPredicateUnifer.isIntricatePredicate(pre) || mPredicateUnifer.isIntricatePredicate(succ)) {
+		if (mPredicateProtection.test(pre) || mPredicateProtection.test(succ) || mActionProtection.test(act)) {
 			return Validity.NOT_CHECKED;
 		}
 		return mProtectedHoareTripleChecker.checkCall(pre, act, succ);
@@ -72,8 +97,8 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate succ) {
-		if (mPredicateUnifer.isIntricatePredicate(preLin) || mPredicateUnifer.isIntricatePredicate(preHier)
-				|| mPredicateUnifer.isIntricatePredicate(succ)) {
+		if (mPredicateProtection.test(preLin) || mPredicateProtection.test(preHier) || mPredicateProtection.test(succ)
+				|| mActionProtection.test(act)) {
 			return Validity.NOT_CHECKED;
 		}
 		return mProtectedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
