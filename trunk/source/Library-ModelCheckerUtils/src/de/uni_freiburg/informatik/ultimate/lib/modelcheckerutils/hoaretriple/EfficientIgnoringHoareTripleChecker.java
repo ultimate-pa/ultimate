@@ -62,7 +62,7 @@ public class EfficientIgnoringHoareTripleChecker implements IHoareTripleChecker 
 		mSdHoareTripleChecker = new ProtectiveHoareTripleChecker(
 				new SdHoareTripleChecker(csToolkit, predicateUnifier,
 						mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark()),
-				predicateUnifier, a -> true, allowSdForProtectedActions ? a -> true : predActionProtection);
+				predicateUnifier, a -> false, allowSdForProtectedActions ? a -> false : predActionProtection);
 
 	}
 
