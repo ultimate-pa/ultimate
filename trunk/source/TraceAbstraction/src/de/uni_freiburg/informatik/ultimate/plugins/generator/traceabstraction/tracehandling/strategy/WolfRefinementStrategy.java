@@ -49,19 +49,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class WolfRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public WolfRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public WolfRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
-			createModules(final StrategyModuleFactory<LETTER> factory) {
+	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
+			createModules(final StrategyModuleFactory<L> factory) {
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
-		final List<IIpTcStrategyModule<?, LETTER>> rtr = new ArrayList<>();
+		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBP));
