@@ -111,6 +111,7 @@ known_timeouts:
   "Toolchain execution was canceled (user or tool) before executing":
   "TimeoutResultAtElement":
   "TimeoutResult":
+  "UserSpecifiedLimitReachedResult":
   "Killed by 15":
   "Killed from outside":
 
