@@ -60,12 +60,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -113,19 +113,20 @@ public class TraceAbstractionUtils {
 	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
 			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
 			final IPredicateUnifier predicateUnifier) throws AssertionError {
-		final IHoareTripleChecker solverHtc = constructSmtHoareTripleChecker(hoareTripleChecks, csToolkit);
+		final IHoareTripleChecker solverHtc = constructSmtHoareTripleChecker(services, hoareTripleChecks, csToolkit);
 		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
 	}
 
-	public static IHoareTripleChecker constructSmtHoareTripleChecker(final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit) throws AssertionError {
+	public static IHoareTripleChecker constructSmtHoareTripleChecker(final IUltimateServiceProvider services,
+			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit) throws AssertionError {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
 			solverHtc = new MonolithicHoareTripleChecker(csToolkit);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false);
+			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false,
+					services.getLoggingService().getLogger(TraceAbstractionUtils.class));
 			break;
 		default:
 			throw new AssertionError("unknown value");

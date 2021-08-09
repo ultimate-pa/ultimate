@@ -165,7 +165,7 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 		mLogger.info("Constructing danger automaton with " + mPredicates.size() + " predicates.");
 		mPt = new PredicateTransformer<>(csToolkit.getManagedScript(),
 				new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
-		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mCsTookit, false);
+		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mCsTookit, false, mLogger);
 
 		{
 			final IValueConstruction<Pair<IPredicate, L>, Term> valueConstruction = key -> {

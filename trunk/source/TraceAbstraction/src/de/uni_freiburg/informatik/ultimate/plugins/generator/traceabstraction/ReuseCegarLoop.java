@@ -449,10 +449,9 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 		if (res.length == 2) {
 			// res[0] is the serial number, res[1] is the string
 			return res[1];
-		} else {
-			mLogger.warn("Unexpected result from String's split function. String parsing failed.");
-			throw new UnsupportedOperationException("String parsing failed");
 		}
+		mLogger.warn("Unexpected result from String's split function. String parsing failed.");
+		throw new UnsupportedOperationException("String parsing failed");
 	}
 
 	/**
@@ -518,8 +517,8 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 
 		private IHoareTripleChecker constructEfficientIgnoringHtc(final boolean allowSdForProtectedActions)
 				throws AssertionError {
-			final IHoareTripleChecker smtHtc =
-					TraceAbstractionUtils.constructSmtHoareTripleChecker(mPref.getHoareTripleChecks(), mCsToolkit);
+			final IHoareTripleChecker smtHtc = TraceAbstractionUtils.constructSmtHoareTripleChecker(mServices,
+					mPref.getHoareTripleChecks(), mCsToolkit);
 			final EfficientIgnoringHoareTripleChecker eiHtc = new EfficientIgnoringHoareTripleChecker(smtHtc,
 					mCsToolkit, getPredicateUnifier(), constructOldAlphabet(), allowSdForProtectedActions);
 			return new CachingHoareTripleCheckerMap(getServices(), eiHtc, getPredicateUnifier());

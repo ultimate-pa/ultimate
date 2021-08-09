@@ -253,7 +253,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), determinized).getResult();
 				assert new InductivityCheck<>(getServices(), test, false, true,
-						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false)).getResult();
+						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false, mLogger)).getResult();
 				progress = true;
 				break;
 			}
@@ -275,7 +275,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), nondet).getResult();
 				assert new InductivityCheck<>(getServices(), test, false, true,
-						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false)).getResult();
+						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false, mLogger)).getResult();
 				progress = true;
 				break;
 			}

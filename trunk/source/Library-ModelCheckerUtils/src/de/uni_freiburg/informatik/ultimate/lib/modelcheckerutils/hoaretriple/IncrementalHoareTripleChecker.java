@@ -34,9 +34,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -68,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
@@ -101,6 +104,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	private final boolean mConstructCounterexamples;
 	private ProgramState<Term> mCounterexampleStatePrecond;
 	private ProgramState<Term> mCounterexampleStatePostcond;
+	private final ILogger mLogger;
 
 	/**
 	 * @param constructCounterexamples
@@ -110,13 +114,17 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	 *
 	 *            TODO: Return a third {@link ProgramState} in counterexamples to validity of return transitions (will
 	 *            represent state before call)
+	 * @param logger
+	 *            TODO
 	 */
-	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit, final boolean constructCounterexamples) {
+	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit, final boolean constructCounterexamples,
+			final ILogger logger) {
 		mManagedScript = csToolkit.getManagedScript();
 		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
 		mOldVarsAssignmentCache = csToolkit.getOldVarsAssignmentCache();
 		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mConstructCounterexamples = constructCounterexamples;
+		mLogger = logger;
 	}
 
 	@Override
@@ -252,13 +260,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	protected LBool assertPostcond(final IPredicate postcond) {
 		if (mAssertedAction instanceof IInternalAction) {
 			return assertPostcondInternal(postcond);
-		} else if (mAssertedAction instanceof ICallAction) {
-			return assertPostcondCall(postcond);
-		} else if (mAssertedAction instanceof IReturnAction) {
-			return assertPostcondReturn(postcond);
-		} else {
-			throw new AssertionError("unknown trans type");
 		}
+		if (mAssertedAction instanceof ICallAction) {
+			return assertPostcondCall(postcond);
+		}
+		if (mAssertedAction instanceof IReturnAction) {
+			return assertPostcondReturn(postcond);
+		}
+		throw new AssertionError("unknown trans type");
 	}
 
 	public void clearAssertionStack() {
@@ -388,7 +397,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 			// rename oldVars of modifiable globals to default vars
 			ovaFormula = renameVarsToDefaultConstants(ovaTF.getOutVars(), ovaFormula);
 			if (UNLET_TERMS) {
-				ovaFormula = (new FormulaUnLet()).unlet(ovaFormula);
+				ovaFormula = new FormulaUnLet().unlet(ovaFormula);
 			}
 			assert ovaFormula.getFreeVars().length == 0;
 			if (mUseNamedTerms) {
@@ -411,7 +420,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 			// rename auxiliary vars to fresh constants
 			locVarAssign = renameAuxVarsToCorrespondingConstants(callTf.getAuxVars(), locVarAssign);
 			if (UNLET_TERMS) {
-				locVarAssign = (new FormulaUnLet()).unlet(locVarAssign);
+				locVarAssign = new FormulaUnLet().unlet(locVarAssign);
 			}
 			assert locVarAssign.getFreeVars().length == 0;
 			if (mUseNamedTerms) {
@@ -430,12 +439,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		mAssertedAction = null;
 		mHierConstants = null;
 		mManagedScript.pop(this, 1);
-		if (mAssertedPrecond == null) {
-			mManagedScript.echo(this, new QuotedObject(MSG_END_EDGE_CHECK));
-			mManagedScript.unlock(this);
-		} else {
+		if (mAssertedPrecond != null) {
 			throw new AssertionError("CodeBlock is unasserted last");
 		}
+		mManagedScript.echo(this, new QuotedObject(MSG_END_EDGE_CHECK));
+		mManagedScript.unlock(this);
 	}
 
 	protected LBool assertHierPred(final IPredicate p) {
@@ -468,7 +476,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		// rename vars which are assigned on return to Hier vars
 		hierFormula = renameVarsToHierConstants(p.getVars(), hierFormula);
 		if (UNLET_TERMS) {
-			hierFormula = (new FormulaUnLet()).unlet(hierFormula);
+			hierFormula = new FormulaUnLet().unlet(hierFormula);
 		}
 
 		// TODO auxvars
@@ -542,7 +550,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		Term renamedFormula = constructPostcondFormula(p, (IInternalAction) mAssertedAction,
 				mModifiableGlobalVariableManager, mManagedScript, this);
 		if (UNLET_TERMS) {
-			renamedFormula = (new FormulaUnLet()).unlet(renamedFormula);
+			renamedFormula = new FormulaUnLet().unlet(renamedFormula);
 		}
 		assert renamedFormula.getFreeVars().length == 0;
 		Term negation = mManagedScript.term(this, "not", renamedFormula);
@@ -583,7 +591,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		renamedFormula = renameVarsToPrimedConstants(boogieVars, renamedFormula, mManagedScript, this);
 		renamedFormula = renameVarsToDefaultConstants(p.getVars(), renamedFormula, mManagedScript, this);
 		if (UNLET_TERMS) {
-			renamedFormula = (new FormulaUnLet()).unlet(renamedFormula);
+			renamedFormula = new FormulaUnLet().unlet(renamedFormula);
 		}
 		assert renamedFormula.getFreeVars().length == 0;
 		Term negation = mManagedScript.term(this, "not", renamedFormula);
@@ -637,7 +645,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		renamedFormula = renameVarsToHierConstants(p.getVars(), renamedFormula);
 
 		if (UNLET_TERMS) {
-			renamedFormula = (new FormulaUnLet()).unlet(renamedFormula);
+			renamedFormula = new FormulaUnLet().unlet(renamedFormula);
 		}
 		assert renamedFormula.getFreeVars().length == 0;
 		Term negation = mManagedScript.term(this, "not", renamedFormula);
@@ -673,7 +681,13 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		assert mAssertedPrecond != null : "Assert precond first! ";
 		assert mAssertedPostcond != null : "Assert postcond first! ";
 		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
+
+		final long before = System.currentTimeMillis();
 		final LBool isSat = mManagedScript.checkSat(this);
+		final long delta = System.currentTimeMillis() - before;
+		if (delta > 1000) {
+			mLogger.warn("Took %s for a HTC check", CoreUtil.humanReadableTime(delta, TimeUnit.MILLISECONDS, 2));
+		}
 		switch (isSat) {
 		case SAT:
 			if (mConstructCounterexamples) {
@@ -701,7 +715,6 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				x -> TransFormulaUtils.renameInvarsToDefaultVars(tf, mManagedScript, x));
 	}
 
-
 	private ProgramState<Term> constructCounterexampleStateForPostcondition() {
 		final UnmodifiableTransFormula tf = mAssertedAction.getTransformula();
 		return constructCounterexampleState(tf.getOutVars(), TransFormulaUtils::constructInvarsToOutvarsMap,
@@ -720,14 +733,13 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				representativeTerm2ClosedTerm.put(entry.getKey().getTermVariable(), xVarConst);
 			}
 		}
-		final Set<TermVariable> inAndOutVars = tf.getInVars().entrySet().stream().map(x -> x.getValue())
-				.collect(Collectors.toSet());
-		inAndOutVars.addAll(tf.getOutVars().entrySet().stream().map(x -> x.getValue()).collect(Collectors.toSet()));
+		final Set<TermVariable> inAndOutVars =
+				tf.getInVars().entrySet().stream().map(Entry::getValue).collect(Collectors.toSet());
+		inAndOutVars.addAll(tf.getOutVars().entrySet().stream().map(Entry::getValue).collect(Collectors.toSet()));
 		final Set<Term> selectTerms = SubTermFinder.find(tf.getFormula(), x -> isSuitableArrayReadTerm(x, inAndOutVars),
 				false);
 		for (final Term selectTerm : selectTerms) {
-			final Term selectTermAllOut = new Substitution(mManagedScript,
-					toXVarsMap.apply(tf)).transform(selectTerm);
+			final Term selectTermAllOut = new Substitution(mManagedScript, toXVarsMap.apply(tf)).transform(selectTerm);
 			final Term selectTermWithDefaultVars = xVarToDefaultVar.apply(selectTermAllOut);
 			// version of the select term as is was asserted
 			final Term selectTermClosed = UnmodifiableTransFormula.computeClosedFormula(selectTermAllOut,
@@ -748,13 +760,13 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	/**
-	 * @param varSet here, these are inVar or outVars of a TransFormula
-	 * @return true iff term is an array select term, whose Sort allows us to get values and whose
-	 * free variables are in the set varSet.
+	 * @param varSet
+	 *            here, these are inVar or outVars of a TransFormula
+	 * @return true iff term is an array select term, whose Sort allows us to get values and whose free variables are in
+	 *         the set varSet.
 	 */
 	private boolean isSuitableArrayReadTerm(final Term term, final Set<TermVariable> varSet) {
-		return (term instanceof ApplicationTerm)
-				&& ((ApplicationTerm) term).getFunction().getName().equals("select")
+		return term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("select")
 				&& SmtUtils.isSortForWhichWeCanGetValues(term.getSort())
 				&& Arrays.stream(term.getFreeVars()).allMatch(x -> varSet.contains(x));
 	}
@@ -902,14 +914,12 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				if (bv.isOldvar()) {
 					assert !modifiableGlobals.contains(bv);
 					// do nothing
+				} else if (modifiableGlobals.contains(bv)) {
+					// do noting
 				} else {
-					if (modifiableGlobals.contains(bv)) {
-						// do noting
-					} else {
-						// oldVar of global which is not modifiable by called proc
-						replacees.add(entry.getValue());
-						replacers.add(bv.getDefaultConstant());
-					}
+					// oldVar of global which is not modifiable by called proc
+					replacees.add(entry.getValue());
+					replacers.add(bv.getDefaultConstant());
 				}
 			} else {
 				assert !modifiableGlobals.contains(bv);

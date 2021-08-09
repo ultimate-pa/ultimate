@@ -161,7 +161,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
 		mTopState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createTopState());
 		mBottomState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createBottomState());
-		mHtcSmt = new IncrementalHoareTripleChecker(mCsToolkit, false);
+		mHtcSmt = new IncrementalHoareTripleChecker(mCsToolkit, false, mLogger);
 		mHtcSd = new SdHoareTripleChecker(mCsToolkit, predicateUnifer, mBenchmark);
 		mOnlyAbsInt = onlyAbsInt;
 

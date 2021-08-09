@@ -185,7 +185,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 		determinized.switchToReadonlyMode();
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult();
+				new IncrementalHoareTripleChecker(mCsToolkit, false, mLogger)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
