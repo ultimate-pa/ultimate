@@ -242,7 +242,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		final Term result =
 				TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services, applyDistributivity,
 						quantifierEliminationTechniques, simplificationTechnique, script), context, inputTerm);
-		checkSimplificationPotential(services, script, "Quantifier elimination failed to simlify output", inputTerm);
+		checkSimplificationPotential(services, script, "Quantifier elimination failed to simlify output", result);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
 			SmtUtils.checkLogicalEquivalenceForDebugging(script.getScript(), result, inputTerm, QuantifierPusher.class,
