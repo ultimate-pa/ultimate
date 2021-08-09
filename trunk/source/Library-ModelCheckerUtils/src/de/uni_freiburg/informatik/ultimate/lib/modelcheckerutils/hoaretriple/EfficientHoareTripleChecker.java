@@ -44,7 +44,6 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 
 	public EfficientHoareTripleChecker(final IHoareTripleChecker smtBasedHoareTripleChecker,
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
-		super();
 		mSmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier);
 		mSdHoareTripleChecker = new SdHoareTripleChecker(csToolkit, predicateUnifier,
 				mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark());
@@ -55,15 +54,11 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		final Validity sdResult = mSdHoareTripleChecker.checkInternal(pre, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
-			if (REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED) {
-				assert reviewInductiveInternal(pre, act, succ, sdResult);
-			}
+			assert !REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED || reviewInductiveInternal(pre, act, succ, sdResult);
 			return sdResult;
 		}
 		final Validity result = mSmtBasedHoareTripleChecker.checkInternal(pre, act, succ);
-		if (REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED) {
-			assert reviewInductiveInternal(pre, act, succ, result);
-		}
+		assert !REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED || reviewInductiveInternal(pre, act, succ, result);
 		return result;
 	}
 
@@ -71,15 +66,11 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		final Validity sdResult = mSdHoareTripleChecker.checkCall(pre, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
-			if (REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED) {
-				assert reviewInductiveCall(pre, act, succ, sdResult);
-			}
+			assert !REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED || reviewInductiveCall(pre, act, succ, sdResult);
 			return sdResult;
 		}
 		final Validity result = mSmtBasedHoareTripleChecker.checkCall(pre, act, succ);
-		if (REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED) {
-			assert reviewInductiveCall(pre, act, succ, result);
-		}
+		assert !REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED || reviewInductiveCall(pre, act, succ, result);
 		return result;
 	}
 
@@ -88,15 +79,12 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 			final IPredicate succ) {
 		final Validity sdResult = mSdHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
-			if (REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED) {
-				assert reviewInductiveReturn(preLin, preHier, act, succ, sdResult);
-			}
+			assert !REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED
+					|| reviewInductiveReturn(preLin, preHier, act, succ, sdResult);
 			return sdResult;
 		}
 		final Validity result = mSmtBasedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
-		if (REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED) {
-			assert reviewInductiveReturn(preLin, preHier, act, succ, result);
-		}
+		assert !REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED || reviewInductiveReturn(preLin, preHier, act, succ, result);
 		return result;
 	}
 
