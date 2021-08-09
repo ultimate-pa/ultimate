@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * {@link IHoareTripleChecker} that "protects" another {@link IHoareTripleChecker} from Hoare triples satisfying some
@@ -52,15 +53,20 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	private final IHoareTripleChecker mProtectedHoareTripleChecker;
 	private final Predicate<IPredicate> mPredicateProtection;
 	private final Predicate<IAction> mActionProtection;
+	private final Term mTrueTerm;
+	private final Term mFalseTerm;
 
 	/**
 	 * see {@link ProtectiveHoareTripleChecker}
 	 */
 	public ProtectiveHoareTripleChecker(final IHoareTripleChecker protectedHoareTripleChecker,
-			final Predicate<IPredicate> predPredicateProtection, final Predicate<IAction> predActionProtection) {
+			final IPredicateUnifier predicateUnifier, final Predicate<IPredicate> predPredicateProtection,
+			final Predicate<IAction> predActionProtection) {
 		mProtectedHoareTripleChecker = protectedHoareTripleChecker;
 		mPredicateProtection = predPredicateProtection;
 		mActionProtection = predActionProtection;
+		mTrueTerm = predicateUnifier.getTruePredicate().getClosedFormula();
+		mFalseTerm = predicateUnifier.getFalsePredicate().getClosedFormula();
 	}
 
 	/**
@@ -74,12 +80,15 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifier) {
 		final Predicate<IPredicate> predPredicateProtection = predicateUnifier::isIntricatePredicate;
 		final Predicate<IAction> predActionProtection = a -> true;
-		return new ProtectiveHoareTripleChecker(protectedHoareTripleChecker, predPredicateProtection,
+		return new ProtectiveHoareTripleChecker(protectedHoareTripleChecker, predicateUnifier, predPredicateProtection,
 				predActionProtection);
 	}
 
 	@Override
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
+		if (isTrueTrue(pre, succ) || isFalse(pre)) {
+			return Validity.VALID;
+		}
 		if (mPredicateProtection.test(pre) || mPredicateProtection.test(succ) || mActionProtection.test(act)) {
 			return Validity.NOT_CHECKED;
 		}
@@ -88,6 +97,9 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
+		if (isTrueTrue(pre, succ) || isFalse(pre)) {
+			return Validity.VALID;
+		}
 		if (mPredicateProtection.test(pre) || mPredicateProtection.test(succ) || mActionProtection.test(act)) {
 			return Validity.NOT_CHECKED;
 		}
@@ -97,6 +109,9 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate succ) {
+		if (isTrueTrue(preLin, preHier, succ) || isFalse(preLin, preHier)) {
+			return Validity.VALID;
+		}
 		if (mPredicateProtection.test(preLin) || mPredicateProtection.test(preHier) || mPredicateProtection.test(succ)
 				|| mActionProtection.test(act)) {
 			return Validity.NOT_CHECKED;
@@ -116,5 +131,22 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public void releaseLock() {
 		mProtectedHoareTripleChecker.releaseLock();
+	}
+
+	private boolean isTrueTrue(final IPredicate pre, final IPredicate post) {
+		return pre.getClosedFormula() == mTrueTerm && post.getClosedFormula() == mTrueTerm;
+	}
+
+	private boolean isTrueTrue(final IPredicate preLin, final IPredicate preHier, final IPredicate post) {
+		return preLin.getClosedFormula() == mTrueTerm && preHier.getClosedFormula() == mTrueTerm
+				&& post.getClosedFormula() == mTrueTerm;
+	}
+
+	private boolean isFalse(final IPredicate preLin, final IPredicate preHier) {
+		return preLin.getClosedFormula() == mFalseTerm || preHier.getClosedFormula() == mFalseTerm;
+	}
+
+	private boolean isFalse(final IPredicate pre) {
+		return pre.getClosedFormula() == mFalseTerm;
 	}
 }
