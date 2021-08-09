@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 
 public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	private static final boolean REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED = true;
@@ -44,8 +46,12 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 
 	public EfficientHoareTripleChecker(final IHoareTripleChecker smtBasedHoareTripleChecker,
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
-		mSmtBasedHoareTripleChecker = ProtectiveHoareTripleChecker
-				.protectionFromIntricatePredicates(smtBasedHoareTripleChecker, predicateUnifier);
+
+		// protect against quantified transition formulas and intricate predicates
+		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
+		mSmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier,
+				predicateUnifier::isIntricatePredicate,
+				a -> quantifierFinder.isSatisfiedBySomeSubterm(a.getTransformula().getFormula()));
 		mSdHoareTripleChecker = new SdHoareTripleChecker(csToolkit, predicateUnifier,
 				mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark());
 		mHoareTripleCheckerForReview = new MonolithicHoareTripleChecker(csToolkit);
