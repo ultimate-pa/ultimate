@@ -24,12 +24,12 @@ public class version {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** The minor version number. */
-  public static final int minor = 0;
+  public static final int minor = 2;
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** The update letter. */
-  public static final String update = " 20160720";
+  public static final String update = " 20210807";
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
