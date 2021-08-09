@@ -79,7 +79,7 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	public static ProtectiveHoareTripleChecker protectionFromIntricatePredicates(
 			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifier) {
 		final Predicate<IPredicate> predPredicateProtection = predicateUnifier::isIntricatePredicate;
-		final Predicate<IAction> predActionProtection = a -> true;
+		final Predicate<IAction> predActionProtection = a -> false;
 		return new ProtectiveHoareTripleChecker(protectedHoareTripleChecker, predicateUnifier, predPredicateProtection,
 				predActionProtection);
 	}
