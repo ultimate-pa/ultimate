@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,20 +36,24 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataProvider {
-	
-	protected final InCaReCounter mSDtfsCounter;
-	protected final InCaReCounter mSDsluCounter;
-	protected final InCaReCounter mSDsCounter;
-	protected final InCaReCounter mSdLazyCounter;
-	protected final InCaReCounter mSolverCounterSat;
-	protected final InCaReCounter mSolverCounterUnsat;
-	protected final InCaReCounter mSolverCounterUnknown;
-	protected final InCaReCounter mSolverCounterNotChecked;
-	protected final Benchmark mBenchmark;
 
-	protected boolean mRunning = false;
+	private final InCaReCounter mSDtfsCounter;
+	private final InCaReCounter mSDsluCounter;
+	private final InCaReCounter mSDsCounter;
+	private final InCaReCounter mSdLazyCounter;
+	private final InCaReCounter mSolverCounterSat;
+	private final InCaReCounter mSolverCounterUnsat;
+	private final InCaReCounter mSolverCounterUnknown;
+	private final InCaReCounter mSolverCounterNotChecked;
+	private final Benchmark mBenchmark;
+	private final InCaReCounter mProtectedPredicate;
+	private final InCaReCounter mProtectedAction;
+
+	private boolean mRunning = false;
 
 	public HoareTripleCheckerStatisticsGenerator() {
+		mProtectedPredicate = new InCaReCounter();
+		mProtectedAction = new InCaReCounter();
 		mSDtfsCounter = new InCaReCounter();
 		mSDsluCounter = new InCaReCounter();
 		mSDsCounter = new InCaReCounter();
@@ -57,56 +61,82 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 		mSolverCounterSat = new InCaReCounter();
 		mSolverCounterUnsat = new InCaReCounter();
 		mSolverCounterUnknown = new InCaReCounter();
-		mSolverCounterNotChecked= new InCaReCounter();
+		mSolverCounterNotChecked = new InCaReCounter();
 		mBenchmark = new Benchmark();
 		mBenchmark.register(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
+	}
+
+	public InCaReCounter getProtectedPredicateCounter() {
+		return mProtectedPredicate;
+	}
+
+	public InCaReCounter getProtectedActionCounter() {
+		return mProtectedAction;
 	}
 
 	public InCaReCounter getSDtfsCounter() {
 		return mSDtfsCounter;
 	}
+
 	public InCaReCounter getSDsluCounter() {
 		return mSDsluCounter;
 	}
+
 	public InCaReCounter getSDsCounter() {
 		return mSDsCounter;
 	}
+
 	public InCaReCounter getSdLazyCounter() {
 		return mSdLazyCounter;
 	}
+
 	public InCaReCounter getSolverCounterSat() {
 		return mSolverCounterSat;
 	}
+
 	public InCaReCounter getSolverCounterUnsat() {
 		return mSolverCounterUnsat;
 	}
+
 	public InCaReCounter getSolverCounterUnknown() {
 		return mSolverCounterUnknown;
 	}
+
 	public InCaReCounter getSolverCounterNotChecked() {
 		return mSolverCounterNotChecked;
 	}
+
 	public long getEdgeCheckerTime() {
-		return (long) mBenchmark.getElapsedTime(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time), TimeUnit.NANOSECONDS);
+		return (long) mBenchmark.getElapsedTime(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time),
+				TimeUnit.NANOSECONDS);
 	}
+
 	public void continueEdgeCheckerTime() {
 		assert !mRunning : "Timing already running";
 		mRunning = true;
 		mBenchmark.unpause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
+
 	public void stopEdgeCheckerTime() {
 		assert mRunning : "Timing not running";
 		mRunning = false;
 		mBenchmark.pause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
+
 	@Override
 	public Collection<String> getKeys() {
 		return HoareTripleCheckerStatisticsType.getInstance().getKeys();
 	}
+
 	@Override
 	public Object getValue(final String key) {
-		final HoareTripleCheckerStatisticsDefinitions keyEnum = Enum.valueOf(HoareTripleCheckerStatisticsDefinitions.class, key);
+		final HoareTripleCheckerStatisticsDefinitions keyEnum =
+				Enum.valueOf(HoareTripleCheckerStatisticsDefinitions.class, key);
 		switch (keyEnum) {
+		case ProAct:
+			return mProtectedAction;
+		case ProPred:
+			return mProtectedPredicate;
 		case SDtfs:
 			return mSDtfsCounter;
 		case SDslu:
@@ -154,10 +184,12 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 		builder.append(mSolverCounterUnknown);
 		builder.append(", mSolverCounterNotChecked=");
 		builder.append(mSolverCounterNotChecked);
+		builder.append(", mProtectedPredicate=");
+		builder.append(mProtectedPredicate);
+		builder.append(", mProtectedAction=");
+		builder.append(mProtectedAction);
 		builder.append("]");
 		return builder.toString();
 	}
-	
-	
 
 }

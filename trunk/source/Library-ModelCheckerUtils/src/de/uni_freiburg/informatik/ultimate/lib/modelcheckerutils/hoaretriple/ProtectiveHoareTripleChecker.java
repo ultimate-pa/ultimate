@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -55,6 +56,7 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	private final Predicate<IAction> mActionProtection;
 	private final Term mTrueTerm;
 	private final Term mFalseTerm;
+	private final HoareTripleCheckerStatisticsGenerator mStats;
 
 	/**
 	 * see {@link ProtectiveHoareTripleChecker}
@@ -62,7 +64,8 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	public ProtectiveHoareTripleChecker(final IHoareTripleChecker protectedHoareTripleChecker,
 			final IPredicateUnifier predicateUnifier, final Predicate<IPredicate> predPredicateProtection,
 			final Predicate<IAction> predActionProtection) {
-		mProtectedHoareTripleChecker = protectedHoareTripleChecker;
+		mProtectedHoareTripleChecker = Objects.requireNonNull(protectedHoareTripleChecker);
+		mStats = protectedHoareTripleChecker.getEdgeCheckerBenchmark();
 		mPredicateProtection = predPredicateProtection;
 		mActionProtection = predActionProtection;
 		mTrueTerm = predicateUnifier.getTruePredicate().getClosedFormula();
@@ -87,9 +90,15 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		if (isTrueTrue(pre, succ) || isFalse(pre)) {
+			// TODO: Increase some SD counter
 			return Validity.VALID;
 		}
-		if (mPredicateProtection.test(pre) || mPredicateProtection.test(succ) || mActionProtection.test(act)) {
+		if (mPredicateProtection.test(pre) || mPredicateProtection.test(succ)) {
+			mStats.getProtectedPredicateCounter().incIn();
+			return Validity.NOT_CHECKED;
+		}
+		if (mActionProtection.test(act)) {
+			mStats.getProtectedActionCounter().incIn();
 			return Validity.NOT_CHECKED;
 		}
 		return mProtectedHoareTripleChecker.checkInternal(pre, act, succ);
@@ -98,9 +107,15 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		if (isTrueTrue(pre, succ) || isFalse(pre)) {
+			// TODO: Increase some SD counter
 			return Validity.VALID;
 		}
-		if (mPredicateProtection.test(pre) || mPredicateProtection.test(succ) || mActionProtection.test(act)) {
+		if (mPredicateProtection.test(pre) || mPredicateProtection.test(succ)) {
+			mStats.getProtectedPredicateCounter().incCa();
+			return Validity.NOT_CHECKED;
+		}
+		if (mActionProtection.test(act)) {
+			mStats.getProtectedActionCounter().incCa();
 			return Validity.NOT_CHECKED;
 		}
 		return mProtectedHoareTripleChecker.checkCall(pre, act, succ);
@@ -110,12 +125,19 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate succ) {
 		if (isTrueTrue(preLin, preHier, succ) || isFalse(preLin, preHier)) {
+			// TODO: Increase some SD counter
 			return Validity.VALID;
 		}
-		if (mPredicateProtection.test(preLin) || mPredicateProtection.test(preHier) || mPredicateProtection.test(succ)
-				|| mActionProtection.test(act)) {
+		if (mPredicateProtection.test(preLin) || mPredicateProtection.test(preHier)
+				|| mPredicateProtection.test(succ)) {
+			mStats.getProtectedPredicateCounter().incRe();
 			return Validity.NOT_CHECKED;
 		}
+		if (mActionProtection.test(act)) {
+			mStats.getProtectedActionCounter().incRe();
+			return Validity.NOT_CHECKED;
+		}
+
 		return mProtectedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 	}
 

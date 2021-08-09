@@ -930,6 +930,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			}
 
 		} finally {
+			mLogger.info(htc.getEdgeCheckerBenchmark());
 			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());

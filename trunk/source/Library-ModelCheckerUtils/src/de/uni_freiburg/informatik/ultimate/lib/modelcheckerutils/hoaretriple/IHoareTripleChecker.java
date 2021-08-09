@@ -70,6 +70,10 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 
 	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
 
+		ProPred(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+		ProAct(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
 		/**
 		 * Simple Dataflow analysis To False Satisfiable. See
 		 * {@link SdHoareTripleCheckerHelper#sdecInternalToFalse}.
