@@ -554,7 +554,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 		if (mComputeHoareAnnotation) {
 			assert new InductivityCheck<>(getServices(), dia, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult() : "Not inductive";
+					new IncrementalHoareTripleChecker(super.mCsToolkit, false, mLogger)).getResult() : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;

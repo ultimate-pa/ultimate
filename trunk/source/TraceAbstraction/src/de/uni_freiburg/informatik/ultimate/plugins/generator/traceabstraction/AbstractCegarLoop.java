@@ -171,7 +171,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
-	private IUltimateServiceProvider mServices;
+	protected IUltimateServiceProvider mServices;
 
 	protected final TaskIdentifier mTaskIdentifier;
 
@@ -473,7 +473,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 			assert new InductivityCheck<>(getServices(), (INestedWordAutomaton<L, IPredicate>) mAbstraction, false,
-					true, new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
+					true, new IncrementalHoareTripleChecker(mCsToolkit, false, mLogger)).getResult() : "Not inductive";
 		}
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {

@@ -240,7 +240,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private IHoareTripleChecker createHoareTripleChecker() {
-		final IHoareTripleChecker smtBasedHoareTripleChecker = new IncrementalHoareTripleChecker(mCsToolkit, false);
+		final IHoareTripleChecker smtBasedHoareTripleChecker = new IncrementalHoareTripleChecker(mCsToolkit, false, mLogger);
 		final IHoareTripleChecker protectedHoareTripleChecker =
 				new EfficientHoareTripleChecker(smtBasedHoareTripleChecker, mCsToolkit, mPredicateUnifier);
 		final IHoareTripleChecker edgeChecker =

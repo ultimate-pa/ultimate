@@ -440,7 +440,7 @@ public class InvariantChecker {
 
 	private EdgeCheckResult doCheck(final IcfgLocation startLoc, final UnmodifiableTransFormula tf,
 			final IcfgLocation errorLoc) {
-		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true);
+		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true, mLogger);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable());
 		final IPredicate truePredicate =
