@@ -44,7 +44,8 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 
 	public EfficientHoareTripleChecker(final IHoareTripleChecker smtBasedHoareTripleChecker,
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
-		mSmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier);
+		mSmtBasedHoareTripleChecker = ProtectiveHoareTripleChecker
+				.protectionFromIntricatePredicates(smtBasedHoareTripleChecker, predicateUnifier);
 		mSdHoareTripleChecker = new SdHoareTripleChecker(csToolkit, predicateUnifier,
 				mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark());
 		mHoareTripleCheckerForReview = new MonolithicHoareTripleChecker(csToolkit);
