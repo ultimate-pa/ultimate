@@ -89,10 +89,14 @@ public class DataStructureUtils {
 	}
 
 	/**
-	 * @return an Optional<T> that contains an element that is contained in set1 and contained in set2 and that does not
-	 *         contain en element otherwise.
+	 * @return an Optional<T> that contains an element that is contained in both sets or is empty if both sets do not
+	 *         have a common element.
 	 */
 	public static <T> Optional<T> getSomeCommonElement(final Set<T> set1, final Set<T> set2) {
+		if (set1.isEmpty() || set2.isEmpty()) {
+			// at least one is empty, there is no common element
+			return Optional.empty();
+		}
 		final Set<T> larger;
 		final Set<T> smaller;
 		if (set1.size() > set2.size()) {
@@ -109,6 +113,12 @@ public class DataStructureUtils {
 	 * Construct a {@link Set} that contains all elements of set1 that are not in set2.
 	 */
 	public static <T> Set<T> difference(final Set<T> a, final Set<T> b) {
+		if (a.isEmpty()) {
+			return Collections.emptySet();
+		}
+		if (b.isEmpty()) {
+			return new HashSet<>(a);
+		}
 		return a.stream().filter(elem -> !b.contains(elem)).collect(Collectors.toSet());
 	}
 
@@ -135,7 +145,7 @@ public class DataStructureUtils {
 			return Collections.emptySet();
 		}
 
-		final int size = Arrays.stream(a).mapToInt(set -> set.size()).sum();
+		final int size = Arrays.stream(a).mapToInt(Set::size).sum();
 
 		final Set<T> rtr = DataStructureUtils.getFreshSet(a[0], size);
 		Arrays.stream(a).forEach(rtr::addAll);

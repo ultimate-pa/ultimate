@@ -49,7 +49,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	private final IPredicateCoverageChecker mPredicateCoverageChecker;
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
-	private static final boolean mLazyChecks = false;
+	private static final boolean LAZY_CHECKS = false;
 	private final InternalCheckHelper mInternalCheckHelper = new InternalCheckHelper();
 	private final CallCheckHelper mCallCheckHelper = new CallCheckHelper();
 	private final ReturnCheckHelper mReturnCheckHelper = new ReturnCheckHelper();
@@ -189,7 +189,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 				}
 			}
 			final Validity general;
-			if (mLazyChecks) {
+			if (LAZY_CHECKS) {
 				general = sdLazyEc(preLin, preHier, act, succ);
 			} else {
 				general = sdec(preLin, preHier, act, succ);
