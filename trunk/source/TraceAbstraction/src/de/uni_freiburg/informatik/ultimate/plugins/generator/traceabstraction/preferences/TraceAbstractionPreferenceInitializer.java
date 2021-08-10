@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.CegarRestartBehaviour;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder.ErrorAutomatonType;
@@ -114,7 +115,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
-	public static final String LABEL_ONE_ERROR_PER_CEGAR = "Restart CEGAR for each error location";
+	public static final String LABEL_CEGAR_RESTART_BEHAVIOUR = "CEGAR restart behaviour";
 	public static final String LABEL_ERROR_AUTOMATON_MODE = "Error locations removal mode";
 	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_LAST = "Check the insufficient thread errors last";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
@@ -209,7 +210,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_MINIMIZE = true;
 	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
 	public static final boolean DEF_STOP_AFTER_FIRST_VIOLATION = true;
-	private static final boolean DEF_ONE_ERROR_PER_CEGAR = false;
+	private static final CegarRestartBehaviour DEF_CEGAR_RESTART_BEHAVIOUR = CegarRestartBehaviour.ONLY_ONE_CEGAR;
 
 	public static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.SIMPLE_ERROR_AUTOMATON;
 
@@ -261,10 +262,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	private static final String DESC_STOP_AFTER_FIRST_VIOLATION =
 			"Stop the analysis after the first violation was found.";
-	private static final String DESC_ONE_ERROR_PER_CEGAR = "Use a dedicated CEGAR loop for each error location.";
-	private static final String DESC_ERROR_AUTOMATON_MODE = "If \"" + LABEL_ONE_ERROR_PER_CEGAR
-			+ "\" is false, i.e., if one CEGAR loop analyzes multiple error locations, reachable error locations are "
-			+ "removed by refinining the abstraction with an error automaton specified by this mode.";
+	private static final String DESC_CEGAR_RESTART_BEHAVIOUR =
+			"Control how many error locations are analyzed by a single CEGAR loop: all, only one, or other subsets.";
+	private static final String DESC_ERROR_AUTOMATON_MODE = "If \"" + LABEL_CEGAR_RESTART_BEHAVIOUR + "\" is not "
+			+ "\"ONE_CEGAR_PER_ERROR_LOCATION\", i.e., if one CEGAR loop analyzes multiple error locations, reachable "
+			+ "error locations are removed by refinining the abstraction with an error automaton specified by this mode.";
 
 	private static final String DESC_INSUFFICIENT_THREAD_ERRORS_LAST = null;
 
@@ -369,8 +371,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_STOP_AFTER_FIRST_VIOLATION, DEF_STOP_AFTER_FIRST_VIOLATION,
 						DESC_STOP_AFTER_FIRST_VIOLATION, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ONE_ERROR_PER_CEGAR, DEF_ONE_ERROR_PER_CEGAR,
-						DESC_ONE_ERROR_PER_CEGAR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CEGAR_RESTART_BEHAVIOUR, DEF_CEGAR_RESTART_BEHAVIOUR,
+						DESC_CEGAR_RESTART_BEHAVIOUR, PreferenceType.Combo, CegarRestartBehaviour.values()),
 				new UltimatePreferenceItem<>(LABEL_ERROR_AUTOMATON_MODE, DEF_ERROR_AUTOMATON_MODE,
 						DESC_ERROR_AUTOMATON_MODE, PreferenceType.Combo, ErrorAutomatonType.values()),
 				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_LAST, DEF_INSUFFICIENT_THREAD_ERRORS_LAST,

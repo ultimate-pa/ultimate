@@ -92,9 +92,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
-
-	// TODO add setting for this
-	public static final boolean ERRORS_PER_THREAD = true;
+	public enum CegarRestartBehaviour {
+		ONLY_ONE_CEGAR, ONE_CEGAR_PER_THREAD_INSTANCE, ONE_CEGAR_PER_ERROR_LOCATION,
+	}
 
 	public static final String ULTIMATE_INIT = "ULTIMATE.init";
 	public static final String ULTIMATE_START = "ULTIMATE.start";
@@ -342,10 +342,18 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 * @return A partition of the error locations, each set annotated with a debug identifier
 	 */
 	private List<Pair<DebugIdentifier, Set<IcfgLocation>>> partitionErrorLocations(final IIcfg<IcfgLocation> icfg) {
-		// TODO (Dominik 2021-04-29) Support other mode: group by thread
 		// TODO (Dominik 2021-04-29) Support other mode: group by original (i.e. all copies of a location together)
 
-		if (ERRORS_PER_THREAD && mIsConcurrent) {
+		CegarRestartBehaviour restartBehaviour = mServices.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(
+				TraceAbstractionPreferenceInitializer.LABEL_CEGAR_RESTART_BEHAVIOUR, CegarRestartBehaviour.class);
+		if (restartBehaviour == CegarRestartBehaviour.ONE_CEGAR_PER_THREAD_INSTANCE && !mIsConcurrent) {
+			mLogger.warn("Program is not concurrent. Changing CEGAR restart behaviour to "
+					+ CegarRestartBehaviour.ONLY_ONE_CEGAR);
+			restartBehaviour = CegarRestartBehaviour.ONLY_ONE_CEGAR;
+		}
+
+		if (restartBehaviour == CegarRestartBehaviour.ONE_CEGAR_PER_THREAD_INSTANCE) {
+			assert mIsConcurrent : "One CEGAR per thread instance only works for concurrent programs";
 			final List<Pair<DebugIdentifier, Set<IcfgLocation>>> result = new ArrayList<>();
 			for (final String thread : IcfgUtils.getAllThreadInstances(icfg)) {
 				final Set<IcfgLocation> locs = icfg.getProcedureErrorNodes().get(thread);
@@ -358,19 +366,18 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		}
 
 		final Set<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
-		final boolean oneErrorPerCegar = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ONE_ERROR_PER_CEGAR);
-		if (oneErrorPerCegar) {
+		if (restartBehaviour == CegarRestartBehaviour.ONE_CEGAR_PER_ERROR_LOCATION) {
 			Stream<IcfgLocation> errorLocs = errNodesOfAllProc.stream();
-
-			if (isConcurrent(icfg) && mPrefs.insufficientThreadErrorsLast()) {
+			if (mIsConcurrent && mPrefs.insufficientThreadErrorsLast()) {
 				// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
 				errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(CegarLoopUtils.isInsufficientThreadsLocation(x),
 						CegarLoopUtils.isInsufficientThreadsLocation(y)));
 			}
 			return errorLocs.map(x -> new Pair<>(x.getDebugIdentifier(), Set.of(x))).collect(Collectors.toList());
 		}
-		if (isConcurrent(icfg) && mPrefs.insufficientThreadErrorsLast() && isAnyForkInCycle(icfg)) {
+
+		assert restartBehaviour == CegarRestartBehaviour.ONLY_ONE_CEGAR : "unsupported CEGAR restart behaviour";
+		if (mIsConcurrent && mPrefs.insufficientThreadErrorsLast() && isAnyForkInCycle(icfg)) {
 			final Set<IcfgLocation> inUseErrors = new HashSet<>(getInUseErrorNodeMap(icfg).values());
 			final Set<IcfgLocation> otherErrors = DataStructureUtils.difference(errNodesOfAllProc, inUseErrors);
 			return List.of(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, otherErrors),
