@@ -1,11 +1,17 @@
 #!/bin/bash
 
-MAX_THREADS=10
-TEMPLATE_FILE=bluetooth-customized.template
-THREAD_PROCEDURE=DeviceThread
-MIN_ID=2
-OFFSET=1
-VERDICT=true
+: ${MAX_THREADS:=10}
+: ${MIN_ID:=1}
+: ${OFFSET:=0}
+
+echo "Settings:
+  TEMPLATE_FILE    = $TEMPLATE_FILE
+  THREAD_PROCEDURE = $THREAD_PROCEDURE
+  MAX_THREADS      = $MAX_THREADS
+  VERDICT          = $VERDICT
+  MIN_ID           = $MIN_ID
+  OFFSET           = $OFFSET
+"
 
 TEMPLATE=$(cat "$TEMPLATE_FILE")
 grep -q "<<<JOINS>>>" <<< "$TEMPLATE"
@@ -42,7 +48,7 @@ do
   do
     if (( $JOIN_FREE == 1 ))
     then
-      ID=$(printf % 2d $j)
+      ID=$(printf "%2d" $j)
     else
       ID=$(get_unique_id $j)
     fi
