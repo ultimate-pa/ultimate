@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeB
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.EmptyStackSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class BFSEmptinessCheck implements IEmptinessCheck {
 	private static final int BAD_NESTING_RELATION_INIT = -7;
@@ -319,12 +320,11 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					break;
 				}
 				final IIcfgCallTransition<?> matchingCall = callStack.pop();
-				if (((IIcfgReturnTransition<?, ?>) errorPath[i]).getCorrespondingCall().equals(matchingCall)) {
-					nr[i] = callStackIndizes.pop();
-					nr[nr[i]] = i;
-				} else {
+				if (!((IIcfgReturnTransition<?, ?>) errorPath[i]).getCorrespondingCall().equals(matchingCall)) {
 					return new int[] { BAD_NESTING_RELATION_INIT, i, callStackIndizes.pop() };
 				}
+				nr[i] = callStackIndizes.pop();
+				nr[nr[i]] = i;
 
 			} else {
 				nr[i] = NestedWord.INTERNAL_POSITION;
@@ -387,7 +387,6 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 
 		public AddEdge(final AppDoubleDecker source, final AppDoubleDecker target,
 				final IIcfgTransition<IcfgLocation> label) {
-			super();
 			assert label != null;
 			mSource = source;
 			mTarget = target;

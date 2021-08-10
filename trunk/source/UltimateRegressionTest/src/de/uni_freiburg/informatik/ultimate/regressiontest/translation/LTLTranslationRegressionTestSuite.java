@@ -53,8 +53,8 @@ public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSui
 	}
 
 	@Override
-	protected Collection<Pair> getRunConfiguration() {
-		final List<Pair> rtr = new ArrayList<>();
+	protected Collection<Config> getRunConfiguration() {
+		final List<Config> rtr = new ArrayList<>();
 
 		rtr.add(getPair("examples/toolchains/LtlTranslationC.xml", "examples/settings/ltlAutomizer/Default.epf"));
 
@@ -62,12 +62,12 @@ public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSui
 	}
 
 	@Override
-	protected Collection<File> getInputFiles(final Predicate<File> regexFilter, final Pair runConfiguration) {
+	protected Collection<File> getInputFiles(final Predicate<File> regexFilter, final Config runConfiguration) {
 		return TestUtil.getFiles(getPathFromTrunk("examples/LTL/rers2012/"), mFiletypesToConsider);
 	}
 
-	private static Pair getPair(final String toolchain, final String setting) {
-		return new Pair(getPathFromTrunk(toolchain), getPathFromTrunk(setting));
+	private static Config getPair(final String toolchain, final String setting) {
+		return new Config(getPathFromTrunk(toolchain), getPathFromTrunk(setting));
 	}
 
 	private static File getPathFromTrunk(final String path) {
