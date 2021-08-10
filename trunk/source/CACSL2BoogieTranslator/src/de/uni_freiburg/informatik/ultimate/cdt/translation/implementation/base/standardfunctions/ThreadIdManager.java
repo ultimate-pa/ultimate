@@ -344,21 +344,7 @@ public class ThreadIdManager {
 		if (unary.getOperator() != IASTUnaryExpression.op_amper) {
 			return false;
 		}
-		final IASTNode funCallNode = unary.getParent();
-		if (!(funCallNode instanceof IASTFunctionCallExpression)) {
-			return false;
-		}
-		final IASTFunctionCallExpression funCall = (IASTFunctionCallExpression) funCallNode;
-		if (funCall.getArguments().length == 0 || funCall.getArguments()[0] != ampExprNode) {
-			return false;
-		}
-		final IASTExpression funNameExprNode = funCall.getFunctionNameExpression();
-		if (!(funNameExprNode instanceof IASTIdExpression)) {
-			return false;
-		}
-		final IASTIdExpression funNameExpr = (IASTIdExpression) funNameExprNode;
-		final String funName = funNameExpr.getName().toString();
-		return "pthread_create".equals(funName);
+		return isFirstArgumentOfFunCall(unary, "pthread_create");
 	}
 
 	private static boolean isPthreadJoinReference(final IASTName name) {
@@ -366,12 +352,16 @@ public class ThreadIdManager {
 		if (!(idExprNode instanceof IASTIdExpression)) {
 			return false;
 		}
-		final IASTNode funCallNode = idExprNode.getParent();
+		return isFirstArgumentOfFunCall(idExprNode, "pthread_join");
+	}
+
+	private static boolean isFirstArgumentOfFunCall(final IASTNode expr, final String function) {
+		final IASTNode funCallNode = expr.getParent();
 		if (!(funCallNode instanceof IASTFunctionCallExpression)) {
 			return false;
 		}
 		final IASTFunctionCallExpression funCall = (IASTFunctionCallExpression) funCallNode;
-		if (funCall.getArguments().length == 0 || funCall.getArguments()[0] != idExprNode) {
+		if (funCall.getArguments().length == 0 || funCall.getArguments()[0] != expr) {
 			return false;
 		}
 		final IASTExpression funNameExprNode = funCall.getFunctionNameExpression();
@@ -380,7 +370,7 @@ public class ThreadIdManager {
 		}
 		final IASTIdExpression funNameExpr = (IASTIdExpression) funNameExprNode;
 		final String funName = funNameExpr.getName().toString();
-		return "pthread_join".equals(funName);
+		return function.equals(funName);
 	}
 
 	private static Expression[] createUnambiguousThreadId(final int count, final Expression forkCounter) {
