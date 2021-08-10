@@ -251,8 +251,11 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 *            The filter criterion applied to conditions.
 	 */
 	public B withFilteredConditions(final Predicate<S> filter) {
-		return mCreator
-				.apply(new ConditionTransformingIndependenceRelation<>(mRelation, x -> filter.test(x) ? x : null));
+		if (mRelation.isConditional()) {
+			return mCreator
+					.apply(new ConditionTransformingIndependenceRelation<>(mRelation, x -> filter.test(x) ? x : null));
+		}
+		return mCreator.apply(mRelation);
 	}
 
 	/**
