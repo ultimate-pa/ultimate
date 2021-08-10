@@ -258,4 +258,5 @@ public final class HashUtils {
 		hash += hash >>> 6;
 		return hash;
 	}
+
 }

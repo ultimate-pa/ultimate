@@ -107,9 +107,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 			mOriginalStates.put(copy, original);
 			if (PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION) {
 				mSleepSets.put(copy, sleepset);
-				if (mSleepSets.size() % 1000 == 0) {
-					System.out.println(mSleepSets.size() + " states created");
-				}
 			}
 			return copy;
 		}
