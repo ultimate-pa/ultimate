@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 
 /**
@@ -71,13 +72,7 @@ public class Quad<E1, E2, E3, E4> {
 	}
 
 	private int computeHash() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mFirst == null ? 0 : mFirst.hashCode());
-		result = prime * result + (mFourth == null ? 0 : mFourth.hashCode());
-		result = prime * result + (mSecond == null ? 0 : mSecond.hashCode());
-		result = prime * result + (mThird == null ? 0 : mThird.hashCode());
-		return result;
+		return HashUtils.hashJenkins(31, mFirst, mSecond, mThird, mFourth);
 	}
 
 	@Override
