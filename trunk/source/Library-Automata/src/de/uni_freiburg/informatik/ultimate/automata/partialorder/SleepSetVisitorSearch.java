@@ -99,7 +99,7 @@ public class SleepSetVisitorSearch<L, S> implements IDfsVisitor<L, S> {
 	}
 
 	@Override
-	public void backtrackState(final S state) {
+	public void backtrackState(final S state, final boolean isComplete) {
 		// pop state's list and remove letter leading to state from predecessor's list
 		if (mStateStack.peek().isEmpty()) {
 			mLetterStack.pop();

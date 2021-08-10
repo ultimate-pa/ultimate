@@ -83,9 +83,11 @@ public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> i
 	}
 
 	@Override
-	public void backtrackState(final S state) {
-		getUnderlying().backtrackState(state);
-		addDeadEndState(state);
+	public void backtrackState(final S state, final boolean isComplete) {
+		getUnderlying().backtrackState(state, isComplete);
+		if (isComplete) {
+			addDeadEndState(state);
+		}
 	}
 
 	@Override

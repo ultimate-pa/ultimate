@@ -137,7 +137,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 
 			// If all transitions have been explored or pruned (or there were none), backtrack.
 			if (successorTransitionList.isEmpty()) {
-				mVisitor.backtrackState(currentSleepSetState);
+				mVisitor.backtrackState(currentSleepSetState, false);
 				mStateStack.pop();
 				continue;
 			}

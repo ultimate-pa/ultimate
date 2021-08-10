@@ -89,8 +89,11 @@ public interface IDfsVisitor<L, S> {
 	 *
 	 * @param state
 	 *            state that is backtracked
+	 * @param isComplete
+	 *            true if the backtracking is guaranteed to be complete, i.e., all states reachable from the backtracked
+	 *            state have been explored; false otherwise (or if no guarantee can be made)
 	 */
-	default void backtrackState(final S state) {
+	default void backtrackState(final S state, final boolean isComplete) {
 		// by default, do nothing here
 	}
 

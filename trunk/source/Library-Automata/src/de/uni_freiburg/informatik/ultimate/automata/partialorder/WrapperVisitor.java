@@ -78,8 +78,8 @@ public abstract class WrapperVisitor<L, S, V extends IDfsVisitor<L, S>> implemen
 	}
 
 	@Override
-	public void backtrackState(final S state) {
-		mUnderlying.backtrackState(state);
+	public void backtrackState(final S state, final boolean isComplete) {
+		mUnderlying.backtrackState(state, isComplete);
 	}
 
 	@Override

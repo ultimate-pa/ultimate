@@ -103,7 +103,7 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 	}
 
 	@Override
-	public void backtrackState(final S state) {
+	public void backtrackState(final S state, final boolean isComplete) {
 		assert !mFound : "Unexpected backtrack after abort";
 		assert mStateStack.getLast() == state : "Unexpected backtrack of state " + state;
 

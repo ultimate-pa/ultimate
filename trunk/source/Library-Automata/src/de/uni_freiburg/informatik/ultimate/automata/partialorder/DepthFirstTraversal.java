@@ -130,14 +130,14 @@ public class DepthFirstTraversal<L, S> {
 		}
 
 		mStateStack.pop();
-		mVisitor.backtrackState(initial);
+		mVisitor.backtrackState(initial, false);
 		mLogger.debug("search completed");
 	}
 
 	private boolean backtrackUntil(final S state) {
 		while (!mStateStack.peek().equals(state)) {
 			final S oldState = mStateStack.pop();
-			mVisitor.backtrackState(oldState);
+			mVisitor.backtrackState(oldState, false);
 			mIndentLevel--;
 			if (mVisitor.isFinished()) {
 				return true;

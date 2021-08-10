@@ -143,7 +143,7 @@ public class SleepSetDelayReduction<L, S, R> {
 				}
 
 				if (prune) {
-					mVisitor.backtrackState(currentRedState);
+					mVisitor.backtrackState(currentRedState, false);
 					mStateStack.pop();
 					continue;
 				}
@@ -193,7 +193,7 @@ public class SleepSetDelayReduction<L, S, R> {
 				}
 
 				if (successorTransitionList.isEmpty()) {
-					mVisitor.backtrackState(currentRedState);
+					mVisitor.backtrackState(currentRedState, false);
 					mStateStack.pop();
 					final R popped = loopDetectionStack.pop();
 					assert popped == currentRedState;
