@@ -686,7 +686,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final LBool isSat = mManagedScript.checkSat(this);
 		final long delta = System.currentTimeMillis() - before;
 		if (delta > 1000) {
-			mLogger.warn("Took %s for a HTC check", CoreUtil.humanReadableTime(delta, TimeUnit.MILLISECONDS, 2));
+			mLogger.warn("Took %s for a HTC check with result %s",
+					CoreUtil.humanReadableTime(delta, TimeUnit.MILLISECONDS, 2),
+					IncrementalPlicationChecker.convertLBool2Validity(isSat));
 		}
 		switch (isSat) {
 		case SAT:
