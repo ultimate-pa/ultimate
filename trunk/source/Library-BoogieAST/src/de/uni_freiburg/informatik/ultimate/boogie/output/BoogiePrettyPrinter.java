@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.output;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -50,10 +51,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 public final class BoogiePrettyPrinter {
 
 	private static final String LINEBREAK = System.getProperty("line.separator");
-	private static final IToString<BoogieASTNode> BOOGIE_STRING_PROVIDER = new BoogieStringProvider();;
+	private static final IToString<BoogieASTNode> BOOGIE_STRING_PROVIDER = new BoogieStringProvider();
 
 	private BoogiePrettyPrinter() {
 		// utility class does not have a constructor
+	}
+
+	public static String print(final Axiom axiom) {
+		final BoogieOutput output = new BoogieOutput(null);
+		final StringBuilder sb = new StringBuilder();
+		output.appendAxiom(sb, axiom);
+		removeLastLinebreak(sb);
+		return sb.toString();
 	}
 
 	/**
@@ -169,7 +178,8 @@ public final class BoogiePrettyPrinter {
 		public String toString(final BoogieASTNode elem) {
 			if (elem instanceof Expression) {
 				return BoogiePrettyPrinter.print((Expression) elem);
-			} else if (elem instanceof Statement) {
+			}
+			if (elem instanceof Statement) {
 				return BoogiePrettyPrinter.print((Statement) elem);
 			} else if (elem instanceof VarList) {
 				return BoogiePrettyPrinter.print((VarList) elem);
