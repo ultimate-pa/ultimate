@@ -91,7 +91,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 *         state
 	 */
 	public IPredicate getOriginalState(final IPredicate sleepState) {
-		// TODO replace and only store relevant info (set of initial, set of accepting)
 		return mOriginalStates.get(sleepState);
 	}
 
