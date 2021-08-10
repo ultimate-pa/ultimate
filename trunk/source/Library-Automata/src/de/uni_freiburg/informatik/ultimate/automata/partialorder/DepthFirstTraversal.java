@@ -33,9 +33,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -50,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of states in the traversed automaton
  */
 public class DepthFirstTraversal<L, S> {
+	private final ILogger mLogger;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, S> mVisitor;
@@ -57,6 +61,7 @@ public class DepthFirstTraversal<L, S> {
 	private final Deque<S> mStateStack = new ArrayDeque<>();
 	private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
 	private final Set<S> mVisited = new HashSet<>();
+	private int mIndentLevel = -1;
 
 	/**
 	 * Performs a depth-first traversal. This constructor is called purely for its side-effects.
@@ -68,10 +73,13 @@ public class DepthFirstTraversal<L, S> {
 	 * @param visitor
 	 *            A visitor to traverse the automaton
 	 */
-	public DepthFirstTraversal(final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+	public DepthFirstTraversal(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
 			final IDfsVisitor<L, S> visitor) {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
 
+		mLogger = services.getLoggingService().getLogger(DepthFirstTraversal.class);
+		mLogger.setLevel(LogLevel.DEBUG);
 		mOperand = operand;
 		mOrder = order;
 		mVisitor = visitor;
@@ -86,41 +94,53 @@ public class DepthFirstTraversal<L, S> {
 		while (!mWorklist.isEmpty()) {
 			final var current = mWorklist.pop();
 			final S currentState = current.getFirst();
-			final OutgoingInternalTransition<L, S> currentTransition = current.getSecond();
 
 			// Backtrack states still on the stack whose exploration has finished.
 			final boolean abort = backtrackUntil(currentState);
 			if (abort) {
+				mLogger.debug("visitor aborted search");
 				return;
 			}
 
+			final OutgoingInternalTransition<L, S> currentTransition = current.getSecond();
 			final S nextState = currentTransition.getSucc();
+			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
+					currentTransition.getLetter());
 			final boolean prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
 			if (mVisitor.isFinished()) {
+				mLogger.debug("visitor aborted search");
 				return;
 			}
 
 			if (!prune && !mVisited.contains(nextState)) {
 				final boolean abortNow = visitState(nextState);
 				if (abortNow) {
+					mLogger.debug("visitor aborted search");
 					return;
 				}
+			} else if (prune) {
+				debugIndent("-> visitor pruned transition");
+			} else {
+				debugIndent("-> state was visited before -- no re-exploration");
 			}
 		}
 
 		final boolean abort = backtrackUntil(initial);
 		if (abort) {
+			mLogger.debug("visitor aborted search");
 			return;
 		}
 
 		mStateStack.pop();
 		mVisitor.backtrackState(initial);
+		mLogger.debug("search completed");
 	}
 
 	private boolean backtrackUntil(final S state) {
 		while (!mStateStack.peek().equals(state)) {
 			final S oldState = mStateStack.pop();
 			mVisitor.backtrackState(oldState);
+			mIndentLevel--;
 			if (mVisitor.isFinished()) {
 				return true;
 			}
@@ -130,9 +150,12 @@ public class DepthFirstTraversal<L, S> {
 
 	private boolean visitState(final S state) {
 		assert !mVisited.contains(state) : "must never re-visit state";
+		mIndentLevel++;
+		debugIndent("visiting state %s", state);
 
 		final boolean pruneSuccessors;
 		if (mOperand.isInitial(state)) {
+			debugIndent("-> state is initial");
 			assert mVisited.isEmpty() : "initial state should be first visited state";
 			pruneSuccessors = mVisitor.addStartState(state);
 		} else {
@@ -146,7 +169,9 @@ public class DepthFirstTraversal<L, S> {
 		assert !mStateStack.contains(state) : "must not infinitely unroll loop";
 		mStateStack.push(state);
 
-		if (!pruneSuccessors) {
+		if (pruneSuccessors) {
+			debugIndent("-> visitor pruned all outgoing edges");
+		} else {
 			final Comparator<OutgoingInternalTransition<L, S>> comp =
 					Comparator.<OutgoingInternalTransition<L, S>, L> comparing(OutgoingInternalTransition::getLetter,
 							mOrder.getOrder(state)).reversed();
@@ -154,5 +179,9 @@ public class DepthFirstTraversal<L, S> {
 					.forEachOrdered(out -> mWorklist.push(new Pair<>(state, out)));
 		}
 		return false;
+	}
+
+	private void debugIndent(final String msg, final Object... params) {
+		mLogger.debug(msg.indent(mIndentLevel * 2).stripTrailing(), params);
 	}
 }

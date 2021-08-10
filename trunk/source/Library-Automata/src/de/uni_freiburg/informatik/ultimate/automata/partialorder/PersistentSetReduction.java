@@ -49,12 +49,12 @@ public final class PersistentSetReduction {
 	private PersistentSetReduction() {
 	}
 
-	public static <L, S> void applyWithoutSleepSets(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IDfsOrder<L, S> dfsOrder, final IPersistentSetChoice<L, S> persistent,
-			final IDfsVisitor<L, S> visitor) {
+	public static <L, S> void applyWithoutSleepSets(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> dfsOrder,
+			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor) {
 		final IDfsOrder<L, S> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
-		new DepthFirstTraversal<>(operand, combinedOrder, combinedVisitor);
+		new DepthFirstTraversal<>(services, operand, combinedOrder, combinedVisitor);
 	}
 
 	public static <L, S, R> void applyNewStateReduction(final AutomataLibraryServices services,

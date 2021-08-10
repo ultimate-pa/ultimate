@@ -170,7 +170,7 @@ public class PartialOrderReductionFacade<L extends IAction> {
 			new SleepSetNewStateReduction<>(mAutomataServices, input, mSleepFactory, mIndependence, mDfsOrder, visitor);
 			break;
 		case PERSISTENT_SETS:
-			PersistentSetReduction.applyWithoutSleepSets(input, mDfsOrder, mPersistent, visitor);
+			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);
 			break;
 		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
 		case PERSISTENT_SLEEP_DELAY_SET:
@@ -183,7 +183,7 @@ public class PartialOrderReductionFacade<L extends IAction> {
 					mSleepFactory, mPersistent, visitor);
 			break;
 		case NONE:
-			new DepthFirstTraversal<>(input, mDfsOrder, visitor);
+			new DepthFirstTraversal<>(mAutomataServices, input, mDfsOrder, visitor);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
