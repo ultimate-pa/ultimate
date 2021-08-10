@@ -28,14 +28,10 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Comparator;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Performs persistent set reduction on top of sleep set reduction. The goal of this is primarily to reduce the size (in
@@ -150,47 +146,6 @@ public final class PersistentSetReduction {
 		@Override
 		public boolean isPositional() {
 			return mUnderlying.isPositional() || !mPersistent.ensuresCompatibility(mUnderlying);
-		}
-	}
-
-	/**
-	 * A persistent set choice that can be used with sleep set reduction.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <L>
-	 *            The type of letters in the reduced automaton
-	 * @param <S>
-	 *            The type of states in the reduced automaton
-	 */
-	private static class CompatiblePersistentSetChoice<L, S> implements IPersistentSetChoice<L, S> {
-		private final IPersistentSetChoice<L, S> mUnderlying;
-		private final IDfsOrder<L, S> mOrder;
-		private final Function<S, Set<L>> mEnabledLetters;
-
-		public CompatiblePersistentSetChoice(final IPersistentSetChoice<L, S> underlying, final IDfsOrder<L, S> order,
-				final Function<S, Set<L>> enabledLetters) {
-			mUnderlying = underlying;
-			mOrder = order;
-			mEnabledLetters = enabledLetters;
-		}
-
-		@Override
-		public Set<L> persistentSet(final S state) {
-			final Set<L> set = mUnderlying.persistentSet(state);
-			if (set == null) {
-				return set;
-			}
-
-			final Comparator<L> comparator = mOrder.getOrder(state);
-			final Set<L> additional = mEnabledLetters.apply(state).stream()
-					.filter(a -> set.stream().anyMatch(b -> comparator.compare(a, b) <= 0)).collect(Collectors.toSet());
-			return DataStructureUtils.union(set, additional);
-		}
-
-		@Override
-		public IStatisticsDataProvider getStatistics() {
-			return mUnderlying.getStatistics();
 		}
 	}
 }
