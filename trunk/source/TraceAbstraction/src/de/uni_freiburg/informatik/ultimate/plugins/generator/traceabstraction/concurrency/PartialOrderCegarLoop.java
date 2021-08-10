@@ -107,9 +107,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
-		mVisitor = mPartialOrderMode.supportsDeadStateOptimization()
-				? new DeadEndOptimizingSearchVisitor<>(this::createVisitor)
-				: null;
+		mVisitor = null;
+
+		/*
+		 * TODO See if we can fix dead end optimization (see comment in DeadEndOptimizingSearchVisitor). If so,
+		 * re-enable it here.
+		 *
+		 * mVisitor = mPartialOrderMode.supportsDeadStateOptimization() ? new
+		 * DeadEndOptimizingSearchVisitor<>(this::createVisitor) : null;
+		 */
 
 		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
