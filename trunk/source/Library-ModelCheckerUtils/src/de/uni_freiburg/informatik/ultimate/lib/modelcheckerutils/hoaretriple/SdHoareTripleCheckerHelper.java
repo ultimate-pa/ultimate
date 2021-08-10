@@ -149,7 +149,7 @@ public class SdHoareTripleCheckerHelper {
 	 *
 	 * FIXME: Check for preconditions, postcondition? Check at least for infeasibility flag of TransFormula.
 	 */
-	public Validity sdecInteral(final IPredicate pre, final IInternalAction act, final IPredicate post) {
+	public Validity sdecInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (mPredicateCoverageChecker != null) {
 			final Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
@@ -224,7 +224,7 @@ public class SdHoareTripleCheckerHelper {
 
 	public Validity sdLazyEcInteral(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (isOrIteFormula(post)) {
-			return sdecInteral(pre, act, post);
+			return sdecInternal(pre, act, post);
 		}
 		for (final IProgramVar bv : post.getVars()) {
 			if (!pre.getVars().contains(bv) || !act.getTransformula().getInVars().containsKey(bv)
