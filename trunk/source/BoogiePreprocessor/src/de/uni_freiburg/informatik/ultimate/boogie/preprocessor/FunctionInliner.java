@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * This class removes function bodies by either inlining them (if the attribute "inline" is set) or by adding a
@@ -78,6 +79,11 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 	 * The current scope containing the renamings and names used.
 	 */
 	private Scope mCurrentScope;
+	private final ILogger mLogger;
+
+	public FunctionInliner(final ILogger logger) {
+		mLogger = logger;
+	}
 
 	@Override
 	/**
@@ -105,32 +111,13 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 					newDeclarations.add(fdecl);
 					continue;
 				}
-				if (hasFunctionInlineAttr(fdecl)) {
+				if (checkFunctionInlineAttr(fdecl)) {
 					continue;
 				}
 
-				final List<Expression> params = new ArrayList<>();
-				int anonctr = 0;
-				for (final VarList vl : fdecl.getInParams()) {
-					if (vl.getIdentifiers().length == 0) {
-						params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(),
-								"#" + anonctr++, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
-					} else {
-						for (final String i : vl.getIdentifiers()) {
-							params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(), i,
-									new DeclarationInformation(StorageClass.QUANTIFIED, null)));
-						}
-					}
-				}
-				final Expression[] funcParams = params.toArray(new Expression[params.size()]);
-				final Expression funcApp = new FunctionApplication(fdecl.getLocation(),
-						fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
-				final Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] { funcApp });
-				final Expression funcEq = new BinaryExpression(fdecl.getLocation(), BoogieType.TYPE_BOOL,
-						BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
-				final Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), BoogieType.TYPE_BOOL, true,
-						fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
-				final Axiom fdeclAxiom = new Axiom(fdecl.getLocation(), new Attribute[0], funcDecl);
+				final Axiom fdeclAxiom = createAxiom(fdecl);
+				mLogger.warn("Replacing function body of %s with quantified axiom %s", fdecl.getIdentifier(),
+						BoogiePrettyPrinter.print(fdeclAxiom));
 				newDeclarations.add(new FunctionDeclaration(fdecl.getLocation(), fdecl.getAttributes(),
 						fdecl.getIdentifier(), fdecl.getTypeParams(), fdecl.getInParams(), fdecl.getOutParam()));
 				newDeclarations.add(fdeclAxiom);
@@ -150,7 +137,33 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 		return false;
 	}
 
-	private boolean hasFunctionInlineAttr(final FunctionDeclaration fdecl) {
+	private static Axiom createAxiom(final FunctionDeclaration fdecl) {
+		final List<Expression> params = new ArrayList<>();
+		int anonctr = 0;
+		for (final VarList vl : fdecl.getInParams()) {
+			if (vl.getIdentifiers().length == 0) {
+				params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(), "#" + anonctr,
+						new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+				anonctr++;
+			} else {
+				for (final String i : vl.getIdentifiers()) {
+					params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(), i,
+							new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+				}
+			}
+		}
+		final Expression[] funcParams = params.toArray(new Expression[params.size()]);
+		final Expression funcApp = new FunctionApplication(fdecl.getLocation(),
+				fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
+		final Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] { funcApp });
+		final Expression funcEq = new BinaryExpression(fdecl.getLocation(), BoogieType.TYPE_BOOL,
+				BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
+		final Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), BoogieType.TYPE_BOOL, true,
+				fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
+		return new Axiom(fdecl.getLocation(), new Attribute[0], funcDecl);
+	}
+
+	private boolean checkFunctionInlineAttr(final FunctionDeclaration fdecl) {
 		for (final Attribute attr : fdecl.getAttributes()) {
 			if (attr instanceof NamedAttribute) {
 				final NamedAttribute nattr = (NamedAttribute) attr;
@@ -163,14 +176,13 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 							+ Arrays.stream(val).map(BoogiePrettyPrinter::print).collect(Collectors.joining(", "))
 							+ " (should be only 1 and of type bool)");
 				}
-				if (((BooleanLiteral) val[0]).getValue()) {
-					mInlinedFunctions.put(fdecl.getIdentifier(), fdecl);
-					return true;
+				if (!((BooleanLiteral) val[0]).getValue()) {
+					return false;
 				}
-				return false;
 			}
 		}
-		return false;
+		mInlinedFunctions.put(fdecl.getIdentifier(), fdecl);
+		return true;
 	}
 
 	@Override
@@ -239,7 +251,8 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 						pnr++;
 					} else {
 						for (final String i : vl.getIdentifiers()) {
-							mCurrentScope.addRenaming(i, processExpression(args[pnr++]));
+							mCurrentScope.addRenaming(i, processExpression(args[pnr]));
+							pnr++;
 						}
 					}
 				}
@@ -264,7 +277,8 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 						int ctr = 0;
 						String newname;
 						do {
-							newname = ids[idNr] + "$" + ctr++;
+							newname = ids[idNr] + "$" + ctr;
+							ctr++;
 						} while (mCurrentScope.clashes(newname));
 						newIds[idNr] = newname;
 						mCurrentScope.addRenaming(ids[idNr],
