@@ -50,8 +50,9 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 		// protect against quantified transition formulas and intricate predicates
 		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
 		mSmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier,
-				predicateUnifier::isIntricatePredicate,
-				a -> quantifierFinder.isSatisfiedBySomeSubterm(a.getTransformula().getFormula()));
+				pred -> predicateUnifier.isIntricatePredicate(pred)
+						|| quantifierFinder.isSatisfiedBySomeSubterm(pred.getFormula()),
+				act -> quantifierFinder.isSatisfiedBySomeSubterm(act.getTransformula().getFormula()));
 		mSdHoareTripleChecker = new SdHoareTripleChecker(csToolkit, predicateUnifier,
 				mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark());
 		mHoareTripleCheckerForReview = new MonolithicHoareTripleChecker(csToolkit);
