@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -61,6 +62,16 @@ public class UtilsTest {
 		Assert.assertEquals("0 B", CoreUtil.humanReadableByteCount(0, true));
 		Assert.assertEquals("0 B", CoreUtil.humanReadableByteCount(0, false));
 		Assert.assertEquals("1.0 MiB", CoreUtil.humanReadableByteCount(1048576, false));
+	}
+
+	@Test
+	public void humanReadableTimesTest() {
+		Assert.assertEquals("2 s", CoreUtil.humanReadableTime(2000, TimeUnit.MILLISECONDS, 0));
+		Assert.assertEquals("2 s", CoreUtil.humanReadableTime(2400, TimeUnit.MILLISECONDS, 0));
+		Assert.assertEquals("2.4 s", CoreUtil.humanReadableTime(2400, TimeUnit.MILLISECONDS, 1));
+		Assert.assertEquals("1.0 h", CoreUtil.humanReadableTime(3600, TimeUnit.SECONDS, 1));
+		Assert.assertEquals("1.0 d", CoreUtil.humanReadableTime(24, TimeUnit.HOURS, 1));
+		Assert.assertEquals("2 d", CoreUtil.humanReadableTime(2, TimeUnit.DAYS, 0));
 	}
 
 	@Test(expected = Test.None.class)

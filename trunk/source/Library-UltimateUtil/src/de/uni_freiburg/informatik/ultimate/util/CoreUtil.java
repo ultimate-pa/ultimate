@@ -712,48 +712,104 @@ public class CoreUtil {
 	 * @param unit
 	 *            The unit of the amount.
 	 * @param decimal
-	 *            The decimal accurracy of the ouptut.
+	 *            The decimal accuracy of the output.
 	 * @return A String with unit symbol.
 	 */
 	public static String humanReadableTime(final double time, final TimeUnit unit, final int decimal) {
-		final String[] units = { "ns", "µs", "ms", "s", "m", "h", "d" };
+		final TimeUnit targetUnit = findLargestTargetUnit(time, unit);
+		return toTimeString(time, unit, targetUnit, decimal);
+	}
 
+	/**
+	 * Returns a String representation of time as a fraction of the largest whole unit.
+	 *
+	 * I.e. 1001ms becomes 1,001s, 25h become 1,041d.
+	 *
+	 * @param time
+	 *            The amount of time
+	 * @param sourceUnit
+	 *            The unit of the amount.
+	 * @param decimal
+	 *            The decimal accurracy of the ouptut.
+	 * @return A String with unit symbol.
+	 */
+	public static String toTimeString(final double time, final TimeUnit sourceUnit, final TimeUnit targetUnit,
+			final int decimal) {
 		final String formatString = "%." + decimal + "f %s";
+		return String.format(formatString, convertTimeUnit(time, sourceUnit, targetUnit),
+				getTimeUnitSymbol(targetUnit));
+	}
+
+	/**
+	 * Convert time durations represented as double to different units.
+	 */
+	public static double convertTimeUnit(final double amount, final TimeUnit from, final TimeUnit to) {
+		if (from == to) {
+			return amount;
+		}
+		if (from.ordinal() < to.ordinal()) {
+			return amount / from.convert(1, to);
+		}
+		return amount * to.convert(1, from);
+	}
+
+	public static TimeUnit findLargestTargetUnit(final double amount, final TimeUnit unit) {
 		switch (unit) {
 		case DAYS:
-			return String.format(formatString, time, units[6]);
+			return TimeUnit.DAYS;
 		case HOURS:
-			if (time > 24) {
-				return humanReadableTime(time / 24.0, TimeUnit.DAYS, decimal);
+			if (amount >= 24) {
+				return findLargestTargetUnit(amount / 24.0, TimeUnit.DAYS);
 			}
-			return String.format(formatString, time, units[5]);
+			return TimeUnit.HOURS;
 		case MINUTES:
-			if (time > 60) {
-				return humanReadableTime(time / 60.0, TimeUnit.HOURS, decimal);
+			if (amount >= 60) {
+				return findLargestTargetUnit(amount / 60.0, TimeUnit.HOURS);
 			}
-			return String.format(formatString, time, units[4]);
+			return TimeUnit.MINUTES;
 		case SECONDS:
-			if (time > 60) {
-				return humanReadableTime(time / 60.0, TimeUnit.MINUTES, decimal);
+			if (amount >= 60) {
+				return findLargestTargetUnit(amount / 60.0, TimeUnit.MINUTES);
 			}
-			return String.format(formatString, time, units[3]);
+			return TimeUnit.SECONDS;
 		case MILLISECONDS:
-			if (time > 1000) {
-				return humanReadableTime(time / 1000.0, TimeUnit.SECONDS, decimal);
+			if (amount >= 1000) {
+				return findLargestTargetUnit(amount / 1000.0, TimeUnit.SECONDS);
 			}
-			return String.format(formatString, time, units[2]);
+			return TimeUnit.MILLISECONDS;
 		case MICROSECONDS:
-			if (time > 1000) {
-				return humanReadableTime(time / 1000.0, TimeUnit.MILLISECONDS, decimal);
+			if (amount >= 1000) {
+				return findLargestTargetUnit(amount / 1000.0, TimeUnit.MILLISECONDS);
 			}
-			return String.format(formatString, time, units[1]);
+			return TimeUnit.MICROSECONDS;
 		case NANOSECONDS:
-			if (time > 1000) {
-				return humanReadableTime(time / 1000.0, TimeUnit.MICROSECONDS, decimal);
+			if (amount >= 1000) {
+				return findLargestTargetUnit(amount / 1000.0, TimeUnit.NANOSECONDS);
 			}
-			return String.format(formatString, time, units[0]);
+			return TimeUnit.NANOSECONDS;
 		default:
-			throw new UnsupportedOperationException(unit + " TimeUnit not yet implemented");
+			throw new UnsupportedOperationException("TimeUnit not yet implemented: " + unit);
+		}
+	}
+
+	public static String getTimeUnitSymbol(final TimeUnit unit) {
+		switch (unit) {
+		case NANOSECONDS:
+			return "ns";
+		case MICROSECONDS:
+			return "µs";
+		case MILLISECONDS:
+			return "ms";
+		case SECONDS:
+			return "s";
+		case MINUTES:
+			return "m";
+		case HOURS:
+			return "h";
+		case DAYS:
+			return "d";
+		default:
+			throw new UnsupportedOperationException("TimeUnit not yet implemented: " + unit);
 		}
 	}
 
