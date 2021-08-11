@@ -222,6 +222,12 @@ public class SdHoareTripleCheckerHelper {
 	// else return false;
 	// }
 
+	/**
+	 * FIXME 20210810 Matthias: Bad name: "incomplete" would be better than "lazy".
+	 * Idea: If succedent of implication does (in NNF) not contain a disjunction and
+	 * contains some variable that does not occur in the antecedent the implication
+	 * does not hold very often.
+	 */
 	public Validity sdLazyEcInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (isOrIteFormula(post)) {
 			return sdecInternal(pre, act, post);

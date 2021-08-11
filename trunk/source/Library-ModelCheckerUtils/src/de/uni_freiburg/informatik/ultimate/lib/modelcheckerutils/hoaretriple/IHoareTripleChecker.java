@@ -71,20 +71,26 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
 
 		/**
-		 * Simple Dataflow analysis To False Satisfiable. See {@link SdHoareTripleCheckerHelper#sdecInternalToFalse}.
+		 * Simple Dataflow analysis To False Satisfiable. See
+		 * {@link SdHoareTripleCheckerHelper#sdecInternalToFalse}.
 		 */
 		SDtfs(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		/**
-		 * Simple Dataflow analysis Self Loop Unsatisfiable. See {@link SdHoareTripleCheckerHelper#sdecInternalSelfloop}.
+		 * Simple Dataflow analysis Self Loop Unsatisfiable. See
+		 * {@link SdHoareTripleCheckerHelper#sdecInternalSelfloop}.
 		 */
 		SDslu(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		/**
-		 * Simple Dataflow Satisfiable. See {@link SdHoareTripleCheckerHelper#sdecInteral}.
+		 * Simple Dataflow Satisfiable. See
+		 * {@link SdHoareTripleCheckerHelper#sdecInteral}.
 		 */
 		SDs(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
+		/**
+		 * See {@link SdHoareTripleCheckerHelper#sdLazyEcInternal}.
+		 */
 		SdLazy(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		SolverSat(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
