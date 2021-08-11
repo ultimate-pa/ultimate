@@ -32,7 +32,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -59,13 +58,9 @@ public class CamelNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends B
 	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
 			createModules(final StrategyModuleFactory<L> factory) {
 
-		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		if (tc.getOccuringQuantifiers().isEmpty()) {
-			// use SMTInterpol only if there are no quantifiers
-			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY));
-		}
+		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation,
+				AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
