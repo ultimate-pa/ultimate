@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
@@ -275,8 +276,17 @@ public abstract class BoogieType implements IBoogieType {
 	 * Returns true if this type is a synonym of the give object o. This can only be the case if o is a BoogieType.
 	 */
 	@Override
-	public boolean equals(final Object o) {
+	public final boolean equals(final Object o) {
 		return o instanceof BoogieType && getUnderlyingType() == ((BoogieType) o).getUnderlyingType();
+	}
+
+	@Override
+	public final int hashCode() {
+		final BoogieType underlying = getUnderlyingType();
+		if (underlying == this) {
+			return super.hashCode();
+		}
+		return Objects.hashCode(underlying);
 	}
 
 	/**
