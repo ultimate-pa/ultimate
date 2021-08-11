@@ -26,14 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Expects input in NNF, replaces quantified formulas by "true".
@@ -55,23 +55,25 @@ public class QuantifierOverapproximator extends TermTransformer {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final Term notTerm = SmtUtils.unzipNot(appTerm);
 			if (notTerm != null) {
-				if (!QuantifierUtils.isQuantifierFree(notTerm)) {
+				if (!SmtUtils.isAtomicFormula(notTerm)) {
 					throw new AssertionError("NNF required for sound overapproximation.");
 				}
 				setResult(term);
 				return;
 			}
-		}
-		if (term instanceof QuantifiedFormula) {
+			super.convert(term);
+			return;
+		} else if (term instanceof QuantifiedFormula) {
 			setResult(mScript.term("true"));
 			return;
+		} else if (term instanceof TermVariable) {
+			setResult(term);
+			return;
+		} else if (term instanceof ConstantTerm) {
+			setResult(term);
+			return;
 		}
-		super.convert(term);
-	}
-
-	@Override
-	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
-		throw new UnsupportedOperationException("not yet implemented, we need term without let");
+		throw new UnsupportedOperationException("Unsupported kind of Term: " + term.getClass().getSimpleName());
 	}
 
 	public static Term apply(final Script script, final Term term) {

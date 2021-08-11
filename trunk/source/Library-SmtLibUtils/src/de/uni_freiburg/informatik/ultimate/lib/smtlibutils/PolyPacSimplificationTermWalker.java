@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context.CcTransformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
@@ -81,12 +82,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	@Override
 	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb, final List<Term> allParams,
 			final int selectedParam) {
-		return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams, selectedParam);
+		return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams, selectedParam,
+				CcTransformation.TO_NNF);
 	}
 
 	@Override
 	Term constructContextForQuantifiedFormula(final Term context, final int quant, final List<TermVariable> vars) {
-		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars);
+		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars,
+				CcTransformation.TO_NNF);
 	}
 
 	@Override
