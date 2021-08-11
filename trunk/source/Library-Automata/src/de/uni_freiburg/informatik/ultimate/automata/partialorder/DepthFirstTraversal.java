@@ -255,7 +255,7 @@ public class DepthFirstTraversal<L, S> {
 	}
 
 	private void debugIndent(final String msg, final Object... params) {
-		mLogger.debug(msg.indent(mIndentLevel * 2).stripTrailing(), params);
+		mLogger.debug("  ".repeat(mIndentLevel) + msg, params);
 	}
 
 	private S peek() {
