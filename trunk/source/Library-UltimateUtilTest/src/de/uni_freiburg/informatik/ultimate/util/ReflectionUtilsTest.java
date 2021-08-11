@@ -32,7 +32,9 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ReflectionutilsTest {
+public class ReflectionUtilsTest {
+
+	private static final String INSTANCE_IS_NULL = "instance is null";
 
 	@Test
 	public void loadInterfaceImplementingClasses() {
@@ -54,7 +56,7 @@ public class ReflectionutilsTest {
 		} catch (final Throwable e) {
 			e.printStackTrace();
 		}
-		Assert.assertTrue("instance is null", instance != null);
+		Assert.assertTrue(INSTANCE_IS_NULL, instance != null);
 	}
 
 	@Test
@@ -65,7 +67,7 @@ public class ReflectionutilsTest {
 		} catch (final Throwable e) {
 			e.printStackTrace();
 		}
-		Assert.assertTrue("instance is null", instance != null);
+		Assert.assertTrue(INSTANCE_IS_NULL, instance != null);
 	}
 
 	@Test
@@ -76,8 +78,8 @@ public class ReflectionutilsTest {
 		} catch (final Throwable e) {
 			e.printStackTrace();
 		}
-		Assert.assertTrue("instance is null", instance != null);
-		Assert.assertTrue("instance is null", "IntIntInt".equals(instance.doIt()));
+		Assert.assertTrue(INSTANCE_IS_NULL, instance != null);
+		Assert.assertTrue(INSTANCE_IS_NULL, "IntIntInt".equals(instance.doIt()));
 	}
 
 	@Test
@@ -88,8 +90,8 @@ public class ReflectionutilsTest {
 		} catch (final Throwable e) {
 			e.printStackTrace();
 		}
-		Assert.assertTrue("instance is null", instance != null);
-		Assert.assertTrue("instance is null", "Object".equals(instance.doIt()));
+		Assert.assertTrue(INSTANCE_IS_NULL, instance != null);
+		Assert.assertTrue(INSTANCE_IS_NULL, "Object".equals(instance.doIt()));
 	}
 
 	@Test
@@ -100,8 +102,8 @@ public class ReflectionutilsTest {
 		} catch (final Throwable e) {
 			e.printStackTrace();
 		}
-		Assert.assertTrue("instance is null", instance != null);
-		Assert.assertTrue("instance is null", "Object".equals(instance.doIt()));
+		Assert.assertTrue(INSTANCE_IS_NULL, instance != null);
+		Assert.assertTrue(INSTANCE_IS_NULL, "Object".equals(instance.doIt()));
 	}
 
 	public interface ITestInterface {
