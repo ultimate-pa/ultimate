@@ -783,8 +783,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
 				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
-		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
-
 		minimizeAbstractionIfEnabled();
 
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(getServices()),
@@ -930,7 +928,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			}
 
 		} finally {
+			mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 			mLogger.info(htc.getEdgeCheckerBenchmark());
+			mLogger.info(htc);
 			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
