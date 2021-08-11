@@ -36,10 +36,6 @@ import java.util.function.Supplier;
  * future traversals, the successors of such dead ends are not explored. Additionally, states can be explicitly marked
  * as dead ends.
  *
- * CAUTION: DO NOT USE. The current implementation is UNSOUND. The issue lies in the fact that DFS may backtrack a node
- * inside a loop even though it is not a dead end. We currently have no way to distinguish between backtracking because
- * of a dead end and backtracking because of a loop.
- *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>

@@ -89,10 +89,4 @@ public enum PartialOrderMode {
 	public boolean hasFixedOrder() {
 		return mHasFixedOrder;
 	}
-
-	public boolean supportsDeadStateOptimization() {
-		// Only sound if the same state can never be reached with two different sleep sets.
-		// This is the case if there are no sleep sets, or if the reduction unrolls (distinguishes the two states).
-		return !hasSleepSets() || doesUnrolling();
-	}
 }
