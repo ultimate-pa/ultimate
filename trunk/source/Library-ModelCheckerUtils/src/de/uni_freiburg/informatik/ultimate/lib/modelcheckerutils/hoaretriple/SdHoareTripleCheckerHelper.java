@@ -222,7 +222,7 @@ public class SdHoareTripleCheckerHelper {
 	// else return false;
 	// }
 
-	public Validity sdLazyEcInteral(final IPredicate pre, final IInternalAction act, final IPredicate post) {
+	public Validity sdLazyEcInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (isOrIteFormula(post)) {
 			return sdecInternal(pre, act, post);
 		}
