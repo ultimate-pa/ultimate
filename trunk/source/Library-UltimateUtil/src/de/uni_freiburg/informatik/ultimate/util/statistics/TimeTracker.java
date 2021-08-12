@@ -40,6 +40,7 @@ public final class TimeTracker {
 
 	private long mStartTime;
 	private long mElapsedTimeNs;
+	private long mLastDeltaNs;
 
 	public TimeTracker() {
 		reset();
@@ -57,12 +58,14 @@ public final class TimeTracker {
 	}
 
 	public void stop() {
-		mElapsedTimeNs = System.nanoTime() - mStartTime + mElapsedTimeNs;
+		mLastDeltaNs = System.nanoTime() - mStartTime;
+		mElapsedTimeNs = mLastDeltaNs + mElapsedTimeNs;
 	}
 
 	public void reset() {
 		mStartTime = -1;
 		mElapsedTimeNs = 0;
+		mLastDeltaNs = -1;
 	}
 
 	@Override
@@ -71,5 +74,12 @@ public final class TimeTracker {
 			return "N/A";
 		}
 		return CoreUtil.humanReadableTime(mElapsedTimeNs, TimeUnit.NANOSECONDS, 2);
+	}
+
+	public long lastDelta(final TimeUnit unit) {
+		if (mLastDeltaNs == -1) {
+			throw new IllegalStateException("Clock was not started");
+		}
+		return unit.convert(mLastDeltaNs, TimeUnit.NANOSECONDS);
 	}
 }
