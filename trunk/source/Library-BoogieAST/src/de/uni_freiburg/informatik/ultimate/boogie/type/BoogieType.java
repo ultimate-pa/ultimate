@@ -127,7 +127,7 @@ public abstract class BoogieType implements IBoogieType {
 				if (i == params.length) {
 					return c;
 				}
-				if (params[i] != c.getParameter(i)) {
+				if (!params[i].equals(c.getParameter(i))) {
 					break;
 				}
 			}
@@ -174,14 +174,14 @@ public abstract class BoogieType implements IBoogieType {
 			}
 			final BoogieArrayType arrType = (BoogieArrayType) t;
 			if (arrType.getNumPlaceholders() != numPlaceholders || arrType.getIndexCount() != indexTypes.length
-					|| arrType.getValueType() != valueType) {
+					|| !arrType.getValueType().equals(valueType)) {
 				continue;
 			}
 			for (int i = 0; true; i++) {
 				if (i == indexTypes.length) {
 					return arrType;
 				}
-				if (indexTypes[i] != arrType.getIndexType(i)) {
+				if (!indexTypes[i].equals(arrType.getIndexType(i))) {
 					break;
 				}
 			}
@@ -219,7 +219,7 @@ public abstract class BoogieType implements IBoogieType {
 				break;
 			}
 			for (int i = 0; i < fNames.length; i++) {
-				if (fTypes[i] != strType.getFieldType(fNames[i])) {
+				if (!fTypes[i].equals(strType.getFieldType(fNames[i]))) {
 					break outer;
 				}
 			}
