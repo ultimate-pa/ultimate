@@ -87,7 +87,7 @@ public class PartialOrderReductionFacade<L extends IAction> {
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
-			final PartialOrderReductionFacade.OrderType orderType, final long randomOrderSeed,
+			final OrderType orderType, final long randomOrderSeed,
 			final IIndependenceRelation<IPredicate, L> independence) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
@@ -113,9 +113,8 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		return mSleepFactory;
 	}
 
-	private static <L extends IAction> IDfsOrder<L, IPredicate> getDfsOrder(
-			final PartialOrderReductionFacade.OrderType orderType, final long randomOrderSeed,
-			final Collection<? extends IcfgLocation> errorLocs) {
+	private static <L extends IAction> IDfsOrder<L, IPredicate> getDfsOrder(final OrderType orderType,
+			final long randomOrderSeed, final Collection<? extends IcfgLocation> errorLocs) {
 		switch (orderType) {
 		case BY_SERIAL_NUMBER:
 			final Set<String> errorThreads =
