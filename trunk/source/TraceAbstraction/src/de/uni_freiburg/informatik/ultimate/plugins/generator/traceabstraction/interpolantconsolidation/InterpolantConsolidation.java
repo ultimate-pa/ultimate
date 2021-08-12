@@ -60,6 +60,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -71,9 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -144,9 +144,8 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
 				constructInterpolantAutomaton(mTrace, mCsToolkit, mPredicateFactory, false, mServices, mIpTc);
 		// 3. Determinize the finite automaton from step 2.
-		final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
-				TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, mCsToolkit,
-				mIpTc.getPredicateUnifier());
+		final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleChecker(mServices,
+				HoareTripleChecks.INCREMENTAL, mCsToolkit, mIpTc.getPredicateUnifier());
 		final IHoareTripleChecker cachingHtc =
 				new CachingHoareTripleCheckerMap(mServices, ehtc, mIpTc.getPredicateUnifier());
 		final DeterministicInterpolantAutomaton<LETTER> interpolantAutomatonDeterminized =
@@ -546,7 +545,8 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 			final IPredicate postcondition, final List<IPredicate> interpolants) {
 		if (i < 0) {
 			throw new AssertionError("index beyond precondition");
-		} else if (i == 0) {
+		}
+		if (i == 0) {
 			return precondition;
 		} else if (i <= interpolants.size()) {
 			return interpolants.get(i - 1);

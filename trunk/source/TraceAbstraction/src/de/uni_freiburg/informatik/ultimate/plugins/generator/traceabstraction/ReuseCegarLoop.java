@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.EfficientIgnoringHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -502,7 +503,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			case AS_USUAL:
 				// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
 				// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
-				return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+				return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 						mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
 			case ONLY_NEW_LETTERS:
 				return constructEfficientIgnoringHtc(false);
@@ -517,7 +518,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 
 		private IHoareTripleChecker constructEfficientIgnoringHtc(final boolean allowSdForProtectedActions)
 				throws AssertionError {
-			final IHoareTripleChecker smtHtc = TraceAbstractionUtils.constructSmtHoareTripleChecker(mServices,
+			final IHoareTripleChecker smtHtc = HoareTripleCheckerUtils.constructSmtHoareTripleChecker(mServices,
 					mPref.getHoareTripleChecks(), mCsToolkit);
 			final EfficientIgnoringHoareTripleChecker eiHtc = new EfficientIgnoringHoareTripleChecker(smtHtc,
 					mCsToolkit, getPredicateUnifier(), constructOldAlphabet(), allowSdForProtectedActions);

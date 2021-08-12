@@ -77,10 +77,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.EfficientHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.biesenb.BPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -240,12 +239,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private IHoareTripleChecker createHoareTripleChecker() {
-		final IHoareTripleChecker smtBasedHoareTripleChecker = new IncrementalHoareTripleChecker(mCsToolkit, false, mLogger);
-		final IHoareTripleChecker protectedHoareTripleChecker =
-				new EfficientHoareTripleChecker(smtBasedHoareTripleChecker, mCsToolkit, mPredicateUnifier);
-		final IHoareTripleChecker edgeChecker =
-				new CachingHoareTripleCheckerMap(mServices, protectedHoareTripleChecker, mPredicateUnifier);
-		return edgeChecker;
+		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
 	}
 
 	private void readPreferencePage() {

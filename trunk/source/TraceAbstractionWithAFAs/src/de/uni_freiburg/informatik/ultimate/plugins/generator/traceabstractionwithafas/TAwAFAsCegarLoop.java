@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.EfficientHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
@@ -189,8 +189,9 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 					// + alternatingAutomatonUnion + "\n"
 					// + "################### 2nd AFA: ###################\n"
 					// + alternatingAutomaton + "\n");
-					final AA_MergedUnion<L, IPredicate> mergedUnion = new AA_MergedUnion<>(
-							new AutomataLibraryServices(getServices()), alternatingAutomatonUnion, alternatingAutomaton);
+					final AA_MergedUnion<L, IPredicate> mergedUnion =
+							new AA_MergedUnion<>(new AutomataLibraryServices(getServices()), alternatingAutomatonUnion,
+									alternatingAutomaton);
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
@@ -493,8 +494,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 					oldAbstraction, determinized, psd2, false);
 		} else {
-			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, oldAbstraction,
-					determinized, psd2, explointSigmaStarConcatOfIA);
+			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+					oldAbstraction, determinized, psd2, explointSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
@@ -543,24 +544,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 
 	protected IHoareTripleChecker getEfficientHoareTripleChecker() // copied
 			throws AssertionError {
-		final IHoareTripleChecker solverHtc;
-		switch (mPref.getHoareTripleChecks()) {
-		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(mCsToolkit);
-			break;
-		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(mCsToolkit, false, mLogger);
-			break;
-		default:
-			throw new AssertionError("unknown value");
-		}
-		final IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, mCsToolkit, mPredicateUnifier); // only
-																													// change
-																													// to
-																													// method
-																													// in
-																													// BasicCegarLoop
-		return htc;
+		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				mPref.getHoareTripleChecks(), mCsToolkit, mPredicateUnifier);
 	}
 
 	/**

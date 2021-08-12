@@ -40,27 +40,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.EfficientHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -72,9 +63,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * Provides static auxiliary methods for trace abstraction.
@@ -82,7 +71,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class TraceAbstractionUtils {
+public final class TraceAbstractionUtils {
+
+	private TraceAbstractionUtils() {
+		// do not instantiate utility class
+	}
 
 	/**
 	 * @param <LCS>
@@ -108,51 +101,6 @@ public class TraceAbstractionUtils {
 		}
 		logger.debug("Finished computation of initial partition.");
 		return new PartitionBackedSetOfPairs<>(partition);
-	}
-
-	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
-			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
-			final IPredicateUnifier predicateUnifier) throws AssertionError {
-		final IHoareTripleChecker solverHtc = constructSmtHoareTripleChecker(services, hoareTripleChecks, csToolkit);
-		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
-	}
-
-	public static IHoareTripleChecker constructSmtHoareTripleChecker(final IUltimateServiceProvider services,
-			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit) throws AssertionError {
-		final IHoareTripleChecker solverHtc;
-		switch (hoareTripleChecks) {
-		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(csToolkit);
-			break;
-		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false,
-					services.getLoggingService().getLogger(TraceAbstractionUtils.class));
-			break;
-		default:
-			throw new AssertionError("unknown value");
-		}
-		return solverHtc;
-	}
-
-	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
-			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) throws AssertionError {
-		final IHoareTripleChecker ehtc =
-				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
-		return new CachingHoareTripleCheckerMap(services, ehtc, predicateUnifier);
-	}
-
-	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
-			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier,
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialInternalCache,
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialCallCache,
-			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> initialReturnCache)
-			throws AssertionError {
-		final IHoareTripleChecker ehtc =
-				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
-		return new CachingHoareTripleCheckerMap(services, ehtc, predicateUnifier, initialInternalCache,
-				initialCallCache, initialReturnCache);
 	}
 
 	/**
