@@ -29,6 +29,8 @@ import de.uni_freiburg.informatik.ultimate.lib.mcr.McrAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrTraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -44,9 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -78,8 +78,8 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		mToolkit = prefs.getCfgSmtToolkit();
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mResultProvider = resultProvider;
-		mHoareTripleChecker = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
-				TraceAbstractionPreferenceInitializer.HoareTripleChecks.MONOLITHIC, mToolkit, mPredicateUnifier);
+		mHoareTripleChecker = HoareTripleCheckerUtils.constructEfficientHoareTripleChecker(mServices,
+				HoareTripleChecks.MONOLITHIC, mToolkit, mPredicateUnifier);
 		mInterpolantProvider = interpolantProvider;
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);

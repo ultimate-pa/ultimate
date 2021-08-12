@@ -59,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -76,8 +78,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -142,7 +142,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			mAnnotated.add(lastAutomatonState);
 			mWorklist.add(lastAutomatonState);
 		}
-		mHtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC,
+		mHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC,
 				mCsToolkit, mPredicateUnifier);
 		for (final IPredicate state : nestedRun.getStateSequence()) {
 			mWorklist.add(state);
@@ -205,7 +205,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 					(OutgoingInternalTransition<LETTER, IPredicate>) transition;
 			final Set<IPredicate> succs = mIA.succInternal(predItp, internalTrans.getLetter());
 			return succs.contains(succItp);
-		} else if (transition instanceof OutgoingCallTransition) {
+		}
+		if (transition instanceof OutgoingCallTransition) {
 			final OutgoingCallTransition<LETTER, IPredicate> callTrans =
 					(OutgoingCallTransition<LETTER, IPredicate>) transition;
 			final Set<IPredicate> succs = mIA.succCall(predItp, callTrans.getLetter());
@@ -233,7 +234,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final OutgoingInternalTransition<LETTER, IPredicate> internalTrans =
 					(OutgoingInternalTransition<LETTER, IPredicate>) transition;
 			return new NestedRun<>(p, internalTrans.getLetter(), NestedWord.INTERNAL_POSITION, internalTrans.getSucc());
-		} else if (transition instanceof OutgoingCallTransition) {
+		}
+		if (transition instanceof OutgoingCallTransition) {
 			final OutgoingCallTransition<LETTER, IPredicate> callTrans =
 					(OutgoingCallTransition<LETTER, IPredicate>) transition;
 			return new NestedRun<>(p, callTrans.getLetter(), NestedWord.PLUS_INFINITY, callTrans.getSucc());
@@ -594,8 +596,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 
 		@Override
 		public Collection<String> getKeys() {
-			return Arrays.asList(new String[] { s_AdditionalInterpolants, s_PathLenght1, s_RunSearches,
-					s_UsefullRunGeq2, s_UselessRunGeq2, s_TraceCheckBenchmarks, s_EdgeCheckerBenchmarks });
+			return Arrays.asList(s_AdditionalInterpolants, s_PathLenght1, s_RunSearches, s_UsefullRunGeq2,
+					s_UselessRunGeq2, s_TraceCheckBenchmarks, s_EdgeCheckerBenchmarks);
 		}
 
 		@Override
