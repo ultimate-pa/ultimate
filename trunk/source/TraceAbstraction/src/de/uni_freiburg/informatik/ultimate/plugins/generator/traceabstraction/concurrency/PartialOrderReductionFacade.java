@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetNewStateReduction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -162,6 +162,15 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		return mDfsOrder;
 	}
 
+	/**
+	 * Apply POR to a given automaton.
+	 *
+	 * @param input
+	 *            The automaton to which reduction is applied
+	 * @param visitor
+	 *            A visitor that traverses the reduced automaton
+	 * @throws AutomataOperationCanceledException
+	 */
 	public void apply(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
 			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
 		switch (mMode) {
@@ -169,7 +178,8 @@ public class PartialOrderReductionFacade<L extends IAction> {
 			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, mIndependence, mDfsOrder, visitor);
 			break;
 		case SLEEP_NEW_STATES:
-			new SleepSetNewStateReduction<>(mAutomataServices, input, mSleepFactory, mIndependence, mDfsOrder, visitor);
+			new DepthFirstTraversal<>(mAutomataServices,
+					new MinimalSleepSetReduction<>(input, mSleepFactory, mIndependence, mDfsOrder), mDfsOrder, visitor);
 			break;
 		case PERSISTENT_SETS:
 			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);

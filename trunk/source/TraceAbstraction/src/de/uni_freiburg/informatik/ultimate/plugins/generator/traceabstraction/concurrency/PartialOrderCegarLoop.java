@@ -183,7 +183,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		if (visitor instanceof WrapperVisitor<?, ?, ?>) {
 			visitor = ((WrapperVisitor<L, IPredicate, IDfsVisitor<L, IPredicate>>) visitor).getBaseVisitor();
 		}
-		if (mPartialOrderMode.hasSleepSets()) {
+		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
 			return ((SleepSetVisitorSearch<L, IPredicate>) visitor).constructRun();
 		}
@@ -192,7 +192,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private IDfsVisitor<L, IPredicate> createVisitor() {
 		IDfsVisitor<L, IPredicate> visitor;
-		if (mPartialOrderMode.hasSleepSets()) {
+		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
 			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
 		} else {

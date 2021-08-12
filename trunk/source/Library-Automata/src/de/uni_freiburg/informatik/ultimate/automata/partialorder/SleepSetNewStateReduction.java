@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * unfolds and unrolls the input automaton, in order to guarantee a reduction that is minimal (in terms of the accepted
  * language).
  *
- * @deprecated Will be superseded by {@link SleepSetDelayReduction}
+ * @deprecated Superseded by {@link MinimalSleepSetReduction}
  *
  * @author Marcel Ebbinghaus
  *

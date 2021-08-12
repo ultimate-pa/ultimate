@@ -60,7 +60,8 @@ public final class PersistentSetReduction {
 			final IDfsVisitor<L, R> visitor) throws AutomataOperationCanceledException {
 		final IDfsOrder<L, R> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
-		new SleepSetNewStateReduction<>(services, operand, factory, independenceRelation, combinedOrder,
+		new DepthFirstTraversal<>(services,
+				new MinimalSleepSetReduction<>(operand, factory, independenceRelation, combinedOrder), combinedOrder,
 				combinedVisitor);
 	}
 
