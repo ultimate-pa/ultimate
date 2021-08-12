@@ -285,6 +285,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return SmtUtils.isFalseLiteral(state.getFormula());
 	}
 
+	private static boolean isTrueLiteral(final IPredicate state) {
+		if (state instanceof MLPredicateWithConjuncts) {
+			final ImmutableList<IPredicate> conjuncts = ((MLPredicateWithConjuncts) state).getConjuncts();
+			return conjuncts.size() == 1 && isTrueLiteral(conjuncts.getHead());
+		}
+		return SmtUtils.isTrueLiteral(state.getFormula());
+	}
+
 	private static List<IPredicate> getConjuncts(final IPredicate conjunction) {
 		if (conjunction == null) {
 			return ImmutableList.empty();
@@ -309,8 +317,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			}
 
 			final IPredicate newState;
-			if (isFalseLiteral(state2)) {
+			if (isTrueLiteral(state2)) {
+				// There is no point in adding a conjunct "true".
+				newState = state1;
+			} else if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
 				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isProvenState.
+				// As another (less important) optimization, we also ignore state1 if it is "true".
 				newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
 						((IMLPredicate) state1).getProgramPoints(), ImmutableList.singleton(state2)));
 			} else {
