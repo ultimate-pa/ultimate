@@ -137,7 +137,7 @@ public class ThreadIdManager {
 		storeThreadId(argument, threadId, dispatcher, loc, hook, erb);
 
 		if (UNAMBIGUOUS_THREAD_ID_OPTIMIZATION) {
-			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument, true);
+			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument);
 			if (unambiguousId != null) {
 				return createUnambiguousThreadId(unambiguousId, threadId);
 			}
@@ -170,7 +170,7 @@ public class ThreadIdManager {
 		final Expression threadId = argThreadId.getLrValue().getValue();
 
 		if (UNAMBIGUOUS_THREAD_ID_OPTIMIZATION) {
-			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument, false);
+			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument);
 			if (unambiguousId != null) {
 				return createUnambiguousThreadId(unambiguousId, threadId);
 			}
@@ -239,7 +239,7 @@ public class ThreadIdManager {
 				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, mMemoryHandler.getThreadIdType(), false, hook));
 	}
 
-	private Integer getUnambiguousThreadIdCounter(final IASTInitializerClause argument, final boolean isFork) {
+	private Integer getUnambiguousThreadIdCounter(final IASTInitializerClause argument) {
 		final IASTName threadIdName = getDirectReference(argument);
 		if (threadIdName == null) {
 			return null;
@@ -256,7 +256,7 @@ public class ThreadIdManager {
 		}
 
 		final Set<IASTName> references = findAllReferences(threadIdBinding, threadIdName);
-		if (references != null && onlyPassiveReferencesExceptOneFork(references, isFork ? threadIdName : null)) {
+		if (references != null && onlyForkJoinReferences(references)) {
 			final int idCounter = mUnambiguousThreadIds.size() + 1;
 			mUnambiguousThreadIds.put(threadIdBinding, idCounter);
 			return idCounter;
@@ -299,36 +299,15 @@ public class ThreadIdManager {
 			return null;
 		}
 		final IASTUnaryExpression unary = (IASTUnaryExpression) expression;
-		if (unary.getOperator() != IASTUnaryExpression.op_amper) {
-			return null;
-		}
-		if (!(unary.getOperand() instanceof IASTIdExpression)) {
+		if (unary.getOperator() != IASTUnaryExpression.op_amper || !(unary.getOperand() instanceof IASTIdExpression)) {
 			return null;
 		}
 		final IASTIdExpression idExpr = (IASTIdExpression) unary.getOperand();
 		return idExpr.getName();
 	}
 
-	private static boolean onlyPassiveReferencesExceptOneFork(final Set<IASTName> references,
-			final IASTName exception) {
-		assert exception == null || references.contains(exception) : "Pointless exception";
-
-		boolean hasFork = false;
-		for (final IASTName name : references) {
-			if (!name.isReference()) {
-				continue;
-			}
-			if (!hasFork && isPthreadCreateReference(name)) {
-				assert exception == null || name == exception : "Found fork, but not the expected one";
-				hasFork = true;
-				continue;
-			}
-
-			if (!isPthreadJoinReference(name)) {
-				return false;
-			}
-		}
-		return true;
+	private static boolean onlyForkJoinReferences(final Set<IASTName> references) {
+		return references.stream().allMatch(ref -> isPthreadCreateReference(ref) || isPthreadJoinReference(ref));
 	}
 
 	private static boolean isPthreadCreateReference(final IASTName name) {
