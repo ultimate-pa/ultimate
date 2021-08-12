@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of states in the traversed automaton
  */
 public class DepthFirstTraversal<L, S> {
+	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final IDfsOrder<L, S> mOrder;
@@ -79,12 +81,14 @@ public class DepthFirstTraversal<L, S> {
 	 *            The order in which transitions for each state should be explored
 	 * @param visitor
 	 *            A visitor to traverse the automaton
+	 * @throws AutomataOperationCanceledException
 	 */
 	public DepthFirstTraversal(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
-			final IDfsVisitor<L, S> visitor) {
+			final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
 
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DepthFirstTraversal.class);
 		mOperand = operand;
 		mOrder = order;
@@ -93,11 +97,15 @@ public class DepthFirstTraversal<L, S> {
 		traverse();
 	}
 
-	private void traverse() {
+	private void traverse() throws AutomataOperationCanceledException {
 		final S initial = DataStructureUtils.getOneAndOnly(mOperand.getInitialStates(), "initial state");
 		visitState(initial);
 
 		while (!mWorklist.isEmpty()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+
 			final var current = mWorklist.pop();
 			final S currentState = current.getFirst();
 

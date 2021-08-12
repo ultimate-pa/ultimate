@@ -47,7 +47,8 @@ public final class PersistentSetReduction {
 
 	public static <L, S> void applyWithoutSleepSets(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> dfsOrder,
-			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor) {
+			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor)
+			throws AutomataOperationCanceledException {
 		final IDfsOrder<L, S> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		new DepthFirstTraversal<>(services, operand, combinedOrder, combinedVisitor);
