@@ -147,12 +147,6 @@ public class SleepSetNewStateReduction<L, S, R> {
 			final Set<L> explored = new HashSet<>();
 			final ArrayDeque<R> successorStateList = new ArrayDeque<>(successorTransitionList.size());
 
-			// TODO (Dominik 2021-01-24) Consider pre-computing independence between different outgoing transitions,
-			// and between outgoing transitions and sleep set members, at an earlier point. The background is that
-			// in the usage of this class in SleepSetCegar, there is competition for a ManagedScript between the
-			// (interpolant) automaton and the independence checks. The fewer batches of independence checks, the
-			// fewer times the ManagedScript need change lock ownership.
-
 			for (final L currentLetter : successorTransitionList) {
 				final var currentTransitionOpt = DataStructureUtils.getOnly(
 						mOperand.internalSuccessors(currentState, currentLetter), "Automaton must be deterministic");
