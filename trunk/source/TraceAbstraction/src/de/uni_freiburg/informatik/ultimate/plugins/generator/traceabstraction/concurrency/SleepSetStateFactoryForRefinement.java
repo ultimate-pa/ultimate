@@ -53,9 +53,16 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mEmptyStack;
+
+	// TODO Consider clearing these maps after each iteration (these states should not be re-used).
+	// Alternatively, can we get rid of this for the iterative approach entirely and just use it for one-shot reduction?
+	// For the iterative approach, we could just use pairs of predicates and sleep sets.
 	private final Map<IPredicate, Map<ImmutableSet<L>, IPredicate>> mKnownStates = new HashMap<>();
+
+	// TODO Consider introducing a new type of predicates that store the original state and the sleep set.
+	// Then we could eliminate these maps. This would also mean that we don't keep references to outdated states.
 	private final Map<IPredicate, IPredicate> mOriginalStates = new HashMap<>();
-	private final Map<IPredicate, Set<L>> mSleepSets;
+	private final Map<IPredicate, ImmutableSet<L>> mSleepSets;
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -67,7 +74,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		super();
 		mPredicateFactory = predicateFactory;
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
-		mSleepSets = PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION ? new HashMap<>() : null;
+		mSleepSets = new HashMap<>();
 	}
 
 	@Override
@@ -87,35 +94,40 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 * @param sleepState
 	 *            The state of the sleep set reduction, as returned by a call to
 	 *            {@link #createSleepSetState(IPredicate, Set)}.
-	 * @return The argument passed to {@link #createSleepSetState(IPredicate, Set)} that returned the given reduction
-	 *         state
+	 * @return The argument passed to {@link #createSleepSetState(IPredicate, ImmutableSet)} that returned the given
+	 *         reduction state
 	 */
 	public IPredicate getOriginalState(final IPredicate sleepState) {
 		return mOriginalStates.get(sleepState);
 	}
 
-	private Set<L> getSleepSet(final IPredicate sleepState) {
+	/**
+	 * Retrieves the sleep set for which a reduction state was constructed.
+	 *
+	 * @param sleepState
+	 *            The state of the sleep set reduction, as returned by a call to
+	 *            {@link #createSleepSetState(IPredicate, Set)}.
+	 * @return The argument passed to {@link #createSleepSetState(IPredicate, ImmutableSet)} that returned the given
+	 *         reduction state
+	 */
+	public ImmutableSet<L> getSleepSet(final IPredicate sleepState) {
 		return mSleepSets.get(sleepState);
 	}
 
-	private IPredicate createFreshCopy(final IPredicate original, final Set<L> sleepset) {
+	private IPredicate createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
 		if (original instanceof MLPredicateWithConjuncts) {
 			final MLPredicateWithConjuncts mlPred = (MLPredicateWithConjuncts) original;
 			final MLPredicateWithConjuncts copy = mPredicateFactory.construct(
 					id -> new MLPredicateWithConjuncts(id, mlPred.getProgramPoints(), mlPred.getConjuncts()));
 			mOriginalStates.put(copy, original);
-			if (PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION) {
-				mSleepSets.put(copy, sleepset);
-			}
+			mSleepSets.put(copy, sleepset);
 			return copy;
 		}
 		if (original instanceof IMLPredicate) {
 			final IMLPredicate mlPred = (IMLPredicate) original;
 			final IMLPredicate copy = mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());
 			mOriginalStates.put(copy, original);
-			if (PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION) {
-				mSleepSets.put(copy, sleepset);
-			}
+			mSleepSets.put(copy, sleepset);
 			return copy;
 		}
 		throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());

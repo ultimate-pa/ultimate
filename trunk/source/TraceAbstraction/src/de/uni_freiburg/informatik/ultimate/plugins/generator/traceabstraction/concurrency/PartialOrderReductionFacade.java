@@ -29,14 +29,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
@@ -190,7 +193,39 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		}
 	}
 
-	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> constructReduction(
+	/**
+	 * Creates a {@link DeadEndOptimizingSearchVisitor} suitable for use with this instance.
+	 *
+	 * @param <V>
+	 *            The type of underlying visitor
+	 * @param createUnderlying
+	 *            A method to create the underlying visitor. See
+	 *            {@link DeadEndOptimizingSearchVisitor#DeadEndOptimizingSearchVisitor(Supplier)} for details.
+	 * @return the new visitor
+	 */
+	public <V extends IDfsVisitor<L, IPredicate>> DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, V>
+			createDeadEndVisitor(final Supplier<V> createUnderlying) {
+		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
+			final SleepSetStateFactoryForRefinement<L> revFactory =
+					(SleepSetStateFactoryForRefinement<L>) mSleepFactory;
+			return new DeadEndOptimizingSearchVisitor<>(createUnderlying, revFactory::getOriginalState,
+					revFactory::getSleepSet);
+		}
+		return new DeadEndOptimizingSearchVisitor<>(createUnderlying);
+	}
+
+	/**
+	 * Constructs the reduced automaton explicitly.
+	 *
+	 * @param input
+	 *            The automaton to be reduced.
+	 * @param emptyStackFactory
+	 *            A state factory used for the reduced automaton.
+	 * @return An explicit representation of the reduced automaton
+	 * @throws AutomataOperationCanceledException
+	 *             in case of cancellation or timeout
+	 */
+	public NestedWordAutomaton<L, IPredicate> constructReduction(
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) throws AutomataOperationCanceledException {
 		final AutomatonConstructingVisitor<L, IPredicate> visitor;

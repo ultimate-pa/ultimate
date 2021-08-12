@@ -92,7 +92,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
-	private final DeadEndOptimizingSearchVisitor<L, IPredicate, IDfsVisitor<L, IPredicate>> mVisitor;
+	private final DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, IDfsVisitor<L, IPredicate>> mVisitor;
 	private final PartialOrderReductionFacade<L> mPOR;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
@@ -104,14 +104,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
-
 		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
-		mVisitor = new DeadEndOptimizingSearchVisitor<>(this::createVisitor);
 
 		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), independenceRelation);
+		mVisitor = mPOR.createDeadEndVisitor(this::createVisitor);
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.
@@ -311,16 +310,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		@Override
 		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
-			if (isProvenState(state1)) {
+			if (isProvenState(state1) || isTrueLiteral(state2)) {
 				// If state1 is "false", we add no other conjuncts, and do not create a new state.
+				// Similarly, there is no point in adding state2 as conjunct if it is "true".
 				return state1;
 			}
 
 			final IPredicate newState;
-			if (isTrueLiteral(state2)) {
-				// There is no point in adding a conjunct "true".
-				newState = state1;
-			} else if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
+			if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
 				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isProvenState.
 				// As another (less important) optimization, we also ignore state1 if it is "true".
 				newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
@@ -331,11 +328,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 						.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
 			}
 
-			// Transfer dead state info
-			if (mVisitor.isDeadEndState(state1)) {
-				mVisitor.addDeadEndState(newState);
-			}
-
+			mVisitor.copyDeadEndInformation(state1, newState);
 			return newState;
 		}
 	}

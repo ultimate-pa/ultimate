@@ -28,7 +28,11 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * A visitor that implements a dead-end removal optimization. Each instance can be used in multiple traversals, if it is
@@ -40,15 +44,24 @@ import java.util.function.Supplier;
  *
  * @param <L>
  *            The type of letters in the traversed automaton
- * @param <S>
+ * @param <R>
  *            The type of states in the traversed automaton
+ * @param <S>
+ *            In case of sleep set reduction, the type of states in the unreduced automaton. Otherwise, should be the
+ *            same as R.
  * @param <V>
  *            The type of the underlying visitor
  */
-public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> implements IDfsVisitor<L, S> {
+public class DeadEndOptimizingSearchVisitor<L, R, S, V extends IDfsVisitor<L, R>> implements IDfsVisitor<L, R> {
 	private V mUnderlying;
 	private final Supplier<V> mCreateUnderlying;
-	private final Set<S> mDeadEndSet = new HashSet<>();
+	private final Function<R, S> mState2Original;
+	private final Function<R, ImmutableSet<L>> mState2SleepSet;
+
+	private final Set<R> mDeadEndSet;
+	private final HashRelation<S, ImmutableSet<L>> mDeadEndRelation;
+
+	private int mPruneCounter;
 
 	/**
 	 * Creates a new instance, which can be used in multiple traversals. In each traversal, a new underlying visitor is
@@ -58,28 +71,45 @@ public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> i
 	 *            A function that constructs a new underlying instance
 	 */
 	public DeadEndOptimizingSearchVisitor(final Supplier<V> createUnderlying) {
+		this(createUnderlying, null, null);
+	}
+
+	public DeadEndOptimizingSearchVisitor(final Supplier<V> createUnderlying, final Function<R, S> state2Original,
+			final Function<R, ImmutableSet<L>> state2SleepSet) {
 		mCreateUnderlying = createUnderlying;
+		mState2Original = state2Original;
+		mState2SleepSet = state2SleepSet;
+
+		if (mState2Original == null) {
+			assert mState2SleepSet == null : "sleep set support requires both state and set";
+			mDeadEndSet = new HashSet<>();
+			mDeadEndRelation = null;
+		} else {
+			assert mState2SleepSet != null : "sleep set support requires both state and set";
+			mDeadEndSet = null;
+			mDeadEndRelation = new HashRelation<>();
+		}
 	}
 
 	@Override
-	public boolean addStartState(final S state) {
+	public boolean addStartState(final R state) {
 		final boolean result = getUnderlying().addStartState(state);
 		return result || isDeadEndState(state);
 	}
 
 	@Override
-	public boolean discoverTransition(final S source, final L letter, final S target) {
+	public boolean discoverTransition(final R source, final L letter, final R target) {
 		return getUnderlying().discoverTransition(source, letter, target);
 	}
 
 	@Override
-	public boolean discoverState(final S state) {
+	public boolean discoverState(final R state) {
 		final boolean result = getUnderlying().discoverState(state);
 		return result || isDeadEndState(state);
 	}
 
 	@Override
-	public void backtrackState(final S state, final boolean isComplete) {
+	public void backtrackState(final R state, final boolean isComplete) {
 		getUnderlying().backtrackState(state, isComplete);
 		if (isComplete) {
 			addDeadEndState(state);
@@ -87,7 +117,7 @@ public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> i
 	}
 
 	@Override
-	public void delayState(final S state) {
+	public void delayState(final R state) {
 		getUnderlying().delayState(state);
 	}
 
@@ -116,24 +146,52 @@ public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> i
 
 	/**
 	 * Determines if a state has been marked as dead end, either because it was backtracked or because it was marked
-	 * explicitly as dead end (see {@link #addDeadEndState(S)}).
+	 * explicitly as dead end (see {@link #addDeadEndState(R)}).
 	 *
 	 * @param state
 	 *            the state which might be a dead end
 	 * @return true if the state has already been marked as dead end, false otherwise
 	 */
-	public boolean isDeadEndState(final S state) {
-		return mDeadEndSet.contains(state);
+	public boolean isDeadEndState(final R state) {
+		final boolean result;
+		if (mDeadEndSet == null) {
+			result = mDeadEndRelation.containsPair(mState2Original.apply(state), mState2SleepSet.apply(state));
+		} else {
+			result = mDeadEndSet.contains(state);
+		}
+		if (result) {
+			mPruneCounter++;
+		}
+		return result;
+	}
+
+	private void addDeadEndState(final R state) {
+		if (mDeadEndSet == null) {
+			mDeadEndRelation.addPair(mState2Original.apply(state), mState2SleepSet.apply(state));
+		} else {
+			mDeadEndSet.add(state);
+		}
 	}
 
 	/**
-	 * Explicitly marks a given state as dead end. In future traversals, outgoing transitions of this state will not be
-	 * explored.
+	 * Copies dead end information from a given state to another.
 	 *
-	 * @param state
-	 *            the new dead end state
+	 * If sleep sets are not used, this simply means that if the first state is known to be a dead end, we also mark the
+	 * new state as dead end.
+	 *
+	 * If sleep sets are used, this means that for any combination of the first state with a sleep set S that is known
+	 * to be a dead end, we also mark the combination of the new state and the same sleep sets s as dead end.
+	 *
+	 * @param originalState
+	 *            The state whose dead end information should be copied.
+	 * @param newState
+	 *            The state for which dead end information is added
 	 */
-	public void addDeadEndState(final S state) {
-		mDeadEndSet.add(state);
+	public void copyDeadEndInformation(final S originalState, final S newState) {
+		if (mDeadEndSet == null) {
+			mDeadEndRelation.addAllPairs(newState, mDeadEndRelation.getImage(originalState));
+		} else if (mDeadEndSet.contains(originalState)) {
+			mDeadEndSet.add((R) newState);
+		}
 	}
 }
