@@ -139,7 +139,7 @@ public class ThreadIdManager {
 		if (UNAMBIGUOUS_THREAD_ID_OPTIMIZATION) {
 			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument);
 			if (unambiguousId != null) {
-				return createUnambiguousThreadId(unambiguousId, threadId);
+				return createUnambiguousThreadId(unambiguousId, loc, threadId);
 			}
 		}
 
@@ -172,7 +172,7 @@ public class ThreadIdManager {
 		if (UNAMBIGUOUS_THREAD_ID_OPTIMIZATION) {
 			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument);
 			if (unambiguousId != null) {
-				return createUnambiguousThreadId(unambiguousId, threadId);
+				return createUnambiguousThreadId(unambiguousId, loc, threadId);
 			}
 		}
 
@@ -352,10 +352,11 @@ public class ThreadIdManager {
 		return function.equals(funName);
 	}
 
-	private static Expression[] createUnambiguousThreadId(final int count, final Expression forkCounter) {
-		final Expression[] ids = new Expression[count];
+	private Expression[] createUnambiguousThreadId(final int count, final ILocation loc, final Expression forkCounter) {
+		final Expression[] ids = new Expression[count + 1];
+		ids[0] = forkCounter;
 		for (int i = 0; i < count; ++i) {
-			ids[i] = forkCounter; // TODO copy?
+			ids[i + 1] = mExpressionTranslation.constructZero(loc, new CPrimitive(CPrimitives.INT));
 		}
 		return ids;
 	}
