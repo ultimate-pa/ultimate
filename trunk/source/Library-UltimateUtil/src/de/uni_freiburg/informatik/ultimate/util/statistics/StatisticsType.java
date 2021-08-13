@@ -3,8 +3,10 @@ package de.uni_freiburg.informatik.ultimate.util.statistics;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
@@ -26,6 +28,10 @@ public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements I
 		((StatisticsData) x).aggregateBenchmarkData((StatisticsData) y);
 		return x;
 	};
+	public static final Function<Object, Function<Object, Object>> STATISTICS_AGGREGATOR_AGGREGATION = x -> y -> {
+		((StatisticsAggregator) x).aggregateBenchmarkData((StatisticsAggregator) y);
+		return x;
+	};
 	/** consider using {@link PrettyPrint#keyColonData(String, Object)} instead */
 	public static final Function<String, Function<Object, String>> KEY_BEFORE_DATA = key -> data -> key + ": " + data;
 	/** consider using {@link PrettyPrint#dataSpaceKey(String, Object)} instead */
@@ -44,7 +50,6 @@ public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements I
 	private final Class<T> mKeyType;
 
 	public StatisticsType(final Class<T> keyType) {
-		super();
 		mKeyType = keyType;
 	}
 
@@ -87,16 +92,7 @@ public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements I
 	}
 
 	public static String prettyprintNanoseconds(final long time) {
-		final boolean showMilliseconds = false;
-		if (showMilliseconds) {
-			final long milliseconds = time / 1_000_000;
-			final long tenthDigit = time / 100_000 % 10;
-			return milliseconds + "." + tenthDigit + "ms";
-		} else {
-			final long seconds = time / 1_000_000_000;
-			final long tenthDigit = time / 100_000_000 % 10;
-			return seconds + "." + tenthDigit + "s";
-		}
+		return CoreUtil.toTimeString(time, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 2);
 	}
 
 }

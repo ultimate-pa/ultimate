@@ -36,11 +36,6 @@ public interface IKeyedStatisticsElement extends IStatisticsElement {
 	String getName();
 
 	@Override
-	default Class<?> getDataType() {
-		return getType().getDataType();
-	}
-
-	@Override
 	default Object aggregate(final Object lhs, final Object rhs) {
 		return getType().aggregate(lhs, rhs);
 	}

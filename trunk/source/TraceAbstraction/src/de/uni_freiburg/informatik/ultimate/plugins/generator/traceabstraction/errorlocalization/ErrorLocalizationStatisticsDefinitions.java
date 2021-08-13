@@ -43,23 +43,21 @@ public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement
 	IcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	ErrorEnforcingIcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-	
+
 	ErrorAdmittingIcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-	
+
 	ErrorIrrelevantIcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-	
+
 	NumberOfBranches(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-	
+
 	AngelicScore(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
-	;
+			StatisticsType.KEY_BEFORE_DATA),;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
-
 
 	ErrorLocalizationStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {
@@ -76,11 +74,6 @@ public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement
 	@Override
 	public String prettyprint(final Object o) {
 		return mPrettyprinter.apply(name()).apply(o);
-	}
-
-	@Override
-	public Class<?> getDataType() {
-		return mClazz;
 	}
 
 }

@@ -71,7 +71,8 @@ public class StatisticsData implements IStatisticsDataProvider, ICsvProviderProv
 			// TODO: maybe we want to allow different types and only the keys
 			// have to be the same...
 			if (mBenchmarkType != benchmarkDataProvider.getBenchmarkType()) {
-				throw new AssertionError("incompatible benchmarks");
+				throw new AssertionError(String.format("incompatible benchmarks: %s vs %s", mBenchmarkType.getClass(),
+						benchmarkDataProvider.getBenchmarkType().getClass()));
 			}
 			for (final String key : mBenchmarkType.getKeys()) {
 				final Object valueThis = mKey2Value.get(key);
@@ -139,7 +140,7 @@ public class StatisticsData implements IStatisticsDataProvider, ICsvProviderProv
 						}
 					}
 				} else {
-					IStatisticsDataProvider sdProvider = (IStatisticsDataProvider) value;
+					final IStatisticsDataProvider sdProvider = (IStatisticsDataProvider) value;
 					for (final String subKey : sdProvider.getKeys()) {
 						final Object subValue = sdProvider.getValue(subKey);
 						final String composedKey = key + "_" + subKey;
