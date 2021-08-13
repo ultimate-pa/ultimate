@@ -28,18 +28,17 @@ package de.uni_freiburg.informatik.ultimate.util;
 
 /**
  * Three counters, one for internal, one for call, one for return.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
 public class InCaReCounter {
-	private static final boolean mToStringIsSum = true;
+	private static final boolean TO_STRING_IS_SUM = true;
 	private int mInternal;
 	private int mCall;
 	private int mReturn;
 
 	public InCaReCounter() {
-		super();
 		mInternal = 0;
 		mCall = 0;
 		mReturn = 0;
@@ -71,14 +70,16 @@ public class InCaReCounter {
 
 	@Override
 	public String toString() {
-		if (mToStringIsSum) {
+		if (TO_STRING_IS_SUM) {
 			return String.valueOf(mInternal + mCall + mReturn);
 		}
-		return mInternal + "In " + mCall + "Ca " + mReturn + "Re";
+		return String.format("%sIn %sCa %sRe", mInternal, mCall, mReturn);
 	}
 
 	/**
 	 * Add all values of another counter to the values of this counter.
+	 *
+	 * TODO: Why modify the state of this counter?
 	 */
 	public void add(final InCaReCounter inCaReCounter) {
 		mInternal += inCaReCounter.getInternal();
