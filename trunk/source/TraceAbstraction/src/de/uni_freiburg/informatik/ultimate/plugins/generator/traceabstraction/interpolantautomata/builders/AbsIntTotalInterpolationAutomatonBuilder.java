@@ -61,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.SdHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
@@ -221,11 +221,11 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
 			mLogger.info("Using "
 					+ alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
-							.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+							.stream().limit(PRINT_PREDS_LIMIT).map(IPredicate::toString).collect(Collectors.toList()))
 					+ "...");
 		} else {
 			mLogger.info("Using " + alreadyThereAsState.size() + " predicates from AI: " + String.join(",",
-					alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
+					alreadyThereAsState.stream().map(IPredicate::toString).collect(Collectors.toList())));
 		}
 
 		enhanceResult(oldAbstraction, aiResult, result, predicateToStates, predicateUnifier);
@@ -260,8 +260,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 
 		final Set<IPredicate> allPredicates = predicateToStates.keySet();
 		final IAbstractPostOperator<?, LETTER> postOperator = aiResult.getUsedDomain().getPostOperator();
-		final SdHoareTripleChecker sdChecker =
-				new SdHoareTripleChecker(mCsToolkit, predicateUnifier, new HoareTripleCheckerStatisticsGenerator());
+		final IHoareTripleChecker sdChecker =
+				HoareTripleCheckerUtils.constructSdHoareTripleChecker(mLogger, mCsToolkit, predicateUnifier);
 
 		// Iterate over all letters in the alphabet to find matching inductive transitions.
 		for (final LETTER currentLetter : oldAbstraction.getAlphabet()) {

@@ -151,7 +151,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getStatistics() {
 		return mHoareTripleCheckerStatistics;
 	}
 

@@ -131,7 +131,7 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getStatistics() {
 		throw new UnsupportedOperationException(getClass().getName() + " does not support getEdgeCheckerBenchmark()");
 	}
 

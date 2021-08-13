@@ -142,8 +142,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			mAnnotated.add(lastAutomatonState);
 			mWorklist.add(lastAutomatonState);
 		}
-		mHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC,
-				mCsToolkit, mPredicateUnifier);
+		mHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(services,
+				HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
 		for (final IPredicate state : nestedRun.getStateSequence()) {
 			mWorklist.add(state);
 			mAnnotated.add(state);
@@ -152,7 +152,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final IPredicate p = mWorklist.removeFirst();
 			doThings(p);
 		}
-		mBenchmarkGenerator.addEdgeCheckerData(mHtc.getEdgeCheckerBenchmark());
+		mBenchmarkGenerator.addEdgeCheckerData(mHtc.getStatistics());
 	}
 
 	private void doThings(final IPredicate p) throws AutomataOperationCanceledException {
@@ -211,7 +211,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 					(OutgoingCallTransition<LETTER, IPredicate>) transition;
 			final Set<IPredicate> succs = mIA.succCall(predItp, callTrans.getLetter());
 			return succs.contains(succItp);
-		} else if (transition instanceof OutgoingReturnTransition) {
+		}
+		if (transition instanceof OutgoingReturnTransition) {
 			final OutgoingReturnTransition<LETTER, IPredicate> returnTrans =
 					(OutgoingReturnTransition<LETTER, IPredicate>) transition;
 			final IPredicate hierPredItp = mEpimorphism.getMapping(returnTrans.getHierPred());
@@ -239,7 +240,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final OutgoingCallTransition<LETTER, IPredicate> callTrans =
 					(OutgoingCallTransition<LETTER, IPredicate>) transition;
 			return new NestedRun<>(p, callTrans.getLetter(), NestedWord.PLUS_INFINITY, callTrans.getSucc());
-		} else if (transition instanceof OutgoingReturnTransition) {
+		}
+		if (transition instanceof OutgoingReturnTransition) {
 			final OutgoingReturnTransition<LETTER, IPredicate> returnTrans =
 					(OutgoingReturnTransition<LETTER, IPredicate>) transition;
 			return new NestedRun<>(p, returnTrans.getLetter(), NestedWord.MINUS_INFINITY, returnTrans.getSucc());

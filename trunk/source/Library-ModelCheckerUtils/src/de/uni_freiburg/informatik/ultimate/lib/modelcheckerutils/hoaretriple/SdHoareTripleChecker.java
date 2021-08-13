@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
  * Hoare triple checker that uses only simple dataflow analysis to check triples. If this simple analysis is not able to
@@ -54,13 +54,12 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	private final CallCheckHelper mCallCheckHelper = new CallCheckHelper();
 	private final ReturnCheckHelper mReturnCheckHelper = new ReturnCheckHelper();
 
-	public SdHoareTripleChecker(final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier,
-			final HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
+	public SdHoareTripleChecker(final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
 		mPredicateCoverageChecker = predicateUnifier.getCoverageRelation();
 		mTruePredicate = predicateUnifier.getTruePredicate();
 		mFalsePredicate = predicateUnifier.getFalsePredicate();
-		mSdHoareTripleChecker =
-				new SdHoareTripleCheckerHelper(csToolkit, mPredicateCoverageChecker, edgeCheckerBenchmarkGenerator);
+		mSdHoareTripleChecker = new SdHoareTripleCheckerHelper(csToolkit, mPredicateCoverageChecker,
+				new HoareTripleCheckerStatisticsGenerator());
 	}
 
 	@Override
@@ -80,7 +79,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getStatistics() {
 		return mSdHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 

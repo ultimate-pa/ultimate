@@ -34,11 +34,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -70,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
@@ -104,9 +101,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	private final boolean mConstructCounterexamples;
 	private ProgramState<Term> mCounterexampleStatePrecond;
 	private ProgramState<Term> mCounterexampleStatePostcond;
-	private final ILogger mLogger;
 
 	/**
+	 * @param csToolkit
+	 *            A {@link CfgSmtToolkit} instance.
 	 * @param constructCounterexamples
 	 *            if a Hoare triple was invalid, then construct a pair of {@link ProgramState}s. This pair constitutes a
 	 *            counterexample to validity. One {@link ProgramState} represents a state before executing the
@@ -114,21 +112,17 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	 *
 	 *            TODO: Return a third {@link ProgramState} in counterexamples to validity of return transitions (will
 	 *            represent state before call)
-	 * @param logger
-	 *            TODO
 	 */
-	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit, final boolean constructCounterexamples,
-			final ILogger logger) {
+	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit, final boolean constructCounterexamples) {
 		mManagedScript = csToolkit.getManagedScript();
 		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
 		mOldVarsAssignmentCache = csToolkit.getOldVarsAssignmentCache();
 		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mConstructCounterexamples = constructCounterexamples;
-		mLogger = logger;
 	}
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getStatistics() {
 		return mEdgeCheckerBenchmark;
 	}
 
@@ -682,14 +676,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		assert mAssertedPostcond != null : "Assert postcond first! ";
 		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
 
-		final long before = System.currentTimeMillis();
 		final LBool isSat = mManagedScript.checkSat(this);
-		final long delta = System.currentTimeMillis() - before;
-		if (delta > 1000) {
-			mLogger.warn("Took %s for a HTC check with result %s",
-					CoreUtil.humanReadableTime(delta, TimeUnit.MILLISECONDS, 2),
-					IncrementalPlicationChecker.convertLBool2Validity(isSat));
-		}
+
 		switch (isSat) {
 		case SAT:
 			if (mConstructCounterexamples) {

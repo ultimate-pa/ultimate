@@ -314,7 +314,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		// INestedWordAutomatonOldApi<LETTER, IPredicate> oldApi = (new
 		// RemoveUnreachable<LETTER,
 		// IPredicate>(mInterpolAutomatonUsedInRefinement)).getResult();
-		benchmarkGenerator.addEdgeCheckerData(bhtc.getEdgeCheckerBenchmark());
+		benchmarkGenerator.addEdgeCheckerData(bhtc.getStatistics());
 		mInterpolAutomaton = null;
 		final boolean isUseful = isUsefulInterpolantAutomaton(mInterpolAutomatonUsedInRefinement, mCounterexample);
 		if (!isUseful) {

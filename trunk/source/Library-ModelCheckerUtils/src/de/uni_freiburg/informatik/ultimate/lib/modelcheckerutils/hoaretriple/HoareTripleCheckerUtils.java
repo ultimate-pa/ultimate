@@ -30,7 +30,6 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -54,59 +53,70 @@ public final class HoareTripleCheckerUtils {
 		// do not instantiate utility class
 	}
 
+	/**
+	 *
+	 * @param services
+	 * @param hoareTripleChecks
+	 * @param csToolkit
+	 * @param unifier
+	 * @return
+	 * @throws AssertionError
+	 */
 	public static ChainingHoareTripleChecker constructEfficientHoareTripleChecker(
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) throws AssertionError {
+			final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
 		final ILogger logger = services.getLoggingService().getLogger(HoareTripleCheckerUtils.class);
-		final IHoareTripleChecker reviewHtc =
-				constructSmtHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, csToolkit);
-		final IHoareTripleChecker solverHtc = constructSmtHoareTripleChecker(services, hoareTripleChecks, csToolkit);
-
-		ChainingHoareTripleChecker rtr = ChainingHoareTripleChecker.with(logger,
-				new SdHoareTripleChecker(csToolkit, predicateUnifier, solverHtc.getEdgeCheckerBenchmark()));
-		if (REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED) {
-			rtr = rtr.reviewWith(reviewHtc);
-		}
-
-		rtr = rtr.andThen(solverHtc);
-		// protect against quantified transition formulas and intricate predicates
-		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
-		final Predicate<IPredicate> noIntricateNoQuantifier = p -> predicateUnifier.isIntricatePredicate(p)
-				|| quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula());
-		final Predicate<IAction> noQuantifier =
-				a -> quantifierFinder.isSatisfiedBySomeSubterm(a.getTransformula().getFormula());
-		rtr = rtr.predicatesProtectedBy(noIntricateNoQuantifier).actionsProtectedBy(noQuantifier);
-
-		if (REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED) {
-			rtr = rtr.reviewWith(reviewHtc);
-		}
-
-		return rtr;
+		final ChainingHoareTripleChecker sdHtc = constructSdHoareTripleChecker(logger, csToolkit, unifier);
+		final ChainingHoareTripleChecker solverHtc =
+				constructSmtHoareTripleChecker(logger, hoareTripleChecks, csToolkit, unifier);
+		return sdHtc.andThen(solverHtc);
 	}
 
-	public static IHoareTripleChecker constructSmtHoareTripleChecker(final IUltimateServiceProvider services,
-			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit) throws AssertionError {
+	public static ChainingHoareTripleChecker constructSdHoareTripleChecker(final ILogger logger,
+			final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
+		ChainingHoareTripleChecker chain =
+				ChainingHoareTripleChecker.with(logger, new SdHoareTripleChecker(csToolkit, unifier));
+		if (REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED) {
+			chain = chain.reviewWith(new MonolithicHoareTripleChecker(csToolkit));
+		}
+		return chain;
+	}
+
+	public static ChainingHoareTripleChecker constructSmtHoareTripleChecker(final ILogger logger,
+			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
 			solverHtc = new MonolithicHoareTripleChecker(csToolkit);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false,
-					services.getLoggingService().getLogger(ModelCheckerUtils.class));
+			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false);
 			break;
 		default:
-			throw new AssertionError("unknown value");
+			throw new UnsupportedOperationException("unknown value " + hoareTripleChecks);
 		}
-		return solverHtc;
+
+		ChainingHoareTripleChecker chain = ChainingHoareTripleChecker.with(logger, solverHtc);
+		// protect against quantified transition formulas and intricate predicates
+		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
+		final Predicate<IPredicate> noIntricateNoQuantifier =
+				p -> unifier.isIntricatePredicate(p) || quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula());
+		final Predicate<IAction> noQuantifier =
+				a -> quantifierFinder.isSatisfiedBySomeSubterm(a.getTransformula().getFormula());
+		chain = chain.predicatesProtectedBy(noIntricateNoQuantifier).actionsProtectedBy(noQuantifier);
+		if (REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED) {
+			chain = chain.reviewWith(new MonolithicHoareTripleChecker(csToolkit));
+		}
+		return chain;
 	}
 
 	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) throws AssertionError {
-		final IHoareTripleChecker ehtc =
-				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
-		return new CachingHoareTripleCheckerMap(services, ehtc, predicateUnifier);
+			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
+		// TODO: Cache support in ChainingHtc
+		return new CachingHoareTripleCheckerMap(services,
+				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier),
+				predicateUnifier);
 	}
 
 	/**

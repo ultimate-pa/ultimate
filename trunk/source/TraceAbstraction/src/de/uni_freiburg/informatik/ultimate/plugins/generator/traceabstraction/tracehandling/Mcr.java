@@ -78,8 +78,8 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		mToolkit = prefs.getCfgSmtToolkit();
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mResultProvider = resultProvider;
-		mHoareTripleChecker = HoareTripleCheckerUtils.constructEfficientHoareTripleChecker(mServices,
-				HoareTripleChecks.MONOLITHIC, mToolkit, mPredicateUnifier);
+		mHoareTripleChecker = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				HoareTripleChecks.INCREMENTAL, mToolkit, mPredicateUnifier);
 		mInterpolantProvider = interpolantProvider;
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);

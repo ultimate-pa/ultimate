@@ -185,7 +185,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 		determinized.switchToReadonlyMode();
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit, false, mLogger)).getResult();
+				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
@@ -207,7 +207,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends B
 			super.writeAutomatonToFile(mInterpolAutomaton, filename);
 		}
 
-		mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+		mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
 		final Minimization minimization = mPref.getMinimization();

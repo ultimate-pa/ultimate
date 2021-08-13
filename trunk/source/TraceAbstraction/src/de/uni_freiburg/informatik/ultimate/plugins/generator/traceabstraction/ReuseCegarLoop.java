@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -50,14 +51,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.EfficientIgnoringHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.ChainingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -518,11 +521,19 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 
 		private IHoareTripleChecker constructEfficientIgnoringHtc(final boolean allowSdForProtectedActions)
 				throws AssertionError {
-			final IHoareTripleChecker smtHtc = HoareTripleCheckerUtils.constructSmtHoareTripleChecker(mServices,
-					mPref.getHoareTripleChecks(), mCsToolkit);
-			final EfficientIgnoringHoareTripleChecker eiHtc = new EfficientIgnoringHoareTripleChecker(smtHtc,
-					mCsToolkit, getPredicateUnifier(), constructOldAlphabet(), allowSdForProtectedActions);
-			return new CachingHoareTripleCheckerMap(getServices(), eiHtc, getPredicateUnifier());
+
+			final Set<L> oldAlphabet = constructOldAlphabet();
+			final Predicate<IAction> isOldAction = oldAlphabet::contains;
+
+			ChainingHoareTripleChecker chain =
+					HoareTripleCheckerUtils.constructSdHoareTripleChecker(mLogger, mCsToolkit, getPredicateUnifier());
+			if (!allowSdForProtectedActions) {
+				chain = chain.actionsProtectedBy(isOldAction);
+			}
+			chain = chain.andThen(HoareTripleCheckerUtils.constructSmtHoareTripleChecker(mLogger,
+					HoareTripleChecks.INCREMENTAL, mCsToolkit, getPredicateUnifier()));
+
+			return new CachingHoareTripleCheckerMap(getServices(), chain, getPredicateUnifier());
 		}
 
 		private Set<L> constructOldAlphabet() {
@@ -535,11 +546,11 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 							mAutomaton.getVpAlphabet().getReturnAlphabet()));
 		}
 
-		public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+		public IStatisticsDataProvider getEdgeCheckerBenchmark() {
 			if (mHtc == null) {
 				return new HoareTripleCheckerStatisticsGenerator();
 			}
-			return mHtc.getEdgeCheckerBenchmark();
+			return mHtc.getStatistics();
 		}
 
 		public IPredicateUnifier getPredicateUnifier() {
@@ -616,10 +627,6 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
 		}
 
-		@Override
-		public Class<?> getDataType() {
-			return mClazz;
-		}
 	}
 
 	public static final class ReuseStatisticsType extends StatisticsType<ReuseStatisticsDefinitions> {
