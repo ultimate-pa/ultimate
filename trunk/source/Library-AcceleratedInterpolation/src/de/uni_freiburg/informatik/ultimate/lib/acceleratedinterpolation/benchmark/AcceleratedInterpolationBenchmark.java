@@ -108,19 +108,16 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 	 *
 	 */
 	public enum AcceleratedInterpolationStatisticsDefinitions implements IStatisticsElement {
-		ACCELINTERPOL_CORE(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_OVERALL(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_LOOPDETECTOR(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_LOOPACCELERATOR(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY);
+		ACCELINTERPOL_CORE(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_OVERALL(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_LOOPDETECTOR(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_LOOPACCELERATOR(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY);
 
-		private final Class<?> mClass;
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
 
-		AcceleratedInterpolationStatisticsDefinitions(final Class<?> clazz,
-				final Function<Object, Function<Object, Object>> aggr,
+		AcceleratedInterpolationStatisticsDefinitions(final Function<Object, Function<Object, Object>> aggr,
 				final Function<String, Function<Object, String>> prettyprinter) {
-			mClass = clazz;
 			mAggr = aggr;
 			mPrettyprinter = prettyprinter;
 		}
@@ -133,11 +130,6 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 		@Override
 		public String prettyprint(final Object o) {
 			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
-		}
-
-		@Override
-		public Class<?> getDataType() {
-			return mClass;
 		}
 	}
 
