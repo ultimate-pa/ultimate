@@ -639,11 +639,11 @@ public class CoreUtil {
 	public static String humanReadableByteCount(final long bytes, final boolean si) {
 		final int unit = si ? 1000 : 1024;
 		if (bytes < unit) {
-			return bytes + " B";
+			return bytes + "B";
 		}
 		final int exp = (int) (Math.log(bytes) / Math.log(unit));
 		final String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
-		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+		return String.format("%.1f%sB", bytes / Math.pow(unit, exp), pre);
 	}
 
 	public static String humanReadableNumber(final long number) {
@@ -653,7 +653,7 @@ public class CoreUtil {
 		}
 		final int exp = (int) (Math.log(number) / Math.log(unit));
 		final String pre = String.valueOf("KMGTPE".charAt(exp - 1));
-		return String.format("%.1f %s", number / Math.pow(unit, exp), pre);
+		return String.format("%.1f%s", number / Math.pow(unit, exp), pre);
 	}
 
 	/***
@@ -721,23 +721,30 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Returns a String representation of time as a fraction of the largest whole unit.
-	 *
-	 * I.e. 1001ms becomes 1,001s, 25h become 1,041d.
+	 * Returns a String representation of time and performs conversion and rounding.
 	 *
 	 * @param time
 	 *            The amount of time
 	 * @param sourceUnit
-	 *            The unit of the amount.
+	 *            The unit of the amount of time.
+	 * @param targetUnit
+	 *            The unit in which the amount should be converted and which should be displayed.
 	 * @param decimal
-	 *            The decimal accurracy of the ouptut.
+	 *            The decimal accuracy of the output.
 	 * @return A String with unit symbol.
 	 */
 	public static String toTimeString(final double time, final TimeUnit sourceUnit, final TimeUnit targetUnit,
 			final int decimal) {
-		final String formatString = "%." + decimal + "f %s";
+		final String formatString = "%." + decimal + "f%s";
 		return String.format(formatString, convertTimeUnit(time, sourceUnit, targetUnit),
 				getTimeUnitSymbol(targetUnit));
+	}
+
+	/**
+	 * Convert time to string with unit symbol rounded to two decimals.
+	 */
+	public static String toTimeString(final double time, final TimeUnit unit) {
+		return toTimeString(time, unit, unit, 2);
 	}
 
 	/**
