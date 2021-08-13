@@ -131,8 +131,9 @@ public final class TimeMemoryTracker {
 		final StringBuilder sb = new StringBuilder();
 		final long nanoseconds = mElapsedTimeNs;
 
-		sb.append(String.format("%s took %." + decimals + "f %s.", mTitle,
-				CoreUtil.convertTimeUnit(nanoseconds, TimeUnit.NANOSECONDS, timeUnit), CoreUtil.getTimeUnitSymbol(timeUnit)));
+		sb.append(String.format("%s took %." + decimals + "f%s.", mTitle,
+				CoreUtil.convertTimeUnit(nanoseconds, TimeUnit.NANOSECONDS, timeUnit),
+				CoreUtil.getTimeUnitSymbol(timeUnit)));
 
 		if (memoryDelta != 0) {
 			final String heapPrefix = memoryDelta < 0 ? "-" : "";
