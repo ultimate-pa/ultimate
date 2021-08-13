@@ -82,4 +82,8 @@ public final class TimeTracker {
 		}
 		return unit.convert(mLastDeltaNs, TimeUnit.NANOSECONDS);
 	}
+
+	public long elapsedTime(final TimeUnit unit) {
+		return unit.convert(mElapsedTimeNs, TimeUnit.NANOSECONDS);
+	}
 }
