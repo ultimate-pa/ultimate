@@ -27,12 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -41,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -61,20 +58,16 @@ public class DepthFirstTraversal<L, S> {
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, S> mVisitor;
 
-	private final List<S> mStateStack = new ArrayList<>();
 	private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
-
-	// Maps each visited state q to the outermost loop head reached from q, and its state stack index.
-	// If q has no entry, it has not been visited. If q is mapped to null, no loop head has been reached from q.
-	// When backtracking q, this is used to determine if all states reachable from q have been explored, or if this may
-	// not be the case because q is in a loop.
-	private final Map<S, Pair<Integer, S>> mVisited2LoopHeadIndex = new HashMap<>();
+	private final DfsBookkeeping<S> mDfs = new DfsBookkeeping<>();
 
 	private int mIndentLevel = -1;
 
 	/**
 	 * Performs a depth-first traversal. This constructor is called purely for its side-effects.
 	 *
+	 * @param services
+	 *            automata services used for logging and timeout management
 	 * @param operand
 	 *            The automaton to be traversed
 	 * @param order
@@ -82,6 +75,7 @@ public class DepthFirstTraversal<L, S> {
 	 * @param visitor
 	 *            A visitor to traverse the automaton
 	 * @throws AutomataOperationCanceledException
+	 *             in case of timeout or cancellation
 	 */
 	public DepthFirstTraversal(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
@@ -129,21 +123,18 @@ public class DepthFirstTraversal<L, S> {
 			final int stackIndex;
 			if (prune) {
 				debugIndent("-> visitor pruned transition");
-			} else if (!mVisited2LoopHeadIndex.containsKey(nextState)) {
+			} else if (!mDfs.isVisited(nextState)) {
 				final boolean abortNow = visitState(nextState);
 				if (abortNow) {
 					mLogger.debug("visitor aborted search");
 					return;
 				}
-			} else if ((stackIndex = mStateStack.indexOf(nextState)) != -1) {
-				debugIndent("-> state is on stack -- do not explore loop");
-				updateLoopHead(currentState, new Pair<>(stackIndex, nextState));
+			} else if ((stackIndex = mDfs.stackIndexOf(nextState)) != -1) {
+				debugIndent("-> state is on stack -- do not unroll loop");
+				mDfs.updateLoopHead(currentState, new Pair<>(stackIndex, nextState));
 			} else {
 				debugIndent("-> state was visited before -- no re-exploration");
-				final Pair<Integer, S> loopHead = getStackedLoopHead(nextState);
-				if (loopHead != null) {
-					updateLoopHead(currentState, loopHead);
-				}
+				mDfs.backPropagateLoopHead(currentState, nextState);
 			}
 		}
 
@@ -158,7 +149,7 @@ public class DepthFirstTraversal<L, S> {
 	}
 
 	private boolean backtrackUntil(final S state) {
-		while (!peek().equals(state)) {
+		while (!mDfs.peek().equals(state)) {
 			final boolean abort = backtrack();
 			if (abort) {
 				return true;
@@ -168,46 +159,34 @@ public class DepthFirstTraversal<L, S> {
 	}
 
 	private boolean backtrack() {
-		final S oldState = pop();
+		final S oldState = mDfs.peek();
+		final boolean isComplete = mDfs.backtrack();
 
-		// Determine if we are backtracking inside a loop, or if the backtrack is "complete".
-		assert mVisited2LoopHeadIndex.containsKey(oldState) : "stack node must have been visited";
-		final Pair<Integer, S> loopHead = mVisited2LoopHeadIndex.get(oldState);
-		final boolean isComplete = loopHead == null || loopHead.getSecond() == oldState;
 		debugIndent("backtracking state %s (complete: %s)", oldState, isComplete);
-
-		// If there is a predecessor, and it is (still) inside a loop, propagate the loop head information.
-		if (!mStateStack.isEmpty() && loopHead != null && loopHead.getFirst() < mStateStack.size()) {
-			final S predecessor = peek();
-			updateLoopHead(predecessor, loopHead);
-		}
+		mIndentLevel--;
 
 		mVisitor.backtrackState(oldState, isComplete);
-		mIndentLevel--;
 		return mVisitor.isFinished();
-
 	}
 
 	private boolean visitState(final S state) {
-		assert !mVisited2LoopHeadIndex.containsKey(state) : "must never re-visit state";
+		assert !mDfs.isVisited(state) : "must never re-visit state";
 		mIndentLevel++;
 		debugIndent("visiting state %s", state);
 
 		final boolean pruneSuccessors;
 		if (mOperand.isInitial(state)) {
 			debugIndent("-> state is initial");
-			assert mVisited2LoopHeadIndex.isEmpty() : "initial state should be first visited state";
+			assert !mDfs.hasStarted() : "initial state should be first visited state";
 			pruneSuccessors = mVisitor.addStartState(state);
 		} else {
+			assert mDfs.hasStarted() : "first visited state should be initial state";
 			pruneSuccessors = mVisitor.discoverState(state);
 		}
 		if (mVisitor.isFinished()) {
 			return true;
 		}
-		mVisited2LoopHeadIndex.put(state, null);
-
-		assert !mStateStack.contains(state) : "must not infinitely unroll loop";
-		mStateStack.add(state);
+		mDfs.push(state);
 
 		if (pruneSuccessors) {
 			debugIndent("-> visitor pruned all outgoing edges");
@@ -221,56 +200,7 @@ public class DepthFirstTraversal<L, S> {
 		return false;
 	}
 
-	private Pair<Integer, S> getStackedLoopHead(final S state) {
-		int currentIndex = Integer.MAX_VALUE;
-		S currentNode = state;
-
-		while (true) {
-			assert currentIndex >= 0 : "negative loop head index";
-			assert mVisited2LoopHeadIndex.containsKey(currentNode) : "encountered unvisited state in loop head chain";
-
-			final Pair<Integer, S> loopHead = mVisited2LoopHeadIndex.get(currentNode);
-			if (loopHead == null || validLoopHead(loopHead)) {
-				return loopHead;
-			}
-
-			final S loopHeadNode = loopHead.getSecond();
-			if (loopHeadNode == currentNode) {
-				return null;
-			}
-
-			assert loopHead.getFirst() < currentIndex : "loop head index must decrease";
-			currentIndex = loopHead.getFirst();
-			currentNode = loopHeadNode;
-		}
-	}
-
-	private void updateLoopHead(final S state, final Pair<Integer, S> newLoopHead) {
-		assert mStateStack.contains(state) : "loop head can only be updated for stack nodes";
-		assert mVisited2LoopHeadIndex.containsKey(state) : "loop head can only be updated for visited nodes";
-		assert validLoopHead(newLoopHead) : "new loop head is invalid";
-
-		final Pair<Integer, S> oldLoopHead = mVisited2LoopHeadIndex.get(state);
-		assert oldLoopHead == null || validLoopHead(oldLoopHead) : "old loop head has become invalid";
-
-		if (oldLoopHead == null || newLoopHead.getFirst() < oldLoopHead.getFirst()) {
-			mVisited2LoopHeadIndex.put(state, newLoopHead);
-		}
-	}
-
-	private boolean validLoopHead(final Pair<Integer, S> loopHead) {
-		return loopHead.getFirst() < mStateStack.size() && mStateStack.get(loopHead.getFirst()) == loopHead.getSecond();
-	}
-
 	private void debugIndent(final String msg, final Object... params) {
 		mLogger.debug("  ".repeat(mIndentLevel) + msg, params);
-	}
-
-	private S peek() {
-		return mStateStack.get(mStateStack.size() - 1);
-	}
-
-	private S pop() {
-		return mStateStack.remove(mStateStack.size() - 1);
 	}
 }

@@ -434,7 +434,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 			if (elem == null) {
 				return LBool.UNKNOWN;
 			}
-			return elem ? LBool.UNSAT : LBool.SAT;
+			return elem ? LBool.SAT : LBool.UNSAT;
 		}
 
 		private void set(final X x, final Y y, final boolean elem) {

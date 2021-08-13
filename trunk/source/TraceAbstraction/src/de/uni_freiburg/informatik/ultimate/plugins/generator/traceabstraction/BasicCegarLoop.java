@@ -435,7 +435,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			if (!hopelessCache.containsKey(l)) {
 				return LBool.UNKNOWN;
 			}
-			return hopelessCache.get(l) ? LBool.UNSAT : LBool.SAT;
+			return hopelessCache.get(l) ? LBool.SAT : LBool.UNSAT;
 		}, (l, res) -> {
 			assert hopelessCache.getOrDefault(l, res) == res : "contradictory reachability";
 			assert res != null;
