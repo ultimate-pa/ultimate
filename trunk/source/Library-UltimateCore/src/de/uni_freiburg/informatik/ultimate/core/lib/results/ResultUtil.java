@@ -229,6 +229,11 @@ public final class ResultUtil {
 
 	/**
 	 * Combines results for multiple petrification-created copies of a location, for a fixed number of thread instances.
+	 * <ul>
+	 * <li>Only if both results are positive, a positive result is returned.</li>
+	 * <li>If at least one of the results is negative (a counterexample), then a negative result is returned.</li>
+	 * <li>Otherwise, the old result is returned.</li>
+	 * </ul>
 	 *
 	 * @param oldResult
 	 *            The first computed result
@@ -242,7 +247,8 @@ public final class ResultUtil {
 		}
 		if (oldResult instanceof TimeoutResultAtElement<?>
 				|| oldResult instanceof UserSpecifiedLimitReachedResultAtElement<?>
-				|| oldResult instanceof CounterExampleResult<?, ?, ?>) {
+				|| oldResult instanceof CounterExampleResult<?, ?, ?>
+				|| oldResult instanceof UnprovableResult<?, ?, ?>) {
 			return oldResult;
 		}
 		assert oldResult instanceof PositiveResult<?> : "Unsupported location-specific result: " + oldResult;
