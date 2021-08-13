@@ -308,11 +308,6 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		}
 
 		@Override
-		public Class<?> getDataType() {
-			return mClazz;
-		}
-
-		@Override
 		public Object aggregate(final Object o1, final Object o2) {
 			return mAggr.apply(o1).apply(o2);
 		}

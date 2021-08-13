@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysi
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
@@ -39,7 +40,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		implements IStatisticsDataProvider {
 
 	private final StatisticsData mReuseStats = new StatisticsData();
-	private final StatisticsData mEcData = new StatisticsData();
+	private final StatisticsAggregator mEcData = new StatisticsAggregator();
 	private final StatisticsData mPredicateUnifierData = new StatisticsData();
 	private final StatisticsData mTcData = new StatisticsData();
 	private final StatisticsData mTiData = new StatisticsData();

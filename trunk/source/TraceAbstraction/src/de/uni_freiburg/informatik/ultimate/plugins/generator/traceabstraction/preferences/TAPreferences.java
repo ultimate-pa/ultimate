@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.McrInterpolantMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.ExcludeFromToString;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 
 public final class TAPreferences {
 	private static final boolean SEPARATE_VIOLATION_CHECK = true;
@@ -71,7 +71,7 @@ public final class TAPreferences {
 	private final boolean mHoare;
 	private final Concurrency mAutomataTypeConcurrency;
 	private final HoareTripleChecks mHoareTripleChecks;
-	@ExcludeFromToString
+	@Reflected(excluded = true)
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
 	private final boolean mDumpOnlyReuseAutomata;

@@ -677,7 +677,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		if (NON_EA_INDUCTIVITY_CHECK) {
 			final boolean inductive = new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit, false, mLogger)).getResult();
+					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 
 			if (!inductive) {
 				throw new AssertionError("not inductive");
@@ -693,7 +693,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		// callers try to lock it. With assertions enabled, the line below causes the ManagedScript to be unlocked and
 		// no exceptions occur.
 		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(super.mCsToolkit, false, mLogger)).getResult();
+				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 	}
 
 	private static boolean
@@ -930,9 +930,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		} finally {
 			mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
-			mLogger.info(htc.getEdgeCheckerBenchmark());
+			mLogger.info(htc.getStatistics());
 			mLogger.info(htc);
-			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+			mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		}
@@ -1022,7 +1022,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
 		assert new InductivityCheck<>(getServices(),
 				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult(),
-				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit, false, mLogger)).getResult();
+				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(

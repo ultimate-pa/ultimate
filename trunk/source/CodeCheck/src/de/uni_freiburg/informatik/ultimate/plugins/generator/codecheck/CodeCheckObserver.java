@@ -469,7 +469,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						interpolants = traceCheck.getInterpolants();
 					}
 					codechecker.codeCheck(errorRun, interpolants, procedureRoot);
-					benchmarkGenerator.addEdgeCheckerData(codechecker.mEdgeChecker.getEdgeCheckerBenchmark());
+					benchmarkGenerator.addEdgeCheckerData(codechecker.mEdgeChecker.getStatistics());
 
 				} else if (isSafe == LBool.SAT) { // trace is feasible
 					mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");

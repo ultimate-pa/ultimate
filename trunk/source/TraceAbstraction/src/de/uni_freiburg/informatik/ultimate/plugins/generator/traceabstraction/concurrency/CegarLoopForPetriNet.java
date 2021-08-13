@@ -319,7 +319,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			}
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(dia.size());
 		} finally {
-			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+			mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
 			mCegarLoopBenchmark
 					.addPredicateUnifierData(mRefinementResult.getPredicateUnifier().getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -554,7 +554,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 		if (mComputeHoareAnnotation) {
 			assert new InductivityCheck<>(getServices(), dia, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit, false, mLogger)).getResult() : "Not inductive";
+					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult() : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;

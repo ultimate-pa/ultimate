@@ -83,7 +83,7 @@ public class FaultLocalizationRelevanceChecker {
 			extends IncrementalHoareTripleChecker {
 		
 		public FaultLocalizationHoareTripleChecker(final CfgSmtToolkit csToolkit) {
-			super(csToolkit, false, mLogger);
+			super(csToolkit, false);
 		}
 		
 		@Override
@@ -319,7 +319,7 @@ public class FaultLocalizationRelevanceChecker {
 	}
 	
 	public HoareTripleCheckerStatisticsGenerator getHoareTripleCheckerStatistics() {
-		return mHoareTripleChecker.getEdgeCheckerBenchmark();
+		return mHoareTripleChecker.getStatistics();
 	}
 	
 	public IInternalAction constructHavocedInternalAction(final IUltimateServiceProvider services,

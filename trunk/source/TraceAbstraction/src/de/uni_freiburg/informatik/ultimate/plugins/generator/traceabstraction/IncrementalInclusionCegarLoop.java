@@ -254,7 +254,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), determinized).getResult();
 				assert new InductivityCheck<>(getServices(), test, false, true,
-						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false, mLogger)).getResult();
+						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false)).getResult();
 				progress = true;
 				break;
 			}
@@ -276,7 +276,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), nondet).getResult();
 				assert new InductivityCheck<>(getServices(), test, false, true,
-						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false, mLogger)).getResult();
+						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false)).getResult();
 				progress = true;
 				break;
 			}
@@ -327,7 +327,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	public void finish() {
 		assert mHoareTripleChecker.size() == mInterpolantAutomata.size();
 		for (final IHoareTripleChecker htc : mHoareTripleChecker) {
-			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+			mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
 		}
 
 	}

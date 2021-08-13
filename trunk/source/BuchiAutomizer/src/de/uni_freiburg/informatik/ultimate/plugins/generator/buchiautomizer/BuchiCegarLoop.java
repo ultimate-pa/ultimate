@@ -971,7 +971,7 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 		}
 		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars, false, mLogger)).getResult();
+				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars, false)).getResult();
 		// If no machine.conf file is in UltimateTest directory, then this flag is false
 		// by default, NO machine.conf
 		final boolean pldiDump = BenchmarkRecord.canDump();
@@ -1002,7 +1002,7 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 		// e1.printStackTrace();
 		// }
 		assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
-		mBenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+		mBenchmarkGenerator.addEdgeCheckerData(htc.getStatistics());
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 	}
 

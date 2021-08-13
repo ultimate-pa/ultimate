@@ -120,7 +120,7 @@ public class InclusionInPreChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getStatistics() {
 		// TODO 2017-05-17 Christian: What to do here?
 		return null;
 	}

@@ -58,7 +58,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 	private List<IPredicate> mAssertedPrecond;
 
 	public HoareTripleCheckerWithPreconditionRelevanceAnalysis(final CfgSmtToolkit csToolkit, final ILogger logger) {
-		super(csToolkit, false, logger);
+		super(csToolkit, false);
 	}
 
 	private LBool assertPrecondition(final List<IPredicate> pres) {

@@ -499,7 +499,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit, false, mLogger)).getResult();
+				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
