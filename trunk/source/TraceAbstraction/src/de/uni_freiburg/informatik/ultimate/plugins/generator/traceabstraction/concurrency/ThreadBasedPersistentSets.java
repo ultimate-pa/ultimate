@@ -289,8 +289,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 						propagateConflict(entry.getKey(), entry.getValue(), conflictRelation, locs);
 				newConflicts.addAllPairs(entry.getKey(), propagatedConflicts);
 			}
-			conflictRelation.addAll(newConflicts);
-			changes = !newConflicts.isEmpty();
+			changes = conflictRelation.addAll(newConflicts);
 		} while (changes);
 	}
 
