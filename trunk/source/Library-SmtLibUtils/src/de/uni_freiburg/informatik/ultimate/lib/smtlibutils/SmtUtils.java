@@ -2521,13 +2521,13 @@ public final class SmtUtils {
 	}
 
 	public static Set<FunctionSymbol> extractNonTheoryFunctionSymbols(final Term term) {
-		final Set<Term> appTerms = new SubTermFinder(x -> (x instanceof ApplicationTerm)).findMatchingSubterms(term);
+		final Set<Term> appTerms = SubTermFinder.find(term, x -> (x instanceof ApplicationTerm), false);
 		return appTerms.stream().map(x -> ((ApplicationTerm) x).getFunction()).filter(x -> !x.isIntern())
 				.collect(Collectors.toSet());
 	}
 
 	public static Set<Term> extractApplicationTerms(final String fun, final Term term) {
-		return new SubTermFinder(x -> isFunctionApplication(x, fun)).findMatchingSubterms(term);
+		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), false);
 	}
 
 	public static Term unzipNot(final Term term) {
