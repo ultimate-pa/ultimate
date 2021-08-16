@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -67,7 +67,7 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 	 */
 	public CegarLoopForPetriNetWithRepeatedLiptonReduction(final DebugIdentifier name, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
+			final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, services, compositionFactory,
 				transitionClazz);

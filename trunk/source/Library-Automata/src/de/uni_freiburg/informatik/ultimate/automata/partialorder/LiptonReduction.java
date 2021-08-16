@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -428,7 +429,7 @@ public class LiptonReduction<L, P> {
 				post.remove(entry.getKey());
 				post.add(deadPlace);
 				final ITransition<L, P> newTransition =
-						petriNet.addTransition(t.getSymbol(), petriNet.getPredecessors(t), post);
+						petriNet.addTransition(t.getSymbol(), petriNet.getPredecessors(t), ImmutableSet.of(post));
 				mNewToOldTransitions.put(newTransition, getOriginalTransition(t));
 				mCoEnabledRelation.copyRelationships(t, newTransition);
 			}
@@ -634,7 +635,8 @@ public class LiptonReduction<L, P> {
 			post.removeAll(petriNet.getPredecessors(triplet.getThird()));
 			post.addAll(petriNet.getSuccessors(triplet.getThird()));
 
-			letters2Transitions.put(triplet.getFirst(), petriNet.addTransition(triplet.getFirst(), pre, post));
+			letters2Transitions.put(triplet.getFirst(),
+					petriNet.addTransition(triplet.getFirst(), ImmutableSet.of(pre), ImmutableSet.of(post)));
 		}
 
 		final Set<ITransition<L, P>> transitionsToKeep = new HashSet<>(petriNet.getTransitions());
