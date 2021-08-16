@@ -87,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
@@ -633,13 +634,18 @@ public class PathProgramDumper {
 		final Expression guardExpression = mTerm2Expression.translate(guardTerm);
 		final AssumeStatement assume = new AssumeStatement(constructNewLocation(), guardExpression);
 
-		final SimultaneousUpdate su = new SimultaneousUpdate(action.getTransformula(), mgdScript);
+		final SimultaneousUpdate su;
+		try {
+			su = SimultaneousUpdate.fromTransFormula(action.getTransformula(), mgdScript);
+		} catch (final SimultaneousUpdateException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
 		final AssignmentStatement assignment;
 		{
-			final LeftHandSide[] lhs = new LeftHandSide[su.getUpdatedVars().size()];
-			final Expression[] rhs = new Expression[su.getUpdatedVars().size()];
+			final LeftHandSide[] lhs = new LeftHandSide[su.getDeterministicAssignment().size()];
+			final Expression[] rhs = new Expression[su.getDeterministicAssignment().size()];
 			int offset = 0;
-			for (final Entry<IProgramVar, Term> entry : su.getUpdatedVars().entrySet()) {
+			for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
 				lhs[offset] = new VariableLHS(constructNewLocation(),
 						((IdentifierExpression) mTerm2Expression.translate(entry.getKey().getTermVariable()))
 						.getIdentifier());
@@ -662,7 +668,7 @@ public class PathProgramDumper {
 		if (!SmtUtils.isTrueLiteral(guardTerm)) {
 			statements.add(assume);
 		}
-		if (!su.getUpdatedVars().isEmpty()) {
+		if (!su.getDeterministicAssignment().isEmpty()) {
 			statements.add(assignment);
 		}
 		if (!su.getHavocedVars().isEmpty()) {

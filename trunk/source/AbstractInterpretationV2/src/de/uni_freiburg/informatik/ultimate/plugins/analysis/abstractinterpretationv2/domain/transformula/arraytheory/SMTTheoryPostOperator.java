@@ -110,9 +110,7 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 
 	private List<Term> postProcessStrongestPost(final Term term) {
 
-		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
-				mCsToolkit.getManagedScript(), term, SimplificationTechnique.SIMPLIFY_QUICK,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term eliminated = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_QUICK, term);
 
 		// final Term conjunction = dropQuantifiedConjuncts(resTerm);
 

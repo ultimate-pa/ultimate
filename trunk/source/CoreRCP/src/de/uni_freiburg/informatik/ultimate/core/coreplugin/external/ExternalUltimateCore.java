@@ -79,16 +79,16 @@ public class ExternalUltimateCore {
 		mReachedInit = false;
 	}
 
-	public IStatus runUltimate() throws Throwable {
+	public IStatus runUltimate(final String threadName) throws Throwable {
 		if (mCurrentUltimateInstance != null) {
-			throw new Exception("You must call complete() before re-using this instance ");
+			throw new IllegalStateException("You must call complete() before re-using this instance: " + threadName);
 		}
 		mCurrentUltimateInstance = new UltimateCore();
 		mUltimateThrowable = null;
 
 		final ActualUltimateRunnable runnable = new ActualUltimateRunnable();
 
-		final Thread thread = new Thread(runnable, "ActualUltimateInstance");
+		final Thread thread = new Thread(runnable, threadName);
 
 		thread.start();
 		mStarterContinue.acquireUninterruptibly();

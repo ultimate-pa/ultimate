@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
@@ -177,9 +178,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	// private final BuchiModGlobalVarManager mBuchiModGlobalVarManager;
 
-	private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> mStemCheck;
-	private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> mLoopCheck;
-	private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> mConcatCheck;
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mStemCheck;
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mLoopCheck;
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mConcatCheck;
 
 	private NestedRun<L, IPredicate> mConcatenatedCounterexample;
 
@@ -255,23 +256,19 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (mLassoCheckResult.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
 					|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
+		} else if (mLassoCheckResult.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
+			assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE;
+		} else // loop not infeasible
+		if (mLassoCheckResult.getLoopTermination() == SynthesisResult.TERMINATING) {
+			assert mBspm.providesPredicates();
 		} else {
-			if (mLassoCheckResult.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-				assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE;
+			assert mConcatCheck != null;
+			if (mLassoCheckResult.getConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
+				assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
+						|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
+				assert mConcatenatedCounterexample != null;
 			} else {
-				// loop not infeasible
-				if (mLassoCheckResult.getLoopTermination() == SynthesisResult.TERMINATING) {
-					assert mBspm.providesPredicates();
-				} else {
-					assert mConcatCheck != null;
-					if (mLassoCheckResult.getConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
-						assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
-								|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
-						assert mConcatenatedCounterexample != null;
-					} else {
-						assert mLassoCheckResult.getContinueDirective() != ContinueDirective.REFINE_FINITE;
-					}
-				}
+				assert mLassoCheckResult.getContinueDirective() != ContinueDirective.REFINE_FINITE;
 			}
 		}
 	}
@@ -280,15 +277,15 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return mLassoCheckResult;
 	}
 
-	public IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> getStemCheck() {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getStemCheck() {
 		return mStemCheck;
 	}
 
-	public IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> getLoopCheck() {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getLoopCheck() {
 		return mLoopCheck;
 	}
 
-	public IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> getConcatCheck() {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getConcatCheck() {
 		return mConcatCheck;
 	}
 
@@ -662,11 +659,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
-		} else if (nonTermArgument != null) {
-			return SynthesisResult.NONTERMINATING;
-		} else {
-			return SynthesisResult.UNKNOWN;
 		}
+		if (nonTermArgument != null) {
+			return SynthesisResult.NONTERMINATING;
+		}
+		return SynthesisResult.UNKNOWN;
 	}
 
 	/**
@@ -866,12 +863,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			if (mLassoTermination == SynthesisResult.TERMINATING) {
 				mContinueDirective = ContinueDirective.REFINE_BUCHI;
 				return;
-			} else if (mLassoTermination == SynthesisResult.NONTERMINATING) {
+			}
+			if (mLassoTermination == SynthesisResult.NONTERMINATING) {
 				mContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
-				return;
 			} else {
 				mContinueDirective = ContinueDirective.REPORT_UNKNOWN;
-				return;
 			}
 		}
 
@@ -917,17 +913,17 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			}
 		}
 
-		private IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
+		private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<L, IPredicate> run, final TaskIdentifier taskIdentifier) {
 			try {
-				final IRefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(run, mAbstraction,
-						taskIdentifier, mStateFactoryForInterpolantAutomaton,
+				final IRefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, run,
+						mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
 						IPreconditionProvider.constructDefaultPreconditionProvider(),
 						IPostconditionProvider.constructDefaultPostconditionProvider());
 				final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =
-						new TraceAbstractionRefinementEngine<>(mLogger, strategy);
+						new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
 				mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());
-				return engine;
+				return engine.getResult();
 			} catch (final ToolchainCanceledException tce) {
 				final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
 				final String taskDescription =

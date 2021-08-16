@@ -525,11 +525,13 @@ def set_unknowns(
         if r.classification is None:
             basename = ntpath.basename(file)
             run = runs.get(basename,None)
-            if run and run.is_timeout():
+            if not run:
+                raise UnsupportedLogFile(f"There is no run for {file}")
+            if run.is_timeout():
                 real_results += [
                     Result(file, (str_benchexec_timeout, "..."), r.call, r.version)
                 ]
-            elif run and run.is_oom():
+            elif run.is_oom():
                 real_results += [
                     Result(file, (str_benchexec_oom, "..."), r.call, r.version)
                 ]
@@ -630,7 +632,7 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
         result = root.find(".")
         name_attr = result.attrib.get("name", None)
         if not name_attr:
-            print(f"Run in xm file {xml} has no name! Cannot detect toolname, ignoring .xml")
+            print(f"Run in xml file {xml} has no name! Cannot detect toolname, ignoring .xml")
             continue
         name = name_attr.split(".")
         tool_name = name[0]

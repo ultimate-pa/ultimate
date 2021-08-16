@@ -9,5 +9,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.smtinterpol
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
+ org.apache.commons.io
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.smtsolver.external

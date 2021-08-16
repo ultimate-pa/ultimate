@@ -388,6 +388,10 @@ public class AtomicTraceElement<TE> {
 			return this;
 		}
 
+		public Integer getForkedThreadId() {
+			return mForkedThreadId;
+		}
+
 		public AtomicTraceElementBuilder<TE> setForkedThreadId(final int threadId) {
 			mForkedThreadId = threadId;
 			return this;

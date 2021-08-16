@@ -1,6 +1,6 @@
 # Ultimate
 [![Build Status Jenkins](https://monteverdi.informatik.uni-freiburg.de/ci/buildStatus/icon?job=Ultimate%20(GitHub))](https://monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate%20(GitHub)/)
-[![Build Status](https://travis-ci.org/ultimate-pa/ultimate.svg)](https://travis-ci.org/ultimate-pa/ultimate)
+[![Build Status](https://travis-ci.com/ultimate-pa/ultimate.svg?branch=dev)](https://travis-ci.com/ultimate-pa/ultimate)
 [![LGPL License](https://img.shields.io/badge/license-LGPLv3+LE-brightgreen.svg)](https://github.com/ultimate-pa/ultimate/wiki/License)
 [![Jenkins tests](https://img.shields.io/jenkins/tests?jobUrl=https%3A%2F%2Fmonteverdi.informatik.uni-freiburg.de%2Fci%2Fjob%2FUltimate%2520Nightly%2F)](https://monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate%20Nightly/lastBuild/testReport/)
 [![SonarQube Coverage](https://monteverdi.informatik.uni-freiburg.de/sonar/api/project_badges/measure?project=de.uni_freiburg.informatik.ultimate:mavenparent&metric=coverage)](https://monteverdi.informatik.uni-freiburg.de/sonar/component_measures/domain/Coverage?id=de.uni_freiburg.informatik.ultimate%3Amavenparent)

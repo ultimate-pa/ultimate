@@ -43,12 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class CnfTransformer extends XnfTransformer {
 
 	public CnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
-		this(script, services, false);
-	}
-
-	public CnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
-			final boolean omitSoundnessCheck) {
-		super(script, services, omitSoundnessCheck);
+		super(script, services);
 	}
 
 	@Override

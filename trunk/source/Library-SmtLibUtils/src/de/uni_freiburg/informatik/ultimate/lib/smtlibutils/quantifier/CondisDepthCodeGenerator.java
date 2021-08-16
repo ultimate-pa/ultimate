@@ -29,20 +29,47 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO 2020025 Matthias: Revise and add documentation.
- * Because of the SMT-COMP deadline, I committed this without documentation or code review.
+ * TODO 2020025 Matthias: Revise and add documentation. Because of the SMT-COMP
+ * deadline, I committed this without documentation or code review.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCode> {
 
-	public enum Adk { ATOM, DISJUNCTION, CONJUNCTION }
+	public enum Adk {
+		ATOM, DISJUNCTION, CONJUNCTION;
+
+		public String getSymbol() {
+			final String result;
+			switch (this) {
+			case ATOM:
+				result = this.toString();
+				break;
+			case CONJUNCTION:
+				result = "∧";
+				break;
+			case DISJUNCTION:
+				result = "∨";
+				break;
+			default:
+				throw new AssertionError("unknown value " + this);
+			}
+			return result;
+		}
+	}
+
+	/**
+	 * Do not instantiate. Use method {@link CondisDepthCode::of} instead.
+	 */
+	private CondisDepthCodeGenerator() {
+	}
 
 	@Override
 	protected CondisDepthCode transduceAtom(final Term term) {
@@ -56,7 +83,7 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 			if (input.getAdk() == Adk.ATOM || input.getAdk() == Adk.DISJUNCTION) {
 				tmp = computeMaximum(tmp, input.getDualJuncts());
 			} else {
-				throw new AssertionError("expected conjuntion-disjunction alternation");
+				throw new AssertionError("expected conjunction-disjunction alternation");
 			}
 		}
 		final List<Integer> result = new ArrayList<>();
@@ -72,7 +99,7 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 			if (input.getAdk() == Adk.ATOM || input.getAdk() == Adk.CONJUNCTION) {
 				tmp = computeMaximum(tmp, input.getDualJuncts());
 			} else {
-				throw new AssertionError("expected conjuntion-disjunction alternation");
+				throw new AssertionError("expected conjunction-disjunction alternation");
 			}
 		}
 		final List<Integer> result = new ArrayList<>();
@@ -91,34 +118,37 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 			larger = list2;
 			smaller = list1;
 		}
-		for (int i=0; i<smaller.size(); i++) {
+		for (int i = 0; i < smaller.size(); i++) {
 			larger.set(i, Integer.max(larger.get(i), smaller.get(i)));
 		}
 		return larger;
 	}
 
-
 	public static class CondisDepthCode {
 		private final Adk mAdk;
 		private final List<Integer> mDualJuncts;
+
 		public CondisDepthCode(final Adk adk, final List<Integer> dualJuncts) {
 			super();
 			mAdk = adk;
 			mDualJuncts = dualJuncts;
 		}
+
 		public Adk getAdk() {
 			return mAdk;
 		}
+
 		public List<Integer> getDualJuncts() {
 			return mDualJuncts;
 		}
+
 		@Override
 		public String toString() {
-			return mAdk.toString() + mDualJuncts.toString();
+			return mAdk.getSymbol() + "-" + mDualJuncts.stream().map(Object::toString).collect(Collectors.joining("-"));
 		}
 
-
-
-
+		public static CondisDepthCode of(final Term term) {
+			return new CondisDepthCodeGenerator().transduce(term);
+		}
 	}
 }

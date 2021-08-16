@@ -59,14 +59,19 @@ public final class IcfgEdgeFactory {
 	}
 
 	/**
-	 * @deprecated Use overload that allows passing transformula with branch indicators.
+	 * Creates {@link IcfgInternalTransition} without separate branch indicators.
+	 *
+	 * @see #createInternalTransition(IcfgLocation, IcfgLocation, IPayload, UnmodifiableTransFormula,
+	 *      UnmodifiableTransFormula)
 	 */
-	@Deprecated(since = "2020-10-25")
 	public IcfgInternalTransition createInternalTransition(final IcfgLocation source, final IcfgLocation target,
 			final IPayload payload, final UnmodifiableTransFormula transFormula) {
 		return createInternalTransition(source, target, payload, transFormula, transFormula);
 	}
 
+	/**
+	 * Creates {@link IcfgInternalTransition} with separate branch indicators.
+	 */
 	public IcfgInternalTransition createInternalTransition(final IcfgLocation source, final IcfgLocation target,
 			final IPayload payload, final UnmodifiableTransFormula transFormula,
 			final UnmodifiableTransFormula transFormulaWithBranchIndicators) {

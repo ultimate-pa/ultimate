@@ -147,7 +147,7 @@ public class SubstitutionHelper {
 								mClausifier.createMutableAffinTerm(lhs, mSource);
 						newAtom = mQuantTheory.getLinAr().generateConstraint(msum, false);
 					} else {
-						newAtom = mQuantTheory.getQuantInequality(isPos, atomApp.getParameters()[0]);
+						newAtom = mQuantTheory.getQuantInequality(isPos, atomApp.getParameters()[0], mSource);
 					}
 				} else if (atomApp.getFunction().getName() == "=") {
 					final Term lhs = atomApp.getParameters()[0];
@@ -157,7 +157,8 @@ public class SubstitutionHelper {
 						assert eq != EqualityProxy.getTrueProxy() && eq != EqualityProxy.getFalseProxy();
 						newAtom = eq.getLiteral(mSource);
 					} else {
-						newAtom = mQuantTheory.getQuantEquality(atomApp.getParameters()[0], atomApp.getParameters()[1]);
+						newAtom = mQuantTheory.getQuantEquality(atomApp.getParameters()[0], atomApp.getParameters()[1],
+								mSource);
 					}
 				} else { // Predicates
 					assert atomApp.getFreeVars().length == 0; // Quantified predicates are stored as equalities.

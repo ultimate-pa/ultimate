@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -50,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimp
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -65,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
-
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -79,9 +81,11 @@ public class QuantifierEliminationTest {
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final boolean CHECK_SIMPLIFICATION_POSSIBILITY = false;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 1_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
-	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
+	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
+	private static final String SOLVER_COMMAND =
+			String.format("z3 SMTLIB2_COMPLIANT=true -t:%s -memory:2024 -smt2 -in", TEST_TIMEOUT_MILLISECONDS);
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -152,7 +156,8 @@ public class QuantifierEliminationTest {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));
+		final Script solverInstance =
+				new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
@@ -184,8 +189,6 @@ public class QuantifierEliminationTest {
 		final LBool checkSatRes = mScript.checkSat();
 		Assert.assertTrue(checkSatRes == LBool.SAT);
 	}
-
-
 
 	/**
 	 * Quantifier elimination use case that comes from using constant arrays to initialize array variables in the C to
@@ -247,8 +250,6 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
 
-
-
 	static void runQuantifierEliminationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
@@ -264,18 +265,21 @@ public class QuantifierEliminationTest {
 	 * @deprecated use instead method with argument "FunDecl[] funDecls"
 	 */
 	@Deprecated
-	private static void runQuantifierEliminationTest(final String eliminationInputAsString, final String expectedResultAsString,
-			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
+	private static void runQuantifierEliminationTest(final String eliminationInputAsString,
+			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
+			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
+			final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+		Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+		letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
+		letFree = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(letFree);
 		csvWriter.reportEliminationBegin(letFree);
-		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, letFree,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,
+				SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
 		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
-					SimplificationTechnique.SIMPLIFY_DDA);
+			final ExtendedSimplificationResult esr =
+					SmtUtils.simplifyWithStatistics(mgdScript, result, services, SimplificationTechnique.SIMPLIFY_DDA);
 			logger.info("Simplified result: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
 			if (esr.getReductionOfTreeSize() > 0) {
@@ -291,7 +295,6 @@ public class QuantifierEliminationTest {
 		}
 		csvWriter.reportEliminationSuccess(result);
 	}
-
 
 	private static void checkLogicalEquivalence(final Script script, final Term result,
 			final String expectedResultAsString) {
@@ -314,7 +317,6 @@ public class QuantifierEliminationTest {
 			throw new AssertionError("unknown value " + lbool);
 		}
 		Assert.assertTrue(errorMessage, lbool == LBool.UNSAT);
-
 	}
 
 	@Test
@@ -344,6 +346,5 @@ public class QuantifierEliminationTest {
 		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantFormula,
 				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
-
 
 }

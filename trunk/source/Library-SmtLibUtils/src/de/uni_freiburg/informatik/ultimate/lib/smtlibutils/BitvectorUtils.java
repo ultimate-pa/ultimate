@@ -84,13 +84,17 @@ public final class BitvectorUtils {
 						assert (symb.getName().startsWith("bv"));
 						final String valueString = symb.getName().substring(2);
 						final BigInteger value = new BigInteger(valueString);
-						final String index = term.getSort().getIndices()[0];
-						return new BitvectorConstant(value, index);
+						return constructBitvectorConstant(value, term.getSort());
 					}
 				}
 			}
 		}
 		return null;
+	}
+
+	public static BitvectorConstant constructBitvectorConstant(final BigInteger value, final Sort sort) {
+		final String index = sort.getIndices()[0];
+		return new BitvectorConstant(value, index);
 	}
 
 	/**

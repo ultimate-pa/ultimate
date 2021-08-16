@@ -73,7 +73,6 @@ public class MatchTerm extends Term {
 
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
-		final DataType dataType = (DataType) mDataTerm.getSort().getRealSort().getSortSymbol();
 		// Add subterm to stack.
 		mTodo.addLast("))");
 		for (int i = mCases.length - 1; i >= 0; i--) {

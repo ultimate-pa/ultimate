@@ -161,16 +161,6 @@ public class CClosure implements ITheory {
 	 * merged in checkpoint.
 	 */
 	final ArrayDeque<SymmetricPair<CCAppTerm>> mPendingCongruences = new ArrayDeque<>();
-	
-	/**
-	 * This determines if a new term age for CCAppTerms should begin. This should be set to true only if new terms
-	 * were built.
-	 */
-	boolean mBeginNextTermAgeInFinalCheck;
-	/**
-	 * The current generation of (complete) CCAppTerms.
-	 */
-	int mAppTermAge;
 
 	private long mInvertEdgeTime, mEqTime, mCcTime, mSetRepTime;
 	private long mCcCount, mMergeCount;
@@ -185,10 +175,6 @@ public class CClosure implements ITheory {
 
 	public LogProxy getLogger() {
 		return mClausifier.getLogger();
-	}
-
-	public int getTermAge() {
-		return mAppTermAge;
 	}
 
 	public boolean isProofGenerationEnabled() {
@@ -315,9 +301,8 @@ public class CClosure implements ITheory {
 		final CCAppTerm term = new CCAppTerm(isFunc, isFunc ? func.mParentPosition + 1 : 0, func, arg, this,
 				source.isFromQuantTheory());
 		if (!isFunc) {
-			mBeginNextTermAgeInFinalCheck = true;
-			if (mAppTermAge > 0) {
-				getLogger().debug("Create new AppTerm %s of age %d", term, mAppTermAge);
+			if (term.getAge() > 0) {
+				getLogger().debug("Create new AppTerm %s of age %d", term, term.getAge());
 			}
 		}
 		mAllTerms.add(term);
@@ -824,10 +809,6 @@ public class CClosure implements ITheory {
 
 	@Override
 	public Clause computeConflictClause() {
-		if (mBeginNextTermAgeInFinalCheck) {
-			mAppTermAge++;
-			mBeginNextTermAgeInFinalCheck = false;
-		}
 		Clause res = checkpoint();
 		if (res == null) {
 			res = checkpoint();

@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.er
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.ErrorLocalizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
@@ -80,42 +81,42 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  * Constructs an error automaton for a given error trace.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER>
+ * @param <L>
  *            letter type in the trace
  */
-public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implements IErrorAutomatonBuilder<LETTER> {
-	private static final ErrorAutomatonType TYPE = ErrorAutomatonType.DANGER_AUTOMATON;
+public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements IErrorAutomatonBuilder<L> {
+
+	private static final boolean LOG_EXTENDED_SIZE_INFO = false;
 
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 
-	private final ErrorTraceContainer<LETTER> mErrorTraces;
-	private final List<Collection<LETTER>> mRelevantStatements;
+	private final ErrorTraceContainer<L> mErrorTraces;
+	private final List<Collection<L>> mRelevantStatements;
 	private final List<ErrorLocalizationStatisticsGenerator> mFaultLocalizerStatistics;
 	private final ErrorAutomatonStatisticsGenerator mErrorAutomatonStatisticsGenerator;
-	private IErrorAutomatonBuilder<LETTER> mErrorAutomatonBuilder;
+	private IErrorAutomatonBuilder<L> mErrorAutomatonBuilder;
 	private int mLastIteration = -1;
+	private final ErrorAutomatonType mType;
 
-	/**
-	 * @param services
-	 *            Ultimate services.
-	 */
 	public ErrorGeneralizationEngine(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator(services);
+		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator();
 		mErrorTraces = new ErrorTraceContainer<>();
 		mRelevantStatements = new ArrayList<>();
 		mFaultLocalizerStatistics = new ArrayList<>();
+		mType = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ERROR_AUTOMATON_MODE, ErrorAutomatonType.class);
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, IPredicate> getResultBeforeEnhancement() {
+	public NestedWordAutomaton<L, IPredicate> getResultBeforeEnhancement() {
 		return mErrorAutomatonBuilder.getResultBeforeEnhancement();
 	}
 
 	@Override
-	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getResultAfterEnhancement() {
+	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getResultAfterEnhancement() {
 		return mErrorAutomatonBuilder.getResultAfterEnhancement();
 	}
 
@@ -143,6 +144,15 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 		return mLastIteration == iteration;
 	}
 
+	public void constructErrorAutomaton(final IRun<L, ?> counterexample, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IIcfgSymbolTable symbolTable, final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton,
+			final INestedWordAutomaton<L, IPredicate> abstraction, final int iteration) {
+		constructErrorAutomaton(counterexample, predicateFactory, predicateUnifier, csToolkit, simplificationTechnique,
+				xnfConversionTechnique, symbolTable, stateFactoryForAutomaton, abstraction, iteration, mType);
+	}
+
 	/**
 	 * @param counterexample
 	 *            Counterexample.
@@ -165,42 +175,44 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	 * @param iteration
 	 *            current CEGAR loop iteration
 	 */
-	public void constructErrorAutomaton(final IRun<LETTER, ?> counterexample,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
-			final CfgSmtToolkit csToolkit, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
-			final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton,
-			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final int iteration) {
+	public void constructErrorAutomaton(final IRun<L, ?> counterexample, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IIcfgSymbolTable symbolTable, final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton,
+			final INestedWordAutomaton<L, IPredicate> abstraction, final int iteration, final ErrorAutomatonType type) {
 		mErrorTraces.addTrace(counterexample);
 		mLastIteration = iteration;
 
-		final NestedWord<LETTER> trace = (NestedWord<LETTER>) counterexample.getWord();
+		final NestedWord<L> trace = (NestedWord<L>) counterexample.getWord();
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Constructing " + (TYPE == ErrorAutomatonType.ERROR_AUTOMATON ? "error" : "danger")
-					+ " automaton for trace of length " + trace.length());
+			mLogger.info("Constructing %s automaton for trace of length %s", type, trace.length());
 		}
 
 		mErrorAutomatonStatisticsGenerator.reportTrace(trace);
 		mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
 
 		try {
-			switch (TYPE) {
-				case ERROR_AUTOMATON:
-					mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
-							csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
-							stateFactoryForAutomaton, abstraction, trace);
-					break;
-				case DANGER_AUTOMATON:
-					mErrorAutomatonBuilder = new DangerAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
-							csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
-							stateFactoryForAutomaton, abstraction, trace);
-					break;
-				default:
-					throw new IllegalArgumentException("Unknown automaton type: " + TYPE);
+			switch (type) {
+			case SIMPLE_ERROR_AUTOMATON:
+				mErrorAutomatonBuilder = new SimpleErrorAutomatonBuilder<>(mServices, predicateFactory,
+						predicateUnifier, csToolkit, stateFactoryForAutomaton, abstraction, trace);
+				break;
+			case ERROR_AUTOMATON:
+				mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
+						csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
+						stateFactoryForAutomaton, abstraction, trace);
+				break;
+			case DANGER_AUTOMATON:
+				mErrorAutomatonBuilder = new DangerAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
+						csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
+						stateFactoryForAutomaton, abstraction, trace);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown automaton type: " + type);
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
-			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance(true);
+			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 					"constructing error automaton for trace of length " + trace.length() + " (spent "
 							+ mErrorAutomatonStatisticsGenerator.getLastConstructionTime() + " nanoseconds)");
@@ -229,19 +241,20 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	 * @throws AutomataLibraryException
 	 *             thrown by automaton evaluation
 	 */
-	public void stopDifference(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
+	public void stopDifference(final INestedWordAutomaton<L, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final PredicateFactoryResultChecking predicateFactoryResultChecking,
-			final IRun<LETTER, ?> errorTrace, final boolean prematureTermination)
-			throws AutomataLibraryException {
+			final PredicateFactoryResultChecking predicateFactoryResultChecking, final IRun<L, ?> errorTrace,
+			final boolean prematureTermination) throws AutomataLibraryException {
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
 		if (!prematureTermination) {
-			mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger, mErrorAutomatonBuilder,
-					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction,
-					predicateFactoryInterpolantAutomata, predicateFactoryResultChecking, errorTrace);
+			if (LOG_EXTENDED_SIZE_INFO) {
+				mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger,
+						mErrorAutomatonBuilder, (INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) abstraction,
+						predicateFactoryInterpolantAutomata, predicateFactoryResultChecking, errorTrace);
+			}
 			mErrorTraces.addEnhancementType(mErrorAutomatonStatisticsGenerator.getEnhancement());
 		}
-		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance(prematureTermination);
+		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 	}
 
 	/**
@@ -265,7 +278,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	 *            result that would be reported by {@link AbstractCegarLoop}
 	 * @return {@code true} if at least one feasible counterexample was detected
 	 */
-	public boolean isResultUnsafe(final Result abstractResult, final INestedWordAutomaton<LETTER, IPredicate> cfg,
+	public boolean isResultUnsafe(final Result abstractResult, final INestedWordAutomaton<L, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable) {
@@ -276,26 +289,27 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			mLogger.info("Found " + mErrorTraces.size()
 					+ (mErrorTraces.size() == 1 ? " error trace:" : " different error traces in total:"));
 			int ctr = 0;
-			for (final ErrorTrace<LETTER> errorTraceWrapper : mErrorTraces) {
+			for (final ErrorTrace<L> errorTraceWrapper : mErrorTraces) {
 				final StringBuilder builder = new StringBuilder();
-				builder.append(++ctr).append(": Error trace of length ")
+				ctr++;
+				builder.append(ctr).append(": Error trace of length ")
 						.append(errorTraceWrapper.getTrace().getWord().length());
 				switch (errorTraceWrapper.getEnhancement()) {
-					case NONE:
-						builder.append(" (no additional traces)");
-						break;
-					case FINITE:
-						builder.append(" (finite language)");
-						break;
-					case INFINITE:
-						builder.append(" (infinite language)");
-						break;
-					case UNKNOWN:
-						builder.append(" (unknown trace enhancement)");
-						break;
-					default:
-						throw new IllegalArgumentException(
-								"Unknown enhancement type: " + errorTraceWrapper.getEnhancement());
+				case NONE:
+					builder.append(" (no additional traces)");
+					break;
+				case FINITE:
+					builder.append(" (finite language)");
+					break;
+				case INFINITE:
+					builder.append(" (infinite language)");
+					break;
+				case UNKNOWN:
+					builder.append(" (unknown trace enhancement)");
+					break;
+				default:
+					throw new IllegalArgumentException(
+							"Unknown enhancement type: " + errorTraceWrapper.getEnhancement());
 				}
 				final IPredicate precondition = errorTraceWrapper.getPrecondition();
 				// TODO 2017-06-14 Christian: Do not print error precondition on info level after testing phase.
@@ -314,28 +328,28 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 				xnfConversionTechnique, symbolTable);
 
 		// TODO 2017-06-18 Christian: Currently we want to run the CEGAR loop until the abstraction is empty.
-//		return abstractResult == Result.SAFE;
+		// return abstractResult == Result.SAFE;
 		return true;
 	}
 
 	@SuppressWarnings("unchecked")
-	private void aggregateFaultLocalization(final INestedWordAutomaton<LETTER, IPredicate> cfg,
+	private void aggregateFaultLocalization(final INestedWordAutomaton<L, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable) {
-		final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts = new HashMap<>();
+		final Map<IcfgLocation, Set<L>> finalLoc2responsibleStmts = new HashMap<>();
 		final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics = new ArrayList<>();
-		final Iterator<Collection<LETTER>> relevantStatementsIt = mRelevantStatements.iterator();
-		for (final ErrorTrace<LETTER> errorTraceWrapper : mErrorTraces) {
-			final NestedRun<LETTER, IPredicate> trace = (NestedRun<LETTER, IPredicate>) errorTraceWrapper.getTrace();
-			if (! relevantStatementsIt.hasNext()) {
+		final Iterator<Collection<L>> relevantStatementsIt = mRelevantStatements.iterator();
+		for (final ErrorTrace<L> errorTraceWrapper : mErrorTraces) {
+			final NestedRun<L, IPredicate> trace = (NestedRun<L, IPredicate>) errorTraceWrapper.getTrace();
+			if (!relevantStatementsIt.hasNext()) {
 				break;
 			}
 
-			final Collection<LETTER> newResponsibleStmts =
+			final Collection<L> newResponsibleStmts =
 					// TODO changed this, computed in BasicCegarLoop
-//					faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
-//							xnfConversionTechnique, symbolTable, faultLocalizerStatistics, trace);
+					// faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
+					// xnfConversionTechnique, symbolTable, faultLocalizerStatistics, trace);
 					relevantStatementsIt.next();
 
 			aggregate(newResponsibleStmts, finalLoc2responsibleStmts, trace.getStateSequence());
@@ -344,30 +358,32 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 		presentResult(finalLoc2responsibleStmts, cfg, faultLocalizerStatistics);
 	}
 
-	public void faultLocalizationWithStorage(final INestedWordAutomaton<LETTER, IPredicate> cfg,
+	public void faultLocalizationWithStorage(final INestedWordAutomaton<L, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
 			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
-			final NestedRun<LETTER, IPredicate> trace, IIcfg<IcfgLocation> Icfg) {
+			final NestedRun<L, IPredicate> trace, final IIcfg<IcfgLocation> Icfg) {
 		final List<ErrorLocalizationStatisticsGenerator> realFaultLocalizerStatistics =
-				(faultLocalizerStatistics == null) ? mFaultLocalizerStatistics : faultLocalizerStatistics;
-		mRelevantStatements.add(faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier,
-				simplificationTechnique, xnfConversionTechnique, symbolTable, realFaultLocalizerStatistics, trace, Icfg));
+				faultLocalizerStatistics == null ? mFaultLocalizerStatistics : faultLocalizerStatistics;
+		mRelevantStatements
+				.add(faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
+						xnfConversionTechnique, symbolTable, realFaultLocalizerStatistics, trace, Icfg));
 	}
 
 	/**
 	 * Fault localization of single trace.
-	 * @param icfg 
+	 *
+	 * @param icfg
 	 */
-	private Collection<LETTER> faultLocalization(final INestedWordAutomaton<LETTER, IPredicate> cfg,
+	private Collection<L> faultLocalization(final INestedWordAutomaton<L, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
 			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
-			final NestedRun<LETTER, IPredicate> trace, IIcfg<IcfgLocation> icfg) {
-		final FlowSensitiveFaultLocalizer<LETTER> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg,
-				mServices, csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier,
+			final NestedRun<L, IPredicate> trace, final IIcfg<IcfgLocation> icfg) {
+		final FlowSensitiveFaultLocalizer<L> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg, mServices,
+				csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier,
 				RelevanceAnalysisMode.SINGLE_TRACE, simplificationTechnique, xnfConversionTechnique, symbolTable, icfg);
 		final List<IRelevanceInformation> relevanceInformation = faultLocalizer.getRelevanceInformation();
 		if (faultLocalizerStatistics != null) {
@@ -376,14 +392,14 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 		return findResponsibleStatements(relevanceInformation, trace.getWord());
 	}
 
-	private Collection<LETTER> findResponsibleStatements(final List<IRelevanceInformation> relevanceInformation,
-			final NestedWord<LETTER> word) {
+	private Collection<L> findResponsibleStatements(final List<IRelevanceInformation> relevanceInformation,
+			final NestedWord<L> word) {
 		assert word.length() == relevanceInformation.size();
-		final Iterator<LETTER> traceIt = word.iterator();
+		final Iterator<L> traceIt = word.iterator();
 		final Iterator<IRelevanceInformation> relIt = relevanceInformation.iterator();
-		final List<LETTER> result = new ArrayList<>();
+		final List<L> result = new ArrayList<>();
 		while (traceIt.hasNext()) {
-			final LETTER stmt = traceIt.next();
+			final L stmt = traceIt.next();
 			final RelevanceInformation rel = (RelevanceInformation) relIt.next();
 			if (rel != null && (rel.getCriterion1GF() || rel.getCriterion1UC())) {
 				result.add(stmt);
@@ -406,23 +422,23 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 		}
 	}
 
-	private void presentResult(final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts,
-			final INestedWordAutomaton<LETTER, IPredicate> cfg,
+	private void presentResult(final Map<IcfgLocation, Set<L>> finalLoc2responsibleStmts,
+			final INestedWordAutomaton<L, IPredicate> cfg,
 			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics) {
 		if (mLogger.isWarnEnabled()) {
 			final StringBuilder builder = new StringBuilder();
-			final VpAlphabet<LETTER> vpAlphabet = cfg.getVpAlphabet();
+			final VpAlphabet<L> vpAlphabet = cfg.getVpAlphabet();
 			final int alphabetSize = vpAlphabet.getInternalAlphabet().size() + vpAlphabet.getCallAlphabet().size()
 					+ vpAlphabet.getReturnAlphabet().size();
-			for (final Entry<IcfgLocation, Set<LETTER>> entry : finalLoc2responsibleStmts.entrySet()) {
+			for (final Entry<IcfgLocation, Set<L>> entry : finalLoc2responsibleStmts.entrySet()) {
 				builder.append("Error location '").append(entry.getKey());
-				final Set<LETTER> statements = entry.getValue();
+				final Set<L> statements = entry.getValue();
 				if (statements.isEmpty()) {
 					builder.append("' has no responsible statements (out of ").append(alphabetSize).append(").");
 				} else {
 					builder.append("' has the following ").append(statements.size())
 							.append(" responsible statements (out of ").append(alphabetSize).append("):\n");
-					for (final LETTER stmt : statements) {
+					for (final L stmt : statements) {
 						builder.append(stmt).append(", ");
 					}
 				}

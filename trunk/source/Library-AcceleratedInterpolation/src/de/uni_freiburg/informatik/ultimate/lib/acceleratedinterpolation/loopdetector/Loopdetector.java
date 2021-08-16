@@ -132,6 +132,11 @@ public class Loopdetector<LOC extends IcfgLocation, LETTER extends IIcfgTransiti
 		mLoopsAsTf = cycledPaths.getSecond();
 
 		mLogger.debug("Found Loops");
+		if (mLogger.isDebugEnabled()) {
+			for (final Entry<LOC, Set<List<LETTER>>> loop : mLoops.entrySet()) {
+				mLogger.debug("Loops for " + loop.getKey().toString() + " " + loop.getValue().toString());
+			}
+		}
 		if (!mNestingRelation.isEmpty()) {
 			mLogger.debug("Found Nested Loops");
 		}

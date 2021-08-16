@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -44,7 +44,7 @@ public class ExpressionResultBuilder {
 	private final List<Statement> mStatements = new ArrayList<>();
 	private final List<Declaration> mDeclarations = new ArrayList<>();
 	private final List<Overapprox> mOverappr = new ArrayList<>();
-	private final Set<AuxVarInfo> mAuxVars = new HashSet<>();
+	private final Set<AuxVarInfo> mAuxVars = new LinkedHashSet<>();
 	private final List<ExpressionResult> mNeighbourUnionFields = new ArrayList<>();
 
 	private LRValue mLrVal;

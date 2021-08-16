@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * This is an abstract state of the {@link EmptyDomain}. It does save variable declarations, but no values or value
@@ -57,23 +57,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public final class EmptyDomainState implements IAbstractState<EmptyDomainState> {
 
 	private static int sId;
-	private final Set<IProgramVarOrConst> mVarDecls;
+	private final ImmutableSet<IProgramVarOrConst> mVarDecls;
 	private final int mId;
 	private final boolean mIsBottom;
 
 	protected EmptyDomainState() {
-		this(new HashSet<>());
+		this(ImmutableSet.empty());
 	}
 
 	protected EmptyDomainState(final boolean isBottom) {
-		this(new HashSet<>(), isBottom);
+		this(ImmutableSet.empty(), isBottom);
 	}
 
-	protected EmptyDomainState(final Set<IProgramVarOrConst> varDecls) {
+	protected EmptyDomainState(final ImmutableSet<IProgramVarOrConst> varDecls) {
 		this(varDecls, false);
 	}
 
-	protected EmptyDomainState(final Set<IProgramVarOrConst> varDecls, final boolean isBottom) {
+	protected EmptyDomainState(final ImmutableSet<IProgramVarOrConst> varDecls, final boolean isBottom) {
 		mVarDecls = varDecls;
 		sId++;
 		mId = sId;
@@ -88,7 +88,7 @@ public final class EmptyDomainState implements IAbstractState<EmptyDomainState> 
 		if (!newMap.add(variable)) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
-		return new EmptyDomainState(newMap);
+		return new EmptyDomainState(ImmutableSet.of(newMap));
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public final class EmptyDomainState implements IAbstractState<EmptyDomainState> 
 		final Set<IProgramVarOrConst> newMap = new HashSet<>(mVarDecls);
 		final boolean result = newMap.remove(variable);
 		assert result;
-		return new EmptyDomainState(newMap);
+		return new EmptyDomainState(ImmutableSet.of(newMap));
 	}
 
 	@Override
@@ -111,7 +111,7 @@ public final class EmptyDomainState implements IAbstractState<EmptyDomainState> 
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
 			}
 		}
-		return new EmptyDomainState(newMap);
+		return new EmptyDomainState(ImmutableSet.of(newMap));
 	}
 
 	@Override
@@ -123,7 +123,7 @@ public final class EmptyDomainState implements IAbstractState<EmptyDomainState> 
 		for (final IProgramVarOrConst entry : variables) {
 			newMap.remove(entry);
 		}
-		return new EmptyDomainState(newMap);
+		return new EmptyDomainState(ImmutableSet.of(newMap));
 	}
 
 	@Override
@@ -204,8 +204,8 @@ public final class EmptyDomainState implements IAbstractState<EmptyDomainState> 
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
-		return Collections.unmodifiableSet(mVarDecls);
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
+		return mVarDecls;
 	}
 
 	@Override
@@ -234,7 +234,7 @@ public final class EmptyDomainState implements IAbstractState<EmptyDomainState> 
 			return this;
 		}
 
-		return new EmptyDomainState(newVarDecls);
+		return new EmptyDomainState(ImmutableSet.of(newVarDecls));
 	}
 
 	@Override
@@ -290,7 +290,7 @@ public final class EmptyDomainState implements IAbstractState<EmptyDomainState> 
 		}
 
 		if (isChanged) {
-			return new EmptyDomainState(newVars);
+			return new EmptyDomainState(ImmutableSet.of(newVars));
 		}
 		return this;
 	}

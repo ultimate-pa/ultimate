@@ -491,7 +491,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return;
 		}
 		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
-		final Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
+		final Validity testRes = sdhtch.sdecInternal(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result) : "my internal dataflow check failed";
 			// if (testRes != result) {

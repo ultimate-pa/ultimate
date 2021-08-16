@@ -240,14 +240,14 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 		public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IAction act,
 				final IPredicate succ) {
 			assert preHier == null;
-			return getSdHoareTripleChecker().sdecInteral(preLin, (IInternalAction) act, succ);
+			return getSdHoareTripleChecker().sdecInternal(preLin, (IInternalAction) act, succ);
 		}
 
 		@Override
 		public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
 				final IPredicate succ) {
 			assert preHier == null;
-			return getSdHoareTripleChecker().sdLazyEcInteral(preLin, (IInternalAction) act, succ);
+			return getSdHoareTripleChecker().sdLazyEcInternal(preLin, (IInternalAction) act, succ);
 		}
 	}
 

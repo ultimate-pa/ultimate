@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -354,7 +355,7 @@ public class QuantifierUtils {
 	 * @return false iff some subformula is a {@link QuantifiedFormula}.
 	 */
 	public static boolean isQuantifierFree(final Term term) {
-		return !new SubtermPropertyChecker(x -> (x instanceof QuantifiedFormula)).isPropertySatisfied(term);
+		return !new SubtermPropertyChecker(x -> (x instanceof QuantifiedFormula)).isSatisfiedBySomeSubterm(term);
 	}
 
 	public static String getNameOfCorrespondingJuncts(final int quantifier) {
@@ -427,6 +428,6 @@ public class QuantifierUtils {
 	public interface IQuantifierEliminator {
 		public Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 				final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-				final Context context, final Term inputTerm);
+				final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm);
 	}
 }

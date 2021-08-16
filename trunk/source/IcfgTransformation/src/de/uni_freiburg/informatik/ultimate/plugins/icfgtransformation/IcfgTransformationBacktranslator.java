@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
@@ -68,7 +67,7 @@ public class IcfgTransformationBacktranslator extends
 
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof IcfgProgramExecution) {
-			oldBranchEncoders = ((IcfgProgramExecution) programExecution).getBranchEncoders();
+			oldBranchEncoders = ((IcfgProgramExecution<?>) programExecution).getBranchEncoders();
 		}
 
 		final List<IIcfgTransition<IcfgLocation>> newTrace = new ArrayList<>();
@@ -84,12 +83,6 @@ public class IcfgTransformationBacktranslator extends
 				// skip this, its not worth it.
 				mLogger.warn("Skipped ATE because there is no mapping: [" + currentATE.getTraceElement().hashCode()
 						+ "] " + currentATE.getTraceElement());
-				continue;
-			}
-			if (!(mappedEdge instanceof CodeBlock)) {
-				mLogger.warn("Skipped ATE because its not mapped to a codeblock: ["
-						+ currentATE.getTraceElement().hashCode() + "] " + currentATE.getTraceElement());
-				mLogger.warn(mappedEdge);
 				continue;
 			}
 

@@ -72,6 +72,7 @@ public class UltimateEliminator extends WrapperScript {
 
 	private static final boolean WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION = true;
 	private static final boolean APPLY_SIMPLE_E_SKOLEMIZATION = true;
+	private static final boolean LOG_JUNIT_TEST = false;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
@@ -164,8 +165,11 @@ public class UltimateEliminator extends WrapperScript {
 		final Term letFree = new FormulaUnLet().transform(term);
 		final Term annotationFree = new AnnotationRemover().transform(letFree);
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
-		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		if (LOG_JUNIT_TEST) {
+			mLogger.info("Copy this to one of our JUnit test files:\n"
+					+ SmtTestGenerationUtils.generateStringForTestfile2(unf));
+		}
+		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, SimplificationTechnique.SIMPLIFY_DDA, unf);
 		// TODO futher optimizations. E.g., overapproximation by replacing all
 		// quantified formulas.
 		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
@@ -268,8 +272,7 @@ public class UltimateEliminator extends WrapperScript {
 		final Term letFree = new FormulaUnLet().transform(term);
 		final Term annotationFree = new AnnotationRemover().transform(letFree);
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
-		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, SimplificationTechnique.SIMPLIFY_DDA, unf);
 		final IResult result = constructResult("simplify", String.valueOf(lessQuantifier));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result );
 		return lessQuantifier;

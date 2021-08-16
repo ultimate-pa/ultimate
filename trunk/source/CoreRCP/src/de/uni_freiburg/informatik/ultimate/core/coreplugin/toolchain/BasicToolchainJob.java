@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 
+import java.util.Objects;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -49,13 +51,12 @@ public abstract class BasicToolchainJob extends Job {
 	protected IUltimateServiceProvider mServices;
 	private long mDeadline;
 
-	public BasicToolchainJob(final String name, final ICore<RunDefinition> core,
+	protected BasicToolchainJob(final String name, final ICore<RunDefinition> core,
 			final IController<RunDefinition> controller, final ILogger logger) {
 		super(name);
-		assert logger != null;
 		mCore = core;
 		mController = controller;
-		mLogger = logger;
+		mLogger = Objects.requireNonNull(logger);
 		mDeadline = -1;
 	}
 

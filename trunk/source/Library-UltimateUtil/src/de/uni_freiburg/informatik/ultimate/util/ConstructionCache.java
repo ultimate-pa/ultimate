@@ -67,15 +67,6 @@ public class ConstructionCache<K, V> implements Map<K, V> {
 		return value;
 	}
 
-	/**
-	 * Constructs values for a {@link Construction Cache}
-	 *
-	 */
-	@FunctionalInterface
-	public interface IValueConstruction<K, V> {
-		public V constructValue(K key);
-	}
-
 	@Override
 	public int size() {
 		return mMap.size();
@@ -134,6 +125,14 @@ public class ConstructionCache<K, V> implements Map<K, V> {
 	@Override
 	public Set<Entry<K, V>> entrySet() {
 		return mMap.entrySet();
+	}
+
+	/**
+	 * Constructs values for a {@link Construction Cache}
+	 */
+	@FunctionalInterface
+	public interface IValueConstruction<K, V> {
+		V constructValue(K key);
 	}
 
 }

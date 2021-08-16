@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackReceiver;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
@@ -38,20 +39,18 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AutomataOperationCanceledException extends AutomataLibraryException implements IRunningTaskStackProvider {
+public class AutomataOperationCanceledException extends AutomataLibraryException
+		implements IRunningTaskStackProvider, IRunningTaskStackReceiver {
 	private static final long serialVersionUID = -1713238821191695165L;
 
 	private static final String MESSAGE_CANCELED = "Timeout or canceled by user.";
 
-	@SuppressWarnings("squid:S1948")
-	private final List<RunningTaskInfo> mRunningTaskInfos;
+	private final transient List<RunningTaskInfo> mRunningTaskInfos;
 
 	/**
 	 * @param thrower
 	 *            Thrower class.
 	 */
-	// false-positive
-	@SuppressWarnings("fb-contrib:SCII_SPOILED_CHILD_INTERFACE_IMPLEMENTOR")
 	public AutomataOperationCanceledException(final Class<?> thrower) {
 		this(thrower, new RunningTaskInfo(thrower, null));
 	}
@@ -74,6 +73,7 @@ public class AutomataOperationCanceledException extends AutomataLibraryException
 	 * @param runningTaskInfo
 	 *            Running task info.
 	 */
+	@Override
 	public void addRunningTaskInfo(final RunningTaskInfo runningTaskInfo) {
 		mRunningTaskInfos.add(runningTaskInfo);
 	}

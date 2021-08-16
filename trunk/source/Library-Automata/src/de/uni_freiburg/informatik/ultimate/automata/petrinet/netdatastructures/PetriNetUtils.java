@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -191,9 +191,10 @@ public final class PetriNetUtils {
 			mergePlaces(final IPetriNet<LETTER, PLACE> net, final Map<PLACE, PLACE> map) {
 		final Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> result = new HashMap<>();
 		for (final ITransition<LETTER, PLACE> oldT : net.getTransitions()) {
-			final Set<PLACE> predecessors =
-					net.getPredecessors(oldT).stream().map(map::get).collect(Collectors.toSet());
-			final Set<PLACE> successors = net.getSuccessors(oldT).stream().map(map::get).collect(Collectors.toSet());
+			final ImmutableSet<PLACE> predecessors =
+					net.getPredecessors(oldT).stream().map(map::get).collect(ImmutableSet.collector());
+			final ImmutableSet<PLACE> successors =
+					net.getSuccessors(oldT).stream().map(map::get).collect(ImmutableSet.collector());
 			final Transition<LETTER, PLACE> newT = new Transition<>(oldT.getSymbol(), predecessors, successors, 0);
 			result.put(oldT, newT);
 		}
@@ -220,7 +221,7 @@ public final class PetriNetUtils {
 				oldIsAccepting = iniAcc.getSecond();
 			}
 			newPlaces.put(newPlace,
-					new Pair<Boolean, Boolean>(oldIsInitial || isInitial, oldIsAccepting || isAccepting));
+					new Pair<>(oldIsInitial || isInitial, oldIsAccepting || isAccepting));
 		}
 		for (final Entry<PLACE, Pair<Boolean, Boolean>> entry : newPlaces.entrySet()) {
 			result.addPlace(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());

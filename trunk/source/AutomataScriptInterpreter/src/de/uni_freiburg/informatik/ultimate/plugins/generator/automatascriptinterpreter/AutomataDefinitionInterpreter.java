@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonRankedAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonTransitionAST;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -548,7 +549,7 @@ public class AutomataDefinitionInterpreter {
 				}
 				succs.add(name2places.get(succ));
 			}
-			net.addTransition(ptrans.getSymbol(), preds, succs);
+			net.addTransition(ptrans.getSymbol(), ImmutableSet.of(preds), ImmutableSet.of(succs));
 		}
 
 		mAutomata.put(pna.getName(), net);

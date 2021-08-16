@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.reqparser;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,8 +39,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.github.jhoenicke.javacup.runtime.Symbol;
-
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -50,7 +47,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParserResult;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
@@ -88,19 +88,43 @@ public class ReqParser implements ISource {
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
 		final List<PatternType<?>> rawPatterns = new ArrayList<>();
+		final List<Durations> durations = new ArrayList<>();
 		for (final File file : files) {
 			final String filePath = file.getAbsolutePath();
 			mLogger.info("Parsing file " + filePath);
 			try {
-				final List<PatternType<?>> pattern = parseFile(filePath);
+				final ReqParserResult parserResult =
+						de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser.parseFile(mLogger, filePath);
+				durations.add(parserResult.getDurations());
+				final List<PatternType<?>> pattern = parserResult.getPatterns();
 				final List<PatternType<?>> nonNullPatterns =
 						pattern.stream().filter(Objects::nonNull).collect(Collectors.toList());
 				if (nonNullPatterns.size() != pattern.size()) {
-					mReporter.unexpectedParserFailure(filePath);
+					int i = 0;
+					PatternType<?> last = null;
+					final StringBuilder sb = new StringBuilder();
+					for (final PatternType<?> p : pattern) {
+						if (p == null) {
+							sb.append(i).append(' ');
+							if (last == null) {
+								sb.append("(at the beginning)");
+							} else {
+								sb.append("(after ").append(last.getId()).append("),");
+							}
+						} else {
+							last = p;
+						}
+						++i;
+					}
+					mReporter.unexpectedParserFailure(filePath,
+							String.format("%s of %s patterns could not be parsed, positions %s",
+									pattern.size() - nonNullPatterns.size(), pattern.size(),
+									sb.deleteCharAt(sb.length() - 1)));
 				}
 				rawPatterns.addAll(nonNullPatterns);
 			} catch (final Exception ex) {
-				mReporter.unexpectedParserFailure(filePath);
+				mReporter.unexpectedParserFailure(filePath,
+						String.format("%s: %s", ex.getClass().getSimpleName(), ex.getMessage()));
 				throw ex;
 			}
 		}
@@ -112,20 +136,15 @@ public class ReqParser implements ISource {
 		final List<PatternType<?>> unifiedPatterns = unify(rawPatterns);
 		logPatternSize(unifiedPatterns, "after unification");
 
-		return new ObjectContainer<>(unifiedPatterns);
+		final List<PatternType<?>> durationNormalizedPatterns =
+				normalizeDurations(unifiedPatterns, new Durations().merge(durations));
+
+		return new ObjectContainer<>(durationNormalizedPatterns);
 	}
 
-	private List<PatternType<?>> parseFile(final String reqFileName) throws Exception {
-		final FileInputStream fis = new FileInputStream(reqFileName);
-		try {
-			final de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser parser =
-					new de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser(mLogger, fis, reqFileName);
-			final Symbol goal = parser.parse();
-			final PatternType<?>[] patterns = (PatternType[]) goal.value;
-			return Arrays.asList(patterns);
-		} finally {
-			fis.close();
-		}
+	private List<PatternType<?>> normalizeDurations(final List<PatternType<?>> patterns, final Durations durations) {
+		mLogger.info("Scaling all durations to integer by multiplying with %s", durations.computeScalingFactor());
+		return patterns.stream().map(a -> PatternBuilder.normalize(a, durations)).collect(Collectors.toList());
 	}
 
 	private void logPatternSize(final List<PatternType<?>> patterns, final String suffix) {
@@ -140,8 +159,8 @@ public class ReqParser implements ISource {
 
 	private List<PatternType<?>> unify(final List<PatternType<?>> patterns) {
 		final List<PatternType<?>> rtr = new ArrayList<>();
-		final List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
-				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
+		final List<InitializationPattern> init = patterns.stream().filter(InitializationPattern.class::isInstance)
+				.map(InitializationPattern.class::cast).collect(Collectors.toList());
 		final UnionFind<InitializationPattern> uf = createUnionFind(init);
 		checkTypeConflicts(uf.getAllRepresentatives());
 		rtr.addAll(merge(uf));

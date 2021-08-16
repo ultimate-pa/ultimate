@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -54,17 +55,17 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 	private static int sId;
 	private final int mId;
 
-	private final Set<IProgramVarOrConst> mVars;
+	private final ImmutableSet<IProgramVarOrConst> mVars;
 	private final Map<IProgramVarOrConst, Set<ACTION>> mDef;
 	private final Map<IProgramVarOrConst, Set<ACTION>> mUse;
 	private final Map<IProgramVarOrConst, Set<ACTION>> mReachDef;
 	private final Map<IProgramVarOrConst, Set<IcfgLocation>> mNoWrite;
 
 	DataflowState() {
-		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+		this(ImmutableSet.empty(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
 	}
 
-	DataflowState(final Set<IProgramVarOrConst> vars, final Map<IProgramVarOrConst, Set<ACTION>> def,
+	DataflowState(final ImmutableSet<IProgramVarOrConst> vars, final Map<IProgramVarOrConst, Set<ACTION>> def,
 			final Map<IProgramVarOrConst, Set<ACTION>> use, final Map<IProgramVarOrConst, Set<ACTION>> reachdef,
 			final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite) {
 		assert vars != null;
@@ -86,7 +87,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 		}
 		final Set<IProgramVarOrConst> vars = DataStructureUtils.getFreshSet(mVars, mVars.size() + 1);
 		vars.add(variable);
-		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
+		return new DataflowState<>(ImmutableSet.of(vars), mDef, mUse, mReachDef, mNoWrite);
 	}
 
 	@Override
@@ -104,7 +105,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 		use.remove(variable);
 		final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 		use.remove(variable);
-		return new DataflowState<>(vars, def, use, reachdef, noWrite);
+		return new DataflowState<>(ImmutableSet.of(vars), def, use, reachdef, noWrite);
 	}
 
 	@Override
@@ -114,7 +115,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 		}
 		final Set<IProgramVarOrConst> vars = DataStructureUtils.getFreshSet(mVars, mVars.size() + variables.size());
 		vars.addAll(variables);
-		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
+		return new DataflowState<>(ImmutableSet.of(vars), mDef, mUse, mReachDef, mNoWrite);
 	}
 
 	@Override
@@ -134,7 +135,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 			reachdef.remove(a);
 			noWrite.remove(a);
 		});
-		return new DataflowState<>(vars, def, use, reachdef, noWrite);
+		return new DataflowState<>(ImmutableSet.of(vars), def, use, reachdef, noWrite);
 	}
 
 	@Override
@@ -143,8 +144,8 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
-		return Collections.unmodifiableSet(mVars);
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
+		return mVars;
 	}
 
 	@Override
@@ -311,7 +312,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 			}
 		}
 
-		return new DataflowState<>(vars, def, use, reachdef, noWrite);
+		return new DataflowState<>(ImmutableSet.of(vars), def, use, reachdef, noWrite);
 	}
 
 	@Override
@@ -379,7 +380,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 			}
 		}
 		if (isChanged) {
-			return new DataflowState<>(vars, def, use, reachdef, noWrite);
+			return new DataflowState<>(ImmutableSet.of(vars), def, use, reachdef, noWrite);
 		}
 		return this;
 	}

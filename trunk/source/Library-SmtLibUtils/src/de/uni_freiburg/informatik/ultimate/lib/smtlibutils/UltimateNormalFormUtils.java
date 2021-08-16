@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -123,6 +124,29 @@ public final class UltimateNormalFormUtils {
 			}
 
 		}
+		if (term.getFunction().getName().equals("or")) {
+			if (Arrays.asList(term.getParameters()).stream().anyMatch(SmtUtils::isTrueLiteral)) {
+				assert false : "true is absorbing for or: " + term;
+				return false;
+			}
+			if (Arrays.asList(term.getParameters()).stream().anyMatch(SmtUtils::isFalseLiteral)) {
+				assert false : "disjunction with false is identity: " + term;
+				return false;
+			}
+
+		}
+		if (term.getFunction().getName().equals("and")) {
+			if (Arrays.asList(term.getParameters()).stream().anyMatch(SmtUtils::isFalseLiteral)) {
+				assert false : "false is absorbing for and: " + term;
+				return false;
+			}
+			if (Arrays.asList(term.getParameters()).stream().anyMatch(SmtUtils::isTrueLiteral)) {
+				assert false : "conjunction with true is identity: " + term;
+				return false;
+			}
+
+		}
+
 		return true;
 	}
 
@@ -152,14 +176,14 @@ public final class UltimateNormalFormUtils {
 	 */
 	public static boolean respectsUltimateNormalForm(final Term term) {
 		final Predicate<Term> property = x -> !rootRespectsUltimateNormalForm(x);
-		return !new SubtermPropertyChecker(property).isPropertySatisfied(term);
+		return !new SubtermPropertyChecker(property).isSatisfiedBySomeSubterm(term);
 	}
 
 	public static boolean respectsUltimateNormalForm(final Term... terms) {
 		final Predicate<Term> property = x -> !rootRespectsUltimateNormalForm(x);
 		boolean respects = true;
 		for (final Term term : terms) {
-			respects &= !new SubtermPropertyChecker(property).isPropertySatisfied(term);
+			respects &= !new SubtermPropertyChecker(property).isSatisfiedBySomeSubterm(term);
 		}
 		return respects;
 	}

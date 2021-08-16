@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -41,18 +39,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
  * Visitor Class for the Sleep Set Reduction, which searches for an error state while reducing.
  *
  * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @deprecated will be replaced by {@link AcceptingRunSearchVisitor}
  *
  * @param <L>
  *            letter
  * @param <S>
  *            state
  */
-public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
+@Deprecated(since = "2021-04-08")
+public class SleepSetVisitorSearch<L, S> implements IDfsVisitor<L, S> {
 	private final Predicate<S> mIsGoalState;
 	private final Predicate<S> mIsHopelessState;
-
-	private final boolean mDeadStateOptimization;
-	private final Set<S> mDeadEndSet = new HashSet<>();
 
 	private final ArrayDeque<ArrayList<L>> mLetterStack = new ArrayDeque<>();
 	private final ArrayDeque<ArrayList<S>> mStateStack = new ArrayDeque<>();
@@ -67,14 +66,10 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	 *            function to determine whether a state is a goal state
 	 * @param isHopelessState
 	 *            function to identify "hopeless" states, i.e., states from which a goal state can not be reached
-	 * @param deadStateOptimization
-	 *            whether or not to use the "dead state" optimization -- this can affect soundness
 	 */
-	public SleepSetVisitorSearch(final Predicate<S> isGoalState, final Predicate<S> isHopelessState,
-			final boolean deadStateOptimization) {
+	public SleepSetVisitorSearch(final Predicate<S> isGoalState, final Predicate<S> isHopelessState) {
 		mIsGoalState = isGoalState;
 		mIsHopelessState = isHopelessState;
-		mDeadStateOptimization = deadStateOptimization;
 	}
 
 	@Override
@@ -83,13 +78,16 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 			mLetterStack.push(new ArrayList<>());
 			mStateStack.push(new ArrayList<>());
 		}
-		// prune successors of dead ends or hopeless states
-		return isDeadEndState(state) || isHopelessState(state);
+		// prune successors of hopeless states
+		return isHopelessState(state);
 	}
 
 	@Override
 	public boolean discoverTransition(final S source, final L letter, final S target) {
 		assert !mFound : "Search must not continue after target state found";
+		assert mStateStack.size() > 1 || source == mStartState : "Initial transition must begin in start state";
+		assert mStateStack.size() < 2
+				|| mStateStack.toArray(ArrayList[]::new)[1].contains(source) : "Transition source should be on stack";
 
 		// push letter onto Stack
 		mLetterStack.peek().add(letter);
@@ -101,9 +99,8 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	}
 
 	@Override
-	public void backtrackState(final S state) {
+	public void backtrackState(final S state, final boolean isComplete) {
 		// pop state's list and remove letter leading to state from predecessor's list
-		mDeadEndSet.add(state);
 		if (mStateStack.peek().isEmpty()) {
 			mLetterStack.pop();
 			mStateStack.pop();
@@ -116,6 +113,9 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 
 	@Override
 	public void delayState(final S state) {
+		// Delay is called immediately after discoverTransition.
+		// Hence the delayed state will be the last (just added) in the topmost stack frame.
+		assert state == mStateStack.peek().get(mStateStack.peek().size() - 1) : "Delaying the wrong state";
 		mLetterStack.peek().remove(mLetterStack.peek().size() - 1);
 		mStateStack.peek().remove(mStateStack.peek().size() - 1);
 	}
@@ -136,6 +136,9 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 		}
 
 		final ArrayList<L> acceptingTransitionSequence = new ArrayList<>();
+
+		// mFound is set in discoverTransition.
+		// Hence the transition leading to the goal state will be the last in the topmost stack frame.
 		ArrayList<L> currentTransitionList = mLetterStack.pop();
 		L currentTransition = currentTransitionList.get(currentTransitionList.size() - 1);
 		acceptingTransitionSequence.add(0, currentTransition);
@@ -144,6 +147,8 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 		acceptingStateSequence.add(0, currentState);
 
 		while (!mStateStack.isEmpty()) {
+			// In other stack frames, the first transition in the stack frame is the one that is currently being
+			// explored and leads to the goal state.
 			currentTransitionList = mLetterStack.pop();
 			currentTransition = currentTransitionList.get(0);
 			acceptingTransitionSequence.add(0, currentTransition);
@@ -162,12 +167,12 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 	}
 
 	@Override
-	public void addStartState(final S state) {
-		reset();
+	public boolean addStartState(final S state) {
 		mStartState = state;
 		mLetterStack.push(new ArrayList<>());
 		mStateStack.push(new ArrayList<>());
 		mFound = mIsGoalState.test(state);
+		return isHopelessState(state);
 	}
 
 	@Override
@@ -180,36 +185,5 @@ public class SleepSetVisitorSearch<L, S> implements IPartialOrderVisitor<L, S> {
 			return mIsHopelessState.test(state);
 		}
 		return false;
-	}
-
-	private void reset() {
-		mLetterStack.clear();
-		mStateStack.clear();
-		mFound = false;
-	}
-
-	/**
-	 * Determines if the given state has been marked as a "dead end", meaning no goal states are reachable from the
-	 * state. This only works if the "dead state" optimization was enabled in the constructor.
-	 *
-	 * @param state
-	 *            The state to analyse
-	 * @return true if the given state was previously explored without finding a goal state, false otherwise
-	 */
-	public boolean isDeadEndState(final S state) {
-		return mDeadStateOptimization && mDeadEndSet.contains(state);
-	}
-
-	/**
-	 * Explicitly mark a state as "dead end". Future explorations will assume that no goal state can be reached from
-	 * this state, and will thus not explore its outgoing edges.
-	 *
-	 * @param state
-	 *            The state that shall be marked as "dead end"
-	 */
-	public void addDeadEndState(final S state) {
-		if (mDeadStateOptimization) {
-			mDeadEndSet.add(state);
-		}
 	}
 }

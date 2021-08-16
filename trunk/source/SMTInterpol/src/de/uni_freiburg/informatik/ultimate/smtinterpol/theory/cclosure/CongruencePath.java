@@ -57,13 +57,13 @@ public class CongruencePath {
 	public static class SubPath {
 		ArrayList<CCTerm> mTermsOnPath;
 
-		public SubPath(CCTerm start) {
+		public SubPath(final CCTerm start) {
 			this(start, true);
 		}
 
-		public SubPath(CCTerm start, boolean produceProofs) {
+		public SubPath(final CCTerm start, final boolean produceProofs) {
 			if (produceProofs) {
-				mTermsOnPath = new ArrayList<CCTerm>();
+				mTermsOnPath = new ArrayList<>();
 				mTermsOnPath.add(start);
 			}
 		}
@@ -72,13 +72,13 @@ public class CongruencePath {
 			return mTermsOnPath.toArray(new CCTerm[mTermsOnPath.size()]);
 		}
 
-		public void addEntry(CCTerm term, CCEquality reason) {
+		public void addEntry(final CCTerm term, final CCEquality reason) {
 			if (mTermsOnPath != null) {
 				mTermsOnPath.add(term);
 			}
 		}
 
-		public void addSubPath(SubPath second) {
+		public void addSubPath(final SubPath second) {
 			if (mTermsOnPath != null && second != null) {
 				if (second.mTermsOnPath.get(0)
 						== mTermsOnPath.get(mTermsOnPath.size() - 1)) {
@@ -107,15 +107,15 @@ public class CongruencePath {
 	final ArrayDeque<SymmetricPair<CCTerm>> mTodo;
 	final Set<Literal> mAllLiterals;
 
-	public CongruencePath(CClosure closure) {
+	public CongruencePath(final CClosure closure) {
 		mClosure = closure;
-		mVisited = new HashMap<SymmetricPair<CCTerm>, SubPath>();
-		mAllLiterals = new LinkedHashSet<Literal>();
-		mTodo = new ArrayDeque<SymmetricPair<CCTerm>>();
-		mAllPaths = new ArrayDeque<SubPath>();
+		mVisited = new HashMap<>();
+		mAllLiterals = new LinkedHashSet<>();
+		mTodo = new ArrayDeque<>();
+		mAllPaths = new ArrayDeque<>();
 	}
 
-	private CCAnnotation createAnnotation(SymmetricPair<CCTerm> diseq) {
+	private CCAnnotation createAnnotation(final SymmetricPair<CCTerm> diseq) {
 		return new CCAnnotation(diseq, mAllPaths, CCAnnotation.RuleKind.CC);
 	}
 
@@ -151,7 +151,7 @@ public class CongruencePath {
 	private void computeCCPath(CCAppTerm start, CCAppTerm end) {
 		while (true) {
 			/* Compute path and interpolation info for func and arg */
-			mTodo.addFirst(new SymmetricPair<CCTerm>(start.mArg, end.mArg));
+			mTodo.addFirst(new SymmetricPair<>(start.mArg, end.mArg));
 
 			/*
 			 * We do not have explicit edges between partial function applications. Hence start.func and end.func must
@@ -185,7 +185,7 @@ public class CongruencePath {
 	 * @return the sub path from t to end, if proof production is enabled.
 	 *   Without proof production, this returns null.
 	 */
-	private SubPath computePathTo(CCTerm t, CCTerm end) {
+	private SubPath computePathTo(CCTerm t, final CCTerm end) {
 		final SubPath path =
 				new SubPath(t, mClosure.isProofGenerationEnabled());
 		CCTerm startCongruence = t;
@@ -227,13 +227,13 @@ public class CongruencePath {
 	 * @param left the left end of the congruence chain that should be evaluated.
 	 * @param right the right end of the congruence chain that should be evaluated.
 	 */
-	SubPath computePathNonRecursive(CCTerm left, CCTerm right) {
+	SubPath computePathNonRecursive(final CCTerm left, final CCTerm right) {
 		/* check for and ignore trivial paths */
 		if (left == right) {
 			return null;
 		}
 
-		final SymmetricPair<CCTerm> key = new SymmetricPair<CCTerm>(left, right);
+		final SymmetricPair<CCTerm> key = new SymmetricPair<>(left, right);
 		if (mVisited.containsKey(key)) {
 			return mVisited.get(key);
 		}
@@ -298,18 +298,19 @@ public class CongruencePath {
 	 * @param right
 	 *            the right end of the congruence chain that should be evaluated.
 	 */
-	public void computePath(CCTerm left, CCTerm right) {
-		HashSet<SymmetricPair<CCTerm>> added = new HashSet<>();
-		mTodo.add(new SymmetricPair<CCTerm>(left, right));
+	public void computePath(final CCTerm left, final CCTerm right) {
+		final HashSet<SymmetricPair<CCTerm>> added = new HashSet<>();
+		mTodo.add(new SymmetricPair<>(left, right));
 		while (!mTodo.isEmpty()) {
-			SymmetricPair<CCTerm> pathEnds = mTodo.removeFirst();
+			final SymmetricPair<CCTerm> pathEnds = mTodo.removeFirst();
 
 			// don't do anything for trivial paths
-			if (pathEnds.getFirst() == pathEnds.getSecond())
+			if (pathEnds.getFirst() == pathEnds.getSecond()) {
 				continue;
+			}
 
 			// check if we already visited this path
-			SubPath path = mVisited.get(pathEnds);
+			final SubPath path = mVisited.get(pathEnds);
 			if (path == null) {
 				// if we did not visit it yet, enqueue again for later and visit the path
 				mTodo.addFirst(pathEnds);
@@ -323,7 +324,7 @@ public class CongruencePath {
 		}
 	}
 
-	public Clause computeCycle(CCEquality eq, boolean produceProofs) {
+	public Clause computeCycle(final CCEquality eq, final boolean produceProofs) {
 		final CCTerm lhs = eq.getLhs();
 		final CCTerm rhs = eq.getRhs();
 		computePath(eq.getLhs(), eq.getRhs());
@@ -335,12 +336,12 @@ public class CongruencePath {
 		}
 		final Clause c = new Clause(cycle);
 		if (produceProofs) {
-			c.setProof(new LeafNode(LeafNode.THEORY_CC, createAnnotation(new SymmetricPair<CCTerm>(lhs, rhs))));
+			c.setProof(new LeafNode(LeafNode.THEORY_CC, createAnnotation(new SymmetricPair<>(lhs, rhs))));
 		}
 		return c;
 	}
 
-	public Clause computeCycle(CCTerm lconstant, CCTerm rconstant, boolean produceProofs) {
+	public Clause computeCycle(final CCTerm lconstant, final CCTerm rconstant, final boolean produceProofs) {
 		mClosure.getLogger().debug("computeCycle for Constants");
 		computePath(lconstant, rconstant);
 		final Literal[] cycle = new Literal[mAllLiterals.size()];
@@ -351,7 +352,30 @@ public class CongruencePath {
 		final Clause c = new Clause(cycle);
 		if (produceProofs) {
 			c.setProof(new LeafNode(
-					LeafNode.THEORY_CC, createAnnotation(new SymmetricPair<CCTerm>(lconstant, rconstant))));
+					LeafNode.THEORY_CC, createAnnotation(new SymmetricPair<>(lconstant, rconstant))));
+		}
+		return c;
+	}
+
+	public Clause computeDTLemma(final CCEquality propagatedEq, final DataTypeLemma lemma,
+			final boolean produceProofs) {
+		for (final SymmetricPair<CCTerm> reason : lemma.getReason()) {
+			computePath(reason.getFirst(), reason.getSecond());
+		}
+
+		final Literal[] negLits = new Literal[mAllLiterals.size() + (propagatedEq != null ? 1 : 0)];
+		int i = 0;
+		if (propagatedEq != null) {
+			negLits[i++] = propagatedEq;
+		}
+		for (final Literal l : mAllLiterals) {
+			negLits[i++] = l.negate();
+		}
+		final Clause c = new Clause(negLits);
+		if (produceProofs) {
+			final SymmetricPair<CCTerm> diseq = propagatedEq == null ? null
+					: new SymmetricPair<>(propagatedEq.getLhs(), propagatedEq.getRhs());
+			c.setProof(new LeafNode(LeafNode.THEORY_DT, new CCAnnotation(diseq, mAllPaths, lemma)));
 		}
 		return c;
 	}
@@ -359,17 +383,17 @@ public class CongruencePath {
 	/**
 	 * Compute the earliest decide level at which the path between lhs and rhs exists. There must be a path, i.e.
 	 * {@code lhs.getRepresentative() == rhs.getRepresentative()}.
-	 * 
+	 *
 	 * @param lhs
 	 *            the start of the path
 	 * @param rhs
 	 *            the end of the path
 	 * @return the earliest decide level.
 	 */
-	public int computeDecideLevel(CCTerm lhs, CCTerm rhs) {
+	public int computeDecideLevel(final CCTerm lhs, final CCTerm rhs) {
 		computePath(lhs, rhs);
 		int depth = 0;
-		for (Literal l : mAllLiterals) {
+		for (final Literal l : mAllLiterals) {
 			depth = Math.max(depth, l.getAtom().getDecideLevel());
 		}
 		return depth;

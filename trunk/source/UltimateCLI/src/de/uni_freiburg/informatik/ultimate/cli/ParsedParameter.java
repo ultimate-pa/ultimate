@@ -230,7 +230,7 @@ public class ParsedParameter {
 			files.add(new File(getSettingsFile()));
 		}
 		files.add(getToolchainFile());
-		final String joinednames = files.stream().map(a -> a.getName()).collect(Collectors.joining("_"));
+		final String joinednames = files.stream().map(File::getName).collect(Collectors.joining("_"));
 		return Paths.get(dir, joinednames).toString();
 	}
 

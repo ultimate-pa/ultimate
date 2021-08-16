@@ -33,128 +33,121 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * Class for rational integer matrices consisting of a QuadraticMatrix and a main denominator for all entries.
+ *
  * @author Miriam Herzig
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class RationalMatrix {
-	private QuadraticMatrix mIntMatrix;
+	/**
+	 * mIntMatrix is a quadratic matrix with only BigInteger entries.
+	 */
+	private final QuadraticMatrix mIntMatrix;
+	/**
+	 * mDenominator represents the common denominator of all matrix entries.
+	 */
 	private BigInteger mDenominator;
-	
-	RationalMatrix(BigInteger matrixDenominator, QuadraticMatrix matrix) {
+
+	public RationalMatrix(final BigInteger matrixDenominator, final QuadraticMatrix matrix) {
 		mDenominator = matrixDenominator;
 		mIntMatrix = matrix;
 	}
-	
+
 	/**
 	 * Computes the inverse of the matrix using the inverse of the integer matrix: (c*M)^-1 = c^-1 * M ^-1.
-	 * @param matrix
 	 */
-	public static RationalMatrix inverse(final RationalMatrix matrix) {
+	public static RationalMatrix computeInverse(final RationalMatrix matrix) {
 		final int n = matrix.mIntMatrix.getDimension();
-		RationalMatrix matrixInverse = QuadraticMatrix.inverse(matrix.mIntMatrix);
+		final RationalMatrix matrixInverse = QuadraticMatrix.computeInverse(matrix.mIntMatrix);
 		Rational factorInverse = Rational.valueOf(matrix.mDenominator, matrixInverse.mDenominator);
 		factorInverse = Rational.valueOf(factorInverse.numerator(), factorInverse.denominator());
-		for (int i=0; i<n; i++) {
-			for (int j=0; j<n; j++) {
-				matrix.mIntMatrix.setEntry(i,j,(matrix.mIntMatrix.getEntry(i,j).multiply(
-						factorInverse.numerator())));
-				// matrix.mIntMatrix.mEntries[i][j] = (matrix.mIntMatrix.mEntries[i][j]).multiply(
-						// factorInverse.numerator());
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				matrix.mIntMatrix.setEntry(i, j, matrix.mIntMatrix.getEntry(i, j).multiply(factorInverse.numerator()));
 			}
 		}
 		matrixInverse.mDenominator = factorInverse.denominator();
 		return matrixInverse;
 	}
-	
+
 	/**
 	 * Adds vector to j-th column of matrix. If number of entries in vector is smaller than number of rows in matrix,
 	 * then vector is still written in matrix, starting at row zero.
-	 * @param j column in which vector is written
-	 * @param vector to be written in matrix.
+	 *
+	 * @param j
+	 *            column in which vector is written
+	 * @param vector
+	 *            to be written in matrix.
 	 */
 	public void addColumnToMatrix(final int j, final Rational[] vector) {
-		QuadraticMatrix intMatrix = mIntMatrix;
+		final QuadraticMatrix intMatrix = mIntMatrix;
 		final int n = intMatrix.getDimension();
-		for (int i=0; i<vector.length; i++) {
+		for (int i = 0; i < vector.length; i++) {
 			vector[i] = Rational.valueOf(vector[i].numerator(), vector[i].denominator());
 			final BigInteger gcd = Rational.gcd(vector[i].denominator(), mDenominator);
-			intMatrix.setEntry(i,j,(vector[i].numerator()).multiply((mDenominator.divide(gcd))));
-			// intMatrix.mEntries[i][j] = (vector[i].numerator()).multiply((mDenominator.divide(gcd)));
-			mDenominator = (mDenominator).multiply(vector[i].denominator().divide(gcd));
-			for (int l=0; l<n; l++) {
-				for (int k=0; k<n; k++) {
-					intMatrix.setEntry(l,k, (intMatrix.getEntry(l,k)).multiply(
-							(vector[i].denominator()).divide(gcd)));
-					// intMatrix.mEntries[l][k] = (intMatrix.mEntries[l][k]).multiply(
-							// (vector[i].denominator()).divide(gcd));
+			intMatrix.setEntry(i, j, vector[i].numerator().multiply(mDenominator.divide(gcd)));
+			mDenominator = mDenominator.multiply(vector[i].denominator().divide(gcd));
+			for (int l = 0; l < n; l++) {
+				for (int k = 0; k < n; k++) {
+					intMatrix.setEntry(l, k, intMatrix.getEntry(l, k).multiply(vector[i].denominator().divide(gcd)));
 				}
 			}
-			intMatrix.setEntry(i,j,(intMatrix.getEntry(i,j)).divide((vector[i].denominator()).divide(gcd)));
-			// intMatrix.mEntries[i][j] = (intMatrix.mEntries[i][j]).divide((vector[i].denominator()).divide(gcd));
+			intMatrix.setEntry(i, j, intMatrix.getEntry(i, j).divide(vector[i].denominator().divide(gcd)));
 		}
 	}
-	
+
 	/**
 	 * Adds vector to i-th row of matrix. If number of entries in vector is smaller than number of columns in matrix,
 	 * then vector is still written in matrix, starting at column zero.
-	 * @param i row in which vector is written
-	 * @param vector to be written in matrix.
+	 *
+	 * @param i
+	 *            row in which vector is written
+	 * @param vector
+	 *            to be written in matrix.
 	 */
 	public void addRowToMatrix(final int i, final Rational[] vector) {
-		QuadraticMatrix intMatrix = mIntMatrix;
+		final QuadraticMatrix intMatrix = mIntMatrix;
 		final int n = intMatrix.getDimension();
-		for (int j=0; j<vector.length; j++) {
+		for (int j = 0; j < vector.length; j++) {
 			vector[j] = Rational.valueOf(vector[j].numerator(), vector[j].denominator());
 			final BigInteger gcd = Rational.gcd(vector[j].denominator(), mDenominator);
-			intMatrix.setEntry(i,j, (vector[j].numerator()).multiply((mDenominator.divide(gcd))));
-			// intMatrix.mEntries[i][j] = (vector[j].numerator()).multiply((mDenominator.divide(gcd)));
-			mDenominator = (mDenominator).multiply(vector[j].denominator().divide(gcd));
-			for (int k=0; k<n; k++) {
-				for (int l=0; l<n; l++) {
-					intMatrix.setEntry(k,l, (intMatrix.getEntry(k,l).multiply((vector[j].denominator()).divide(gcd))));
-					// intMatrix.mEntries[k][l] = intMatrix.mEntries[k][l].multiply((vector[j].denominator()).divide(gcd));
+			intMatrix.setEntry(i, j, vector[j].numerator().multiply(mDenominator.divide(gcd)));
+			mDenominator = mDenominator.multiply(vector[j].denominator().divide(gcd));
+			for (int k = 0; k < n; k++) {
+				for (int l = 0; l < n; l++) {
+					intMatrix.setEntry(k, l, intMatrix.getEntry(k, l).multiply(vector[j].denominator().divide(gcd)));
 				}
 			}
-			intMatrix.setEntry(i,j, (intMatrix.getEntry(i,j)).divide((vector[j].denominator()).divide(gcd)));
-			// intMatrix.mEntries[i][j] = (intMatrix.mEntries[i][j]).divide((vector[j].denominator()).divide(gcd));
+			intMatrix.setEntry(i, j, intMatrix.getEntry(i, j).divide(vector[j].denominator().divide(gcd)));
 		}
 	}
-	
+
 	/**
 	 * Solves a linear equation system les, with k-th choice 1, all other choices 0, with
 	 * additional constraints that solution of linear equation system and constraining vectors are
 	 * linearly independent. To achieve this, the constraining vectors are added to the linear equation
 	 * system with right-hand side 0 (scalar product of constraint and solution is 0).
-	 * @param les
-	 * @param constraints
-	 * @return
 	 */
 	public static Rational[] solveLes(final RationalMatrix les, final Rational[][] constraints, final int k) {
-		// final int n = les.mIntMatrix.mDimension;
 		final int numberOfConstraints = constraints.length;
-		RationalMatrix lesGauss1 = new RationalMatrix(BigInteger.valueOf(1),
-				QuadraticMatrix.gaussElimination(les.mIntMatrix));
-		final int rank = (lesGauss1.mIntMatrix).rank();
-		for (int i=0; i<numberOfConstraints; i++) {
-		// for (int i=rank, i<n; i++) {
-		// for (int i=rank; i<= rank + numberOfConstraints; i++) {
-			lesGauss1.addRowToMatrix(rank+i, constraints[i]);
+		final RationalMatrix lesGauss1 =
+				new RationalMatrix(BigInteger.valueOf(1), QuadraticMatrix.gaussElimination(les.mIntMatrix));
+		final int rank = lesGauss1.mIntMatrix.computeRank();
+		for (int i = 0; i < numberOfConstraints; i++) {
+			lesGauss1.addRowToMatrix(rank + i, constraints[i]);
 		}
 		// Keep 1 in last non-zero row.
-		lesGauss1.mIntMatrix.setEntry(lesGauss1.mIntMatrix.rank()-1,lesGauss1.mIntMatrix.getDimension()-1,
+		lesGauss1.mIntMatrix.setEntry(lesGauss1.mIntMatrix.computeRank() - 1, lesGauss1.mIntMatrix.getDimension() - 1,
 				BigInteger.valueOf(1));
-		// lesGauss1.mIntMatrix.mEntries[lesGauss1.mIntMatrix.rank()-1][lesGauss1.mIntMatrix.getDimension()-1] =
-				// BigInteger.valueOf(1);
-		QuadraticMatrix lesGauss2 = QuadraticMatrix.gaussElimination(lesGauss1.mIntMatrix);
-		Rational[] solution = QuadraticMatrix.backwardSubstitution(lesGauss2, k);
+		final QuadraticMatrix lesGauss2 = QuadraticMatrix.gaussElimination(lesGauss1.mIntMatrix);
+		final Rational[] solution = QuadraticMatrix.backwardSubstitution(lesGauss2, k);
 		return solution;
 	}
-	
+
 	public QuadraticMatrix getIntMatrix() {
 		return mIntMatrix;
 	}
-	
+
 	public BigInteger getDenominator() {
 		return mDenominator;
 	}

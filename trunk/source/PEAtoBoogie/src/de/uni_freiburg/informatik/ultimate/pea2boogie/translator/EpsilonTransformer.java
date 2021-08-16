@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class EpsilonTransformer {
+public final class EpsilonTransformer implements IEpsilonTransformer {
 
 	private final Rational mEpsilon;
 	private final Script mScript;
@@ -70,6 +70,7 @@ public final class EpsilonTransformer {
 		mReqSymboltable = reqSymboltable;
 	}
 
+	@Override
 	public Term transformGuard(final Term guardTerm) {
 		// final Term replacedRelation =
 		// new GenericTransformer(EpsilonTransformer::filterAll, this::changeRelation).transform(guardTerm);
@@ -80,6 +81,7 @@ public final class EpsilonTransformer {
 		return new GenericTransformer(EpsilonTransformer::filterAll, this::subtractEpsilon).transform(guardTerm);
 	}
 
+	@Override
 	public Term transformClockInvariant(final Term inv) {
 		return new GenericTransformer(EpsilonTransformer::filterLt, this::subtractEpsilon).transform(inv);
 	}
@@ -94,7 +96,8 @@ public final class EpsilonTransformer {
 
 		if (args[0] instanceof ConstantTerm && args[1] instanceof TermVariable) {
 			return applyTransform(appTerm, dual(func), new Term[] { args[1], args[0] }, funTransform);
-		} else if (args[1] instanceof ConstantTerm && args[0] instanceof TermVariable) {
+		}
+		if (args[1] instanceof ConstantTerm && args[0] instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) args[0];
 			if (mReqSymboltable.getClockVars().contains(tv.getName())) {
 				return funTransform.transform(appTerm, func, args);

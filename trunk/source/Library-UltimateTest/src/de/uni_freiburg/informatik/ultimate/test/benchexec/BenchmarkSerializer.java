@@ -56,7 +56,7 @@ public class BenchmarkSerializer {
 
 	private static final String BENCHMARK_PACKAGE = Benchmark.class.getPackage().getName();
 	private static final String BENCHMARK_URI = "/" + BENCHMARK_PACKAGE.replace(".", "/") + "/benchmark-1.9.xsd";
-	private final static QName QNAME_BENCHMARK = new QName("", "benchmark");
+	private static final QName QNAME_BENCHMARK = new QName("", "benchmark");
 
 	private BenchmarkSerializer() {
 		// do not instantiate utility class
@@ -76,7 +76,7 @@ public class BenchmarkSerializer {
 	 */
 	public static Benchmark loadValidatedBenchmark(final String xmlfile)
 			throws JAXBException, FileNotFoundException, SAXException {
-		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE);
+		final JAXBContext jc = createJAXBContext();
 		final Unmarshaller unmarshaller = jc.createUnmarshaller();
 		final URL fullPathString = BenchmarkSerializer.class.getResource(BENCHMARK_URI);
 		unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(fullPathString));
@@ -101,8 +101,7 @@ public class BenchmarkSerializer {
 			throws JAXBException, FileNotFoundException {
 		final JAXBElement<Benchmark> jaxbelem =
 				new JAXBElement<>(QNAME_BENCHMARK, Benchmark.class, null, benchmarkInstance);
-		final ClassLoader cl = ObjectFactory.class.getClassLoader();
-		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE, cl);
+		final JAXBContext jc = createJAXBContext();
 		final Marshaller marshaller = jc.createMarshaller();
 		marshaller.setProperty("jaxb.formatted.output", true);
 		marshaller.marshal(jaxbelem, new FileOutputStream(xmlfile));
@@ -111,13 +110,16 @@ public class BenchmarkSerializer {
 	public static String toString(final Benchmark benchmarkInstance) throws JAXBException {
 		final JAXBElement<Benchmark> jaxbelem =
 				new JAXBElement<>(QNAME_BENCHMARK, Benchmark.class, null, benchmarkInstance);
-		final ClassLoader cl = ObjectFactory.class.getClassLoader();
-		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE, cl);
+		final JAXBContext jc = createJAXBContext();
 		final Marshaller marshaller = jc.createMarshaller();
 		marshaller.setProperty("jaxb.formatted.output", true);
 		final StringWriter sw = new StringWriter();
 		marshaller.marshal(jaxbelem, sw);
 		return sw.toString();
+	}
+
+	private static JAXBContext createJAXBContext() throws JAXBException {
+		return JAXBContext.newInstance(BENCHMARK_PACKAGE, ObjectFactory.class.getClassLoader());
 	}
 
 }

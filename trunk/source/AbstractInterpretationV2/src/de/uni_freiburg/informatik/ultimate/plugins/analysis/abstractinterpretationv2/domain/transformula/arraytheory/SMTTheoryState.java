@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -56,9 +57,9 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState>, IEquality
 
 	private final SMTTheoryStateFactoryAndPredicateHelper mFactory;
 
-	private final Set<IProgramVarOrConst> mPvocs;
+	private final ImmutableSet<IProgramVarOrConst> mPvocs;
 
-	public SMTTheoryState(final IPredicate predicate, final Set<IProgramVarOrConst> variables,
+	public SMTTheoryState(final IPredicate predicate, final ImmutableSet<IProgramVarOrConst> variables,
 			final SMTTheoryStateFactoryAndPredicateHelper factory) {
 		mPredicate = predicate;
 		mFactory = factory;
@@ -69,7 +70,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState>, IEquality
 	public SMTTheoryState addVariable(final IProgramVarOrConst variable) {
 		final Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
 		newPvocs.add(variable);
-		return mFactory.getOrConstructState(mPredicate, newPvocs);
+		return mFactory.getOrConstructState(mPredicate, ImmutableSet.of(newPvocs));
 	}
 
 	@Override
@@ -81,7 +82,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState>, IEquality
 	public SMTTheoryState addVariables(final Collection<IProgramVarOrConst> variables) {
 		final Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
 		newPvocs.addAll(variables);
-		return mFactory.getOrConstructState(mPredicate, newPvocs);
+		return mFactory.getOrConstructState(mPredicate, ImmutableSet.of(newPvocs));
 	}
 
 	@Override
@@ -93,7 +94,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState>, IEquality
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
 		newVariables.removeAll(variables);
 
-		return mFactory.getOrConstructState(projectedPredicate, newVariables);
+		return mFactory.getOrConstructState(projectedPredicate, ImmutableSet.of(newVariables));
 	}
 
 	@Override
@@ -102,7 +103,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState>, IEquality
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
 		return mPvocs;
 	}
 
@@ -158,9 +159,9 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState>, IEquality
 	@Override
 	public SMTTheoryState compact() {
 		final List<TermVariable> freeVars = Arrays.asList(mPredicate.getFormula().getFreeVars());
-		final Set<IProgramVarOrConst> newPvocs =
+		final ImmutableSet<IProgramVarOrConst> newPvocs =
 				mPvocs.stream().filter(pvoc -> (!(pvoc instanceof IProgramVar)) || freeVars.contains(pvoc.getTerm()))
-						.collect(Collectors.toSet());
+						.collect(ImmutableSet.collector());
 		return mFactory.getOrConstructState(mPredicate, newPvocs);
 	}
 

@@ -38,8 +38,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -79,12 +82,84 @@ public class PartialQuantifierElimination {
 	private static final boolean DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION = false;
 	private static final boolean THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED = false;
 
+	private static final boolean CORONA_QUANTIFIER_ELIMINATION = true;
+
+
+	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term term, final SimplificationTechnique simplificationTechnique) {
+		if (CORONA_QUANTIFIER_ELIMINATION) {
+			final Term tmp = eliminateLight(services, mgdScript, term);
+			return QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL,
+					simplificationTechnique, tmp);
+		} else {
+			final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+			final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
+			final ILogger logger = services.getLoggingService().getLogger(PartialQuantifierElimination.class);
+			return tryToEliminate(services, logger, mgdScript, chnf, simplificationTechnique,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		}
+	}
+
+	public static Term eliminateLight(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term term) {
+		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+		final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
+		assert (CommuhashUtils.isInCommuhashNormalForm(chnf, "and", "or", "=")) : "Input not in commuhash form";
+		if (CORONA_QUANTIFIER_ELIMINATION) {
+			return QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
+					SimplificationTechnique.NONE, chnf);
+		} else {
+			return QuantifierPusher.eliminate(services, mgdScript, false, PqeTechniques.ONLY_DER,
+					SimplificationTechnique.NONE, chnf);
+		}
+	}
+
+	/**
+	 * Auxiliary method that replaces old calls to quantifier elimination. This
+	 * method is a temporary workaround.
+	 */
+	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
+			final SimplificationTechnique simplificationTechnique, final Term term) {
+		if (CORONA_QUANTIFIER_ELIMINATION) {
+			final Term tmp = eliminateLight(services, mgdScript, term);
+			return QuantifierPushTermWalker.eliminate(services, mgdScript, applyDistributivity,
+					quantifierEliminationTechniques, simplificationTechnique, tmp);
+		} else {
+			final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+			final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
+			if (quantifierEliminationTechniques == PqeTechniques.ALL) {
+				final ILogger logger = services.getLoggingService().getLogger(PartialQuantifierElimination.class);
+				return tryToEliminate(services, logger, mgdScript, chnf, simplificationTechnique,
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			} else {
+				return QuantifierPusher.eliminate(services, mgdScript, applyDistributivity,
+						quantifierEliminationTechniques, simplificationTechnique, chnf);
+			}
+		}
+	}
+
+	/**
+	 * Auxiliary method that replaces old calls to quantifier elimination. This
+	 * method is a temporary workaround.
+	 */
+	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final SimplificationTechnique simplificationTechnique, final Term term) {
+		return eliminateCompat(services, mgdScript, true, PqeTechniques.ALL, simplificationTechnique, term);
+	}
+
+	/**
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
+	 */
+	@Deprecated
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final Term term, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
-		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
-		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
+		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
+				simplificationTechnique, term);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
 		final Term matrix = qs.getInnerTerm();
@@ -109,15 +184,21 @@ public class PartialQuantifierElimination {
 			if (THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED && (result instanceof QuantifiedFormula)) {
 				throw new AssertionError("Not all eliminated: " + result);
 			}
-			result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ONLY_DER, result);
+			result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ONLY_DER,
+					simplificationTechnique, result);
 		}
 		return result;
 	}
 
+
 	/**
-	 * Returns equivalent formula. Quantifier is dropped if quantified variable not in formula. Quantifier is eliminated
-	 * if this can be done by the complete quantifier elimination.
+	 * Returns equivalent formula. Quantifier is dropped if quantified variable not
+	 * in formula. Quantifier is eliminated if this can be done by the complete
+	 * quantifier elimination.
+	 *
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
 	 */
+	@Deprecated
 	public static Term quantifier(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final int quantifier,
@@ -159,10 +240,14 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Returns formula equivalent to the one constructed by {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula
-	 * is not quantified if quantified variables are not in the formula or if quantifiers can be eliminated by using the
-	 * specified {@link PqeTechniques}.
+	 * Returns formula equivalent to the one constructed by
+	 * {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula is not
+	 * quantified if quantified variables are not in the formula or if quantifiers
+	 * can be eliminated by using the specified {@link PqeTechniques}.
+	 *
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
 	 */
+	@Deprecated
 	public static Term quantifierCustom(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final PqeTechniques techniques, final int quantifier,
 			final Collection<TermVariable> vars, final Term body, final Term[]... patterns) {
@@ -190,6 +275,11 @@ public class PartialQuantifierElimination {
 		return occurringVars;
 	}
 
+
+	/**
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
+	 */
+	@Deprecated
 	public static Term elimPushPull(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final Term term, final IUltimateServiceProvider services,
 			final ILogger logger) {
@@ -203,7 +293,8 @@ public class PartialQuantifierElimination {
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term quantified = mgdScript.getScript().quantifier(quantifier,
 				eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
-		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, techniques, quantified);
+		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, techniques,
+				SimplificationTechnique.SIMPLIFY_DDA, quantified);
 		// final Term commu = new CommuhashNormalForm(services, mgdScript.getScript()).transform(pushed);
 		// final Term pnf = new Nnf(script, services, freshTermVariableConstructor,
 		// QuantifierHandling.PULL).transform(pushed);
@@ -211,6 +302,10 @@ public class PartialQuantifierElimination {
 		return pnf;
 	}
 
+	/**
+	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
+	 */
+	@Deprecated
 	public static Term elim(final ManagedScript mgdScript, final int quantifier, final Set<TermVariable> eliminatees,
 			final Term term, final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique,

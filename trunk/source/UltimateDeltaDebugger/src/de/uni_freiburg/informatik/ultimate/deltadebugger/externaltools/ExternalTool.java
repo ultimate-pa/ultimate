@@ -53,7 +53,7 @@ public abstract class ExternalTool implements IExternalTool {
 
 	public ExternalTool(final IUltimateServiceProvider services) {
 		mServices = Objects.requireNonNull(services);
-		mLogger = services.getLoggingService().getControllerLogger();
+		mLogger = services.getLoggingService().getLogger(getClass());
 	}
 
 	@Override

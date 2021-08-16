@@ -45,23 +45,19 @@ public class QuadraticMatrixTest {
 	/**
 	 * Function that checks if two quadratic matrices are identical meaning they are of the same dimension and have
 	 * the same entries.
-	 * @param M1
-	 * @param M2
 	 */
-	static void checkMatrixEquality(QuadraticMatrix M1, QuadraticMatrix M2) {
-		assertEquals(M1.getDimension(), M2.getDimension());
-		int n = M1.getDimension();
+	static void checkMatrixEquality(QuadraticMatrix matrix1, QuadraticMatrix matrix2) {
+		assertEquals(matrix1.getDimension(), matrix2.getDimension());
+		int n = matrix1.getDimension();
 		for (int i=0; i<n; i++) {
 			for (int j=0; j<n; j++) {
-				checkBigIntegerEquality(M1.getEntry(i,j), M2.getEntry(i,j));
+				checkBigIntegerEquality(matrix1.getEntry(i,j), matrix2.getEntry(i,j));
 			}
 		}
 	}
 	
 	/**
 	 * Function that checks if two BigInteger are identical
-	 * @param a
-	 * @param b
 	 */
 	static void checkBigIntegerEquality(BigInteger a, BigInteger b) {
 		assertEquals(a.intValue(), b.intValue());
@@ -69,8 +65,6 @@ public class QuadraticMatrixTest {
 	
 	/**
 	 * Create a random quadratic matrix of dimension n. Used for nontrivial test cases.
-	 * @param n
-	 * @return
 	 */
 	QuadraticMatrix createRandomMatrix(int n) {
 		Random random = new Random(10);
@@ -85,13 +79,11 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Transform an integer matrix (array of arrays) to a BigInteger QUadraticMatrix.
-	 * @param entries
-	 * @return
+	 * Transform an integer array of arrays to a BigInteger QUadraticMatrix.
 	 */
 	public static QuadraticMatrix intToBigInteger(int[][] entries) {
 		int n = entries.length;
-		QuadraticMatrix bigIntegerMatrix = QuadraticMatrix.zeroMatrix(n);
+		QuadraticMatrix bigIntegerMatrix = QuadraticMatrix.constructZeroMatrix(n);
 		for (int i=0; i<n; i++) {
 			for (int j=0; j<n; j++) {
 				bigIntegerMatrix.setEntry(i,j,BigInteger.valueOf(entries[i][j]));
@@ -101,12 +93,12 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests function QuadraticMatrix identityMatrix(final int n).
+	 * Tests function {@link QuadraticMatrix#constructIdentityMatrix(int)}.
 	 */
 	@Test
 	public void testIdentityMatrix() {
 		int n = 10;
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(n);
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(n);
 		assertEquals(n, E.getDimension());
 		for (int i=0; i<n; i++) {
 			for (int j=0; j<n; j++) {
@@ -120,7 +112,7 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests function QuadraticMatrix copyMatrix(final QuadraticMatrix matrix).
+	 * Tests function {@link QuadraticMatrix#copyMatrix(QuadraticMatrix)}.
 	 */
 	@Test
 	public void testCopyMatrix() {
@@ -135,13 +127,13 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix addition(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2).
+	 * Tests the function {@link QuadraticMatrix#addition(QuadraticMatrix, QuadraticMatrix)}.
 	 */
 	@Test
 	public void testAddition() {
 		// First case: add zero-matrix to random matrix
 		QuadraticMatrix A = createRandomMatrix(5);
-		QuadraticMatrix zeroMatrix = QuadraticMatrix.zeroMatrix(5);
+		QuadraticMatrix zeroMatrix = QuadraticMatrix.constructZeroMatrix(5);
 		QuadraticMatrix Sum = QuadraticMatrix.addition(A, zeroMatrix);
 		// Test whether A and Sum have the same dimension and the same entries.
 		checkMatrixEquality(A, Sum);
@@ -160,14 +152,14 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix scalarMultiplication(final BigInteger a, final QuadraticMatrix matrix).
+	 * Tests the function {@link QuadraticMatrix#scalarMultiplication(BigInteger, QuadraticMatrix)}.
 	 */
 	@Test
 	public void testScalarMultiplication() {
 		// First case: a=0.
 		BigInteger a1 = BigInteger.valueOf(0);
 		QuadraticMatrix M1 = createRandomMatrix(5);
-		QuadraticMatrix Zero = QuadraticMatrix.zeroMatrix(5);
+		QuadraticMatrix Zero = QuadraticMatrix.constructZeroMatrix(5);
 		QuadraticMatrix a1_M1 = QuadraticMatrix.scalarMultiplication(a1,M1);
 		checkMatrixEquality(a1_M1, Zero);
 		
@@ -182,12 +174,12 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix multiplication(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2).
+	 * Tests the function {@link QuadraticMatrix#multiplication(QuadraticMatrix, QuadraticMatrix)}.
 	 */
 	@Test
 	public void testMultiplication() {
 		// First case: multiply identity matrix to random matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(6);
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(6);
 		QuadraticMatrix M1 = createRandomMatrix(6);
 		QuadraticMatrix E_M1 = QuadraticMatrix.multiplication(E,M1);
 		checkMatrixEquality(E_M1, M1);
@@ -204,12 +196,12 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix power(final QuadraticMatrix matrix, final int s).
+	 * Tests the function {@link QuadraticMatrix#power(QuadraticMatrix, int)}.
 	 */
 	@Test
 	public void testPower() {
 		// First case: identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(5);
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(5);
 		QuadraticMatrix E_4 = QuadraticMatrix.power(E,4);
 		checkMatrixEquality(E, E_4);
 		
@@ -223,36 +215,36 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function BigInteger det().
+	 * Tests the function {@link QuadraticMatrix#computeDet()}.
 	 */
 	@Test
 	public void testDet() {
 		// First case: identity matrix
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(5);
-		checkBigIntegerEquality(BigInteger.valueOf(1), E.det());
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(5);
+		checkBigIntegerEquality(BigInteger.valueOf(1), E.computeDet());
 		// assertEquals(1, E.det());
 		
 		// Second case: nontrivial invertible matrix.
 		int[][] entries_1 = {{1,3,-1,1},{2,6,-2,2},{1,0,0,3},{1,2,-1,0}};
 		QuadraticMatrix M_1 = intToBigInteger(entries_1);
-		checkBigIntegerEquality(BigInteger.valueOf(0), M_1.det());
+		checkBigIntegerEquality(BigInteger.valueOf(0), M_1.computeDet());
 		// assertEquals(0,M_1.det());
 		
 		// Third case: nontrivial not invertible matrix.
 		int[][] entries_2 = {{1,2,4,2},{1,6,5,4},{2,-1,5,0},{9,-3,1,0}};
 		QuadraticMatrix M_2 = intToBigInteger(entries_2);
-		checkBigIntegerEquality(BigInteger.valueOf(-126), M_2.det());
+		checkBigIntegerEquality(BigInteger.valueOf(-126), M_2.computeDet());
 		// assertEquals(-126,M_2.det());
 	}
 	
 	/**
-	 * Tests the function RationalMatrix inverse(final QuadraticMatrix matrix).
+	 * Tests the function {@link QuadraticMatrix#computeInverse(QuadraticMatrix)}
 	 */
 	@Test
 	public void testInverse() {
 		// identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(6);
-		RationalMatrix E_inverse = QuadraticMatrix.inverse(E);
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(6);
+		RationalMatrix E_inverse = QuadraticMatrix.computeInverse(E);
 		checkMatrixEquality(E, E_inverse.getIntMatrix());
 		checkBigIntegerEquality(BigInteger.valueOf(1), E_inverse.getDenominator());
 		// assertEquals(1, E_inverse.mDenominator);
@@ -260,35 +252,35 @@ public class QuadraticMatrixTest {
 		// Nontrivial matrix.
 		int[][] M1_entries = {{1,1,0,2},{1,0,1,1},{0,0,1,-1},{0,0,0,1}};
 		QuadraticMatrix M1 = intToBigInteger(M1_entries);
-		RationalMatrix Inverse1 = QuadraticMatrix.inverse(M1);
-		QuadraticMatrix E1 = QuadraticMatrix.scalarMultiplication(Inverse1.getDenominator(), QuadraticMatrix.identityMatrix(4));
+		RationalMatrix Inverse1 = QuadraticMatrix.computeInverse(M1);
+		QuadraticMatrix E1 = QuadraticMatrix.scalarMultiplication(Inverse1.getDenominator(), QuadraticMatrix.constructIdentityMatrix(4));
 		checkMatrixEquality(QuadraticMatrix.multiplication(M1, Inverse1.getIntMatrix()), E1);
 		checkMatrixEquality(QuadraticMatrix.multiplication(Inverse1.getIntMatrix(), M1), E1);
 		
 		// Nontrivial matrix with non-integer entries in inverse.
 		int[][] M2_entries = {{2,3,1},{2,4,-1},{-2,0,1}};
 		QuadraticMatrix M2 = intToBigInteger(M2_entries);
-		RationalMatrix Inverse2 = QuadraticMatrix.inverse(M2);;
-		QuadraticMatrix E2 = QuadraticMatrix.scalarMultiplication(Inverse2.getDenominator(), QuadraticMatrix.identityMatrix(3));
+		RationalMatrix Inverse2 = QuadraticMatrix.computeInverse(M2);;
+		QuadraticMatrix E2 = QuadraticMatrix.scalarMultiplication(Inverse2.getDenominator(), QuadraticMatrix.constructIdentityMatrix(3));
 		checkMatrixEquality(QuadraticMatrix.multiplication(M2, Inverse2.getIntMatrix()), E2);
 		checkMatrixEquality(QuadraticMatrix.multiplication(Inverse2.getIntMatrix(), M2), E2);
 	}
 	
 	/**
-	 * Tests the function boolean[] smallEigenvalues().
+	 * Tests the function {@link QuadraticMatrix#computeSmallEigenvalues()}.
 	 */
 	@Test
 	public void testSmallEigenvalues() {
 		// Identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(4);
-		boolean[] E_eigenvalues =  E.smallEigenvalues();
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(4);
+		boolean[] E_eigenvalues =  E.computeSmallEigenvalues();
 		assertEquals(false, E_eigenvalues[0]);
 		assertEquals(false, E_eigenvalues[1]);
 		assertEquals(true, E_eigenvalues[2]);
 		
 		// Zero-matrix.
-		QuadraticMatrix Zero = QuadraticMatrix.zeroMatrix(5);
-		boolean[] Zero_eigenvalues = Zero.smallEigenvalues();
+		QuadraticMatrix Zero = QuadraticMatrix.constructZeroMatrix(5);
+		boolean[] Zero_eigenvalues = Zero.computeSmallEigenvalues();
 		assertEquals(false, Zero_eigenvalues[0]);
 		assertEquals(true, Zero_eigenvalues[1]);
 		assertEquals(false, Zero_eigenvalues[2]);
@@ -296,14 +288,14 @@ public class QuadraticMatrixTest {
 		// Non-trivial matrix with eigenvalues -1,0,1.
 		int[][] M_entries = {{-1,0,3}, {-1,0,2}, {0,0,1}};
 		QuadraticMatrix M = intToBigInteger(M_entries);
-		boolean[] M_eigenvalues = M.smallEigenvalues();
+		boolean[] M_eigenvalues = M.computeSmallEigenvalues();
 		assertEquals(true, M_eigenvalues[0]);
 		assertEquals(true, M_eigenvalues[1]);
 		assertEquals(true, M_eigenvalues[2]);
 	}
 	
 	/**
-	 * Tests the function void swapRows(final int i, final int j).
+	 * Tests the function {@link QuadraticMatrix#swapRows(int, int)}.
 	 */
 	@Test
 	public void testSwapRows() {
@@ -317,12 +309,12 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix gaussElimination(final QuadraticMatrix matrix).
+	 * Tests the function {@link QuadraticMatrix#gaussElimination(QuadraticMatrix)}.
 	 */
 	@Test
 	public void testGaussElimination() {
 		// First case: identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(4);
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(4);
 		BigInteger denominator = BigInteger.valueOf(1);
 		RationalMatrix GE = new RationalMatrix(BigInteger.valueOf(1),E);
 		assertEquals(denominator, GE.getDenominator());
@@ -354,12 +346,12 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function Rational[] backwardSubstitution(final QuadraticMatrix matrix, final int s).
+	 * Tests the function {@link QuadraticMatrix#backwardSubstitution(QuadraticMatrix, int)}.
 	 */
 	@Test
 	public void testBackwardSubstitution() {
 		// Identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(4);
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(4);
 		QuadraticMatrix GE = QuadraticMatrix.gaussElimination(E);
 		Rational[] x = QuadraticMatrix.backwardSubstitution(GE,1);
 		for (int i=0; i<3; i++) {
@@ -399,78 +391,78 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function int rank().
+	 * Tests the function {@link QuadraticMatrix#computeRank()}.
 	 */
 	@Test
 	public void testRank() {
 		// identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(4);
-		assertEquals(4, E.rank());
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(4);
+		assertEquals(4, E.computeRank());
 		
 		// zero matrix.
-		QuadraticMatrix Zero =QuadraticMatrix.zeroMatrix(10);
-		assertEquals(0, Zero.rank());
+		QuadraticMatrix Zero =QuadraticMatrix.constructZeroMatrix(10);
+		assertEquals(0, Zero.computeRank());
 		
 		// Non trivial matrix with full rank.
 		int[][] M1_entries = {{1,2,-1},{0,1,2},{0,0,1}};
 		QuadraticMatrix M1 = intToBigInteger(M1_entries);
-		assertEquals(3, M1.rank());
+		assertEquals(3, M1.computeRank());
 		
 		// Non trivial matrix with not full rank.
 		int[][] M2_entries = {{1,2,-1,0},{0,1,2,0},{1,3,1,0},{0,0,0,1}};
 		QuadraticMatrix M2 = intToBigInteger(M2_entries);
-		assertEquals(3, M2.rank());
+		assertEquals(3, M2.computeRank());
 		
 		// Non trivial matrix with not full rank.
 		int[][] M3_entries = {{1,2,-1},{0,1,2},{1,3,1}};
 		QuadraticMatrix M3 = intToBigInteger(M3_entries);
-		assertEquals(2, M3.rank());
+		assertEquals(2, M3.computeRank());
 	}
 	
 	/**
-	 * Tests the function int geometricMultiplicity(final int lambda).
+	 * Tests the function {@link QuadraticMatrix#computeGeometricMultiplicity(int)}.
 	 */
 	@Test
 	public void testGeometricMultiplicity() {
 		// identity matrix, eigenvalue 1.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(4);
-		assertEquals(4, E.geometricMultiplicity(1));
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(4);
+		assertEquals(4, E.computeGeometricMultiplicity(1));
 		
 		// Zero matrix, eigenvalue 0.
-		QuadraticMatrix Zero = QuadraticMatrix.zeroMatrix(3);
-		assertEquals(3, Zero.geometricMultiplicity(0));
+		QuadraticMatrix Zero = QuadraticMatrix.constructZeroMatrix(3);
+		assertEquals(3, Zero.computeGeometricMultiplicity(0));
 		
 		// nontrivial matrix.
 		int[][] M_entries = {{-1,0,3}, {-1,0,2}, {0,0,1}};
 		QuadraticMatrix M = intToBigInteger(M_entries);
-		assertEquals(1, M.geometricMultiplicity(-1));
-		assertEquals(1, M.geometricMultiplicity(0));
-		assertEquals(1, M.geometricMultiplicity(1));
+		assertEquals(1, M.computeGeometricMultiplicity(-1));
+		assertEquals(1, M.computeGeometricMultiplicity(0));
+		assertEquals(1, M.computeGeometricMultiplicity(1));
 	}
 	
 	/**
-	 * Tests the function int numberOfBlocks(final int lambda, final int s).
+	 * Tests the function {@link QuadraticMatrix#computeNumberOfBlocks(int, int)}.
 	 */
 	@Test
 	public void testNumberOfBlocks() {
 		// Identity matrix
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(4);
-		assertEquals(4, E.numberOfBlocks(1,1));
-		assertEquals(0, E.numberOfBlocks(1,2));
-		assertEquals(0, E.numberOfBlocks(-1,1));
-		assertEquals(0, E.numberOfBlocks(-1,2));
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(4);
+		assertEquals(4, E.computeNumberOfBlocks(1,1));
+		assertEquals(0, E.computeNumberOfBlocks(1,2));
+		assertEquals(0, E.computeNumberOfBlocks(-1,1));
+		assertEquals(0, E.computeNumberOfBlocks(-1,2));
 		
 		// Nontrivial matrix.
 		int[][] M_entries = {{-1,0,3}, {-1,0,2}, {0,0,1}};
 		QuadraticMatrix M = intToBigInteger(M_entries);
-		assertEquals(1, M.numberOfBlocks(-1,1));
-		assertEquals(1, M.numberOfBlocks(0,1));
-		assertEquals(1, M.numberOfBlocks(1,1));
-		assertEquals(0, M.numberOfBlocks(1,2));
+		assertEquals(1, M.computeNumberOfBlocks(-1,1));
+		assertEquals(1, M.computeNumberOfBlocks(0,1));
+		assertEquals(1, M.computeNumberOfBlocks(1,1));
+		assertEquals(0, M.computeNumberOfBlocks(1,2));
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix createJordanBlock(final int lambda, final int s).
+	 * Tests the function {@link QuadraticMatrix#createJordanBlock(int, int)}.
 	 */
 	@Test
 	public void testCreateJordanBlock() {
@@ -491,11 +483,11 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function void addJordanBlock(final QuadraticMatrix block, final int start).
+	 * Tests the function {@link QuadraticMatrix#addJordanBlock(QuadraticMatrix, int)}.
 	 */
 	@Test
 	public void testAddJordanBlock() {
-		QuadraticMatrix J = QuadraticMatrix.zeroMatrix(4);
+		QuadraticMatrix J = QuadraticMatrix.constructZeroMatrix(4);
 		QuadraticMatrix block = QuadraticMatrix.createJordanBlock(1, 2);
 		J.addJordanBlock(block, 1);
 		int[][] Res_entries = {{0,0,0,0},{0,1,1,0},{0,0,1,0},{0,0,0,0}};
@@ -504,24 +496,24 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function QuadraticMatrix jordanMatrix().
+	 * Tests the function {@link QuadraticMatrix#computeJordanMatrix()}.
 	 */
 	@Test
 	public void testJordanMatrix() {
 		// Identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(5);
-		QuadraticMatrix J_E = E.jordanMatrix();
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(5);
+		QuadraticMatrix J_E = E.constructJordanTransformation().getJnf();
 		checkMatrixEquality(E,J_E);
 		
 		// Zero matrix.
-		QuadraticMatrix Zero = QuadraticMatrix.zeroMatrix(6);
-		QuadraticMatrix J_Zero = Zero.jordanMatrix();
+		QuadraticMatrix Zero = QuadraticMatrix.constructZeroMatrix(6);
+		QuadraticMatrix J_Zero = Zero.constructJordanTransformation().getJnf();
 		checkMatrixEquality(Zero,J_Zero);
 		
 		// Nontrivial matrix 1.
 		int[][] M1_entries = {{-1,0,3}, {-1,0,2}, {0,0,1}};
 		QuadraticMatrix M1 = intToBigInteger(M1_entries);
-		QuadraticMatrix J1 = M1.jordanMatrix();
+		QuadraticMatrix J1 = M1.constructJordanTransformation().getJnf();
 		int[][] res1_entries = {{-1,0,0},{0,0,0},{0,0,1}};
 		QuadraticMatrix Res1 = intToBigInteger(res1_entries);
 		checkMatrixEquality(Res1,J1);
@@ -529,7 +521,7 @@ public class QuadraticMatrixTest {
 		// Nontrivial matrix 2.
 		int[][] M2_entries = {{1,0,1}, {0,1,0}, {0,1,1}};
 		QuadraticMatrix M2 = intToBigInteger(M2_entries);
-		QuadraticMatrix J2 = M2.jordanMatrix();
+		QuadraticMatrix J2 = M2.constructJordanTransformation().getJnf();
 		int[][] res2_entries = {{1,1,0},{0,1,1},{0,0,1}};
 		QuadraticMatrix Res2 = intToBigInteger(res2_entries);
 		checkMatrixEquality(Res2,J2);
@@ -537,14 +529,14 @@ public class QuadraticMatrixTest {
 		// Nontrivial matrix 3.
 		int[][] M3_entries = {{-1,0,1,3}, {0,1,0,2}, {0,1,-1,1},{0,0,0,1}};
 		QuadraticMatrix M3 = intToBigInteger(M3_entries);
-		QuadraticMatrix J3 = M3.jordanMatrix();
+		QuadraticMatrix J3 = M3.constructJordanTransformation().getJnf();
 		int[][] res3_entries = {{-1,1,0,0},{0,-1,0,0},{0,0,1,1},{0,0,0,1}};
 		QuadraticMatrix Res3 = intToBigInteger(res3_entries);
 		checkMatrixEquality(Res3,J3);
 	}
 	
 	/**
-	 * Tests the function RationalMatrix les(QuadraticMatrix matrix, Rational[] b).
+	 * Tests the function {@link QuadraticMatrix#constructLes(QuadraticMatrix, Rational[])}.
 	 */
 	@Test
 	public void testLes() {
@@ -557,13 +549,13 @@ public class QuadraticMatrixTest {
 		BigInteger expectedDenominator = BigInteger.valueOf(12);
 		int[][] expectedMatrixEntries = {{12,36,48,24,12},{-12,0,0,12,6},{24,12,-24,12,4},{12,0,0,0,3},{0,0,0,0,1}};
 		QuadraticMatrix expectedMatrix = intToBigInteger(expectedMatrixEntries);
-		RationalMatrix result = QuadraticMatrix.les(matrix, p);
+		RationalMatrix result = QuadraticMatrix.constructLes(matrix, p);
 		checkBigIntegerEquality(expectedDenominator, result.getDenominator());
 		checkMatrixEquality(expectedMatrix, result.getIntMatrix());
 	}
 	
 	/**
-	 * Tests the function Rational[] matrixVectorMultiplication(QuadraticMatrix matrix, Rational[] vector).
+	 * Tests the function {@link QuadraticMatrix#matrixVectorMultiplication(QuadraticMatrix, Rational[])}.
 	 */
 	@Test
 	public void testMatrixVectorMultiplication() {
@@ -586,15 +578,15 @@ public class QuadraticMatrixTest {
 	}
 	
 	/**
-	 * Tests the function RationalMatrix modalMatrix(final QuadraticMatrix matrix, final QuadraticMatrix jordanMatrix).
+	 * Tests the function {@link QuadraticMatrix#computeModalMatrix(QuadraticMatrix, QuadraticMatrix)}.
 	 */
 	@Test
 	public void testModalMatrix() {
 		// identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.identityMatrix(5);
-		QuadraticMatrix JE = E.jordanMatrix();
-		RationalMatrix PE = QuadraticMatrix.modalMatrix(E, JE);
-		RationalMatrix PE_inverse = RationalMatrix.inverse(PE);
+		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(5);
+		QuadraticMatrix JE = E.constructJordanTransformation().getJnf();
+		RationalMatrix PE = QuadraticMatrix.computeModalMatrix(E, JE);
+		RationalMatrix PE_inverse = RationalMatrix.computeInverse(PE);
 		checkMatrixEquality(E, JE);
 		checkMatrixEquality(E, PE.getIntMatrix());
 		checkMatrixEquality(E, PE_inverse.getIntMatrix());
@@ -604,9 +596,9 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M1_entries = {{1,0,1},{0,1,0},{0,1,1}};
 		QuadraticMatrix M1 = intToBigInteger(M1_entries);
-		QuadraticMatrix J1 = M1.jordanMatrix();
-		RationalMatrix P1 = QuadraticMatrix.modalMatrix(M1, J1);
-		RationalMatrix P1_inverse = RationalMatrix.inverse(P1);
+		QuadraticMatrix J1 = M1.constructJordanTransformation().getJnf();
+		RationalMatrix P1 = QuadraticMatrix.computeModalMatrix(M1, J1);
+		RationalMatrix P1_inverse = RationalMatrix.computeInverse(P1);
 		QuadraticMatrix Right11 = QuadraticMatrix.multiplication(P1.getIntMatrix(), J1);
 		QuadraticMatrix Right1 = QuadraticMatrix.multiplication(Right11, P1_inverse.getIntMatrix());
 		checkBigIntegerEquality(BigInteger.valueOf(1), P1.getDenominator().multiply(P1_inverse.getDenominator()));
@@ -621,9 +613,9 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M2_entries = {{1,1,1},{0,1,1},{0,0,1}};
 		QuadraticMatrix M2 = intToBigInteger(M2_entries);
-		QuadraticMatrix J2 = M2.jordanMatrix();
-		RationalMatrix P2 = QuadraticMatrix.modalMatrix(M2, J2);
-		RationalMatrix P2_inverse = RationalMatrix.inverse(P2);
+		QuadraticMatrix J2 = M2.constructJordanTransformation().getJnf();
+		RationalMatrix P2 = QuadraticMatrix.computeModalMatrix(M2, J2);
+		RationalMatrix P2_inverse = RationalMatrix.computeInverse(P2);
 		QuadraticMatrix Right21 = QuadraticMatrix.multiplication(P2.getIntMatrix(), J2);
 		QuadraticMatrix Right2 = QuadraticMatrix.multiplication(Right21, P2_inverse.getIntMatrix());
 		BigInteger denominator2 = P2.getDenominator().multiply(P2_inverse.getDenominator());
@@ -637,9 +629,9 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M3_entries = {{-1,0,3}, {-1,0,2}, {0,0,1}};
 		QuadraticMatrix M3 = intToBigInteger(M3_entries);
-		QuadraticMatrix J3 = M3.jordanMatrix();
-		RationalMatrix P3 = QuadraticMatrix.modalMatrix(M3, J3);
-		RationalMatrix P3_inverse = RationalMatrix.inverse(P3);
+		QuadraticMatrix J3 = M3.constructJordanTransformation().getJnf();
+		RationalMatrix P3 = QuadraticMatrix.computeModalMatrix(M3, J3);
+		RationalMatrix P3_inverse = RationalMatrix.computeInverse(P3);
 		QuadraticMatrix Right31 = QuadraticMatrix.multiplication(P3.getIntMatrix(), J3);
 		QuadraticMatrix Right3 = QuadraticMatrix.multiplication(Right31, P3_inverse.getIntMatrix());
 		BigInteger denominator3 = P3.getDenominator().multiply(P3_inverse.getDenominator());
@@ -653,9 +645,9 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M4_entries = {{0,1,-1,2},{1,0,0,-1},{0,0,1,2},{0,0,0,1}};
 		QuadraticMatrix M4 = intToBigInteger(M4_entries);
-		QuadraticMatrix J4 = M4.jordanMatrix();
-		RationalMatrix P4 = QuadraticMatrix.modalMatrix(M4, J4);
-		RationalMatrix P4_inverse = RationalMatrix.inverse(P4);
+		QuadraticMatrix J4 = M4.constructJordanTransformation().getJnf();
+		RationalMatrix P4 = QuadraticMatrix.computeModalMatrix(M4, J4);
+		RationalMatrix P4_inverse = RationalMatrix.computeInverse(P4);
 		QuadraticMatrix Right41 = QuadraticMatrix.multiplication(P4.getIntMatrix(), J4);
 		QuadraticMatrix Right4 = QuadraticMatrix.multiplication(Right41, P4_inverse.getIntMatrix());
 		BigInteger denominator4 = P4.getDenominator().multiply(P4_inverse.getDenominator());
@@ -669,9 +661,9 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M5_entries = {{1,1,-1,3},{0,1,0,0},{0,1,-1,3},{0,0,0,1}};
 		QuadraticMatrix M5 = intToBigInteger(M5_entries);
-		QuadraticMatrix J5 = M5.jordanMatrix();
-		RationalMatrix P5 = QuadraticMatrix.modalMatrix(M5, J5);
-		RationalMatrix P5_inverse = RationalMatrix.inverse(P5);
+		QuadraticMatrix J5 = M5.constructJordanTransformation().getJnf();
+		RationalMatrix P5 = QuadraticMatrix.computeModalMatrix(M5, J5);
+		RationalMatrix P5_inverse = RationalMatrix.computeInverse(P5);
 		QuadraticMatrix Right51 = QuadraticMatrix.multiplication(P5.getIntMatrix(), J5);
 		QuadraticMatrix Right5 = QuadraticMatrix.multiplication(Right51, P5_inverse.getIntMatrix());
 		BigInteger denominator5 = P5.getDenominator().multiply(P5_inverse.getDenominator());
@@ -685,9 +677,9 @@ public class QuadraticMatrixTest {
 		// abfuck matrix
 		int[][] matrix6Entries = {{-1,0,-1,1,1,3,0},{0,1,0,0,0,0,0},{2,1,2,-1,-1,-6,0},{-2,0,-1,2,1,3,0},{0,0,0,0,1,0,0},{0,0,0,0,0,1,0},{-1,-1,0,1,2,4,1}};
 		QuadraticMatrix matrix6 = intToBigInteger(matrix6Entries);
-		QuadraticMatrix jordan6 = matrix6.jordanMatrix();
-		RationalMatrix modal6 = QuadraticMatrix.modalMatrix(matrix6, jordan6);
-		RationalMatrix modal6Inverse = RationalMatrix.inverse(modal6);
+		QuadraticMatrix jordan6 = matrix6.constructJordanTransformation().getJnf();
+		RationalMatrix modal6 = QuadraticMatrix.computeModalMatrix(matrix6, jordan6);
+		RationalMatrix modal6Inverse = RationalMatrix.computeInverse(modal6);
 		QuadraticMatrix Right61 = QuadraticMatrix.multiplication(modal6.getIntMatrix(), jordan6);
 		QuadraticMatrix Right6 = QuadraticMatrix.multiplication(Right61, modal6Inverse.getIntMatrix());
 		BigInteger denominator6 = modal6.getDenominator().multiply(modal6Inverse.getDenominator());
