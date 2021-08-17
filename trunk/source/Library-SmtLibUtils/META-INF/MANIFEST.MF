@@ -9,6 +9,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bd
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier,
