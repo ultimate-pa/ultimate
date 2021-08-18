@@ -1599,6 +1599,7 @@ public class CfgBuilder {
 		private final InternalLbeMode mInternalLbeMode;
 		final boolean mSimplifyCodeBlocks;
 		private final Set<BoogieIcfgLocation> mAtomicPoints = new HashSet<>();
+		private final Set<BoogieIcfgLocation> mEntryNodes;
 
 		// straight-line sequential composition points
 		private final Set<BoogieIcfgLocation> mSequentialQueue = new HashSet<>();
@@ -1612,11 +1613,12 @@ public class CfgBuilder {
 			mInternalLbeMode = internalLbeMode;
 			mSimplifyCodeBlocks = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY);
+			mEntryNodes = new HashSet<>(mIcfg.getProcedureEntryNodes().values());
+
 			if (mInternalLbeMode == InternalLbeMode.ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS
 					|| mInternalLbeMode == InternalLbeMode.ONLY_ATOMIC_BLOCK) {
 				collectAtomicPoints();
 			}
-
 			getAllLocations().forEach(pp -> considerCompositionCandidate(pp, true));
 
 			// We distinguish 3 types of compositions: straight-line sequential compositions, parallel compositions, and
@@ -1786,7 +1788,7 @@ public class CfgBuilder {
 		 * Determines what kind of sequential composition (if any) should be performed at this node.
 		 */
 		private SequentialCompositionType classifySequentialCompositionNode(final BoogieIcfgLocation pp) {
-			if (pp.getIncomingEdges().isEmpty() || pp.getOutgoingEdges().isEmpty()) {
+			if (pp.getIncomingEdges().isEmpty() || pp.getOutgoingEdges().isEmpty() || mEntryNodes.contains(pp)) {
 				return SequentialCompositionType.NONE;
 			}
 			if (DataStructureUtils.haveNonEmptyIntersection(new HashSet<>(pp.getIncomingEdges()),
