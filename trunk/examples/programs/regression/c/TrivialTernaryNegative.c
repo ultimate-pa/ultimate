@@ -1,3 +1,4 @@
+//#Safe
 /*
  * Slight variation for program in bug reported by Philipp Berger on github.
  * <https://github.com/ultimate-pa/ultimate/issues/510>
