@@ -1252,7 +1252,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 	}
 
-	public void computeOwickiGries() {
+	@Override
+	protected void computeOwickiGriesAnnotation() {
 		assert !isSequential() : "Cannot compute Owicki-Gries for sequential program.";
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");

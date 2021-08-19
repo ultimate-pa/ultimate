@@ -107,7 +107,7 @@ public class CegarLoopUtils {
 						throw new UnsupportedOperationException("Reuse with Petri net-based analysis");
 					}
 					result = new CegarLoopForPetriNet<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							services, compositionFactory, transitionClazz);
+							computeHoareAnnotation, services, compositionFactory, transitionClazz);
 				}
 					break;
 				default:

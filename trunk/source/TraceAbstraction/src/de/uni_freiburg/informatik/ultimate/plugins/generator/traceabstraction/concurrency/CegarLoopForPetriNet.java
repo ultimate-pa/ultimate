@@ -156,10 +156,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
-			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
-			final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
-				compositionFactory, transitionClazz);
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(),
+				computeHoareAnnotation, services, compositionFactory, transitionClazz);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
 		mCounterexampleCache = new CounterexampleCache<>();
 	}
@@ -704,7 +704,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	}
 
 	@Override
-	public void computeOwickiGries() {
+	protected void computeOwickiGriesAnnotation() {
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}

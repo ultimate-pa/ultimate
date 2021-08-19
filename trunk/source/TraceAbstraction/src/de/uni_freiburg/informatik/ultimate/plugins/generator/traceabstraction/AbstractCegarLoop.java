@@ -280,6 +280,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	 */
 	protected abstract void computeIcfgHoareAnnotation();
 
+	protected void computeOwickiGriesAnnotation() {
+		mLogger.warn("Computation of Owicki-Gries proof not supported by " + getClass().getSimpleName());
+	}
+
 	protected abstract Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata();
 
 	/**
@@ -828,8 +832,12 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			}
 
 			if (mComputeHoareAnnotation && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
-				computeIcfgHoareAnnotation();
-				writeHoareAnnotationToLogger();
+				if (mIcfg.isSequential()) {
+					computeIcfgHoareAnnotation();
+					writeHoareAnnotationToLogger();
+				} else {
+					computeOwickiGriesAnnotation();
+				}
 			} else {
 				mLogger.debug("Omitting computation of Hoare annotation");
 			}
