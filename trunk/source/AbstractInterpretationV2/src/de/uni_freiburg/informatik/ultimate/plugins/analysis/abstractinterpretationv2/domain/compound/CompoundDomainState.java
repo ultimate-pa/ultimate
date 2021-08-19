@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * A state in the {@link CompoundDomain}.
@@ -147,7 +148,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
 		return mAbstractStates.get(0).getVariables();
 	}
 

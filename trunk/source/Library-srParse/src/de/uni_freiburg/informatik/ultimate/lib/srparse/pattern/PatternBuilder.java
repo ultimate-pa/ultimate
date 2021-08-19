@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,14 +60,14 @@ public class PatternBuilder {
 
 	private static final Class<?>[] PATTERNS = new Class<?>[] { BndDelayedResponsePatternUT.class,
 			BndDelayedResponsePatternTU.class, BndEdgeResponsePattern.class, BndEdgeResponsePatternDelayed.class,
-			BndEntryConditionPattern.class, BndExistencePattern.class, BndInvariancePattern.class,
-			BndPossResponsePattern.class, BndRecurrencePattern.class, BndResponsePatternTT.class,
-			BndResponsePatternTU.class, BndResponsePatternUT.class, BndTriggeredEntryConditionPattern.class,
-			BndTriggeredEntryConditionPatternDelayed.class, ConstrainedChainPattern.class,
-			EdgeResponsePatternDelayed.class, InitializationPattern.class, InstAbsPattern.class, InvariantPattern.class,
-			MaxDurationPattern.class, MinDurationPattern.class, PossibilityPattern.class,
-			PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class, PrecedencePattern.class,
-			ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
+			BndEdgeResponsePatternTU.class, BndEntryConditionPattern.class, BndExistencePattern.class,
+			BndInvariancePattern.class, BndPossResponsePattern.class, BndRecurrencePattern.class,
+			BndResponsePatternTT.class, BndResponsePatternTU.class, BndResponsePatternUT.class,
+			BndTriggeredEntryConditionPattern.class, BndTriggeredEntryConditionPatternDelayed.class,
+			ConstrainedChainPattern.class, EdgeResponsePatternDelayed.class, InitializationPattern.class,
+			InstAbsPattern.class, InvariantPattern.class, MaxDurationPattern.class, MinDurationPattern.class,
+			PossibilityPattern.class, PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class,
+			PrecedencePattern.class, ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
 			UniversalityPatternDelayed.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
@@ -164,7 +165,7 @@ public class PatternBuilder {
 		}
 		final PatternTypeConstructor constr = getConstructor(mClazz);
 		if (mDurationNames.stream().allMatch(Objects::isNull)) {
-			return constr.construct(mScope, mId, mCDDs, mDurations, null);
+			return constr.construct(mScope, mId, mCDDs, mDurations, Collections.emptyList());
 		}
 
 		for (int i = 0; i < mDurations.size(); ++i) {
@@ -187,6 +188,23 @@ public class PatternBuilder {
 			throw new UnsupportedOperationException("Unknown pattern type " + clazz);
 		}
 		return constr;
+	}
+
+	public static PatternType<?> normalize(final PatternType<?> p, final Durations durations) {
+		if (p instanceof InitializationPattern) {
+			return p;
+		}
+		final PatternBuilder pb = new PatternBuilder();
+		pb.mId = p.getId();
+		pb.mScope = p.getScope();
+		pb.mClazz = (Class<? extends PatternType<?>>) p.getClass();
+		pb.mDurationNames.addAll(p.getDurationNames());
+		pb.mCDDs.addAll(p.getCdds());
+		final Rational durationScale = durations.computeScalingFactor();
+		for (final Rational d : p.getDurations()) {
+			pb.mDurations.add(d.mul(durationScale));
+		}
+		return pb.build(durations);
 	}
 
 	@FunctionalInterface

@@ -575,14 +575,13 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
 					if (!ALLOW_AT_DIFF
-							&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isPropertySatisfied(withoutIndices)) {
+							&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isSatisfiedBySomeSubterm(withoutIndices)) {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
 					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
 					Term lessQuantifiers;
 					try {
-						lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScriptCfg,
-								withoutIndicesNormalized, mSimplificationTechnique, mXnfConversionTechnique);
+						lessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScriptCfg, mSimplificationTechnique, withoutIndicesNormalized);
 					} catch (final AssertionError ae) {
 						if (IGNORE_PQE_ERROR) {
 							lessQuantifiers = withoutIndicesNormalized;

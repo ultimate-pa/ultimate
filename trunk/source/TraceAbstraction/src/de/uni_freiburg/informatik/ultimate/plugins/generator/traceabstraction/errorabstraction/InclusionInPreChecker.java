@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * Checks the implication (the name 'Hoare triple checker' is misleading) {@literal P => ¬ wp(¬ P', st)} which is
  * equivalent to {@literal P => pre(P', st)}.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class InclusionInPreChecker implements IHoareTripleChecker {
@@ -132,9 +132,8 @@ public class InclusionInPreChecker implements IHoareTripleChecker {
 	private Term getWpInternal(final IInternalAction act, final IPredicate succ) {
 		Term result = mPt.weakestPrecondition(mPf.not(succ), act.getTransformula());
 		if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
-			result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mCsToolkit.getManagedScript(),
-					result, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term term = result;
+			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
 		}
 		return result;
 	}
@@ -149,9 +148,8 @@ public class InclusionInPreChecker implements IHoareTripleChecker {
 		Term result = mPt.weakestPreconditionCall(mPf.not(succ), act.getTransformula(), globalVarsAssignments,
 				oldVarAssignments, modifiableGlobals);
 		if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
-			result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mCsToolkit.getManagedScript(),
-					result, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term term = result;
+			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
 		}
 		return result;
 	}
@@ -167,9 +165,8 @@ public class InclusionInPreChecker implements IHoareTripleChecker {
 		Term result = mPt.weakestPreconditionReturn(mPf.not(succ), preHier, returnTf, callTf, oldVarAssignments,
 				modifiableGlobals);
 		if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
-			result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mCsToolkit.getManagedScript(),
-					result, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term term = result;
+			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
 		}
 		return result;
 	}

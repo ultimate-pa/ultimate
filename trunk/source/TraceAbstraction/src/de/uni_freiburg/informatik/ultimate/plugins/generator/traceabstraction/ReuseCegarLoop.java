@@ -104,7 +104,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 
 	public ReuseCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
@@ -150,8 +150,8 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 		countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter);
 		// Create empty automaton with same alphabet
 		final NestedWordAutomaton<L, IPredicate> resAutomaton = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
+				new AutomataLibraryServices(getServices()), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
+		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
 				mCsToolkit.getManagedScript(), mPredicateFactory, mCsToolkit.getSymbolTable(),
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
@@ -445,7 +445,8 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 		if (res.length == 1) {
 			mLogger.warn("String " + rawString + " doesn't have a # symbol in it. Kepping entire string.");
 			return res[0];
-		} else if (res.length == 2) {
+		}
+		if (res.length == 2) {
 			// res[0] is the serial number, res[1] is the string
 			return res[1];
 		} else {
@@ -502,7 +503,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			case AS_USUAL:
 				// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
 				// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
-				return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 						mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
 			case ONLY_NEW_LETTERS:
 				return constructEfficientIgnoringHtc(false);
@@ -521,7 +522,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 					TraceAbstractionUtils.constructSmtHoareTripleChecker(mPref.getHoareTripleChecks(), mCsToolkit);
 			final EfficientIgnoringHoareTripleChecker eiHtc = new EfficientIgnoringHoareTripleChecker(smtHtc,
 					mCsToolkit, getPredicateUnifier(), constructOldAlphabet(), allowSdForProtectedActions);
-			return new CachingHoareTripleCheckerMap(mServices, eiHtc, getPredicateUnifier());
+			return new CachingHoareTripleCheckerMap(getServices(), eiHtc, getPredicateUnifier());
 		}
 
 		private Set<L> constructOldAlphabet() {

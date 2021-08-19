@@ -53,9 +53,9 @@ public class LizardRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 	public LizardRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
-				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(
 						InterpolationTechnique.Craig_NestedInterpolation, AssertCodeBlockOrder.NOT_INCREMENTALLY),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
+						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates,
 								AssertCodeBlockOrder.NOT_INCREMENTALLY) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}

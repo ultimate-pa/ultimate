@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -125,9 +125,8 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 			final boolean useAbstractInterpretationPredicates = mPrefs.getUseAbstractInterpretation();
 			final boolean useWpPredicates = mPrefs.getUseWeakestPreconditionForPathInvariants();
 
-			final SolverSettings solverSettings =
-					mPrefs.constructSolverSettings(mTaskIdentifier).setUseFakeIncrementalScript(false)
-							.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_TIMEOUT, null);
+			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
+					.setUseFakeIncrementalScript(false).setUseExternalSolver(ExternalSolver.Z3, 12000);
 
 			final InvariantSynthesisSettings invariantSynthesisSettings = new InvariantSynthesisSettings(solverSettings,
 					useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWpPredicates, true);
@@ -138,12 +137,14 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 					invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
 					mPrefs.collectInterpolantStatistics());
 		case PDR:
-			return new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
-					mPrecondition, mPostcondition, mCounterexample.getWord().asList(), mTransitionClazz);
+			return new Pdr<>(mServices, mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
+					mPredicateUnifier, mPrecondition, mPostcondition, mCounterexample.getWord().asList(),
+					mTransitionClazz);
 
 		case AcceleratedInterpolation:
-			return new AcceleratedInterpolation<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
-					managedScript, mPredicateUnifier, (IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
+			return new AcceleratedInterpolation<>(mServices,
+					mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, managedScript,
+					mPredicateUnifier, (IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
 					mPrefs.getLoopAccelerationTechnique().toString());
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);
@@ -158,7 +159,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 		}
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
 			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier);
-			return mPrefs.getCfgSmtToolkit().createFreshManagedScript(solverSettings);
+			return mPrefs.getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings);
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
 	}

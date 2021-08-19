@@ -51,28 +51,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class WarthogNoAmRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class WarthogNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public WarthogNoAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public WarthogNoAmRefinementStrategy(final StrategyModuleFactory<L> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
-			createModules(final StrategyModuleFactory<LETTER> factory) {
+	private static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
+			createModules(final StrategyModuleFactory<L> factory) {
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
-		final List<IIpTcStrategyModule<?, LETTER>> rtr = new ArrayList<>();
+		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoFloats(tc)) {
-			rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.ForwardPredicates,
+			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.ForwardPredicates,
 					SolverBuilder.LOGIC_CVC4_BITVECTORS, AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// floats, but no quantifiers and no extensions
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.ForwardPredicates,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		}
-		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}

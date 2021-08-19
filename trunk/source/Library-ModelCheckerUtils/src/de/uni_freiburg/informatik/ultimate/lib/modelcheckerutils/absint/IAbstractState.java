@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * An abstract state is an abstraction of all program variables at a certain program location.
@@ -109,7 +110,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE>> {
 	/**
 	 * @return an unmodifiable {@link Set} containing all variables declared in this state.
 	 */
-	Set<IProgramVarOrConst> getVariables();
+	ImmutableSet<IProgramVarOrConst> getVariables();
 
 	/**
 	 * Create a new {@link IAbstractState} by renaming a variable.

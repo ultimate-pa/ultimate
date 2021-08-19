@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.CachingBoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
  *
  * @author hoenicke
  */
-public class FunctionInliner extends CachingBoogieTransformer implements IUnmanagedObserver {
+public class FunctionInliner extends BoogieTransformer implements IUnmanagedObserver {
 
 	/**
 	 * A map containing the functions that should be inlined. The key is the function name.

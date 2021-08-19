@@ -148,9 +148,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			}
 			final Term jointTerm = script.quantifier(Script.EXISTS, new TermVariable[] { n },
 					script.term("and", quantifiedFormula, quantifiedFormulaK, result));
-			final Term simplified = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgScript,
-					jointTerm, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term simplified = PartialQuantifierElimination.eliminateCompat(mServices, mMgScript, SimplificationTechnique.SIMPLIFY_DDA, jointTerm);
 
 			// Quantifier - End
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(originalLoopTransFormula.getInVars(), outVars,
@@ -221,9 +219,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final Term quantifiedFormula = script.quantifier(Script.FORALL, new TermVariable[] { j }, conditions);
 			final Term jointTerm = script.quantifier(Script.EXISTS, new TermVariable[] { n },
 					script.term("and", quantifiedFormula, result));
-			final Term simplified = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgScript,
-					jointTerm, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term simplified = PartialQuantifierElimination.eliminateCompat(mServices, mMgScript, SimplificationTechnique.SIMPLIFY_DDA, jointTerm);
 
 			// Quantifier - End
 

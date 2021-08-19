@@ -168,14 +168,23 @@ public class DataStructureUtils {
 	 * @return
 	 */
 	public static <T> boolean haveNonEmptyIntersection(final Set<T> set1, final Set<T> set2) {
-		return getSomeCommonElement(set1, set2).isPresent();
+		final Set<T> larger;
+		final Set<T> smaller;
+		if (set1.size() > set2.size()) {
+			larger = set1;
+			smaller = set2;
+		} else {
+			larger = set2;
+			smaller = set1;
+		}
+		return smaller.stream().anyMatch(larger::contains);
 	}
 
 	/**
 	 * @return Both sets are disjunct
 	 */
 	public static <T> boolean haveEmptyIntersection(final Set<T> set1, final Set<T> set2) {
-		return !getSomeCommonElement(set1, set2).isPresent();
+		return !haveNonEmptyIntersection(set1, set2);
 	}
 
 	public static <E> String prettyPrint(final Set<E> set) {
@@ -352,4 +361,46 @@ public class DataStructureUtils {
 		return rtr;
 	}
 
+	/**
+	 * Gets an element from a given {@link Iterable}, and checks (with assertions) that this element is the only one.
+	 *
+	 * @param <E>
+	 *            The type of elements
+	 *
+	 * @param elements
+	 *            The {@link Iterable} from which the first element is retrieved.
+	 * @param thing
+	 *            A string describing the kind of element that is retrieved. Used in the assertion error messages
+	 * @return The first (and only) element
+	 */
+	public static <E> E getOneAndOnly(final Iterable<E> elements, final String thing) {
+		final Iterator<E> iterator = elements.iterator();
+		assert iterator.hasNext() : "Must have at least one " + thing;
+		final E elem = iterator.next();
+		assert !iterator.hasNext() : "Only one " + thing + " allowed";
+		return elem;
+	}
+
+	/**
+	 * Gets an element from a given {@link Iterable}, if there is one. Also checks (with assertions) that there are not
+	 * more than one elements.
+	 *
+	 * @param <E>
+	 *            The type of elements
+	 *
+	 * @param elements
+	 *            The {@link Iterable} from which the first element is retrieved.
+	 * @param errMsg
+	 *            An error message used in the assertion that there are not more elements
+	 * @return The first (and only) element, if there is one
+	 */
+	public static <E> Optional<E> getOnly(final Iterable<E> elements, final String errMsg) {
+		final Iterator<E> iterator = elements.iterator();
+		if (!iterator.hasNext()) {
+			return Optional.empty();
+		}
+		final E elem = iterator.next();
+		assert !iterator.hasNext() : errMsg;
+		return Optional.of(elem);
+	}
 }

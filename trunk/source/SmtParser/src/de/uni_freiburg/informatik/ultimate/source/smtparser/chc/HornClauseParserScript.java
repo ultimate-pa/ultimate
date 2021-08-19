@@ -329,9 +329,8 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 			snfBody = snfTerm;
 			snfVars = null;
 		}
-		final Set<Term> constraints =
-				new SubTermFinder(term -> term.getSort().getName().equals("Bool") && hasNoUninterpretedPredicates(term),
-						true).findMatchingSubterms(snfBody);
+		final Set<Term> constraints = SubTermFinder.find(snfBody,
+				term -> term.getSort().getName().equals("Bool") && hasNoUninterpretedPredicates(term), true);
 		final Map<Term, Term> subs = new HashMap<>();
 		final Map<Term, Term> subsInverse = new HashMap<>();
 		// replace constraints with a boolean constant
@@ -343,8 +342,8 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 		}
 		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(snfBody);
 
-		final Term cnfWConstraintsReplaced =
-				new CnfTransformer(mManagedScript, mServices, true).transform(bodyWithConstraintsReplaced);
+		final Term cnfWConstraintsReplaced = new CnfTransformer(mManagedScript, mServices)
+				.transform(bodyWithConstraintsReplaced);
 
 		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
 

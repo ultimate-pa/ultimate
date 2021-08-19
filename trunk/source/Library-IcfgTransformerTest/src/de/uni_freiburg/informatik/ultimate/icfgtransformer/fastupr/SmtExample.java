@@ -95,12 +95,14 @@ public class SmtExample {
 		final Term isFalseOuter = mScript.term("=", quantified, mScript.term("false"));
 		final Term isFalseInner = mScript.quantifier(QuantifiedFormula.EXISTS, new TermVariable[] { k },
 				mScript.term("=", conj, mScript.term("false")));
-		final Term simplfOuter = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript,
-				isFalseOuter, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final Term simplfInner = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript,
-				isFalseInner, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdScript;
+		final Term simplfOuter = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, isFalseOuter);
+		final IUltimateServiceProvider services1 = mServices;
+		final ILogger logger1 = mLogger;
+		final ManagedScript mgdScript1 = mMgdScript;
+		final Term simplfInner = PartialQuantifierElimination.eliminateCompat(services1, mgdScript1, SimplificationTechnique.SIMPLIFY_DDA, isFalseInner);
 
 		mLogger.info("Original (in):");
 		mLogger.info(isFalseInner.toStringDirect());

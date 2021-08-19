@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IpTcStrategyModuleMathsat<LETTER extends IIcfgTransition<?>> extends IpTcStrategyModuleSpWp<LETTER> {
+public class IpTcStrategyModuleMathsat<L extends IIcfgTransition<?>> extends IpTcStrategyModuleSpWp<L> {
 
 	private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES =
 			new InterpolationTechnique[] { InterpolationTechnique.ForwardPredicates,
@@ -58,9 +58,9 @@ public class IpTcStrategyModuleMathsat<LETTER extends IIcfgTransition<?>> extend
 	private final InterpolationTechnique mInterpolationTechnique;
 
 	public IpTcStrategyModuleMathsat(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
+			final TaCheckAndRefinementPreferences<L> prefs, final IRun<L, ?> counterExample,
 			final IPredicate precondition, final IPredicate postcondition,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final AssertionOrderModulation<L> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final InterpolationTechnique interpolationTechnique) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
 				predicateUnifier, predicateFactory);
@@ -72,8 +72,7 @@ public class IpTcStrategyModuleMathsat<LETTER extends IIcfgTransition<?>> extend
 	@Override
 	protected ManagedScript constructManagedScript() {
 		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
-				.setUseExternalSolver(true, SolverBuilder.COMMAND_MATHSAT, SolverBuilder.LOGIC_MATHSAT)
-				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
+				.setUseExternalSolver(ExternalSolver.MATHSAT).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
 		return createExternalManagedScript(solverSettings);
 	}
 

@@ -94,8 +94,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
 
-	public AcceleratedInterpolationCore(final ILogger logger, final ManagedScript script,
-			final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
+	public AcceleratedInterpolationCore(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript script, final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
 			final IRun<L, IPredicate> counterexample, final IIcfg<?> icfg,
 			final ILoopdetector<IcfgLocation, L> loopdetector,
 			final ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> loopPreprocessor,
@@ -121,7 +121,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		mPrefs = prefs;
-		mServices = prefs.getUltimateServices();
+		mServices = services;
 		mPredUnifier = predicateUnifier;
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 		mSimplificationTechnique = prefs.getSimplificationTechnique();
@@ -188,8 +188,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				}
 				accelerationFinishedCorrectly = true;
 				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
-				t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t,
-						mSimplificationTechnique, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				final Term term = t;
+				t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
 
 				if (mLogger.isDebugEnabled()) {
@@ -291,7 +291,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private ManagedScript constructManagedScriptForInterpolation() throws AssertionError {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(false)
 				.setSolverMode(SolverMode.Internal_SMTInterpol);
-		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(solverSettings);
+		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings);
 	}
 
 	/**
@@ -435,8 +435,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			}
 			accelerationFinishedCorrectly = true;
 			Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
-			t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, t, mSimplificationTechnique,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term term = t;
+			t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
 			final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
 			mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
 			accelerations.add(tf);

@@ -131,7 +131,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		// repair old pea
 		setFlags(oldPea.getInit());
 		final Phase[] oldLocations = oldPea.getPhases();
-		final int dcEffectPhase = getHighestDCPhase(oldLocations);
+		final int dcEffectPhase = getHighestDCPhase(oldLocations, dcFormula);
 		mLogger.info(new StringBuilder("Effect Variables of ").append(pattern.toString()).append(": ")
 				.append(effectVars.toString()).toString() + ", with effect phase: " + Integer.toString(dcEffectPhase));
 		final Phase[] newLocations = transformLocations(oldPea, oldSymbolTable, effectVars, dcEffectPhase, dcFormula);
@@ -265,10 +265,10 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return toTrackVars;
 	}
 
-	private static int getHighestDCPhase(final Phase[] oldLocations) {
+	private static int getHighestDCPhase(final Phase[] oldLocations, final DCPhase[] dcFormula) {
 		// Find the last phase that is mentioned in automaton. Its the effect phase.
 		int lastDcPhase = 0;
-		for (int i = 0; i < oldLocations.length; i++) {
+		for (int i = 0; i < dcFormula.length; i++) {
 			for (final Phase p : oldLocations) {
 				final PhaseBits pb = p.getPhaseBits();
 				if (pb != null && (pb.isActive(i) || pb.isWaiting(i) || pb.isExact(i)) && i > lastDcPhase) {

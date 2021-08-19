@@ -57,6 +57,7 @@ public class PolyPoNe {
 	private final Set<Term> mNegative = new HashSet<>();
 	private final HashRelation<Map<?, Rational>, PolynomialRelation> mPolyRels = new HashRelation<>();
 	private boolean mInconsistent = false;
+	private boolean mSimplificationPossible = false;
 
 	PolyPoNe(final Script script) {
 		mScript = script;
@@ -90,14 +91,23 @@ public class PolyPoNe {
 		}
 	}
 
-	Term and(final Collection<Term> params) {
+	Term and(final List<Term> params) {
 		add(params, false);
-		return and();
+		if (mSimplificationPossible) {
+			return and();
+		} else {
+			return SmtUtils.and(mScript, params);
+		}
 	}
 
-	Term or(final Collection<Term> params) {
+	Term or(final List<Term> params) {
 		add(params, true);
-		return or();
+		if (mSimplificationPossible) {
+			return or();
+		} else {
+
+			return SmtUtils.or(mScript, params);
+		}
 	}
 
 	protected Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
@@ -146,6 +156,7 @@ public class PolyPoNe {
 				final boolean modified = mPolyRels.removePair(existing.getPolynomialTerm().getAbstractVariable2Coefficient(),
 						existing);
 				assert modified : "nothing removed";
+				mSimplificationPossible = true;
 			}
 		}
 		return null;
@@ -161,8 +172,10 @@ public class PolyPoNe {
 			mPolyRels.addPair(polyRel.getPolynomialTerm().getAbstractVariable2Coefficient(), polyRel);
 			return false;
 		} else if (check == Check.REDUNDANT) {
+			mSimplificationPossible = true;
 			return false;
 		} else if (check == Check.INCONSISTENT) {
+			mSimplificationPossible = true;
 			return true;
 		} else {
 			throw new AssertionError("unknown value " + check);
@@ -201,6 +214,7 @@ public class PolyPoNe {
 		boolean result;
 		switch (check) {
 		case INCONSISTENT:
+			mSimplificationPossible = true;
 			result = true;
 			break;
 		case MAYBE_USEFUL:
@@ -208,6 +222,7 @@ public class PolyPoNe {
 			result = false;
 			break;
 		case REDUNDANT:
+			mSimplificationPossible = true;
 			result = false;
 			break;
 		default:
@@ -234,6 +249,7 @@ public class PolyPoNe {
 		boolean result;
 		switch (check) {
 		case INCONSISTENT:
+			mSimplificationPossible = true;
 			result = true;
 			break;
 		case MAYBE_USEFUL:
@@ -241,6 +257,7 @@ public class PolyPoNe {
 			result = false;
 			break;
 		case REDUNDANT:
+			mSimplificationPossible = true;
 			result = false;
 			break;
 		default:

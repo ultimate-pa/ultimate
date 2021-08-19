@@ -32,10 +32,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * A marking of a Petri Net which is a set of places.
@@ -50,7 +52,7 @@ import java.util.stream.Stream;
 public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
-	private final Set<PLACE> mPlaces;
+	private final ImmutableSet<PLACE> mPlaces;
 
 	/**
 	 * Constructor.
@@ -58,8 +60,8 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @param places
 	 *            places
 	 */
-	public Marking(final Set<PLACE> places) {
-		mPlaces = places;
+	public Marking(final ImmutableSet<PLACE> places) {
+		mPlaces = Objects.requireNonNull(places);
 	}
 
 	/**
@@ -138,8 +140,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		return prime + ((mPlaces == null) ? 0 : mPlaces.hashCode());
+		return mPlaces.hashCode();
 	}
 
 	/**
@@ -147,27 +148,10 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
-//		if (transition instanceof InhibitorTransition<?, ?>) {
-//			final InhibitorTransition<LETTER, PLACE> it = (InhibitorTransition<LETTER, PLACE>) transition;
-//			if (containsAny(it.getInhibitors())) {
-//				return false;
-//			}
-//		}
+	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
+			final IPetriNet<LETTER, PLACE> net) {
 		return mPlaces.containsAll(net.getPredecessors(transition));
 	}
-
-	/*
-	/**
-	 * Adds the places of another marking.
-	 *
-	 * @param other
-	 */
-	/*
-	public void add(Marking<LETTER, PLACE> other) {
-		mPlaces.addAll(other.mPlaces);
-	}
-	*/
 
 	/**
 	 * @param transition
@@ -187,23 +171,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 					.filter(successors::contains).collect(Collectors.toList());
 			throw new PetriNetNot1SafeException(getClass(), unsafePlaces);
 		}
-		return new Marking<>(resultSet);
-	}
-
-	/**
-	 * Revokes the occurrence of the specified transition if valid.
-	 *
-	 * @param transition
-	 *            transition
-	 * @return {@code true} iff all successor places are contained.
-	 */
-	public boolean undoTransition(final ITransition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
-		if (!mPlaces.containsAll(net.getSuccessors(transition))) {
-			return false;
-		}
-		mPlaces.removeAll(net.getSuccessors(transition));
-		mPlaces.addAll(net.getPredecessors(transition));
-		return true;
+		return new Marking<>(ImmutableSet.of(resultSet));
 	}
 
 	@Override
@@ -214,6 +182,4 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	public Stream<PLACE> stream() {
 		return mPlaces.stream();
 	}
-
-
 }

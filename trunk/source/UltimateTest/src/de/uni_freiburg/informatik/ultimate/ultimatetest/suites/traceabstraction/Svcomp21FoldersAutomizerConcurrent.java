@@ -34,8 +34,9 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.ThreeTierTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder.ExpectedResultFinderStatus;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
@@ -85,7 +86,7 @@ public class Svcomp21FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 
 
 	@Override
-	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
+	protected ThreeTierTestResultDecider<?> constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new SvcompReachTestResultDecider(urd, false);
 	}
 
@@ -131,14 +132,14 @@ public class Svcomp21FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
 			for (final String toolchain : TOOLCHAINS) {
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
+				addTestsWithExpectedResult(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
 						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SETTINGS_32BIT, toolchain,
 						getTimeout(), dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_64BIT) {
 			for (final String toolchain : TOOLCHAINS) {
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
+				addTestsWithExpectedResult(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
 						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SETTINGS_64BIT, toolchain,
 						getTimeout(), dfep.getOffset(), dfep.getLimit()));
 			}
@@ -146,4 +147,13 @@ public class Svcomp21FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 		return super.createTestCases();
 	}
 
+	private void addTestsWithExpectedResult(final Collection<UltimateRunDefinition> urds) {
+		for (final UltimateRunDefinition urd : urds) {
+			final var erf = constructITestResultDecider(urd).constructExpectedResultFinder();
+			erf.findExpectedResult(urd);
+			if (erf.getExpectedResultFinderStatus() == ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND) {
+				addTestCase(urd);
+			}
+		}
+	}
 }

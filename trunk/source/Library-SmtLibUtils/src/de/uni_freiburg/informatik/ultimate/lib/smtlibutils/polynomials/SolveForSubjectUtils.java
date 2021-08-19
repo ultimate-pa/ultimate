@@ -209,8 +209,11 @@ public class SolveForSubjectUtils {
 			final Term subtermSumComparison = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.EQ, xnf),
 					divModSubterm.getParameters()[0], sum);
 			// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
+			final HashSet<TermVariable> bannedForDivCaptureWithAuxiliary = new HashSet<>(bannedForDivCapture);
+			bannedForDivCaptureWithAuxiliary.add(auxDiv);
+			bannedForDivCaptureWithAuxiliary.add(auxMod);
 			solvedComparison = PolynomialRelation.convert(script, subtermSumComparison).solveForSubject(script, subject,
-					xnf, bannedForDivCapture);
+					xnf, bannedForDivCaptureWithAuxiliary);
 			if (solvedComparison == null) {
 				return null;
 			}

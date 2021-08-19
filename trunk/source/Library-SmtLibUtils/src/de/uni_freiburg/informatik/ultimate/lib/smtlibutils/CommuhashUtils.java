@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.function.Predicate;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -87,6 +89,31 @@ public class CommuhashUtils {
 			return script.term(funcname, indices, returnSort, sortByHashCode(params));
 		}
 		return script.term(funcname, indices, returnSort, params);
+	}
+
+	public static boolean isInCommuhashNormalForm(final Term term, final String... operators) {
+		final Predicate<Term> property = (x -> !rootInCommuhashNormalForm(x, operators));
+		return !new SubtermPropertyChecker(property).isSatisfiedBySomeSubterm(term);
+	}
+
+	private static boolean rootInCommuhashNormalForm(final Term term, final String... operators) {
+		final boolean result;
+		if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (Arrays.asList(operators).contains(appTerm.getFunction().getName())) {
+				result = areParamsSorted(appTerm.getParameters());
+			} else {
+				result = true;
+			}
+		} else {
+			result = true;
+		}
+		return result;
+	}
+
+	private static boolean areParamsSorted(final Term[] params) {
+		final Term[] sorted = sortByHashCode(params);
+		return Arrays.equals(params, sorted);
 	}
 
 }

@@ -84,8 +84,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -174,9 +174,9 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 
 	private final Class<L> mTransitionClazz;
 
-	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final IPredicate precondition, final IPredicate postcondition, final List<L> counterexample,
-			final Class<L> transitionClazz) {
+	public Pdr(final IUltimateServiceProvider services, final ILogger logger, final ITraceCheckPreferences prefs,
+			final IPredicateUnifier predicateUnifier, final IPredicate precondition, final IPredicate postcondition,
+			final List<L> counterexample, final Class<L> transitionClazz) {
 		// from params
 		mLogger = logger;
 		mTrace = counterexample;
@@ -191,7 +191,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			throw new UnsupportedOperationException("Currently, only postcondition false is supported");
 		}
 
-		mServices = prefs.getUltimateServices();
+		mServices = services;
 		mIcfg = prefs.getIcfgContainer();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
@@ -494,9 +494,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 					 */
 					if (res == LBool.SAT) {
 						Term pre = mPredTrans.pre(toBeBlocked, predTF);
-						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
-								SimplificationTechnique.SIMPLIFY_DDA,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						final Term term = pre;
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 						final IPredicate prePred = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						final ProofObligation newProofObligation =
@@ -587,9 +586,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						final IPredicate callPred = mTruePred;
 						Term pre =
 								mPredTrans.preReturn(toBeBlocked, callPred, assOfRet, assOfCall, oldVarAssign, modVars);
-						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
-								SimplificationTechnique.SIMPLIFY_DDA,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						final Term term = pre;
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 						poPostReturn = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						// Other idea: create formula of old(y) = y and add that to the frames.
@@ -640,9 +638,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						final IPredicate callPred = mTruePred;
 						Term pre = mPredTrans.preReturn(newProofObligation.getToBeBlocked(), callPred, assOfRet,
 								assOfCall, oldVarAssign, modVars);
-						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
-								SimplificationTechnique.SIMPLIFY_DDA,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						final Term term = pre;
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 						poPostReturn = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						final ProofObligation newLocalProofObligation;
@@ -990,12 +987,10 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			IPredicate localPred;
 			if (init.contains(loc)) {
 				localPred = globalFrame;
+			} else if (globalFrame != mTruePred) {
+				localPred = mLocalPredicateUnifier.getOrConstructPredicate(globalFrame);
 			} else {
-				if (globalFrame != mTruePred) {
-					localPred = mLocalPredicateUnifier.getOrConstructPredicate(globalFrame);
-				} else {
-					localPred = mFalsePred;
-				}
+				localPred = mFalsePred;
 			}
 			newLocalFrame.add(new Pair<>(ChangedFrame.U, localPred));
 			localFrames.put(loc, newLocalFrame);
@@ -1234,9 +1229,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 					final Term pdrTerm = interpolants[l - 1].getFormula();
 					withPdr = SmtUtils.and(mScript.getScript(), pred.getFormula(), pdrTerm);
 				}
-				final Term afterQuantElim = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
-						withPdr, SimplificationTechnique.SIMPLIFY_QUICK,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				final Term term = withPdr;
+				final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_QUICK, term);
 				final IPredicate result = mLocalPredicateUnifier.getOrConstructPredicate(afterQuantElim);
 				assert result != null;
 				return result;
@@ -1347,12 +1341,10 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 				final IProgramNonOldVar nonOldVar = ((IProgramOldVar) bv).getNonOldVar();
 				if (modifiableGlobalsPred.contains(nonOldVar)) {
 					// var modifiable, do nothing
+				} else if (primedRequired.contains(bv)) {
+					nonModifiableGlobalsPrimed.add(nonOldVar);
 				} else {
-					if (primedRequired.contains(bv)) {
-						nonModifiableGlobalsPrimed.add(nonOldVar);
-					} else {
-						nonModifiableGlobalsUnprimed.add(nonOldVar);
-					}
+					nonModifiableGlobalsUnprimed.add(nonOldVar);
 				}
 			}
 		}
@@ -1378,7 +1370,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		// we extract and one to perform the actual checks
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.Internal_SMTInterpol).setSolverLogics(Logics.AUFLIRA);
-		return csToolkit.createFreshManagedScript(solverSettings, "PdrSolver");
+		return csToolkit.createFreshManagedScript(services, solverSettings, "PdrSolver");
 	}
 
 	/** ITraceCheck interface **/
@@ -1460,11 +1452,11 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		if (isCorrect() == LBool.UNSAT) {
 			return new InterpolantComputationStatus();
-		} else if (isCorrect() == LBool.SAT) {
-			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
-		} else {
-			throw new UnsupportedOperationException();
 		}
+		if (isCorrect() == LBool.SAT) {
+			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	/** End IInterpolantGenerator interface **/

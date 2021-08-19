@@ -144,14 +144,12 @@ public interface IRefinementStrategy<L extends IAction> {
 	IHoareTripleChecker getHoareTripleChecker(IRefinementEngine<L, ?> engine);
 
 	/**
-	 * Some strategies might need a specific {@link IPredicateUnifier} (e.g., AbsInt, ...) and can provide it here. The
+	 * Some strategies need a specific {@link IPredicateUnifier} (e.g., AbsInt, ...) and can provide it here. The
 	 * refinement engine will pick it up after completing a strategy and provide it to this iteration of the CEGAR loop.
-	 *
-	 * If your strategy does not require a specific {@link IPredicateUnifier}, return null.
 	 *
 	 * @param engine
 	 *            the {@link IRefinementEngine} instance after the strategy has been completely processed.
-	 * @return An {@link IPredicateUnifier} instance particular to this strategy or null
+	 * @return An {@link IPredicateUnifier} instance particular to this strategy
 	 */
 	IPredicateUnifier getPredicateUnifier(IRefinementEngine<L, ?> engine);
 

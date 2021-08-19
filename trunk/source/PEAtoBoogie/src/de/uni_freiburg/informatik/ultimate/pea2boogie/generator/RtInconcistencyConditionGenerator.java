@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -61,30 +62,34 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.EpsilonTransformer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.IEpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -141,7 +146,7 @@ public class RtInconcistencyConditionGenerator {
 	private final Substitution mConstInliner;
 
 	private final ILogger mPQELogger;
-	private final EpsilonTransformer mEpsilonTransformer;
+	private final IEpsilonTransformer mEpsilonTransformer;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable, final List<ReqPeas> reqPeas,
@@ -178,8 +183,15 @@ public class RtInconcistencyConditionGenerator {
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
-		mLogger.info("Using epsilon=%s for rt-consistency checks", SmtUtils.toString(durations.computeEpsilon()));
-		mEpsilonTransformer = new EpsilonTransformer(mScript, durations.computeEpsilon(), mReqSymboltable);
+
+		final boolean useEpsilon =
+				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(Pea2BoogiePreferences.LABEL_USE_EPSILON);
+		if (useEpsilon) {
+			mLogger.info("Using epsilon=%s for rt-consistency checks", SmtUtils.toString(durations.computeEpsilon()));
+			mEpsilonTransformer = new EpsilonTransformer(mScript, durations.computeEpsilon(), mReqSymboltable);
+		} else {
+			mEpsilonTransformer = IEpsilonTransformer.identity();
+		}
 		final Map<Term, Term> constToValue = createConst2Value(mScript, mReqSymboltable, mBoogie2Smt);
 		mConstInliner = new Substitution(mScript, constToValue);
 
@@ -200,11 +212,10 @@ public class RtInconcistencyConditionGenerator {
 		for (final Entry<String, Expression> constEntry : constToValue.entrySet()) {
 			final BoogieConst programConst = boogieConsts.get(constEntry.getKey());
 			final Optional<Term> value = LiteralUtils.toTerm(constEntry.getValue(), script);
-			if (value.isPresent()) {
-				rtr.put(programConst.getTerm(), value.get());
-			} else {
+			if (!value.isPresent()) {
 				throw new IllegalArgumentException(BoogiePrettyPrinter.print(constEntry.getValue()) + " is no literal");
 			}
+			rtr.put(programConst.getTerm(), value.get());
 		}
 
 		return rtr;
@@ -254,9 +265,8 @@ public class RtInconcistencyConditionGenerator {
 
 	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
 
-		SolverSettings settings =
-				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
-						.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL);
+		SolverSettings settings = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
 		// SolverSettings settings =
 		// SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
 		// .setSolverLogics(Logics.ALL);
@@ -300,7 +310,7 @@ public class RtInconcistencyConditionGenerator {
 				mLogger.info(pea.getName() + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(pea));
 			}
 			if (automata.length < 4) {
-				final Optional<PhaseEventAutomata> prod = Arrays.stream(automata).reduce((a, b) -> a.parallel(b));
+				final Optional<PhaseEventAutomata> prod = Arrays.stream(automata).reduce(PhaseEventAutomata::parallel);
 				if (prod.isPresent()) {
 					mLogger.info(
 							"PRODUCT" + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(prod.get()));
@@ -428,11 +438,11 @@ public class RtInconcistencyConditionGenerator {
 				mEpsilonTransformer::transformClockInvariant, "clock invariant");
 	}
 
-	private Term transformAndLog(final CDD org, final Function<Term, Term> funTrans, final String msg) {
+	private Term transformAndLog(final CDD org, final UnaryOperator<Term> funTrans, final String msg) {
 		final Term orgTerm = mCddToSmt.toSmt(org);
 		final Term transTerm = funTrans.apply(orgTerm);
 		if (orgTerm != transTerm) {
-			mLogger.info("Transformed %s %s to %s", msg, orgTerm, transTerm);
+			mLogger.info("Epsilon-transformed %s %s to %s", msg, orgTerm, transTerm);
 		}
 		return transTerm;
 	}
@@ -453,7 +463,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term simplify(final Term term) {
-		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.POLY_PAC);
 	}
 
 	private Term constructPrimedStateInvariant(final List<ReqPeas> reqPeas) throws InvariantInfeasibleException {
@@ -474,7 +484,8 @@ public class RtInconcistencyConditionGenerator {
 		final Map<PatternType<?>, Term> terms;
 		if (primedStateInvariants.isEmpty()) {
 			return mTrue;
-		} else if (primedStateInvariants.size() == 1) {
+		}
+		if (primedStateInvariants.size() == 1) {
 			final Entry<PatternType<?>, CDD> entry = primedStateInvariants.entrySet().iterator().next();
 			result = mCddToSmt.toSmt(entry.getValue());
 			terms = Collections.singletonMap(entry.getKey(), result);
@@ -534,9 +545,7 @@ public class RtInconcistencyConditionGenerator {
 		mQelimQuery++;
 		final Term afterQelimFormula;
 		try {
-			afterQelimFormula = PartialQuantifierElimination.tryToEliminate(mServices, mPQELogger, mManagedScript,
-					quantifiedFormula, SimplificationTechnique.NONE,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			afterQelimFormula = tryToEliminate(quantifiedFormula);
 		} catch (final SMTLIBException ex) {
 			mLogger.fatal("Exception occured during PQE of " + term);
 			throw ex;
@@ -575,13 +584,12 @@ public class RtInconcistencyConditionGenerator {
 		final Set<String> stateVars = mReqSymboltable.getStateVars();
 		for (final TermVariable var : freeVars) {
 			final Expression expr = mBoogie2Smt.getTerm2Expression().translate(var);
-			if (expr instanceof IdentifierExpression) {
-				final String name = ((IdentifierExpression) expr).getIdentifier();
-				if (primedVars.contains(name) || eventVars.contains(name) || stateVars.contains(name)) {
-					rtr.add(var);
-				}
-			} else {
+			if (!(expr instanceof IdentifierExpression)) {
 				throw new AssertionError();
+			}
+			final String name = ((IdentifierExpression) expr).getIdentifier();
+			if (primedVars.contains(name) || eventVars.contains(name) || stateVars.contains(name)) {
+				rtr.add(var);
 			}
 		}
 
@@ -605,6 +613,16 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.binaryEquality(mScript, getTermVarTerm(pcName), mScript.numeral(Integer.toString(phaseIndex)));
 	}
 
+	private Term tryToEliminate(final QuantifiedFormula quantified) {
+		final Term lightResult = QuantifierPushTermWalker.eliminate(mServices, mManagedScript, false,
+				PqeTechniques.LIGHT, SimplificationTechnique.NONE, quantified);
+		if (new SubtermPropertyChecker(QuantifiedFormula.class::isInstance).isSatisfiedBySomeSubterm(lightResult)) {
+			return QuantifierPushTermWalker.eliminate(mServices, mManagedScript, true, PqeTechniques.ALL,
+					SimplificationTechnique.NONE, lightResult);
+		}
+		return lightResult;
+	}
+
 	public static final class InvariantInfeasibleException extends Exception {
 
 		private static final long serialVersionUID = 1L;
@@ -612,7 +630,7 @@ public class RtInconcistencyConditionGenerator {
 
 		private InvariantInfeasibleException(final Collection<PatternType<?>> responsibleRequirements) {
 			super("Some invariants are already infeasible. Responsible requirements: "
-					+ responsibleRequirements.stream().map(a -> a.getId()).collect(Collectors.joining(", ")));
+					+ responsibleRequirements.stream().map(PatternType::getId).collect(Collectors.joining(", ")));
 			mResponsibleRequirements = responsibleRequirements;
 		}
 

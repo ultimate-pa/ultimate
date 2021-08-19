@@ -60,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -711,7 +711,8 @@ public class ElimStorePlain {
 			throws ElimStorePlainException {
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), eTask.getQuantifier(),
 				eTask.getEliminatees(), eTask.getTerm());
-		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, techniques, quantified);
+		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, techniques,
+				SimplificationTechnique.SIMPLIFY_DDA, quantified);
 
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);

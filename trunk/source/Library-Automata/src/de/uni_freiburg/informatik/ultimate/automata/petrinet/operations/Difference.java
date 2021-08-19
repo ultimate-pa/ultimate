@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -399,7 +400,7 @@ public final class Difference
 			successors.add(blackSucc);
 		}
 		copyMinuendFlow(oldTrans, predecessors, successors);
-		mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
+		mResult.addTransition(oldTrans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 	}
 
 	private void syncWithSelfloops(final ITransition<LETTER, PLACE> oldTrans) {
@@ -452,7 +453,7 @@ public final class Difference
 			predecessors.add(wPlace);
 			successors.add(wPlace);
 			copyMinuendFlow(oldTrans, predecessors, successors);
-			mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
+			mResult.addTransition(oldTrans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 		}
 	}
 
@@ -496,7 +497,7 @@ public final class Difference
 			predecessors.add(bPlace);
 			successors.add(bPlace);
 		}
-		mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
+		mResult.addTransition(oldTrans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 	}
 
 	private void copyMinuendFlow(final ITransition<LETTER, PLACE> trans, final Collection<PLACE> preds,

@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
  * Wrapper that constructs SMTInterpol or an external SMT solver.
  *
  * @author heizmann@informatik.uni-freiburg.de
- * @author dietsch@informatik.uni-freiburg.de,
+ * @author dietsch@informatik.uni-freiburg.de
  */
 public final class SolverBuilder {
 
@@ -95,28 +95,10 @@ public final class SolverBuilder {
 		}
 	}
 
-	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
-	public static final String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
-
-	public static final String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --incremental --print-success --lang smt";
-	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
-
-	// 20161214 Matthias: MathSAT does not support timeouts
-	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
-	public static final String COMMAND_MATHSAT_INTERPOLATION =
-			"mathsat -theory.bv.eager=false -theory.fp.enabled=false";
-
-	public static final long TIMEOUT_SMTINTERPOL = 12_000L;
-	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
-	public static final Logics LOGIC_Z3 = Logics.ALL;
 	public static final Logics LOGIC_CVC4_DEFAULT = Logics.AUFLIRA;
 	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.ALL;
-	public static final Logics LOGIC_MATHSAT = Logics.ALL;
-	public static final Logics LOGIC_SMTINTERPOL = Logics.ALL;
-
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
 
-	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 
 	private SolverBuilder() {
@@ -137,21 +119,27 @@ public final class SolverBuilder {
 	 * @return A Script that represents an SMT solver which is defined by settings.
 	 */
 	public static Script buildScript(final IUltimateServiceProvider services, final SolverSettings settings) {
+		final ILogger localLogger = services.getLoggingService().getLogger(SolverBuilder.class);
 		final ILogger solverLogger = getSolverLogger(services, settings);
 		Script script;
 		if (settings.useExternalSolver()) {
-			script = createExternalSolver(services, settings, solverLogger);
+			script = createExternalSolver(services, settings, solverLogger, localLogger);
 		} else {
-			solverLogger.info("constructing new instance of SMTInterpol");
+			localLogger.info(
+					"Constructing new instance of SMTInterpol with explicit timeout %s ms and remaining time %s ms",
+					settings.getTimeoutSmtInterpol(), services.getProgressMonitorService().remainingTime());
 			final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(solverLogger);
 			final TerminationRequest termRequest =
 					new SMTInterpolTerminationRequest(services.getProgressMonitorService());
 			script = new SMTInterpol(loggerWrapper, termRequest);
 			if (settings.dumpSmtScriptToFile()) {
-				script = wrapScriptWithLoggingScript(services, script, solverLogger,
+				script = wrapScriptWithLoggingScript(services, script, localLogger,
 						settings.constructFullPathOfDumpedScript());
 			}
-			script.setOption(":timeout", settings.getTimeoutSmtInterpol());
+			if (settings.getTimeoutSmtInterpol() != -1) {
+				script.setOption(":timeout", settings.getTimeoutSmtInterpol());
+			}
+
 			// ensure that SMTInterpol is exited when toolchain ends
 			script = new SelfDestructingSolverStorable(script, services.getStorage());
 		}
@@ -175,15 +163,15 @@ public final class SolverBuilder {
 	}
 
 	private static Script createExternalSolver(final IUltimateServiceProvider services, final SolverSettings settings,
-			final ILogger solverLogger) {
+			final ILogger solverLogger, final ILogger localLogger) {
 		assert settings.getSolverMode() == null || settings
 				.getSolverMode() != SolverMode.Internal_SMTInterpol : "You set solver mode to Internal* and enabled useExternalSolver";
 		final String command = settings.getCommandExternalSolver();
-		solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
+		localLogger.info("Constructing external solver with command: %s", settings.getCommandExternalSolver());
 		final String fullPathOfDumpedFile;
 		if (settings.dumpSmtScriptToFile()) {
 			fullPathOfDumpedFile = settings.constructFullPathOfDumpedScript();
-			solverLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
+			localLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
 		} else {
 			fullPathOfDumpedFile = null;
 		}
@@ -200,7 +188,7 @@ public final class SolverBuilder {
 					script = new Scriptor(command, solverLogger, services, "External", fullPathOfDumpedFile);
 				}
 			} else {
-				solverLogger.info("external solver will use " + externalInterpolator + " interpolation mode");
+				localLogger.info("external solver will use " + externalInterpolator + " interpolation mode");
 				script = new ScriptorWithGetInterpolants(command, solverLogger, services, externalInterpolator,
 						"ExternalInterpolator", fullPathOfDumpedFile);
 			}
@@ -208,7 +196,7 @@ public final class SolverBuilder {
 				script = new DiffWrapperScript(script);
 			}
 		} catch (final IOException e) {
-			solverLogger.fatal("Unable to construct solver");
+			localLogger.fatal("Unable to construct solver: %s", e.getMessage());
 			throw new RuntimeException(e);
 		}
 		return script;
@@ -243,15 +231,15 @@ public final class SolverBuilder {
 	}
 
 	private static Script wrapScriptWithLoggingScript(final IUltimateServiceProvider services, final Script script,
-			final ILogger solverLogger, final String fullPathOfDumpedFile) {
+			final ILogger localLogger, final String fullPathOfDumpedFile) {
 		final Script wrappedScript;
 		try {
 			// wrap with SelfDestructingSolverStorable to ensure that .gz streams are closed if solver crashes
 			wrappedScript = new SelfDestructingSolverStorable(new LoggingScript(script, fullPathOfDumpedFile, true),
 					services.getStorage());
-			solverLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
+			localLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
 		} catch (final IOException e) {
-			solverLogger.error("Unable dump SMT script to " + fullPathOfDumpedFile);
+			localLogger.error("Unable dump SMT script to " + fullPathOfDumpedFile);
 			throw new RuntimeException(e);
 		}
 		return wrappedScript;
@@ -261,7 +249,7 @@ public final class SolverBuilder {
 		if (settings.getSolverLogger() != null) {
 			return settings.getSolverLogger();
 		}
-		return services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
+		return services.getLoggingService().getLoggerForExternalTool(SolverBuilder.class);
 	}
 
 	private static void setSolverModeDependentOptions(final SolverSettings solverSettings, final Script script)
@@ -318,11 +306,10 @@ public final class SolverBuilder {
 			script.setOption(":produce-interpolants", true);
 			script.setOption(":interpolant-check-mode", true);
 			script.setOption(":proof-transformation", "LU");
-			if (logic != null) {
-				script.setLogic(logic);
-			} else {
-				script.setLogic(LOGIC_SMTINTERPOL.toString());
+			if (logic == null) {
+				throw new AssertionError("SMTInterpol requires explicit logic");
 			}
+			script.setLogic(logic);
 			break;
 		default:
 			throw new AssertionError("unknown solver");
@@ -338,7 +325,7 @@ public final class SolverBuilder {
 
 		@Override
 		public boolean isTerminationRequested() {
-			return !mMonitor.continueProcessingRoot();
+			return !mMonitor.continueProcessing();
 		}
 	}
 
@@ -552,9 +539,19 @@ public final class SolverBuilder {
 					mAdditionalOptions, mSolverLogger);
 		}
 
-		public SolverSettings setSmtInterpolTimeout(final long timeoutSmtInterpol) {
+		/**
+		 * Set timeout for SmtInterpol in milliseconds.
+		 *
+		 * @param timeoutInMsSmtInterpol
+		 *            timeout in milliseconds. Must be non-negative or -1 to disable timeout.
+		 */
+		public SolverSettings setSmtInterpolTimeout(final long timeoutInMsSmtInterpol) {
+			if (timeoutInMsSmtInterpol < 0 && timeoutInMsSmtInterpol != -1) {
+				throw new IllegalArgumentException(
+						"Timeout for SMTInterpol must be non-negative or -1 to disable timeout");
+			}
 			return new SolverSettings(mSolverMode, mFakeNonIncrementalScript, mUseExternalSolver,
-					mExternalSolverCommand, mSolverLogics, timeoutSmtInterpol, mExternalInterpolator,
+					mExternalSolverCommand, mSolverLogics, timeoutInMsSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript,
 					mBaseNameOfDumpedScript, mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath,
 					mCompressDumpedScript, mAdditionalOptions, mSolverLogger);
@@ -567,6 +564,54 @@ public final class SolverBuilder {
 					mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
 					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath, mCompressDumpedScript,
 					mAdditionalOptions, mSolverLogger);
+		}
+
+		/**
+		 * Use an external solver with default command, logic, and no timeout
+		 */
+		public SolverSettings setUseExternalSolver(final ExternalSolver solver) {
+			return setUseExternalSolver(true, solver.getSolverCommand(), solver.getDefaultLogic());
+		}
+
+		/**
+		 * Use an external solver with default command.
+		 *
+		 * @param solver
+		 *            The external solver.
+		 * @param logic
+		 *            The logic we should set in the solver or null if we should not set any logic
+		 * @param timeout
+		 *            A timeout in ms that should be supplied to the solver. Use only non-negative values. Some solvers
+		 *            do not support setting a timeout.
+		 */
+		public SolverSettings setUseExternalSolver(final ExternalSolver solver, final Logics logic,
+				final long timeout) {
+			return setUseExternalSolver(true, solver.getSolverCommand(timeout), logic);
+		}
+
+		/**
+		 * Use an external solver with default command and no timeout.
+		 *
+		 * @param solver
+		 *            The external solver.
+		 * @param logic
+		 *            The logic we should set in the solver or null if we should not set any logic
+		 */
+		public SolverSettings setUseExternalSolver(final ExternalSolver solver, final Logics logic) {
+			return setUseExternalSolver(true, solver.getSolverCommand(), logic);
+		}
+
+		/**
+		 * Use an external solver with default command and default logic.
+		 *
+		 * @param solver
+		 *            The external solver.
+		 * @param timeout
+		 *            A non-negative timeout in ms that should be supplied to the solver or -1 if no timeout should be
+		 *            used. Some solvers do not support setting a timeout.
+		 */
+		public SolverSettings setUseExternalSolver(final ExternalSolver solver, final long timeout) {
+			return setUseExternalSolver(true, solver.getSolverCommand(timeout), solver.getDefaultLogic());
 		}
 
 		public SolverSettings setUseFakeIncrementalScript(final boolean enable) {
@@ -659,7 +704,7 @@ public final class SolverBuilder {
 				timeoutSmtInterpol = -1;
 				externalInterpolator = null;
 				useDiffWrapper = false;
-				logics = LOGIC_SMTINTERPOL;
+				logics = ExternalSolver.SMTINTERPOL.getDefaultLogic();
 				break;
 			default:
 				throw new AssertionError("unknown solver mode " + solverMode);
@@ -731,6 +776,64 @@ public final class SolverBuilder {
 
 		private String getKey() {
 			return getClass().getSimpleName() + mId;
+		}
+	}
+
+	/**
+	 * Enumeration that provides default command line strings for SMT solvers in different modes as well as their
+	 * default logics and -- if available -- commands for setting a timeout.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum ExternalSolver {
+		Z3("z3 -smt2 -in SMTLIB2_COMPLIANT=true", "z3 -smt2 -in SMTLIB2_COMPLIANT=true" + " -t:%d", Logics.ALL),
+
+		CVC4("cvc4 --incremental --print-success --lang smt",
+				"cvc4 --incremental --print-success --lang smt" + " --tlimit-per=%d", LOGIC_CVC4_DEFAULT),
+
+		MATHSAT("mathsat -unsat_core_generation=3", null, Logics.ALL),
+
+		MATHSAT_INTERPOLATION("mathsat -theory.bv.eager=false -theory.fp.enabled=false", null, Logics.ALL),
+
+		SMTINTERPOL(null, null, Logics.ALL),
+
+		PRINCESS(null, null, null);
+
+		private final String mSolverCommand;
+		private final String mSolverCommandTimeoutFormatString;
+		private final Logics mDefaultLogic;
+
+		ExternalSolver(final String solverCommand, final String solverCommandTimeoutFormatString,
+				final Logics defaultLogic) {
+			mSolverCommand = solverCommand;
+			mSolverCommandTimeoutFormatString = solverCommandTimeoutFormatString;
+			mDefaultLogic = defaultLogic;
+		}
+
+		public String getSolverCommand() {
+			if (mSolverCommand == null) {
+				throw new UnsupportedOperationException("Unknown or not implemented solver command: " + this);
+			}
+			return mSolverCommand;
+		}
+
+		public String getSolverCommand(final long timeout) {
+			if (timeout == -1) {
+				return getSolverCommand();
+			}
+			if (timeout < 0) {
+				throw new IllegalArgumentException("Timeout must be non-negative");
+			}
+			if (mSolverCommandTimeoutFormatString == null) {
+				throw new UnsupportedOperationException(
+						"Unknown or not implemented solver command with timeouts: " + this);
+			}
+			return String.format(mSolverCommandTimeoutFormatString, timeout);
+		}
+
+		public Logics getDefaultLogic() {
+			return mDefaultLogic;
 		}
 	}
 }

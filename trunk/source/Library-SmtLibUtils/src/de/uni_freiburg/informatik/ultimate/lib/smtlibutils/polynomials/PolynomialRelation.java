@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -385,21 +387,41 @@ public class PolynomialRelation implements IBinaryRelation {
 			assert mTrivialityStatus == TrivialityStatus.NONTRIVIAL;
 			final List<Term> lhsSummands = new ArrayList<>();
 			final List<Term> rhsSummands = new ArrayList<>();
-			for (final Entry<Term, Rational> entry : mPolynomialTerm.getAbstractVariableAsTerm2Coefficient(script).entrySet()) {
+			for (final Entry<Term, Rational> entry : mPolynomialTerm.getAbstractVariableAsTerm2Coefficient(script)
+					.entrySet()) {
 				final Term abstractVariableAsTerm = entry.getKey();
-				if (entry.getValue().isNegative()) {
-					rhsSummands.add(SmtUtils.mul(script, entry.getValue().abs(), abstractVariableAsTerm));
+				if (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())) {
+					if (isNegativeAsSignedInt(entry.getValue(), mPolynomialTerm.getSort())) {
+						rhsSummands
+								.add(SmtUtils.mul(script, entry.getValue().mul(Rational.MONE), abstractVariableAsTerm));
+					} else {
+						lhsSummands.add(SmtUtils.mul(script, entry.getValue(), abstractVariableAsTerm));
+					}
 				} else {
-					lhsSummands.add(SmtUtils.mul(script, entry.getValue(), abstractVariableAsTerm));
+					if (entry.getValue().isNegative()) {
+						rhsSummands.add(SmtUtils.mul(script, entry.getValue().abs(), abstractVariableAsTerm));
+					} else {
+						lhsSummands.add(SmtUtils.mul(script, entry.getValue(), abstractVariableAsTerm));
+					}
 				}
 			}
 			if (mPolynomialTerm.getConstant() != Rational.ZERO) {
-				if (mPolynomialTerm.getConstant().isNegative()) {
-					rhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant().abs(),
-							mPolynomialTerm.getSort()));
+				if (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())) {
+					if (isNegativeAsSignedInt(mPolynomialTerm.getConstant(), mPolynomialTerm.getSort())) {
+						rhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant().mul(Rational.MONE),
+								mPolynomialTerm.getSort()));
+					} else {
+						lhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant(),
+								mPolynomialTerm.getSort()));
+					}
 				} else {
-					lhsSummands.add(
-							SmtUtils.rational2Term(script, mPolynomialTerm.getConstant(), mPolynomialTerm.getSort()));
+					if (mPolynomialTerm.getConstant().isNegative()) {
+						rhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant().abs(),
+								mPolynomialTerm.getSort()));
+					} else {
+						lhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant(),
+								mPolynomialTerm.getSort()));
+					}
 				}
 			}
 			final Term lhsTerm =
@@ -411,6 +433,22 @@ public class PolynomialRelation implements IBinaryRelation {
 					script) != LBool.SAT : "transformation to positive normal form " + "unsound";
 			return result;
 		}
+	}
+
+	/**
+	 * Interpret the value as an integer given by the two's complement
+	 * representation of the bitvector value. Return true iff this integer is
+	 * negative.
+	 */
+	private static boolean isNegativeAsSignedInt(final Rational value, final Sort sort) {
+		if (!value.isIntegral()) {
+			throw new AssertionError();
+		}
+		if (!SmtSortUtils.isBitvecSort(sort)) {
+			throw new AssertionError();
+		}
+		final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(value.numerator(), sort);
+		return (bc.toSignedInt().compareTo(BigInteger.ZERO) < 0);
 	}
 
 	/**

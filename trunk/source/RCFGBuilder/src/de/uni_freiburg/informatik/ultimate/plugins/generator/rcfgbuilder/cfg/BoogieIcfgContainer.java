@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -100,22 +100,22 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations,
 			final Boogie2SMT mBoogie2smt, final ConcurrencyInformation concurInfo) {
 
-		mEntryNodes = new HashMap<>();
-		mExitNode = new HashMap<>();
-		mFinalNode = new HashMap<>();
-		mLocNodes = new HashMap<>();
-		mErrorNodes = new HashMap<>();
-		mLoopLocations = new HashSet<>();
-		mInitialNodes = new HashSet<>();
+		mEntryNodes = new LinkedHashMap<>();
+		mExitNode = new LinkedHashMap<>();
+		mFinalNode = new LinkedHashMap<>();
+		mLocNodes = new LinkedHashMap<>();
+		mErrorNodes = new LinkedHashMap<>();
+		mLoopLocations = new LinkedHashSet<>();
+		mInitialNodes = new LinkedHashSet<>();
 
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
 		final ManagedScript mgScript = mBoogie2smt.getManagedScript();
-		final Set<String> procs = new HashSet<>();
+		final Set<String> procs = new LinkedHashSet<>();
 		procs.addAll(boogieDeclarations.getProcImplementation().keySet());
 		procs.addAll(boogieDeclarations.getProcSpecification().keySet());
 		final SerialProvider serialprovider = new SerialProvider();
-		mCfgSmtToolkit = new CfgSmtToolkit(services,
+		mCfgSmtToolkit = new CfgSmtToolkit(
 				new ModifiableGlobalsTable(
 						mBoogie2smt.getBoogie2SmtSymbolTable().constructProc2ModifiableGlobalsMapping()),
 				mgScript, mBoogie2smt.getBoogie2SmtSymbolTable(), procs,

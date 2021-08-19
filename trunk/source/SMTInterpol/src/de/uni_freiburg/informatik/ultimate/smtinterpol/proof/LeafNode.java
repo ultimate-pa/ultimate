@@ -40,6 +40,8 @@ public class LeafNode extends ProofNode {
 	public final static int EQ = -6;
 	/// An assumption
 	public final static int ASSUMPTION = -7;
+	/// DataType-lemma
+	public final static int THEORY_DT = -8;
 
 	private final int mLeafKind;
 	private IAnnotation mAnnotation;

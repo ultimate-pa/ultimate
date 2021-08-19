@@ -68,6 +68,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * ∀x. x≠t ∨ φ(x)   ⟿⟿⟿      φ[x-->t]
  * </pre>
  *
+ * If relations do not have the form x=t (resp. x≠t) we use our
+ * {@link PolynomialRelation}s and {@link SolvedBinaryRelation}s and try to
+ * bring them into this form.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class DualJunctionDer extends DualJunctionQuantifierElimination {

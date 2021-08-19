@@ -63,8 +63,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -346,10 +346,10 @@ public class Elim1Store {
 					doubleCaseJuncts);
 			final Term doubleCaseTermMod;
 			if (APPLY_DOUBLE_CASE_SIMPLIFICATION) {
-				final Term resultWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result,
-						context);
+				final Term criticalConstraint = SmtUtils.and(mScript,
+						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, result), context);
 				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, doubleCaseTerm,
-						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, resultWithContext), mServices,
+						criticalConstraint, mServices,
 						SimplificationTechnique.SIMPLIFY_DDA);
 				mLogger.info(esr.buildSizeReductionMessage());
 				doubleCaseTermMod = esr.getSimplifiedTerm();
