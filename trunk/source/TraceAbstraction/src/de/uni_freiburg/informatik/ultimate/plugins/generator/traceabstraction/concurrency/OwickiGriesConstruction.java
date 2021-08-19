@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -60,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -86,7 +85,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
-	private final ArrayList<IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> mRefinementEngines;
+	private final List<IRefinementEngineResult<LETTER, ?>> mRefinementEngines;
 	private final DefaultIcfgSymbolTable mSymbolTable;
 
 	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
@@ -99,8 +98,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IPetriNet<LETTER, PLACE> net, final Map<Marking<LETTER, PLACE>, IPredicate> floydHoare,
-			final ArrayList<IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines,
-			final boolean useHittingSets) {
+			final List<IRefinementEngineResult<LETTER, ?>> refinementEngines, final boolean useHittingSets) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mManagedScript = csToolkit.getManagedScript();

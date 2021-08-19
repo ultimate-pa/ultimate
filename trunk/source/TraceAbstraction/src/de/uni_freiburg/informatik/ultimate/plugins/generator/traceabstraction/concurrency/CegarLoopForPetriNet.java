@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -102,7 +103,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pe
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -151,8 +152,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	private final CounterexampleCache<L> mCounterexampleCache;
 	private BranchingProcess<L, IPredicate> mFinPrefix;
 	private IPetriNet<L, IPredicate> mInitialNet;
-	protected ArrayList<IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>>> mRefinementEngines =
-			new ArrayList<>();
+	private final List<IRefinementEngineResult<L, ?>> mRefinementEngines = new ArrayList<>();
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
@@ -277,7 +277,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final BoundedPetriNet<L, IPredicate> abstraction = (BoundedPetriNet<L, IPredicate>) mAbstraction;
-		mRefinementEngines.add(mRefinementEngine);
+		mRefinementEngines.add(mRefinementResult);
 		final IHoareTripleChecker htc;
 		if (mRefinementResult.getHoareTripleChecker() != null) {
 			htc = mRefinementResult.getHoareTripleChecker();
@@ -710,9 +710,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		final long startTime = System.nanoTime();
-		final OwickiGriesFloydHoare<IPredicate, L> floydHoare =
-				new OwickiGriesFloydHoare<>(mServices, mCsToolkit, mFinPrefix, mInitialNet, x -> x, mRefinementEngines,
-						mPref.owickiGriesIterativeCosets(), mPref.owickiGriesCoveringSimplification());
+		final OwickiGriesFloydHoare<IPredicate, L> floydHoare = new OwickiGriesFloydHoare<>(getServices(), mCsToolkit,
+				mFinPrefix, mInitialNet, x -> x, mRefinementEngines, mPref.owickiGriesIterativeCosets(),
+				mPref.owickiGriesCoveringSimplification());
 		final Map<Marking<L, IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 
 		// final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
@@ -737,14 +737,14 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		// }
 		// }
 
-		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(mServices, mCsToolkit,
-				mInitialNet, petriFloydHoare, mRefinementEngines, mPref.owickiGriesHittingSets());
+		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
+				mCsToolkit, mInitialNet, petriFloydHoare, mRefinementEngines, mPref.owickiGriesHittingSets());
 		// TODO: simplify
 		final long constructionTime = System.nanoTime();
 		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "
 				+ (constructionTime - startTime) + "ns");
 
-		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(mServices, mCsToolkit,
+		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(getServices(), mCsToolkit,
 				construction.getResult(), construction.getCoMarkedPlaces());
 		final long endTime = System.nanoTime();
 		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in "
