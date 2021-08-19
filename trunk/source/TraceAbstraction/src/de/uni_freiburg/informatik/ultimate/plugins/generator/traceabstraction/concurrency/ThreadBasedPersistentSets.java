@@ -351,7 +351,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 */
 	private boolean hasJoinConflict(final IcfgLocation persistentLoc, final IcfgLocation otherLoc) {
 		final String joinedThread = otherLoc.getProcedure();
-		if (persistentLoc.getProcedure() == joinedThread) {
+		if (joinedThread.equals(persistentLoc.getProcedure())) {
 			return false;
 		}
 		return IcfgUtils.canReachCached(persistentLoc,
@@ -362,7 +362,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 	private boolean hasErrorConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc) {
 		final String persistentThread = persistentLoc.getProcedure();
-		if (sourceLoc.getProcedure() == persistentThread) {
+		if (persistentThread.equals(sourceLoc.getProcedure())) {
 			return false;
 		}
 		return canReachConflict(persistentThread, sourceLoc, e -> mErrorLocs.contains(e.getTarget()),
