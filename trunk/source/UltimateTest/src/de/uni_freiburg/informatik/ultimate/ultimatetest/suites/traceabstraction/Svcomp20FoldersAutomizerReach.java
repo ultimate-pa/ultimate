@@ -193,7 +193,7 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		"default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 //		"automizer/DumpDifficultPathProgramsFromBoogie_svcomp-Reach-64bit-Automizer.epf"
 //		"automizer/LoopAccelerationJordan.epf",
-//		"svcomp-Reach-64bit-Automizer_Default_BvToInt.epf",
+//		"automizer/svcomp-Reach-64bit-Automizer_Default_BvToInt.epf",
 	};
 
 	private static final String[] SETTINGS_64BIT = {
