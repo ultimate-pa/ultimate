@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
@@ -407,7 +408,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			final Term predicateTerm) {
 		// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
 		final String threadNotInUseString = threadInstanceId + "NotInUse";
-		final IPredicate threadNotInUsePredicate = predicateFactory.newPredicate(predicateTerm);
+		final IPredicate threadNotInUsePredicate =
+				predicateFactory.construct(id -> new DebugPredicate(threadNotInUseString, id, predicateTerm));
 		net.addPlace(threadNotInUsePredicate, true, false);
 		return threadNotInUsePredicate;
 	}
@@ -417,7 +419,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			final Term predicateTerm) {
 		// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
 		final String threadInUseString = threadInstanceId + "InUse";
-		final IPredicate threadInUsePredicate = predicateFactory.newPredicate(predicateTerm);
+		final IPredicate threadInUsePredicate =
+				predicateFactory.construct(id -> new DebugPredicate(threadInUseString, id, predicateTerm));
 		net.addPlace(threadInUsePredicate, false, false);
 		return threadInUsePredicate;
 	}
