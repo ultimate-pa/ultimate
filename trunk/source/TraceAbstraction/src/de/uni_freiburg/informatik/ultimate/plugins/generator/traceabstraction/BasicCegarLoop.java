@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -157,6 +158,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.wi
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -1270,6 +1272,29 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			petriFloydHoare.put(marking, hoare);
 		}
 		assert !petriFloydHoare.isEmpty();
+
+		// Mark all reachable markings that do not have an assertion yet with TRUE.
+		final var stack = new ArrayDeque<Marking<L, IPredicate>>();
+		final var visited = new HashSet<>();
+		stack.push(new Marking<>(ImmutableSet.of(mPetriNet.getInitialPlaces())));
+		while (!stack.isEmpty()) {
+			final var src = stack.pop();
+			if (!visited.add(src)) {
+				continue;
+			}
+			petriFloydHoare.putIfAbsent(src, mPredicateFactory.and());
+			for (final var trans : mPetriNet.getTransitions()) {
+				if (!src.isTransitionEnabled(trans, mPetriNet)) {
+					continue;
+				}
+				try {
+					final var tgt = src.fireTransition(trans, mPetriNet);
+					stack.push(tgt);
+				} catch (final PetriNetNot1SafeException e) {
+					mLogger.fatal(e);
+				}
+			}
+		}
 
 		final OwickiGriesConstruction<IPredicate, L> construction =
 				new OwickiGriesConstruction<>(getServices(), mCsToolkit, mPetriNet, petriFloydHoare, null, false);
