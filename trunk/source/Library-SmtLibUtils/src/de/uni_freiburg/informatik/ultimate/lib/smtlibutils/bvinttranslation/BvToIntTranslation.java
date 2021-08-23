@@ -31,12 +31,18 @@ public class BvToIntTranslation extends TermTransformer {
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
 	private final LinkedHashMap<Term, Term> mReversedVarMap;
 
-	public BvToIntTranslation(final ManagedScript mgdscript, final TranslationConstrainer tc) {
+	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
+			final TranslationConstrainer tc) {
 
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
 		mNutzTransformation = false;
-		mVariableMap = new LinkedHashMap<Term, Term>();
+		if (variableMap != null) {
+			mVariableMap = variableMap;
+		} else {
+			mVariableMap = new LinkedHashMap<Term, Term>();
+		}
+
 		mReversedVarMap = new LinkedHashMap<Term, Term>();
 		mTc = tc;
 	}
@@ -48,23 +54,41 @@ public class BvToIntTranslation extends TermTransformer {
 	@Override
 	public void convert(final Term term) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
-		if (SmtSortUtils.isBitvecSort(term.getSort())) {
-			if (term instanceof TermVariable) {
-				setResult(translateVars(term));
-				return;
-			} else if (term instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (appTerm.getParameters().length == 0) {
-					if (SmtUtils.isConstant(appTerm)) {
-						final Term intVar = translateVars(term);
 
-						mTc.varConstraint(term, intVar); // Create and Collect Constraints
-						setResult(intVar);
-						return;
-					}
-
+		if (term instanceof TermVariable) {
+			setResult(translateVars(term));
+			return;
+		} else if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			final FunctionSymbol fsym = appTerm.getFunction();
+			if (appTerm.getParameters().length == 0) {
+				if (SmtUtils.isConstant(appTerm)) {
+					final Term intVar = translateVars(term);
+					mTc.varConstraint(term, intVar); // Create and Collect Constraints
+					setResult(intVar);
+					return;
 				}
-			} else if (term instanceof ConstantTerm) {
+			}
+			if (fsym.isIntern()) {
+				switch (fsym.getName()) {
+				case "bvor": {
+					// bvor = bvsub(bvadd, bvand)
+					final Term bvor = mScript.term("bvsub", mScript.term("bvadd", appTerm.getParameters()),
+							mScript.term("bvand", appTerm.getParameters()));
+					pushTerm(bvor);
+					return;
+				}
+				case "bvxor": {
+					pushTerm(mScript.term("bvsub",
+							mScript.term("bvsub", mScript.term("bvadd", appTerm.getParameters()),
+									mScript.term("bvand", appTerm.getParameters())),
+							mScript.term("bvand", appTerm.getParameters())));
+					return;
+				}
+				}
+			}
+		} else if (term instanceof ConstantTerm) {
+			if (SmtSortUtils.isBitvecSort(term.getSort())) {
 				final ConstantTerm constTerm = (ConstantTerm) term;
 				assert isBitVecSort(constTerm.getSort());
 				BigInteger constValue;
@@ -86,21 +110,59 @@ public class BvToIntTranslation extends TermTransformer {
 
 				setResult(intConst);
 				return;
+			} else {
+				throw new UnsupportedOperationException("unexpected constant sort");
 			}
 		}
 		super.convert(term);
 
 	}
 
-	private Term translateVars(final Term term) {
-		Term intVar;
-		intVar = mMgdScript.constructFreshTermVariable("intInVar", SmtSortUtils.getIntSort(mScript));
-		if (!(term instanceof TermVariable)) {
-			intVar = SmtUtils.termVariable2constant(mScript, (TermVariable) intVar, true);
+	private Sort translateArraySort(final Sort sort) {
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			return SmtSortUtils.getIntSort(mMgdScript);
+		} else if (SmtSortUtils.isArraySort(sort)) {
+			final Sort[] newArgs = new Sort[sort.getArguments().length];
+			for (int i = 0; i < sort.getArguments().length; i++) {
+				newArgs[i] = translateArraySort(sort.getArguments()[i]);
+			}
+			assert newArgs.length == 2;
+			final Sort domainSort = newArgs[0];
+			final Sort rangeSort = newArgs[1];
+			return SmtSortUtils.getArraySort(mMgdScript.getScript(), domainSort, rangeSort);
+		} else {
+			throw new AssertionError("Unexpected Sort: " + sort);
 		}
-		mVariableMap.put(term, intVar);
-		mReversedVarMap.put(intVar, term);
-		return intVar;
+	}
+
+	private Term translateVars(final Term term) {
+		if (mVariableMap.containsKey(term)) {
+			mReversedVarMap.put(mVariableMap.get(term), term);
+			return mVariableMap.get(term);
+		} else {
+			final Sort sort = term.getSort();
+			if (SmtSortUtils.isArraySort(sort)) {
+				Term arrayVar;
+				arrayVar = mMgdScript.constructFreshTermVariable("arrayVar", translateArraySort(sort));
+				if (!(term instanceof TermVariable)) {
+					arrayVar = SmtUtils.termVariable2constant(mScript, (TermVariable) arrayVar, true);
+				}
+				mVariableMap.put(term, arrayVar);
+				mReversedVarMap.put(arrayVar, term);
+				return arrayVar;
+			} else {
+				Term intVar;
+				intVar = mMgdScript.constructFreshTermVariable("intVar", SmtSortUtils.getIntSort(mScript));
+				if (!(term instanceof TermVariable)) {
+					intVar = SmtUtils.termVariable2constant(mScript, (TermVariable) intVar, true);
+				}
+				mVariableMap.put(term, intVar);
+				mReversedVarMap.put(intVar, term);
+				return intVar;
+			}
+
+		}
+
 	}
 
 	@Override
@@ -118,7 +180,6 @@ public class BvToIntTranslation extends TermTransformer {
 					newTermVars.add(old.getVariables()[i]);
 				}
 			}
-
 			setResult(SmtUtils.quantifier(mScript, old.getQuantifier(), newTermVars,
 					QuantifierUtils.applyDualFiniteConnective(mScript, old.getQuantifier(), newBody, QuantifierUtils
 							.negateIfUniversal(mScript, old.getQuantifier(), SmtUtils.and(mScript, tvConstraints)))));
@@ -128,6 +189,13 @@ public class BvToIntTranslation extends TermTransformer {
 		}
 	}
 
+	/*
+	 * TODO binarize or deal with equalities, additions etc with more than 2 argmuents
+	 * TODO bvsdiv bvsrem // testen ob auf argumente signed to unsgined angewendet werfden muss
+	 * TODO check if we have to do sth for extend's
+	 * TODO modularer
+	 * TODO bitvectorutils mod finden und testen
+	 */
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] args) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
@@ -139,13 +207,17 @@ public class BvToIntTranslation extends TermTransformer {
 			case "or":
 			case "not":
 			case "=>":
-			case "store":
+			case "store": {
+				setResult(mScript.term(fsym.getName(), args));
+				return;
+			}
 			case "select": {
 				setResult(mScript.term(fsym.getName(), args));
 				return;
 			}
 			}
 		}
+
 		if (appTerm.getParameters().length == 0) {
 			if (fsym.getName().matches(BITVEC_CONST_PATTERN)) {
 				final BigInteger constValue = new BigInteger(fsym.getName().substring(2));
@@ -164,7 +236,8 @@ public class BvToIntTranslation extends TermTransformer {
 				setResult(mVariableMap.get(appTerm));
 				return;
 			}
-		} else if (appTerm.getParameters().length == 1) {
+		} else if (appTerm.getParameters().length == 1
+				&& SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort())) {
 			final int width = Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]);
 			final Term maxNumber =
 					SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
@@ -202,7 +275,10 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 				case "zero_extend":
-				case "sign_extend":
+				case "sign_extend": {
+					setResult(args[0]);
+					return;
+				}
 				case "repeat":
 				case "rotate_left":
 				case "rotate_right":
@@ -211,8 +287,11 @@ public class BvToIntTranslation extends TermTransformer {
 				}
 			}
 		} else if (appTerm.getParameters().length == 2) {
-
-			final int width = Integer.valueOf(appTerm.getParameters()[1].getSort().getIndices()[0]);
+			// TODO array sort pra0
+			int width = 0; // TODO schön array sort is das problem
+			if (SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort())) {
+				width = Integer.valueOf(appTerm.getParameters()[1].getSort().getIndices()[0]);
+			}
 			final Term maxNumber =
 					SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
 			final Term translatedLHS = args[0];
@@ -229,9 +308,11 @@ public class BvToIntTranslation extends TermTransformer {
 			if (fsym.isIntern()) {
 				switch (fsym.getName()) {
 				case "=": {
-					System.out.println(tLhs + "  adsads  " + tRhs);
-
 					setResult(mScript.term("=", tLhs, tRhs));
+					return;
+				}
+				case "distinct": {
+					setResult(mScript.term("distinct", tLhs, tRhs));
 					return;
 				}
 				case "bvult": {
@@ -364,6 +445,10 @@ public class BvToIntTranslation extends TermTransformer {
 					setResult(mScript.term("+", multiplication, translatedRHS));
 					return;
 				}
+				case "bvsdiv": {
+					// TODO
+
+				}
 				case "bvudiv": {
 					Term rhs;
 					Term lhs;
@@ -380,6 +465,9 @@ public class BvToIntTranslation extends TermTransformer {
 					final Term elseTerm = mScript.term("div", lhs, rhs);
 					setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
 					return;
+				}
+				case "bvsrem": {
+					// TODO
 				}
 				case "bvurem": {
 					Term rhs;
@@ -404,29 +492,7 @@ public class BvToIntTranslation extends TermTransformer {
 					setResult(intAnd);
 					return;
 				}
-				case "bvor": {
-					// bvor = bvsub(bvadd, bvand)
-					final Term intAnd =
-							mScript.term(mTc.getIntAndFunctionSymbol().getName(), translatedLHS, translatedRHS);
-					mTc.bvandConstraint(intAnd, width);
-					final Term addition = mScript.term("+", translatedLHS, translatedRHS);
-					final Term intAdd = mScript.term("mod", addition, maxNumber);
 
-					final Term substraction = mScript.term("-", intAdd, intAnd);
-					final Term bvsub = mScript.term("mod", substraction, maxNumber);
-
-					setResult(bvsub);
-					return;
-
-				}
-
-				case "bvxor": {
-					setResult(mScript.term("bvsub",
-							mScript.term("bvsub", mScript.term("bvadd", appTerm.getParameters()),
-									mScript.term("bvand", appTerm.getParameters())),
-							mScript.term("bvand", appTerm.getParameters())));
-					return;
-				}
 				default:
 					throw new UnsupportedOperationException("TODOmessage " + fsym.getName());
 				}

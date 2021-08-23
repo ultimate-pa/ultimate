@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -35,10 +36,15 @@ public class TranslationManager {
 		mTc = new TranslationConstrainer(mMgdScript);
 	}
 
+	public void setReplacementVarMaps(final LinkedHashMap replacementVarMap) {
+		mVariableMap = replacementVarMap;
+	}
+
 	public Term translateBvtoInt(final Term bitvecFromula) {
 
-		final BvToIntTranslation bvToInt = new BvToIntTranslation(mMgdScript, mTc);
+		final BvToIntTranslation bvToInt = new BvToIntTranslation(mMgdScript, mVariableMap, mTc);
 		bvToInt.setNutzTransformation(false);
+
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
@@ -54,11 +60,15 @@ public class TranslationManager {
 	}
 
 	public Term translateIntBacktoBv(final Term integerFromula) {
+
+		final UnfTransformer unfT = new UnfTransformer(mScript);
+		final Term simplifiedInput = unfT.transform(integerFromula);
+
 		final HashSet<Term> constraints = mConstraintSet;
 		constraints.addAll(mTc.getTvConstraints());
 		final IntToBvBackTranslation intToBv = new IntToBvBackTranslation(mMgdScript, mReversedVarMap, constraints);
 
-		return intToBv.transform(integerFromula);
+		return intToBv.transform(simplifiedInput);
 	}
 
 
@@ -69,5 +79,6 @@ public class TranslationManager {
 	public LinkedHashMap<Term, Term> getReversedVarMap() {
 		return mReversedVarMap;
 	}
+
 
 }

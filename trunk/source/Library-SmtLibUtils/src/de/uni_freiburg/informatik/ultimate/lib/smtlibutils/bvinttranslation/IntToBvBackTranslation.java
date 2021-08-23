@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class IntToBvBackTranslation extends TermTransformer {
 	private final ManagedScript mMgdScript;
@@ -33,13 +34,22 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 	@Override
 	public void convert(final Term term) {
-		if (mVariableMap.containsKey(term)) {
-			setResult(mVariableMap.get(term));
-			return;
-		}
 		if (mConstraintSet.contains(term)) {
 			setResult(mScript.term("true"));
 			return;
+		}
+		if (mVariableMap.containsKey(term)) {
+			setResult(mVariableMap.get(term));
+			return;
+		} else if (term instanceof TermVariable) {
+			throw new UnsupportedOperationException("Cannot translate AuxVars back to Bitvector Sort " + term);
+		} else if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getParameters().length == 0) {
+				if (SmtUtils.isConstant(appTerm)) {
+					throw new UnsupportedOperationException("Cannot translate AuxVars back to Bitvector Sort " + term);
+				}
+			}
 		}
 		super.convert(term);
 	}
@@ -60,19 +70,16 @@ public class IntToBvBackTranslation extends TermTransformer {
 			return;
 		}
 
-		if (appTerm.getParameters().length == 2) { // only if not a constraint
-			if (newargs[0] instanceof ConstantTerm) {
-				assert !(newargs[1] instanceof ConstantTerm);
-				width = Integer.valueOf(newargs[1].getSort().getIndices()[0]);
-				final Term bvConst = translateConst((ConstantTerm) newargs[0], width);
-				newargs[0] = bvConst; // TODO
-			} else if (newargs[1] instanceof ConstantTerm) {
-				assert !(newargs[0] instanceof ConstantTerm);
-				width = Integer.valueOf(newargs[0].getSort().getIndices()[0]);
-				final Term bvConst = translateConst((ConstantTerm) newargs[1], width);
-				newargs[1] = bvConst; // TODO
-			} else if (SmtSortUtils.isBitvecSort(newargs[0].getSort())) {
-				width = Integer.valueOf(newargs[0].getSort().getIndices()[0]);
+		for (final Term argument : args) {
+			if (!(argument instanceof ConstantTerm) && SmtSortUtils.isBitvecSort(argument.getSort())) {
+				final int newwidth = Integer.valueOf(argument.getSort().getIndices()[0]);
+				assert (width == 0) || (width == newwidth); // TODO extract concat etc
+				width = newwidth;
+			}
+		}
+		for (int i = 0; i < args.length; i++) {
+			if (args[i] instanceof ConstantTerm) {
+				newargs[i] = translateConst((ConstantTerm) args[i], width);
 			}
 		}
 
@@ -124,9 +131,12 @@ public class IntToBvBackTranslation extends TermTransformer {
 					setResult(newargs[0]);
 					return;
 				}
-
+				// if (isMaxNumberPlusOneHalf(appTerm.getParameters()[1], width)) { // mod (maxNumber / 2)
+				// setResult(newargs[0]);
+				// return;
+				// }
+				//no difference in test success between bvsmod and bvurem
 				setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvsmod", null, newargs[0], newargs[1]));
-
 				return;
 
 			}
@@ -164,29 +174,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 		super.convertApplicationTerm(appTerm, newargs);
 	}
 
-	// Constraint geq 0
-	// Constraint less maxNumber
-	private boolean isConstraint(final ApplicationTerm term) {
-		if (term.getFunction().getName().equals("<")) {
-			// rhs ismaxnumber
-			if (mVariableMap.containsKey(term.getParameters()[0])) {
-				final int width = Integer.valueOf(mVariableMap.get(term.getParameters()[0]).getSort().getIndices()[0]);
-				if (isMaxNumberPlusOne(term.getParameters()[1], width)) {
-					return true;
-				}
-			}
-
-		} else if (term.getFunction().getName().equals("<=")) {
-			// lhs 0
-			if (mVariableMap.containsKey(term.getParameters()[1])) {
-				if (isZero(term.getParameters()[0])) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
 	private boolean isZero(final Term term) {
 		if (term instanceof ConstantTerm) {
 			final ConstantTerm cnst = (ConstantTerm) term;
@@ -208,6 +195,26 @@ public class IntToBvBackTranslation extends TermTransformer {
 			// negated maxnumber
 			if (rational.isNegative()) {
 				if (rational.negate().equals(Rational.valueOf(BigInteger.TWO.pow(width), BigInteger.ONE))) {
+					return true;
+				}
+			}
+
+		}
+		return false;
+	}
+
+	private boolean isMaxNumberPlusOneHalf(final Term term, final int width) {
+		assert SmtSortUtils.isIntSort(term.getSort());
+		if (term instanceof ConstantTerm) {
+			final ConstantTerm ct = (ConstantTerm) term;
+			final Rational rational = (Rational) ct.getValue();
+			if (rational.equals(Rational.valueOf(BigInteger.TWO.pow(width).divide(BigInteger.TWO), BigInteger.ONE))) {
+				return true;
+			}
+			// negated maxnumber
+			if (rational.isNegative()) {
+				if (rational.negate()
+						.equals(Rational.valueOf(BigInteger.TWO.pow(width).divide(BigInteger.TWO), BigInteger.ONE))) {
 					return true;
 				}
 			}

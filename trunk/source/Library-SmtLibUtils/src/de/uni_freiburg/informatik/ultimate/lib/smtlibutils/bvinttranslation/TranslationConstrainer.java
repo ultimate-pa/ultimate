@@ -41,8 +41,11 @@ public class TranslationConstrainer {
 		final Sort[] functionsort = new Sort[2];
 		functionsort[0] = intSort;
 		functionsort[1] = intSort;
+
 		if (mIntand == null) {
-			mScript.declareFun("intand", functionsort, intSort);
+			if (mScript.getFunctionSymbol("intand") == null) {
+				mScript.declareFun("intand", functionsort, intSort);
+			}
 			mIntand = mScript.getFunctionSymbol("intand");
 		}
 	}

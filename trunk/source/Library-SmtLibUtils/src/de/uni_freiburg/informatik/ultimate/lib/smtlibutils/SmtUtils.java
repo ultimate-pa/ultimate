@@ -1437,6 +1437,7 @@ public final class SmtUtils {
 		case "bvurem":
 		case "bvsdiv":
 		case "bvsrem":
+		case "bvsmod":
 		case "bvand":
 		case "bvor":
 		case "bvxor":
