@@ -80,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -318,112 +317,33 @@ public final class TransFormulaUtils {
 			final TermVariable[] branchIndicators, final boolean tranformToCNF,
 			final XnfConversionTechnique xnfConversionTechnique, final UnmodifiableTransFormula... transFormulas) {
 		logger.debug("parallel composition");
-		boolean useBranchEncoders;
-		if (branchIndicators == null) {
-			useBranchEncoders = false;
-		} else {
-			useBranchEncoders = true;
-			if (branchIndicators.length != transFormulas.length) {
-				throw new IllegalArgumentException();
-			}
 
+		final boolean useBranchEncoders = branchIndicators != null;
+		if (useBranchEncoders && branchIndicators.length != transFormulas.length) {
+			throw new IllegalArgumentException();
 		}
 
-		final Term[] renamedFormulas = new Term[transFormulas.length];
 		final TransFormulaBuilder tfb;
 		if (useBranchEncoders) {
 			tfb = new TransFormulaBuilder(null, null, false, null, false, Arrays.asList(branchIndicators), false);
 		} else {
 			tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
 		}
-		final Set<IProgramConst> nonTheoryConsts = new HashSet<>();
 
-		final Map<IProgramVar, Sort> assignedInSomeBranch = new HashMap<>();
-		for (final UnmodifiableTransFormula tf : transFormulas) {
-			for (final IProgramVar bv : tf.getInVars().keySet()) {
-				if (!tfb.containsInVar(bv)) {
-					addInVariable(tfb, bv, tf.getInVars().get(bv).getSort(), tf, mgdScript);
-				}
-			}
-			for (final IProgramVar bv : tf.getOutVars().keySet()) {
-
-				// vars which are assigned in some but not all branches must
-				// also occur as inVar
-				// We can omit this step in the special case where the
-				// variable is assigned in all branches.
-				if (!tfb.containsInVar(bv) && !assignedInAll(bv, transFormulas)) {
-					addInVariable(tfb, bv, tf.getOutVars().get(bv).getSort(), tf, mgdScript);
-				}
-
-				final TermVariable outVar = tf.getOutVars().get(bv);
-				final TermVariable inVar = tf.getInVars().get(bv);
-				final boolean isAssignedVar = outVar != inVar;
-				if (isAssignedVar) {
-					final Sort sort = tf.getOutVars().get(bv).getSort();
-					assignedInSomeBranch.put(bv, sort);
-				}
-				// auxilliary step, add all invars. Some will be overwritten by
-				// outvars
-				tfb.addOutVar(bv, tfb.getInVar(bv));
-			}
-			nonTheoryConsts.addAll(tf.getNonTheoryConsts());
+		final TransFormulaUnification unification = new TransFormulaUnification(mgdScript, transFormulas);
+		tfb.addInVars(unification.getInVars());
+		tfb.addOutVars(unification.getOutVars());
+		for (final TermVariable auxVar : unification.getAuxVars()) {
+			tfb.addAuxVar(auxVar);
 		}
 
-		// overwrite (see comment above) the outvars if the outvar does not
-		// coincide with the invar in some of the transFormulas
-		for (final Entry<IProgramVar, Sort> entry : assignedInSomeBranch.entrySet()) {
-			final IProgramVar bv = entry.getKey();
-			final Sort sort = entry.getValue();
-			final String baseName = bv.getGloballyUniqueId() + "_Out";
-			final TermVariable outVar = mgdScript.constructFreshTermVariable(baseName, sort);
-			tfb.addOutVar(bv, outVar);
-		}
-
-		final Set<TermVariable> auxVars = new HashSet<>();
+		final Term[] renamedFormulas = new Term[transFormulas.length];
 		for (int i = 0; i < transFormulas.length; i++) {
-			tfb.addBranchEncoders(transFormulas[i].getBranchEncoders());
-			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (final IProgramVar bv : transFormulas[i].getInVars().keySet()) {
-				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
-				substitutionMapping.put(inVar, tfb.getInVar(bv));
-			}
-			for (final IProgramVar bv : transFormulas[i].getOutVars().keySet()) {
-				final TermVariable outVar = transFormulas[i].getOutVars().get(bv);
-				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
-
-				final boolean isAssignedVar = inVar != outVar;
-				if (isAssignedVar) {
-					substitutionMapping.put(outVar, tfb.getOutVar(bv));
-				} else {
-					assert substitutionMapping.containsKey(outVar);
-					assert substitutionMapping.containsValue(tfb.getInVar(bv));
-				}
-			}
-			for (final TermVariable oldAuxVar : transFormulas[i].getAuxVars()) {
-				final TermVariable newAuxVar = mgdScript.constructFreshCopy(oldAuxVar);
-				substitutionMapping.put(oldAuxVar, newAuxVar);
-				auxVars.add(newAuxVar);
-			}
-			final Term originalFormula = transFormulas[i].getFormula();
-			renamedFormulas[i] =
-					new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(originalFormula);
-
-			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
-				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
-				final TermVariable outVar = transFormulas[i].getOutVars().get(bv);
-				if (inVar == null && outVar == null || inVar == outVar) {
-					// bv does not occur in transFormula or bv is not modified in transFormula
-					final TermVariable termInVar = tfb.getInVar(bv);
-					final TermVariable termOutVar = tfb.getOutVar(bv);
-					assert termInVar != null;
-					assert termOutVar != null;
-					final Term equality = mgdScript.getScript().term("=", termInVar, termOutVar);
-					renamedFormulas[i] = SmtUtils.and(mgdScript.getScript(), renamedFormulas[i], equality);
-				}
-			}
-
+			final Term unifiedFormula = unification.getUnifiedFormula(i);
 			if (useBranchEncoders) {
-				renamedFormulas[i] = Util.implies(mgdScript.getScript(), branchIndicators[i], renamedFormulas[i]);
+				renamedFormulas[i] = Util.implies(mgdScript.getScript(), branchIndicators[i], unifiedFormula);
+			} else {
+				renamedFormulas[i] = unifiedFormula;
 			}
 		}
 
@@ -446,35 +366,13 @@ public final class TransFormulaUtils {
 			resultFormula = SmtUtils.toCnf(services, mgdScript, resultFormula, xnfConversionTechnique);
 		}
 
+		final Set<IProgramConst> nonTheoryConsts = Arrays.stream(transFormulas)
+				.flatMap(tf -> tf.getNonTheoryConsts().stream()).collect(Collectors.toSet());
 		TransFormulaUtils.addConstantsIfInFormula(tfb, resultFormula, nonTheoryConsts);
+
 		tfb.setFormula(resultFormula);
 		tfb.setInfeasibility(inFeasibility);
-		for (final TermVariable auxVar : auxVars) {
-			tfb.addAuxVar(auxVar);
-		}
 		return tfb.finishConstruction(mgdScript);
-	}
-
-	private static void addInVariable(final TransFormulaBuilder tfb, final IProgramVar bv, final Sort sort,
-			final TransFormula tf, final ManagedScript mgdScript) {
-		assert !tfb.containsInVar(bv);
-
-		final String baseName = bv.getGloballyUniqueId() + "_In";
-		final TermVariable inVar = mgdScript.constructFreshTermVariable(baseName, sort);
-		tfb.addInVar(bv, inVar);
-
-	}
-
-	/**
-	 * Return true iff bv is assigned in all transFormulas.
-	 */
-	private static boolean assignedInAll(final IProgramVar bv, final UnmodifiableTransFormula... transFormulas) {
-		for (final UnmodifiableTransFormula tf : transFormulas) {
-			if (!tf.getAssignedVars().contains(bv)) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/**
