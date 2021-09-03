@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independence.Se
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -175,7 +176,7 @@ public class SemanticIndependenceConditionGeneratorTest {
 
 	@Test
 	public void pushPush() {
-		final Term expected = parseWithVariables("(and (= e1 e2) (< top (+ max 2)))");
+		final Term expected = parseWithVariables("(= (+ top 1) max)");
 		runTest(push(e1, r1), push(e2, r2), expected);
 	}
 
@@ -337,6 +338,6 @@ public class SemanticIndependenceConditionGeneratorTest {
 				.collect(Collectors.joining(" "));
 		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";
 		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
-		return quant.getSubformula();
+		return new CommuhashNormalForm(mServices, mScript).transform(quant.getSubformula());
 	}
 }

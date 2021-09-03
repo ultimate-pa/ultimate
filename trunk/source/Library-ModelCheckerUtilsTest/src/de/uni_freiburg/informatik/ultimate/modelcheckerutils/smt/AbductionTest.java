@@ -36,6 +36,7 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.abduction.Abducer;
@@ -111,7 +112,9 @@ public class AbductionTest {
 		final Term conclusion = parseWithVariables("(= arr2 (store (store arr0 j 3) i 2))", "(i Int)", "(j Int)",
 				"(arr0 (Array Int Int))", "(arr2 (Array Int Int))");
 		final Term expected = parseWithVariables("(distinct i j)", "(i Int)", "(j Int)");
-		runAbductionTest(premise, conclusion, expected);
+		final TermVariable outVar =
+				mScript.variable("arr2", mScript.sort("Array", mScript.sort("Int"), mScript.sort("Int")));
+		runAbductionTest(premise, conclusion, Collections.singleton(outVar), expected, false);
 	}
 
 	@Test
@@ -120,8 +123,10 @@ public class AbductionTest {
 				"(arr0 (Array Int Int))", "(arr2 (Array Int Int))");
 		final Term conclusion = parseWithVariables("(= arr2 (store (store arr0 j 3) i (+ i 1)))", "(i Int)", "(j Int)",
 				"(arr0 (Array Int Int))", "(arr2 (Array Int Int))");
-		final Term expected = parseWithVariables("(or (distinct i j) (= i 2))", "(i Int)", "(j Int)");
-		runAbductionTest(premise, conclusion, expected);
+		final Term expected = parseWithVariables("(= i 2)", "(i Int)", "(j Int)");
+		final TermVariable outVar =
+				mScript.variable("arr2", mScript.sort("Array", mScript.sort("Int"), mScript.sort("Int")));
+		runAbductionTest(premise, conclusion, Collections.singleton(outVar), expected, false);
 	}
 
 	@Test
@@ -158,6 +163,6 @@ public class AbductionTest {
 	private Term parseWithVariables(final String syntax, final String... declarations) {
 		final String fullSyntax = "(forall (" + String.join(" ", declarations) + ") " + syntax + ")";
 		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
-		return quant.getSubformula();
+		return new CommuhashNormalForm(mServices, mScript).transform(quant.getSubformula());
 	}
 }
