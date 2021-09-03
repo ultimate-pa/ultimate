@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,14 +51,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
@@ -95,7 +90,7 @@ public class ReqSymboltableBuilder {
 	private final Set<String> mPcVars;
 	private final Set<String> mClockVars;
 	private final Map<String, Expression> mConst2Value;
-	private final Map<String, Integer> mId2Bounds;
+
 	private final Map<PatternType<?>, BoogieLocation> mReq2Loc;
 	private final Set<String> mInputVars;
 	private final Set<String> mOutputVars;
@@ -121,8 +116,6 @@ public class ReqSymboltableBuilder {
 
 		mReq2Loc = new LinkedHashMap<>();
 		mConst2Value = new LinkedHashMap<>();
-		mId2Bounds = new LinkedHashMap<>();
-
 		mInputVars = new LinkedHashSet<>();
 		mOutputVars = new LinkedHashSet<>();
 		mEquivalences = new UnionFind<>();
@@ -131,10 +124,10 @@ public class ReqSymboltableBuilder {
 	}
 
 	public void addInitPattern(final InitializationPattern initPattern) {
-		final BoogiePrimitiveType type = toPrimitiveType(initPattern.getType());
+		final BoogiePrimitiveType type = BoogiePrimitiveType.toPrimitiveType(initPattern.getType());
 		final String name = initPattern.getId();
 		if (type == BoogieType.TYPE_ERROR) {
-			addErrorError(name, new ErrorInfo(ErrorType.NONE_TYPE, initPattern));
+			addError(name, new ErrorInfo(ErrorType.NONE_TYPE, initPattern));
 			return;
 		}
 
@@ -142,9 +135,6 @@ public class ReqSymboltableBuilder {
 		case CONST:
 			addVar(name, type, initPattern, mConstVars);
 			mConst2Value.put(name, initPattern.getExpression());
-			if (type == BoogieType.TYPE_INT || type == BoogieType.TYPE_REAL) {
-				addId2Bounds(initPattern);
-			}
 			break;
 		case IN:
 			mInputVars.add(name);
@@ -183,13 +173,13 @@ public class ReqSymboltableBuilder {
 			case "bool":
 			case "real":
 			case "int":
-				addVar(name, toPrimitiveType(type), pattern, mStateVars);
+				addVar(name, BoogiePrimitiveType.toPrimitiveType(type), pattern, mStateVars);
 				break;
 			case "event":
 				addVar(name, BoogieType.TYPE_BOOL, pattern, mEventVars);
 				break;
 			default:
-				addErrorError(name, new ErrorInfo(ErrorType.UNKNOWN_TYPE, pattern));
+				addError(name, new ErrorInfo(ErrorType.UNKNOWN_TYPE, pattern));
 				break;
 			}
 		}
@@ -209,7 +199,7 @@ public class ReqSymboltableBuilder {
 	}
 
 	public void addAuxvar(final String name, final String typeString, final PatternType<?> source) {
-		addVar(name, toPrimitiveType(typeString), source, mStateVars);
+		addVar(name, BoogiePrimitiveType.toPrimitiveType(typeString), source, mStateVars);
 	}
 
 	public IReqSymbolTable constructSymbolTable() {
@@ -221,10 +211,6 @@ public class ReqSymboltableBuilder {
 
 	public Set<String> getConstIds() {
 		return mConstVars;
-	}
-
-	public Map<String, Integer> getId2Bounds() {
-		return mId2Bounds;
 	}
 
 	public Set<Entry<String, ErrorInfo>> getErrors() {
@@ -253,60 +239,9 @@ public class ReqSymboltableBuilder {
 		return rtr;
 	}
 
-	private void addErrorError(final String name, final ErrorInfo typeErrorInfo) {
+	private void addError(final String name, final ErrorInfo typeErrorInfo) {
 		if (mId2Errors.addPair(name, typeErrorInfo)) {
 			mLogger.error(typeErrorInfo.mType + " for " + name);
-		}
-	}
-
-	private void addId2Bounds(final InitializationPattern init) {
-
-		final Expression expr = init.getExpression();
-		final Integer val = tryParseInt(init, expr);
-		if (val == null) {
-			return;
-		}
-		mId2Bounds.put(init.getId(), val);
-	}
-
-	private Integer tryParseInt(final InitializationPattern init, final Expression expr) {
-		final Integer val;
-		if (expr instanceof UnaryExpression) {
-			final UnaryExpression uexpr = (UnaryExpression) expr;
-			if (uexpr
-					.getOperator() == de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.ARITHNEGATIVE) {
-				final Integer pval = tryParseInt(init, uexpr.getExpr());
-				if (pval == null) {
-					return null;
-				}
-				val = -pval;
-			} else {
-				val = null;
-				addErrorError(init.getId(), new ErrorInfo(ErrorType.SYNTAX_ERROR, init,
-						"Unexpected CONST expression " + BoogiePrettyPrinter.print(expr)));
-			}
-		} else if (expr instanceof RealLiteral) {
-			val = tryParseInt(init, ((RealLiteral) expr).getValue());
-		} else if (expr instanceof IntegerLiteral) {
-			val = tryParseInt(init, ((IntegerLiteral) expr).getValue());
-		} else {
-			val = null;
-			addErrorError(init.getId(), new ErrorInfo(ErrorType.SYNTAX_ERROR, init,
-					"Cannot convert CONST with expression " + BoogiePrettyPrinter.print(expr) + " to duration"));
-		}
-		return val;
-	}
-
-	private Integer tryParseInt(final PatternType<?> pattern, final String val) {
-		try {
-			return new BigDecimal(val).toBigIntegerExact().intValueExact();
-		} catch (final NumberFormatException ex) {
-			addErrorError(pattern.getId(),
-					new ErrorInfo(ErrorType.SYNTAX_ERROR, pattern, "Cannot convert CONST with value " + val
-							+ " to duration (must be integer literal or non-fractional real literal)"));
-			return null;
-		} catch (final ArithmeticException ex) {
-			return null;
 		}
 	}
 
@@ -333,7 +268,7 @@ public class ReqSymboltableBuilder {
 
 		final BoogieType old = mId2Type.put(name, type);
 		if (old != null && old != type) {
-			addErrorError(name, new ErrorInfo(ErrorType.DUPLICATE_DECLARATION, source));
+			addError(name, new ErrorInfo(ErrorType.DUPLICATE_DECLARATION, source));
 			mId2Type.put(name, BoogieType.TYPE_ERROR);
 			return;
 		}
@@ -349,7 +284,7 @@ public class ReqSymboltableBuilder {
 		if (mId2Type.containsKey(name)) {
 			return;
 		}
-		addErrorError(name, new ErrorInfo(ErrorType.MISSING_DECLARATION, source));
+		addError(name, new ErrorInfo(ErrorType.MISSING_DECLARATION, source));
 	}
 
 	private ILocation getLocation(final PatternType<?> source) {
@@ -371,19 +306,6 @@ public class ReqSymboltableBuilder {
 
 		addVar(name, BoogieType.TYPE_REAL, null, null);
 		return name;
-	}
-
-	private static BoogiePrimitiveType toPrimitiveType(final String type) {
-		switch (type.toLowerCase()) {
-		case "bool":
-			return BoogieType.TYPE_BOOL;
-		case "real":
-			return BoogieType.TYPE_REAL;
-		case "int":
-			return BoogieType.TYPE_INT;
-		default:
-			return BoogieType.TYPE_ERROR;
-		}
 	}
 
 	private static String getPrimedVarId(final String name) {
@@ -671,7 +593,6 @@ public class ReqSymboltableBuilder {
 		public String getMessage() {
 			return mMessage;
 		}
-
 	}
 
 }

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -49,19 +50,19 @@ public class PolyPoNeWithContext extends PolyPoNe {
 		mContext = context;
 	}
 
-	Term and(final Term context, final Collection<Term> params) {
+	Term and(final Term context, final List<Term> params) {
 		if (SmtUtils.isFalseLiteral(context)) {
 			return mScript.term("false");
 		}
 		return and(Arrays.asList(SmtUtils.getConjuncts(context)), params);
 	}
 
-	private Term and(final Collection<Term> contextConjuncts, final Collection<Term> params) {
+	private Term and(final Collection<Term> contextConjuncts, final List<Term> params) {
 		addContext(contextConjuncts);
 		return super.and(params);
 	}
 
-	Term or(final Term context, final Collection<Term> params) {
+	Term or(final Term context, final List<Term> params) {
 		if (SmtUtils.isFalseLiteral(context)) {
 			return mScript.term("true");
 		}
@@ -69,7 +70,7 @@ public class PolyPoNeWithContext extends PolyPoNe {
 		return or(Arrays.asList(SmtUtils.getConjuncts(context)), params);
 	}
 
-	private Term or(final Collection<Term> contextConjuncts, final Collection<Term> params) {
+	private Term or(final Collection<Term> contextConjuncts, final List<Term> params) {
 		addContext(contextConjuncts);
 		return super.or(params);
 	}

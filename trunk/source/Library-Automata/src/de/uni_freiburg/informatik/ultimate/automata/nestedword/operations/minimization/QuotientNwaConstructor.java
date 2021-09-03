@@ -2,22 +2,22 @@
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * The equivalence relation has to be given as a {@link UnionFind} or a {@link IAutomatonStatePartition} data structure.
  * <p>
  * If the operand is an {@link IDoubleDeckerAutomaton}, the output will also be an {@link IDoubleDeckerAutomaton}.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -78,7 +78,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 
 	/**
 	 * Private constructor for common parts.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -125,7 +125,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 
 	/**
 	 * Constructs the result automaton from a partition data structure.
-	 * 
+	 *
 	 * @param resStateConstructor
 	 *            state constructor
 	 * @param partition
@@ -143,7 +143,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 
 	/**
 	 * Constructs the result automaton from a partition data structure.
-	 * 
+	 *
 	 * @param resStateConstructor
 	 *            state constructor
 	 * @param partition
@@ -172,7 +172,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 
 	/**
 	 * Adds a state and all outgoing transitions for an input state.
-	 * 
+	 *
 	 * @param resStateConstructor
 	 *            state constructor
 	 * @param inputState
@@ -274,8 +274,8 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			final STATE inputState, final STATE resultState) {
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(inputState)) {
 			/*
-			 * Return transitions which are not usable in the original automaton
-			 * may change the language if they are blindly copied.
+			 * Return transitions which are not usable in the original automaton may change the language if they are
+			 * blindly copied.
 			 */
 			assert (!(mOperand instanceof IDoubleDeckerAutomaton<?, ?>))
 					|| ((IDoubleDeckerAutomaton<LETTER, STATE>) mOperand).isDoubleDecker(inputState,
@@ -303,7 +303,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 
 	/**
 	 * Constructs the states of the resulting automaton (parametric in the data structure).
-	 * 
+	 *
 	 * @param <STATE>
 	 *            state tpe
 	 */
@@ -325,7 +325,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 
 	/**
 	 * Result state constructor from a partition data structure.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private class ResultStateConstructorFromGeneralPartition implements IResultStateConstructor<STATE> {
@@ -338,31 +338,30 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			mPartition = partition;
 			mOperandInner = operand;
 
-			final IValueConstruction<Set<STATE>, STATE> valueConstruction =
-					new IValueConstruction<Set<STATE>, STATE>() {
-						@Override
-						public STATE constructValue(final Set<STATE> block) {
-							final STATE resultState = mStateFactory.merge(block);
-							boolean isInitial = false;
-							boolean isFinal = false;
-							for (final STATE state : block) {
-								if (!isInitial && mOperandInner.isInitial(state)) {
-									isInitial = true;
-									if (isFinal) {
-										break;
-									}
-								}
-								if (!isFinal && mOperandInner.isFinal(state)) {
-									isFinal = true;
-									if (isInitial) {
-										break;
-									}
-								}
+			final IValueConstruction<Set<STATE>, STATE> valueConstruction = new IValueConstruction<>() {
+				@Override
+				public STATE constructValue(final Set<STATE> block) {
+					final STATE resultState = mStateFactory.merge(block);
+					boolean isInitial = false;
+					boolean isFinal = false;
+					for (final STATE state : block) {
+						if (!isInitial && mOperandInner.isInitial(state)) {
+							isInitial = true;
+							if (isFinal) {
+								break;
 							}
-							mResult.addState(isInitial, isFinal, resultState);
-							return resultState;
 						}
-					};
+						if (!isFinal && mOperandInner.isFinal(state)) {
+							isFinal = true;
+							if (isInitial) {
+								break;
+							}
+						}
+					}
+					mResult.addState(isInitial, isFinal, resultState);
+					return resultState;
+				}
+			};
 			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
 
@@ -376,13 +375,13 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		@Override
 		public STATE get(final STATE inputState) {
 			final Set<STATE> block = mPartition.getContainingSet(inputState);
-			return mConstructionCache.getMap().get(block);
+			return mConstructionCache.get(block);
 		}
 	}
 
 	/**
 	 * Result state constructor from a special partition data structure which is more efficient to access.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private class ResultStateConstructorFromAutomatonStatePartition implements IResultStateConstructor<STATE> {
@@ -392,17 +391,16 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		public ResultStateConstructorFromAutomatonStatePartition(final IAutomatonStatePartition<STATE> partition) {
 			mPartition = partition;
 
-			final IValueConstruction<IBlock<STATE>, STATE> valueConstruction =
-					new IValueConstruction<IBlock<STATE>, STATE>() {
-						@Override
-						public STATE constructValue(final IBlock<STATE> block) {
-							final STATE resultState = block.minimize(mStateFactory);
-							final boolean isInitial = block.isInitial();
-							final boolean isFinal = block.isFinal();
-							mResult.addState(isInitial, isFinal, resultState);
-							return resultState;
-						}
-					};
+			final IValueConstruction<IBlock<STATE>, STATE> valueConstruction = new IValueConstruction<>() {
+				@Override
+				public STATE constructValue(final IBlock<STATE> block) {
+					final STATE resultState = block.minimize(mStateFactory);
+					final boolean isInitial = block.isInitial();
+					final boolean isFinal = block.isFinal();
+					mResult.addState(isInitial, isFinal, resultState);
+					return resultState;
+				}
+			};
 			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
 
@@ -416,7 +414,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		@Override
 		public STATE get(final STATE inputState) {
 			final IBlock<STATE> block = mPartition.getBlock(inputState);
-			return mConstructionCache.getMap().get(block);
+			return mConstructionCache.get(block);
 		}
 	}
 
@@ -426,7 +424,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 * We use it here for the map 'old state -> new state' as this is the only operation used later on. The reason why
 	 * we use this map instead of a fresh one is that we create the backing data structure already during construction
 	 * time.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private class GetOnlyMap implements Map<STATE, STATE> {

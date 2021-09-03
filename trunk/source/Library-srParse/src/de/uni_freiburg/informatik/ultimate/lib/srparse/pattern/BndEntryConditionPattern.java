@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that after "R" holds for at least "c1" time units, then "S" holds
@@ -48,14 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class BndEntryConditionPattern extends PatternType<BndEntryConditionPattern> {
 
 	public BndEntryConditionPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndEntryConditionPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndEntryConditionPattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -110,16 +105,11 @@ public class BndEntryConditionPattern extends PatternType<BndEntryConditionPatte
 		sb.append("it is always the case that after \"");
 		sb.append(getCdds().get(1).toBoogieString());
 		sb.append("\" holds for at least \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds");
 		return sb.toString();
-	}
-
-	@Override
-	public BndEntryConditionPattern rename(final String newName) {
-		return new BndEntryConditionPattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

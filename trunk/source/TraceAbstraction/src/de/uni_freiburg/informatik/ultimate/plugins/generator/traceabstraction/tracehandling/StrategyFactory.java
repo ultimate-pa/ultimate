@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.DachshundRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FixedRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LazyTaipanRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LizardRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothNoAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.McrRefinementStrategy;
@@ -79,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class StrategyFactory<L extends IIcfgTransition<?>> {
-	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mTaPrefs;
 	private final TaCheckAndRefinementPreferences<L> mPrefs;
 	private final ILogger mLogger;
@@ -90,11 +90,10 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final Class<L> mTransitionClazz;
 
-	public StrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
-			final TAPreferences taPrefsForInterpolantConsolidation, final TaCheckAndRefinementPreferences<L> prefs,
-			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz) {
-		mServices = services;
+	public StrategyFactory(final ILogger logger, final TAPreferences taPrefsForInterpolantConsolidation,
+			final TaCheckAndRefinementPreferences<L> prefs, final IIcfg<?> initialIcfg,
+			final PredicateFactory predicateFactory, final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut,
+			final Class<L> transitionClazz) {
 		mLogger = logger;
 		mTaPrefs = taPrefsForInterpolantConsolidation;
 		mPrefs = prefs;
@@ -113,29 +112,29 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	/**
 	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
 	 */
-	public IRefinementStrategy<L> constructStrategy(final IRun<L, ?> counterexample,
-			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+	public IRefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
+			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider) {
-		return constructStrategy(counterexample, abstraction, taskIdentifier, emptyStackFactory, preconditionProvider,
-				postconditionProvider, mPrefs.getRefinementStrategy());
+		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
+				preconditionProvider, postconditionProvider, mPrefs.getRefinementStrategy());
 	}
 
 	/**
 	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
 	 */
-	public IRefinementStrategy<L> constructStrategy(final IRun<L, ?> counterexample,
-			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+	public IRefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
+			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
 			final RefinementStrategy strategyType) {
 
-		final IPredicateUnifier predicateUnifier = constructPredicateUnifier();
+		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
 		mPathProgramCache.addRun(counterexample);
 
-		final StrategyModuleFactory<L> strategyModuleFactory = new StrategyModuleFactory<>(taskIdentifier, mServices,
+		final StrategyModuleFactory<L> strategyModuleFactory = new StrategyModuleFactory<>(taskIdentifier, services,
 				mLogger, mPrefs, mTaPrefs, counterexample, precondition, postcondition, predicateUnifier,
 				mPredicateFactory, abstraction, emptyStackFactory, mCfgSmtToolkit, mPredicateFactoryInterpolAut,
 				mPathProgramCache, mTransitionClazz);
@@ -152,6 +151,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new CamelNoAmRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case CAMEL_SMT_AM:
 			return new CamelSmtAmRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case LIZARD:
+			return new LizardRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case BADGER:
 			return new BadgerRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WALRUS:
@@ -192,13 +193,13 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private IPredicateUnifier constructPredicateUnifier() {
+	private IPredicateUnifier constructPredicateUnifier(final IUltimateServiceProvider services) {
 		final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
 		final IIcfgSymbolTable symbolTable = mInitialIcfg.getCfgSmtToolkit().getSymbolTable();
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {
-			return new BPredicateUnifier(mServices, mLogger, managedScript, mPredicateFactory, symbolTable);
+			return new BPredicateUnifier(services, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}
-		return new PredicateUnifier(mLogger, mServices, managedScript, mPredicateFactory, symbolTable,
+		return new PredicateUnifier(mLogger, services, managedScript, mPredicateFactory, symbolTable,
 				mTaPrefs.getSimplificationTechnique(), mTaPrefs.getXnfConversionTechnique());
 	}
 

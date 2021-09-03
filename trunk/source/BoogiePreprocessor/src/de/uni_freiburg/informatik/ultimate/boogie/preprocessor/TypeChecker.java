@@ -1041,13 +1041,13 @@ public class TypeChecker extends BaseObserver {
 	 */
 	private void checkIfAlreadyInOutLocal(final VarList vl, final String id) {
 		if (mInParams.contains(id)) {
-			typeError(vl, id + "already declared as in parameter");
+			typeError(vl, id + " already declared as in parameter");
 		}
 		if (mOutParams.contains(id)) {
-			typeError(vl, id + "already declared as out parameter");
+			typeError(vl, id + " already declared as out parameter");
 		}
 		if (mLocalVars.contains(id)) {
-			typeError(vl, id + "already declared as local variable");
+			typeError(vl, id + " already declared as local variable");
 		}
 	}
 

@@ -67,8 +67,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.ErrorLocalizationStatisticsGenerator;
@@ -82,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ *
  */
 public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvider {
 
@@ -104,29 +103,25 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		 */
 		INFINITE,
 		/**
-		 * No information, execution was canceled.
+		 * No information.
 		 */
 		UNKNOWN
 	}
 
 	private static final String ERROR_AUTOMATON_CONSTRUCTION_TIME = "ErrorAutomatonConstructionTime";
 	private static final String ERROR_AUTOMATON_DIFFERENCE_TIME = "ErrorAutomatonDifferenceTime";
-	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 	private final Benchmark mBenchmark;
 	private boolean mRunningConstruction = false;
 	private boolean mRunningDifference = false;
 	private int mTraceLength = -1;
 	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
-	private EnhancementType mEnhancement;
-	private final Set<CodeBlock> mLetters = new HashSet<>();
+	private EnhancementType mEnhancement = EnhancementType.UNKNOWN;
+	private final Set<Integer> mLetters = new HashSet<>();
 	private int mLettersFirstTrace = -1;
 	private int mRelevantStatements;
 	private long mFaultLocalizationTime = 0l;
 
-	public ErrorAutomatonStatisticsGenerator(final IUltimateServiceProvider services) {
-		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	public ErrorAutomatonStatisticsGenerator() {
 		mBenchmark = new Benchmark();
 		mBenchmark.register(ERROR_AUTOMATON_CONSTRUCTION_TIME);
 	}
@@ -159,27 +154,25 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		assert mTraceLength == -1 : "Length already reported";
 		mTraceLength = trace.length();
 		for (int i = 0; i < trace.length(); ++i) {
-			mLetters.add((CodeBlock) trace.getSymbol(i));
+			mLetters.add(trace.getSymbol(i).hashCode());
 		}
 		if (mLettersFirstTrace == -1) {
 			mLettersFirstTrace = mTraceLength;
 		}
 	}
 
-	public <LETTER> void reportRelevantStatements(final List<Collection<LETTER>> relevantStatements) {
-		final Set<CodeBlock> relevantStatementsSet = new HashSet<>();
+	public <L> void reportRelevantStatements(final List<Collection<L>> relevantStatements) {
+		final Set<L> relevantStatementsSet = new HashSet<>();
 		boolean isFirst = true;
-		for (final Collection<LETTER> letters : relevantStatements) {
-			mLogger.warn("current trace's relevant statements: " + letters.size());
+		for (final Collection<L> letters : relevantStatements) {
 			if (isFirst) {
-				relevantStatementsSet.addAll((Collection<CodeBlock>) letters);
+				relevantStatementsSet.addAll(letters);
 				isFirst = false;
 			} else {
 				relevantStatementsSet.retainAll(letters);
 			}
 		}
 		mRelevantStatements = relevantStatementsSet.size();
-		mLogger.warn("total relevant statements: " + mRelevantStatements);
 	}
 
 	public void reportFaultLocalizationStatistics(
@@ -189,15 +182,16 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
-	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final IUltimateServiceProvider services,
-			final ILogger logger, final IErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
+	public <L extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final IUltimateServiceProvider services,
+			final ILogger logger, final IErrorAutomatonBuilder<L> errorAutomatonBuilder,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final PredicateFactoryResultChecking predicateFactoryResultChecking,
-			final IRun<LETTER, ?> errorTrace) throws AutomataLibraryException {
-		final NestedWordAutomaton<LETTER, IPredicate> subtrahend;
+			final PredicateFactoryResultChecking predicateFactoryResultChecking, final IRun<L, ?> errorTrace)
+			throws AutomataLibraryException {
+		final NestedWordAutomaton<L, IPredicate> subtrahend;
 		final AutomataLibraryServices alServices = new AutomataLibraryServices(services);
 		switch (errorAutomatonBuilder.getType()) {
+		case SIMPLE_ERROR_AUTOMATON:
 		case ERROR_AUTOMATON:
 			subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
 			break;
@@ -208,19 +202,18 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		default:
 			throw new IllegalArgumentException("Unknown error automaton type: " + errorAutomatonBuilder.getType());
 		}
-		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
+		final NestedWordAutomatonReachableStates<L, IPredicate> errorAutomatonAfterEnhancement =
 				new RemoveUnreachable<>(alServices, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> intersectionWithAbstraction =
+		final INestedWordAutomaton<L, IPredicate> intersectionWithAbstraction =
 				new Intersect<>(alServices, predicateFactoryResultChecking, abstraction, errorAutomatonAfterEnhancement)
 						.getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> withoutDeadEnds =
+		final INestedWordAutomaton<L, IPredicate> withoutDeadEnds =
 				new RemoveDeadEnds<>(alServices, intersectionWithAbstraction).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton =
+		final INestedWordAutomaton<L, IPredicate> effectiveErrorAutomaton =
 				new Determinize<>(alServices, predicateFactoryResultChecking, withoutDeadEnds).getResult();
-		final PowersetDeterminizer<LETTER, IPredicate> psd =
-				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
-		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff = new Difference<>(alServices,
-				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
+		final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
+		final IDoubleDeckerAutomaton<L, IPredicate> diff = new Difference<>(alServices, predicateFactoryResultChecking,
+				effectiveErrorAutomaton, subtrahend, psd, false).getResult();
 		if (new IsEmpty<>(alServices, diff).getResult()) {
 			mEnhancement = EnhancementType.NONE;
 			if (logger.isWarnEnabled()) {
@@ -237,7 +230,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				logger.info("Automaton has an infinite language.");
 			}
 		}
-		final NestedWordAutomatonReachableStates<LETTER, IPredicate> nwars =
+		final NestedWordAutomatonReachableStates<L, IPredicate> nwars =
 				new NestedWordAutomatonReachableStates<>(alServices, effectiveErrorAutomaton);
 		nwars.computeAcceptingComponents();
 		if (logger.isInfoEnabled()) {
@@ -245,22 +238,15 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
-	public void finishAutomatonInstance(final boolean prematureTermination) {
-		final long constructionTime;
-		final long differenceTime;
-		final int traceLength;
-		final EnhancementType enhancement;
-		if (prematureTermination) {
-			enhancement = EnhancementType.UNKNOWN;
-		} else {
-			if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
-				throw new IllegalAccessError("Not all statistics data were provided.");
-			}
-			enhancement = mEnhancement;
+	public void finishAutomatonInstance() {
+		if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
+			throw new IllegalAccessError("Not all statistics data were provided.");
 		}
-		constructionTime = getLastConstructionTime();
-		differenceTime = getLastDifferenceTime();
-		traceLength = mTraceLength;
+
+		final long constructionTime = getLastConstructionTime();
+		final long differenceTime = getLastDifferenceTime();
+		final int traceLength = mTraceLength;
+		final EnhancementType enhancement = mEnhancement;
 		mTraceLength = -1;
 		mAutomatonStatistics
 				.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength, enhancement));
@@ -376,11 +362,10 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return time;
 	}
 
-	private static <LETTER extends IIcfgTransition<?>> NestedWordAutomaton<LETTER, IPredicate>
-			constructStraightLineAutomaton(final IUltimateServiceProvider services,
-					final IRun<LETTER, ?> errorTrace, final VpAlphabet<LETTER> alphabet,
-					final PredicateFactoryForInterpolantAutomata predicateFactory) {
-		final IInterpolantGenerator<LETTER> ig = new StraightlineGenerator<>(errorTrace);
+	private static <L extends IIcfgTransition<?>> NestedWordAutomaton<L, IPredicate> constructStraightLineAutomaton(
+			final IUltimateServiceProvider services, final IRun<L, ?> errorTrace, final VpAlphabet<L> alphabet,
+			final PredicateFactoryForInterpolantAutomata predicateFactory) {
+		final IInterpolantGenerator<L> ig = new StraightlineGenerator<>(errorTrace);
 		return new StraightLineInterpolantAutomatonBuilder<>(services, errorTrace.getWord(), alphabet,
 				Collections.singletonList(new TracePredicates(ig)), predicateFactory,
 				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING)
@@ -407,10 +392,10 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
-	private static final class StraightlineGenerator<LETTER extends IAction> implements IInterpolantGenerator<LETTER> {
-		private final IRun<LETTER, ?> mErrorTrace;
+	private static final class StraightlineGenerator<L extends IAction> implements IInterpolantGenerator<L> {
+		private final IRun<L, ?> mErrorTrace;
 
-		private StraightlineGenerator(final IRun<LETTER, ?> errorTrace) {
+		private StraightlineGenerator(final IRun<L, ?> errorTrace) {
 			mErrorTrace = errorTrace;
 		}
 
@@ -420,7 +405,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 
 		@Override
-		public List<LETTER> getTrace() {
+		public List<L> getTrace() {
 			return mErrorTrace.getWord().asList();
 		}
 

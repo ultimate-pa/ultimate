@@ -84,7 +84,7 @@ public class UltimateStarter implements IController<RunDefinition> {
 	}
 
 	public IStatus runUltimate() throws Throwable {
-		return mExternalUltimateCore.runUltimate();
+		return mExternalUltimateCore.runUltimate(getClass().getSimpleName() + ": " + mUltimateRunDefinition.toString());
 	}
 
 	@Override

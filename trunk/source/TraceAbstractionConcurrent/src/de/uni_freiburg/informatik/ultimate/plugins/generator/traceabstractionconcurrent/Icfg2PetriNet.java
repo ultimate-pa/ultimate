@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public abstract class Icfg2PetriNet {
 
@@ -109,7 +109,7 @@ public abstract class Icfg2PetriNet {
 			final IcfgEdge edge = it.next();
 			final IPredicate pred = cc.getOrConstruct((BoogieIcfgLocation) edge.getSource());
 			final IPredicate succ = cc.getOrConstruct((BoogieIcfgLocation) edge.getTarget());
-			net.addTransition(edge, Collections.singleton(pred), Collections.singleton(succ));
+			net.addTransition(edge, ImmutableSet.singleton(pred), ImmutableSet.singleton(succ));
 		}
 	}
 

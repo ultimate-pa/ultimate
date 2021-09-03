@@ -55,11 +55,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -723,8 +723,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final Set<TermVariable> inAndOutVars = tf.getInVars().entrySet().stream().map(x -> x.getValue())
 				.collect(Collectors.toSet());
 		inAndOutVars.addAll(tf.getOutVars().entrySet().stream().map(x -> x.getValue()).collect(Collectors.toSet()));
-		final Set<Term> selectTerms = new SubTermFinder(x -> isSuitableArrayReadTerm(x, inAndOutVars))
-				.findMatchingSubterms(tf.getFormula());
+		final Set<Term> selectTerms = SubTermFinder.find(tf.getFormula(), x -> isSuitableArrayReadTerm(x, inAndOutVars),
+				false);
 		for (final Term selectTerm : selectTerms) {
 			final Term selectTermAllOut = new Substitution(mManagedScript,
 					toXVarsMap.apply(tf)).transform(selectTerm);

@@ -27,21 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -53,15 +45,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier;
@@ -105,15 +96,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Set<IcfgLocation> threadErrorLocations;
-		if (csToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
-			// no fork or join
-			threadErrorLocations = Collections.emptySet();
-		} else {
+		if (!csToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			throw new UnsupportedOperationException();
 		}
+		// no fork or join
+		threadErrorLocations = Collections.emptySet();
 
 		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) petrifiedIcfg.getProcedureErrorNodes();
-		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
+		final Set<IcfgLocation> errNodesOfAllProc = new LinkedHashSet<>();
 		for (final Entry<String, Set<? extends IcfgLocation>> proc2errorLocs : proc2errNodes.entrySet()) {
 			for (final IcfgLocation errorLoc : proc2errorLocs.getValue()) {
 				if (!threadErrorLocations.contains(errorLoc)) {
@@ -135,34 +125,15 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException();
 		}
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(petrifiedIcfg);
-		final Result result = abstractCegarLoop.iterate();
-		abstractCegarLoop.finish();
+		final CegarLoopResult<IcfgEdge> result = abstractCegarLoop.runCegar();
 		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = abstractCegarLoop.getCegarLoopBenchmark();
 		traceAbstractionBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		reportBenchmark(traceAbstractionBenchmark);
 
-		switch (result) {
-		case SAFE:
-			reportPositiveResults(errNodesOfAllProc);
-			break;
-		case UNSAFE:
-			reportCounterexampleResult(abstractCegarLoop.getRcfgProgramExecution());
-			break;
-		case TIMEOUT:
-		case USER_LIMIT_ITERATIONS:
-		case USER_LIMIT_PATH_PROGRAM:
-		case USER_LIMIT_TIME:
-		case USER_LIMIT_TRACEHISTOGRAM:
-			// TODO: The result handling is similar to that of the normal trace abstraction starter, merge the code and
-			// use the logic from there. Until then, just threat user limits like timeouts
-			reportTimeoutResult(result, errNodesOfAllProc, abstractCegarLoop.getRunningTaskStackProvider());
-			break;
-		case UNKNOWN:
-			reportUnproveableResult(abstractCegarLoop.getRcfgProgramExecution(), null);
-			break;
-		default:
-			throw new IllegalArgumentException();
-		}
+		final CegarLoopResultReporter<IcfgEdge> clrReporter =
+				new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+		clrReporter.reportCegarLoopResult(result);
+		clrReporter.reportAllSafeResultIfNecessary(result, errNodesOfAllProc.size());
 
 		mLogger.info("Statistics - iterations: " + abstractCegarLoop.getIteration());
 		// s_Logger.info("Statistics - biggest abstraction: " +
@@ -194,75 +165,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException();
 		}
 		mLogger.warn(stat);
-		switch (result) {
-		case SAFE:
-			mLogger.warn("Program is correct");
-			// FIXME This is not the right way to tell the core about results
-			// ResultNotifier.programCorrect();
-			break;
-		case UNSAFE:
-			mLogger.warn("Program is incorrect");
-			// FIXME This is not the right way to tell the core about results
-			// ResultNotifier.programIncorrect();
-			break;
-		case TIMEOUT:
-			mLogger.warn("Insufficient iterations to proof correctness");
-			// FIXME This is not the right way to tell the core about results
-			// ResultNotifier
-			// .programUnknown("Insufficient iterations to prove correctness");
-			break;
-		case UNKNOWN:
-			mLogger.warn("Program might be incorrect, check conterexample.");
-			// FIXME This is not the right way to tell the core about results
-			// ResultNotifier.programUnknown("Program might be incorrect, check"
-			// + " counterexample.");
-			break;
-		default:
-			throw new IllegalArgumentException();
-		}
 
 		mGraphroot = abstractCegarLoop.getArtifact();
 
 		return false;
-	}
-
-	private void reportPositiveResults(final Collection<? extends IcfgLocation> errorLocs) {
-		if (!errorLocs.isEmpty()) {
-			for (final IcfgLocation errorLoc : errorLocs) {
-				final PositiveResult<IIcfgElement> pResult =
-						new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
-				reportResult(pResult);
-			}
-		}
-		final AllSpecificationsHoldResult result =
-				AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errorLocs.size());
-		reportResult(result);
-		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
-	}
-
-	private void reportCounterexampleResult(final IProgramExecution<IcfgEdge, Term> pe) {
-		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
-		if (!upreasons.isEmpty()) {
-			reportUnproveableResult(pe, upreasons);
-			return;
-		}
-		reportResult(new CounterExampleResult<>(getErrorPP(pe), Activator.PLUGIN_NAME,
-				mServices.getBacktranslationService(), pe));
-	}
-
-	private void reportTimeoutResult(final Result result, final Collection<IcfgLocation> errorLocs,
-			final IRunningTaskStackProvider rtsp) {
-		for (final IcfgLocation errorIpp : errorLocs) {
-			final IResult res = TraceAbstractionStarter.constructLimitResult(mServices, result, rtsp, errorIpp);
-			reportResult(res);
-		}
-	}
-
-	private void reportUnproveableResult(final IProgramExecution<IcfgEdge, Term> pe,
-			final List<UnprovabilityReason> unproabilityReasons) {
-		final IcfgLocation errorPP = getErrorPP(pe);
-		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
-				unproabilityReasons));
 	}
 
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {

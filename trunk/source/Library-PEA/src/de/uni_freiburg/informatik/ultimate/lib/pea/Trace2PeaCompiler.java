@@ -724,13 +724,13 @@ public class Trace2PeaCompiler {
 			mInit = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
 				final Transition trans = initTrans.get(i);
-				if (trans.dest.getName().equals("st")) {
+				if (trans.getDest().getName().equals("st")) {
 					/*
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
 					 * only if the predicate of the first phase does not hold.
 					 */
 					start = new Phase("stinit", mCountertrace.getPhases()[0].getInvariant().negate(), CDD.TRUE);
-					start.addTransition(trans.dest, mNoSyncEvent.prime(mConstantIds), new String[0]);
+					start.addTransition(trans.getDest(), mNoSyncEvent.prime(mConstantIds), new String[0]);
 					/* for completeness add stutter-step edge */
 					start.addTransition(start, mNoSyncEvent.prime(mConstantIds), new String[0]);
 					mInit[i] = start;
@@ -739,7 +739,7 @@ public class Trace2PeaCompiler {
 					 * For all other states the guard of trans should already equal the state invariant, so we do not
 					 * need to add an extra state
 					 */
-					mInit[i] = trans.dest;
+					mInit[i] = trans.getDest();
 				}
 			}
 		}

@@ -60,10 +60,8 @@ public final class HashDeque<E> implements Deque<E> {
 
 	@Override
 	public void push(final E node) {
-		mDeque.push(node);
-		final boolean modified = mSet.add(node);
-		if (!modified) {
-			throw new IllegalArgumentException("Illegal to add element twice " + node);
+		if (mSet.add(node)) {
+			mDeque.push(node);
 		}
 	}
 
@@ -289,7 +287,7 @@ public final class HashDeque<E> implements Deque<E> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mDeque == null) ? 0 : mDeque.hashCode());
+		result = prime * result + (mDeque == null ? 0 : mDeque.hashCode());
 		return result;
 	}
 

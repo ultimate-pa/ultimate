@@ -26,11 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+
 /**
  * An independence relation that is used in Partial Order or Lipton reductions.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * 
+ *
  * @param <STATE>
  *            The type of states the independence may depend on.
  * @param <LETTER>
@@ -38,28 +41,39 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
  */
 public interface IIndependenceRelation<STATE, LETTER> {
 	/**
-	 * Indicates whether this relation is symmetric (i.e., captures full
-	 * commutativity) or not (i.e., captures semicommutativity, Lipton movers).
+	 * Indicates whether this relation is symmetric (i.e., captures full commutativity) or not (i.e., captures
+	 * semicommutativity, Lipton movers).
 	 */
 	boolean isSymmetric();
 
 	/**
-	 * Indicates whether this relation is conditional, i.e., the result of
-	 * {@link contains} may differ depending on the given states.
+	 * Indicates whether this relation is conditional, i.e., the result of {@link contains} may differ depending on the
+	 * given states.
 	 */
 	boolean isConditional();
 
 	/**
-	 * Tests if the given pair of actions is in the relation for the given state.
-	 * Undetermined checks should return {@code false} to remain conservative.
-	 * Unconditional relations (see {@link isConditional}) should accept
+	 * Tests if the given pair of actions is in the relation for the given state. Undetermined checks should return
+	 * {@code false} to remain conservative. Unconditional relations (see {@link isConditional}) should accept
 	 * {@code null} as state.
 	 *
-	 * The intuition is that correctness of a trace containing the subsequence "ba"
-	 * implies the correctness of the trace where this was replaced by "ab". We also
-	 * sometimes say that {@code a} is a right-mover for {@code b} (in the given
-	 * {@code state}, if the relation is conditional), or resp., {@code b} is a left
-	 * mover for {@code a}.
+	 * The intuition is that correctness of a trace containing the subsequence "ba" implies the correctness of the trace
+	 * where this was replaced by "ab". We also sometimes say that {@code a} is a right-mover for {@code b} (in the
+	 * given {@code state}, if the relation is conditional), or resp., {@code b} is a left mover for {@code a}.
 	 */
 	boolean contains(STATE state, LETTER a, LETTER b);
+
+	/**
+	 * An optional method that allows collecting statistics about the history of queries made to this independence
+	 * relation. The default implementation does not provide any statistics.
+	 *
+	 * Implementations of this methods are encouraged to use (subclasses of) {@link IndependenceStatisticsDataProvider}.
+	 *
+	 * @return a statistics provider with implementation-defined data
+	 */
+	default IStatisticsDataProvider getStatistics() {
+		return new AbstractStatisticsDataProvider() {
+			// By default, no statistics are collected.
+		};
+	}
 }

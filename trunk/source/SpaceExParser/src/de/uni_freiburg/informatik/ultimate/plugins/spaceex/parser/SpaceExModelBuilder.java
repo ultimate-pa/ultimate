@@ -117,12 +117,10 @@ public class SpaceExModelBuilder {
 		HybridAutomaton automaton;
 		if (!parallelCompositions.isEmpty()) {
 			automaton = parallelCompositions.get(1);
+		} else if (!system.getAutomata().isEmpty()) {
+			automaton = model.mergeAutomata(system, null);
 		} else {
-			if (!system.getAutomata().isEmpty()) {
-				automaton = model.mergeAutomata(system, null);
-			} else {
-				throw new IllegalStateException("system does not have any automata");
-			}
+			throw new IllegalStateException("system does not have any automata");
 		}
 		// generate a smt toolkit in order to build transformulas later on.
 		final CfgSmtToolkit smtToolkit = generateToolkit(automaton);
@@ -156,8 +154,8 @@ public class SpaceExModelBuilder {
 		final Map<String, List<ILocalProgramVar>> inParams =
 				Collections.singletonMap(HybridTranslatorConstants.PROC_NAME, Collections.emptyList());
 		final Map<String, List<ILocalProgramVar>> outParams = inParams;
-		return new CfgSmtToolkit(mServices, modifiableGlobalsTable, managedScript, defaultTable, procedures, inParams,
-				outParams, new IcfgEdgeFactory(new SerialProvider()), null, new SmtFunctionsAndAxioms(managedScript));
+		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, procedures, inParams, outParams,
+				new IcfgEdgeFactory(new SerialProvider()), null, new SmtFunctionsAndAxioms(managedScript));
 	}
 
 	public BasicIcfg<IcfgLocation> getModel() {

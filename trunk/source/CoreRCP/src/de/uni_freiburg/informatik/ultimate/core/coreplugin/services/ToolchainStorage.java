@@ -178,7 +178,6 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	@Override
 	public ILoggingService getLoggingService() {
 		return Log4JLoggingService.getService(this);
-		// return Log4J2LoggingService.getService(this);
 	}
 
 	@Override
@@ -289,7 +288,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	private boolean hasMarker(final Object marker) {
 		assert marker != null;
 		synchronized (mLock) {
-			return mMarker.stream().map(a -> a.getFirst()).anyMatch(a -> a == marker);
+			return mMarker.stream().map(Pair::getFirst).anyMatch(a -> a == marker);
 		}
 	}
 

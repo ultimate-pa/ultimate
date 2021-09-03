@@ -133,7 +133,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Icfg
 
 	@Override
 	public boolean isAbstractable(final Term inputTerm) {
-		return !mAbstractablePropertyChecker.isPropertySatisfied(inputTerm);
+		return !mAbstractablePropertyChecker.isSatisfiedBySomeSubterm(inputTerm);
 	}
 
 	@Override

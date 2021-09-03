@@ -68,14 +68,12 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	private final Set<String> mLiterals;
 	private final Set<BigDecimal> mNumberLiterals;
 	private final StatementLiteralCollector mStatementLiteralCollector;
-	private final SubTermFinder mSubTermFinder;
 	private final LiteralCollection mLiteralCollection;
 
 	public RCFGLiteralCollector(final IIcfg<?> root) {
 		mLiterals = new HashSet<>();
 		mNumberLiterals = new HashSet<>();
 		mStatementLiteralCollector = new StatementLiteralCollector();
-		mSubTermFinder = new SubTermFinder(RCFGLiteralCollector::isConstant);
 		process(RcfgUtils.getInitialEdges(root));
 		mLiteralCollection = new LiteralCollection(mNumberLiterals);
 	}
@@ -135,10 +133,10 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	}
 
 	private void addConstantsFromTerms(final Term t) {
-		final Set<Term> results = mSubTermFinder.findMatchingSubterms(t);
+		final Set<Term> results = SubTermFinder.find(t, RCFGLiteralCollector::isConstant, false);
 		for (final Term constTerm : results) {
 			if (constTerm instanceof ConstantTerm) {
-				final Rational rat = SmtUtils.convertConstantTermToRational((ConstantTerm) constTerm);
+				final Rational rat = SmtUtils.toRational((ConstantTerm) constTerm);
 				mNumberLiterals.add(new BigDecimal(rat.numerator()).divide(new BigDecimal(rat.denominator())));
 			}
 		}

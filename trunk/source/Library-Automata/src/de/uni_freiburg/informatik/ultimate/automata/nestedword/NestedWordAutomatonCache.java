@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -380,11 +381,16 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 			return states + " states.";
 		}
 		final int statesWithInternalSuccessors;
+		final double internalSuccAvg;
 		final Set<STATE> statesWithOutgoingInternal = mInternalOut.keySet();
 		if (statesWithOutgoingInternal == null) {
 			statesWithInternalSuccessors = 0;
+			internalSuccAvg = 0;
 		} else {
 			statesWithInternalSuccessors = statesWithOutgoingInternal.size();
+			final int sum = statesWithOutgoingInternal.stream()
+					.collect(Collectors.summingInt(this::numberOfOutgoingInternalTransitions));
+			internalSuccAvg = statesWithInternalSuccessors == 0 ? 0 : (sum / (double) statesWithInternalSuccessors);
 		}
 		final int internalSuccessors = mInternalOut.size();
 
@@ -408,10 +414,11 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 
 		final StringBuilder sb = new StringBuilder();
 		sb.append(" has ").append(getStates().size()).append(" states, " + statesWithInternalSuccessors)
-				.append(" states have internal successors, (").append(internalSuccessors).append("), ")
-				.append(statesWithCallSuccessors).append(" states have call successors, (").append(callSuccessors)
-				.append("), ").append(statesWithReturnSuccessor).append(" states have return successors, (")
-				.append(returnSuccessors).append("), ");
+				.append(" states have (on average " + internalSuccAvg + ") internal successors, (")
+				.append(internalSuccessors).append("), ").append(statesWithCallSuccessors)
+				.append(" states have call successors, (").append(callSuccessors).append("), ")
+				.append(statesWithReturnSuccessor).append(" states have return successors, (").append(returnSuccessors)
+				.append("), ");
 		return sb.toString();
 	}
 

@@ -125,9 +125,6 @@ public class LoopPreprocessorTransformulaTransformer {
 			modTfTransformed = null;
 			e.printStackTrace();
 		}
-		/*
-		 * TODO: programs with multiple modulos Use SubTermPropertyChecker -> returns multiple terms
-		 */
 
 		final List<Term> result = new ArrayList<>();
 		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", false);

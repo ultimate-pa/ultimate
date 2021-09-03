@@ -26,11 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Counter;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * An independence relation that caches the result of an underlying relation. To be used with computation-intensive
@@ -47,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S, L> {
 
 	private final IIndependenceRelation<S, L> mUnderlying;
-	private final Map<S, HashRelation<L, L>> mPositiveCache = new HashMap<>();
-	private final Map<S, HashRelation<L, L>> mNegativeCache = new HashMap<>();
+	private final IIndependenceCache<S, L> mCache;
+	private final CachedIndependenceStatisticsProvider mStatistics;
 
 	/**
 	 * Create a new cache for the given relation.
@@ -57,7 +56,31 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 *            The underlying relation that will be queried and whose results will be cached.
 	 */
 	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
+		this(underlying, new DefaultIndependenceCache<>());
+	}
+
+	/**
+	 * Create a new cache for the given relation.
+	 *
+	 * @param underlying
+	 *            The underlying relation that will be queried and whose results will be cached.
+	 * @param cache
+	 *            A cache object used to retrieve and store independence. This parameter allows re-use and sharing of
+	 *            cached information across instances. Use with care as it allows potentially unsound mixing of
+	 *            different relations through a shared cache.
+	 */
+	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying,
+			final IIndependenceCache<S, L> cache) {
 		mUnderlying = underlying;
+		mCache = cache;
+		mStatistics = new CachedIndependenceStatisticsProvider();
+	}
+
+	/**
+	 * @return The cache instance used to store and retrieve independence information.
+	 */
+	public IIndependenceCache<S, L> getCache() {
+		return mCache;
 	}
 
 	@Override
@@ -72,93 +95,150 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 	@Override
 	public boolean contains(final S state, final L a, final L b) {
-		S stateKey = state;
-		if (!isConditional()) {
-			stateKey = null;
-		}
+		final S condition = isConditional() ? state : null;
 
-		HashRelation<L, L> positive = mPositiveCache.get(stateKey);
-		if (positive == null) {
-			positive = new HashRelation<>();
-		}
-
-		HashRelation<L, L> negative = mNegativeCache.get(stateKey);
-		if (negative == null) {
-			negative = new HashRelation<>();
-		}
-
-		if (positive.containsPair(a, b) || (isSymmetric() && positive.containsPair(b, a))) {
+		final LBool cached = mCache.contains(condition, a, b);
+		if (cached == LBool.SAT) {
+			mStatistics.reportPositiveCachedQuery(condition != null);
 			return true;
-		} else if (negative.containsPair(a, b) || (isSymmetric() && negative.containsPair(b, a))) {
+		} else if (cached == LBool.UNSAT) {
+			mStatistics.reportNegativeCachedQuery(condition != null);
 			return false;
 		}
 
-		final boolean result = mUnderlying.contains(stateKey, a, b);
-		if (result) {
-			positive.addPair(a, b);
-			mPositiveCache.put(stateKey, positive);
-		} else {
-			negative.addPair(a, b);
-			mNegativeCache.put(stateKey, negative);
+		if (isSymmetric()) {
+			final LBool symCached = mCache.contains(condition, b, a);
+			if (symCached == LBool.SAT) {
+				mStatistics.reportPositiveCachedQuery(condition != null);
+				return true;
+			} else if (symCached == LBool.UNSAT) {
+				mStatistics.reportNegativeCachedQuery(condition != null);
+				return false;
+			}
 		}
 
+		final boolean result = mUnderlying.contains(condition, a, b);
+		mCache.cacheResult(condition, a, b, result);
+		mStatistics.reportUncachedQuery(result, condition != null);
 		return result;
 	}
 
-	public int getNegativeCacheSize() {
-		return mNegativeCache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
-	}
-
-	public int getPositiveCacheSize() {
-		return mPositiveCache.entrySet().stream().collect(Collectors.summingInt(e -> e.getValue().size()));
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 
 	/**
-	 * Merges cached independencies for two letters into a combined letter. If both are independent from some third
-	 * letter c, the combined letter will be independent from c as well.
-	 *
-	 * This method can be used to transfer knowledge about letters to a (sequential or choice) composition of these
-	 * letters. The caller must ensure soundness, it is not checked against the underlying relation (as this would
-	 * defeat the purpose).
+	 * Purge all information involving a given letter from the cache.
 	 *
 	 * @param a
-	 *            The first letter
-	 * @param b
-	 *            The second letter
-	 * @param ab
-	 *            The combination (e.g. sequential composition) of the previous two letters.
-	 */
-	public void mergeIndependencies(final L a, final L b, final L ab) {
-		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
-			// (a, c) + (b, c) -> (ab, c)
-			for (final L c : relation.getImage(a)) {
-				if (relation.containsPair(b, c)) {
-					relation.addPair(ab, c);
-				}
-			}
-			// (c, a) + (c, b) -> (c, ab)
-			for (final L c : relation.getDomain()) {
-				if (relation.containsPair(c, a) && relation.containsPair(c, b)) {
-					relation.addPair(c, ab);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Purge all independencies involving a given letter from the cache.
-	 *
-	 * @param a
-	 *            The letter whose independencies shall be removed.
+	 *            The letter whose independencies and dependencies shall be removed.
 	 */
 	public void removeFromCache(final L a) {
-		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
-			relation.removeDomainElement(a);
-			relation.removeRangeElement(a);
+		mCache.remove(a);
+	}
+
+	private final class CachedIndependenceStatisticsProvider extends IndependenceStatisticsDataProvider {
+		public static final String CACHE_QUERIES = "Cache Queries";
+		public static final String CACHE_STATISTICS = "Statistics on independence cache";
+
+		private final Counter mCacheQueries = new Counter();
+
+		private CachedIndependenceStatisticsProvider() {
+			super(CachedIndependenceRelation.class, mUnderlying);
+			declareCounter(CACHE_QUERIES, () -> mCacheQueries);
+			forward(CACHE_STATISTICS, mCache::getStatistics);
 		}
-		for (final HashRelation<L, L> relation : mNegativeCache.values()) {
-			relation.removeDomainElement(a);
-			relation.removeRangeElement(a);
+
+		private void reportPositiveCachedQuery(final boolean conditional) {
+			reportPositiveQuery(conditional);
+			mCacheQueries.increment(true, conditional);
+		}
+
+		private void reportNegativeCachedQuery(final boolean conditional) {
+			reportNegativeQuery(conditional);
+			mCacheQueries.increment(false, conditional);
+		}
+
+		private void reportUncachedQuery(final boolean result, final boolean conditional) {
+			reportQuery(result, conditional);
+			mCacheQueries.incrementUnknown(conditional);
+		}
+	}
+
+	/**
+	 * A cache used to store independence information.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <S>
+	 *            The type of conditions (arbitrary in case of non-conditional independence)
+	 * @param <L>
+	 *            The type of letters
+	 */
+	public interface IIndependenceCache<S, L> {
+		/**
+		 * Determine if the cache contains certain independence information.
+		 *
+		 * @param condition
+		 *            A condition in case of conditional independence, null otherwise.
+		 * @param a
+		 *            The first letter
+		 * @param b
+		 *            The second letter
+		 * @return SAT if the letters are known to be independent (possibly under the given condition), UNSAT if they
+		 *         are known to be dependent, and UNKNOWN otherwise.
+		 */
+		LBool contains(S condition, L a, L b);
+
+		/**
+		 * Remove all independence and dependence information involving a given letter.
+		 *
+		 * @param a
+		 *            The letter whose information shall be removed.
+		 */
+		void remove(L a);
+
+		/**
+		 * Add information to the cache.
+		 *
+		 * @param condition
+		 *            A condition, or null in case of non-conditional independence.
+		 * @param a
+		 *            The first letter
+		 * @param b
+		 *            The second letter
+		 * @param independent
+		 *            Whether or not the given letters are independent
+		 */
+		void cacheResult(S condition, L a, L b, boolean independent);
+
+		/**
+		 * Merges cached independencies for two letters into a combined letter. If both are independent from some third
+		 * letter c, the combined letter will be independent from c as well.
+		 *
+		 * This method can be used to transfer knowledge about letters to a (sequential or choice) composition of these
+		 * letters. The caller must ensure soundness, it is not checked against the underlying relation (as this would
+		 * defeat the purpose).
+		 *
+		 * @param a
+		 *            The first letter
+		 * @param b
+		 *            The second letter
+		 * @param ab
+		 *            The combination (e.g. sequential composition) of the previous two letters.
+		 */
+		void mergeIndependencies(L a, L b, L ab);
+
+		/**
+		 * An optional method to provide statistics about the cache.
+		 *
+		 * @return implementation-defined statistics
+		 */
+		default IStatisticsDataProvider getStatistics() {
+			return new AbstractStatisticsDataProvider() {
+				// by default, no statistics are collected
+			};
 		}
 	}
 }

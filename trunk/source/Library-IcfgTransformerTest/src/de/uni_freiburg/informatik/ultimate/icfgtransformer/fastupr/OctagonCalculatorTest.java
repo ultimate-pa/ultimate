@@ -110,7 +110,7 @@ public class OctagonCalculatorTest {
 		System.out.println(result.toString());
 		Assert.assertEquals("(-v_xin_1 +v_xout_1 <= 1) and (v_xin_1 -v_xout_1 <= -1) and (2*v_yin_1 <= 10)",
 				example.toString());
-		Assert.assertEquals("(2*v_yin_1 <= 10) and (v_xout_1 -v_xin_1 <= 2) and (-v_xout_1 +v_xin_1 <= -2)",
+		Assert.assertEquals("(v_xout_1 -v_xin_1 <= 2) and (-v_xout_1 +v_xin_1 <= -2) and (2*v_yin_1 <= 10)",
 				result.toString());
 	}
 
@@ -146,7 +146,7 @@ public class OctagonCalculatorTest {
 		System.out.println(result.toString());
 		Assert.assertEquals("(-v_xin_1 +v_xout_1 <= 1) and (v_xin_1 -v_xout_1 <= -1) and (2*v_yin_1 <= 10)",
 				example.toString());
-		Assert.assertEquals("(2*v_yin_1 <= 10) and (v_xout_1 -v_xin_1 <= 2) and (-v_xout_1 +v_xin_1 <= -2)",
+		Assert.assertEquals("(v_xout_1 -v_xin_1 <= 2) and (-v_xout_1 +v_xin_1 <= -2) and (2*v_yin_1 <= 10)",
 				result.toString());
 
 	}

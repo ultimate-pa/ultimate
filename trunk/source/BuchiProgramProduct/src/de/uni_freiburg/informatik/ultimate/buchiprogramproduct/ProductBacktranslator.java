@@ -87,9 +87,13 @@ public class ProductBacktranslator extends
 				newBranchEncoders.add(oldBranchEncoders[i]);
 			}
 		}
-
-		return IcfgProgramExecution.create(newTrace, newValues,
-				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
+		if (newTrace.isEmpty()) {
+			return new IcfgProgramExecution(newTrace, newValues,
+					newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), false, IIcfgTransition.class);
+		} else {
+			return IcfgProgramExecution.create(newTrace, newValues,
+					newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
+		}
 	}
 
 	private static void addProgramState(final Integer i, final Map<Integer, ProgramState<Term>> newValues,

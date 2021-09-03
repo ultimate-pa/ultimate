@@ -1,0 +1,21 @@
+var x : int;
+
+procedure ULTIMATE.start()
+modifies x;
+{
+  x := 0;
+
+  <<<FORKS>>>
+  <<<JOINS>>>
+
+  assert x == 0;
+}
+
+procedure Thread()
+modifies x;
+{
+  while (*) {
+    x := x + 1;
+    x := x - 1;
+  }
+}

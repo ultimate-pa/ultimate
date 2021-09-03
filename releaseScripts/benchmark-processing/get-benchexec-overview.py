@@ -270,8 +270,11 @@ def scan_line(
             if mc.show_line:
                 new_result = message, line
             else:
-                new_result = message, line_iter.__next__()
-            debug("Found result {} with line {}".format(message, line))
+                try:
+                    new_result = message, line_iter.__next__()
+                    debug("Found result {} with line {}".format(message, line))
+                except StopIteration:
+                    pass
             break
 
     if not result and new_result:
@@ -459,33 +462,34 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
         msg = "{:>7}  {}  {}:".format(j, limit(r.category(), 20), r.message())
         msg_detail = msg
 
-        fastest = n_min([x for x in results if x.category() == r.category() and x.message() == r.message()],
-                        args.fastest_n,
-                        key=lambda y: runs[os.path.basename(y.logfile)].walltime)
-        for f in fastest:
-            run = runs[os.path.basename(f.logfile)]
-            msg_detail += f'\n{" ":<8} {format_number(run.walltime, 2):>8}s {f.logfile}'
-            msg_detail += f'\n{" ":<18} {"Call:":<8} {f.call}'
-            if r.category() not in interesting_strings:
-                print(f"{r.category()} not in interesting_strings")
-                continue
-            mc = interesting_strings[r.category()]
-            if mc.delta_debug:
-                desc = "--deltadebugger.result.short.description.prefix" if mc.delta_debug_short else "--deltadebugger.result.long.description.prefix"
-                msg_detail += f'\n{" ":<18} {"Delta:":<8} {f.call} ' \
-                              f'--deltadebugger.look.for.result.of.type "{mc.delta_debug_result_type}" ' \
-                              f'{desc} "{r.category() if mc.delta_debug_category else r.message()}" '
+        if runs:
+            fastest = n_min([x for x in results if x.category() == r.category() and x.message() == r.message() and os.path.basename(x.logfile) in runs],
+                            args.fastest_n,
+                            key=lambda y: runs[os.path.basename(y.logfile)].walltime)
+            for f in fastest:
+                run = runs[os.path.basename(f.logfile)]
+                msg_detail += f'\n{" ":<8} {format_number(run.walltime, 2):>8}s {f.logfile}'
+                msg_detail += f'\n{" ":<18} {"Call:":<8} {f.call}'
+                if r.category() not in interesting_strings:
+                    print(f"{r.category()} not in interesting_strings")
+                    continue
+                mc = interesting_strings[r.category()]
+                if mc.delta_debug:
+                    desc = "--deltadebugger.result.short.description.prefix" if mc.delta_debug_short else "--deltadebugger.result.long.description.prefix"
+                    msg_detail += f'\n{" ":<18} {"Delta:":<8} {f.call} ' \
+                                f'--deltadebugger.look.for.result.of.type "{mc.delta_debug_result_type}" ' \
+                                f'{desc} "{r.category() if mc.delta_debug_category else r.message()}" '
 
-            if mc.dump_smt:
-                dump_dir = Path(f"{os.path.dirname(f.logfile)}-dump")
-                dump_dir.mkdir(parents=True, exist_ok=True)
-                msg_detail += f'\n{" ":<18} {"Dump SMT:":<8} {f.call} ' \
-                              f'--rcfgbuilder.dump.smt.script.to.file true ' \
-                              f'--rcfgbuilder.compress.dumped.smt.script true ' \
-                              f'--rcfgbuilder.to.the.following.directory "{dump_dir}" ' \
-                              f'--traceabstraction.dump.smt.script.to.file true ' \
-                              f'--traceabstraction.compress.dumped.smt.script true ' \
-                              f'--traceabstraction.to.the.following.directory "{dump_dir}" '
+                if mc.dump_smt:
+                    dump_dir = Path(f"{os.path.dirname(f.logfile)}-dump")
+                    dump_dir.mkdir(parents=True, exist_ok=True)
+                    msg_detail += f'\n{" ":<18} {"Dump SMT:":<8} {f.call} ' \
+                                f'--rcfgbuilder.dump.smt.script.to.file true ' \
+                                f'--rcfgbuilder.compress.dumped.smt.script true ' \
+                                f'--rcfgbuilder.to.the.following.directory "{dump_dir}" ' \
+                                f'--traceabstraction.dump.smt.script.to.file true ' \
+                                f'--traceabstraction.compress.dumped.smt.script true ' \
+                                f'--traceabstraction.to.the.following.directory "{dump_dir}" '
 
         if j < args.cut_off:
             print_cutoff += [msg]
@@ -500,16 +504,17 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
         for msg_detail in sorted(print_cutoff, reverse=True):
             print(msg_detail)
 
-    print()
-    print(f"Detailed actual results (n>={args.cut_off})")
-    for msg in print_detail:
-        print(msg)
-
-    if print_cutoff_detail:
+    if runs:
         print()
-        print(f"Detailed actual results (n<{args.cut_off})")
-        for msg_detail in sorted(print_cutoff_detail, reverse=True):
-            print(msg_detail)
+        print(f"Detailed actual results (n>={args.cut_off})")
+        for msg in print_detail:
+            print(msg)
+
+        if print_cutoff_detail:
+            print()
+            print(f"Detailed actual results (n<{args.cut_off})")
+            for msg_detail in sorted(print_cutoff_detail, reverse=True):
+                print(msg_detail)
 
 
 def set_unknowns(
@@ -519,7 +524,9 @@ def set_unknowns(
     for r in results:
         if r.classification is None:
             basename = ntpath.basename(file)
-            run = runs[basename]
+            run = runs.get(basename,None)
+            if not run:
+                raise UnsupportedLogFile(f"There is no run for {file}")
             if run.is_timeout():
                 real_results += [
                     Result(file, (str_benchexec_timeout, "..."), r.call, r.version)
@@ -623,7 +630,11 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
     for xml in list_xml_filepaths(input_dir):
         root = ET.parse(xml).getroot()
         result = root.find(".")
-        name = result.attrib["name"].split(".")
+        name_attr = result.attrib.get("name", None)
+        if not name_attr:
+            print(f"Run in xml file {xml} has no name! Cannot detect toolname, ignoring .xml")
+            continue
+        name = name_attr.split(".")
         tool_name = name[0]
         for elem in root.findall(".//run"):
             # files = elem.attrib["files"]

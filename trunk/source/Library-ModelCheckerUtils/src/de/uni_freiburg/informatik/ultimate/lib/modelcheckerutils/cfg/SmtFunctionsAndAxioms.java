@@ -146,10 +146,13 @@ public class SmtFunctionsAndAxioms {
 
 		final NonDeclaringTermTransferrer tt = new NonDeclaringTermTransferrer(script);
 		final Term transferredAxiom = tt.transform(mAxioms.getClosedFormula());
-		final LBool quickCheckAxioms = script.assertTerm(transferredAxiom);
-		// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent axioms,
-		// we just want to be informed about them.
-		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
+		if (!SmtUtils.isTrueLiteral(transferredAxiom)) {
+			final LBool quickCheckAxioms = script.assertTerm(transferredAxiom);
+			// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent
+			// axioms,
+			// we just want to be informed about them.
+			assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
+		}
 	}
 
 	/**
@@ -174,7 +177,7 @@ public class SmtFunctionsAndAxioms {
 		return mScript.getSymbolTable().entrySet().stream()
 				.filter(a -> a.getValue() instanceof DeclarableFunctionSymbol)
 				.map(a -> (DeclarableFunctionSymbol) a.getValue()).filter(a -> a.getDefinition() != null)
-				.collect(Collectors.toMap(a -> a.getName(), a -> a));
+				.collect(Collectors.toMap(DeclarableFunctionSymbol::getName, a -> a));
 	}
 
 	/**

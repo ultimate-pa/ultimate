@@ -1,48 +1,55 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
 <benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="8GB" cpuCores="2">
-
-  <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-
-  <rundefinition name="Automizer DEFAULT">
-    <option name="--force-no-wrapper" />
-    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-    <tasks name="lt300_32">
-      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
-      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
-    </tasks>
-    <tasks name="lt300_64">
-      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
-      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
-    </tasks>
-  </rundefinition>
-
-  <rundefinition name="Automizer AcceleratedFastUPR">
-    <option name="--force-no-wrapper" />
-    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-    <tasks name="lt300_32">
-      <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationFastUPR_32.epf</option>
-      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
-    </tasks>
-    <tasks name="lt300_64">
-      <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationFastUPR_64.epf</option>
-      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
-    </tasks>
-  </rundefinition>
-
-  <rundefinition name="Automizer Craig_NestedInterpolation">
-    <option name="--force-no-wrapper" />
-    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-    <tasks name="lt300_32">
-      <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationFastUPR_32.epf</option>
-      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
-    </tasks>
-    <tasks name="lt300_64">
-      <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationFastUPR_64.epf</option>
-      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
-    </tasks>
-    <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
-    <option name="--traceabstraction.use.separate.solver.for.trace.checks">true</option>
-  </rundefinition>
-
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+    <rundefinition name="Automizer DEFAULT">
+        <option name="--force-no-wrapper" />
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <tasks name="lt300_32">
+            <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+        </tasks>
+        <tasks name="lt300_64">
+            <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+        </tasks>
+    </rundefinition>
+    <rundefinition name="Automizer AcceleratedFastUPR">
+        <option name="--force-no-wrapper" />
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <tasks name="lt300_32">
+            <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationFastUPR_32.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+        </tasks>
+        <tasks name="lt300_64">
+            <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationFastUPR_64.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+        </tasks>
+    </rundefinition>
+    <rundefinition name="Automizer Craig_NestedInterpolation">
+        <option name="--force-no-wrapper" />
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <tasks name="lt300_32">
+            <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationFastUPR_32.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+        </tasks>
+        <tasks name="lt300_64">
+            <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationFastUPR_64.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+        </tasks>
+        <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
+        <option name="--traceabstraction.use.separate.solver.for.trace.checks">true</option>
+    </rundefinition>
+    <rundefinition name="Automizer AcceleratedWerner">
+        <option name="--force-no-wrapper" />
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <tasks name="lt300_32">
+            <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationWernerOverapprox_32.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+        </tasks>
+        <tasks name="lt300_64">
+            <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationWernerOverapprox_64.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+        </tasks>
+    </rundefinition>
 </benchmark>

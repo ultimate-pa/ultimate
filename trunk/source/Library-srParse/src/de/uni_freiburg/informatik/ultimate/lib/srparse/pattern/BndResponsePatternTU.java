@@ -33,7 +33,12 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards
@@ -44,14 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class BndResponsePatternTU extends PatternType<BndResponsePatternTU> {
 
 	public BndResponsePatternTU(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndResponsePatternTU create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndResponsePatternTU(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -65,12 +64,32 @@ public class BndResponsePatternTU extends PatternType<BndResponsePatternTU> {
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
 
+		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			final CounterTrace ct =
-					counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phase(S.negate()), phaseT());
-			return Collections.singletonList(ct);
+			ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phase(S.negate()), phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1),
+					phase(P.negate().and(S.negate())), phaseT());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phase(Q.negate().and(S.negate())), phaseT());
+		} else if (scope instanceof SrParseScopeAfter) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phase(S.negate()),
+					phaseT());
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phase(Q.negate().and(S.negate())),
+					phase(Q.negate()), phase(Q), phaseT());
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		return Collections.singletonList(ct);
 	}
 
 	@Override
@@ -86,16 +105,11 @@ public class BndResponsePatternTU extends PatternType<BndResponsePatternTU> {
 		sb.append("it is always the case that if \"");
 		sb.append(getCdds().get(1).toBoogieString());
 		sb.append("\" holds for at least \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds afterwards");
 		return sb.toString();
-	}
-
-	@Override
-	public BndResponsePatternTU rename(final String newName) {
-		return new BndResponsePatternTU(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

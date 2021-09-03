@@ -42,6 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AcceleratedInterpolationLoopAccelerationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
@@ -50,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.McrInterpolantMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.ExcludeFromToString;
 
 public final class TAPreferences {
 	private static final boolean SEPARATE_VIOLATION_CHECK = true;
@@ -67,11 +71,12 @@ public final class TAPreferences {
 	private final boolean mHoare;
 	private final Concurrency mConcurrency;
 	private final HoareTripleChecks mHoareTripleChecks;
+	@ExcludeFromToString
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
 	private final boolean mDumpOnlyReuseAutomata;
 	private final int mLimitTraceHistogram;
-	private final int mLimitAnalysisTime;
+	private final int mErrorLocTimeLimit;
 	private final int mLimitPathProgramCount;
 	private final boolean mCollectInterpolantStatistics;
 	private final boolean mHeuristicEmptinessCheck;
@@ -82,6 +87,7 @@ public final class TAPreferences {
 	private final String mSMTFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
 	private final McrInterpolantMethod mMcrInterpolantMethod;
+	private final AcceleratedInterpolationLoopAccelerationTechnique mLoopAccelerationTechnique;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -93,7 +99,7 @@ public final class TAPreferences {
 	}
 
 	public enum Concurrency {
-		FINITE_AUTOMATA, PETRI_NET
+		FINITE_AUTOMATA, PETRI_NET, PARTIAL_ORDER_FA
 	}
 
 	public enum LooperCheck {
@@ -141,7 +147,7 @@ public final class TAPreferences {
 		mConcurrency = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
 
 		mLimitTraceHistogram = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TRACE_HISTOGRAM);
-		mLimitAnalysisTime = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
+		mErrorLocTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
 		mLimitPathProgramCount = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_PATH_PROGRAM);
 
 		mCollectInterpolantStatistics =
@@ -178,6 +184,9 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
 		mMcrInterpolantMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_INTERPOLANT_METHOD,
 				McrInterpolantMethod.class);
+		mLoopAccelerationTechnique =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
+						AcceleratedInterpolationLoopAccelerationTechnique.class);
 
 	}
 
@@ -188,8 +197,12 @@ public final class TAPreferences {
 		return mInterprocedural;
 	}
 
-	public boolean allErrorLocsAtOnce() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
+	public boolean stopAfterFirstViolation() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_STOP_AFTER_FIRST_VIOLATION);
+	}
+
+	public boolean insufficientThreadErrorsLast() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INSUFFICIENT_THREAD_ERRORS_LAST);
 	}
 
 	public FloydHoareAutomataReuse getFloydHoareAutomataReuse() {
@@ -348,6 +361,26 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY, PetriNetLbe.class);
 	}
 
+	public PartialOrderMode getPartialOrderMode() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_MODE, PartialOrderMode.class);
+	}
+
+	public OrderType getDfsOrderType() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.class);
+	}
+
+	public long getDfsOrderSeed() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
+	}
+
+	public boolean getConditionalPor() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COND_POR);
+	}
+
+	public boolean getSymmetricPor() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SYMM_POR);
+	}
+
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_SIMPLIFICATION_TECHNIQUE,
 				SimplificationTechnique.class);
@@ -385,16 +418,21 @@ public final class TAPreferences {
 		return mLimitTraceHistogram;
 	}
 
-	public boolean hasLimitAnalysisTime() {
-		return mLimitAnalysisTime > 0;
+	public boolean hasErrorLocTimeLimit() {
+		return mErrorLocTimeLimit > 0;
+	}
+
+	public AcceleratedInterpolationLoopAccelerationTechnique getLoopAccelerationTechnique() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
+				AcceleratedInterpolationLoopAccelerationTechnique.class);
 	}
 
 	/**
 	 * @return A positive integer that specifies a time limit in seconds for the analysis of an error location or zero
 	 *         if no limit is set.
 	 */
-	public int getLimitAnalysisTime() {
-		return mLimitAnalysisTime;
+	public int getErrorLocTimeLimit() {
+		return mErrorLocTimeLimit;
 	}
 
 	public boolean hasLimitPathProgramCount() {

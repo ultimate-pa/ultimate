@@ -89,8 +89,8 @@ import de.uni_freiburg.informatik.ultimate.automata.util.HashRelationBackedSetOf
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UniqueQueue;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Hep;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -299,7 +299,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * <p>
 	 * Throws an IllegalStateException if computing summarize edge priorities could not be done because a live lock
 	 * occurred.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
@@ -308,7 +308,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mLogger.debug("Computing priorities of summarize edges.");
 		}
 
-		final Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
+		final Queue<SearchElement<LETTER, STATE>> searchQueue = new HashDeque<>();
 		final NestedMap3<Vertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>, Pair<STATE, Boolean>, Integer> vertexToSubSummarizeToSearchPriority =
 				new NestedMap3<>();
 		final LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(mGameGraph, mLogger, mProgressTimer);
@@ -397,7 +397,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								|| transitionType == TransitionType.SUMMARIZE_EXIT) {
 							// Ignore return and special edges
 							continue;
-						} else if (transitionType == TransitionType.SUMMARIZE_ENTRY) {
+						}
+						if (transitionType == TransitionType.SUMMARIZE_ENTRY) {
 							// Use min(summarizeEdgePriority,
 							// summarizeEdgeDestinationPriority) as priority
 							// candidate
@@ -442,23 +443,21 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							}
 							succPriority = succSearchPriority;
 						}
-					} else {
-						// Successor is spoiler vertex
-						if (isSearchVertexDuplicatorNwa) {
-							final TransitionType transitionType = searchVertexAsDuplicatorNwa.getTransitionType();
-							if (transitionType == TransitionType.RETURN || transitionType == TransitionType.SINK
-									|| transitionType == TransitionType.SUMMARIZE_ENTRY
-									|| transitionType == TransitionType.SUMMARIZE_EXIT) {
-								// Ignore return and special edges
-								break;
-							}
-							final Integer succSearchPriority = vertexToSubSummarizeToSearchPriority.get(succ,
-									searchSummarizeEdge, searchDuplicatorChoice);
-							if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
-								continue;
-							}
-							succPriority = succSearchPriority;
+					} else // Successor is spoiler vertex
+					if (isSearchVertexDuplicatorNwa) {
+						final TransitionType transitionType = searchVertexAsDuplicatorNwa.getTransitionType();
+						if (transitionType == TransitionType.RETURN || transitionType == TransitionType.SINK
+								|| transitionType == TransitionType.SUMMARIZE_ENTRY
+								|| transitionType == TransitionType.SUMMARIZE_EXIT) {
+							// Ignore return and special edges
+							break;
 						}
+						final Integer succSearchPriority = vertexToSubSummarizeToSearchPriority.get(succ,
+								searchSummarizeEdge, searchDuplicatorChoice);
+						if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
+							continue;
+						}
+						succPriority = succSearchPriority;
 					}
 					// Evaluate the priority of the current successor
 					// Differentiate between non-loop and loop vertices
@@ -584,7 +583,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 									|| transitionType == TransitionType.SUMMARIZE_ENTRY) {
 								// Ignore return and special edges
 								continue;
-							} else if (transitionType == TransitionType.SUMMARIZE_EXIT) {
+							}
+							if (transitionType == TransitionType.SUMMARIZE_EXIT) {
 								// Follow summarize edge to the source and use
 								// this vertex
 								final Vertex<LETTER, STATE> source = predAsDuplicatorNwa.getSummarizeEdge().getSource();
@@ -595,20 +595,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								searchQueue.add(new SearchElement<>(pred, searchTarget, searchVertex,
 										searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
 							}
-						} else {
-							// Predecessor is spoiler vertex
-							if (isSearchVertexDuplicatorNwa) {
-								final TransitionType transitionType = searchVertexAsDuplicatorNwa.getTransitionType();
-								if (transitionType == TransitionType.RETURN || transitionType == TransitionType.SINK
-										|| transitionType == TransitionType.SUMMARIZE_ENTRY
-										|| transitionType == TransitionType.SUMMARIZE_EXIT) {
-									// Ignore return and special edges
-									break;
-								}
-								// Create a search element
-								searchQueue.add(new SearchElement<>(pred, searchTarget, searchVertex,
-										searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
+						} else // Predecessor is spoiler vertex
+						if (isSearchVertexDuplicatorNwa) {
+							final TransitionType transitionType = searchVertexAsDuplicatorNwa.getTransitionType();
+							if (transitionType == TransitionType.RETURN || transitionType == TransitionType.SINK
+									|| transitionType == TransitionType.SUMMARIZE_ENTRY
+									|| transitionType == TransitionType.SUMMARIZE_EXIT) {
+								// Ignore return and special edges
+								break;
 							}
+							// Create a search element
+							searchQueue.add(new SearchElement<>(pred, searchTarget, searchVertex, searchSummarizeEdge,
+									searchDuplicatorChoice, searchOrigin));
 						}
 						// If operation was canceled, for example from the
 						// Ultimate framework
@@ -636,9 +634,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			throws AutomataOperationCanceledException {
 		// At this point we may validate the correctness of the simulation
 		// results
-		assert (NwaSimulationUtil.areNwaSimulationResultsCorrect(mGameGraph, mNwa, mSimulationType,
+		assert NwaSimulationUtil.areNwaSimulationResultsCorrect(mGameGraph, mNwa, mSimulationType,
 				new NwaSimulationUtil.BinaryRelationPredicateFromPartition<>(mPossibleEquivalenceClasses),
-				mLogger)) : "The computed simulation results are incorrect.";
+				mLogger) : "The computed simulation results are incorrect.";
 
 		final FairGameGraph<LETTER, STATE> fairGraph = castGraphToFairGameGraph();
 
@@ -725,11 +723,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// Use a Max-Sat-Solver that minimizes the automaton based on
 			// our simulation results
 			mSimulationPerformance.startTimeMeasure(TimeMeasure.SOLVE_MAX_SAT);
-			final BiPredicate<STATE, STATE> finalNonfinalConstraint = useFinalStateConstraints
-					? new MinimizeNwaMaxSat2.TrueBiPredicate<>()
-					: new MinimizeNwaMaxSat2.RelationBackedBiPredicate<>(new HashRelationBackedSetOfPairs<>());
-			final MinimizeNwaPmaxSat<LETTER, STATE> minimizer = new MinimizeNwaPmaxSatDirectBi<>(mServices, stateFactory, mNwa,
-					new PartitionBackedSetOfPairs<>(equivalenceClassesAsCollection),
+			final BiPredicate<STATE, STATE> finalNonfinalConstraint =
+					useFinalStateConstraints ? new MinimizeNwaMaxSat2.TrueBiPredicate<>()
+							: new MinimizeNwaMaxSat2.RelationBackedBiPredicate<>(new HashRelationBackedSetOfPairs<>());
+			final MinimizeNwaPmaxSat<LETTER, STATE> minimizer = new MinimizeNwaPmaxSatDirectBi<>(mServices,
+					stateFactory, mNwa, new PartitionBackedSetOfPairs<>(equivalenceClassesAsCollection),
 					new MinimizeNwaMaxSat2.Settings<STATE>()
 							.setFinalNonfinalConstraintPredicate(finalNonfinalConstraint));
 			mSimulationPerformance.stopTimeMeasure(TimeMeasure.SOLVE_MAX_SAT);
@@ -737,8 +735,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		} else {
 			// If there are no merge-able states simply
 			// copy the inputed automaton
-			final NestedWordAutomaton<LETTER, STATE> resultAsChangeableAutomaton = new NestedWordAutomaton<>(mServices,
-					mNwa.getVpAlphabet(), stateFactory);
+			final NestedWordAutomaton<LETTER, STATE> resultAsChangeableAutomaton =
+					new NestedWordAutomaton<>(mServices, mNwa.getVpAlphabet(), stateFactory);
 			for (final STATE state : mNwa.getStates()) {
 				// Copy states
 				final boolean isInitial = mNwa.isInitial(state);
@@ -1411,7 +1409,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mLogger.debug("Generating summarize edges.");
 		}
 		// Create the game automaton, we will use it for summarize computation
-		final INwaOutgoingLetterAndTransitionProvider<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
+		final INwaOutgoingLetterAndTransitionProvider<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton =
+				createGameAutomaton();
 		final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries =
 				new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
 
@@ -1598,13 +1597,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							final Set<Pair<STATE, Boolean>> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
 							choices.add(new Pair<>(duplicatorTarget, bitTarget));
 							spoilerToDuplicatorChoices.put(spoilerTarget, choices);
+						} else // Target is a sink, put it in a separate container
+						if (sinkTarget.isWinningForSpoiler()) {
+							hasSinkWinningForSpoiler = true;
 						} else {
-							// Target is a sink, put it in a separate container
-							if (sinkTarget.isWinningForSpoiler()) {
-								hasSinkWinningForSpoiler = true;
-							} else {
-								hasSinkWinningForDuplicator = true;
-							}
+							hasSinkWinningForDuplicator = true;
 						}
 					}
 
@@ -1978,7 +1975,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// add existent vertices again. This may cause problems, because of
 		// that we check it.
 		if (type != TransitionType.RETURN
-				|| (getDuplicatorVertex(leftState, rightState, letter, bit, type, null, null) == null)) {
+				|| getDuplicatorVertex(leftState, rightState, letter, bit, type, null, null) == null) {
 			final DuplicatorNwaVertex<LETTER, STATE> duplicatorVertex =
 					new DuplicatorNwaVertex<>(priority, bit, leftState, rightState, letter, type);
 			addDuplicatorVertex(duplicatorVertex);
@@ -2089,13 +2086,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final IGameLetter<LETTER, STATE> letter, final IGameState dest,
 			final NestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
 		final TransitionType transType = letter.getTransitionType();
-		if (transType.equals(TransitionType.RETURN)) {
-			if (!gameAutomaton.containsReturnTransition(src, hierPred, letter, dest)) {
-				gameAutomaton.addReturnTransition(src, hierPred, letter, dest);
-			}
-		} else {
+		if (!transType.equals(TransitionType.RETURN)) {
 			throw new IllegalArgumentException(
 					"The transition type of the game letter is not supported by this operation.");
+		}
+		if (!gameAutomaton.containsReturnTransition(src, hierPred, letter, dest)) {
+			gameAutomaton.addReturnTransition(src, hierPred, letter, dest);
 		}
 	}
 
@@ -2293,7 +2289,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		if (mNwa.isFinal(rightState)) {
 			return 0;
-		} else if (mNwa.isFinal(leftState)) {
+		}
+		if (mNwa.isFinal(leftState)) {
 			return 1;
 		} else {
 			return 2;
@@ -2381,9 +2378,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 		} else {
 			// Consider every down state of the source as hierPred
-			for (final STATE downState : mNwa.getDownStates(spoilerSrc)) {
-				spoilerHierPreds.add(downState);
-			}
+			spoilerHierPreds.addAll(mNwa.getDownStates(spoilerSrc));
 			spoilerHierPreds.remove(mNwa.getEmptyStackState());
 		}
 
@@ -2397,9 +2392,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 		} else {
 			// Consider every down state of the source as hierPred
-			for (final STATE downState : mNwa.getDownStates(duplicatorSrc)) {
-				duplicatorHierPreds.add(downState);
-			}
+			duplicatorHierPreds.addAll(mNwa.getDownStates(duplicatorSrc));
 			duplicatorHierPreds.remove(mNwa.getEmptyStackState());
 		}
 
@@ -2440,12 +2433,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final Set<IGameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
 		final Set<IGameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
 		final Set<IGameLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
-		
-		final VpAlphabet<IGameLetter<LETTER, STATE>> gameVpAlphabet = new VpAlphabet<>(internalGameAlphabet, callGameAlphabet, returnGameAlphabet);
-		
 
-		final NestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = new NestedWordAutomaton<>(
-				mServices, gameVpAlphabet, new GameFactory());
+		final VpAlphabet<IGameLetter<LETTER, STATE>> gameVpAlphabet =
+				new VpAlphabet<>(internalGameAlphabet, callGameAlphabet, returnGameAlphabet);
+
+		final NestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton =
+				new NestedWordAutomaton<>(mServices, gameVpAlphabet, new GameFactory());
 
 		// Collect all data by using
 		// (spoilerVertex -> duplicatorSucc -> spoilerSucc)
@@ -2494,25 +2487,25 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				final TransitionType transType = duplicatorNwaSucc.getTransitionType();
 				final IGameLetter<LETTER, STATE> letter;
 				switch (transType) {
-					case CALL:
-						letter = duplicatorNwaSucc;
-						callGameAlphabet.add(letter);
-						break;
-					case INTERNAL:
-						letter = duplicatorNwaSucc;
-						internalGameAlphabet.add(letter);
-						break;
-					case RETURN:
-						letter = duplicatorNwaSucc;
-						returnGameAlphabet.add(letter);
-						break;
-					case SINK:
-					case SUMMARIZE_ENTRY:
-					case SUMMARIZE_EXIT:
-						letter = null;
-						break;
-					default:
-						throw new AssertionError("unknown ETransitionType");
+				case CALL:
+					letter = duplicatorNwaSucc;
+					callGameAlphabet.add(letter);
+					break;
+				case INTERNAL:
+					letter = duplicatorNwaSucc;
+					internalGameAlphabet.add(letter);
+					break;
+				case RETURN:
+					letter = duplicatorNwaSucc;
+					returnGameAlphabet.add(letter);
+					break;
+				case SINK:
+				case SUMMARIZE_ENTRY:
+				case SUMMARIZE_EXIT:
+					letter = null;
+					break;
+				default:
+					throw new AssertionError("unknown ETransitionType");
 				}
 				// At this point we know that the source is of relevance, add it
 				// if not already done before

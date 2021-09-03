@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -79,7 +79,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 	// TODO can this method be removed?
 	public EagerReuseCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
@@ -134,7 +134,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 				new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
 		final boolean explointSigmaStarConcatOfIA = true;
 		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
-				new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+				new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 						(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, reuseAut, psd,
 						explointSigmaStarConcatOfIA);
 
@@ -145,8 +145,8 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 		}
 
 		// Check if all edges of the Floyd-Hoare automaton are indeed inductive.
-		assert new InductivityCheck<>(mServices,
-				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(), false, true,
+		assert new InductivityCheck<>(getServices(),
+				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), reuseAut).getResult(), false, true,
 				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 
 		if (mPref.dumpAutomata()) {
@@ -168,7 +168,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 		}
 
 		if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
-			final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
+			final AutomataLibraryServices als = new AutomataLibraryServices(getServices());
 			final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
 					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, diff.getResult())
 							.getResult();

@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
@@ -18,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -62,11 +64,9 @@ public class ReqToGraph {
 		return gs;
 	}
 
-	private Term getDurationTerm(final String duration) {
-		if (mReqSymbolTable.isConstVar(duration)) {
-			return mScript.variable(duration, mScript.sort("Int"));
-		}
-		return mScript.numeral(duration);
+	private Term getDurationTerm(final Rational duration) {
+		// TODO: for real support, we need to adapt other terms as well
+		return duration.toTerm(SmtSortUtils.getIntSort(mScript));
 	}
 
 	/*
@@ -115,8 +115,8 @@ public class ReqToGraph {
 			// create effect guards
 
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
-			final String durationTrigger = pattern.getDuration().get(0);
-			final String durationEffect = pattern.getDuration().get(1);
+			final Rational durationTrigger = pattern.getDurations().get(0);
+			final Rational durationEffect = pattern.getDurations().get(1);
 			final TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			// assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
 			final Term triggerLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(durationTrigger));
@@ -166,8 +166,8 @@ public class ReqToGraph {
 			// create effect guards
 
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
-			final String delayEffect = pattern.getDuration().get(0);
-			final String durationEffect = pattern.getDuration().get(1);
+			final Rational delayEffect = pattern.getDurations().get(0);
+			final Rational durationEffect = pattern.getDurations().get(1);
 			final TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			// assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
 			final Term triggerLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(delayEffect));
@@ -212,7 +212,7 @@ public class ReqToGraph {
 			final ReqGuardGraph qw = new ReqGuardGraph(-1, id);
 			// create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
-			final String duration = pattern.getDuration().get(0);
+			final Rational duration = pattern.getDurations().get(0);
 			final TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			// assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
 			final Term triggerLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));
@@ -260,7 +260,7 @@ public class ReqToGraph {
 			final ReqGuardGraph qw = new ReqGuardGraph(-1, id);
 			// create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
-			final String duration = pattern.getDuration().get(0);
+			final Rational duration = pattern.getDurations().get(0);
 			final TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			final Term clockGuard = SmtUtils.leq(mScript, clockIdent, getDurationTerm(duration));
 			final Term clockGuardGeq = SmtUtils.greater(mScript, clockIdent, getDurationTerm(duration));
@@ -308,7 +308,7 @@ public class ReqToGraph {
 			final ReqGuardGraph qw = new ReqGuardGraph(-1, id);
 			// create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
-			final String duration = pattern.getDuration().get(0);
+			final Rational duration = pattern.getDurations().get(0);
 			final TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			// assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
 			final Term clockGuardLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));
@@ -359,7 +359,7 @@ public class ReqToGraph {
 			final ReqGuardGraph qw = new ReqGuardGraph(-1, id);
 			// create effect guards
 			mThreeValuedAuxVarGen.setEffectLabel(q1, S);
-			final String duration = pattern.getDuration().get(0);
+			final Rational duration = pattern.getDurations().get(0);
 			final TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			// assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
 			final Term clockGuardLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));
@@ -575,7 +575,7 @@ public class ReqToGraph {
 			final Term uS = mThreeValuedAuxVarGen.getUseGuard(S);
 			final Term nP = SmtUtils.not(mScript, P);
 			final Term nS = SmtUtils.not(mScript, S);
-			final String duration = pattern.getDuration().get(0);
+			final Rational duration = pattern.getDurations().get(0);
 			final TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			final Term clockGuardLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));
 			final Term clockGuardEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(duration));

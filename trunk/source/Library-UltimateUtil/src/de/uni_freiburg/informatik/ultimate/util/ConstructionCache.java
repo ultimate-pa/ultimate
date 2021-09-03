@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2021 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2021 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -26,9 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.util;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Allows to construct objects lazily. Stores a Map from keys to values. The getOrConstruct methods will return the
@@ -36,27 +37,22 @@ import java.util.Map;
  * constructed at the first call of the getOrConstruct method. Construction of elements is done by Objects that
  * implement this IValueConstruction interface of this class.
  *
+ * Note that this cache does not support null values, i.e., it cannot cache them.
+ *
  * @author Matthias Heizmann
  *
- * @param <K>
- * @param <V>
  */
-public class ConstructionCache<K, V> {
-	private final Map<K, V> mMap = new HashMap<>();
+public class ConstructionCache<K, V> implements Map<K, V> {
+	private final Map<K, V> mMap;
 	private final IValueConstruction<K, V> mValueComputation;
 
-	/**
-	 * Constructs values for a {@link Construction Cache}
-	 *
-	 * @param <K>
-	 * @param <V>
-	 */
-	public interface IValueConstruction<K, V> {
-		public V constructValue(K key);
+	public ConstructionCache(final IValueConstruction<K, V> valueConstruction, final Map<K, V> backing) {
+		mValueComputation = valueConstruction;
+		mMap = backing;
 	}
 
 	public ConstructionCache(final IValueConstruction<K, V> valueConstruction) {
-		mValueComputation = valueConstruction;
+		this(valueConstruction, new HashMap<>());
 	}
 
 	/**
@@ -71,8 +67,72 @@ public class ConstructionCache<K, V> {
 		return value;
 	}
 
-	public Map<K, V> getMap() {
-		return Collections.unmodifiableMap(mMap);
+	@Override
+	public int size() {
+		return mMap.size();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return mMap.isEmpty();
+	}
+
+	@Override
+	public boolean containsKey(final Object key) {
+		return mMap.containsKey(key);
+	}
+
+	@Override
+	public boolean containsValue(final Object value) {
+		return mMap.containsValue(value);
+	}
+
+	@Override
+	public V get(final Object key) {
+		return mMap.get(key);
+	}
+
+	@Override
+	public V put(final K key, final V value) {
+		return mMap.put(key, value);
+	}
+
+	@Override
+	public V remove(final Object key) {
+		return mMap.remove(key);
+	}
+
+	@Override
+	public void putAll(final Map<? extends K, ? extends V> m) {
+		mMap.putAll(m);
+	}
+
+	@Override
+	public void clear() {
+		mMap.clear();
+	}
+
+	@Override
+	public Set<K> keySet() {
+		return mMap.keySet();
+	}
+
+	@Override
+	public Collection<V> values() {
+		return mMap.values();
+	}
+
+	@Override
+	public Set<Entry<K, V>> entrySet() {
+		return mMap.entrySet();
+	}
+
+	/**
+	 * Constructs values for a {@link Construction Cache}
+	 */
+	@FunctionalInterface
+	public interface IValueConstruction<K, V> {
+		V constructValue(K key);
 	}
 
 }

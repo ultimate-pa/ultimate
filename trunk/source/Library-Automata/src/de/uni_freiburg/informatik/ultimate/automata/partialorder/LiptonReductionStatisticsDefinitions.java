@@ -71,8 +71,7 @@ public enum LiptonReductionStatisticsDefinitions implements IStatisticsElement {
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
 
-	private LiptonReductionStatisticsDefinitions(final Class<?> clazz,
-			final Function<Object, Function<Object, Object>> aggr,
+	LiptonReductionStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {
 		mClazz = clazz;
 		mAggr = aggr;

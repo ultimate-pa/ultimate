@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -104,8 +104,7 @@ public class ReqInOutGuesser {
 	private Set<String> getEffectVariables(final List<PatternType<?>> oldPatterns) {
 		final Set<String> effectVars = new HashSet<>();
 		for (final PatternType<?> pattern : oldPatterns) {
-			effectVars.addAll(
-					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern, mId2Bounds));
+			effectVars.addAll(reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern));
 		}
 		return effectVars;
 	}
@@ -113,24 +112,21 @@ public class ReqInOutGuesser {
 	private Set<String> getPreconditionVars(final List<PatternType<?>> oldPatterns) {
 		final Set<String> precondVars = new HashSet<>();
 		for (final PatternType<?> pattern : oldPatterns) {
-			final Set<String> vars =
-					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getAllVariables, pattern, mId2Bounds);
-			vars.removeAll(
-					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern, mId2Bounds));
+			final Set<String> vars = reportTransformationErrorWrapper(Req2CauseTrackingCDD::getAllVariables, pattern);
+			vars.removeAll(reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern));
 			precondVars.addAll(vars);
 		}
 		return precondVars;
 	}
 
-	private Set<String> reportTransformationErrorWrapper(
-			final BiFunction<PatternType<?>, Map<String, Integer>, Set<String>> fun, final PatternType<?> pattern,
-			final Map<String, Integer> id2Bounds) {
+	private Set<String> reportTransformationErrorWrapper(final Function<PatternType<?>, Set<String>> fun,
+			final PatternType<?> pattern) {
 		if (mRequirementsWithTransformationErrors.contains(pattern)) {
 			// already broken
 			return Collections.emptySet();
 		}
 		try {
-			return fun.apply(pattern, id2Bounds);
+			return fun.apply(pattern);
 		} catch (final Exception ex) {
 			final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
 			mResultUtil.transformationError(pattern, reason);

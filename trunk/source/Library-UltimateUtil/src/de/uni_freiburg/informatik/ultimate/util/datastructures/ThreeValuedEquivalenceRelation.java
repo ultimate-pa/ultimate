@@ -509,7 +509,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 				// the current elem has never been added to this TVER; don't add it to the new TVER either
 				continue;
 			}
-			final Set<E> elemEqc = new HashSet<>(mUnionFind.getEquivalenceClassMembers(elem));
+			final ImmutableSet<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
 			// retain representatives because otherwise we have to do extra work for literal set constraints
 			newUf.addEquivalenceClass(elemEqc, mUnionFind.find(elem));
 //			newUf.addEquivalenceClass(elemEqc);
@@ -546,7 +546,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 				continue;
 			}
 			final Set<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
-			newUf.addEquivalenceClass(DataStructureUtils.intersection(elemEqc, elems));
+			newUf.addEquivalenceClass(ImmutableSet.of(DataStructureUtils.intersection(elemEqc, elems)));
 		}
 		final HashRelation<E, E> newDisequalities = new HashRelation<>();
 		for (final Entry<E, E> deq : mDisequalities.getSetOfPairs()) {

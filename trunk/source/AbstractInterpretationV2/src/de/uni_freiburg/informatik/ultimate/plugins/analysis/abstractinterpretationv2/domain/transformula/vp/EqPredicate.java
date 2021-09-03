@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -54,12 +54,12 @@ public class EqPredicate implements IPredicate {
 
 	private final EqDisjunctiveConstraint<EqNode> mConstraint;
 	private final String[] mProcedures;
-	private final Set<IProgramVar> mVars;
+	private final ImmutableSet<IProgramVar> mVars;
 	private final Term mClosedFormula;
 	private final Term mFormula;
 	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 
-	public EqPredicate(final EqDisjunctiveConstraint<EqNode> constraint, final Set<IProgramVar> vars,
+	public EqPredicate(final EqDisjunctiveConstraint<EqNode> constraint, final ImmutableSet<IProgramVar> vars,
 			final String[] procedures, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		assert vars != null;
@@ -83,7 +83,7 @@ public class EqPredicate implements IPredicate {
 
 
 
-	public EqPredicate(final Term formula, final Set<IProgramVar> vars, final String[] procedures,
+	public EqPredicate(final Term formula, final ImmutableSet<IProgramVar> vars, final String[] procedures,
 			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqConstraintFactory<EqNode> eqConstraintFactory) {
 		mConstraint = null;
@@ -116,7 +116,7 @@ public class EqPredicate implements IPredicate {
 	private Set<Term> collectLiteralsInFormula(final Term formula) {
 		final Predicate<Term> pred = term -> term instanceof ConstantTerm
 				|| mEqNodeAndFunctionFactory.getNonTheoryLiterals().contains(term);
-		return new SubTermFinder(pred).findMatchingSubterms(formula);
+		return SubTermFinder.find(formula, pred, false);
 	}
 
 //	@Deprecated
@@ -137,8 +137,8 @@ public class EqPredicate implements IPredicate {
 	}
 
 	@Override
-	public Set<IProgramVar> getVars() {
-		return Collections.unmodifiableSet(mVars);
+	public ImmutableSet<IProgramVar> getVars() {
+		return mVars;
 	}
 
 	public EqDisjunctiveConstraint<EqNode> getEqConstraint() {

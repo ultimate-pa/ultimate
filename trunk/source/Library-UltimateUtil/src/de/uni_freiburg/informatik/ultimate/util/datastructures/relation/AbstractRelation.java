@@ -221,15 +221,18 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	 * Add all elements contained in relation rel to this relation. Does not reuse sets of the relation rel but
 	 * constructs new sets if necessary.
 	 */
-	public void addAll(final AbstractRelation<D, R, ?, ?> rel) {
+	public boolean addAll(final AbstractRelation<D, R, ?, ?> rel) {
+		boolean changed = false;
 		for (final Entry<D, ? extends Set<R>> entry : rel.mMap.entrySet()) {
 			SET rangeElems = mMap.get(entry.getKey());
 			if (rangeElems == null) {
 				rangeElems = newSet();
 				mMap.put(entry.getKey(), rangeElems);
 			}
-			rangeElems.addAll(entry.getValue());
+			final boolean modified = rangeElems.addAll(entry.getValue());
+			changed = changed || modified;
 		}
+		return changed;
 	}
 
 	/**

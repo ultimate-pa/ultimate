@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
@@ -69,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
@@ -98,8 +101,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private final IReqSymbolTable mSymbolTable;
 	private final List<ReqPeas> mReqPeas;
 
+	private final Durations mDurations;
+
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
-			final IReqSymbolTable symbolTable) {
+			final IReqSymbolTable symbolTable, final Durations durations) {
 		mLogger = logger;
 		mServices = services;
 		mSymbolTable = symbolTable;
@@ -108,6 +113,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
+		mDurations = durations;
+
 	}
 
 	@Override
@@ -142,7 +149,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			if (mCombinationNum >= 1) {
 				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
 				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymbolTable,
-						mReqPeas, boogieDeclarations, mSeparateInvariantHandling);
+						mReqPeas, boogieDeclarations, mDurations, mSeparateInvariantHandling);
 			} else {
 				rticGenerator = null;
 			}
@@ -213,13 +220,17 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			mLogger.info("Computing rt-inconsistency assertions for " + subsetsSize + " subsets");
 		}
 
+		long last = System.currentTimeMillis();
 		for (final Entry<PatternType<?>, PhaseEventAutomata>[] subset : subsets) {
 			if (subsetsSize % 100 == 0 && !mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(),
 						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
 			}
 			if (subsetsSize % 10 == 0) {
-				mLogger.info(subsetsSize + " subsets remaining");
+				final long current = System.currentTimeMillis();
+				mLogger.info("%s subsets remaining (took %s since last message)", subsetsSize,
+						CoreUtil.humanReadableTime(current - last, TimeUnit.MILLISECONDS, 2));
+				last = current;
 				mRtInconcistencyConditionGenerator.logStats();
 			}
 			final Statement assertStmt = genAssertRTInconsistency(subset);
@@ -238,12 +249,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	}
 
 	private Statement genAssertRTInconsistency(final Entry<PatternType<?>, PhaseEventAutomata>[] subset) {
-		final Set<PhaseEventAutomata> automataSet =
-				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
+		final Set<PhaseEventAutomata> automataSet = Arrays.stream(subset)
+				.map(Entry<PatternType<?>, PhaseEventAutomata>::getValue).collect(Collectors.toSet());
 		assert automataSet.size() == subset.length;
 		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
 
-		final Expression expr = mRtInconcistencyConditionGenerator.nonDLCGenerator(automata);
+		final Expression expr = mRtInconcistencyConditionGenerator.generateNonDeadlockCondition(automata);
 		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, subset);
 
 		if (expr == null) {

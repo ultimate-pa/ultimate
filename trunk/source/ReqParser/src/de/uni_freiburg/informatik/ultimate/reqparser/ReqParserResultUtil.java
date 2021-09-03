@@ -59,14 +59,14 @@ public class ReqParserResultUtil {
 	}
 
 	@SafeVarargs
-	public final <T extends PatternType> void mergedRequirements(final T... reqIds) {
+	public final <T extends PatternType<?>> void mergedRequirements(final T... reqIds) {
 		assert reqIds != null && reqIds.length > 1;
 		mergedRequirements(Arrays.asList(reqIds));
 	}
 
-	public void mergedRequirements(final Collection<? extends PatternType> reqIds) {
+	public void mergedRequirements(final Collection<? extends PatternType<?>> reqIds) {
 		assert reqIds != null && reqIds.size() > 1;
-		final String reqIdStr = reqIds.stream().map(a -> a.getId()).collect(Collectors.joining(", "));
+		final String reqIdStr = reqIds.stream().map(PatternType::getId).collect(Collectors.joining(", "));
 		final MergedRequirementsResult result = new MergedRequirementsResult(reqIdStr);
 		mLogger.warn(result.getLongDescription());
 		report(result);
@@ -77,8 +77,8 @@ public class ReqParserResultUtil {
 				new UnsupportedSyntaxResult<>(Activator.PLUGIN_ID, location, description));
 	}
 
-	public void unexpectedParserFailure(final String filename) {
-		errorAndAbort(new UnexpectedRequirementsParserFailureResult(filename));
+	public void unexpectedParserFailure(final String filename, final String message) {
+		errorAndAbort(new UnexpectedRequirementsParserFailureResult(filename, message));
 	}
 
 	public boolean isAlreadyAborted() {
@@ -107,10 +107,12 @@ public class ReqParserResultUtil {
 			implements IFailedAnalysisResult {
 
 		private final String mMessage;
+		private final String mLongMessage;
 
-		public UnexpectedRequirementsParserFailureResult(final String filename) {
+		public UnexpectedRequirementsParserFailureResult(final String filename, final String message) {
 			super(Activator.PLUGIN_ID);
-			mMessage = "The parser failed on some requirements from " + filename;
+			mMessage = String.format("The parser failed on some requirements from %s", filename);
+			mLongMessage = message;
 		}
 
 		@Override
@@ -120,7 +122,7 @@ public class ReqParserResultUtil {
 
 		@Override
 		public String getLongDescription() {
-			return mMessage;
+			return mLongMessage;
 		}
 	}
 

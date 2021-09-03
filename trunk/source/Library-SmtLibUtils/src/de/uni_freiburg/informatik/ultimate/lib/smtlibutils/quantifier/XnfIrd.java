@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -37,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation.AssumptionForSolvability;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Case;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -81,7 +83,6 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				it.remove();
 				continue;
 			}
-			// if (tv.getSort().isNumericSort()) {
 			final Term[] withoutTv = irdSimple(mScript, quantifier, result, tv, mLogger);
 			if (withoutTv != null) {
 				mLogger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
@@ -90,29 +91,25 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			} else {
 				mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
 			}
-			// } else {
-			// // ird is only applicable to variables of numeric sort
-			// mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
-			// }
 		}
 		return result;
 	}
 
 	/**
-	 * If the application term contains only parameters param such that for each param one of the following holds and
-	 * the third case applies at most once, we return all params that do not contain tv. 1. param does not contain tv 2.
-	 * param is an AffineRelation such that tv is a variable of the AffineRelation and the function symbol is "distinct"
-	 * and quantifier is ∃ or the function symbol is "=" and the quantifier is ∀ 3. param is an inequality
-	 *
-	 * @param logger
+	 * If the application term contains only parameters param such that for each
+	 * param one of the following holds and the third case applies at most once, we
+	 * return all params that do not contain tv. 1. param does not contain tv 2.
+	 * param is an AffineRelation such that tv is a variable of the AffineRelation
+	 * and the function symbol is "distinct" and quantifier is ∃ or the function
+	 * symbol is "=" and the quantifier is ∀ 3. param is an inequality
 	 */
 	public static Term[] irdSimple(final Script script, final int quantifier, final Term[] oldParams,
 			final TermVariable tv, final ILogger logger) {
-		// assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
 
 		final ArrayList<Term> paramsWithoutTv = new ArrayList<>();
-		int inequalitiesWithTv = 0;
 		int numberOfAntiDer = 0;
+		int numberOfUpperBounds = 0;
+		int numberOfLowerBounds = 0;
 		for (final Term oldParam : oldParams) {
 			if (!Arrays.asList(oldParam.getFreeVars()).contains(tv)) {
 				paramsWithoutTv.add(oldParam);
@@ -120,24 +117,11 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				if (!SmtSortUtils.isNumericSort(tv.getSort()) && !SmtSortUtils.isBitvecSort(tv.getSort())) {
 					return null;
 				}
-
-				final PolynomialRelation polyRel = PolynomialRelation.convert(script, oldParam);
-				if (polyRel == null) {
-					// unable to eliminate quantifier
+				final SolvedBinaryRelation sbr = solve(script, tv, quantifier, oldParam);
+				if (sbr == null) {
 					return null;
 				}
-				if (!polyRel.isVariable(tv)) {
-					// unable to eliminate quantifier
-					// tv occurs in affine relation but not as affine variable
-					// it might occur inside a function or array.
-					return null;
-				}
-				final boolean solveabelWoCaseDist = isSolvableWithoutCaseDistinction(script, tv, polyRel);
-				if (!solveabelWoCaseDist) {
-					return null;
-				}
-				final RelationSymbol relationSymbol = polyRel.getRelationSymbol();
-				switch (relationSymbol) {
+				switch (sbr.getRelationSymbol()) {
 				case EQ:
 					if (quantifier == QuantifiedFormula.EXISTS) {
 						// unable to eliminate quantifier
@@ -162,8 +146,20 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 					break;
 				case GREATER:
 				case GEQ:
+					if (numberOfUpperBounds > 0) {
+						// unable to eliminate quantifier, only one direction of bounds is supported
+						return null;
+					}
+					numberOfLowerBounds++;
+					break;
 				case LESS:
 				case LEQ:
+					if (numberOfLowerBounds > 0) {
+						// unable to eliminate quantifier, only one direction of bounds is supported
+						return null;
+					}
+					numberOfUpperBounds++;
+					break;
 				case BVULE:
 				case BVULT:
 				case BVUGE:
@@ -172,21 +168,12 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				case BVSLT:
 				case BVSGE:
 				case BVSGT:
-					if (inequalitiesWithTv > 0) {
-						// unable to eliminate quantifier, we may drop at most
-						// one inequality
-						return null;
-					}
-					inequalitiesWithTv++;
-					// we may drop this parameter (but it has to be the
-					// only dropped inequality
-					break;
+					throw new AssertionError("cannot have been transformed to PolynomialRelation");
 				default:
 					throw new AssertionError("unknown functionSymbol");
 				}
 			}
 		}
-		// throw new AssertionError("ird ftw");
 		final float numberOfDomainElements = underapproximateNumberOfDomainElements(tv.getSort());
 		if (numberOfAntiDer >= numberOfDomainElements) {
 			return null;
@@ -194,14 +181,28 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 		return paramsWithoutTv.toArray(new Term[paramsWithoutTv.size()]);
 	}
 
-	private static boolean isSolvableWithoutCaseDistinction(final Script script, final TermVariable tv,
-			final PolynomialRelation polyRel) {
-		assert Arrays.equals(AssumptionForSolvability.values(), new AssumptionForSolvability[] {
-				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT, AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO,
-				AssumptionForSolvability.INTEGER_DIVISOR_NOT_ZERO,
-				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_VARIABLE }) : "A new value was added to enum and has to be considered here";
-		final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, tv);
-		return (sbr != null);
+	private static SolvedBinaryRelation solve(final Script script, final TermVariable tv, final int quantifier,
+			final Term term) {
+		final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+		if (polyRel == null) {
+			// unable to eliminate quantifier
+			return null;
+		}
+		final MultiCaseSolvedBinaryRelation mcsbr = polyRel.solveForSubject(script, tv, Xnf.fromQuantifier(quantifier),
+				Collections.emptySet());
+		if (mcsbr == null) {
+			return null;
+		}
+		final List<Case> cases = mcsbr.getCases();
+		if (cases.size() > 1) {
+			return null;
+		}
+		final Case oneCase = cases.iterator().next();
+		if (!oneCase.getSupportingTerms().isEmpty()) {
+			return null;
+		} else {
+			return oneCase.getSolvedBinaryRelation();
+		}
 	}
 
 	private static float underapproximateNumberOfDomainElements(final Sort sort) {
@@ -231,27 +232,6 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			// unknown sort, but contains at least one element
 			return 1.0f;
 		}
-	}
-
-	/**
-	 * @return true iff oldParam is a not equals relation (resp. quality for universal quantifier) such that one side is
-	 *         the variable tv and tv does not occur on the other side.
-	 */
-	private static boolean isAntiDer(final Term oldParam, final TermVariable tv, final int quantifier) {
-		final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(oldParam);
-		if (ber == null) {
-			return false;
-		}
-		if ((quantifier == QuantifiedFormula.EXISTS && ber.getRelationSymbol() == RelationSymbol.DISTINCT)
-				|| quantifier == QuantifiedFormula.FORALL && ber.getRelationSymbol() == RelationSymbol.EQ) {
-			if ((ber.getLhs().equals(tv) && !Arrays.asList(ber.getRhs().getFreeVars()).contains(tv))
-					|| ber.getRhs().equals(tv) && !Arrays.asList(ber.getLhs().getFreeVars()).contains(tv)) {
-				// this is the antiDER case
-				return true;
-			}
-			return false;
-		}
-		return false;
 	}
 
 }

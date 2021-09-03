@@ -42,9 +42,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier.CoverageRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.DivisibilityPredicateGenerator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -60,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 		extends BasicAbstractInterpolantAutomaton<LETTER> {
 
-	private final Map<Set<IPredicate>, IPredicate> mInputPreds2ResultPreds = new HashMap<>();
+	private final Map<ImmutableSet<IPredicate>, IPredicate> mInputPreds2ResultPreds = new HashMap<>();
 	private final HashRelation<IPredicate, IPredicate> mResPred2InputPreds = new HashRelation<>();
 	private final IPredicateUnifier mPredicateUnifier;
 
@@ -265,7 +266,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 		}
 	}
 
-	private IPredicate getOrConstructPredicate(final Set<IPredicate> succs) {
+	private IPredicate getOrConstructPredicate(final ImmutableSet<IPredicate> succs) {
 		// assert mInterpolantAutomaton.getStates().containsAll(succs);
 		final IPredicate result;
 		if (succs.isEmpty()) {
@@ -299,7 +300,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 
 	@Override
 	protected void constructSuccessorsAndTransitions(final IPredicate resPred, final IPredicate resHier,
-			final LETTER letter, final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
+			final LETTER letter, final SuccessorComputationHelper sch, final ImmutableSet<IPredicate> inputSuccs) {
 		final IPredicate resSucc = getOrConstructPredicate(inputSuccs);
 		sch.addTransition(resPred, resHier, letter, resSucc);
 		sch.reportSuccsComputed(resPred, resHier, letter);

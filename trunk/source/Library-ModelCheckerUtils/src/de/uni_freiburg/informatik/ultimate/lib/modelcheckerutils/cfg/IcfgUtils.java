@@ -26,17 +26,29 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -45,10 +57,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -78,9 +93,11 @@ public class IcfgUtils {
 	public static <T extends IIcfgTransition<?>> UnmodifiableTransFormula getTransformula(final T transition) {
 		if (transition instanceof IInternalAction) {
 			return ((IInternalAction) transition).getTransformula();
-		} else if (transition instanceof ICallAction) {
+		}
+		if (transition instanceof ICallAction) {
 			return ((ICallAction) transition).getLocalVarsAssignment();
-		} else if (transition instanceof IReturnAction) {
+		}
+		if (transition instanceof IReturnAction) {
 			return ((IReturnAction) transition).getAssignmentOfReturn();
 		} else {
 			throw new UnsupportedOperationException(
@@ -89,9 +106,8 @@ public class IcfgUtils {
 	}
 
 	public static <LOC extends IcfgLocation> Set<LOC> getErrorLocations(final IIcfg<LOC> icfg) {
-		final Map<String, Set<LOC>> proc2ErrorLocations = icfg.getProcedureErrorNodes();
-		final Set<LOC> errorLocs = new HashSet<>();
-		for (final Entry<String, Set<LOC>> entry : proc2ErrorLocations.entrySet()) {
+		final Set<LOC> errorLocs = new LinkedHashSet<>();
+		for (final Entry<String, Set<LOC>> entry : icfg.getProcedureErrorNodes().entrySet()) {
 			errorLocs.addAll(entry.getValue());
 		}
 		return errorLocs;
@@ -133,9 +149,7 @@ public class IcfgUtils {
 			result.add(oldVar);
 		}
 		for (final String proc : csToolkit.getProcedures()) {
-			for (final ILocalProgramVar local : csToolkit.getSymbolTable().getLocals(proc)) {
-				result.add(local);
-			}
+			result.addAll(csToolkit.getSymbolTable().getLocals(proc));
 		}
 		return result;
 	}
@@ -182,5 +196,193 @@ public class IcfgUtils {
 	 */
 	public static <LOC extends IcfgLocation> boolean isExit(final LOC loc, final IIcfg<LOC> icfg) {
 		return icfg.getProcedureExitNodes().get(loc.getProcedure()).equals(loc);
+	}
+
+	/**
+	 * Determines if a given edge is currently enabled, given the set of current locations (across all thread instances)
+	 *
+	 * Note that {@link IIcfgForkTransitionThreadCurrent} and {@link IIcfgJoinTransitionThreadCurrent} are never
+	 * considered enabled, but their counterparts ({@link IIcfgForkTransitionThreadOther} and
+	 * {@link IIcfgJoinTransitionThreadOther}) are.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <LOC>
+	 *            The type of locations
+	 * @param locs
+	 *            The set of all current locations
+	 * @param edge
+	 *            An edge of the CFG
+	 * @return true iff the given edge is enabled
+	 */
+	public static <LOC extends IcfgLocation> boolean isEnabled(final Set<LOC> locs, final IcfgEdge edge) {
+		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>
+				|| edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+			// These edges exist in the Icfg, but in traces they are represented by the respective
+			// IIcfg*TransitionThreadOther transitions. Hence they are never enabled.
+			return false;
+		}
+		if (edge instanceof IIcfgForkTransitionThreadOther<?>) {
+			// Enabled if predecessor location is in state, and forked thread instance is not yet running.
+			final Set<String> threads = locs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
+			final String forkedThread = edge.getSucceedingProcedure();
+			return locs.contains(edge.getSource()) && !threads.contains(forkedThread);
+		}
+		if (edge instanceof IIcfgJoinTransitionThreadOther<?>) {
+			// Enabled if predecessor location and predecessor location of the corresponding
+			// IIcfg*TransitionThreadCurrent instance are both in the state.
+			final var joinOther = (IIcfgJoinTransitionThreadOther<?>) edge;
+			final var joinCurrent = joinOther.getCorrespondingIIcfgJoinTransitionCurrentThread();
+			return locs.contains(joinOther.getSource()) && locs.contains(joinCurrent.getSource());
+		}
+		return locs.contains(edge.getSource());
+	}
+
+	/**
+	 * Performs a DFS to determine if from a given source location, a target edge can be reached. A given cache allows
+	 * re-using results across queries.
+	 *
+	 * @param sourceLoc
+	 *            The source location from which reachability is checked.
+	 * @param isTarget
+	 *            Identifies target edges.
+	 * @param prune
+	 *            Used to prune edges if paths though such an edges should not be considered.
+	 * @param getCachedResult
+	 *            A function that retrieves a cached reachability result. SAT represents reachability, UNSAT represents
+	 *            non-reachability.
+	 * @param setCachedResult
+	 *            A function that updates the cache.
+	 * @return
+	 */
+	public static boolean canReachCached(final IcfgLocation sourceLoc, final Predicate<IcfgEdge> isTarget,
+			final Predicate<IcfgEdge> prune, final Function<IcfgLocation, LBool> getCachedResult,
+			final BiConsumer<IcfgLocation, Boolean> setCachedResult) {
+		final LBool REACHABLE = LBool.SAT;
+		final LBool UNREACHABLE = LBool.UNSAT;
+		final LBool UNKNOWN = LBool.UNKNOWN;
+
+		// First check if result is cached.
+		final LBool cachedCanReach = getCachedResult.apply(sourceLoc);
+		if (cachedCanReach != UNKNOWN) {
+			return cachedCanReach == REACHABLE;
+		}
+
+		// Do a DFS search of the CFG.
+		final DfsBookkeeping<IcfgLocation> dfs = new DfsBookkeeping<>();
+		final LinkedList<IcfgLocation> worklist = new LinkedList<>();
+
+		worklist.add(sourceLoc);
+		LBool canReach = UNREACHABLE;
+
+		while (!worklist.isEmpty() && canReach != REACHABLE) {
+			final IcfgLocation currentLoc = worklist.getLast();
+
+			// If the result is cached, retrieve it, mark the location as visited, and backtrack.
+			final LBool knownCanReach = getCachedResult.apply(currentLoc);
+			if (knownCanReach != UNKNOWN) {
+				// Do not replace UNKNOWN by UNREACHABLE, as we must not propagate this unreachability to predecessors.
+				canReach = knownCanReach == REACHABLE || canReach != UNKNOWN ? knownCanReach : canReach;
+
+				worklist.removeLast();
+				dfs.push(currentLoc);
+				dfs.backtrack();
+				continue;
+			}
+
+			// When backtracking, remember the computed result for future queries.
+			if (dfs.isVisited(currentLoc)) {
+				assert canReach != REACHABLE : "After reachability confirmed, should be fast-backtracking";
+				worklist.removeLast();
+
+				if (dfs.peek() != currentLoc) {
+					// Node might have been added to worklist multiple times and since been visited. Hence it might not
+					// be on the stack. In that case, no backtracking is needed, nor do we visit the node again.
+					continue;
+				}
+
+				final boolean completeBacktrack = dfs.backtrack();
+				// Inside a loop, reachability cannot be UNREACHABLE. Yet, a successor outside the loop might have
+				// UNREACHABLE status. Once back inside the loop, we here set canReach to UNKNOWN.
+				// Conversely, if we just backtracked the outermost loop head, reset canReach to UNREACHABLE.
+				canReach = completeBacktrack ? UNREACHABLE : UNKNOWN;
+
+				if (canReach != UNKNOWN) {
+					assert canReach == UNREACHABLE;
+					setCachedResult.accept(currentLoc, false);
+				}
+				continue;
+			}
+
+			// Visit location.
+			dfs.push(currentLoc);
+
+			final List<IcfgEdge> outgoing = currentLoc.getOutgoingEdges();
+			final List<IcfgLocation> successors = new ArrayList<>(outgoing.size());
+			for (final IcfgEdge edge : outgoing) {
+				final IcfgLocation succ = edge.getTarget();
+
+				// Ignore explicitly pruned edges.
+				if (prune.test(edge)) {
+					continue;
+				}
+
+				// Abort when reachability is confirmed.
+				if (isTarget.test(edge)) {
+					canReach = REACHABLE;
+					break;
+				}
+
+				final int stackIndex;
+				if (!dfs.isVisited(succ)) {
+					// If the successor has not been visited before, explore it now.
+					successors.add(succ);
+				} else if ((stackIndex = dfs.stackIndexOf(succ)) != -1) {
+					// If the edge leads back to the stack, reachability is unknown until succ (or an even earlier loop
+					// head) is backtracked. To avoid infinite looping, we do not explore succ.
+					assert getCachedResult.apply(succ) == UNKNOWN : "Loop heads on stack must have UNKNOWN status";
+					canReach = UNKNOWN;
+					dfs.updateLoopHead(currentLoc, new Pair<>(stackIndex, succ));
+				} else {
+					// If the successor has been visited before, but is not on the stack, then we know its reachability
+					// is either UNREACHABLE or UNKNOWN.
+					final LBool succCanReach = getCachedResult.apply(succ);
+					assert succCanReach != REACHABLE : "Backtracked node must not have REACHABLE status";
+
+					// In either case, we do not need to explore it again. Instead, we simply propagate reachability and
+					// loop head information back to currentLoc.
+					canReach = succCanReach == UNKNOWN ? UNKNOWN : canReach;
+					dfs.backPropagateLoopHead(currentLoc, succ);
+				}
+			}
+
+			// When reachability was confirmed, do not search any further.
+			if (canReach != REACHABLE) {
+				successors.stream().forEach(worklist::add);
+			}
+		}
+
+		// Fast-backtrack: If we exited the previous loop because reachability was confirmed,
+		// we only backtrack, and no longer explore states on the work list.
+		while (!dfs.isStackEmpty()) {
+			assert canReach == REACHABLE : "Fast-backtracking must only happen in case of reachability";
+			final IcfgLocation currentLoc = dfs.peek();
+			dfs.backtrack();
+			setCachedResult.accept(currentLoc, true);
+		}
+
+		final LBool cachedReachability = getCachedResult.apply(sourceLoc);
+		assert cachedReachability != UNKNOWN : "reachability should be clearly determined";
+		assert cachedReachability == canReach : "contradictory reachability: " + cachedReachability + " != " + canReach;
+		return canReach == REACHABLE;
+	}
+
+	public static <LOC extends IcfgLocation> Set<String> getAllThreadInstances(final IIcfg<LOC> icfg) {
+		final Stream<String> threadInstances =
+				icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().values().stream()
+						.flatMap(Collection::stream).map(ThreadInstance::getThreadInstanceName);
+		final String mainThread =
+				DataStructureUtils.getOneAndOnly(icfg.getInitialNodes(), "initial node").getProcedure();
+		return Stream.concat(Stream.of(mainThread), threadInstances).collect(Collectors.toSet());
 	}
 }

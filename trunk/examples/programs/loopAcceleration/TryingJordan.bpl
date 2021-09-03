@@ -6,10 +6,11 @@
  */
 
 procedure main() returns () {
-  var x1, x2, x3 : int;
-  while(x1 > 0 && x2 > 0)
+  var x, y, z : int;
+  while(x < 10)
   {
-      x1 := -x1 + x3 + 3;
-	  x2 := x1 + x2;
+	x := x + 1;
+	havoc y;
+	z := z - 4;
   }
 }

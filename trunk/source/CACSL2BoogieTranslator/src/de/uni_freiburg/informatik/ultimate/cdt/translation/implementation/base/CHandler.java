@@ -639,24 +639,11 @@ public class CHandler {
 			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(mMemoryHandler));
 		}
 
-		/**
-		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the Boogie program that have been
-		 * collected by the ExpressionTranslation
-		 */
-		final Collection<FunctionDeclaration> declaredFunctions =
-				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
-		mExpressionTranslation.getFunctionDeclarations().finish();
-		mDeclarations.addAll(declaredFunctions);
-
 		// TODO Need to get a CLocation from somewhere
-		// the overall translation result:
-		final Unit boogieUnit = new Unit(
-				mLocationFactory.createRootCLocation(
-						units.stream().map(a -> a.getSourceTranslationUnit()).collect(Collectors.toSet())),
-				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
 
 		// annotate the Unit with LTLPropertyChecks if applicable
+		final List<LTLPropertyCheck> ltlProperyChecks = new ArrayList<>();
 		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
 			final Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<>();
 
@@ -668,7 +655,26 @@ public class CHandler {
 			}
 			final LTLPropertyCheck propCheck =
 					new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
-			propCheck.annotate(boogieUnit);
+			ltlProperyChecks.add(propCheck);
+		}
+
+		/**
+		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the Boogie program that have been
+		 * collected by the ExpressionTranslation
+		 */
+		final Collection<FunctionDeclaration> declaredFunctions =
+				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
+		mExpressionTranslation.getFunctionDeclarations().finish();
+		mDeclarations.addAll(declaredFunctions);
+
+
+		// the overall translation result:
+		final Unit boogieUnit = new Unit(
+				mLocationFactory.createRootCLocation(
+						units.stream().map(a -> a.getSourceTranslationUnit()).collect(Collectors.toSet())),
+				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
+		for (final LTLPropertyCheck ltlPropertyCheck : ltlProperyChecks) {
+			ltlPropertyCheck.annotate(boogieUnit);
 		}
 
 		return new CHandlerTranslationResult(boogieUnit, mSymbolTable.getBoogieCIdentifierMapping());
