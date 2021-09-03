@@ -2761,11 +2761,11 @@ public class CHandler {
 			addBoogieIdsOfHeapVars(bId);
 		}
 
-		final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
-				new SymbolTableValue(bId, null, cDec, dummyDeclInfo, hook, false));
+				new SymbolTableValue(bId, null, cDec, declarationInformation, hook, false));
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
@@ -2776,7 +2776,6 @@ public class CHandler {
 			translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
 		}
 
-		final DeclarationInformation declarationInformation;
 		final Declaration boogieDec;
 		final Result result;
 		if (storageClass == CStorageClass.TYPEDEF) {
@@ -2799,7 +2798,6 @@ public class CHandler {
 				mTypeHandler.registerNamedIncompleteType(identifier, cDec.getName());
 			}
 			// TODO: add a sizeof-constant for the type??
-			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
 			result = new SkipResult();
 		} else if (storageClass == CStorageClass.STATIC && !mProcedureManager.isGlobalScope()) {
@@ -2807,16 +2805,9 @@ public class CHandler {
 			// global static variables are treated like normal global variables..
 			boogieDec = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
 			result = new SkipResult();
 		} else {
-			if (mProcedureManager.isGlobalScope()) {
-				declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-			} else {
-				declarationInformation =
-						new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
-			}
 			final BoogieType boogieType =
 					mTypeHandler.getBoogieTypeForBoogieASTType(mTypeHandler.cType2AstType(loc, cDec.getType()));
 
@@ -2893,6 +2884,14 @@ public class CHandler {
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
 				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, hook, false));
 		return result;
+	}
+
+	private DeclarationInformation getDeclarationInfo(final CStorageClass storageClass) {
+		if (storageClass == CStorageClass.TYPEDEF || storageClass == CStorageClass.STATIC
+				|| mProcedureManager.isGlobalScope()) {
+			return DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		}
+		return new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
 	}
 
 	/**
