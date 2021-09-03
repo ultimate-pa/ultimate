@@ -35,7 +35,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstr
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantconsolidation,
