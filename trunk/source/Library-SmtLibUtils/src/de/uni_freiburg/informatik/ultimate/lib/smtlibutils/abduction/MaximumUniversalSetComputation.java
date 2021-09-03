@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.abduction;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.ToIntFunction;
@@ -38,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -180,8 +178,8 @@ public class MaximumUniversalSetComputation {
 
 	private Term tryEliminateUniversal(final TermVariable x, final Term phi) {
 		final Term letFree = new FormulaUnLet().transform(phi);
-		return PartialQuantifierElimination.quantifier(mServices, mLogger, mMgdScript,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				QuantifiedFormula.FORALL, Collections.singleton(x), letFree);
+		return PartialQuantifierElimination.eliminate(mServices, mMgdScript,
+				SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.FORALL, Set.of(x), letFree),
+				SimplificationTechnique.SIMPLIFY_DDA);
 	}
 }
