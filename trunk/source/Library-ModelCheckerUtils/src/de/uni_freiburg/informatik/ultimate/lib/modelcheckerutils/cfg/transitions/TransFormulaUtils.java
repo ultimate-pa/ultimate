@@ -339,6 +339,7 @@ public final class TransFormulaUtils {
 
 		final Term[] renamedFormulas = new Term[transFormulas.length];
 		for (int i = 0; i < transFormulas.length; i++) {
+			tfb.addBranchEncoders(transFormulas[i].getBranchEncoders());
 			final Term unifiedFormula = unification.getUnifiedFormula(i);
 			if (useBranchEncoders) {
 				renamedFormulas[i] = Util.implies(mgdScript.getScript(), branchIndicators[i], unifiedFormula);
