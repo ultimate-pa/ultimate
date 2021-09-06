@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -61,17 +60,15 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>> extends B
 	@SuppressWarnings("unchecked")
 	static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
 			createModules(final StrategyModuleFactory<LETTER> factory) {
-		final AssertCodeBlockOrder[] order = { AssertCodeBlockOrder.NOT_INCREMENTALLY };
+
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, LETTER>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
-			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
-					order));
+			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBP));
 		}
-		rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
-				Logics.ALL));
-		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP, Logics.ALL));
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 

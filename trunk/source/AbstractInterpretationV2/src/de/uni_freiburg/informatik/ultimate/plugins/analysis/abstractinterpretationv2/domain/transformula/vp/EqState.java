@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityana
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -67,7 +68,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState". Note
 	 * that these should be related but need not be identical to mConstraint.getPvocs(..).
 	 */
-	private final Set<IProgramVarOrConst> mPvocs;
+	private final ImmutableSet<IProgramVarOrConst> mPvocs;
 
 	private final EqConstraint<EqNode> mConstraint;
 
@@ -76,12 +77,11 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	private Map<IcfgEdge, EqIntermediateState> mIntermediateStatesForOutgoinEdges;
 
-	public EqState(final EqConstraint<EqNode> constraint,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory eqStateFactory,
-			final Set<IProgramVarOrConst> variables) {
+	public EqState(final EqConstraint<EqNode> constraint, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+			final EqStateFactory eqStateFactory, final Set<IProgramVarOrConst> variables) {
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
-		mPvocs = Collections.unmodifiableSet(new HashSet<>(variables));
+		mPvocs = ImmutableSet.copyOf(variables);
 		mLogger = mFactory.getLogger();
 		assert assertPvocsAreComplete(constraint);
 	}
@@ -148,8 +148,8 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
-		return Collections.unmodifiableSet(mPvocs);
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
+		return mPvocs;
 	}
 
 	@Override

@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
 /**
@@ -175,7 +176,7 @@ public class CopySubnet<LETTER, PLACE> {
 
 	private void rebuildTransition(final ITransition<LETTER, PLACE> trans) {
 		final Set<PLACE> succ = SetOperations.intersection(mSuperNet.getSuccessors(trans), mResult.getPlaces());
-		mResult.addTransition(trans.getSymbol(), mSuperNet.getPredecessors(trans), succ);
+		mResult.addTransition(trans.getSymbol(), mSuperNet.getPredecessors(trans), ImmutableSet.of(succ));
 	}
 
 	/**

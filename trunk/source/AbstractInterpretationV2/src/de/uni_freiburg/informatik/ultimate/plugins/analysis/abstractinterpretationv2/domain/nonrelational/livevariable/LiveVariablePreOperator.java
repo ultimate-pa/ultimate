@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -56,7 +57,7 @@ public class LiveVariablePreOperator<ACTION extends IAction>
 
 		final Set<IProgramVarOrConst> newLive =
 				DataStructureUtils.union(gen, DataStructureUtils.difference(oldstate.getLiveVariables(), kill));
-		return Collections.singletonList(new LiveVariableState<>(newLive));
+		return Collections.singletonList(new LiveVariableState<>(ImmutableSet.of(newLive)));
 	}
 
 	private UnmodifiableTransFormula getTransformula(final ACTION transition) {

@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -57,14 +56,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -90,7 +89,6 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
-	private final ITransformulaTransformer mTransformer;
 
 	private final Set<IcfgEdge> mLoopEntryTransitions;
 	/**
@@ -130,11 +128,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	public LoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer, final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
-		// TODO: Remove transformer (not used)
-		mTransformer = Objects.requireNonNull(transformer);
 
 		mLoopEntryTransitions = new HashSet<>();
 		mBackbones = new HashMap<>();
@@ -147,8 +143,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(mLogger, funLocFac, backtranslationTracker, transformer, origIcfg,
-						resultIcfg);
+				new TransformedIcfgBuilder<>(mLogger, funLocFac, backtranslationTracker, origIcfg, resultIcfg);
 		mResultIcfg = transform(origIcfg, resultIcfg, lst, backtranslationTracker);
 		lst.finish();
 	}
@@ -170,8 +165,6 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		}
 
 		// Create a new Icfg.
-
-		mTransformer.preprocessIcfg(origIcfg);
 
 		final Set<INLOC> init = origIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
@@ -199,14 +192,11 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				if (mBackbones.containsKey(oldSource)) {
 					final IcfgEdge newTransition = addAcceleratedTransition(oldTransition, newSource, newTarget, lst);
 					backtranslationTracker.rememberRelation(oldTransition, newTransition);
+				} else if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
+					returnTransitions
+							.add(new Triple<>(newSource, newTarget, (IIcfgReturnTransition<?, ?>) oldTransition));
 				} else {
-					if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
-						returnTransitions
-								.add(new Triple<>(newSource, newTarget, (IIcfgReturnTransition<?, ?>) oldTransition));
-					} else {
-						lst.createNewTransition(newSource, newTarget, oldTransition);
-					}
-
+					lst.createNewTransition(newSource, newTarget, oldTransition);
 				}
 			}
 			returnTransitions.stream().filter(a -> lst.isCorrespondingCallContained(a.getThird()))
@@ -492,9 +482,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 							mScript.getScript().term("<", loopIterators.get(i), loopCounters.get(i)));
 			term = Util.implies(mScript.getScript(), iteratorCondition, term);
 			term = mScript.getScript().quantifier(Script.FORALL, new TermVariable[] { loopIterators.get(i) }, term);
+			final Term term1 = term;
 
-			term = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, term,
-					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			term = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term1);
 			terms[i] = term;
 		}
 
@@ -506,9 +496,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		}
 
 		resultTerm = SmtUtils.and(mScript.getScript(), resultTerm, iteratedSymbolicMemory.toTerm());
+		final Term term = resultTerm;
 
-		resultTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, resultTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		resultTerm = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 
 		final TransFormulaBuilder builder = new TransFormulaBuilder(iteratedSymbolicMemory.getInVars(),
 				iteratedSymbolicMemory.getOutVars(), true, null, true, null, false);

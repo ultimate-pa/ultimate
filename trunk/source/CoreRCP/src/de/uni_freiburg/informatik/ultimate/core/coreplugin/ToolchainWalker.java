@@ -185,7 +185,7 @@ final class ToolchainWalker implements IToolchainCancel {
 			return true;
 		}
 
-		if (!service.continueProcessingRoot()) {
+		if (!service.continueProcessing()) {
 			final Collection<ITimeoutResult> toResults = ResultUtil.filterResults(
 					data.getToolchain().getServices().getResultService().getResults(), ITimeoutResult.class);
 			if (toResults.isEmpty()) {
@@ -277,7 +277,8 @@ final class ToolchainWalker implements IToolchainCancel {
 			final Throwable cause) {
 		if (cause instanceof ToolchainExceptionWrapper) {
 			return handleException(data, plugin, (ToolchainExceptionWrapper) cause);
-		} else if (cause instanceof SMTLIBException) {
+		}
+		if (cause instanceof SMTLIBException) {
 			return handleException(data, plugin, (SMTLIBException) cause);
 		} else if (cause instanceof ToolchainCanceledException) {
 			return handleException(data, plugin, (ToolchainCanceledException) cause);

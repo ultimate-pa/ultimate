@@ -26,7 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
+import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Functions to pretty print statistics defined by a single {@link IStatisticsElement}.
@@ -60,6 +63,12 @@ public final class PrettyPrint {
 	public static BiFunction<String, Object, String> dataAsTime(final BiFunction<String, Object, String> pprinter) {
 		// having the unit in the field name rather than in the data makes processing easier
 		return (key, data) -> pprinter.apply(key + "[ms]", Math.round((long) data * 1e-6));
+	}
+
+	public static BiFunction<String, Object, String> list(final BiFunction<String, Object, String> pprinter,
+			final Function<Object, String> elemPrinter) {
+		return (key, data) -> pprinter.apply(key,
+				((List) data).stream().map(elemPrinter).collect(Collectors.joining(", ", "[ ", " ]")));
 	}
 
 }

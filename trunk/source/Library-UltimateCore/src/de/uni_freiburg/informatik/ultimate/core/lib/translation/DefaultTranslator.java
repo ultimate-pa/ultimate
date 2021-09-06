@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -419,8 +420,8 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	 * Check if source trace element and target trace element of a translation have the same procedure labels.
 	 */
 	protected boolean checkProcedureNames(final AtomicTraceElement<STE> ate, final AtomicTraceElement<TTE> newAte) {
-		return ate.getSucceedingProcedure() == newAte.getSucceedingProcedure()
-				&& ate.getPrecedingProcedure() == newAte.getPrecedingProcedure();
+		return Objects.equals(ate.getSucceedingProcedure(), newAte.getSucceedingProcedure())
+				&& Objects.equals(ate.getPrecedingProcedure(), newAte.getPrecedingProcedure());
 	}
 
 	/**

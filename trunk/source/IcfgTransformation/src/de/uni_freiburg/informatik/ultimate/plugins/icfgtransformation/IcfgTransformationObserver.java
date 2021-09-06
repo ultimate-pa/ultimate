@@ -46,18 +46,19 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequen
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration.LoopAccelerationOptions;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.mohr.IcfgLoopTransformerMohr;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer.DealingWithArraysTypes;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing.LoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux.MonniauxMapEliminator;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.BvToIntTransformation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.ModuloNeighborTransformation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
@@ -163,9 +164,11 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyHeapSeparator(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices,
 					new AbsIntEqualityProvider(mServices));
 		case LOOP_ACCELERATION_EXAMPLE:
-			return applyLoopAccelerationEx(icfg, locFac, outlocClass, backtranslationTracker, fac);
+			return applyLoopAccelerationEx(icfg, locFac, outlocClass, backtranslationTracker);
 		case LOOP_ACCELERATION_BIESENBACH:
 			return applyLoopAccelerationBiesenbach(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case LOOP_ACCELERATION_JORDAN:
+			return applyLoopAccelerationJordan(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_MOHR:
 			return applyLoopAccelerationMohr(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_WOELFING:
@@ -174,8 +177,6 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyLoopAccelerationFastUPR(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_WERNER:
 			return applyLoopAccelerationWerner(icfg, locFac, outlocClass, backtranslationTracker, fac);
-		case LOOP_ACCELERATION_AHMED:
-			return applyLoopAccelerationAhmed(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MAP_ELIMINATION_NO_EQUALITY:
 			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac,
 					new DefaultEqualityAnalysisProvider<>());
@@ -186,6 +187,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyRemoveDivMod(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
 			return applyModuloNeighbor(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
+		case BV_TO_INT:
+			return applyBvToIntTranslation(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
 		case MAP_ELIMINATION_MONNIAUX:
 			return (IIcfg<OUTLOC>) applyMapEliminationMonniaux((IIcfg<IcfgLocation>) icfg, backtranslationTracker);
 		default:
@@ -236,15 +239,6 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		return icfgTransformer.getResult();
 	}
 
-	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationAhmed(
-			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
-			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
-		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
-		return new AhmedLoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
-				"IcfgWithLoopAccelerationAhmed", transformer, mServices).getResult();
-	}
-
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationMohr(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
@@ -255,50 +249,49 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationWoelfing(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
-		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
 		return new LoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
-				"IcfgWithLoopAccelerationWoelfing", transformer, mServices).getResult();
+				"IcfgWithLoopAccelerationWoelfing", mServices).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationBiesenbach(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
-		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
 		final LoopAccelerationOptions options = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(IcfgTransformationPreferences.LABEL_LA_BB_MODE, LoopAccelerationOptions.class);
 		return new IcfgLoopAcceleration<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "IcfgDuplicate",
-				transformer, backtranslationTracker, mServices, options).getResult();
+				backtranslationTracker, mServices, options).getResult();
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationJordan(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		return new JordanLoopAccelerationIcfgTransformer<>(mLogger, icfg, outlocClass, locFac,
+				icfg.getIdentifier() + "Jordan", backtranslationTracker, mServices).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationFastUPR(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
-		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
 		final FastUPRReplacementMethod replacementMetho = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(IcfgTransformationPreferences.LABEL_FASTUPR_MODE, FastUPRReplacementMethod.class);
 		return new FastUPRTransformer<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "FastUPR",
-				transformer, backtranslationTracker, mServices, replacementMetho).getResult();
+				backtranslationTracker, mServices, replacementMetho).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationWerner(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
-		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
 		final DealingWithArraysTypes options = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(IcfgTransformationPreferences.LABEL_LA_WERNER_MODE, DealingWithArraysTypes.class);
 		return new WernerLoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
-				icfg.getIdentifier() + "IcfgDuplicate", transformer, mServices, options, 10).getResult();
+				icfg.getIdentifier() + "IcfgDuplicate", mServices, options, 10).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationEx(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
-			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
-		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
+			final IBacktranslationTracker backtranslationTracker) {
+		final ITransformulaTransformer transformer = new CopyingTransformulaTransformer(mLogger,
+				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit());
 		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
 				icfg.getIdentifier() + "IcfgDuplicate", transformer).getResult();
 	}
@@ -325,6 +318,25 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		transitionPreprocessors.add(new RewriteIte());
 		transitionPreprocessors.add(new SimplifyPreprocessor(services, SimplificationTechnique.SIMPLIFY_QUICK));
 		transitionPreprocessors.add(new ModuloNeighborTransformation(services, true));
+		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+
+		final ITransformulaTransformer transformer =
+				new LocalTransformer(transitionPreprocessors, icfg.getCfgSmtToolkit().getManagedScript(), fac);
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
+				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
+		result = icfgTransformer.getResult();
+		return result;
+	}
+
+	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyBvToIntTranslation(
+			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
+			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
+			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
+		IIcfg<OUTLOC> result;
+		final List<TransitionPreprocessor> transitionPreprocessors = new ArrayList<>();
+		transitionPreprocessors.add(new RewriteIte());
+		transitionPreprocessors.add(new SimplifyPreprocessor(services, SimplificationTechnique.SIMPLIFY_QUICK));
+		transitionPreprocessors.add(new BvToIntTransformation(services, fac));
 		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 
 		final ITransformulaTransformer transformer =

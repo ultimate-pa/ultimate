@@ -331,7 +331,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 *
 	 */
 	private static AffineTerm convertConstantNumericTerm(final ConstantTerm constTerm) {
-		final Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
+		final Rational rational = SmtUtils.toRational(constTerm);
 		final AffineTerm result = AffineTerm.constructConstant(constTerm.getSort(), rational);
 		return result;
 	}

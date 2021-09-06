@@ -111,6 +111,13 @@ public class BitvectorConstant {
 		bvsrem(2, false, false),
 
 		/**
+		 * (bvsmod (_ BitVec m) (_ BitVec m) (_ BitVec m))
+		 *
+		 * 2's complement signed remainder (sign follows divisor)
+		 */
+		bvsmod(2, false, false),
+
+		/**
 		 * (bvand (_ BitVec m) (_ BitVec m) (_ BitVec m))
 		 *
 		 * bitwise and
@@ -368,21 +375,56 @@ public class BitvectorConstant {
 	}
 
 	public static BitvectorConstant bvudiv(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		if (bv2.getValue().signum() == 0) {
+			return maxValue(bv1.getIndex());
+		}
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.divide(y));
 	}
 
 	public static BitvectorConstant bvurem(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		if (bv2.getValue().signum() == 0) {
+			return bv1;
+		}
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.remainder(y));
 	}
 
 	public static BitvectorConstant bvsdiv(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		if (toSignedInt(bv2.getValue(), bv2.getIndex()).signum() == 0) {
+			return bvudiv(bv1, bv2);
+		}
 		return similarIndexBvOp_BitvectorResult(bv1, bv2,
 				x -> y -> toSignedInt(x, bv1.getIndex()).divide(toSignedInt(y, bv2.getIndex())));
 	}
 
 	public static BitvectorConstant bvsrem(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		if (toSignedInt(bv2.getValue(), bv2.getIndex()).signum() == 0) {
+			return bvurem(bv1, bv2);
+		}
 		return similarIndexBvOp_BitvectorResult(bv1, bv2,
 				x -> y -> toSignedInt(x, bv1.getIndex()).remainder(toSignedInt(y, bv2.getIndex())));
+	}
+
+	public static BitvectorConstant bvsmod(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		final BigInteger bigInt1 = toSignedInt(bv1.getValue(), bv1.getIndex());
+		final BigInteger bigInt2 = toSignedInt(bv2.getValue(), bv2.getIndex());
+		BitvectorConstant uts1 = bv1;
+		BitvectorConstant uts2 = bv2;
+		if (bigInt1.signum() == -1) {
+			uts1 = bvneg(uts1);
+		}
+		if (bigInt2.signum() == -1) {
+			uts2 = bvneg(uts2);
+		}
+		final BitvectorConstant bvurem = bvurem(uts1, uts2);
+		if ((bigInt1.signum() == -1) && (bigInt2.signum() == 1)) {
+			return bvadd(bvneg(bvurem), bv2);
+		} else if ((bigInt1.signum() == 1) && (bigInt2.signum() == -1)) {
+			return bvadd(bvurem, bv2);
+		} else if ((bigInt1.signum() == -1) && (bigInt2.signum() == -1)) {
+			return bvneg(bvurem);
+		} else {
+			return bvurem;
+		}
 	}
 
 	public static BitvectorConstant bvand(final BitvectorConstant bv1, final BitvectorConstant bv2) {

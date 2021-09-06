@@ -48,8 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SkolemNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -60,6 +58,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.SkolemNormalForm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
@@ -329,9 +329,8 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 			snfBody = snfTerm;
 			snfVars = null;
 		}
-		final Set<Term> constraints =
-				new SubTermFinder(term -> term.getSort().getName().equals("Bool") && hasNoUninterpretedPredicates(term),
-						true).findMatchingSubterms(snfBody);
+		final Set<Term> constraints = SubTermFinder.find(snfBody,
+				term -> term.getSort().getName().equals("Bool") && hasNoUninterpretedPredicates(term), true);
 		final Map<Term, Term> subs = new HashMap<>();
 		final Map<Term, Term> subsInverse = new HashMap<>();
 		// replace constraints with a boolean constant
@@ -343,8 +342,8 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 		}
 		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(snfBody);
 
-		final Term cnfWConstraintsReplaced =
-				new CnfTransformer(mManagedScript, mServices, true).transform(bodyWithConstraintsReplaced);
+		final Term cnfWConstraintsReplaced = new CnfTransformer(mManagedScript, mServices)
+				.transform(bodyWithConstraintsReplaced);
 
 		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
 

@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -29,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -246,8 +246,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		final Term substituted = new SubstitutionWithLocalSimplification(mManagedScript, mapping).transform(term);
 		final Term abstracted = McrUtils.abstractVariables(substituted, varsToKeep, QuantifiedFormula.EXISTS,
 				mManagedScript, mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
-		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, abstracted,
-				mSimplificationTechnique, mXnfConversionTechnique);
+		return PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, mSimplificationTechnique, abstracted);
 	}
 
 	private Term[] getInterpolantsForSsa(final List<Term> ssa) {

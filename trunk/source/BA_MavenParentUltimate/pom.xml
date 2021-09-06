@@ -399,6 +399,7 @@
 						<includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
 						<includeOnlyProperty>^git.dirty$</includeOnlyProperty>
 						<includeOnlyProperty>^git.build.version$</includeOnlyProperty>
+						<includeOnlyProperty>^git.branch$</includeOnlyProperty>
 					</includeOnlyProperties>
 
 				</configuration>

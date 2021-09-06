@@ -32,9 +32,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -213,29 +218,18 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					mTraceCheckFinished = true;
 					cleanupAndUnlockSolver();
 				}
-			} else {
-				if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-					final String msg =
-							"Trace is feasible, we will do another trace check, this time with branch encoders.";
-					managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
-					mLogger.info(msg);
-
-					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
-					if (icfgProgramExecution != null) {
-						providesIcfgProgramExecution = true;
-					}
-					mTraceCheckFinished = true;
-				} else {
-					if (!feasibilityResult.isSolverCrashed()) {
-						mTraceCheckFinished = true;
-						cleanupAndUnlockSolver();
-					} else {
-						if (feasibilityResult.getReasonUnknown()
-								.getExceptionHandlingCategory() != ExceptionHandlingCategory.KNOWN_IGNORE) {
-							throw new AssertionError(feasibilityResult.getReasonUnknown().getException());
-						}
-					}
+			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
+				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
+				if (icfgProgramExecution != null) {
+					providesIcfgProgramExecution = true;
 				}
+				mTraceCheckFinished = true;
+			} else if (!feasibilityResult.isSolverCrashed()) {
+				mTraceCheckFinished = true;
+				cleanupAndUnlockSolver();
+			} else if (feasibilityResult.getReasonUnknown()
+					.getExceptionHandlingCategory() != ExceptionHandlingCategory.KNOWN_IGNORE) {
+				throw new AssertionError(feasibilityResult.getReasonUnknown().getException());
 			}
 		} catch (final ToolchainCanceledException e) {
 			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
@@ -244,6 +238,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		} catch (final SMTLIBException e) {
 			feasibilityResult =
 					new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckReasonUnknown.constructReasonUnknown(e), true);
+		} catch (final InnerTraceCheckException e) {
+			feasibilityResult =
+					new FeasibilityCheckResult(LBool.UNKNOWN, e.getTraceCheckReasonUnknown(), e.hasSolverCrashed());
 		} catch (final Exception e) {
 			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
 					new TraceCheckReasonUnknown(Reason.SOLVER_CRASH_OTHER, e, ExceptionHandlingCategory.UNKNOWN), true);
@@ -252,6 +249,26 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
 			mRcfgProgramExecution = icfgProgramExecution;
 		}
+	}
+
+	/**
+	 * Create new trace check with a fresh solver and default settings.
+	 *
+	 * @param services
+	 */
+	public static TraceCheck<IAction> createTraceCheck(final IUltimateServiceProvider services,
+			final CfgSmtToolkit toolkit, final ManagedScript mgdScriptTc, final IPredicate pre, final IPredicate post,
+			final List<? extends IAction> trace) {
+		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
+		final NestedWord<IAction> nw = NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()])));
+		final NestedFormulas<IAction, UnmodifiableTransFormula, IPredicate> rv =
+				new DefaultTransFormulas<>(nw, pre, post, pendingContexts, toolkit.getOldVarsAssignmentCache(), false);
+		final AssertCodeBlockOrder acbo = new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
+		final boolean computeRcfgProgramExecution = true;
+		final boolean collectInterpolatSequenceStatistics = false;
+		final boolean unlockSmtSolverAlsoIfUnsat = true;
+		return new TraceCheck<>(pre, post, pendingContexts, nw, rv, services, toolkit, mgdScriptTc, acbo,
+				computeRcfgProgramExecution, collectInterpolatSequenceStatistics, unlockSmtSolverAlsoIfUnsat);
 	}
 
 	@Override
@@ -322,14 +339,19 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 * the specification (however, this can still be partial program states e.g., no values assigned to arrays) and that
 	 * contains information which branch of a parallel composed CodeBlock violates the specification.
 	 *
+	 * @param managedScriptTc
+	 *
 	 * @return
 	 */
-	private IcfgProgramExecution<L> computeRcfgProgramExecutionAndDecodeBranches() {
+	private IcfgProgramExecution<L> computeRcfgProgramExecutionAndDecodeBranches(final ManagedScript managedScriptTc) {
 		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
 			throw new AssertionError(
 					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
 		}
 		if (!((DefaultTransFormulas<L>) mNestedFormulas).hasBranchEncoders()) {
+			final String msg = "Trace is feasible, we will do another trace check, this time with branch encoders.";
+			managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
+			mLogger.info(msg);
 			cleanupAndUnlockSolver();
 			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getTrace(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
@@ -337,10 +359,26 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
 					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
-			assert tc.isCorrect() != LBool.UNKNOWN : "result of second trace check is UNKNOWN, Reasons: "
-					+ tc.getTraceCheckReasonUnknown();
-			assert tc.isCorrect() == LBool.SAT : "result of second trace check is not SAT, but " + tc.isCorrect();
-			return tc.getRcfgProgramExecution();
+
+			switch (tc.isCorrect()) {
+			case SAT:
+				return tc.getRcfgProgramExecution();
+			case UNKNOWN:
+				final Exception ex = tc.getTraceCheckReasonUnknown().getException();
+				if (ex instanceof ToolchainCanceledException || ex instanceof AutomataOperationCanceledException) {
+					// TODO: 20210701 DD: It might be useful to set a higher timeout for a TraceCheck here because the
+					// chance of getting a program execution if the previous TC was already successful is high.
+					throw new ToolchainCanceledException((IRunningTaskStackProvider) ex,
+							new RunningTaskInfo(getClass(), "computing program execution"));
+				}
+				throw new InnerTraceCheckException("Exception in inner trace check during branch decoding",
+						tc.getTraceCheckReasonUnknown(), tc.mFeasibilityResult.mSolverCrashed);
+			case UNSAT:
+				throw new AssertionError("result of second trace check is not SAT, but " + tc.isCorrect());
+			default:
+				throw new UnsupportedOperationException("unknown trace check result type:" + tc.isCorrect());
+			}
+
 		}
 		return computeRcfgProgramExecution(mNsb);
 	}
@@ -404,12 +442,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		Boolean result;
 		if (SmtUtils.isTrueLiteral(term)) {
 			result = Boolean.TRUE;
+		} else if (SmtUtils.isFalseLiteral(term)) {
+			result = Boolean.FALSE;
 		} else {
-			if (SmtUtils.isFalseLiteral(term)) {
-				result = Boolean.FALSE;
-			} else {
-				throw new AssertionError();
-			}
+			throw new AssertionError();
 		}
 		return result;
 	}
@@ -489,7 +525,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 		public FeasibilityCheckResult(final LBool lBool, final TraceCheckReasonUnknown reasonUnknown,
 				final boolean solverCrashed) {
-			super();
 			assert lBool != LBool.UNKNOWN
 					|| reasonUnknown != null : "if result is unknown you have to specify a reason";
 			assert lBool == LBool.UNKNOWN
@@ -508,6 +543,28 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		}
 
 		public boolean isSolverCrashed() {
+			return mSolverCrashed;
+		}
+	}
+
+	private static final class InnerTraceCheckException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+		private final transient TraceCheckReasonUnknown mTCRU;
+		private final transient boolean mSolverCrashed;
+
+		public InnerTraceCheckException(final String msg, final TraceCheckReasonUnknown traceCheckReasonUnknown,
+				final boolean solverCrashed) {
+			super(msg);
+			mTCRU = traceCheckReasonUnknown;
+			mSolverCrashed = solverCrashed;
+		}
+
+		public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
+			return mTCRU;
+		}
+
+		public boolean hasSolverCrashed() {
 			return mSolverCrashed;
 		}
 	}

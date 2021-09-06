@@ -69,7 +69,7 @@ public class UltimateMocks {
 		final IUltimateServiceProvider services = createUltimateServiceProviderMock(defaultLogLevel);
 		try {
 			return new Scriptor(solverCommand, services.getLoggingService().getLogger(UltimateMocks.class), services,
-					"SMT solver");
+					"SMT solver", null);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}

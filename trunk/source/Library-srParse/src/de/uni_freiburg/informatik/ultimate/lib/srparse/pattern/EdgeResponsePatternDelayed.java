@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that once "R" becomes satisfied, "S" holds after at most "c1" time units.
@@ -44,14 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class EdgeResponsePatternDelayed extends PatternType<EdgeResponsePatternDelayed> {
 
 	public EdgeResponsePatternDelayed(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public EdgeResponsePatternDelayed create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new EdgeResponsePatternDelayed(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -90,14 +85,9 @@ public class EdgeResponsePatternDelayed extends PatternType<EdgeResponsePatternD
 		sb.append("\" becomes satisfied, \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds after at most \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units");
 		return sb.toString();
-	}
-
-	@Override
-	public EdgeResponsePatternDelayed rename(final String newName) {
-		return new EdgeResponsePatternDelayed(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

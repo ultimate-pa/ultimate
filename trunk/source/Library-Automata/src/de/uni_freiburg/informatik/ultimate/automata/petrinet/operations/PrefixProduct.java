@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Given a Petri net N and an finite automaton A over the same alphabet.
@@ -207,7 +208,7 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 					final PLACE newPlace = mOldPlace2newPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
-				result.addTransition(trans.getSymbol(), predecessors, successors);
+				result.addTransition(trans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 			}
 		}
 
@@ -220,7 +221,7 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 				final Set<PLACE> successors = new HashSet<>();
 				final PLACE newPlaceSucc = mState2newPlace.get(trans.getSuccessor());
 				successors.add(newPlaceSucc);
-				result.addTransition(trans.getSymbol(), predecessors, successors);
+				result.addTransition(trans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 			}
 		}
 	}
@@ -239,7 +240,7 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 			successors.add(newPlace);
 		}
 		successors.add(mState2newPlace.get(nwaTrans.getSuccessor()));
-		result.addTransition(netTrans.getSymbol(), predecessors, successors);
+		result.addTransition(netTrans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 	}
 
 	private void addPlacesAndStates(final BoundedPetriNet<LETTER, PLACE> result) {

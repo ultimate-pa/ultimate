@@ -62,7 +62,7 @@ public class NestedMap2<K1, K2, V> {
 	/**
 	 * Returns a stream to all values of the nested map. The values are backed by
 	 * the map.
-	 * 
+	 *
 	 * @return A backed stream to all values of the nested map
 	 */
 	public Stream<V> values() {
@@ -97,6 +97,10 @@ public class NestedMap2<K1, K2, V> {
 
 	public Map<K2, V> get(final K1 key1) {
 		return mK1ToK2ToV.get(key1);
+	}
+
+	public boolean containsKey(final Object arg0) {
+		return mK1ToK2ToV.containsKey(arg0);
 	}
 
 	public Set<K1> keySet() {

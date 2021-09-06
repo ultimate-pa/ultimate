@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -95,8 +96,8 @@ public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends Eq
 	}
 
 	@Override
-	public Set<IProgramVar> getVariables(final IIcfgSymbolTable symbolTable) {
-		return Collections.emptySet();
+	public ImmutableSet<IProgramVar> getVariables(final IIcfgSymbolTable symbolTable) {
+		return ImmutableSet.empty();
 	}
 
 	@Override

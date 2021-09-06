@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
@@ -40,7 +39,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompilerStateless;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -52,25 +54,41 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public abstract class PatternType<T extends PatternType<?>> {
 
 	private final List<CDD> mCdds;
-	private final List<String> mDurations;
+	private final List<Rational> mDurations;
+	private final List<String> mDurationNames;
 	private final SrParseScope<?> mScope;
 	private final String mId;
 
 	private ReqPeas mPEAs;
 
 	public PatternType(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		mScope = scope;
-		mId = id;
-		mCdds = cdds;
-		mDurations = durations;
+			final List<Rational> durations, final List<String> durationNames) {
+		mScope = Objects.requireNonNull(scope);
+		mId = Objects.requireNonNull(id);
+		mCdds = Objects.requireNonNull(cdds);
+		mDurations = Objects.requireNonNull(durations);
+		mDurationNames = Objects.requireNonNull(durationNames);
 	}
 
-	public abstract T create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations);
+	@SuppressWarnings("unchecked")
+	public T create(final SrParseScope<?> scope, final String id, final List<CDD> cdds, final List<Rational> durations,
+			final List<String> durationNames) {
+		return (T) PatternBuilder.getConstructor((Class<? extends PatternType<?>>) getClass()).construct(scope, id,
+				cdds, durations, durationNames);
+	}
 
-	public List<String> getDuration() {
+	@SuppressWarnings("unchecked")
+	public PatternType<T> rename(final String newName) {
+		return (PatternType<T>) PatternBuilder.getConstructor((Class<? extends PatternType<?>>) getClass())
+				.construct(getScope(), newName, getCdds(), getDurations(), mDurationNames);
+	}
+
+	public List<Rational> getDurations() {
 		return Collections.unmodifiableList(mDurations);
+	}
+
+	public List<String> getDurationNames() {
+		return mDurationNames;
 	}
 
 	public List<CDD> getCdds() {
@@ -81,15 +99,15 @@ public abstract class PatternType<T extends PatternType<?>> {
 		return getCdds().toArray(new CDD[getCdds().size()]);
 	}
 
-	private String[] getDurationsAsArray() {
-		return getDuration().toArray(new String[getDuration().size()]);
-	}
-
-	private int[] getDurationsAsIntArray(final Map<String, Integer> id2bounds) {
-		final String[] durations = getDurationsAsArray();
-		final int[] rtr = new int[durations.length];
-		for (int i = 0; i < durations.length; ++i) {
-			rtr[i] = parseDuration(durations[i], id2bounds);
+	private int[] getDurationsAsIntArray() {
+		final int[] rtr = new int[mDurations.size()];
+		for (int i = 0; i < mDurations.size(); ++i) {
+			final Rational val = mDurations.get(i);
+			if (val == null) {
+				throw new UnsupportedOperationException("Unresolved duration in " + getId());
+			}
+			// TODO: we should normalize all durations s.t. we are guaranteed to have integers here.
+			rtr[i] = SmtUtils.toInt(val).intValueExact();
 		}
 		return rtr;
 	}
@@ -102,18 +120,16 @@ public abstract class PatternType<T extends PatternType<?>> {
 		return mScope;
 	}
 
-	public abstract PatternType<T> rename(String newName);
-
-	public ReqPeas transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
+	public ReqPeas transformToPea(final ILogger logger, final Durations durations) {
 		if (mPEAs == null) {
-			final List<CounterTrace> cts = constructCounterTrace(id2bounds);
+			final List<CounterTrace> cts = constructCounterTrace();
 			final String name = getId();
 
 			final List<Entry<CounterTrace, PhaseEventAutomata>> peas = new ArrayList<>(cts.size());
 			int i = 0;
 			for (final CounterTrace ct : cts) {
 				final Trace2PeaCompilerStateless compiler =
-						new Trace2PeaCompilerStateless(logger, name + "_ct" + i, ct, id2bounds.keySet());
+						new Trace2PeaCompilerStateless(logger, name + "_ct" + i, ct, durations.getConstNames());
 				++i;
 				peas.add(new Pair<>(ct, compiler.getResult()));
 			}
@@ -122,9 +138,9 @@ public abstract class PatternType<T extends PatternType<?>> {
 		return mPEAs;
 	}
 
-	public List<CounterTrace> constructCounterTrace(final Map<String, Integer> id2bounds) {
+	public List<CounterTrace> constructCounterTrace() {
 		final CDD[] cdds = getCddsAsArray();
-		final int[] durations = getDurationsAsIntArray(id2bounds);
+		final int[] durations = getDurationsAsIntArray();
 		assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getName();
 		assert durations.length == getExpectedDurationSize() : "Wrong number of durations for pattern " + getName();
 		return transform(cdds, durations);
@@ -138,25 +154,6 @@ public abstract class PatternType<T extends PatternType<?>> {
 
 	public String getName() {
 		return getClass().getSimpleName();
-	}
-
-	protected int parseDuration(final String duration, final Map<String, Integer> id2bounds) {
-		if (duration == null) {
-			throw new IllegalArgumentException("Duration cannot be null");
-		}
-		try {
-			return Integer.parseInt(duration);
-		} catch (final NumberFormatException nfe) {
-			if (id2bounds == null) {
-				throw new IllegalArgumentException("Cannot parse duration and no alternative bounds are given");
-			}
-			final Integer actualDuration = id2bounds.get(duration);
-			if (actualDuration == null) {
-				throw new IllegalArgumentException(
-						mId + ": Cannot parse duration and alternative bounds do not contain " + duration);
-			}
-			return actualDuration;
-		}
 	}
 
 	protected static CounterTrace counterTrace(final CounterTrace.DCPhase... phases) {
@@ -299,4 +296,5 @@ public abstract class PatternType<T extends PatternType<?>> {
 			return mPeas;
 		}
 	}
+
 }

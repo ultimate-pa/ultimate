@@ -33,7 +33,12 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that once "R" becomes satisfied, "S" holds for at least "c1" time units.
@@ -44,14 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class BndEdgeResponsePattern extends PatternType<BndEdgeResponsePattern> {
 
 	public BndEdgeResponsePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndEdgeResponsePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndEdgeResponsePattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
@@ -70,6 +69,35 @@ public class BndEdgeResponsePattern extends PatternType<BndEdgeResponsePattern> 
 			ct.add(counterTrace(phaseT(), phase(R.negate()), phase(R), phase(S, BoundTypes.LESS, c1), phase(S.negate()),
 					phaseT()));
 			ct.add(counterTrace(phaseT(), phase(R.negate()), phase(R.and(S.negate())), phaseT()));
+		} else if (scope instanceof SrParseScopeBefore) {
+			final CDD P = scope.getCdd1();
+			ct.add(counterTrace(phase(P.negate()), phase(R.negate().and(P.negate())), phase(R.and(P.negate())),
+					phase(S.and(P).negate(), BoundTypes.LESS, c1), phase(S.negate().and(P.negate())), phaseT()));
+			ct.add(counterTrace(phase(P.negate()), phase(R.negate().and(P.negate())),
+					phase(R.and(S.negate().and(P.negate()))), phaseT()));
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.negate().and(Q).negate()),
+					phase(R.and(Q.negate())), phase(S.and(Q.negate()), BoundTypes.LESS, c1),
+					phase(S.negate().and(Q.negate())), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.negate().and(Q.negate())),
+					phase(R.and(S.negate().and(Q.negate()))), phaseT()));
+		} else if (scope instanceof SrParseScopeAfter) {
+			final CDD P = scope.getCdd1();
+			ct.add(counterTrace(phaseT(), phase(P), phaseT(), phase(R.negate()), phase(R),
+					phase(S, BoundTypes.LESS, c1), phase(S.negate()), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phaseT(), phase(R.negate()), phase(R.and(S.negate())), phaseT()));
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(R.negate().and(Q).negate()), phase(R.and(Q.negate())),
+					phase(S.and(Q.negate()), BoundTypes.LESS, c1), phase(S.negate().and(Q.negate())), phase(Q.negate()),
+					phase(Q), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(R.negate().and(Q.negate())), phase(R.and(S.negate().and(Q.negate()))), phase(Q.negate()),
+					phase(Q), phaseT()));
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
@@ -91,14 +119,9 @@ public class BndEdgeResponsePattern extends PatternType<BndEdgeResponsePattern> 
 		sb.append("\" becomes satisfied, \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds for at least \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units");
 		return sb.toString();
-	}
-
-	@Override
-	public BndEdgeResponsePattern rename(final String newName) {
-		return new BndEdgeResponsePattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

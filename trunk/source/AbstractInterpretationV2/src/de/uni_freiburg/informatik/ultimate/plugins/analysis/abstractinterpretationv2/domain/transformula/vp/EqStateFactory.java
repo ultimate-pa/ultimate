@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -142,19 +143,14 @@ public class EqStateFactory {
 		}
 
 		// TODO: what procedures does the predicate need?
-		return new EqPredicate(
-				getEqConstraintFactory().getDisjunctiveConstraint(constraints),
-				variables,
-				null,
-				getSymbolTable(),
-				getManagedScript(),
-				mEqNodeAndFunctionFactory);
+		return new EqPredicate(getEqConstraintFactory().getDisjunctiveConstraint(constraints),
+				ImmutableSet.of(variables), null, getSymbolTable(), getManagedScript(), mEqNodeAndFunctionFactory);
 	}
 
 	public EqPredicate termToPredicate(final Term spPrecise,
 			final IPredicate postConstraint) {
-		return new EqPredicate(spPrecise, postConstraint.getVars(), postConstraint.getProcedures(), mSymbolTable,
-				mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory);
+		return new EqPredicate(spPrecise, ImmutableSet.copyOf(postConstraint.getVars()), postConstraint.getProcedures(),
+				mSymbolTable, mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory);
 
 	}
 

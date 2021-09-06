@@ -42,8 +42,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,14 +57,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
- * A MonitoredProcess is a {@link Process} that will be terminated at the end of the toolchain from which it was
- * created.
+ * A MonitoredProcess is a {@link Process} that will be terminated at the end of the toolchain from which it was created
+ * or by a timeout signaled by {@link IProgressMonitorService}.
  *
  * @author dietsch@informatik.uni-freiburg.de
  */
-public final class MonitoredProcess implements IStorable {
+public final class MonitoredProcess implements IStorable, AutoCloseable {
 
 	/**
 	 * Time in milliseconds to wait for the termination of a process after sending the exit command.
@@ -68,19 +73,14 @@ public final class MonitoredProcess implements IStorable {
 	private static final int WAIT_FOR_EXIT_COMMAND_MILLIS = 200;
 
 	/**
-	 * Time in milliseconds to wait between checks if the toolchain is still running.
+	 * Time in milliseconds to wait between checks if a timeout occurred is still running.
 	 */
-	private static final int WAIT_BETWEEN_CHECKS_MILLIS = 500;
+	private static final int WAIT_BETWEEN_CHECKS_MILLIS = 50;
 
 	/**
 	 * Buffer size in bytes.
 	 */
 	private static final int DEFAULT_BUFFER_SIZE = 2048;
-
-	/**
-	 * -2 because we wait until all 3 threads (stderr buffer, stdin buffer, actual process watcher) are ready.
-	 */
-	private static final int INITIAL_SEMAPHORE_COUNT = -2;
 
 	private static final AtomicInteger sInstanceCounter = new AtomicInteger();
 
@@ -90,40 +90,42 @@ public final class MonitoredProcess implements IStorable {
 	private final String mExitCommand;
 	private final PipedInputStream mStdInStreamPipe;
 	private final PipedInputStream mStdErrStreamPipe;
-	private final Semaphore mWaitForSetup;
+
 	private final AtomicBoolean mTimeoutAttached;
 
-	private Thread mMonitor;
+	private Thread mProcessRunner;
 	private int mID;
 
-	private volatile Process mProcess;
-	private volatile boolean mProcessCompleted;
+	private Process mProcess;
 	private volatile int mReturnCode;
+
+	private final CompletableFuture<Process> mProcessOnExit;
+
+	private final AtomicBoolean mIsKillProcessCalled;
 
 	private MonitoredProcess(final Process process, final String command, final String exitCommand,
 			final IUltimateServiceProvider services, final ILogger logger) {
-		assert services != null;
-		mServices = services;
-		mLogger = logger;
-		mProcess = process;
-		assert mProcess != null;
-		mProcessCompleted = false;
+		mServices = Objects.requireNonNull(services);
+		mLogger = Objects.requireNonNull(logger);
+		mProcess = Objects.requireNonNull(process);
+		mProcessOnExit = mProcess.onExit();
 		mCommand = command;
 		mExitCommand = exitCommand;
 		mReturnCode = -1;
-		mMonitor = null;
+		mProcessRunner = null;
 		mStdInStreamPipe = new PipedInputStream(DEFAULT_BUFFER_SIZE);
 		mStdErrStreamPipe = new PipedInputStream(DEFAULT_BUFFER_SIZE);
-		mWaitForSetup = new Semaphore(INITIAL_SEMAPHORE_COUNT);
+
 		mTimeoutAttached = new AtomicBoolean(false);
+		mIsKillProcessCalled = new AtomicBoolean(false);
 	}
 
 	/**
-	 * Start a new monitored process. The process will be terminated at the end of the toolchain. Note that you should
-	 * not start an external process through some wrapper script, because Java will have trouble terminating this
-	 * processes due to bug <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If
-	 * this occurs, Ultimate may deadlock because it cannot close input and output streams of the unresponsive process
-	 * reliably.
+	 * Start a new monitored process. The process will be terminated at the end of the toolchain or if
+	 * {@link IProgressMonitorService} signals a timeout. Note that you should not start an external process through
+	 * some wrapper script, because Java will have trouble terminating this processes due to bug
+	 * <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If this occurs, Ultimate
+	 * may deadlock because it cannot close input and output streams of the unresponsive process reliably.
 	 *
 	 * @param command
 	 *            A string array containing the command and its possible arguments that will be used to start a new
@@ -142,48 +144,58 @@ public final class MonitoredProcess implements IStorable {
 	 */
 	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
 			final IUltimateServiceProvider services) throws IOException {
-		final MonitoredProcess newMonitoredProcess;
-		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).get();
-		final ILogger logger = services.getLoggingService().getControllerLogger();
+		if (command == null || command.length == 0) {
+			throw new IllegalArgumentException("Cannot execute empty argument");
+		}
+		if (services == null) {
+			throw new NullPointerException("services may not be null");
+		}
+		final ILogger logger = services.getLoggingService().getLogger(MonitoredProcess.class);
+		final File workingDirFile;
 		if (workingDir == null) {
-			if (command.length > 0) {
-				File f = new File(command[0]);
-				if (f.exists()) {
-					command[0] = f.getAbsolutePath();
-				} else {
-					f = new File(Paths.get(System.getProperty("user.dir"), command[0]).toString());
-					if (f.exists() && f.canExecute()) {
-						command[0] = f.getAbsolutePath();
-					} else {
-						final File absolutePath = CoreUtil.findExecutableBinaryOnPath(command[0]);
-						if (absolutePath == null) {
-							logger.error(
-									"Could not determine absolute path of external process, hoping that OS will resolve "
-											+ command[0]);
-						} else {
-							command[0] = absolutePath.getAbsolutePath();
-						}
-					}
-				}
-			}
-			logger.info("No working directory specified, using " + command[0]);
-			newMonitoredProcess =
-					new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand, services, logger);
+			command[0] = findExecutableBinary(command[0], logger);
+			workingDirFile = null;
 		} else {
-			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command, null, new File(workingDir)),
-					oneLineCmd, exitCommand, services, logger);
+			workingDirFile = new File(workingDir);
 		}
 
+		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).orElseThrow(AssertionError::new);
+		final MonitoredProcess newMonitoredProcess = new MonitoredProcess(
+				Runtime.getRuntime().exec(command, null, workingDirFile), oneLineCmd, exitCommand, services, logger);
 		newMonitoredProcess.start(workingDir, services.getStorage(), oneLineCmd);
 		return newMonitoredProcess;
 	}
 
+	private static String findExecutableBinary(final String command, final ILogger logger) {
+		final String binary;
+		File f = new File(command);
+		if (f.exists()) {
+			binary = f.getAbsolutePath();
+		} else {
+			f = new File(Paths.get(System.getProperty("user.dir"), command).toString());
+			if (f.exists() && f.canExecute()) {
+				binary = f.getAbsolutePath();
+			} else {
+				final File absolutePath = CoreUtil.findExecutableBinaryOnPath(command);
+				if (absolutePath == null) {
+					logger.error("Could not determine absolute path of external process, hoping that OS will resolve "
+							+ command);
+					binary = command;
+				} else {
+					binary = absolutePath.getAbsolutePath();
+				}
+			}
+		}
+		logger.info("No working directory specified, using " + binary);
+		return binary;
+	}
+
 	/**
-	 * Start a new monitored process. The process will be terminated at the end of the toolchain. Note that you should
-	 * not start an external process through some wrapper script, because Java will have trouble terminating this
-	 * processes due to bug <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If
-	 * this occurs, Ultimate may deadlock because it cannot close input and output streams of the unresponsive process
-	 * reliably.
+	 * Start a new monitored process. The process will be terminated at the end of the toolchain or if
+	 * {@link IProgressMonitorService} signals a timeout. Note that you should not start an external process through
+	 * some wrapper script, because Java will have trouble terminating this processes due to bug
+	 * <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If this occurs, Ultimate
+	 * may deadlock because it cannot close input and output streams of the unresponsive process reliably.
 	 *
 	 * @param command
 	 *            A command without arguments that will be used to start a new process.
@@ -191,8 +203,9 @@ public final class MonitoredProcess implements IStorable {
 	 *            A string describing an "exit" command that should be sent to the standard input stream of the running
 	 *            process before trying to shut it down.
 	 * @param services
-	 *            An instance of {@link IUltimateServiceProvider} that should be used to report errors and to register
-	 *            this process for destruction after the current toolchain completes.
+	 *            An instance of {@link IUltimateServiceProvider} that is used to report errors, to register this
+	 *            process for destruction after the current toolchain completes, and to obtain
+	 *            {@link IProgressMonitorService}.
 	 * @return A monitored process instance that represents the started process.
 	 * @throws IOException
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
@@ -211,11 +224,12 @@ public final class MonitoredProcess implements IStorable {
 			old.destroy();
 		}
 
-		mMonitor = new Thread(new ProcessRunner(this), "MonitoredProcess " + mID + " " + oneLineCmd);
-		mLogger.info(String.format("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID,
-				mCommand, mExitCommand, workingDir));
-		mMonitor.start();
-		mWaitForSetup.acquireUninterruptibly();
+		final ProcessRunner pr = new ProcessRunner(this);
+		mProcessRunner = new Thread(pr, String.format("MonitoredProcess %s %s", mID, oneLineCmd));
+		mLogger.info("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID, mCommand,
+				mExitCommand, workingDir);
+		mProcessRunner.start();
+		pr.mEndOfSetup.acquireUninterruptibly();
 	}
 
 	/**
@@ -228,11 +242,11 @@ public final class MonitoredProcess implements IStorable {
 	 *             cleared when this exception is thrown.
 	 */
 	public MonitoredProcessState waitfor() throws InterruptedException {
-		if (mMonitor.getState() == State.TERMINATED) {
+		if (mProcessRunner.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
 		}
-		mMonitor.join();
-		if (mMonitor.getState() == State.TERMINATED) {
+		mProcessRunner.join();
+		if (mProcessRunner.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
 		}
 		return new MonitoredProcessState(true, false, mReturnCode);
@@ -250,11 +264,11 @@ public final class MonitoredProcess implements IStorable {
 	 *             cleared when this exception is thrown.
 	 */
 	public MonitoredProcessState waitfor(final long millis) throws InterruptedException {
-		if (mMonitor.getState() == State.TERMINATED) {
+		if (mProcessRunner.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
 		}
-		mMonitor.join(millis);
-		if (mMonitor.getState() == State.TERMINATED) {
+		mProcessRunner.join(millis);
+		if (mProcessRunner.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
 		}
 		return new MonitoredProcessState(true, false, mReturnCode);
@@ -273,49 +287,58 @@ public final class MonitoredProcess implements IStorable {
 		if (millis < 0) {
 			throw new IllegalArgumentException("millis has to be non-negative but was " + millis);
 		}
-		mLogger.info(String.format("Waiting %s ms for monitored process %s with %s", millis, mID, mCommand));
+		mLogger.info("%s Waiting %s ms for monitored process", getLogStringPrefix(), millis);
 		MonitoredProcessState mps = null;
 		try {
 			mps = waitfor(millis);
 		} catch (final InterruptedException e) {
 			// ignore interrupted exceptions; they should never occur in this
 			// context anyways.
+			Thread.currentThread().interrupt();
 		}
 		if (mps == null || mps.isRunning()) {
-			mLogger.warn(
-					String.format("Timeout reached for monitored process %s with %s, terminating...", mID, mCommand));
+			mLogger.warn("%s Timeout reached", getLogStringPrefix());
 			forceShutdown();
-			return new MonitoredProcessState(mMonitor.getState() != State.TERMINATED, true, mReturnCode);
+			try {
+				mProcessRunner.join(WAIT_FOR_EXIT_COMMAND_MILLIS);
+			} catch (final InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			return new MonitoredProcessState(mProcessRunner.getState() != State.TERMINATED, true, mReturnCode);
 		}
 		return mps;
 	}
 
 	/**
-	 * Wait until the toolchain is cancelled for the termination of the process. If it did not occur, terminate the
-	 * process abnormally.
+	 * Wait until the toolchain is cancelled or {@link IProgressMonitorService} signals timeout for the termination of
+	 * the process. If the process is still running, try sending an exit command if present. If it is still running,
+	 * terminate it abnormally.
 	 *
 	 * @param gracePeriod
-	 *            A time period in milliseconds that this method will wait after a toolchain cancellation request was
-	 *            received before terminating the process. Must be non-negative. 0 means no grace-period.
+	 *            A time period in milliseconds that this method will wait after the toolchain was cancelled or
+	 *            {@link IProgressMonitorService} signaled timeout before terminating the process. Must be non-negative.
+	 *            0 means no grace-period.
 	 * @return A {@link MonitoredProcessState} instance containing the return code of the process or -1
 	 */
-	public MonitoredProcessState impatientWaitUntilToolchainTimeout(final long gracePeriod) {
+	public MonitoredProcessState impatientWaitUntilTimeout(final long gracePeriod) {
 		if (gracePeriod < 0) {
 			throw new IllegalArgumentException("gracePeriod must be non-negative");
 		}
-		mLogger.info(String.format("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand));
+		mLogger.info("%s Waiting until timeout for monitored process", getLogStringPrefix());
 		final IProgressMonitorService progressService = mServices.getProgressMonitorService();
-		while (progressService != null && progressService.continueProcessingRoot()) {
+		while (progressService != null && progressService.continueProcessing()) {
 			try {
 				final MonitoredProcessState state = waitfor(WAIT_BETWEEN_CHECKS_MILLIS);
 				if (!state.isRunning()) {
 					return state;
 				}
 			} catch (final InterruptedException e) {
+				Thread.currentThread().interrupt();
 				break;
 			}
 		}
-
+		mLogger.warn("%s Timeout while monitored process is still running, waiting %s ms for graceful end",
+				getLogStringPrefix(), gracePeriod);
 		try {
 			final MonitoredProcessState state = waitfor(gracePeriod);
 			if (!state.isRunning()) {
@@ -324,13 +347,11 @@ public final class MonitoredProcess implements IStorable {
 		} catch (final InterruptedException e) {
 			// ignore interrupted exceptions; they should never occur in this
 			// context anyways.
+			Thread.currentThread().interrupt();
 		}
 
-		mLogger.warn(
-				String.format("Toolchain was canceled while waiting for monitored process %s with %s, terminating...",
-						mID, mCommand));
 		forceShutdown();
-		return new MonitoredProcessState(mMonitor.getState() != State.TERMINATED, true, mReturnCode);
+		return new MonitoredProcessState(mProcessRunner.getState() != State.TERMINATED, true, mReturnCode);
 	}
 
 	/**
@@ -351,19 +372,20 @@ public final class MonitoredProcess implements IStorable {
 				throw new IllegalArgumentException("millis must be larger than zero");
 			}
 
-			new Thread((Runnable) () -> impatientWaitUntilTime(millis), "CountdownTimeout watcher for " + mID).start();
+			new Thread(() -> impatientWaitUntilTime(millis), "CountdownTimeout watcher for " + mID).start();
 		}
 	}
 
 	/**
-	 * Calling this method will force the process to terminate if the toolchain terminates, possibly after a grace
-	 * period. This method is non-blocking. You may only call this method once!
+	 * Calling this method will force the process to terminate if the toolchain terminates or
+	 * {@link IProgressMonitorService} signals timeout, possibly after a grace period. This method is non-blocking. You
+	 * may only call this method once!
 	 *
 	 * @param gracePeriod
-	 *            A time period in milliseconds that we will wait after a toolchain cancellation request was received
-	 *            before terminating the process. Must be non-negative. 0 means no grace-period.
+	 *            A time period in milliseconds that we will wait before terminating the process. Must be non-negative.
+	 *            0 means no grace-period.
 	 */
-	public void setTerminationAfterToolchainTimeout(final long gracePeriod) {
+	public void setTerminationAfterTimeout(final long gracePeriod) {
 		synchronized (this) {
 			if (mTimeoutAttached.getAndSet(true)) {
 				throw new ConcurrentModificationException(
@@ -374,8 +396,7 @@ public final class MonitoredProcess implements IStorable {
 				throw new IllegalArgumentException("millis must be non-negative");
 			}
 
-			new Thread((Runnable) () -> impatientWaitUntilToolchainTimeout(gracePeriod),
-					"ToolchainTimeout watcher for " + mID).start();
+			new Thread(() -> impatientWaitUntilTimeout(gracePeriod), "TimeoutWatcher for " + mID).start();
 		}
 	}
 
@@ -384,73 +405,63 @@ public final class MonitoredProcess implements IStorable {
 	 * is any.
 	 */
 	public void forceShutdown() {
-		synchronized (this) {
+		if (!isRunning()) {
+			return;
+		}
+		if (mExitCommand != null) {
+			final OutputStream std = mProcess.getOutputStream();
+			final OutputStreamWriter stdWriter = new OutputStreamWriter(std, Charset.defaultCharset());
+			try {
+				stdWriter.write(mExitCommand);
+				stdWriter.close();
+			} catch (final IOException e) {
+				mLogger.error("%s Exception during sending of exit command %s: %s", getLogStringPrefix(), mExitCommand,
+						e.getMessage());
+			}
+			try {
+				mLogger.debug("%s About to join with the monitor thread... ", getLogStringPrefix());
+				mProcessRunner.join(WAIT_FOR_EXIT_COMMAND_MILLIS);
+				mLogger.debug("%s Successfully joined", getLogStringPrefix());
+
+			} catch (final InterruptedException e) {
+				// not necessary to do anything here
+				mLogger.debug("%s Interrupted during join", getLogStringPrefix());
+				Thread.currentThread().interrupt();
+			}
 			if (!isRunning()) {
 				return;
 			}
-			if (mExitCommand != null) {
-				final OutputStream std = mProcess.getOutputStream();
-				final OutputStreamWriter stdWriter = new OutputStreamWriter(std, Charset.defaultCharset());
-				try {
-					stdWriter.write(mExitCommand);
-					stdWriter.close();
-				} catch (final IOException e) {
-					mLogger.error(getLogStringPrefix() + " Exception during sending of exit command " + mExitCommand
-							+ ": " + e.getMessage());
-				}
-				try {
-					mLogger.debug(getLogStringPrefix() + " About to join with the monitor thread... ");
-					mMonitor.join(WAIT_FOR_EXIT_COMMAND_MILLIS);
-					mLogger.debug(getLogStringPrefix() + " Successfully joined");
-
-				} catch (final InterruptedException e) {
-					// not necessary to do anything here
-					mLogger.debug(getLogStringPrefix() + " Interrupted during join");
-				}
-				if (!isRunning()) {
-					return;
-				}
-			}
-			mLogger.warn(getLogStringPrefix() + " Forcibly destroying the process");
-			final List<InputStream> tobeclosed = new ArrayList<>(5);
-			try {
-				// mProcess.destroyForcibly();
-				// mStorage.removeStorable(getKey(mID, mCommand));
-				// mProcess.getErrorStream().close();
-				// mProcess.getInputStream().close();
-				// mProcess.getOutputStream().flush();
-				// mProcess.getOutputStream().close();
-				// mProcess = null;
-				tobeclosed.add(mProcess.getInputStream());
-				tobeclosed.add(mProcess.getErrorStream());
-				tobeclosed.add(mStdInStreamPipe);
-				tobeclosed.add(mStdErrStreamPipe);
-				killProcess();
-			} catch (final NullPointerException ex) {
-				if (mLogger.isWarnEnabled()) {
-					mLogger.warn(
-							getLogStringPrefix() + " Rare case: The thread was killed right after we checked if it "
-									+ "was killed and before we wanted to kill it manually");
-				}
-			} catch (final Throwable t) {
-				mLogger.fatal(String.format(getLogStringPrefix() + " Something unexpected happened: %s%n%s", t,
-						CoreUtil.getStackTrace(t)));
-			}
-
-			for (final InputStream stream : tobeclosed) {
-				close(stream);
-			}
-
-			mProcessCompleted = true;
-			mLogger.debug(getLogStringPrefix() + " Forcibly destroyed the process");
 		}
+		mLogger.warn("%s Forcibly destroying the process", getLogStringPrefix());
+		final List<InputStream> tobeclosed = new ArrayList<>(5);
+		try {
+			tobeclosed.add(mProcess.getInputStream());
+			tobeclosed.add(mProcess.getErrorStream());
+			tobeclosed.add(mStdInStreamPipe);
+			tobeclosed.add(mStdErrStreamPipe);
+			killProcess();
+		} catch (final NullPointerException ex) {
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("%s Process already dead, possible race condition", getLogStringPrefix());
+			}
+		} catch (final Exception ex) {
+			mLogger.fatal("%s Something unexpected happened: %s%n%s", getLogStringPrefix(), ex,
+					CoreUtil.getStackTrace(ex));
+			throw ex;
+		}
+
+		for (final InputStream stream : tobeclosed) {
+			close(stream);
+		}
+
+		mLogger.debug("%s Forcibly destroyed the process", getLogStringPrefix());
 	}
 
 	private void close(final Closeable pipe) {
 		try {
 			pipe.close();
 		} catch (final IOException e) {
-			mLogger.warn(getLogStringPrefix() + " An error occured during closing: " + e.getMessage());
+			mLogger.warn("%s An error occured during closing: %s", getLogStringPrefix(), e.getMessage());
 		}
 	}
 
@@ -491,23 +502,56 @@ public final class MonitoredProcess implements IStorable {
 		super.finalize();
 	}
 
+	@Override
+	public void close() throws Exception {
+		forceShutdown();
+	}
+
 	private static String getKey(final int processId, final String command) {
 		return processId + " " + command;
 	}
 
-	public synchronized boolean isRunning() {
-		return !mProcessCompleted;
+	public boolean isRunning() {
+		return !mProcessOnExit.isDone();
 	}
 
 	private String getLogStringPrefix() {
 		return "[MP " + mCommand + " (" + mID + ")]";
 	}
 
+	/**
+	 * Kills the process using {@link Process#destroyForcibly()} and removes it from storage.
+	 */
 	private void killProcess() {
-		if (mProcess == null) {
+		// only execute this method once
+		if (mIsKillProcessCalled.getAndSet(true)) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("%s Called by %s, but is already killed", getLogStringPrefix(),
+						ReflectionUtil.getCallerSignature(3));
+			}
 			return;
 		}
-		mProcess.destroyForcibly();
+
+		if (isRunning()) {
+			try {
+				mProcess.destroyForcibly();
+				mProcessOnExit.get(WAIT_FOR_EXIT_COMMAND_MILLIS, TimeUnit.MILLISECONDS);
+				mReturnCode = mProcess.exitValue();
+				mLogger.info("%s Forceful destruction successful, exit code %d", getLogStringPrefix(), mReturnCode);
+			} catch (final InterruptedException e) {
+				mLogger.fatal("%s Interrupted while destroying process, abandoning it", getLogStringPrefix());
+				Thread.currentThread().interrupt();
+			} catch (final ExecutionException e) {
+				mLogger.fatal("%s Encounted %s destroying process, abandoning process. Exception: %s",
+						getLogStringPrefix(), e.getClass().getSimpleName(), e);
+			} catch (final TimeoutException e) {
+				mLogger.fatal("%s Could not destroy process within %s ms, abandoning it", getLogStringPrefix(),
+						WAIT_FOR_EXIT_COMMAND_MILLIS);
+			}
+		} else {
+			mLogger.info("%s Ended with exit code %s", getLogStringPrefix(), mProcess.exitValue());
+			mReturnCode = mProcess.exitValue();
+		}
 		mProcess = null;
 		removeFromStorage();
 	}
@@ -515,43 +559,16 @@ public final class MonitoredProcess implements IStorable {
 	private void removeFromStorage() {
 		final IStorable storable = mServices.getStorage().removeStorable(getKey(mID, mCommand));
 		if (storable != null && mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogStringPrefix() + " was removed from storage");
+			mLogger.debug(getLogStringPrefix() + " Removed from storage");
 		}
-	}
-
-	private void logUnreadPipeContent() {
-		final String stdout = CoreUtil.convertStreamToString(getInputStream());
-		final String stderr = CoreUtil.convertStreamToString(getErrorStream());
-		if (stdout.isEmpty() && stderr.isEmpty()) {
-			return;
-		}
-
-		final StringBuilder sb = new StringBuilder();
-		sb.append(getLogStringPrefix()).append(CoreUtil.getPlatformLineSeparator());
-		if (!stdout.isEmpty()) {
-			sb.append("Unread content of stdout:").append(CoreUtil.getPlatformLineSeparator()).append(stdout);
-		}
-		if (!stderr.isEmpty()) {
-			if (!stdout.isEmpty()) {
-				sb.append(CoreUtil.getPlatformLineSeparator());
-			}
-			sb.append("Unread content of stderr:").append(CoreUtil.getPlatformLineSeparator()).append(stderr);
-		}
-		mLogger.debug(sb);
-	}
-
-	private void setUpStreamBuffer(final InputStream inputStream, final OutputStream outputStream,
-			final Semaphore endOfPumps, final String name) {
-		endOfPumps.acquireUninterruptibly();
-		final InputStreamReader streamReader = new InputStreamReader(inputStream, Charset.defaultCharset());
-		final String threadName = "MonitoredProcess " + mID + " StreamBuffer " + name;
-		new Thread(new PipePump(outputStream, streamReader, endOfPumps, name), threadName).start();
 	}
 
 	@Override
 	public String toString() {
-		return String.format("%s (%s): %s (exit command is %s)", getClass().getSimpleName(), mID, mCommand,
-				mExitCommand);
+		if (mExitCommand != null) {
+			return String.format("MP %s (%s) with exit command %s", mCommand, mID, mExitCommand);
+		}
+		return String.format("MP %s (%s) without exit command", mCommand, mID);
 	}
 
 	/**
@@ -586,10 +603,17 @@ public final class MonitoredProcess implements IStorable {
 	 */
 	private final class ProcessRunner implements Runnable {
 
+		/**
+		 * -2 because we wait until all 3 threads (stderr buffer, stdin buffer, actual process watcher) are ready.
+		 */
+		private static final int INITIAL_SEMAPHORE_COUNT = -2;
+
+		private final Semaphore mEndOfSetup;
 		private final MonitoredProcess mMonitoredProcess;
 
 		private ProcessRunner(final MonitoredProcess monitoredProcess) {
 			mMonitoredProcess = monitoredProcess;
+			mEndOfSetup = new Semaphore(INITIAL_SEMAPHORE_COUNT);
 		}
 
 		@Override
@@ -597,6 +621,7 @@ public final class MonitoredProcess implements IStorable {
 			final Semaphore endOfPumps = new Semaphore(-INITIAL_SEMAPHORE_COUNT);
 			final PipedOutputStream stdInBufferPipe;
 			final PipedOutputStream stdErrBufferPipe;
+			final ILogger logger = mMonitoredProcess.mLogger;
 			try {
 				stdInBufferPipe = new PipedOutputStream(mStdInStreamPipe);
 				stdErrBufferPipe = new PipedOutputStream(mStdErrStreamPipe);
@@ -604,38 +629,65 @@ public final class MonitoredProcess implements IStorable {
 				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe, endOfPumps, "stdErr");
 
 			} catch (final IOException e) {
-				if (mMonitoredProcess.mLogger.isErrorEnabled()) {
-					mMonitoredProcess.mLogger.error(
-							getLogStringPrefix() + " Failed during stream data buffering. Terminating abnormally.", e);
+				if (logger.isErrorEnabled()) {
+					logger.error(getLogStringPrefix() + " Failed during stream data buffering. Terminating abnormally.",
+							e);
 				}
 				killProcess();
 				// release enough permits for exec to guarantee return
-				mWaitForSetup.release(1 - INITIAL_SEMAPHORE_COUNT);
+				mEndOfSetup.release(1 - INITIAL_SEMAPHORE_COUNT);
 				return;
 			}
 
 			try {
-				mWaitForSetup.release();
+				mEndOfSetup.release();
+				logger.debug(getLogStringPrefix() + " Finished thread setup");
 				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
-				mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished waiting for process!");
-				mMonitoredProcess.mProcessCompleted = true;
+				logger.debug(getLogStringPrefix() + " Finished waiting for process");
 				if (!endOfPumps.tryAcquire(-INITIAL_SEMAPHORE_COUNT, WAIT_FOR_EXIT_COMMAND_MILLIS,
 						TimeUnit.MILLISECONDS)) {
-					mMonitoredProcess.mLogger
-							.warn(getLogStringPrefix() + " Abandoning pump threads because process wont die!");
-				} else {
-					mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished waiting for pump threads!");
-					if (mMonitoredProcess.mLogger.isDebugEnabled()) {
-						logUnreadPipeContent();
-					}
+					logger.warn(getLogStringPrefix() + " Abandoning pump threads because process wont die");
+				} else if (logger.isDebugEnabled()) {
+					logger.debug(getLogStringPrefix() + " Finished waiting for pump threads");
+					logUnreadPipeContent();
+					logger.debug(getLogStringPrefix() + " Finished dumping unread pipe content");
 				}
 			} catch (final InterruptedException e) {
-				if (mMonitoredProcess.mLogger.isErrorEnabled()) {
-					mMonitoredProcess.mLogger.error(getLogStringPrefix() + " Interrupted. Terminating abnormally.", e);
-				}
+				logger.error(getLogStringPrefix() + " Pump interrupted. Terminating abnormally.", e);
+				Thread.currentThread().interrupt();
 			} finally {
 				killProcess();
+				logger.debug(getLogStringPrefix() + " Exiting monitor thread");
 			}
+		}
+
+		private void logUnreadPipeContent() {
+			final String stdout = CoreUtil.convertStreamToString(getInputStream());
+			final String stderr = CoreUtil.convertStreamToString(getErrorStream());
+			if (stdout.isEmpty() && stderr.isEmpty()) {
+				return;
+			}
+
+			final StringBuilder sb = new StringBuilder();
+			sb.append(getLogStringPrefix()).append(CoreUtil.getPlatformLineSeparator());
+			if (!stdout.isEmpty()) {
+				sb.append("Unread content of stdout:").append(CoreUtil.getPlatformLineSeparator()).append(stdout);
+			}
+			if (!stderr.isEmpty()) {
+				if (!stdout.isEmpty()) {
+					sb.append(CoreUtil.getPlatformLineSeparator());
+				}
+				sb.append("Unread content of stderr:").append(CoreUtil.getPlatformLineSeparator()).append(stderr);
+			}
+			mLogger.debug(sb);
+		}
+
+		private void setUpStreamBuffer(final InputStream inputStream, final OutputStream outputStream,
+				final Semaphore endOfPumps, final String name) {
+			endOfPumps.acquireUninterruptibly();
+			final InputStreamReader streamReader = new InputStreamReader(inputStream, Charset.defaultCharset());
+			final String threadName = "MonitoredProcess " + mID + " StreamBuffer " + name;
+			new Thread(new PipePump(outputStream, streamReader, mEndOfSetup, endOfPumps, name), threadName).start();
 		}
 	}
 
@@ -646,19 +698,21 @@ public final class MonitoredProcess implements IStorable {
 		private final OutputStream mOutputStream;
 		private final InputStreamReader mStreamReader;
 		private final Semaphore mEndOfPumps;
+		private final Semaphore mEndOfSetup;
 		private final String mPumpName;
 
 		private PipePump(final OutputStream outputStream, final InputStreamReader streamReader,
-				final Semaphore endOfPumps, final String pumpName) {
+				final Semaphore endOfSetup, final Semaphore endOfPumps, final String pumpName) {
 			mOutputStream = outputStream;
 			mStreamReader = streamReader;
 			mEndOfPumps = endOfPumps;
 			mPumpName = pumpName;
+			mEndOfSetup = endOfSetup;
 		}
 
 		@Override
 		public void run() {
-			mWaitForSetup.release();
+			mEndOfSetup.release();
 			try {
 				int chunk = -1;
 				while ((chunk = mStreamReader.read()) != -1) {
@@ -681,4 +735,5 @@ public final class MonitoredProcess implements IStorable {
 			}
 		}
 	}
+
 }

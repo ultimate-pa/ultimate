@@ -177,7 +177,7 @@ function compile_z3()
 		rm -rf "${BUILD_DIR}"
 	fi
 
-	CXXFLAGS="-march=x86-64 -mtune=generic" python2 scripts/mk_make.py --build="${BUILD_DIR}" ${ADDITIONAL_FLAGS}
+	CXXFLAGS="-march=x86-64 -mtune=generic" python scripts/mk_make.py --build="${BUILD_DIR}" ${ADDITIONAL_FLAGS}
 
 	cd "${BUILD_DIR}"
 	echo "Compiling z3 ..."

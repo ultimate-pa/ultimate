@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
+import java.util.Collection;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 /**
@@ -45,6 +48,11 @@ public final class Aggregate {
 	public static StatisticsData statisticsDataAggregate(final Object lhsStatsData, final Object rhsStatsData) {
 		((StatisticsData) lhsStatsData).aggregateBenchmarkData((StatisticsData) rhsStatsData);
 		return (StatisticsData) lhsStatsData;
+	}
+
+	public static List appendList(final Object lhsList, final Object rhsList) {
+		((List) lhsList).addAll((Collection) rhsList);
+		return (List) lhsList;
 	}
 
 	public static Integer intAdd(final Object lhsInt, final Object rhsInt) {

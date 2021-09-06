@@ -45,13 +45,13 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
@@ -102,7 +102,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
@@ -431,7 +430,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								procedureRoot.toString().substring(0, 5)),
 						errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
 
-				ManagedScript mgdScriptTracechecks;
+				final ManagedScript mgdScriptTracechecks;
 				if (mGlobalSettings.isUseSeparateSolverForTracechecks()) {
 					final SolverMode solverMode = mGlobalSettings.getChooseSeparateSolverForTracechecks();
 					final String commandExternalSolver = mGlobalSettings.getSeparateSolverForTracechecksCommand();
@@ -441,11 +440,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							.setSolverMode(solverMode).setUseFakeIncrementalScript(fakeNonIncrementalScript)
 							.setUseExternalSolver(!commandExternalSolver.isEmpty(), commandExternalSolver,
 									mGlobalSettings.getSeparateSolverForTracechecksTheory());
-					final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings,
-							"TraceCheck_Iteration" + iterationsCount);
 
-					mgdScriptTracechecks = new ManagedScript(mServices, tcSolver);
-					mOriginalRoot.getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
+					mgdScriptTracechecks = mOriginalRoot.getCfgSmtToolkit().createFreshManagedScript(mServices,
+							solverSettings, "TraceCheck_Iteration" + iterationsCount);
 				} else {
 					mgdScriptTracechecks = mCsToolkit.getManagedScript();
 				}
@@ -515,7 +512,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 
 		// benchmark stuff
-		benchmarkGenerator.setResult(overallResult);
 		benchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		benchmarkGenerator.addPredicateUnifierData(mPredicateUnifier.getPredicateUnifierBenchmark());
 		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(mOriginalRoot);
@@ -709,9 +705,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		final ImpRootNode newRoot = new ImpRootNode();
 		copy.put(root, newRoot);
 		final Deque<AnnotatedProgramPoint> stack = new ArrayDeque<>();
-		for (final AnnotatedProgramPoint child : root.getOutgoingNodes()) {
-			stack.add(child);
-		}
+		stack.addAll(root.getOutgoingNodes());
 		while (!stack.isEmpty()) {
 			final AnnotatedProgramPoint current = stack.pop();
 			if (copy.containsKey(current)) {
@@ -792,8 +786,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs) {
 		for (final IcfgLocation errorIpp : errorLocs) {
 			final ILocation origin = ILocation.getAnnotation(errorIpp);
-			String timeOutMessage =
-					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
+			String timeOutMessage = "Unable to prove that " + Check.getAnnotation(errorIpp).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);

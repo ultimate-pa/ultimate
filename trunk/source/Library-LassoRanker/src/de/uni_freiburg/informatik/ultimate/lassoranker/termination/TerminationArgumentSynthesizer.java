@@ -117,7 +117,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			throws IOException {
 		super(lasso, preferences, template.getName() + "Template", services);
 		mSettings = settings;
-		mLogger.info("Termination Analysis Settings:\n" + settings.toString());
+		mLogger.info("Termination Analysis Settings: " + settings.toString());
 		assert !mSettings.getAnalysis().isDisabled();
 		if (mSettings.getNumStrictInvariants() == 0 && mSettings.getNumNonStrictInvariants() == 0) {
 			mLogger.info("Generation of supporting invariants is disabled.");
@@ -327,7 +327,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @throws IOException
 	 */
 	@Override
-	protected LBool do_synthesis() throws SMTLIBException, TermException, IOException {
+	protected LBool doSynthesis() throws SMTLIBException, TermException, IOException {
 		mTemplate.init(this);
 		if (mSettings.getAnalysis().isLinear() && mTemplate.getDegree() > 0) {
 			mLogger.warn(
@@ -439,7 +439,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						+ " redundant supporting invariants from a total of " + before + ".");
 			}
 		} else if (sat == LBool.UNKNOWN) {
-			mScript.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
+			mScript.echo(new QuotedObject(ArgumentSynthesizer.SOLVER_UNKNOWN_MESSAGE));
 			// Problem: If we use the following line we can receive the
 			// following response which is not SMTLIB2 compliant.
 			// (:reason-unknown canceled)

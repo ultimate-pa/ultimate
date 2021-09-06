@@ -105,12 +105,12 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public FunctionSymbol getFunctionSymbol(String constructor) {
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
 		return mTheory.getFunctionSymbol(constructor);
 	}
 
 	@Override
-	public DataType.Constructor constructor(String name, String[] selectors, Sort[] argumentSorts) {
+	public DataType.Constructor constructor(final String name, final String[] selectors, final Sort[] argumentSorts) {
 		if (name == null) {
 			throw new SMTLIBException(
 					"Invalid input to declare a datatype");
@@ -120,7 +120,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public DataType datatype(String typename, int numParams) {
+	public DataType datatype(final String typename, final int numParams) {
 		if (typename == null) {
 			throw new SMTLIBException(
 					"Invalid input to declare a datatype");
@@ -139,7 +139,7 @@ public class NoopScript implements Script {
 	 *            The arguments of the constructor.
 	 * @return 0 or RETURNOVERLOAD, depending on if the flag is needed.
 	 */
-	private int checkReturnOverload(Sort[] sortParams, Sort[] argumentSorts) {
+	private int checkReturnOverload(final Sort[] sortParams, final Sort[] argumentSorts) {
 		final BitSet unused = new BitSet();
 		unused.set(0, sortParams.length);
 		final ArrayDeque<Sort> todo = new ArrayDeque<>();
@@ -168,7 +168,7 @@ public class NoopScript implements Script {
 	 * @param constrs The constructors.
 	 * @throws SMTLIBException
 	 */
-	private void declareConstructorFunctions(DataType datatype, DataType.Constructor[] constrs, Sort[] sortParams) {
+	private void declareConstructorFunctions(final DataType datatype, final DataType.Constructor[] constrs, final Sort[] sortParams) {
 		final String[] indices = null;
 		Sort datatypeSort;
 		if (sortParams == null) {
@@ -194,7 +194,7 @@ public class NoopScript implements Script {
 				getTheory().declareInternalFunction(constrName, argumentSorts, datatypeSort, FunctionSymbol.CONSTRUCTOR);
 
 				for (int j = 0; j < selectors.length; j++) {
-					getTheory().declareInternalFunction(selectors[j], selectorParamSorts, argumentSorts[j], 0);
+					getTheory().declareInternalFunction(selectors[j], selectorParamSorts, argumentSorts[j], FunctionSymbol.SELECTOR);
 				}
 			} else {
 				getTheory().declareInternalPolymorphicFunction(constrName, sortParams, argumentSorts,
@@ -209,14 +209,14 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public void declareDatatype(DataType datatype, DataType.Constructor[] constrs) {
+	public void declareDatatype(final DataType datatype, final DataType.Constructor[] constrs) {
 		assert datatype.mNumParams == 0;
 		datatype.setConstructors(new Sort[0], constrs);
 		declareConstructorFunctions(datatype, constrs, null);
 	}
 
 	@Override
-	public void declareDatatypes(DataType[] datatypes, DataType.Constructor[][] constrs, Sort[][] sortParams) {
+	public void declareDatatypes(final DataType[] datatypes, final DataType.Constructor[][] constrs, final Sort[][] sortParams) {
 		for (int i = 0; i < datatypes.length; i++) {
 			datatypes[i].setConstructors(sortParams[i], constrs[i]);
 			declareConstructorFunctions(datatypes[i], constrs[i], sortParams[i]);
@@ -393,7 +393,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree, Term proofTree)
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
 			throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
@@ -438,19 +438,33 @@ public class NoopScript implements Script {
 		// not equal, we don't create an ApplicationTerm when parsing rational constants.
 		if (funcname.equals("/") && indices == null && returnSort == null && params.length == 2
 				&& params[0] instanceof ConstantTerm && params[1] instanceof ConstantTerm
-				&& params[0].getSort() == mTheory.getRealSort() && params[1].getSort() == mTheory.getRealSort()) {
+				&& params[0].getSort() == mTheory.getNumericSort() && params[1].getSort() == mTheory.getNumericSort()) {
 			final ConstantTerm numTerm = (ConstantTerm) params[0];
 			final ConstantTerm denomTerm = (ConstantTerm) params[1];
-			if (numTerm.getValue() instanceof Rational && denomTerm.getValue() instanceof Rational) {
-				final Rational num = (Rational) numTerm.getValue();
-				final Rational denom = (Rational) denomTerm.getValue();
-				// make sure that num and denom have the right form such that the created rational term would be
-				// completely identical
-				if (num.isIntegral() && denom.isIntegral() && denom.signum() > 0 && !denom.equals(Rational.ONE)
-						&& num.gcd(denom).equals(Rational.ONE)) {
-					final Rational value = Rational.valueOf(num.numerator(), denom.numerator());
-					return mTheory.constant(value, mTheory.getRealSort());
+			BigInteger num = null, denom = null;
+			if (mTheory.getNumericSort() == mTheory.getRealSort()) {
+				// in LRA, numerals are not stored as Rational, but as BigInteger constants, to
+				// distinguish the terms 1 and 1.0.
+				if (numTerm.getValue() instanceof BigInteger && denomTerm.getValue() instanceof BigInteger) {
+					num = (BigInteger) numTerm.getValue();
+					denom = (BigInteger) denomTerm.getValue();
 				}
+			} else {
+				// in LIRA, the numerals are stored as Rational with denominator one.
+				if (numTerm.getValue() instanceof Rational && denomTerm.getValue() instanceof Rational) {
+					final Rational numRat = (Rational) numTerm.getValue();
+					final Rational denomRat = (Rational) denomTerm.getValue();
+					if (numRat.isIntegral() && denomRat.isIntegral()) {
+						num = numRat.numerator();
+						denom = denomRat.numerator();
+					}
+				}
+			}
+			// make sure that num and denom have the right form such that the created
+			// rational term would be completely identical
+			if (num != null && denom.compareTo(BigInteger.ONE) > 0 && num.gcd(denom).equals(BigInteger.ONE)) {
+				final Rational value = Rational.valueOf(num, denom);
+				return mTheory.constant(value, mTheory.getRealSort());
 			}
 		}
 		if (funcname.equals("-") && indices == null && returnSort == null && params.length == 1
@@ -462,6 +476,12 @@ public class NoopScript implements Script {
 				// make sure that num has the right form. In particular we only allow negating integrals, as the
 				// normal form of -.5 is (/ (- 1.0) 2.0).
 				if (num.isIntegral() && num.signum() > 0) {
+					return mTheory.constant(num.negate(), numTerm.getSort());
+				}
+			} else if (numTerm.getValue() instanceof BigInteger) {
+				final BigInteger num = (BigInteger) numTerm.getValue();
+				// make sure that num is positive.
+				if (num.signum() > 0) {
 					return mTheory.constant(num.negate(), numTerm.getSort());
 				}
 			}

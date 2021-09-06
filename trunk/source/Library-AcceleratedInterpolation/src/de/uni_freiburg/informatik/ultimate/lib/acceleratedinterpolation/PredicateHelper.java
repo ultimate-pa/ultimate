@@ -127,32 +127,32 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 		final HashMap<Term, Term> subMap = new HashMap<>();
 		final Term tTerm = t;
 
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> inVars;
+		final Map<IProgramVar, TermVariable> outVars;
 
-		for (final Entry<IProgramVar, TermVariable> outVar : tf.getOutVars().entrySet()) {
-			final TermVariable newTV;
-			if (fresh) {
+		final Term newTerm;
+		if (fresh) {
+			inVars = new HashMap<>();
+			outVars = new HashMap<>();
+			for (final Entry<IProgramVar, TermVariable> outVar : tf.getOutVars().entrySet()) {
+				final TermVariable newTV;
 				newTV = mScript.constructFreshCopy(outVar.getKey().getTermVariable());
-			} else {
-				newTV = outVar.getKey().getTermVariable();
+				subMap.put(outVar.getValue(), newTV);
+				outVars.put(outVar.getKey(), newTV);
 			}
-			subMap.put(outVar.getValue(), newTV);
-			outVars.put(outVar.getKey(), newTV);
-		}
-		for (final Entry<IProgramVar, TermVariable> inVar : tf.getInVars().entrySet()) {
-			final TermVariable newTV;
-			if (fresh) {
+			for (final Entry<IProgramVar, TermVariable> inVar : tf.getInVars().entrySet()) {
+				final TermVariable newTV;
 				newTV = mScript.constructFreshCopy(inVar.getKey().getTermVariable());
-			} else {
-				newTV = inVar.getKey().getTermVariable();
+				subMap.put(inVar.getValue(), newTV);
+				inVars.put(inVar.getKey(), newTV);
 			}
-			subMap.put(inVar.getValue(), newTV);
-			inVars.put(inVar.getKey(), newTV);
+			final Substitution sub = new Substitution(mScript, subMap);
+			newTerm = sub.transform(tTerm);
+		} else {
+			inVars = new HashMap<>(tf.getInVars());
+			outVars = new HashMap<>(tf.getOutVars());
+			newTerm = tTerm;
 		}
-		final Substitution sub = new Substitution(mScript, subMap);
-		final Term newTerm = sub.transform(tTerm);
-
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, Collections.emptySet(), true,
 				Collections.emptySet(), false);
 		tfb.setFormula(newTerm);

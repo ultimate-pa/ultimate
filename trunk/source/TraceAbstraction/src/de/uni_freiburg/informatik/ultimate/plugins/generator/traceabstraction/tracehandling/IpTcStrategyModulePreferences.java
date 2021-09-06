@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
-import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation.AccelerationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -51,13 +50,12 @@ import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InterpolatingTraceCheckPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
@@ -127,9 +125,8 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 			final boolean useAbstractInterpretationPredicates = mPrefs.getUseAbstractInterpretation();
 			final boolean useWpPredicates = mPrefs.getUseWeakestPreconditionForPathInvariants();
 
-			final SolverSettings solverSettings =
-					mPrefs.constructSolverSettings(mTaskIdentifier).setUseFakeIncrementalScript(false)
-							.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_TIMEOUT, null);
+			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
+					.setUseFakeIncrementalScript(false).setUseExternalSolver(ExternalSolver.Z3, 12000);
 
 			final InvariantSynthesisSettings invariantSynthesisSettings = new InvariantSynthesisSettings(solverSettings,
 					useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWpPredicates, true);
@@ -140,13 +137,15 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 					invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
 					mPrefs.collectInterpolantStatistics());
 		case PDR:
-			return new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
-					mPrecondition, mPostcondition, mCounterexample.getWord().asList(), mTransitionClazz);
+			return new Pdr<>(mServices, mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
+					mPredicateUnifier, mPrecondition, mPostcondition, mCounterexample.getWord().asList(),
+					mTransitionClazz);
 
 		case AcceleratedInterpolation:
-			return new AcceleratedInterpolation<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
-					managedScript, mPredicateUnifier, (IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
-					AccelerationMethod.FAST_UPR);
+			return new AcceleratedInterpolation<>(mServices,
+					mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, managedScript,
+					mPredicateUnifier, (IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
+					mPrefs.getLoopAccelerationTechnique().toString());
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);
 		}
@@ -160,12 +159,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 		}
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
 			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier);
-			final String solverId = solverSettings.getBaseNameOfDumpedScript();
-			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, solverId);
-
-			final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
-			mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
-			return mgdScriptTc;
+			return mPrefs.getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings);
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
 	}

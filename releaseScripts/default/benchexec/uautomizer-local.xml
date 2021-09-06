@@ -2,9 +2,7 @@
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
 <benchmark tool="ultimateautomizer" timelimit="15 min" hardtimelimit="16 min" memlimit="8 GB" cpuCores="2">
 
-  <resultfiles>**.graphml</resultfiles>
-  
-  <option name="--full-output"/>
+<option name="--full-output"/>
     
 <rundefinition name="SV-COMP21_unreach-call">
   <tasks name="ReachSafety-Arrays">

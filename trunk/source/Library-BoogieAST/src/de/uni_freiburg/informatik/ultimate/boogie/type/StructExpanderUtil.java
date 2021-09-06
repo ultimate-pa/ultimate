@@ -8,6 +8,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 public class StructExpanderUtil {
 
 	public static final String ATTRIBUTE_EXPAND_STRUCT = "expand_struct";
+	public static final String ATTRIBUTE_BUILTIN = "builtin";
+	public static final String ATTRIBUTE_CONST_ARRAY = "const_array";
+	public static final String ATTRIBUTE_STRUCTPOS = "structpos";
 
 	/**
 	 * don't instantiate

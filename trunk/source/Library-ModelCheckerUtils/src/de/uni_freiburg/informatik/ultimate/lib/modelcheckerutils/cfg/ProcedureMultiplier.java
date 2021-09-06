@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadCurrentTransition;
@@ -95,7 +96,6 @@ public class ProcedureMultiplier {
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads) {
-		super();
 		final IcfgEdgeFactory icfgEdgeFactory = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		final Map<String, List<ILocalProgramVar>> inParams = new HashMap<>(icfg.getCfgSmtToolkit().getInParams());
 		final Map<String, List<ILocalProgramVar>> outParams = new HashMap<>(icfg.getCfgSmtToolkit().getOutParams());
@@ -149,9 +149,7 @@ public class ProcedureMultiplier {
 					}
 				}
 				final List<IProgramNonOldVar> modifiableGlobals = new ArrayList<>();
-				for (final IProgramNonOldVar modifiableGlobal : proc2globals.getImage(proc)) {
-					modifiableGlobals.add(modifiableGlobal);
-				}
+				modifiableGlobals.addAll(proc2globals.getImage(proc));
 				for (final IProgramNonOldVar modifiableGlobal : modifiableGlobals) {
 					proc2globals.addPair(copyIdentifier, modifiableGlobal);
 				}
@@ -199,9 +197,8 @@ public class ProcedureMultiplier {
 							final UnmodifiableTransFormula transFormulaWithBE = TransFormulaBuilder.constructCopy(
 									managedScript, oldInternalEdge.getTransitionFormulaWithBranchEncoders(),
 									oldVar2newVar.get(copyIdentifier));
-							final IcfgInternalTransition newInternalEdge =
-									icfgEdgeFactory.createInternalTransition(source, target, payload,
-											transFormula, transFormulaWithBE);
+							final IcfgInternalTransition newInternalEdge = icfgEdgeFactory.createInternalTransition(
+									source, target, payload, transFormula, transFormulaWithBE);
 							backtranslator.mapEdges(newInternalEdge, oldInternalEdge);
 							ModelUtils.copyAnnotations(oldInternalEdge, newInternalEdge);
 							source.addOutgoing(newInternalEdge);
@@ -251,6 +248,10 @@ public class ProcedureMultiplier {
 							target.addIncoming(newJoinEdge);
 							// add to join list
 							joinCurrentThreads.add(newJoinEdge);
+						} else if (outEdge instanceof IcfgCallTransition) {
+							throw new UnsupportedOperationException(String.format(
+									"%s does not support %s. Calls and returns should habe been removed by inlining. (Did the inlining fail because this program is recursive.)",
+									this.getClass().getSimpleName(), outEdge.getClass().getSimpleName()));
 						} else {
 							throw new UnsupportedOperationException(this.getClass().getSimpleName()
 									+ " does not support " + outEdge.getClass().getSimpleName());
@@ -278,8 +279,17 @@ public class ProcedureMultiplier {
 		final MultiTermResult newThreadIdArguments =
 				copyMultiTermResult(joinSmtArguments.getThreadIdArguments(), defaultVariableMapping, managedScript);
 		final List<IProgramVar> newAssignmentLhs =
-				joinSmtArguments.getAssignmentLhs().stream().map(map::get).collect(Collectors.toList());
+				joinSmtArguments.getAssignmentLhs().stream().map(x -> getNew(map, x)).collect(Collectors.toList());
 		return new JoinSmtArguments(newThreadIdArguments, newAssignmentLhs);
+	}
+
+	private static IProgramVar getNew(final Map<ILocalProgramVar, ILocalProgramVar> mapOld2New,
+			final IProgramVar variable) {
+		if (variable instanceof ILocalProgramVar) {
+			return mapOld2New.get(variable);
+		}
+		assert variable.isGlobal() : "Variable is neither local nor global";
+		return variable;
 	}
 
 	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,

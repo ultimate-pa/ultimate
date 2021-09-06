@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
@@ -46,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public final class NonInductiveAnnotationGenerator {
-	
+
 	public enum Approximation {
 		OVERAPPROXIMATION,
 		UNDERAPPROXIMATION,
@@ -70,17 +70,17 @@ public final class NonInductiveAnnotationGenerator {
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IIcfg<?> mIcfg;
-	
+
 	private final HashRelation<IcfgLocation, IPredicate> mResult = new HashRelation<>();
 	private final ArrayDeque<Pair<IcfgLocation, IPredicate>> mWorklist = new ArrayDeque<>();
 	private final Predicate<Pair<IcfgLocation, IcfgLocation>> mExitCondition;
-	
-	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA; 
+
+	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-	
+
 	private final Approximation mApproximation;
-	
-	
+
+
 
 
 	public NonInductiveAnnotationGenerator(final IUltimateServiceProvider services, final BasicPredicateFactory basicPredicateFactory,
@@ -104,7 +104,7 @@ public final class NonInductiveAnnotationGenerator {
 		default:
 			break;
 		}
-		
+
 		while (!mWorklist.isEmpty()) {
 			final Pair<IcfgLocation, IPredicate> annot = mWorklist.removeFirst();
 			switch (mApproximation) {
@@ -117,7 +117,7 @@ public final class NonInductiveAnnotationGenerator {
 			default:
 				break;
 			}
-			
+
 		}
 	}
 
@@ -127,17 +127,17 @@ public final class NonInductiveAnnotationGenerator {
 			addNewTerm(init, term);
 		}
 	}
-	
+
 	private void initializeWorklistForOverapproximation() {
 		for (final IcfgLocation init : IcfgUtils.getErrorLocations(mIcfg)) {
 			final Term term = mManagedScript.getScript().term("false");
 			addNewTerm(init, term);
 		}
 	}
-	
+
 	/**
 	 * Construct {@link Predicate} that can be used to stop iteration such
-	 * that we obtain only one annotation per location. 
+	 * that we obtain only one annotation per location.
 	 */
 	private Predicate<Pair<IcfgLocation, IcfgLocation>> constructExitCondition_OnlyOne() {
 		return new Predicate<Pair<IcfgLocation,IcfgLocation>>() {
@@ -148,15 +148,15 @@ public final class NonInductiveAnnotationGenerator {
 			}
 		};
 	}
-	
+
 	private void addNewTerm(final IcfgLocation loc, final Term term) {
 		final IPredicate p = mPredicateFactory.newPredicate(term);
 		mResult.addPair(loc, p);
 		mWorklist.add(new Pair<>(loc, p));
 	}
-	
-	
-	private void processAnnotationForUnderapproximation(final IcfgLocation loc, final IPredicate p, 
+
+
+	private void processAnnotationForUnderapproximation(final IcfgLocation loc, final IPredicate p,
 			final Predicate<Pair<IcfgLocation,IcfgLocation>> exitCondition) {
 		for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 			final IcfgLocation succ = edge.getTarget();
@@ -166,9 +166,7 @@ public final class NonInductiveAnnotationGenerator {
 				if (edge.getLabel() instanceof IInternalAction) {
 					final IInternalAction action = (IInternalAction) edge.getLabel();
 					final Term succTerm = mPredicateTransformer.strongestPostcondition(p, action.getTransformula());
-					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
-							mManagedScript, succTerm, mSimplificationTechnique, 
-							mXnfConversionTechnique);
+					final Term lessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, mSimplificationTechnique, succTerm);
 					addNewTerm(edge.getTarget(), lessQuantifiers);
 				} else {
 					throw new UnsupportedOperationException("interprocedural programs not yet supported");
@@ -176,8 +174,8 @@ public final class NonInductiveAnnotationGenerator {
 			}
 		}
 	}
-	
-	private void processAnnotationForOverapproximation(final IcfgLocation loc, final IPredicate p, 
+
+	private void processAnnotationForOverapproximation(final IcfgLocation loc, final IPredicate p,
 			final Predicate<Pair<IcfgLocation,IcfgLocation>> exitCondition) {
 		for (final IcfgEdge edge : loc.getIncomingEdges()) {
 			final IcfgLocation pred = edge.getSource();
@@ -187,9 +185,7 @@ public final class NonInductiveAnnotationGenerator {
 				if (edge.getLabel() instanceof IInternalAction) {
 					final IInternalAction action = (IInternalAction) edge.getLabel();
 					final Term succTerm = mPredicateTransformer.weakestPrecondition(p, action.getTransformula());
-					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
-							mManagedScript, succTerm, mSimplificationTechnique, 
-							mXnfConversionTechnique);
+					final Term lessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, mSimplificationTechnique, succTerm);
 					addNewTerm(edge.getSource(), lessQuantifiers);
 				} else {
 					throw new UnsupportedOperationException("interprocedural programs not yet supported");
@@ -197,14 +193,14 @@ public final class NonInductiveAnnotationGenerator {
 			}
 		}
 	}
-	
-	
-	
+
+
+
 	public HashRelation<IcfgLocation, IPredicate> getResult() {
 		return mResult;
 	}
 
-	
 
-	
+
+
 }

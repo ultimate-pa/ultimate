@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AcceleratedInterpolationLoopAccelerationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
 /**
@@ -75,6 +76,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final String mPathOfDumpedScript;
 	private final Logics mLogicForExternalSolver;
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
+	private final AcceleratedInterpolationLoopAccelerationTechnique mLoopAccelerationTechnique;
 
 	// fields that can be read from the IUltimateServiceProvider
 	private final AssertCodeBlockOrder mAssertCodeBlockOrder;
@@ -87,7 +89,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final boolean mComputeCounterexample;
 	private final boolean mCollectInterpolantStatistics;
-	private final IUltimateServiceProvider mServices;
 	private final boolean mUsePredicateTrieBasedPredicateUnifier;
 	private final String mFeatureVectorDumpPath;
 	private final boolean mDumpFeatureVectors;
@@ -120,7 +121,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer) {
-		mServices = services;
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -142,6 +142,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mCollectInterpolantStatistics = taPrefs.collectInterpolantStatistics();
 		mDumpFeatureVectors = taPrefs.useSMTFeatureExtraction();
 		mFeatureVectorDumpPath = taPrefs.getSMTFeatureExtractionDumpPath();
+		mLoopAccelerationTechnique = taPrefs.getLoopAccelerationTechnique();
 
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAssertCodeBlockOrder = new TaAssertCodeBlockOrder(ultimatePrefs);
@@ -255,6 +256,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mUnsatCores;
 	}
 
+	public AcceleratedInterpolationLoopAccelerationTechnique getLoopAccelerationTechnique() {
+		return mLoopAccelerationTechnique;
+	}
+
 	@Override
 	public boolean getUseLiveVariables() {
 		return mUseLiveVariables;
@@ -296,11 +301,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public boolean collectInterpolantStatistics() {
 		return mCollectInterpolantStatistics;
-	}
-
-	@Override
-	public IUltimateServiceProvider getUltimateServices() {
-		return mServices;
 	}
 
 	public boolean usePredicateTrieBasedPredicateUnifier() {

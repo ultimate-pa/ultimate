@@ -27,6 +27,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -70,8 +71,8 @@ public class ProofTracker implements IProofTracker{
 
 	@Override
 	public Term flatten(final Term orig, final Set<Term> flattenedOrs) {
-		final ArrayList<Term> flat = new ArrayList<Term>();
-		final ArrayDeque<Term> todoStack = new ArrayDeque<Term>();
+		final ArrayList<Term> flat = new ArrayList<>();
+		final ArrayDeque<Term> todoStack = new ArrayDeque<>();
 		final Term origTerm = getProvedTerm(orig);
 		todoStack.addFirst(origTerm);
 		while (!todoStack.isEmpty()) {
@@ -151,7 +152,7 @@ public class ProofTracker implements IProofTracker{
 
 	@Override
 	public Term congruence(final Term a, final Term[] b) {
-		final List<Term> congProofs = new ArrayList<Term>();
+		final List<Term> congProofs = new ArrayList<>();
 		congProofs.add(getProof(a));
 		final Term[] params = new Term[b.length];
 		for (int i = 0; i< b.length; i++) {
@@ -175,7 +176,7 @@ public class ProofTracker implements IProofTracker{
 	@Override
 	public Term orMonotony(final Term a, final Term[] b) {
 		assert b.length > 1;
-		final List<Term> impProofs = new ArrayList<Term>();
+		final List<Term> impProofs = new ArrayList<>();
 		impProofs.add(getProof(a));
 		final Term[] params = new Term[b.length];
 		for (int i = 0; i < b.length; i++) {
@@ -274,7 +275,33 @@ public class ProofTracker implements IProofTracker{
 	}
 
 	@Override
-	public Term allIntro(Term formula, TermVariable[] vars) {
+	public Term match(final MatchTerm oldMatch, final Term newData, final Term[] newCases) {
+		final Theory theory = oldMatch.getTheory();
+		final Term[] subProofs = new Term[newCases.length + 1];
+		final Term[] newCaseTerms = new Term[newCases.length];
+		subProofs[0] = getProof(newData);
+		boolean isReflexivity = isReflexivity(subProofs[0]);
+		for (int i = 0; i < newCases.length; i++) {
+			final Annotation[] annot = new Annotation[] {
+					new Annotation(":vars", oldMatch.getVariables()[i]),
+					new Annotation(":constructor", oldMatch.getConstructors()[i])
+			};
+			final Term caseProof = getProof(newCases[i]);
+			subProofs[i + 1] = theory.annotatedTerm(annot, caseProof);
+			isReflexivity &= isReflexivity(caseProof);
+			newCaseTerms[i] = getProvedTerm(newCases[i]);
+		}
+		final Term formula = theory.match(getProvedTerm(newData), oldMatch.getVariables(), newCaseTerms,
+				oldMatch.getConstructors());
+		if (isReflexivity) {
+			return reflexivity(formula);
+		}
+		final Term proof = theory.term(ProofConstants.FN_MATCH, subProofs);
+		return buildProof(proof, formula);
+	}
+
+	@Override
+	public Term allIntro(final Term formula, final TermVariable[] vars) {
 		final Theory theory = formula.getTheory();
 		final Term subProof = getProof(formula);
 		final Term body = getProvedTerm(formula);

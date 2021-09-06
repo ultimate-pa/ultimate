@@ -1,3 +1,4 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1,req2; inconsistent:; results: 3
 Input A is bool
 Input B is bool
 
@@ -5,4 +6,4 @@ req1: Globally, it is always the case that if "A" holds, then "!B" holds for at 
 req2: Globally, it is always the case that if "A" holds, then "B" holds as well.
 
 
-// Both should be vacuous
+// Reqs silently enforce that !A always holds. For req1, this is detected as vacuity, but req2 cannot be vacuous  because invariants cannot be vacuous 

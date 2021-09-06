@@ -11,12 +11,12 @@ procedure main() {
 	x := 0;
 	y := 0;
 	
-	while (x < 5000) {
+	while (x < 50) {
 		x := x + 1;
-		while (y < 10000) {
+		while (y < 100) {
 			y := y + 1;
 		}
 	}
-	assert x == 5000;
-	assert y == 10000;
+	assert x == 50;
+	assert y == 100;
 }

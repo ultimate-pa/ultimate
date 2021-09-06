@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Event of a {@link BranchingProcess}.
@@ -152,7 +153,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Event(final BranchingProcess<LETTER, PLACE> bp) {
 		mTransition = null;
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>(),0);
-		mMark = new Marking<LETTER, PLACE>(bp.getNet().getInitialPlaces());
+		mMark = new Marking<>(ImmutableSet.of(bp.getNet().getInitialPlaces()));
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();

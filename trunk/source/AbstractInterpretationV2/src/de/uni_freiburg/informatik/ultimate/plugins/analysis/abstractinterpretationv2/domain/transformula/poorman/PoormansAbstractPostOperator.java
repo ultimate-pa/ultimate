@@ -49,15 +49,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -129,9 +129,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final BasicPredicateFactory pf = new BasicPredicateFactory(mServices, mManagedScript, mIcfgSymbolTable);
 		final IPredicate predFromState = pf.newPredicate(stateAsTerm);
 		final Term spTerm = predicateTransformer.strongestPostcondition(predFromState, transition.getTransformula());
-		final Term spNoQuantTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
-				spTerm, SimplificationTechnique.SIMPLIFY_QUICK,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term spNoQuantTerm = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, SimplificationTechnique.SIMPLIFY_QUICK, spTerm);
 		if (DEBUG_QUANTIFIERS) {
 			final TermClassifier tc = new TermClassifier();
 			tc.checkTerm(spNoQuantTerm);

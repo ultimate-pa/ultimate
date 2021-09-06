@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -58,9 +58,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * Hoare annotation for invariants computed by single CEGAR loop
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public class HoareAnnotationComposer {
 
@@ -147,7 +147,7 @@ public class HoareAnnotationComposer {
 			conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
 					conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript().getScript());
 			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
-					mCsToolkit.getManagedScript(), conjunction, null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+					mCsToolkit.getManagedScript(), conjunction, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			mHoareAnnotationStatisticsGenerator.reportSimplificationInter();
 			mHoareAnnotationStatisticsGenerator.reportReductionInter(simplificationResult.getReductionOfTreeSize());
 			mHoareAnnotationStatisticsGenerator
@@ -180,7 +180,7 @@ public class HoareAnnotationComposer {
 	private Term or(final Set<Term> terms) {
 		final Term disjunction = SmtUtils.or(mCsToolkit.getManagedScript().getScript(), terms);
 		final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
-				mCsToolkit.getManagedScript(), disjunction, null, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
+				mCsToolkit.getManagedScript(), disjunction, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
 		mHoareAnnotationStatisticsGenerator.reportSimplification();
 		mHoareAnnotationStatisticsGenerator.reportReduction(simplificationResult.getReductionOfTreeSize());
 		mHoareAnnotationStatisticsGenerator.reportSimplificationTime(simplificationResult.getSimplificationTimeNano());
@@ -190,7 +190,7 @@ public class HoareAnnotationComposer {
 	/**
 	 * Construct mapping for our three cases: - invariants for empty callpred - invariants for dead callpred -
 	 * invariants for live callpred
-	 * 
+	 *
 	 */
 	public HashRelation3<IcfgLocation, IPredicate, Term> constructLoc2CallPred2DisjunctsMapping() {
 		final HashRelation3<IcfgLocation, IPredicate, Term> loc2callpred2invariant = new HashRelation3<>();
@@ -215,7 +215,7 @@ public class HoareAnnotationComposer {
 	/**
 	 * Construct mapping for our three cases: - invariants for empty callpred - invariants for dead callpred -
 	 * invariants for live callpred
-	 * 
+	 *
 	 */
 	public HashRelation3<IcfgLocation, IPredicate, Term> constructMappingOld() {
 		final HashRelation3<IcfgLocation, IPredicate, Term> loc2callpred2invariant = new HashRelation3<>();

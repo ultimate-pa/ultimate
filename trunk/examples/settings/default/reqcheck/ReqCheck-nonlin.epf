@@ -3,6 +3,7 @@ file_export_version=3.0
 
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
 /instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=Library-ModelCheckerUtils\=WARN;
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ class=de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher\=ERROR;
 @de.uni_freiburg.informatik.ultimate.core=0.1.24
 
 

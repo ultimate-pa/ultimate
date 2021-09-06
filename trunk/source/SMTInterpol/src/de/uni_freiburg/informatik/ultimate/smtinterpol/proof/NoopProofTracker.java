@@ -23,6 +23,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -81,7 +82,7 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term orMonotony(Term a, Term[] b) {
+	public Term orMonotony(final Term a, final Term[] b) {
 		assert a instanceof ApplicationTerm && ((ApplicationTerm) a).getFunction().getName() == "or";
 		assert b.length > 1;
 		final Theory theory = a.getSort().getTheory();
@@ -123,6 +124,13 @@ public class NoopProofTracker implements IProofTracker {
 		final Theory theory = quant.getTheory();
 		return theory.exists(quant.getVariables(), newBody);
 	}
+
+	@Override
+	public Term match(final MatchTerm oldMatch, final Term newData, final Term[] newCases) {
+		final Theory theory = oldMatch.getTheory();
+		return theory.match(newData, oldMatch.getVariables(), newCases, oldMatch.getConstructors());
+	}
+
 	@Override
 	public Term forall(final QuantifiedFormula quant, final Term negNewBody) {
 		final Theory theory = quant.getTheory();
@@ -130,7 +138,7 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term allIntro(Term formula, TermVariable[] vars) {
+	public Term allIntro(final Term formula, final TermVariable[] vars) {
 		final Theory theory = formula.getTheory();
 		return theory.annotatedTerm(new Annotation[] { new Annotation(":quoted", null) },
 				theory.forall(vars, formula));

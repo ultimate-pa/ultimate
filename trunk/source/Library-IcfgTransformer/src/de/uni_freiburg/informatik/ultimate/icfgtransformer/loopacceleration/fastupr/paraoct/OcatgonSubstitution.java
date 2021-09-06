@@ -27,22 +27,23 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 class OctagonSubstitution {
 	private final TermVariable mVar;
-	private final HashSet<OctagonSubstitutionTerm> mGreaterEqThan;
-	private final HashSet<OctagonSubstitutionTerm> mLesserEqThan;
+	private final Set<OctagonSubstitutionTerm> mGreaterEqThan;
+	private final Set<OctagonSubstitutionTerm> mLesserEqThan;
 
-	protected OctagonSubstitution(TermVariable var) {
+	protected OctagonSubstitution(final TermVariable var) {
 		mVar = var;
-		mGreaterEqThan = new HashSet<>();
-		mLesserEqThan = new HashSet<>();
+		mGreaterEqThan = new LinkedHashSet<>();
+		mLesserEqThan = new LinkedHashSet<>();
 	}
 
-	void addSubstitution(OctTerm term) {
+	void addSubstitution(final OctTerm term) {
 		if (term.getFirstVar().equals(mVar)) {
 			addSubstitution(term, true);
 		} else if (term.getSecondVar().equals(mVar)) {
@@ -50,7 +51,7 @@ class OctagonSubstitution {
 		}
 	}
 
-	void addSubstitution(OctTerm term, boolean first) {
+	void addSubstitution(final OctTerm term, final boolean first) {
 
 		OctagonSubstitutionTerm subTerm;
 		boolean greater = false;
@@ -74,7 +75,7 @@ class OctagonSubstitution {
 		addSubstitution(subTerm, greater);
 	}
 
-	void addSubstitution(OctagonSubstitutionTerm term, boolean greater) {
+	void addSubstitution(final OctagonSubstitutionTerm term, final boolean greater) {
 		if (greater) {
 			mGreaterEqThan.add(term);
 		} else {
@@ -82,11 +83,11 @@ class OctagonSubstitution {
 		}
 	}
 
-	HashSet<OctagonSubstitutionTerm> getGreaterSubsitutions() {
+	Set<OctagonSubstitutionTerm> getGreaterSubsitutions() {
 		return mGreaterEqThan;
 	}
 
-	HashSet<OctagonSubstitutionTerm> getLesserSubsitutions() {
+	Set<OctagonSubstitutionTerm> getLesserSubsitutions() {
 		return mLesserEqThan;
 	}
 

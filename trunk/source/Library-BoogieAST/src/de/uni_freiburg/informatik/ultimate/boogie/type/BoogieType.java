@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
@@ -126,7 +127,7 @@ public abstract class BoogieType implements IBoogieType {
 				if (i == params.length) {
 					return c;
 				}
-				if (params[i] != c.getParameter(i)) {
+				if (!params[i].equals(c.getParameter(i))) {
 					break;
 				}
 			}
@@ -173,14 +174,14 @@ public abstract class BoogieType implements IBoogieType {
 			}
 			final BoogieArrayType arrType = (BoogieArrayType) t;
 			if (arrType.getNumPlaceholders() != numPlaceholders || arrType.getIndexCount() != indexTypes.length
-					|| arrType.getValueType() != valueType) {
+					|| !arrType.getValueType().equals(valueType)) {
 				continue;
 			}
 			for (int i = 0; true; i++) {
 				if (i == indexTypes.length) {
 					return arrType;
 				}
-				if (indexTypes[i] != arrType.getIndexType(i)) {
+				if (!indexTypes[i].equals(arrType.getIndexType(i))) {
 					break;
 				}
 			}
@@ -218,7 +219,7 @@ public abstract class BoogieType implements IBoogieType {
 				break;
 			}
 			for (int i = 0; i < fNames.length; i++) {
-				if (fTypes[i] != strType.getFieldType(fNames[i])) {
+				if (!fTypes[i].equals(strType.getFieldType(fNames[i]))) {
 					break outer;
 				}
 			}
@@ -275,8 +276,17 @@ public abstract class BoogieType implements IBoogieType {
 	 * Returns true if this type is a synonym of the give object o. This can only be the case if o is a BoogieType.
 	 */
 	@Override
-	public boolean equals(final Object o) {
+	public final boolean equals(final Object o) {
 		return o instanceof BoogieType && getUnderlyingType() == ((BoogieType) o).getUnderlyingType();
+	}
+
+	@Override
+	public final int hashCode() {
+		final BoogieType underlying = getUnderlyingType();
+		if (underlying == this) {
+			return super.hashCode();
+		}
+		return Objects.hashCode(underlying);
 	}
 
 	/**

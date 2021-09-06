@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -84,13 +85,35 @@ public final class BitvectorUtils {
 						assert (symb.getName().startsWith("bv"));
 						final String valueString = symb.getName().substring(2);
 						final BigInteger value = new BigInteger(valueString);
-						final String index = term.getSort().getIndices()[0];
-						return new BitvectorConstant(value, index);
+						return constructBitvectorConstant(value, term.getSort());
 					}
+				}
+			}
+		} else if (term instanceof ConstantTerm) {
+			if (SmtSortUtils.isBitvecSort(term.getSort())) {
+				final ConstantTerm constTerm = (ConstantTerm) term;
+				if (constTerm.getValue() instanceof String) {
+					final String bitString = (String) constTerm.getValue();
+					final BigInteger value;
+					if (bitString.startsWith("#b")) {
+						value = new BigInteger(bitString.substring(2), 2);
+					} else if (bitString.startsWith("#x")) {
+						value = new BigInteger(bitString.substring(2), 16);
+					} else {
+						throw new AssertionError("Unexpected constant value");
+					}
+					return constructBitvectorConstant(value, term.getSort());
+				} else {
+					throw new UnsupportedOperationException("Unexpected value of bitvector constant");
 				}
 			}
 		}
 		return null;
+	}
+
+	public static BitvectorConstant constructBitvectorConstant(final BigInteger value, final Sort sort) {
+		final String index = sort.getIndices()[0];
+		return new BitvectorConstant(value, index);
 	}
 
 	/**
@@ -156,6 +179,10 @@ public final class BitvectorUtils {
 			break;
 		case bvsrem:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsrem(x, y))
+					.simplifiedResult(script, funcname, indices, params);
+			break;
+		case bvsmod:
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsmod(x, y))
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvmul:

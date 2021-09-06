@@ -81,7 +81,7 @@ public interface ILoggingService {
 	void setLogLevel(String id, LogLevel level);
 
 	/**
-	 * Gets the correct logger for an asking external tool This method should be called by all external tools that want
+	 * Gets the correct logger for an asking external tool. This method should be called by all external tools that want
 	 * to access their {@link ILogger}. Appenders are set as defaults and log levels are set using the preferences <br/>
 	 *
 	 * Not to be used for plug-ins.
@@ -91,6 +91,13 @@ public interface ILoggingService {
 	 * @return an initialized {@link ILogger} instance that can be used by an external tool.
 	 */
 	ILogger getLoggerForExternalTool(String id);
+
+	/**
+	 * Convenience method for {@link #getLoggerForExternalTool(String)}.
+	 */
+	default ILogger getLoggerForExternalTool(final Class<?> clazz) {
+		return getLoggerForExternalTool(clazz.getName());
+	}
 
 	/**
 	 * Gets the correct logger for the controller plug-in. This method should be called by all controller plug-ins that

@@ -163,9 +163,9 @@ public class StandardFunctionHandler {
 
 	private final ITypeHandler mTypeHandler;
 
-	private int mPthreadCreateCounter = 0;
-
 	private final CExpressionTranslator mCEpressionTranslator;
+
+	private final ThreadIdManager mThreadIdManager;
 
 	private final ILogger mLogger;
 
@@ -197,6 +197,8 @@ public class StandardFunctionHandler {
 		mCEpressionTranslator = cEpressionTranslator;
 		mFunctionModels = getFunctionModels();
 		mOverwrittenFunctionNames = getOverwrittenFunctionNames(settings);
+		mThreadIdManager = new ThreadIdManager(mAuxVarInfoBuilder, mExprResultTransformer, mExpressionTranslation,
+				mMemoryHandler, mTypeHandler, mTypeSizes, null /* TODO */, symboltable);
 	}
 
 	/**
@@ -991,20 +993,11 @@ public class StandardFunctionHandler {
 	 */
 	private Result handlePthread_create(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
-		final ExpressionResult argThreadIdPointer;
-		{
-			final ExpressionResult tmp =
-					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-			// TODO 2018-10-25 Matthias: conversion not correct
-			// we do not have a void pointer but a pthread_t pointer
-			// but this incorrectness will currently not have a
-			// negative effect
-			argThreadIdPointer = mExprResultTransformer.performImplicitConversion(tmp,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
-		}
+
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
 		final ExpressionResult argThreadAttributes =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
 		final ExpressionResult argStartRoutine =
@@ -1016,59 +1009,9 @@ public class StandardFunctionHandler {
 			startRoutineArguments = mExprResultTransformer.performImplicitConversion(tmp,
 					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
 		}
-		// We hope that the function is not given by a function pointer that is stored
-		// in a variable but directly by the function name
-		final String rawProcName;
-		if (arguments[2] instanceof CASTIdExpression) {
-			final CASTIdExpression castIdExpr = (CASTIdExpression) arguments[2];
-			rawProcName = castIdExpr.getName().toString();
-		} else if (arguments[2] instanceof CASTUnaryExpression) {
-			final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) arguments[2];
-			if (castUnaryExpr.getOperator() == IASTUnaryExpression.op_amper) {
-				// function foo is probably given as a function pointer of the form & foo
-				if (castUnaryExpr.getOperand() instanceof CASTIdExpression) {
-					final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
-					rawProcName = castIdExpr.getName().toString();
-				} else {
-					throw new UnsupportedOperationException("Third argument of pthread_create is: "
-							+ castUnaryExpr.getOperand().getClass().getSimpleName());
-				}
-			} else {
-				throw new UnsupportedOperationException(
-						"Third argument of pthread_create is: " + arguments[2].getClass().getSimpleName());
-			}
-		} else {
-			throw new UnsupportedOperationException(
-					"Third argument of pthread_create is " + arguments[2].getClass().getSimpleName());
-		}
+		builder.addAllExceptLrValue(argThreadAttributes, argStartRoutine, startRoutineArguments);
 
-		final String multiParseProcedureName =
-				mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
-		if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
-			throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
-					+ " Ultimate does not support pthread_create in combination with function pointers");
-		}
-
-		final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
-		final String prefix = idExpr.getIdentifier().substring(0, 9);
-		if (!prefix.equals("#funAddr~")) {
-			throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
-		}
-		final String methodName = idExpr.getIdentifier().substring(9);
-
-		final HeapLValue heapLValue;
-		if (argThreadIdPointer.getLrValue() instanceof HeapLValue) {
-			heapLValue = (HeapLValue) argThreadIdPointer.getLrValue();
-		} else {
-			heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler, argThreadIdPointer.getLrValue().getValue(),
-					argThreadIdPointer.getLrValue().getCType(), false, null);
-		}
-
-		final Expression threadId = mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.ULONG),
-				BigInteger.valueOf(mPthreadCreateCounter++));
-		final List<Statement> writeCall =
-				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, new CPrimitive(CPrimitives.ULONG), false, node);
-
+		final String methodName = getForkedProcedure(node, arguments[2], argStartRoutine);
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
 		final Expression[] forkArguments;
@@ -1079,12 +1022,11 @@ public class StandardFunctionHandler {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "pthread_create calls function with more than one argument");
 		}
-		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId }, methodName, forkArguments);
-		mProcedureManager.registerForkStatement(fs);
 
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(argThreadIdPointer, argThreadAttributes, argStartRoutine, startRoutineArguments);
-		builder.addStatements(writeCall);
+		final Expression[] threadId = mThreadIdManager.updateForkedThreadId(arguments[0], main, loc, node, builder);
+		final ForkStatement fs = new ForkStatement(loc, threadId, methodName, forkArguments);
+		mProcedureManager.registerForkStatement(fs);
+		builder.addStatement(fs);
 
 		final boolean letPthreadCreateAlwaysReturnZero = false;
 		final CPrimitive returnValueCType = new CPrimitive(CPrimitive.CPrimitives.INT);
@@ -1102,8 +1044,54 @@ public class StandardFunctionHandler {
 		final LRValue val = new RValue(returnValue, returnValueCType);
 
 		builder.setLrValue(val);
-		builder.addStatement(fs);
 		return builder.build();
+	}
+
+	private String getForkedProcedure(final IASTFunctionCallExpression node, final IASTInitializerClause argument,
+			final ExpressionResult argStartRoutine) {
+		final String methodName;
+		{
+			// We hope that the function is not given by a function pointer that is stored
+			// in a variable but directly by the function name
+			final String rawProcName;
+			if (argument instanceof CASTIdExpression) {
+				final CASTIdExpression castIdExpr = (CASTIdExpression) argument;
+				rawProcName = castIdExpr.getName().toString();
+			} else if (argument instanceof CASTUnaryExpression) {
+				final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
+				if (castUnaryExpr.getOperator() == IASTUnaryExpression.op_amper) {
+					// function foo is probably given as a function pointer of the form & foo
+					if (castUnaryExpr.getOperand() instanceof CASTIdExpression) {
+						final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
+						rawProcName = castIdExpr.getName().toString();
+					} else {
+						throw new UnsupportedOperationException("Third argument of pthread_create is: "
+								+ castUnaryExpr.getOperand().getClass().getSimpleName());
+					}
+				} else {
+					throw new UnsupportedOperationException(
+							"Third argument of pthread_create is: " + argument.getClass().getSimpleName());
+				}
+			} else {
+				throw new UnsupportedOperationException(
+						"Third argument of pthread_create is " + argument.getClass().getSimpleName());
+			}
+
+			final String multiParseProcedureName =
+					mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
+			if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
+				throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
+						+ " Ultimate does not support pthread_create in combination with function pointers");
+			}
+
+			final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
+			final String prefix = idExpr.getIdentifier().substring(0, 9);
+			if (!prefix.equals("#funAddr~")) {
+				throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
+			}
+			methodName = idExpr.getIdentifier().substring(9);
+		}
+		return methodName;
 	}
 
 	// We assume success and return 0 without any additional checks.
@@ -1125,30 +1113,25 @@ public class StandardFunctionHandler {
 		// get arguments
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
-		final ExpressionResult argThreadId;
-		{
-			final ExpressionResult tmp =
-					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-			// TODO 2018-10-26 Matthias: we presume that pthread_t is unsigned long
-			argThreadId = mExprResultTransformer.performImplicitConversion(tmp, new CPrimitive(CPrimitives.ULONG), loc);
-		}
-		final ExpressionResult argAddressOfResultPointer;
-		{
-			// final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main,
-			// loc,
-			// arguments[1]);
-			final ExpressionResult tmp = (ExpressionResult) main.dispatch(arguments[1]);
-			argAddressOfResultPointer = mExprResultTransformer.performImplicitConversion(tmp,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
-		}
 
 		// Object that will build our result
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(argThreadId, argAddressOfResultPointer);
+		final Expression[] threadId = mThreadIdManager.getJoinedThreadId(arguments[0], main, loc, builder);
+
+		final LRValue argAddressOfResultPointerLr;
+		{
+			// final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main,
+			// loc, arguments[1]);
+			final ExpressionResult tmp = (ExpressionResult) main.dispatch(arguments[1]);
+			final ExpressionResult argAddressOfResultPointer = mExprResultTransformer.performImplicitConversion(tmp,
+					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			builder.addAllExceptLrValue(argAddressOfResultPointer);
+			argAddressOfResultPointerLr = argAddressOfResultPointer.getLrValue();
+		}
 
 		final JoinStatement js;
-		if (argAddressOfResultPointer.getLrValue().isNullPointerConstant()) {
-			js = new JoinStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() }, new VariableLHS[0]);
+		if (argAddressOfResultPointerLr.isNullPointerConstant()) {
+			js = new JoinStatement(loc, threadId, new VariableLHS[0]);
 			builder.addStatement(js);
 		} else {
 			// auxvar for joined procedure's return value
@@ -1156,15 +1139,14 @@ public class StandardFunctionHandler {
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 			builder.addDeclaration(auxvarinfo.getVarDec());
 			builder.addAuxVar(auxvarinfo);
-			js = new JoinStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
-					new VariableLHS[] { auxvarinfo.getLhs() });
+			js = new JoinStatement(loc, threadId, new VariableLHS[] { auxvarinfo.getLhs() });
 			builder.addStatement(js);
 			final HeapLValue heapLValue;
-			if (argAddressOfResultPointer.getLrValue() instanceof HeapLValue) {
-				heapLValue = (HeapLValue) argAddressOfResultPointer.getLrValue();
+			if (argAddressOfResultPointerLr instanceof HeapLValue) {
+				heapLValue = (HeapLValue) argAddressOfResultPointerLr;
 			} else {
-				heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler,
-						argAddressOfResultPointer.getLrValue().getValue(), cType, false, null);
+				heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler, argAddressOfResultPointerLr.getValue(),
+						cType, false, null);
 			}
 			final List<Statement> wc =
 					mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false, node);
@@ -1511,6 +1493,8 @@ public class StandardFunctionHandler {
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		erb.addDeclaration(auxvar.getVarDec());
+		erb.addAuxVar(auxvar);
+
 		final MemoryArea memArea;
 		if (methodName.equals("malloc")) {
 			memArea = MemoryArea.HEAP;

@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,17 +33,16 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -66,15 +63,9 @@ public class NestedStoreSequenceTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		try {
-			mScript =
-					new Scriptor("z3 SMTLIB2_COMPLIANT=true -t:5000 -memory:2024 -smt2 -in", mLogger, mServices, "z3");
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
-		// script = new SMTInterpol();
+		mScript =
+				UltimateMocks.createSolver("z3 SMTLIB2_COMPLIANT=true -t:5000 -memory:2024 -smt2 -in", LogLevel.DEBUG);
 		mMgdScript = new ManagedScript(mServices, mScript);
-
 		mScript.setLogic(Logics.ALL);
 	}
 
@@ -92,8 +83,10 @@ public class NestedStoreSequenceTest {
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdScript;
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 		mLogger.info(result);
 
 		final String expectedResultAsString = "(= (_ bv5 8) val)";
@@ -117,8 +110,10 @@ public class NestedStoreSequenceTest {
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdScript;
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 
 		final String expectedResultAsString =
 				"(and (=> (= idx1 idx2) (= (_ bv0 8) val)) (=> (distinct idx1 idx2) (= (_ bv5 8) val)))";
@@ -147,8 +142,10 @@ public class NestedStoreSequenceTest {
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdScript;
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 
 		final String expectedResultAsString =
 				"(and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val)))";
@@ -177,8 +174,10 @@ public class NestedStoreSequenceTest {
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdScript;
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 
 		final String expectedResultAsString =
 				"(not (and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val))))";

@@ -57,7 +57,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * Auxiliary String that we put into the smt script via an echo. This String should help to identify the difficult
 	 * constraints in a bunch of dumped smt2 files.
 	 */
-	public final static String s_SolverUnknownMessage = "Warning solver responded UNKNOWN to the check-sat above";
+	public final static String SOLVER_UNKNOWN_MESSAGE = "Warning solver responded UNKNOWN to the check-sat above";
 
 	/**
 	 * The SMT script for argument synthesis
@@ -134,7 +134,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @throws IOException
 	 */
 	public final LBool synthesize() throws SMTLIBException, TermException, IOException {
-		final LBool lBool = do_synthesis();
+		final LBool lBool = doSynthesis();
 		mSynthesisSuccessful = (lBool == LBool.SAT);
 		return lBool;
 	}
@@ -146,7 +146,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @return result of the solver while checking the constraints
 	 * @throws IOException
 	 */
-	protected abstract LBool do_synthesis() throws SMTLIBException, TermException, IOException;
+	protected abstract LBool doSynthesis() throws SMTLIBException, TermException, IOException;
 
 	/**
 	 * Define a new constant
@@ -180,6 +180,5 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		// Always call close() as exported by the Closable interface!
 		// This is just a fallback to make sure close() has been called.
 		close();
-		super.finalize();
 	}
 }

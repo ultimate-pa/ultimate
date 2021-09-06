@@ -43,7 +43,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_TRANSFOMER_MODE = "PEA Transformation Mode";
 	public static final PEATransformerMode TRANSFOMER_MODE = PEATransformerMode.REQ_CHECK;
-	private static final String DESC_TRANSFOMER_MODE = "Switches between checking requirements and generating tests for requirements.";
+	private static final String DESC_TRANSFOMER_MODE =
+			"Switches between checking requirements and generating tests for requirements.";
 
 	public static final String LABEL_CHECK_VACUITY = "Check vacuity";
 	private static final boolean DEF_CHECK_VACUITY = true;
@@ -56,6 +57,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_RT_INCONSISTENCY = "Check rt-inconsistency";
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
+
+	public static final String LABEL_USE_EPSILON = "Use ε transformation during rt-inconsistency check";
+	private static final boolean DEF_USE_EPSILON = true;
+	private static final String DESC_USE_EPSILON = null;
 
 	public static final String LABEL_RT_INCONSISTENCY_RANGE = "Rt-inconsistency range";
 	private static final int DEF_RT_INCONSISTENCY_RANGE = 2;
@@ -76,23 +81,24 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 					+ " are treated as separate requirements. If enabled, each rt-inconsistency check is of the form "
 					+ "Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated separately.";
 
-	public static final String LABEL_GUESS_IN_OUT = "Use heuristic to find input/output definitions (if none are given)";
+	public static final String LABEL_GUESS_IN_OUT =
+			"Use heuristic to find input/output definitions (if none are given)";
 	private static final boolean DEF_GUESS_IN_OUT = true;
-	private static final String DESC_GUESS_IN_OUT= "If there is no explicit definition of inputs, outputs and internal"
+	private static final String DESC_GUESS_IN_OUT = "If there is no explicit definition of inputs, outputs and internal"
 			+ "variables in the Requirements file (i.e. only inputs), use the follwing heuristics:"
 			+ "Every variable that is never influenced by a requirement is an input"
 			+ "Every variable that is never used in the precondition of a requirement is an output"
 			+ "The rest is internal. Note: this is the most conservative assignment suited for demos, but "
 			+ " usually not helpful in the wild";
 
-	public static final String LABEL_CHOOSE_INITIAL = "Choose init. Output assignment";
-	private static final boolean DEF_CHOOSE_INITIAL = false;
-	private static final String DESC_CHOOSE_INITIAL = "Allow for the test generator to initially choose an arbitrary"
+	public static final String LABEL_GUESS_INITIAL = "Guess initial output assignment";
+	private static final boolean DEF_GUESS_INITIAL = false;
+	private static final String DESC_GUESS_INITIAL = "Allow for the test generator to initially guess an arbitrary"
 			+ "value for all output variables. This shall help finding tests for systems with feedback loops i.e. that "
 			+ "require a previosu state to determine the successor state. Note: this will only work for the very first"
 			+ "step independend of length or usefulness.";
 
-	public enum PEATransformerMode{
+	public enum PEATransformerMode {
 		REQ_CHECK, REQ_TEST
 	}
 
@@ -104,25 +110,27 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 
-			new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
-					PreferenceType.Combo, PEATransformerMode.values()),
-			new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_CHECK_CONSISTENCY, DEF_CHECK_CONSISTENCY, DESC_CHECK_CONSISTENCY,
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
-					DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
-					DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
-					DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer, IUltimatePreferenceItemValidator.GEQ_TWO),
-			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
-					DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT,
-					DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT, PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_CHOOSE_INITIAL,
-					DEF_CHOOSE_INITIAL, DESC_CHOOSE_INITIAL, PreferenceType.Boolean)};
+				new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
+						PreferenceType.Combo, PEATransformerMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_CONSISTENCY, DEF_CHECK_CONSISTENCY, DESC_CHECK_CONSISTENCY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
+						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_EPSILON, DEF_USE_EPSILON, DESC_USE_EPSILON,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
+						DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
+						DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer, IUltimatePreferenceItemValidator.GEQ_TWO),
+				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
+						DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT, DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_GUESS_INITIAL, DEF_GUESS_INITIAL, DESC_GUESS_INITIAL,
+						PreferenceType.Boolean) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

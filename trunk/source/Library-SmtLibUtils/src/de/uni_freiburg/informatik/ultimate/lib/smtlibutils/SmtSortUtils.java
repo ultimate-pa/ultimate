@@ -100,6 +100,14 @@ public final class SmtSortUtils {
 		return ROUNDINGMODE_SORT.equals(sort.getRealSort().getName());
 	}
 
+	public static Sort getRoundingmodeSort(final Script script) {
+		return script.sort(ROUNDINGMODE_SORT);
+	}
+
+	public static Sort getRoundingmodeSort(final ManagedScript script) {
+		return getIntSort(script.getScript());
+	}
+
 	public static Sort getRealSort(final Script script) {
 		return script.sort(REAL_SORT);
 	}

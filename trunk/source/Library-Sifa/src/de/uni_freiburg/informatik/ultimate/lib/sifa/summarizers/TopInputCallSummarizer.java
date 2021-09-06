@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
 /**
- * Computes call summaries ignoring the actual call's input and using only true as an input.
- * Summaries computed once are cached and re-used.
+ * Computes call summaries ignoring the actual call's input and using only true as an input. Summaries computed once are
+ * cached and re-used.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -64,8 +64,14 @@ public class TopInputCallSummarizer implements ICallSummarizer {
 		mStats.start(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
 		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_APPLICATIONS);
 
-		final IPredicate result = mProcToSummary.computeIfAbsent(callee, this::computeTopSummary);
-
+		IPredicate result = mProcToSummary.get(callee);
+		if (result == null) {
+			// do not use computeIfAbsent because mDagInterpreter may compute another summary during the computation of
+			// this one
+			result = computeTopSummary(callee);
+			final IPredicate intermediateResult = mProcToSummary.put(callee, result);
+			assert intermediateResult == null || result == intermediateResult;
+		}
 		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
 		return result;
 	}
@@ -75,8 +81,8 @@ public class TopInputCallSummarizer implements ICallSummarizer {
 		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_CACHE_MISSES);
 
 		final ProcedureResources res = mProcResCache.resourcesOf(procedure);
-		final IPredicate result = mDagIpreter.interpretForSingleMarker(
-				res.getRegexDag(), res.getDagOverlayPathToReturn(), mTools.top());
+		final IPredicate result =
+				mDagIpreter.interpretForSingleMarker(res.getRegexDag(), res.getDagOverlayPathToReturn(), mTools.top());
 
 		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
 		return result;

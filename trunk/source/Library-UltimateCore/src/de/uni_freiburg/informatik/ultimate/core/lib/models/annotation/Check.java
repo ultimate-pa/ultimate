@@ -253,7 +253,7 @@ public class Check extends ModernAnnotations {
 		case CONSISTENCY:
 			return "consistent";
 		case INCOMPLETE:
-			return "incomplete";
+			return "complete";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
 		default:
@@ -341,6 +341,9 @@ public class Check extends ModernAnnotations {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
+	/**
+	 * Return the checked specification that is checked at this location or null.
+	 */
 	public static Check getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (Check) a);
 	}

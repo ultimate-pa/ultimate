@@ -26,88 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
 
-import java.util.Collection;
-
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
-public class PetriNetLargeBlockEncodingStatisticsGenerator implements IStatisticsDataProvider {
+public class PetriNetLargeBlockEncodingStatisticsGenerator extends AbstractStatisticsDataProvider {
+	public static final String LIPTON_STATISTICS = "Lipton Reduction Statistics";
+	public static final String INDEPENDENCE_STATISTICS = "Independence Relation Statistics";
 
-	private long mVarBasedMoverChecksPositive;
-	private long mVarBasedMoverChecksNegative;
-	private long mSemBasedMoverChecksPositive;
-	private long mSemBasedMoverChecksNegative;
-	private long mSemBasedMoverChecksUnknown;
-	private long mSemBasedMoverCheckTime;
-	private long mCheckedPairsTotal;
-	private final StatisticsData mLiptonStatistics = new StatisticsData();
-
-	public void reportCheckedPairsTotal(final int i) {
-		mCheckedPairsTotal += i;
+	public PetriNetLargeBlockEncodingStatisticsGenerator(final LiptonReductionStatisticsGenerator liptonStats,
+			final IStatisticsDataProvider independenceStats) {
+		forward(LIPTON_STATISTICS, () -> liptonStats);
+		forward(INDEPENDENCE_STATISTICS, () -> independenceStats);
 	}
-
-	public void extractStatistics(final SemanticIndependenceRelation<?> semanticBasedCheck) {
-		if (semanticBasedCheck != null) {
-			mSemBasedMoverChecksPositive = semanticBasedCheck.getPositiveQueries();
-			mSemBasedMoverChecksNegative = semanticBasedCheck.getNegativeQueries();
-			mSemBasedMoverChecksUnknown = semanticBasedCheck.getUnknownQueries();
-			mSemBasedMoverCheckTime = semanticBasedCheck.getComputationTimeNano();
-		}
-	}
-
-	public void extractStatistics(final SyntacticIndependenceRelation<?, ?> variableBasedCheck) {
-		mVarBasedMoverChecksPositive = variableBasedCheck.getPositiveQueries();
-		mVarBasedMoverChecksNegative = variableBasedCheck.getNegativeQueries();
-	}
-
-	public void extractStatistics(final CachedIndependenceRelation<?, ?> cachedCheck) {
-		mCheckedPairsTotal += cachedCheck.getPositiveCacheSize();
-		mCheckedPairsTotal += cachedCheck.getNegativeCacheSize();
-	}
-
-	public void addLiptonStatistics(final LiptonReductionStatisticsGenerator stat) {
-		mLiptonStatistics.aggregateBenchmarkData(stat);
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return PetriNetLargeBlockEncodingStatisticsType.getInstance();
-	}
-
-	@Override
-	public Object getValue(final String key) {
-		final PetriNetLargeBlockEncodingStatisticsDefinitions keyEnum =
-				Enum.valueOf(PetriNetLargeBlockEncodingStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case VarBasedMoverChecksPositive:
-			return mVarBasedMoverChecksPositive;
-		case VarBasedMoverChecksNegative:
-			return mVarBasedMoverChecksNegative;
-		case SemBasedMoverChecksNegative:
-			return mSemBasedMoverChecksNegative;
-		case SemBasedMoverChecksPositive:
-			return mSemBasedMoverChecksPositive;
-		case SemBasedMoverChecksUnknown:
-			return mSemBasedMoverChecksUnknown;
-		case SemBasedMoverCheckTime:
-			return mSemBasedMoverCheckTime;
-		case CheckedPairsTotal:
-			return mCheckedPairsTotal;
-		case LiptonReductionStatistics:
-			return mLiptonStatistics;
-		default:
-			throw new AssertionError("unknown data");
-		}
-	}
-
-	@Override
-	public Collection<String> getKeys() {
-		return PetriNetLargeBlockEncodingStatisticsType.getInstance().getKeys();
-	}
-
 }

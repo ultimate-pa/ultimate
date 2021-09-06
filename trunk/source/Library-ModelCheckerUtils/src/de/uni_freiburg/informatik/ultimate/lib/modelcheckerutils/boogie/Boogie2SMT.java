@@ -73,12 +73,12 @@ public class Boogie2SMT {
 
 	private final IUltimateServiceProvider mServices;
 
-	public Boogie2SMT(final ManagedScript maScript, final BoogieDeclarations boogieDeclarations,
+	public Boogie2SMT(final ManagedScript mgdScript, final BoogieDeclarations boogieDeclarations,
 			final boolean bitvectorInsteadOfInt, final IUltimateServiceProvider services,
 			final boolean simplePartialSkolemization) {
 		mServices = services;
 		mBoogieDeclarations = boogieDeclarations;
-		mScript = maScript;
+		mScript = mgdScript;
 		final Script script = mScript.getScript();
 
 		if (bitvectorInsteadOfInt) {
@@ -106,7 +106,7 @@ public class Boogie2SMT {
 		if (!(script instanceof HistoryRecordingScript)) {
 			throw new AssertionError("need HistoryRecordingScript");
 		}
-		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(), script);
+		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(), mScript);
 
 		mStatements2TransFormula =
 				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);

@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -54,11 +54,11 @@ public class PEAtoBoogieObserver extends BaseObserver {
 				prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE, PEATransformerMode.class);
 		if (mode == PEATransformerMode.REQ_CHECK) {
 			return generateReqCheckBoogie(patterns);
-		} else if (mode == PEATransformerMode.REQ_TEST) {
-			return generateReqTestBoogie(patterns);
-		} else {
-			return null;
 		}
+		if (mode == PEATransformerMode.REQ_TEST) {
+			return generateReqTestBoogie(patterns);
+		}
+		return null;
 	}
 
 	private IElement generateReqCheckBoogie(final List<PatternType<?>> patterns) {
@@ -67,7 +67,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		final VerificationResultTransformer reporter =
 				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
 		// register CEX transformer that removes program executions from CEX.
-		final Function<IResult, IResult> resultTransformer = reporter::convertTraceAbstractionResult;
+		final UnaryOperator<IResult> resultTransformer = reporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		return translator.getUnit();
 	}
@@ -80,7 +80,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		final ReqTestResultUtil mReporter =
 				new ReqTestResultUtil(mLogger, mServices, translator.getReqSymbolTable(), transformer.getEffectStore());
 		// register CEX transformer that removes program executions from CEX.
-		final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
+		final UnaryOperator<IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		return translator.getUnit();
 	}

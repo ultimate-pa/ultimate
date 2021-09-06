@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.xnf.Dnf;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * This strategy constructs invariant patterns using those program variables which are <i> live </i> at the given
@@ -35,7 +36,7 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 		if (liveVars == null) {
 			return Collections.emptySet();
 		}
-		return Collections.unmodifiableSet(liveVars);
+		return ImmutableSet.of(liveVars);
 	}
 
 	@Override

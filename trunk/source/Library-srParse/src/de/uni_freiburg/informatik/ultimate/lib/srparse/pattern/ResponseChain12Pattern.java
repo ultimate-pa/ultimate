@@ -31,6 +31,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T"
@@ -40,14 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  */
 public class ResponseChain12Pattern extends PatternType<ResponseChain12Pattern> {
 	public ResponseChain12Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public ResponseChain12Pattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new ResponseChain12Pattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -82,11 +77,6 @@ public class ResponseChain12Pattern extends PatternType<ResponseChain12Pattern> 
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\"");
 		return sb.toString();
-	}
-
-	@Override
-	public ResponseChain12Pattern rename(final String newName) {
-		return new ResponseChain12Pattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

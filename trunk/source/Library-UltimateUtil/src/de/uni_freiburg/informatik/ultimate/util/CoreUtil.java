@@ -129,17 +129,25 @@ public class CoreUtil {
 		try {
 			final InputStream prop = cl.getResourceAsStream("version.properties");
 			if (prop == null) {
-				return "?-m";
+				return "?-?-m";
 			}
 			properties.load(prop);
 		} catch (final IOException e) {
 			return null;
 		}
 
-		final String hash = properties.getProperty("git.commit.id.abbrev", "UNKNOWN");
-		final String dirty = properties.getProperty("git.dirty", "UNKNOWN");
+		final String unknown = "?";
+		final String branch = properties.getProperty("git.branch", unknown).replace('/', '.');
+		final String hash = properties.getProperty("git.commit.id.abbrev", unknown);
+		final String dirty = properties.getProperty("git.dirty", unknown);
 
-		return hash + ("UNKNOWN".equals(dirty) ? "" : "true".equals(dirty) ? "-m" : "");
+		final String format;
+		if (!"true".equals(dirty)) {
+			format = "%s-%s";
+		} else {
+			format = "%s-%s-m";
+		}
+		return String.format(format, branch, hash);
 	}
 
 	/**
@@ -458,6 +466,16 @@ public class CoreUtil {
 		return sb.toString();
 	}
 
+	/**
+	 * Add file separator if last symbol is not already file separator.
+	 */
+	public static String addFileSeparator(final String string) {
+		if (string.endsWith(System.getProperty("file.separator"))) {
+			return string;
+		}
+		return string + System.getProperty("file.separator");
+	}
+
 	public static String getCurrentDateTimeAsString() {
 		return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(Calendar.getInstance().getTime());
 	}
@@ -677,7 +695,7 @@ public class CoreUtil {
 	 * @param unit
 	 *            The unit of the amount.
 	 * @param decimal
-	 *            The decimal accurracy of the ouptut.
+	 *            The decimal accuracy of the output.
 	 * @return A String with unit symbol.
 	 */
 	public static String humanReadableTime(final long time, final TimeUnit unit, final int decimal) {
@@ -700,39 +718,40 @@ public class CoreUtil {
 	public static String humanReadableTime(final double time, final TimeUnit unit, final int decimal) {
 		final String[] units = { "ns", "µs", "ms", "s", "m", "h", "d" };
 
+		final String formatString = "%." + decimal + "f %s";
 		switch (unit) {
 		case DAYS:
-			return String.format("%." + decimal + "f %s", time, units[6]);
+			return String.format(formatString, time, units[6]);
 		case HOURS:
 			if (time > 24) {
 				return humanReadableTime(time / 24.0, TimeUnit.DAYS, decimal);
 			}
-			return String.format("%." + decimal + "f %s", time, units[5]);
+			return String.format(formatString, time, units[5]);
 		case MINUTES:
 			if (time > 60) {
 				return humanReadableTime(time / 60.0, TimeUnit.HOURS, decimal);
 			}
-			return String.format("%." + decimal + "f %s", time, units[4]);
+			return String.format(formatString, time, units[4]);
 		case SECONDS:
 			if (time > 60) {
 				return humanReadableTime(time / 60.0, TimeUnit.MINUTES, decimal);
 			}
-			return String.format("%." + decimal + "f %s", time, units[3]);
+			return String.format(formatString, time, units[3]);
 		case MILLISECONDS:
 			if (time > 1000) {
 				return humanReadableTime(time / 1000.0, TimeUnit.SECONDS, decimal);
 			}
-			return String.format("%." + decimal + "f %s", time, units[2]);
+			return String.format(formatString, time, units[2]);
 		case MICROSECONDS:
 			if (time > 1000) {
 				return humanReadableTime(time / 1000.0, TimeUnit.MILLISECONDS, decimal);
 			}
-			return String.format("%." + decimal + "f %s", time, units[1]);
+			return String.format(formatString, time, units[1]);
 		case NANOSECONDS:
 			if (time > 1000) {
 				return humanReadableTime(time / 1000.0, TimeUnit.MICROSECONDS, decimal);
 			}
-			return String.format("%." + decimal + "f %s", time, units[0]);
+			return String.format(formatString, time, units[0]);
 		default:
 			throw new UnsupportedOperationException(unit + " TimeUnit not yet implemented");
 		}
@@ -772,11 +791,8 @@ public class CoreUtil {
 			for (final File f : files) {
 				if (f.isDirectory()) {
 					deleteDirectory(f);
-				} else {
-					if (!f.delete()) {
-						f.deleteOnExit();
-					}
-
+				} else if (!f.delete()) {
+					f.deleteOnExit();
 				}
 			}
 		}

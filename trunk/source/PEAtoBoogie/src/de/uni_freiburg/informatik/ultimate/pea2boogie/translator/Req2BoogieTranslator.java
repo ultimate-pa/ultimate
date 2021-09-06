@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
@@ -94,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
  */
 public class Req2BoogieTranslator {
 
+	private static final String DOUBLE_ZERO = Double.toString(0.0);
 	private final Unit mUnit;
 	private final List<ReqPeas> mReqPeas;
 	private final BoogieLocation mUnitLocation;
@@ -123,7 +125,7 @@ public class Req2BoogieTranslator {
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 
 		// check for duplicate IDs
-		final List<Entry<String, Integer>> duplicates = requirements.stream().map(PatternType<?>::getId)
+		final List<Entry<String, Integer>> duplicates = requirements.stream().map(PatternType::getId)
 				.collect(Collectors.toMap(k -> k, v -> 1, (v1, v2) -> v1 + v2)).entrySet().stream()
 				.filter(a -> a.getValue() > 1).collect(Collectors.toList());
 		if (!duplicates.isEmpty()) {
@@ -160,14 +162,13 @@ public class Req2BoogieTranslator {
 		mReqPeas = req2pea.getReqPeas();
 		mSymboltable = req2pea.getSymboltable();
 		mReqCheckAnnotator = req2pea.getAnnotator();
-
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
 
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymboltable.getDeclarations());
 
-		decls.add(generateProcedures(init));
+		decls.add(generateProcedure(init));
 		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
 		annotateContainedPatternSet(mUnit, mReqPeas, init);
 
@@ -407,8 +408,8 @@ public class Req2BoogieTranslator {
 		return Collections.singletonList(joinIfSmts(statements.toArray(new Statement[statements.size()]), bl));
 	}
 
-	private static Statement genReset(final String resetVar, final BoogieLocation bl) {
-		final RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
+	private static Statement generateClockResetAssign(final String resetVar, final BoogieLocation bl) {
+		final RealLiteral realLiteral = new RealLiteral(bl, DOUBLE_ZERO);
 		return genAssignmentStmt(bl, resetVar, realLiteral);
 	}
 
@@ -417,61 +418,96 @@ public class Req2BoogieTranslator {
 		return genAssignmentStmt(bl, pcName, intLiteral);
 	}
 
-	private Statement[] genInnerIfBody(final PhaseEventAutomata automaton, final String pcName,
+	private Statement[] generateTransitionFromPeaTransition(final PhaseEventAutomata automaton, final String pcName,
 			final Transition transition, final BoogieLocation bl) {
 
-		final List<Statement> smtList = new ArrayList<>();
-		final CDD guardCdd = transition.getGuard();
-		if (guardCdd != CDD.TRUE) {
-			final Expression expr = new CDDTranslator().toBoogie(guardCdd, bl);
-			final AssumeStatement assumeGuard = new AssumeStatement(bl, mNormalFormTransformer.toNnf(expr));
-			smtList.add(assumeGuard);
-		}
-
-		if (transition.getResets().length != 0) {
-			final String[] resets = transition.getResets();
-			for (int i = 0; i < resets.length; i++) {
-				smtList.add(genReset(resets[i], bl));
-			}
-		}
-		final Phase desPhase = transition.getDest();
-		final Phase[] phases = automaton.getPhases();
-		int phaseIndex = -1;
-		for (int i = 0; i < phases.length; i++) {
-			if (phases[i].getName().equals(desPhase.getName())) {
-				phaseIndex = i;
-			}
-		}
-
-		smtList.add(genPCAssign(pcName, phaseIndex, bl));
-
-		return smtList.toArray(new Statement[smtList.size()]);
+		final List<Statement> stmtList = new ArrayList<>();
+		createAssumeFromTransition(transition, bl).ifPresent(stmtList::add);
+		Arrays.stream(transition.getResets()).map(a -> generateClockResetAssign(a, bl)).forEachOrdered(stmtList::add);
+		final int phaseIndex = getPhaseIndex(transition, automaton.getPhases());
+		assert phaseIndex != -1;
+		stmtList.add(genPCAssign(pcName, phaseIndex, bl));
+		return stmtList.toArray(new Statement[stmtList.size()]);
 	}
 
-	private Statement genOuterIfBody(final PhaseEventAutomata automaton, final String pcName, final Phase phase,
-			final BoogieLocation bl) {
+	/**
+	 * @return the index of the first phase that is the destination phase of the transition or -1
+	 */
+	private static int getPhaseIndex(final Transition transition, final Phase[] phases) {
+		final String desPhaseName = transition.getDest().getName();
+		for (int i = 0; i < phases.length; i++) {
+			if (phases[i].getName().equals(desPhaseName)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private Optional<Statement> createAssumeFromTransition(final Transition transition, final BoogieLocation bl) {
+		final CDD guardCdd = transition.getGuard();
+		if (guardCdd == CDD.TRUE) {
+			return Optional.empty();
+		}
+
+		final Expression guardExpr = new CDDTranslator().toBoogie(guardCdd, bl);
+		return Optional.of(new AssumeStatement(bl, mNormalFormTransformer.toNnf(guardExpr)));
+
+		// final Expression transformedGuardExpression = mEpsilonTransformer.transform(guardExpr);
+		// if (guardExpr != transformedGuardExpression) {
+		// mLogger.info("Replaced guard expression %s with %s", BoogiePrettyPrinter.print(guardExpr),
+		// BoogiePrettyPrinter.print(transformedGuardExpression));
+		// }
+		// return Optional.of(new AssumeStatement(bl, mNormalFormTransformer.toNnf(transformedGuardExpression)));
+	}
+
+	private Statement generateTransitionsFromPhase(final PhaseEventAutomata automaton, final String pcName,
+			final Phase phase, final BoogieLocation bl) {
 
 		final Statement[] statements = new Statement[phase.getTransitions().size()];
 		final Statement[] emptyArray = new Statement[0];
 		final WildcardExpression wce = new WildcardExpression(bl);
 		final List<Transition> transitions = phase.getTransitions();
 		for (int i = 0; i < transitions.size(); i++) {
-			statements[i] =
-					new IfStatement(bl, wce, genInnerIfBody(automaton, pcName, transitions.get(i), bl), emptyArray);
+			statements[i] = new IfStatement(bl, wce,
+					generateTransitionFromPeaTransition(automaton, pcName, transitions.get(i), bl), emptyArray);
 		}
 		return joinInnerIfSmts(statements, bl);
 	}
 
-	private Statement genOuterIfTransition(final PhaseEventAutomata automaton, final String pcName,
+	/**
+	 * Generate Boogie code that describes the transition relation for a PEA. The Boogie code will be of this form:
+	 *
+	 * <code>
+	 * if (1 == req1_ct0_pc) {
+	 *     if (*) {
+	 *         req1_ct0_pc := 1;
+	 *     } else if (*) {
+	 *         req1_ct0_pc := 0;
+	 *     } else {
+	 *         assume false;
+	 *     }
+	 * } else if (0 == req1_ct0_pc) {
+	 *     if (*) {
+	 *         req1_ct0_X1 := 0.0;
+	 *         req1_ct0_pc := 1;
+	 *     } else if (*) {
+	 *         req1_ct0_pc := 0;
+	 *     } else {
+	 *         assume false;
+	 *     }
+	 * }
+	 * </code>
+	 */
+	private Statement generateTransition(final PhaseEventAutomata automaton, final String pcName,
 			final BoogieLocation bl) {
 		final Phase[] phases = automaton.getPhases();
 		final Statement[] statements = new Statement[phases.length];
 		final Statement[] emptyArray = new Statement[0];
 		for (int i = 0; i < phases.length; i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
-			final Statement[] outerIfBodySmt = new Statement[] { genOuterIfBody(automaton, pcName, phases[i], bl) };
-			final IfStatement ifStatement = new IfStatement(bl, ifCon, outerIfBodySmt, emptyArray);
-			statements[i] = ifStatement;
+			final Statement[] outerIfBodySmt =
+					new Statement[] { generateTransitionsFromPhase(automaton, pcName, phases[i], bl) };
+			statements[i] = new IfStatement(bl, ifCon, outerIfBodySmt, emptyArray);
 		}
 		return joinIfSmts(statements, bl);
 	}
@@ -510,7 +546,7 @@ public class Req2BoogieTranslator {
 	 *            Location of the procedure body.
 	 * @return Statements of the while-body.
 	 */
-	private Statement[] genWhileBody(final BoogieLocation bl) {
+	private Statement[] genWhileLoopBody(final BoogieLocation bl) {
 		final List<Statement> stmtList = new ArrayList<>();
 		stmtList.addAll(genDelay(bl));
 
@@ -526,8 +562,9 @@ public class Req2BoogieTranslator {
 				mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 
 		for (final ReqPeas reqpea : mReqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
-				stmtList.add(genOuterIfTransition(pea.getValue(), mSymboltable.getPcName(pea.getValue()), bl));
+			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
+				final PhaseEventAutomata pea = ct2pea.getValue();
+				stmtList.add(generateTransition(pea, mSymboltable.getPcName(pea), bl));
 			}
 		}
 
@@ -538,15 +575,13 @@ public class Req2BoogieTranslator {
 	}
 
 	/**
-	 * Create the main loop of the pea product. This is a huge while statement that contains all transitions of all
-	 * components. This procedure calls {@link genWhileBody} to create the statements of the main loop.
+	 * Create the main loop of the pea product. This is a huge while statement that contains all transitions of all PEAs
+	 * as well as our checks. This procedure calls {@link genWhileBody} to create the statements of the main loop.
 	 *
-	 * @param bl
-	 *            Location of the procedure body.
-	 * @return The while-statement.
 	 */
-	private Statement genWhileStmt(final BoogieLocation bl) {
-		return new WhileStatement(bl, new WildcardExpression(bl), new LoopInvariantSpecification[0], genWhileBody(bl));
+	private Statement genWhileLoop(final BoogieLocation bl) {
+		return new WhileStatement(bl, new WildcardExpression(bl), new LoopInvariantSpecification[0],
+				genWhileLoopBody(bl));
 	}
 
 	private Expression genPcExpr(final PhaseEventAutomata aut) {
@@ -613,25 +648,20 @@ public class Req2BoogieTranslator {
 		return stmts;
 	}
 
-	/**
-	 * One assignment is initialized (only as an example). The genWhileSmt method is called.
-	 *
-	 * @param bl
-	 *            Location of the procedure body.
-	 * @param init
-	 * @return Statements of the procedure body which includes one assignment and one while-statement.
-	 */
-	private Statement[] generateProcedureBodyStmts(final BoogieLocation bl, final List<InitializationPattern> init) {
+	private Statement[] generateProcedureBody(final BoogieLocation bl, final List<InitializationPattern> init) {
 		final List<Statement> statements = new ArrayList<>();
 		statements.addAll(genInitialPhasesStmts(bl));
 		statements.addAll(genClockInitStmts());
-		// Assign the history vars with the initial state as if a small stutter step had occured initally.
+
+		// Assign the history vars with the initial state as if a small stutter step had occurred initially.
 		statements.addAll(
 				mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
+
 		statements.addAll(
 				mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 		statements.addAll(mReqCheckAnnotator.getPreChecks());
-		statements.add(genWhileStmt(bl));
+
+		statements.add(genWhileLoop(bl));
 		return statements.toArray(new Statement[statements.size()]);
 	}
 
@@ -656,16 +686,10 @@ public class Req2BoogieTranslator {
 		return Collections.unmodifiableList(mReqPeas);
 	}
 
-	/**
-	 * The procedure statement is initialized. It is deployed to the unit. The unit is sent to the print process. The
-	 * result is a Boogie text file.
-	 *
-	 * @param init
-	 */
-	private Declaration generateProcedures(final List<InitializationPattern> init) {
+	private Declaration generateProcedure(final List<InitializationPattern> init) {
 		final BoogieLocation bl = mUnitLocation;
 		final VariableDeclaration[] localVars = new VariableDeclaration[0];
-		final Body body = new Body(bl, localVars, generateProcedureBodyStmts(bl, init));
+		final Body body = new Body(bl, localVars, generateProcedureBody(bl, init));
 		final List<String> modifiedVarsList = new ArrayList<>();
 
 		modifiedVarsList.addAll(mSymboltable.getClockVars());

@@ -31,6 +31,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, if "R" holds, then there is at least one execution sequence such that "S" holds after at most "c1" time
@@ -42,14 +43,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 public class BndPossResponsePattern extends PatternType<BndPossResponsePattern> {
 
 	public BndPossResponsePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndPossResponsePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndPossResponsePattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -78,14 +73,9 @@ public class BndPossResponsePattern extends PatternType<BndPossResponsePattern> 
 		sb.append("\" holds, then there is at least one execution sequence such that \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds after at most \"");
-		sb.append(getDuration().get(0));
+		sb.append(getDurations().get(0));
 		sb.append("\" time units");
 		return sb.toString();
-	}
-
-	@Override
-	public BndPossResponsePattern rename(final String newName) {
-		return new BndPossResponsePattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

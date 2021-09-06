@@ -639,24 +639,11 @@ public class CHandler {
 			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(mMemoryHandler));
 		}
 
-		/**
-		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the Boogie program that have been
-		 * collected by the ExpressionTranslation
-		 */
-		final Collection<FunctionDeclaration> declaredFunctions =
-				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
-		mExpressionTranslation.getFunctionDeclarations().finish();
-		mDeclarations.addAll(declaredFunctions);
-
 		// TODO Need to get a CLocation from somewhere
-		// the overall translation result:
-		final Unit boogieUnit = new Unit(
-				mLocationFactory.createRootCLocation(
-						units.stream().map(a -> a.getSourceTranslationUnit()).collect(Collectors.toSet())),
-				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
 
 		// annotate the Unit with LTLPropertyChecks if applicable
+		final List<LTLPropertyCheck> ltlProperyChecks = new ArrayList<>();
 		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
 			final Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<>();
 
@@ -668,7 +655,26 @@ public class CHandler {
 			}
 			final LTLPropertyCheck propCheck =
 					new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
-			propCheck.annotate(boogieUnit);
+			ltlProperyChecks.add(propCheck);
+		}
+
+		/**
+		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the Boogie program that have been
+		 * collected by the ExpressionTranslation
+		 */
+		final Collection<FunctionDeclaration> declaredFunctions =
+				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
+		mExpressionTranslation.getFunctionDeclarations().finish();
+		mDeclarations.addAll(declaredFunctions);
+
+
+		// the overall translation result:
+		final Unit boogieUnit = new Unit(
+				mLocationFactory.createRootCLocation(
+						units.stream().map(a -> a.getSourceTranslationUnit()).collect(Collectors.toSet())),
+				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
+		for (final LTLPropertyCheck ltlPropertyCheck : ltlProperyChecks) {
+			ltlPropertyCheck.annotate(boogieUnit);
 		}
 
 		return new CHandlerTranslationResult(boogieUnit, mSymbolTable.getBoogieCIdentifierMapping());
@@ -2755,11 +2761,11 @@ public class CHandler {
 			addBoogieIdsOfHeapVars(bId);
 		}
 
-		final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
-				new SymbolTableValue(bId, null, cDec, dummyDeclInfo, hook, false));
+				new SymbolTableValue(bId, null, cDec, declarationInformation, hook, false));
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
@@ -2770,7 +2776,6 @@ public class CHandler {
 			translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
 		}
 
-		final DeclarationInformation declarationInformation;
 		final Declaration boogieDec;
 		final Result result;
 		if (storageClass == CStorageClass.TYPEDEF) {
@@ -2793,7 +2798,6 @@ public class CHandler {
 				mTypeHandler.registerNamedIncompleteType(identifier, cDec.getName());
 			}
 			// TODO: add a sizeof-constant for the type??
-			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
 			result = new SkipResult();
 		} else if (storageClass == CStorageClass.STATIC && !mProcedureManager.isGlobalScope()) {
@@ -2801,16 +2805,9 @@ public class CHandler {
 			// global static variables are treated like normal global variables..
 			boogieDec = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
 			result = new SkipResult();
 		} else {
-			if (mProcedureManager.isGlobalScope()) {
-				declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-			} else {
-				declarationInformation =
-						new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
-			}
 			final BoogieType boogieType =
 					mTypeHandler.getBoogieTypeForBoogieASTType(mTypeHandler.cType2AstType(loc, cDec.getType()));
 
@@ -2887,6 +2884,14 @@ public class CHandler {
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
 				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, hook, false));
 		return result;
+	}
+
+	private DeclarationInformation getDeclarationInfo(final CStorageClass storageClass) {
+		if (storageClass == CStorageClass.TYPEDEF || storageClass == CStorageClass.STATIC
+				|| mProcedureManager.isGlobalScope()) {
+			return DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		}
+		return new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
 	}
 
 	/**

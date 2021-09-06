@@ -14,29 +14,20 @@ procedure thread() returns()
 modifies value, m;
 {
   var v : int;
-  v := 0;
-  assume m == 0;
-  m := 1;
-  if (value == -1) {
-    assume m == 1;
-	m := 0;
-  } else {
-    v := value;
-	value := v + 1;
-    assume m == 1;
-	m := 0;
-	assert value > v;
-  }
+
+  atomic { assume m == 0; m := 1; }
+  v := value;
+  value := v + 1;
+  atomic { assume m == 1; m := 0; }
+  assert value > v;
 }
 
 procedure ULTIMATE.start() returns()
 modifies value, m;
 {
-  var i : int;
   m := 0;
 
   while (*) {
-    fork i thread();
-	i := i + 1;
+    fork 0 thread();
   }
 }

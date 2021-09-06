@@ -33,7 +33,6 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
@@ -42,13 +41,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
-	VerificationResult(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, StatisticsType.KEY_BEFORE_DATA),
-
 	OverallTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	OverallIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 	TraceHistogramMax(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
+
+	EmptinessCheckTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	AutomataDifference(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
@@ -57,6 +56,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	HoareAnnotationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	InitialAbstractionConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+
+	PartialOrderReductionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
@@ -68,6 +69,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	BiggestAbstraction(Integer.class, CegarStatisticsType.SIZE_ITERATION_PAIR_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
+
+	InterpolantAutomatonStates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 	traceCheckStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
@@ -134,7 +137,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 		if (results.contains(AbstractCegarLoop.Result.UNSAFE)) {
 			return AbstractCegarLoop.Result.UNSAFE;
-		} else if (results.contains(AbstractCegarLoop.Result.UNKNOWN)) {
+		}
+		if (results.contains(AbstractCegarLoop.Result.UNKNOWN)) {
 			return AbstractCegarLoop.Result.UNKNOWN;
 		} else if (results.contains(AbstractCegarLoop.Result.TIMEOUT)) {
 			return AbstractCegarLoop.Result.TIMEOUT;

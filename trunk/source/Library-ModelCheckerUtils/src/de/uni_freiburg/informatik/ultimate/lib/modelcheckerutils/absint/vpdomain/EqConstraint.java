@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CCLiteralSetConstraints;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraint;
 
@@ -66,7 +67,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * The IProgramVars whose getTermVariable()-value is used in a NODE inside this constraint; computed lazily by
 	 * getVariables.
 	 */
-	private Set<IProgramVar> mVariables;
+	private ImmutableSet<IProgramVar> mVariables;
 	/**
 	 * Same as mVariables, but with respect to IProgramVarOrConst, and getTerm, instead of IProgramVar and
 	 * getTermVariable.
@@ -220,7 +221,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 *
 	 * @return
 	 */
-	public Set<IProgramVar> getVariables(final IIcfgSymbolTable symbolTable) {
+	public ImmutableSet<IProgramVar> getVariables(final IIcfgSymbolTable symbolTable) {
 		if (mVariables != null) {
 			return mVariables;
 		}
@@ -230,7 +231,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		 * note this will probably crash if this method is called on an EqConstraint that does not belong to a predicate
 		 * or state
 		 */
-		mVariables = allTvs.stream().map(symbolTable::getProgramVar).collect(Collectors.toSet());
+		mVariables = allTvs.stream().map(symbolTable::getProgramVar).collect(ImmutableSet.collector());
 
 		assert !mVariables.stream().anyMatch(Objects::isNull);
 		return mVariables;

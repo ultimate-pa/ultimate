@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, transitions to states in which "R" holds occur at most twice
@@ -47,14 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class BndExistencePattern extends PatternType<BndExistencePattern> {
 
 	public BndExistencePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public BndExistencePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new BndExistencePattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -110,11 +105,6 @@ public class BndExistencePattern extends PatternType<BndExistencePattern> {
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds occur at most twice");
 		return sb.toString();
-	}
-
-	@Override
-	public BndExistencePattern rename(final String newName) {
-		return new BndExistencePattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

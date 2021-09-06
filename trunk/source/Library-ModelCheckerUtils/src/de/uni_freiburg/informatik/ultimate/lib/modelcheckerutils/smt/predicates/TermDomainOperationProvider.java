@@ -32,11 +32,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -111,8 +112,8 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
 			final Term term) {
 		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), quantifier, varsToQuantify, term);
-		final Term pushed = QuantifierPusher.eliminate(mServices, mMgdScript, false, PqeTechniques.ONLY_DER,
-				quantified);
+		final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, false,
+				PqeTechniques.ONLY_DER, SimplificationTechnique.NONE, quantified);
 		return pushed;
 	}
 

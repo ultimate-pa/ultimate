@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that if "R" holds, then "S" eventually holds
@@ -44,14 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
  */
 public class ResponsePattern extends PatternType<ResponsePattern> {
 	public ResponsePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public ResponsePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new ResponsePattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
@@ -102,11 +97,6 @@ public class ResponsePattern extends PatternType<ResponsePattern> {
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" eventually holds");
 		return sb.toString();
-	}
-
-	@Override
-	public ResponsePattern rename(final String newName) {
-		return new ResponsePattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -71,34 +73,24 @@ public class Req2Pea implements IReq2Pea {
 	private final List<ReqPeas> mPattern2Peas;
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
+	private final Durations mDurations;
 
 	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger,
-			final List<InitializationPattern> init, final List<PatternType<?>> requirements) {
+			final List<InitializationPattern> init, final List<PatternType<?>> reqs) {
 		mLogger = logger;
 		mServices = services;
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
 
-		// Replace FunctionAplication 'prev()' in scope and cdds of all requirements.
-		for (int i = 0; i < requirements.size(); i++) {
-			final PatternType<?> req = requirements.get(i);
-
-			final SrParseScope<?> scope =
-					req.getScope().create(new CDDTransformer().transform(req.getScope().getCdd1()),
-							new CDDTransformer().transform(req.getScope().getCdd2()));
-
-			final List<CDD> cdds =
-					req.getCdds().stream().map(e -> new CDDTransformer().transform(e)).collect(Collectors.toList());
-
-			requirements.set(i, req.create(scope, req.getId(), cdds, req.getDuration()));
-		}
-
+		final List<PatternType<?>> requirements = replacePrev(reqs);
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 
+		mDurations = new Durations();
 		for (final InitializationPattern pattern : init) {
 			builder.addInitPattern(pattern);
+			mDurations.addInitPattern(pattern);
 		}
-		final Map<String, Integer> id2bounds = builder.getId2Bounds();
-		mPattern2Peas = generatePeas(requirements, id2bounds);
+		reqs.stream().forEach(mDurations::addNonInitPattern);
+		mPattern2Peas = generatePeas(requirements, mDurations);
 
 		for (final ReqPeas reqpea : mPattern2Peas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
@@ -120,6 +112,24 @@ public class Req2Pea implements IReq2Pea {
 		mHasErrors = !errors.isEmpty();
 	}
 
+	/**
+	 * Replace FunctionAplication 'prev()' in scope and CDDs of all requirements.
+	 *
+	 * @param requirements
+	 */
+	private List<PatternType<?>> replacePrev(final List<PatternType<?>> requirements) {
+		final List<PatternType<?>> rtr = new ArrayList<>(requirements.size());
+		final CDDTransformer cddTransformer = new CDDTransformer();
+		for (final PatternType<?> req : requirements) {
+
+			final SrParseScope<?> scope = req.getScope().create(cddTransformer.transform(req.getScope().getCdd1()),
+					cddTransformer.transform(req.getScope().getCdd2()));
+			final List<CDD> cdds = req.getCdds().stream().map(cddTransformer::transform).collect(Collectors.toList());
+			rtr.add(req.create(scope, req.getId(), cdds, req.getDurations(), req.getDurationNames()));
+		}
+		return rtr;
+	}
+
 	@Override
 	public List<ReqPeas> getReqPeas() {
 		return Collections.unmodifiableList(mPattern2Peas);
@@ -130,7 +140,7 @@ public class Req2Pea implements IReq2Pea {
 		return mSymbolTable;
 	}
 
-	private List<ReqPeas> generatePeas(final List<PatternType<?>> patterns, final Map<String, Integer> id2bounds) {
+	private List<ReqPeas> generatePeas(final List<PatternType<?>> patterns, final Durations durations) {
 		final Map<PatternType<?>, ReqPeas> req2automata = new LinkedHashMap<>();
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
@@ -143,7 +153,7 @@ public class Req2Pea implements IReq2Pea {
 					mLogger.info("Transforming " + pat.getId());
 				}
 				counter.compute(pat.getClass(), (a, b) -> b == null ? 1 : b + 1);
-				pea = pat.transformToPea(mLogger, id2bounds);
+				pea = pat.transformToPea(mLogger, durations);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
 				mResultUtil.transformationError(pat, reason);
@@ -186,7 +196,12 @@ public class Req2Pea implements IReq2Pea {
 
 	@Override
 	public IReq2PeaAnnotator getAnnotator() {
-		return new ReqCheckAnnotator(mServices, mLogger, mPattern2Peas, mSymbolTable);
+		return new ReqCheckAnnotator(mServices, mLogger, mPattern2Peas, mSymbolTable, mDurations);
+	}
+
+	@Override
+	public Durations getDurations() {
+		return mDurations;
 	}
 
 	/**

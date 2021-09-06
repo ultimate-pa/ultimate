@@ -228,11 +228,12 @@ public class CExpressionTranslator {
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			typeOfResult = left.getLrValue().getCType();
 			assert typeOfResult.equals(right.getLrValue().getCType());
+			final CPrimitive primitiveTypeOfResult = (CPrimitive) typeOfResult.getUnderlyingType();
 
-			addIntegerBoundsCheck(loc, builder, (CPrimitive) typeOfResult, op, hook, left.getLrValue().getValue(),
+			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, hook, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.getLrValue().getValue(),
-					(CPrimitive) typeOfResult, right.getLrValue().getValue(), (CPrimitive) typeOfResult);
+					primitiveTypeOfResult, right.getLrValue().getValue(), primitiveTypeOfResult);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.getLrValue().getCType();
 			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
@@ -881,13 +882,7 @@ public class CExpressionTranslator {
 				overapprItem.annotate(rtrStatement);
 			}
 			resultBuilder.addStatement(rtrStatement);
-		} else if (isBranchDead) {
-			assignAuxVar(loc, opPositive, resultBuilder, auxvar, null, secondArgIsVoid);
-		} else {
-			assignAuxVar(loc, opNegative, resultBuilder, auxvar, null, thirdArgIsVoid);
-		}
-	
-		if (isBranchDead == null) {
+
 			if (!resultCType.isVoidType()) {
 				/* the result has a value only if the result type is not void.. */
 				resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultCType));
@@ -896,12 +891,12 @@ public class CExpressionTranslator {
 			}
 		} else if (isBranchDead) {
 			// the else branch is dead
-			resultBuilder.setLrValue(opPositive.getLrValue());
+			resultBuilder.addAllIncludingLrValue(opPositive);
 		} else {
 			// the then branch is dead
-			resultBuilder.setLrValue(opNegative.getLrValue());
+			resultBuilder.addAllIncludingLrValue(opNegative);
 		}
-	
+
 		return resultBuilder.build();
 	}
 

@@ -27,8 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.TimedIndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
@@ -36,11 +41,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * An independence relation that implements an SMT-based inclusion or equality check on the semantics.
@@ -48,6 +58,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  * It is recommended to wrap this relation in a {@link CachedIndependenceRelation} for better performance.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters whose independence is checked.
  */
 
 public class SemanticIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
@@ -56,17 +69,23 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final ManagedScript mManagedScript;
 	private final ILogger mLogger;
 
-	private final static SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final static XnfConversionTechnique mXnfConversionTechnique =
+	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final boolean mConditional;
 	private final boolean mSymmetric;
 
-	private long mPositiveQueries;
-	private long mNegativeQueries;
-	private long mUnknownQueries;
-	private long mComputationTimeNano;
+	private final TimedIndependenceStatisticsDataProvider mStatistics =
+			new TimedIndependenceStatisticsDataProvider(SemanticIndependenceRelation.class);
+
+	private final Map<IProgramVarOrConst, IProgramVarOrConst> mTransferCache = new HashMap<>();
+	private final TermTransferrer mTransferrer;
+
+	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final boolean conditional, final boolean symmetric) {
+		this(services, mgdScript, conditional, symmetric, null);
+	}
 
 	/**
 	 * Create a new variant of the semantic independence relation.
@@ -79,10 +98,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 *            checked, which subsumes full commutativity.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final boolean conditional, final boolean symmetric) {
+			final boolean conditional, final boolean symmetric, final TermTransferrer transferrer) {
 		mServices = services;
 		mManagedScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mTransferrer = transferrer;
 
 		mConditional = conditional;
 		mSymmetric = symmetric;
@@ -100,54 +120,66 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	@Override
 	public boolean contains(final IPredicate state, final L a, final L b) {
-		final long startTime = System.nanoTime();
 		final IPredicate context = mConditional ? state : null;
-		final LBool subset = performInclusionCheck(context, a, b);
+		if (context instanceof IMLPredicate) {
+			// Locations will be ignored. However, using predicates with the same formula but different locations will
+			// negatively affect cache efficiency. Hence output a warning message.
+			mLogger.warn("Predicates with locations should not be used for independence.");
+		}
 
+		mStatistics.startQuery();
+		final UnmodifiableTransFormula tfA = getTransFormula(a);
+		final UnmodifiableTransFormula tfB = getTransFormula(b);
+
+		// TODO We do composition twice for symmetric relations (in performInclusionCheck). Why?
+		final LBool subset = performInclusionCheck(context, tfA, tfB);
 		final LBool result;
 		if (mSymmetric) {
-			final LBool superset = performInclusionCheck(context, b, a);
-			if (subset == LBool.UNSAT && superset == LBool.UNSAT) {
-				result = LBool.UNSAT;
-			} else if (subset == LBool.UNKNOWN || superset == LBool.UNKNOWN) {
-				result = LBool.UNKNOWN;
-			} else {
-				result = LBool.SAT;
-			}
+			result = and(subset, () -> performInclusionCheck(context, tfB, tfA));
 		} else {
 			result = subset;
 		}
-		switch (result) {
-		case SAT:
-			mNegativeQueries++;
-			break;
-		case UNKNOWN:
-			mUnknownQueries++;
-			break;
-		case UNSAT:
-			mPositiveQueries++;
-			break;
-		default:
-			throw new AssertionError();
-		}
-		mComputationTimeNano += (System.nanoTime() - startTime);
+
+		mStatistics.reportQuery(result, context != null);
 		return result == LBool.UNSAT;
 	}
 
-	private final LBool performInclusionCheck(final IPredicate context, final L a, final L b) {
-		UnmodifiableTransFormula transFormula1 = compose(a.getTransformula(), b.getTransformula());
-		final UnmodifiableTransFormula transFormula2 = compose(b.getTransformula(), a.getTransformula());
+	private UnmodifiableTransFormula getTransFormula(final L a) {
+		return getTransFormula(a.getTransformula());
+	}
 
-		if (context != null) {
-			// TODO: This represents conjunction with guard (precondition) as composition
-			// with assume. Is this a good way?
-			final UnmodifiableTransFormula guard =
-					TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
-			transFormula1 = compose(guard, transFormula1);
+	private UnmodifiableTransFormula getTransFormula(final UnmodifiableTransFormula tf) {
+		if (mTransferrer == null) {
+			return tf;
+		}
+		return TransFormulaBuilder.transferTransformula(mTransferrer, mManagedScript, mTransferCache, tf)
+				.getTransformula();
+	}
+
+	private final LBool performInclusionCheck(final IPredicate context, final UnmodifiableTransFormula a,
+			final UnmodifiableTransFormula b) {
+		if (context != null && SmtUtils.isFalseLiteral(context.getFormula())) {
+			return LBool.UNSAT;
 		}
 
-		final LBool result = TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
-		return result;
+		if (mManagedScript.isLocked()) {
+			mLogger.warn("Requesting ManagedScript unlock before implication check");
+			final boolean unlocked = mManagedScript.requestLockRelease();
+			if (!unlocked) {
+				mLogger.warn("Failed to unlock ManagedScript. Unable to check independence, returning UNKNOWN.");
+				return LBool.UNKNOWN;
+			}
+		}
+
+		UnmodifiableTransFormula transFormula1 = compose(a, b);
+		final UnmodifiableTransFormula transFormula2 = compose(b, a);
+
+		if (context != null) {
+			final UnmodifiableTransFormula guard =
+					TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
+			transFormula1 = compose(getTransFormula(guard), transFormula1);
+		}
+		return TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
 	}
 
 	private final UnmodifiableTransFormula compose(final UnmodifiableTransFormula first,
@@ -157,26 +189,29 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 		// try to eliminate auxiliary variables to avoid quantifier alternation in
 		// implication check
-		final boolean tryAuxVarElimination = true;
+		final boolean tryAuxVarElimination = false;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
-				tryAuxVarElimination, false, mXnfConversionTechnique, mSimplificationTechnique,
+				tryAuxVarElimination, false, false, mXnfConversionTechnique, mSimplificationTechnique,
 				Arrays.asList(first, second));
 	}
 
-	public long getPositiveQueries() {
-		return mPositiveQueries;
+	private static LBool and(final LBool lhs, final Supplier<LBool> getRhs) {
+		if (lhs == LBool.SAT) {
+			return LBool.SAT;
+		}
+		final LBool rhs = getRhs.get();
+		if (rhs == LBool.SAT) {
+			return LBool.SAT;
+		}
+		if (lhs == LBool.UNSAT && rhs == LBool.UNSAT) {
+			return LBool.UNSAT;
+		}
+		return LBool.UNKNOWN;
 	}
 
-	public long getNegativeQueries() {
-		return mNegativeQueries;
-	}
-
-	public long getUnknownQueries() {
-		return mUnknownQueries;
-	}
-
-	public long getComputationTimeNano() {
-		return mComputationTimeNano;
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 }

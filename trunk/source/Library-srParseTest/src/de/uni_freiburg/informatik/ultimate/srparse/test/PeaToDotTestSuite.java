@@ -34,7 +34,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -60,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.PatternUtil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
@@ -83,9 +83,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final boolean CREATE_NEW_FILES = true;
+	private static final boolean CREATE_NEW_FILES = false;
 
-	private static final File ROOT_DIR = new File("/media/Daten/Projects/hanfor/documentation/docs");
+	private static final File ROOT_DIR = new File("/mnt/Data/Projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 	private static final File POS_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/positive");
@@ -101,13 +101,13 @@ public class PeaToDotTestSuite {
 	private final String mPatternName;
 	private final String mPatternString;
 	private final String mScopeName;
-	private final Map<String, Integer> mDurationToBounds;
+	private final Durations mDurations;
 
-	public PeaToDotTestSuite(final PatternType<?> pattern, final Map<String, Integer> durationToBounds) {
+	public PeaToDotTestSuite(final PatternType<?> pattern, final Durations durations) {
 		mServiceProvider = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = mServiceProvider.getLoggingService().getLogger("");
 
-		mDurationToBounds = durationToBounds;
+		mDurations = durations;
 		mPattern = pattern;
 		mPatternName = pattern.getClass().getSimpleName();
 		mPatternString = pattern.toString().replace(pattern.getId() + ": ", "");
@@ -124,13 +124,13 @@ public class PeaToDotTestSuite {
 
 		final ReqPeas reqPeas;
 		try {
-			reqPeas = mPattern.transformToPea(mLogger, mDurationToBounds);
+			reqPeas = mPattern.transformToPea(mLogger, mDurations);
 		} catch (final PatternScopeNotImplemented e) {
 			mLogger.fatal("Pattern not implemented: " + mPattern.getId());
 			return; // Oops, somebody forgot to implement this
 		}
-		
-		List<Entry<CounterTrace, PhaseEventAutomata>> ctsToPea = reqPeas.getCounterTrace2Pea();
+
+		final List<Entry<CounterTrace, PhaseEventAutomata>> ctsToPea = reqPeas.getCounterTrace2Pea();
 		for (final Entry<CounterTrace, PhaseEventAutomata> entry : ctsToPea) {
 			writeSvgFile(DotWriterNew.createDotString(entry.getValue()));
 		}
@@ -274,7 +274,7 @@ public class PeaToDotTestSuite {
 
 	@Parameters()
 	public static Collection<Object[]> data() {
-		final Pair<List<? extends PatternType<?>>, Map<String, Integer>> pair = PatternUtil.createAllPatterns(false);
+		final Pair<List<? extends PatternType<?>>, Durations> pair = PatternUtil.createAllPatterns(false);
 
 		return pair.getFirst().stream().sorted(new PatternNameComparator())
 				.map(a -> new Object[] { a, pair.getSecond() }).collect(Collectors.toList());

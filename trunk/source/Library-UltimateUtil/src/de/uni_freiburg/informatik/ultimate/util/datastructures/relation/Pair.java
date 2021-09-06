@@ -35,15 +35,10 @@ import java.util.Map.Entry;
  * @author Matthias Heizmann
  *
  */
-public class Pair<E1, E2> implements Entry<E1, E2> {
-
-	protected E1 mFirstElement;
-	protected E2 mSecondElement;
+public class Pair<E1, E2> extends BaseTuple<E1, E2> implements Entry<E1, E2> {
 
 	public Pair(final E1 first, final E2 second) {
-		super();
-		mFirstElement = first;
-		mSecondElement = second;
+		super(first, second);
 	}
 
 	public E1 getFirst() {
@@ -52,49 +47,6 @@ public class Pair<E1, E2> implements Entry<E1, E2> {
 
 	public E2 getSecond() {
 		return mSecondElement;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mFirstElement == null) ? 0 : mFirstElement.hashCode());
-		result = prime * result + ((mSecondElement == null) ? 0 : mSecondElement.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (!(obj instanceof Pair)) {
-			return false;
-		}
-		final Pair<?, ?> other = (Pair<?, ?>) obj;
-		if (mFirstElement == null) {
-			if (other.mFirstElement != null) {
-				return false;
-			}
-		} else if (!mFirstElement.equals(other.mFirstElement)) {
-			return false;
-		}
-		if (mSecondElement == null) {
-			if (other.mSecondElement != null) {
-				return false;
-			}
-		} else if (!mSecondElement.equals(other.mSecondElement)) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		return "[" + mFirstElement + ", " + mSecondElement + "]";
 	}
 
 	@Override

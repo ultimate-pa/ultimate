@@ -3,6 +3,9 @@
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.core=0.1.22
 
+#Fri Feb 19 2021
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ class=de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher\=ERROR;
+
 
 #Fri Oct 24 16:34:36 CEST 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=

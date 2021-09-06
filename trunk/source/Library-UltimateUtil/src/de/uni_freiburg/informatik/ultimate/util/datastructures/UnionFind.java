@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -71,17 +70,17 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 * Note that whenever updating values in this map other corresponding data-structures as {@link #mRepresentative}
 	 * also need to be updated with the same new identity.
 	 */
-	private final Map<E, CachedHashSet<E>> mEquivalenceClass = new HashMap<>();
+	private final Map<E, ImmutableSet<E>> mEquivalenceClass = new HashMap<>();
 
 	/**
 	 * Maps an equivalence class to its representative.<br/>
 	 * <br/>
-	 * The current implementation uses {@link CachedHashSet} to provide a fast key-based access.<br/>
+	 * The current implementation uses {@link ImmutableSet} to provide a fast key-based access.<br/>
 	 * <br/>
 	 * Therefore whenever changing keys in this set other corresponding data-structures like {@link #mEquivalenceClass}
 	 * also need to be updated with the same new identity.
 	 */
-	private final Map<CachedHashSet<E>, E> mRepresentative = new HashMap<>();
+	private final Map<ImmutableSet<E>, E> mRepresentative = new HashMap<>();
 
 	/**
 	 * Constructor for new (empty) data structure.
@@ -106,14 +105,14 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *            the UnionFind instance to be copied
 	 */
 	protected UnionFind(final UnionFind<E> unionFind) {
-		for (final Entry<CachedHashSet<E>, E> entry : unionFind.mRepresentative.entrySet()) {
+		for (final Entry<ImmutableSet<E>, E> entry : unionFind.mRepresentative.entrySet()) {
 			final E representative = entry.getValue();
-			final CachedHashSet<E> equivalenceClassCopy = new CachedHashSet<>(entry.getKey());
-			for (final E equivalenceClassMember : equivalenceClassCopy) {
-				final Set<E> oldValue = this.mEquivalenceClass.put(equivalenceClassMember, equivalenceClassCopy);
+			final ImmutableSet<E> equivalenceClass = entry.getKey();
+			for (final E equivalenceClassMember : equivalenceClass) {
+				final Set<E> oldValue = this.mEquivalenceClass.put(equivalenceClassMember, equivalenceClass);
 				assert oldValue == null : "element was contained twice";
 			}
-			this.mRepresentative.put(equivalenceClassCopy, representative);
+			this.mRepresentative.put(equivalenceClass, representative);
 		}
 		mElementComparator = unionFind.mElementComparator;
 		assert representativesAreMinimal();
@@ -126,7 +125,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *
 	 * @param newBlock
 	 */
-	public void addEquivalenceClass(final Set<E> newBlock) {
+	public void addEquivalenceClass(final ImmutableSet<E> newBlock) {
 		if (mElementComparator == null) {
 			addEquivalenceClass(newBlock, null);
 		} else {
@@ -144,8 +143,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 * @param newBlockRep
 	 *            the element that should be the representative of newBlock in this UnionFind, null for don't care
 	 */
-	public void addEquivalenceClass(final Set<E> newBlock, final E newBlockRep) {
-		assert DataStructureUtils.intersection(newBlock, getAllElements()).isEmpty();
+	public void addEquivalenceClass(final ImmutableSet<E> newBlock, final E newBlockRep) {
+		assert DataStructureUtils.haveEmptyIntersection(newBlock, getAllElements());
 		assert !newBlock.isEmpty();
 		assert newBlockRep == null || newBlock.contains(newBlockRep);
 		assert mElementComparator == null || newBlockRep != null : "if we don't give a representative for the new block"
@@ -153,15 +152,13 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 				+ "element.";
 		assert mElementComparator == null || mElementComparator.compare(newBlockRep, findMinimalElement(newBlock)) <= 0;
 
-		final CachedHashSet<E> block = new CachedHashSet<>(newBlock);
-
-		for (final E elem : block) {
-			mEquivalenceClass.put(elem, block);
+		for (final E elem : newBlock) {
+			mEquivalenceClass.put(elem, newBlock);
 		}
 
-		final E rep = newBlockRep == null ? block.iterator().next() : newBlockRep;
+		final E rep = newBlockRep == null ? newBlock.iterator().next() : newBlockRep;
 		assert mEquivalenceClass.get(rep) != null;
-		mRepresentative.put(block, rep);
+		mRepresentative.put(newBlock, rep);
 		assert representativesAreMinimal();
 	}
 
@@ -182,7 +179,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *         equivalence class
 	 */
 	public E find(final E elem) {
-		final Set<E> set = mEquivalenceClass.get(elem);
+		final ImmutableSet<E> set = mEquivalenceClass.get(elem);
 		return mRepresentative.get(set);
 	}
 
@@ -238,7 +235,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	@Override
-	public Set<E> getContainingSet(final E elem) {
+	public ImmutableSet<E> getContainingSet(final E elem) {
 		return getEquivalenceClassMembers(elem);
 	}
 
@@ -251,8 +248,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *            element
 	 * @return set of all elements that are in the same equivalence class than e. (Returned set also contains e).
 	 */
-	public Set<E> getEquivalenceClassMembers(final E elem) {
-		return Collections.unmodifiableSet(mEquivalenceClass.get(elem));
+	public ImmutableSet<E> getEquivalenceClassMembers(final E elem) {
+		return mEquivalenceClass.get(elem);
 	}
 
 	@Override
@@ -270,8 +267,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		if (mEquivalenceClass.containsKey(elem)) {
 			throw new IllegalArgumentException("Already contained " + elem);
 		}
-		final CachedHashSet<E> result = new CachedHashSet<>();
-		result.add(elem);
+		final ImmutableSet<E> result = ImmutableSet.singleton(elem);
 		mEquivalenceClass.put(elem, result);
 		mRepresentative.put(result, elem);
 	}
@@ -302,15 +298,16 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	public void remove(final E element, final E newRepChoice) {
 		assert newRepChoice == null || find(newRepChoice) == find(element);
 
-		final CachedHashSet<E> eqc = mEquivalenceClass.get(element);
-		final CachedHashSet<E> newEqc = new CachedHashSet<>(eqc);
-		newEqc.remove(element);
+		final ImmutableSet<E> eqc = mEquivalenceClass.get(element);
+		final HashSet<E> newEqcElements = new HashSet<>(eqc);
+		newEqcElements.remove(element);
+		final ImmutableSet<E> newEqc = ImmutableSet.of(newEqcElements);
 
 		/*
 		 * if eqc is non-empty after the remove, make sure it gets another representative (keeps the old eqc, for now,
 		 * will replace it with newEqc in next step)
 		 */
-		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
+		if (find(element).equals(element)) {
 			// element is the representative of its equivalence class
 
 			if (eqc.size() == 1) {
@@ -387,8 +384,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	public void transformElements(final Function<E, E> elemTransformer) {
-		final HashMap<CachedHashSet<E>, E> representativeCopy = new HashMap<>(mRepresentative);
-		for (final Entry<CachedHashSet<E>, E> entry : representativeCopy.entrySet()) {
+		final HashMap<ImmutableSet<E>, E> representativeCopy = new HashMap<>(mRepresentative);
+		for (final Entry<ImmutableSet<E>, E> entry : representativeCopy.entrySet()) {
 			for (final E oldElem : entry.getKey()) {
 				mEquivalenceClass.remove(oldElem);
 			}
@@ -396,8 +393,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 			final E newRep = elemTransformer.apply(entry.getValue());
 
-			final CachedHashSet<E> newEqClass =
-					entry.getKey().stream().map(elemTransformer).collect(Collectors.toCollection(CachedHashSet::new));
+			final ImmutableSet<E> newEqClass =
+					entry.getKey().stream().map(elemTransformer).collect(ImmutableSet.collector());
 			for (final E newElem : newEqClass) {
 				mEquivalenceClass.put(newElem, newEqClass);
 			}
@@ -433,13 +430,13 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *            second element
 	 */
 	public void union(final E elem1, final E elem2) {
-		final CachedHashSet<E> set1 = mEquivalenceClass.get(elem1);
-		final CachedHashSet<E> set2 = mEquivalenceClass.get(elem2);
+		final ImmutableSet<E> set1 = mEquivalenceClass.get(elem1);
+		final ImmutableSet<E> set2 = mEquivalenceClass.get(elem2);
 
 		final boolean set1IsLarger = set1.size() > set2.size();
 
-		final CachedHashSet<E> largerSet = set1IsLarger ? set1 : set2;
-		final CachedHashSet<E> smallerSet = set1IsLarger ? set2 : set1;
+		final ImmutableSet<E> largerSet = set1IsLarger ? set1 : set2;
+		final ImmutableSet<E> smallerSet = set1IsLarger ? set2 : set1;
 
 		final E newRep;
 		if (mElementComparator != null) {
@@ -452,11 +449,12 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 		mRepresentative.remove(largerSet);
 		mRepresentative.remove(smallerSet);
-		largerSet.addAll(smallerSet);
-		for (final E e : smallerSet) {
-			mEquivalenceClass.put(e, largerSet);
+
+		final ImmutableSet<E> union = ImmutableSet.of(DataStructureUtils.union(smallerSet, largerSet));
+		for (final E e : union) {
+			mEquivalenceClass.put(e, union);
 		}
-		mRepresentative.put(largerSet, newRep);
+		mRepresentative.put(union, newRep);
 		assert representativesAreMinimal();
 	}
 
@@ -501,7 +499,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 				// assert intersection.contains(uf2Rep) : "right?.."; // EDIT: not the case
 
-				result.addEquivalenceClass(intersection);
+				result.addEquivalenceClass(ImmutableSet.of(intersection));
 
 				final E subBlockRep = result.find(intersection.iterator().next());
 
@@ -547,7 +545,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 			final Set<E> newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(tver1El),
 					uf2.getEquivalenceClassMembers(tver1El));
-			result.addEquivalenceClass(newBlock, newBlockRep);
+			result.addEquivalenceClass(ImmutableSet.of(newBlock), newBlockRep);
 			todo.removeAll(newBlock);
 		}
 		assert result.representativesAreMinimal();
@@ -589,7 +587,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			return true;
 		}
 		// for (Entry<E, Set<E>> en : mEquivalenceClass.entrySet()) {
-		for (final Entry<CachedHashSet<E>, E> en : mRepresentative.entrySet()) {
+		for (final Entry<ImmutableSet<E>, E> en : mRepresentative.entrySet()) {
 			final E rep = en.getValue();
 			for (final E member : en.getKey()) {
 				assert mElementComparator.compare(rep, member) <= 0;

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.AxiomTransformationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransformulaTransformationResult;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -68,8 +69,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.TransitiveClosure;
@@ -107,6 +108,14 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private final Collection<IPredicate> mAdditionalAxioms;
 	private boolean mIsFinished;
 	private ILogger mLogger;
+
+	public TransformedIcfgBuilder(final ILogger logger, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final IBacktranslationTracker backtranslationTracker, final IIcfg<INLOC> originalIcfg,
+			final BasicIcfg<OUTLOC> resultIcfg) {
+		this(logger, funLocFac, backtranslationTracker, new CopyingTransformulaTransformer(logger,
+				originalIcfg.getCfgSmtToolkit().getManagedScript(), originalIcfg.getCfgSmtToolkit()), originalIcfg,
+				resultIcfg, Collections.emptySet());
+	}
 
 	/**
 	 * Default constructor of {@link TransformedIcfgBuilder}.
@@ -353,9 +362,9 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 */
 	private void rememberNewVariables(final UnmodifiableTransFormula transformula, final String procedure) {
 
-		transformula.getInVars().entrySet().stream().map(a -> a.getKey()).filter(a -> !oldSymbolTableContains(a))
+		transformula.getInVars().entrySet().stream().map(Entry::getKey).filter(a -> !oldSymbolTableContains(a))
 				.forEach(mNewVars::add);
-		final Iterator<IProgramVar> iter = transformula.getOutVars().entrySet().stream().map(a -> a.getKey())
+		final Iterator<IProgramVar> iter = transformula.getOutVars().entrySet().stream().map(Entry::getKey)
 				.filter(a -> !oldSymbolTableContains(a)).iterator();
 
 		while (iter.hasNext()) {
@@ -404,13 +413,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			revertedCallGraph.addPair(en.getValue(), en.getKey());
 		}
 
-		final ISuccessorProvider<String> successorProvider = new ISuccessorProvider<String>() {
-			@Override
-			public Iterator<String> getSuccessors(final String node) {
-				return revertedCallGraph.getImage(node).iterator();
-			}
-		};
-		final Function<String, Set<IProgramNonOldVar>> procToModGlobals = p -> newModifiedGlobals.getImage(p);
+		final ISuccessorProvider<String> successorProvider = node -> revertedCallGraph.getImage(node).iterator();
+		final Function<String, Set<IProgramNonOldVar>> procToModGlobals = newModifiedGlobals::getImage;
 
 		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		final Map<String, Set<IProgramNonOldVar>> closed =
@@ -429,8 +433,9 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final HashRelation<String, String> result = new HashRelation<>();
 		for (final Entry<String, OUTLOC> en : mResultIcfg.getProcedureEntryNodes().entrySet()) {
 			for (final IcfgEdge callEdge : en.getValue().getIncomingEdges()) {
-				assert callEdge instanceof IcfgCallTransition : "procedure entry node has an incoming edge that is not a call edge: "
-						+ callEdge.getClass();
+				if (!(callEdge instanceof IcfgCallTransition)) {
+					continue;
+				}
 				result.addPair(callEdge.getPrecedingProcedure(), callEdge.getSucceedingProcedure());
 			}
 		}
@@ -509,16 +514,16 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			throw new UnsupportedOperationException("overapproximation of axioms is not yet supported");
 		}
 
-		final Script script = mOriginalIcfg.getCfgSmtToolkit().getManagedScript().getScript();
+		final ManagedScript script = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
 		if (mAdditionalAxioms.isEmpty()) {
 			return new SmtFunctionsAndAxioms(translationResult.getAxiom(), script);
 		}
 
 		final List<Term> newAxiomsClosed =
-				mAdditionalAxioms.stream().map(a -> a.getClosedFormula()).collect(Collectors.toList());
+				mAdditionalAxioms.stream().map(IPredicate::getClosedFormula).collect(Collectors.toList());
 		newAxiomsClosed.add(translationResult.getAxiom().getClosedFormula());
 
-		final Term newAxioms = SmtUtils.and(script, newAxiomsClosed);
+		final Term newAxioms = SmtUtils.and(script.getScript(), newAxiomsClosed);
 		return new SmtFunctionsAndAxioms(newAxioms, new String[0], script);
 	}
 

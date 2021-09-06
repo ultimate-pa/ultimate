@@ -473,7 +473,7 @@ public class TypeSizes {
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
 				final String cId = mSymboltable.getCIdForBoogieId(bId);
 				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
-				if (stv.hasConstantValue()) {
+				if (stv != null && stv.hasConstantValue()) {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
 			} else if (expr instanceof FunctionApplication) {
