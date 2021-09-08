@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -78,21 +79,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class LiptonReduction<L, P> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	private final ICompositionFactory<L> mCompositionFactory;
-	private final IPlaceFactory<P> mPlaceFactory;
-	protected final IIndependenceRelation<Set<P>, L> mMoverCheck;
 
-	private BranchingProcess<L, P> mBranchingProcess;
-	private final HashRelation<Event<L, P>, Event<L, P>> mCutOffs;
-	protected CoenabledRelation<L, P> mCoEnabledRelation;
-	private final Map<L, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
-	private final Map<L, Set<ITransition<L, P>>> mChoiceCompositions = new HashMap<>();
-	private final Map<ITransition<L, P>, ITransition<L, P>> mNewToOldTransitions;
+	private final ICompositionFactory<L> mCompositionFactory;
+	private final IStuckPlaceChecker<L, P> mStuckPlaceChecker;
+	private final IPlaceFactory<P> mPlaceFactory;
+
+	private final IIndependenceRelation<Set<P>, L> mMoverCheck;
+	private final IIndependenceCache<?, L> mIndependenceCache;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
+
+	private BranchingProcess<L, P> mBranchingProcess;
+	private CoenabledRelation<L, P> mCoEnabledRelation;
+	private final HashRelation<Event<L, P>, Event<L, P>> mCutOffs = new HashRelation<>();
+	private final Map<ITransition<L, P>, ITransition<L, P>> mNewToOldTransitions = new HashMap<>();
+
 	private BoundedPetriNet<L, P> mResult;
-	protected final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
-	private final IStuckPlaceChecker<L, P> mStuckPlaceChecker;
+	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
+	private final Map<L, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
+	private final Map<L, Set<ITransition<L, P>>> mChoiceCompositions = new HashMap<>();
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -113,16 +118,15 @@ public class LiptonReduction<L, P> {
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
 			final ICompositionFactory<L> compositionFactory, final IPlaceFactory<P> placeFactory,
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
-			final IStuckPlaceChecker<L, P> stuckPlaceChecker) {
+			final IStuckPlaceChecker<L, P> stuckPlaceChecker, final IIndependenceCache<?, L> cache) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mCompositionFactory = compositionFactory;
 		mPlaceFactory = placeFactory;
 		mMoverCheck = independenceRelation;
 		mPetriNet = petriNet;
-		mCutOffs = new HashRelation<>();
-		mNewToOldTransitions = new HashMap<>();
 		mStuckPlaceChecker = stuckPlaceChecker;
+		mIndependenceCache = cache;
 	}
 
 	/**
@@ -139,7 +143,6 @@ public class LiptonReduction<L, P> {
 		mLogger.info("Starting Lipton reduction on Petri net that " + mPetriNet.sizeInformation());
 
 		try {
-			BoundedPetriNet<L, P> resultLastIteration;
 			BoundedPetriNet<L, P> resultCurrentIteration = CopySubnet.copy(mServices, mPetriNet,
 					new HashSet<>(mPetriNet.getTransitions()), mPetriNet.getAlphabet(), true);
 
@@ -152,6 +155,7 @@ public class LiptonReduction<L, P> {
 			mLogger.info("Number of co-enabled transitions " + coEnabledRelationSize);
 			mStatistics.setCoEnabledTransitionPairs(coEnabledRelationSize);
 
+			BoundedPetriNet<L, P> resultLastIteration;
 			do {
 				mStatistics.reportFixpointIteration();
 				resultLastIteration = resultCurrentIteration;
@@ -165,14 +169,10 @@ public class LiptonReduction<L, P> {
 					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.MoverChecksTotal));
 			mLogger.info("Total number of compositions: "
 					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.TotalNumberOfCompositions));
-		} catch (final AutomataOperationCanceledException aoce) {
+		} catch (final AutomataOperationCanceledException | ToolchainCanceledException ce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(mPetriNet));
-			aoce.addRunningTaskInfo(runningTaskInfo);
-			throw aoce;
-		} catch (final ToolchainCanceledException tce) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(mPetriNet));
-			tce.addRunningTaskInfo(runningTaskInfo);
-			throw tce;
+			ce.addRunningTaskInfo(runningTaskInfo);
+			throw ce;
 		} finally {
 			mStatistics.stop(LiptonReductionStatisticsDefinitions.ReductionTime);
 		}
@@ -189,14 +189,14 @@ public class LiptonReduction<L, P> {
 	}
 
 	private void transferMoverProperties(final L composition, final L t1, final L t2) {
-		if (mMoverCheck instanceof CachedIndependenceRelation<?, ?>) {
-			((CachedIndependenceRelation<P, L>) mMoverCheck).getCache().mergeIndependencies(t1, t2, composition);
+		if (mIndependenceCache != null) {
+			mIndependenceCache.mergeIndependencies(t1, t2, composition);
 		}
 	}
 
 	private void removeMoverProperties(final L transition) {
-		if (mMoverCheck instanceof CachedIndependenceRelation<?, ?>) {
-			((CachedIndependenceRelation<P, L>) mMoverCheck).removeFromCache(transition);
+		if (mIndependenceCache != null) {
+			mIndependenceCache.remove(transition);
 		}
 	}
 
@@ -221,6 +221,11 @@ public class LiptonReduction<L, P> {
 					continue;
 				}
 
+				// Make sure transitions not involved in any pending compositions
+				if (composedTransitions.contains(t1) || composedTransitions.contains(t2)) {
+					continue;
+				}
+
 				// Check if Pre- and Postset are identical for t1 and t2.
 				if (petriNet.getPredecessors(t1).equals(petriNet.getPredecessors(t2))
 						&& petriNet.getSuccessors(t1).equals(petriNet.getSuccessors(t2))
@@ -228,16 +233,11 @@ public class LiptonReduction<L, P> {
 
 					assert mCoEnabledRelation.getImage(t1).equals(mCoEnabledRelation.getImage(t2));
 
-					// Make sure transitions not involved in any pending compositions
-					if (composedTransitions.contains(t1) || composedTransitions.contains(t2)) {
-						continue;
-					}
-
 					final List<L> parallelLetters = Arrays.asList(t1.getSymbol(), t2.getSymbol());
 					final L composedLetter = mCompositionFactory.composeParallel(parallelLetters);
-					mChoiceCompositions.put(composedLetter, new HashSet<>(Arrays.asList(t1, t2)));
+					mChoiceCompositions.put(composedLetter, Set.of(t1, t2));
 
-					// Create new element of choiceStack.
+					// Create new element of pendingCompositions.
 					pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
 					composedTransitions.add(t1);
 					composedTransitions.add(t2);
@@ -657,15 +657,7 @@ public class LiptonReduction<L, P> {
 		final boolean all1 = coEnabled1.containsAll(coEnabled2);
 		final boolean all2 = coEnabled2.containsAll(coEnabled1);
 
-		if (all1 && !all2) {
-			return isRightMover(petriNet, t1, coEnabled1);
-		} else if (!all1 && all2) {
-			return isLeftMover(petriNet, t2, coEnabled2);
-		} else if (all1) {
-			return isRightMover(petriNet, t1, coEnabled1) || isLeftMover(petriNet, t2, coEnabled2);
-		} else {
-			return false;
-		}
+		return (all1 && isRightMover(petriNet, t1, coEnabled1)) || (all2 && isLeftMover(petriNet, t2, coEnabled2));
 	}
 
 	/**

@@ -141,7 +141,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final StuckPlaceChecker<L, IPredicate> stuckPlaceChecker =
 					new StuckPlaceChecker<>(mLogger, mServices, mManagedScript);
 			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(automataServices, petriNet,
-					compositionFactory, placeFactory, moverCheck, stuckPlaceChecker);
+					compositionFactory, placeFactory, moverCheck, stuckPlaceChecker, mIndependenceCache);
 			lipton.performReduction();
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
