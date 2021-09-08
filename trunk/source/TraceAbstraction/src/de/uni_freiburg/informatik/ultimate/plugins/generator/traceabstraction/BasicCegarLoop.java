@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -268,6 +269,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private final Integer mAStarRandomHeuristicSeed;
 
 	protected final IPLBECompositionFactory<L> mCompositionFactory;
+	private IIndependenceCache<?, L> mIndependenceCache;
 
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -367,17 +369,10 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(getServices(), mIcfg,
 							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			final BoundedPetriNet<L, IPredicate> net;
-			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-				final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
-						mIcfg.getCfgSmtToolkit(), petrifiedCfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory,
-						mPredicateFactory, null, mTransitionClazz);
-				final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
-				getServices().getBacktranslationService().addTranslator(lbe.getBacktranslator());
-				net = lbecfg;
-				getServices().getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(
-						Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
-			} else {
+			if (mPref.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
 				net = petrifiedCfg;
+			} else {
+				net = applyLargeBlockEncoding(petrifiedCfg);
 			}
 
 			final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
@@ -419,6 +414,25 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(getServices(), mAbstraction, mWitnessAutomaton,
 					mCsToolkit, mPredicateFactory, mStateFactoryForRefinement, mLogger, Property.NON_REACHABILITY);
 		}
+	}
+
+	protected BoundedPetriNet<L, IPredicate> applyLargeBlockEncoding(final BoundedPetriNet<L, IPredicate> cfg)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final long start_time = System.currentTimeMillis();
+		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
+				mIcfg.getCfgSmtToolkit(), cfg, mPref.useLbeInConcurrentAnalysis(), mCompositionFactory,
+				mPredicateFactory, mIndependenceCache, mTransitionClazz);
+		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
+		mIndependenceCache = lbe.getIndependenceCache();
+		getServices().getBacktranslationService().addTranslator(lbe.getBacktranslator());
+
+		final long end_time = System.currentTimeMillis();
+		final long difference = end_time - start_time;
+		mLogger.info("Time needed for LBE in milliseconds: " + difference);
+
+		getServices().getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
+				"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
+		return lbecfg;
 	}
 
 	/**

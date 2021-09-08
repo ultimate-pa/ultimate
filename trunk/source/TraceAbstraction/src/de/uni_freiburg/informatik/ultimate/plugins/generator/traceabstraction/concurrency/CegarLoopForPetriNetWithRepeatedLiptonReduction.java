@@ -77,7 +77,7 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final boolean result = super.refineAbstraction();
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-			applyLargeBlockEncoding((BoundedPetriNet<L, IPredicate>) mAbstraction);
+			mAbstraction = applyLargeBlockEncoding((BoundedPetriNet<L, IPredicate>) mAbstraction);
 		}
 		return result;
 	}
