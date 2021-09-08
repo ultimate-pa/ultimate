@@ -71,14 +71,15 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, services, compositionFactory,
 				transitionClazz);
+		if (mPref.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
+			throw new IllegalArgumentException(getClass().getSimpleName() + "without Lipton reduction");
+		}
 	}
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final boolean result = super.refineAbstraction();
-		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-			mAbstraction = applyLargeBlockEncoding((BoundedPetriNet<L, IPredicate>) mAbstraction);
-		}
+		mAbstraction = applyLargeBlockEncoding((BoundedPetriNet<L, IPredicate>) mAbstraction);
 		return result;
 	}
 }
