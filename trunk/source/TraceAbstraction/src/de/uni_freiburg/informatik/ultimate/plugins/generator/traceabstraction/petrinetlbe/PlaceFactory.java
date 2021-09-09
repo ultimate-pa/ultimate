@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPlaceFactory;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICopyPlaceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * A factory for creating places in the Petri net.
  *
  */
-public class PlaceFactory implements IPlaceFactory<IPredicate> {
+public class PlaceFactory implements ICopyPlaceFactory<IPredicate> {
 	private final BasicPredicateFactory mPredicateFactory;
 
 	/**
@@ -48,7 +48,7 @@ public class PlaceFactory implements IPlaceFactory<IPredicate> {
 	}
 
 	@Override
-	public IPredicate createPlace(final IPredicate oldPlace) {
+	public IPredicate copyPlace(final IPredicate oldPlace) {
 		return mPredicateFactory.newPredicate(oldPlace.getFormula());
 	}
 }

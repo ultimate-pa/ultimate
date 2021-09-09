@@ -135,13 +135,14 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		mReplacedTransitions = new HashMap<>();
 
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
+
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
+		final PlaceFactory placeFactory = new PlaceFactory(predicateFactory);
+		final InfeasPostScriptChecker<L, IPredicate> postScriptChecker =
+				new InfeasPostScriptChecker<>(mServices, mManagedScript);
 		try {
-			final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
-			final PlaceFactory placeFactory = new PlaceFactory(predicateFactory);
-			final StuckPlaceChecker<L, IPredicate> stuckPlaceChecker =
-					new StuckPlaceChecker<>(mLogger, mServices, mManagedScript);
 			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(automataServices, petriNet,
-					compositionFactory, placeFactory, moverCheck, stuckPlaceChecker, mIndependenceCache);
+					compositionFactory, placeFactory, moverCheck, postScriptChecker, mIndependenceCache);
 			lipton.performReduction();
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
@@ -223,7 +224,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
 	private <S> IIndependenceCache<S, L> getOrCreateIndependenceCache() {
 		if (mIndependenceCache == null) {
-			mIndependenceCache = new DefaultIndependenceCache<S, L>();
+			mIndependenceCache = new DefaultIndependenceCache<>();
 		}
 		return (IIndependenceCache<S, L>) mIndependenceCache;
 	}

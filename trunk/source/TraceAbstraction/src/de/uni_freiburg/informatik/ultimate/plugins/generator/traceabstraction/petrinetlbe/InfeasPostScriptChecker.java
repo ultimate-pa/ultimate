@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2021 Dennis Wölfing
+ * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
@@ -28,9 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IStuckPlaceChecker;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPostScriptChecker;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -41,35 +44,39 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 /**
- * Checks whether execution might get stuck in a place.
+ * Checks whether a given set of transitions is a post-script of the language INFEAS of infeasible traces.
+ *
+ * For the definition of post-scripts, see {@link IPostScriptChecker}.
+ *
+ * In program verification, we consider the language INFEAS of all infeasible traces. There, firing a transition labeled
+ * only with an assignment or havoc of a variable (in general, any statement with guard "true"), does not make a trace
+ * infeasible. Hence a set of transitions labeled by such statements is a post-script of INFEAS.
  *
  * @param <L>
  *            The type of the letters in the Petri net.
  * @param <P>
  *            The type of the places in the Petri net.
  */
-public class StuckPlaceChecker<L extends IIcfgTransition<?>, P> implements IStuckPlaceChecker<L, P> {
-	private final ILogger mLogger;
+public class InfeasPostScriptChecker<L extends IIcfgTransition<?>, P> implements IPostScriptChecker<L, P> {
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final ManagedScript mScript;
-	private final Map<P, Boolean> mCache;
+
+	// TODO move caching out of mightGetStuck (don't know yet where to)
+	private final Map<P, Boolean> mCache = new HashMap<>();
 
 	/**
-	 * Creates a StuckPlaceChecker.
+	 * Creates a new instance.
 	 *
-	 * @param logger
-	 *            A logging service.
 	 * @param services
 	 *            A {@link IUltimateServiceProvider} instance.
 	 * @param script
-	 *            A ManagedScript.
+	 *            A {@link ManagedScript} used for SMT queries.
 	 */
-	public StuckPlaceChecker(final ILogger logger, final IUltimateServiceProvider services,
-			final ManagedScript script) {
-		mLogger = logger;
+	public InfeasPostScriptChecker(final IUltimateServiceProvider services, final ManagedScript script) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(InfeasPostScriptChecker.class);
 		mScript = script;
-		mCache = new HashMap<>();
 	}
 
 	/**
@@ -85,18 +92,17 @@ public class StuckPlaceChecker<L extends IIcfgTransition<?>, P> implements IStuc
 			return mCache.get(place);
 		}
 
-		final UnmodifiableTransFormula[] tfs = petriNet.getSuccessors(place).stream()
-				.map(t -> t.getSymbol().getTransformula()).toArray(UnmodifiableTransFormula[]::new);
-		final UnmodifiableTransFormula tf;
-		try {
-			tf = TransFormulaUtils.constructRemainderGuard(mLogger, mServices, mScript, tfs);
-		} catch (final UnsupportedOperationException e) {
-			return true;
-		}
+		final boolean result = !isPostScript(petriNet, petriNet.getSuccessors(place));
+		mCache.put(place, result);
+		return result;
+	}
 
+	@Override
+	public boolean isPostScript(final IPetriNet<L, P> net, final Set<ITransition<L, P>> transitions) {
+		final UnmodifiableTransFormula[] tfs =
+				transitions.stream().map(t -> t.getSymbol().getTransformula()).toArray(UnmodifiableTransFormula[]::new);
+		final UnmodifiableTransFormula tf = TransFormulaUtils.constructRemainderGuard(mLogger, mServices, mScript, tfs);
 		final LBool result = Util.checkSat(mScript.getScript(), tf.getFormula());
-
-		mCache.put(place, result != LBool.UNSAT);
-		return result != LBool.UNSAT;
+		return result == LBool.UNSAT;
 	}
 }

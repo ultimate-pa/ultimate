@@ -81,8 +81,8 @@ public class LiptonReduction<L, P> {
 	private final ILogger mLogger;
 
 	private final ICompositionFactory<L> mCompositionFactory;
-	private final IStuckPlaceChecker<L, P> mStuckPlaceChecker;
-	private final IPlaceFactory<P> mPlaceFactory;
+	private final IPostScriptChecker<L, P> mStuckPlaceChecker;
+	private final ICopyPlaceFactory<P> mPlaceFactory;
 
 	private final IIndependenceRelation<Set<P>, L> mMoverCheck;
 	private final IIndependenceCache<?, L> mIndependenceCache;
@@ -109,16 +109,16 @@ public class LiptonReduction<L, P> {
 	 * @param compositionFactory
 	 *            An {@link ICompositionFactory} capable of performing compositions for the given alphabet.
 	 * @param placeFactory
-	 *            An {@link IPlaceFactory} capable of creating places for the given Petri net.
+	 *            An {@link ICopyPlaceFactory} capable of creating places for the given Petri net.
 	 * @param independenceRelation
 	 *            The independence relation used for mover checks.
 	 * @param stuckPlaceChecker
-	 *            An {@link IStuckPlaceChecker}.
+	 *            An {@link IPostScriptChecker}.
 	 */
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
-			final ICompositionFactory<L> compositionFactory, final IPlaceFactory<P> placeFactory,
+			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
-			final IStuckPlaceChecker<L, P> stuckPlaceChecker, final IIndependenceCache<?, L> cache) {
+			final IPostScriptChecker<L, P> stuckPlaceChecker, final IIndependenceCache<?, L> cache) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mCompositionFactory = compositionFactory;
@@ -421,7 +421,7 @@ public class LiptonReduction<L, P> {
 		}
 
 		for (final Map.Entry<P, Set<ITransition<L, P>>> entry : transitionsToBeReplaced.entrySet()) {
-			final P deadPlace = mPlaceFactory.createPlace(entry.getKey());
+			final P deadPlace = mPlaceFactory.copyPlace(entry.getKey());
 			petriNet.addPlace(deadPlace, false, false);
 
 			for (final ITransition<L, P> t : entry.getValue()) {
