@@ -172,6 +172,10 @@ public class TransFormulaBuilder {
 		return mBranchEncoders.addAll(arg0);
 	}
 
+	public Set<TermVariable> getBranchEncoders() {
+		return Collections.unmodifiableSet(mBranchEncoders);
+	}
+
 	public boolean containsInVar(final IProgramVar arg0) {
 		return mInVars.containsKey(arg0);
 	}

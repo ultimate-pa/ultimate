@@ -193,12 +193,21 @@ public final class TransFormulaUtils {
 					}
 				}
 			}
+
 			for (final TermVariable oldAuxVar : transFormula.get(i).getAuxVars()) {
 				final TermVariable newAuxVar = mgdScript.constructFreshCopy(oldAuxVar);
 				substitutionMapping.put(oldAuxVar, newAuxVar);
 				auxVars.add(newAuxVar);
 			}
-			tfb.addBranchEncoders(transFormula.get(i).getBranchEncoders());
+
+			final Set<TermVariable> branchEncoders = transFormula.get(i).getBranchEncoders();
+			if (DataStructureUtils.haveNonEmptyIntersection(branchEncoders, tfb.getBranchEncoders())) {
+				// If a branch encoder is used by multiple transformulas, this would require the same branch to be taken
+				// in each transformula, which is not the full behaviour of sequential composition.
+				// Because branch encoders are used in backtranslation, we cannot simply rename them here.
+				throw new UnsupportedOperationException("Cannot compose transitions with shared branch encoders");
+			}
+			tfb.addBranchEncoders(branchEncoders);
 
 			for (final IProgramVar var : transFormula.get(i).getInVars().keySet()) {
 				if (transFormula.get(i).getOutVars().containsKey(var)) {
