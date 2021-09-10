@@ -294,10 +294,8 @@ public class LiptonReduction<L, P> {
 		// is an ancestor of an accepting place.
 		final Set<ITransition<L, P>> relevantTransitions = new HashSet<>(mCoEnabledRelation.getImage(t1));
 		relevantTransitions.addAll(mCoEnabledRelation.getImage(t2));
-		final Set<P> successorPlaces = new HashSet<>(petriNet.getSuccessors(t1));
-		successorPlaces.remove(place);
-		relevantTransitions.addAll(successorPlaces.stream().flatMap(p2 -> petriNet.getSuccessors(p2).stream())
-				.collect(Collectors.toSet()));
+		petriNet.getSuccessors(t1).stream().filter(p -> p != place).flatMap(p -> petriNet.getSuccessors(p).stream())
+				.forEach(relevantTransitions::add);
 
 		final Set<Event<L, P>> events =
 				relevantTransitions.stream().flatMap(t -> getFirstEvents(t).stream()).collect(Collectors.toSet());
