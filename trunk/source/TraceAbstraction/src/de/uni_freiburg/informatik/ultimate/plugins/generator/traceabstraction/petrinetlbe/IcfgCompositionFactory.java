@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
@@ -72,7 +71,6 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
@@ -84,7 +82,6 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	private final Map<IcfgEdge, BranchEncoderRenaming> mBranchEncoderRenamingInFirst = new HashMap<>();
 
 	public IcfgCompositionFactory(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit) {
-		mLogger = services.getLoggingService().getLogger(IcfgCompositionFactory.class);
 		mMgdScript = cfgSmtToolkit.getManagedScript();
 		mEdgeBuilder = new IcfgEdgeBuilder(cfgSmtToolkit, services, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 	}
@@ -118,7 +115,6 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		final IcfgEdge renamedFirst;
 		if (shareBranchEncoders(first, second)) {
 			branchEncoderRenaming = BranchEncoderRenaming.makeFresh((IActionWithBranchEncoders) first, mMgdScript);
-			mLogger.warn("Renaming branch encoders in %s: %s", first, branchEncoderRenaming);
 			renamedFirst = branchEncoderRenaming.applyToIcfgEdge(first, mMgdScript, mEdgeBuilder);
 		} else {
 			branchEncoderRenaming = null;
@@ -131,7 +127,6 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		if (branchEncoderRenaming != null) {
 			// remember the branch encoder renaming used in this composition
 			mBranchEncoderRenamingInFirst.put(composition, branchEncoderRenaming);
-			mLogger.warn("%s = compose(%s, %s)", composition, first, second);
 		}
 
 		return composition;
