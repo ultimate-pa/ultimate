@@ -310,7 +310,7 @@ public class ManagedScript {
 		public TermVariable constructFreshCopy(final TermVariable tv) {
 			String basename = mTv2Basename.get(tv);
 			if (basename == null) {
-				mLogger.warn("TermVariabe " + tv
+				mLogger.warn("TermVariable " + tv
 						+ " not constructed by VariableManager. Cannot ensure absence of name clashes.");
 				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
 			}
