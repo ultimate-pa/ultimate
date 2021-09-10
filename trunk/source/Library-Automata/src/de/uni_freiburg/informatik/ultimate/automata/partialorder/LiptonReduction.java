@@ -506,8 +506,7 @@ public class LiptonReduction<L, P> {
 			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(t2 -> getFirstTransitions(t2).stream())
 					.collect(Collectors.toSet());
 		} else {
-			final ITransition<L, P> originalTransition = getOriginalTransition(t);
-			return new HashSet<>(Arrays.asList(originalTransition));
+			return Set.of(getOriginalTransition(t));
 		}
 	}
 
@@ -519,8 +518,7 @@ public class LiptonReduction<L, P> {
 			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(t2 -> getLastTransitions(t2).stream())
 					.collect(Collectors.toSet());
 		} else {
-			final ITransition<L, P> originalTransition = getOriginalTransition(t);
-			return new HashSet<>(Arrays.asList(originalTransition));
+			return Set.of(getOriginalTransition(t));
 		}
 	}
 
