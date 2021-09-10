@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
@@ -41,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.BranchEncoderRenaming;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -54,93 +57,99 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  * @author Elisabeth Schanno
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Matthias Heizmann (sourceheizmann@informatik.uni-freiburg.de)
- *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge> {
 
+	// Simplify composed TransFormula because various other algorithms in Ultimate have to work with this term.
+	private static final boolean SIMPLIFY_SEQ_COMP = true;
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+
+	// Try to eliminate auxiliary variables to avoid quantifier alternations in subsequent SMT solver calls during
+	// verification.
+	// TODO (Dominik 2020-12-02): Disabled due to timeout / OOM in old quantifier elimination (XnfTransformer).
+	private static final boolean TRY_AUX_VAR_ELIMINATION = false;
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
+	private final ILogger mLogger;
+	private final ManagedScript mMgdScript;
 	private final IcfgEdgeBuilder mEdgeBuilder;
-	private final Map<IcfgEdge, TermVariable> mBranchEncoders;
+
+	// Branch encoders introduced in parallel compositions (mapping from each input edge to its branch encoder)
+	private final Map<IcfgEdge, TermVariable> mBranchEncoders = new HashMap<>();
+
+	// In sequential compositions of edges with shared branch encoders, we must rename branch encoders in one of the
+	// edges. Here we map a composed edge to the branch encoder renaming used for the first argument of the composition.
+	private final Map<IcfgEdge, BranchEncoderRenaming> mBranchEncoderRenamingInFirst = new HashMap<>();
 
 	public IcfgCompositionFactory(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit) {
+		mLogger = services.getLoggingService().getLogger(IcfgCompositionFactory.class);
+		mMgdScript = cfgSmtToolkit.getManagedScript();
 		mEdgeBuilder = new IcfgEdgeBuilder(cfgSmtToolkit, services, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
-		mBranchEncoders = new HashMap<>();
 	}
 
-	/**
-	 * Work around a problem that can happen with repeated Lipton reduction: When applying the choice rule, a formula
-	 * with branch encoders is created. Then the Trace Abstraction may cause the composed transition to be duplicated
-	 * with different predicates as pre- or postconditions. If we then compose the two duplicated transitions they will
-	 * both have the same branch encoders and thus the resulting formula will only allow a subset of the original
-	 * traces. To prevent this, we must not compose transitions with the same branch encoders.
-	 *
-	 * @param t1
-	 *            The first transition.
-	 * @param t2
-	 *            The second transition.
-	 * @return false if the branch encoders prevent composition. true otherwise.
-	 */
-	private static boolean checkBranchEncoders(final IcfgEdge t1, final IcfgEdge t2) {
-		return !(t1 instanceof IActionWithBranchEncoders && t2 instanceof IActionWithBranchEncoders
-				&& DataStructureUtils.haveNonEmptyIntersection(
-						((IActionWithBranchEncoders) t1).getTransitionFormulaWithBranchEncoders().getBranchEncoders(),
-						((IActionWithBranchEncoders) t2).getTransitionFormulaWithBranchEncoders().getBranchEncoders()));
+	@Override
+	public boolean isSequentiallyComposable(final IcfgEdge t1, final IcfgEdge t2) {
+		// At the moment, we require target and source to coincide, i.e., we prevent compositions across threads.
+		// While such compositions may be desirable (they overcome a shortcoming of normal Lipton reduction), major
+		// refactoring is probably needed to support them: Since the composition must be an IcfgEdge, we must assign it
+		// some source and target locations, which would be unclear with such mixed-thread compositions.
+		return isComposable(t1) && isComposable(t2) && t1.getTarget() == t2.getSource();
+	}
+
+	@Override
+	public boolean isParallelyComposable(final List<IcfgEdge> letters) {
+		assert !letters.isEmpty() : "Cannot compose 0 transitions";
+		final IcfgLocation source = letters.get(0).getSource();
+		final IcfgLocation target = letters.get(0).getTarget();
+		return letters.stream().allMatch(t -> isComposable(t) && t.getSource() == source && t.getTarget() == target);
 	}
 
 	private static boolean isComposable(final IcfgEdge transition) {
 		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof Summary);
 	}
 
-	private static boolean isComposable(final List<IcfgEdge> transitions) {
-		return transitions.stream().allMatch(IcfgCompositionFactory::isComposable);
-	}
-
-	@Override
-	public boolean isSequentiallyComposable(final IcfgEdge t1, final IcfgEdge t2) {
-		return isComposable(t1) && isComposable(t2) && t1.getTarget() == t2.getSource() && checkBranchEncoders(t1, t2);
-	}
-
-	@Override
-	public boolean isParallelyComposable(final List<IcfgEdge> letters) {
-		final IcfgLocation source = letters.get(0).getSource();
-		final IcfgLocation target = letters.get(0).getTarget();
-		return letters.stream().allMatch(t -> isComposable(t) && t.getSource() == source && t.getTarget() == target
-				&& letters.stream().allMatch(t2 -> t == t2 || checkBranchEncoders(t, t2)));
-	}
-
 	@Override
 	public IcfgEdge composeSequential(final IcfgEdge first, final IcfgEdge second) {
-		// Simplify resulting TransFormula because various other algorithms in Ultimate
-		// have to work with this term.
-		final boolean simplify = true;
-		// Try to eliminate auxiliary variables to avoid quantifier alterations in
-		// subsequent SMT solver calls during verification.
-		// TODO (Dominik 2020-12-02): Disabled due to timeout / OOM in old quantifier elimination (XnfTransformer).
-		final boolean tryAuxVarElimination = false;
+		assert isSequentiallyComposable(first, second) : "Illegal sequential composition: " + first + " and " + second;
 
-		final IcfgLocation source = first.getSource();
-		final IcfgLocation target = second.getTarget();
+		final BranchEncoderRenaming branchEncoderRenaming;
+		final IcfgEdge renamedFirst;
+		if (shareBranchEncoders(first, second)) {
+			branchEncoderRenaming = BranchEncoderRenaming.makeFresh((IActionWithBranchEncoders) first, mMgdScript);
+			mLogger.warn("Renaming branch encoders in %s: %s", first, branchEncoderRenaming);
+			renamedFirst = branchEncoderRenaming.applyToIcfgEdge(first, mMgdScript, mEdgeBuilder);
+		} else {
+			branchEncoderRenaming = null;
+			renamedFirst = first;
+		}
 
-		final List<IcfgEdge> transitions = Arrays.asList(first, second);
-		assert isComposable(transitions) : "You cannot have calls or returns in sequential compositions";
+		final IcfgEdge composition = mEdgeBuilder.constructSequentialComposition(first.getSource(), second.getTarget(),
+				Arrays.asList(renamedFirst, second), SIMPLIFY_SEQ_COMP, TRY_AUX_VAR_ELIMINATION, false);
 
-		return mEdgeBuilder.constructSequentialComposition(source, target, transitions, simplify, tryAuxVarElimination,
-				false);
+		if (branchEncoderRenaming != null) {
+			// remember the branch encoder renaming used in this composition
+			mBranchEncoderRenamingInFirst.put(composition, branchEncoderRenaming);
+			mLogger.warn("%s = compose(%s, %s)", composition, first, second);
+		}
+
+		return composition;
+	}
+
+	private static boolean shareBranchEncoders(final IcfgEdge t1, final IcfgEdge t2) {
+		return t1 instanceof IActionWithBranchEncoders && t2 instanceof IActionWithBranchEncoders
+				&& DataStructureUtils.haveNonEmptyIntersection(
+						((IActionWithBranchEncoders) t1).getTransitionFormulaWithBranchEncoders().getBranchEncoders(),
+						((IActionWithBranchEncoders) t2).getTransitionFormulaWithBranchEncoders().getBranchEncoders());
 	}
 
 	@Override
 	public IcfgEdge composeParallel(final List<IcfgEdge> transitions) {
-		assert !transitions.isEmpty() : "Cannot compose 0 transitions";
-		assert isComposable(transitions) : "You cannot have calls or returns in parallel compositions";
+		assert isParallelyComposable(transitions) : "Illegal parallel composition: " + transitions;
 
 		final IcfgLocation source = transitions.get(0).getSource();
 		final IcfgLocation target = transitions.get(0).getTarget();
-		assert transitions.stream().allMatch(t -> t.getSource() == source
-				&& t.getTarget() == target) : "Can only compose transitions with equal sources and targets.";
 
 		final Map<TermVariable, IcfgEdge> branchIndicator2edge =
 				mEdgeBuilder.constructBranchIndicatorToEdgeMapping(transitions);
@@ -158,5 +167,10 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	@Override
 	public Map<IcfgEdge, TermVariable> getBranchEncoders() {
 		return mBranchEncoders;
+	}
+
+	@Override
+	public Map<IcfgEdge, BranchEncoderRenaming> getBranchEncoderRenamings() {
+		return mBranchEncoderRenamingInFirst;
 	}
 }

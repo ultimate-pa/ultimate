@@ -29,7 +29,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -468,21 +467,7 @@ public class LiptonReduction<L, P> {
 	 */
 	private void updateSequentialCompositions(final L composedLetter, final ITransition<L, P> transition1,
 			final ITransition<L, P> transition2) {
-		final List<ITransition<L, P>> combined = new ArrayList<>();
-
-		if (mSequentialCompositions.containsKey(transition1.getSymbol())) {
-			combined.addAll(mSequentialCompositions.get(transition1.getSymbol()));
-		} else {
-			combined.add(transition1);
-		}
-
-		if (mSequentialCompositions.containsKey(transition2.getSymbol())) {
-			combined.addAll(mSequentialCompositions.get(transition2.getSymbol()));
-		} else {
-			combined.add(transition2);
-		}
-
-		mSequentialCompositions.put(composedLetter, combined);
+		mSequentialCompositions.put(composedLetter, List.of(transition1, transition2));
 	}
 
 	/**

@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.BranchEncoderRenaming;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -268,11 +269,14 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			translator.mapEdges((IIcfgTransition<IcfgLocation>) newEdge, (IIcfgTransition<IcfgLocation>) originalEdge);
 		}
 
+		final Map<L, BranchEncoderRenaming> renamings = compositionFactory.getBranchEncoderRenamings();
 		for (final Map.Entry<L, List<L>> seq : reduction.getSequentialCompositions().entrySet()) {
 			final L newEdge = seq.getKey();
+			int i = 0;
 			for (final L originalEdge : seq.getValue()) {
 				translator.mapEdges((IIcfgTransition<IcfgLocation>) newEdge,
-						(IIcfgTransition<IcfgLocation>) originalEdge);
+						(IIcfgTransition<IcfgLocation>) originalEdge, i == 0 ? renamings.get(newEdge) : null);
+				i++;
 			}
 		}
 
@@ -306,5 +310,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 */
 	public interface IPLBECompositionFactory<L> extends ICompositionFactory<L> {
 		Map<L, TermVariable> getBranchEncoders();
+
+		Map<L, BranchEncoderRenaming> getBranchEncoderRenamings();
 	}
 }
