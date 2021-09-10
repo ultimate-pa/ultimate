@@ -263,7 +263,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		if (set == null) {
 			return Collections.emptySet();
 		}
-		return Collections.unmodifiableSet(mMap.get(domainElem));
+		return Collections.unmodifiableSet(set);
 	}
 
 	/**
