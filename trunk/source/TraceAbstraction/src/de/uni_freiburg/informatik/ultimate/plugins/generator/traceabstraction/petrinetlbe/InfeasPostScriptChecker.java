@@ -101,8 +101,14 @@ public class InfeasPostScriptChecker<L extends IIcfgTransition<?>, P> implements
 	public boolean isPostScript(final IPetriNet<L, P> net, final Set<ITransition<L, P>> transitions) {
 		final UnmodifiableTransFormula[] tfs =
 				transitions.stream().map(t -> t.getSymbol().getTransformula()).toArray(UnmodifiableTransFormula[]::new);
-		final UnmodifiableTransFormula tf = TransFormulaUtils.constructRemainderGuard(mLogger, mServices, mScript, tfs);
-		final LBool result = Util.checkSat(mScript.getScript(), tf.getFormula());
-		return result == LBool.UNSAT;
+		try {
+			final UnmodifiableTransFormula tf =
+					TransFormulaUtils.constructRemainderGuard(mLogger, mServices, mScript, tfs);
+			final LBool result = Util.checkSat(mScript.getScript(), tf.getFormula());
+			return result == LBool.UNSAT;
+		} catch (final UnsupportedOperationException e) {
+			// May be thrown by constructRemainderGuard if some aux vars cannot be eliminated.
+			return false;
+		}
 	}
 }
