@@ -135,7 +135,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 
 		final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
-		final PlaceFactory placeFactory = new PlaceFactory(predicateFactory);
+		final CopyPredicatePlaceFactory placeFactory = new CopyPredicatePlaceFactory(predicateFactory);
 		final InfeasPostScriptChecker<L, IPredicate> postScriptChecker =
 				new InfeasPostScriptChecker<>(mServices, mManagedScript);
 		try {

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * A factory for creating places in the Petri net.
  *
  */
-public class PlaceFactory implements ICopyPlaceFactory<IPredicate> {
+public class CopyPredicatePlaceFactory implements ICopyPlaceFactory<IPredicate> {
 	private final BasicPredicateFactory mPredicateFactory;
 
 	/**
@@ -43,7 +43,7 @@ public class PlaceFactory implements ICopyPlaceFactory<IPredicate> {
 	 * @param predicateFactory
 	 *            A predicate factory.
 	 */
-	public PlaceFactory(final BasicPredicateFactory predicateFactory) {
+	public CopyPredicatePlaceFactory(final BasicPredicateFactory predicateFactory) {
 		mPredicateFactory = predicateFactory;
 	}
 
