@@ -102,7 +102,7 @@ public final class CoenabledRelation<LETTER, PLACE> {
 		final Collection<Event<LETTER, PLACE>> events = bp.getEvents();
 		for (final Event<LETTER, PLACE> event1 : events) {
 			if (bp.getDummyRoot() != event1) {
-				final Set<Event<LETTER, PLACE>> coRelatedEvents = coRelation.computeCoRelatatedEvents(event1);
+				final Set<Event<LETTER, PLACE>> coRelatedEvents = coRelation.computeCoRelatedEvents(event1);
 				for (final Event<LETTER, PLACE> coRelatedEvent : coRelatedEvents) {
 					hashRelation.addPair(event1.getTransition(), coRelatedEvent.getTransition());
 				}

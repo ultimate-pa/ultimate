@@ -264,12 +264,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			final Set<Condition<LETTER, PLACE>> coRelatedConditions;
 			final HashRelation<PLACE, Condition<LETTER, PLACE>> place2coRelatedConditions = new HashRelation<>();
 			if (mUseB32Optimization) {
-				coRelatedConditions = coRelation.computeNonCutoffCoRelatatedConditions(newConditions.iterator().next());
+				coRelatedConditions = coRelation.computeNonCutoffCoRelatedConditions(newConditions.iterator().next());
 				for (final Condition<LETTER, PLACE> c : coRelatedConditions) {
 					place2coRelatedConditions.addPair(c.getPlace(), c);
 				}
 			} else {
-				coRelatedConditions = coRelation.computeCoRelatatedConditions(newConditions.iterator().next());
+				coRelatedConditions = coRelation.computeCoRelatedConditions(newConditions.iterator().next());
 				for (final Condition<LETTER, PLACE> c : coRelatedConditions) {
 					if (!c.getPredecessorEvent().isCutoffEvent()) {
 						place2coRelatedConditions.addPair(c.getPlace(), c);

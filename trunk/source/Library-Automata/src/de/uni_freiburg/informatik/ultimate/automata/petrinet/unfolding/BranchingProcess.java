@@ -475,7 +475,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	public Set<PLACE> computeCoRelatedPlaces(final Condition<LETTER, PLACE> cond) {
 		final Set<PLACE> result = new HashSet<>();
-		for (final Condition<LETTER,PLACE> c : mCoRelation.computeCoRelatatedConditions(cond))
+		for (final Condition<LETTER,PLACE> c : mCoRelation.computeCoRelatedConditions(cond))
 		{
 			result.add(c.getPlace());
 		}
@@ -516,7 +516,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		}
 		computeAncestors(companion2cutoff, vitalEvents, worklist);
 		for (final Condition<LETTER, PLACE> c : acceptingConditions) {
-			for (final Event<LETTER, PLACE> coRelated : mCoRelation.computeCoRelatatedEvents(c)) {
+			for (final Event<LETTER, PLACE> coRelated : mCoRelation.computeCoRelatedEvents(c)) {
 				if (!vitalEvents.contains(coRelated)) {
 					vitalEvents.add(coRelated);
 					worklist.add(coRelated);
@@ -554,7 +554,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				// successors. We add all co-related events of e to make sure
 				// that we do not miss a vital event and accept that we add
 				// non-vital events to the output.
-				for (final Event<LETTER, PLACE> eCorel : mCoRelation.computeCoRelatatedEvents(eCutoff)) {
+				for (final Event<LETTER, PLACE> eCorel : mCoRelation.computeCoRelatedEvents(eCutoff)) {
 					if (!vitalEvents.contains(eCorel)) {
 						vitalEvents.add(eCorel);
 						worklist.add(eCorel);

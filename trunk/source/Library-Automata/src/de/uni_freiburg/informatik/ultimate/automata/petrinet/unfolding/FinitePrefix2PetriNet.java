@@ -217,7 +217,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				if (mVitalRepresentatives.add(predRepresentative)) {
 					worklist.add(predRepresentative);
 				}
-				for (final Event<LETTER, PLACE> e : bp.getCoRelation().computeCoRelatatedEvents(c)) {
+				for (final Event<LETTER, PLACE> e : bp.getCoRelation().computeCoRelatedEvents(c)) {
 					if (mVitalRepresentatives.add(mEventRepresentatives.find(e))) {
 						worklist.add(mEventRepresentatives.find(e));
 					}

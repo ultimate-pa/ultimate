@@ -279,23 +279,23 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 	}
 
 	@Override
-	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
+	public Set<Condition<LETTER, PLACE>> computeCoRelatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = streamCoRelatedConditions(cond).collect(Collectors.toSet());
 		if (EXTENDED_ASSERTION_CHECKING) {
 			assert result
-					.equals(computeCoRelatatedConditionsInefficient(cond)) : "inconsistent co-relation information";
+					.equals(computeCoRelatedConditionsInefficient(cond)) : "inconsistent co-relation information";
 		}
 		return result;
 	}
 
 	@Override
-	public Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
+	public Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result =
 				streamNonCutoffCoRelatedConditions(cond).collect(Collectors.toSet());
 		return result;
 	}
 
-	private Set<Condition<LETTER, PLACE>> computeCoRelatatedConditionsInefficient(final Condition<LETTER, PLACE> cond) {
+	private Set<Condition<LETTER, PLACE>> computeCoRelatedConditionsInefficient(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = new HashSet<>();
 		for (final Condition<LETTER, PLACE> c2 : mBranchingProcess.getConditions()) {
 			if (isInCoRelation(cond, c2)) {
@@ -315,13 +315,13 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 	}
 
 	@Override
-	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond,
+	public Set<Condition<LETTER, PLACE>> computeCoRelatedConditions(final Condition<LETTER, PLACE> cond,
 			final PLACE p) {
 		return streamCoRelatedConditions(cond).filter(x -> x.getPlace().equals(p)).collect(Collectors.toSet());
 	}
 
 	@Override
-	public Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(final Event<LETTER, PLACE> e) {
+	public Set<Event<LETTER, PLACE>> computeCoRelatedEvents(final Event<LETTER, PLACE> e) {
 		final Set<Condition<LETTER, PLACE>> succCond = e.getSuccessorConditions();
 		if (succCond.isEmpty()) {
 			throw new UnsupportedOperationException("event without successor conditions");
@@ -339,7 +339,7 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 	}
 
 	@Override
-	public Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(final Condition<LETTER, PLACE> c) {
+	public Set<Event<LETTER, PLACE>> computeCoRelatedEvents(final Condition<LETTER, PLACE> c) {
 		return streamCoRelatedEvents(c).collect(Collectors.toSet());
 	}
 

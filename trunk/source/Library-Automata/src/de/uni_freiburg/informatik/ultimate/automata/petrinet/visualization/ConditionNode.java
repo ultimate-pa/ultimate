@@ -62,7 +62,7 @@ public final class ConditionNode<LETTER, PLACE> extends PetriNetVisualizationNod
 		annot.put("CorrespondingPlace", condition.getPlace());
 		annot.put("NumberSuccesorEvents", condition.getSuccessorEvents().size());
 		final Set<Condition<LETTER, PLACE>> allCoRelatedConditions = branchingProcess.getCoRelation()
-				.computeCoRelatatedConditions(condition);
+				.computeCoRelatedConditions(condition);
 		annot.put("AllConditionsInCoRelation", allCoRelatedConditions);
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);

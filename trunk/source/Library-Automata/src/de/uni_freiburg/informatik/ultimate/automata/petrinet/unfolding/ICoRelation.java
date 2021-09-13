@@ -122,7 +122,7 @@ public interface ICoRelation<LETTER, PLACE> {
 	 * @return Set of all {@link Condition}s that are in co-relation to the
 	 *         {@link Condition} cond.
 	 */
-	Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(Condition<LETTER, PLACE> cond);
+	Set<Condition<LETTER, PLACE>> computeCoRelatedConditions(Condition<LETTER, PLACE> cond);
 
 	/**
 	 * Warning:
@@ -136,7 +136,7 @@ public interface ICoRelation<LETTER, PLACE> {
 	 *         {@link Condition} cond and whose {@link Condition#getPlace()}
 	 *         is p.
 	 */
-	Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(Condition<LETTER, PLACE> cond, PLACE p);
+	Set<Condition<LETTER, PLACE>> computeCoRelatedConditions(Condition<LETTER, PLACE> cond, PLACE p);
 
 
 	/**
@@ -147,17 +147,17 @@ public interface ICoRelation<LETTER, PLACE> {
 	 */
 	int computeMaximalDegree();
 
-	Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(Event<LETTER, PLACE> e);
+	Set<Event<LETTER, PLACE>> computeCoRelatedEvents(Event<LETTER, PLACE> e);
 
-	Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatatedConditions(Condition<LETTER, PLACE> cond);
+	Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatedConditions(Condition<LETTER, PLACE> cond);
 
-	Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(Condition<LETTER, PLACE> c);
+	Set<Event<LETTER, PLACE>> computeCoRelatedEvents(Condition<LETTER, PLACE> c);
 
 	default TreeHashRelation<Integer, Condition<LETTER, PLACE>> computeHistogramOfDegree(
 			final Iterable<Condition<LETTER, PLACE>> conditions) {
 		final TreeHashRelation<Integer, Condition<LETTER, PLACE>> result = new TreeHashRelation<>();
 		for (final Condition<LETTER, PLACE> c : conditions) {
-			result.addPair(computeCoRelatatedConditions(c).size(), c);
+			result.addPair(computeCoRelatedConditions(c).size(), c);
 		}
 		return result;
 	}

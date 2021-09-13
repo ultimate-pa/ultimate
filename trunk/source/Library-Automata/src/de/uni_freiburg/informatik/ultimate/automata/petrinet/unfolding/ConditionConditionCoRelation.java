@@ -261,21 +261,21 @@ public class ConditionConditionCoRelation<LETTER, PLACE> implements ICoRelation<
 
 
 	@Override
-	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
+	public Set<Condition<LETTER, PLACE>> computeCoRelatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = coRelatedConditions.getImage(cond);
 		if (EXTENDED_ASSERTION_CHECKING) {
 			assert result
-					.equals(computeCoRelatatedConditionsInefficient(cond)) : "inconsistent co-relation information";
+					.equals(computeCoRelatedConditionsInefficient(cond)) : "inconsistent co-relation information";
 		}
 		return result;
 	}
 
 	@Override
-	public Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
+	public Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result =   coRelatedConditions.getImage(cond).stream().filter(c->!c.getPredecessorEvent().isCutoffEvent()).collect(Collectors.toSet());
 		return result;
 	}
-	private Set<Condition<LETTER, PLACE>> computeCoRelatatedConditionsInefficient(final Condition<LETTER, PLACE> cond) {
+	private Set<Condition<LETTER, PLACE>> computeCoRelatedConditionsInefficient(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = new HashSet<>();
 		for (final Condition<LETTER, PLACE> c2 : mBranchingProcess.getConditions()) {
 			if (isInCoRelation(cond, c2)) {
@@ -294,7 +294,7 @@ public class ConditionConditionCoRelation<LETTER, PLACE> implements ICoRelation<
 	}
 
 	@Override
-	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond,
+	public Set<Condition<LETTER, PLACE>> computeCoRelatedConditions(final Condition<LETTER, PLACE> cond,
 			final PLACE p) {
 		return  coRelatedConditions.getImage(cond).stream().filter(x -> x.getPlace().equals(p))
 				.collect(Collectors.toSet());
@@ -302,13 +302,13 @@ public class ConditionConditionCoRelation<LETTER, PLACE> implements ICoRelation<
 
 
 	@Override
-	public Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(final Event<LETTER, PLACE> e) {
+	public Set<Event<LETTER, PLACE>> computeCoRelatedEvents(final Event<LETTER, PLACE> e) {
 		assert false : "have to be implemented ";
 		return null; 
 	}
 
 	@Override
-	public Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(final Condition<LETTER, PLACE> c) {
+	public Set<Event<LETTER, PLACE>> computeCoRelatedEvents(final Condition<LETTER, PLACE> c) {
 		assert false : "have to be implemented ";
 		return null; 
 	}
