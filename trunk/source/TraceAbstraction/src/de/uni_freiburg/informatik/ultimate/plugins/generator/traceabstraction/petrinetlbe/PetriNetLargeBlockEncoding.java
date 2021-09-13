@@ -94,7 +94,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private final BlockEncodingBacktranslator<L> mBacktranslator;
 
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics;
-	private final Map<ITransition<L, IPredicate>, ITransition<L, IPredicate>> mReplacedTransitions;
+	private final Map<ITransition<L, IPredicate>, ITransition<L, IPredicate>> mReplacedTransitions = new HashMap<>();
 
 	/**
 	 * Performs Large Block Encoding on the given Petri net.
@@ -132,8 +132,6 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		final IIndependenceRelation<Set<IPredicate>, L> moverCheck =
 				createIndependenceRelation(petriNetLbeSettings, predicateFactory);
 
-		mReplacedTransitions = new HashMap<>();
-
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 
 		final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
@@ -148,14 +146,10 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
 			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
 					moverCheck.getStatistics());
-		} catch (final AutomataOperationCanceledException aoce) {
+		} catch (final AutomataOperationCanceledException | ToolchainCanceledException ce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
-			aoce.addRunningTaskInfo(runningTaskInfo);
-			throw aoce;
-		} catch (final ToolchainCanceledException tce) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
-			tce.addRunningTaskInfo(runningTaskInfo);
-			throw tce;
+			ce.addRunningTaskInfo(runningTaskInfo);
+			throw ce;
 		}
 	}
 
