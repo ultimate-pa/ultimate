@@ -85,7 +85,10 @@ public class InfeasPostScriptChecker<L extends IIcfgTransition<?>, P> implements
 	 * composition of two transitions was discarded due two duplicate pre-/post-conditions. This is because there will
 	 * always be other non-discarded executable transitions as otherwise mightGetStuck would have returned true for the
 	 * place where composition happened and therefore the transitions would not have been composed.
+	 *
+	 * @deprecated Use {@link #isPostScript(IPetriNet, Set)} as soon as caching is sorted out
 	 */
+	@Deprecated(since = "2021-09-13")
 	@Override
 	public boolean mightGetStuck(final IPetriNet<L, P> petriNet, final P place) {
 		if (mCache.containsKey(place)) {

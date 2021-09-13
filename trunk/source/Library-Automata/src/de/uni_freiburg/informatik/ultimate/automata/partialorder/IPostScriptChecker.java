@@ -60,7 +60,10 @@ public interface IPostScriptChecker<L, P> {
 	 * @param place
 	 *            A place in the Petri net.
 	 * @return false if there is always successor transition with a satisfied formula, true if there might not be one.
+	 *
+	 * @deprecated Use {@link #isPostScript(IPetriNet, Set)} as soon as caching is sorted out
 	 */
+	@Deprecated(since = "2021-09-13")
 	default boolean mightGetStuck(final IPetriNet<L, P> petriNet, final P place) {
 		return !isPostScript(petriNet, petriNet.getSuccessors(place));
 	}
