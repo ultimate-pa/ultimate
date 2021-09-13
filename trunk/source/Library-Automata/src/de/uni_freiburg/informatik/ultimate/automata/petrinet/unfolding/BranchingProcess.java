@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -397,11 +396,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	private boolean conflictPathCheck(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2,
 			final Set<Object> c2Ancestors) {
-		// Check for timeout because the conflict check can take a long time on large nets.
-		if (!mServices.getProgressAwareTimer().continueProcessing()) {
-			throw new ToolchainCanceledException(getClass());
-		}
-
 		if (c1 == c2) {
 			throw new IllegalArgumentException(c1 + " ancestor of " + c2);
 		}
