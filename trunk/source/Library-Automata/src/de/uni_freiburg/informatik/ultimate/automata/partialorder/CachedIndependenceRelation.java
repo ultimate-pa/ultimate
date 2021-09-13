@@ -128,16 +128,6 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		return mStatistics;
 	}
 
-	/**
-	 * Purge all information involving a given letter from the cache.
-	 *
-	 * @param a
-	 *            The letter whose independencies and dependencies shall be removed.
-	 */
-	public void removeFromCache(final L a) {
-		mCache.remove(a);
-	}
-
 	private final class CachedIndependenceStatisticsProvider extends IndependenceStatisticsDataProvider {
 		public static final String CACHE_QUERIES = "Cache Queries";
 		public static final String CACHE_STATISTICS = "Statistics on independence cache";

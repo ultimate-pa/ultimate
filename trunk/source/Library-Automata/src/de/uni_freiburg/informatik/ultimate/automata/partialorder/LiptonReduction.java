@@ -193,12 +193,6 @@ public class LiptonReduction<L, P> {
 		}
 	}
 
-	private void removeMoverProperties(final L transition) {
-		if (mIndependenceCache != null) {
-			mIndependenceCache.remove(transition);
-		}
-	}
-
 	/**
 	 * Performs the choice rule on a Petri net.
 	 *
@@ -261,7 +255,6 @@ public class LiptonReduction<L, P> {
 		// delete obsolete information
 		for (final ITransition<L, P> t : composedTransitions) {
 			mCoEnabledRelation.deleteElement(t);
-			removeMoverProperties(t.getSymbol());
 		}
 
 		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
