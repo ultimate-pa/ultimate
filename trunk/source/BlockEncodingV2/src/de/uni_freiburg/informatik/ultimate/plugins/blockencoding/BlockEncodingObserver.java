@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
@@ -51,15 +52,15 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final BlockEncodingBacktranslator mBacktranslator;
+	private final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> mBacktranslator;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private IIcfg<?> mResult;
 
 	public BlockEncodingObserver(final ILogger logger, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final SimplificationTechnique simplTech,
-			final XnfConversionTechnique xnfConvTech) {
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator,
+			final SimplificationTechnique simplTech, final XnfConversionTechnique xnfConvTech) {
 		mLogger = logger;
 		mServices = services;
 		mBacktranslator = backtranslator;

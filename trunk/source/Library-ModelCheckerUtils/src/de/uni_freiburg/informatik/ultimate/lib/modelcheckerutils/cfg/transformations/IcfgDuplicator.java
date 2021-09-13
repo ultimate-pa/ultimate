@@ -72,13 +72,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class IcfgDuplicator {
 
 	private final ILogger mLogger;
-	private final BlockEncodingBacktranslator mBacktranslator;
+	private final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> mBacktranslator;
 	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache;
 	private final ManagedScript mManagedScript;
 	private final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> mOld2New;
 
 	public IcfgDuplicator(final ILogger logger, final IUltimateServiceProvider services,
-			final ManagedScript managedScript, final BlockEncodingBacktranslator backtranslator) {
+			final ManagedScript managedScript,
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator) {
 		mLogger = logger;
 		mBacktranslator = backtranslator;
 		mCallCache = new HashMap<>();

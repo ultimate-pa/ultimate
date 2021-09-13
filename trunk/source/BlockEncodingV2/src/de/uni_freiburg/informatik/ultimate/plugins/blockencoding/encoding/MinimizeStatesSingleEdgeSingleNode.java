@@ -33,6 +33,7 @@ import java.util.function.BiPredicate;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -48,7 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformat
 public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 
 	public MinimizeStatesSingleEdgeSingleNode(final IcfgEdgeBuilder edgeBuilder,
-			final IUltimateServiceProvider services, final BlockEncodingBacktranslator backtranslator,
+			final IUltimateServiceProvider services,
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator,
 			final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting, final ILogger logger,
 			final boolean ignoreBlowup) {
 		super(edgeBuilder, services, backtranslator, funIsAccepting, logger, ignoreBlowup);

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -61,7 +62,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
 	public BaseMinimizeStates(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator,
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator,
 			final BiPredicate<IIcfg<?>, IcfgLocation> funHasToBePreserved, final ILogger logger,
 			final boolean ignoreBlowup) {
 		super(logger, services, backtranslator);

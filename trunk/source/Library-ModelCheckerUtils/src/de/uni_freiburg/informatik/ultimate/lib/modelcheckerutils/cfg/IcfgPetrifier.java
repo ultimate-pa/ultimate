@@ -75,8 +75,7 @@ public class IcfgPetrifier {
 	private final ILogger mLogger;
 
 	private final IIcfg<IcfgLocation> mPetrifiedIcfg;
-	private final BlockEncodingBacktranslator mBacktranslator;
-
+	private final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> mBacktranslator;
 
 	public IcfgPetrifier(final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final IcfgConstructionMode icfgConstructionModefinal, final int numberOfThreadInstances) {
@@ -89,8 +88,8 @@ public class IcfgPetrifier {
 		final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads = icfg.getCfgSmtToolkit()
 				.getConcurrencyInformation().getJoinTransitions();
 
-		final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class,
-				mLogger);
+		final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator =
+				new BlockEncodingBacktranslator<>(IcfgEdge.class, Term.class, mLogger);
 		final IcfgDuplicator duplicator = new IcfgDuplicator(mLogger, mServices,
 				icfg.getCfgSmtToolkit().getManagedScript(), backtranslator);
 		mPetrifiedIcfg = duplicator.copy(icfg);

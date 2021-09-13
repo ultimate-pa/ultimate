@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.BranchEncoderRenaming;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -92,7 +91,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private IIndependenceCache<?, L> mIndependenceCache;
 
 	private final BoundedPetriNet<L, IPredicate> mResult;
-	private final BlockEncodingBacktranslator mBacktranslator;
+	private final BlockEncodingBacktranslator<L> mBacktranslator;
 
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics;
 	private final Map<ITransition<L, IPredicate>, ITransition<L, IPredicate>> mReplacedTransitions;
@@ -257,16 +256,15 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return "applying " + getClass().getSimpleName() + " to Petri net that " + petriNet.sizeInformation();
 	}
 
-	private BlockEncodingBacktranslator createBacktranslator(final Class<L> clazz,
+	private BlockEncodingBacktranslator<L> createBacktranslator(final Class<L> clazz,
 			final LiptonReduction<L, IPredicate> reduction, final IPLBECompositionFactory<L> compositionFactory) {
-		final BlockEncodingBacktranslator translator =
-				new BlockEncodingBacktranslator((Class<IIcfgTransition<IcfgLocation>>) clazz, Term.class, mLogger);
+		final BlockEncodingBacktranslator<L> translator = new BlockEncodingBacktranslator<>(clazz, Term.class, mLogger);
 
 		for (final Map.Entry<ITransition<L, IPredicate>, ITransition<L, IPredicate>> entry : mReplacedTransitions
 				.entrySet()) {
 			final L originalEdge = entry.getKey().getSymbol();
 			final L newEdge = entry.getValue().getSymbol();
-			translator.mapEdges((IIcfgTransition<IcfgLocation>) newEdge, (IIcfgTransition<IcfgLocation>) originalEdge);
+			translator.mapEdges(newEdge, originalEdge);
 		}
 
 		final Map<L, BranchEncoderRenaming> renamings = compositionFactory.getBranchEncoderRenamings();
@@ -274,8 +272,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final L newEdge = seq.getKey();
 			int i = 0;
 			for (final L originalEdge : seq.getValue()) {
-				translator.mapEdges((IIcfgTransition<IcfgLocation>) newEdge,
-						(IIcfgTransition<IcfgLocation>) originalEdge, i == 0 ? renamings.get(newEdge) : null);
+				translator.mapEdges(newEdge, originalEdge, i == 0 ? renamings.get(newEdge) : null);
 				i++;
 			}
 		}
@@ -285,8 +282,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final L newEdge = choice.getKey();
 			for (final L originalEdge : choice.getValue()) {
 				final TermVariable branchEncoder = branchEncoders.get(originalEdge);
-				translator.mapEdges((IIcfgTransition<IcfgLocation>) newEdge,
-						(IIcfgTransition<IcfgLocation>) originalEdge, branchEncoder);
+				translator.mapEdges(newEdge, originalEdge, branchEncoder);
 			}
 		}
 
@@ -297,7 +293,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return mResult;
 	}
 
-	public BlockEncodingBacktranslator getBacktranslator() {
+	public BlockEncodingBacktranslator<L> getBacktranslator() {
 		return mBacktranslator;
 	}
 

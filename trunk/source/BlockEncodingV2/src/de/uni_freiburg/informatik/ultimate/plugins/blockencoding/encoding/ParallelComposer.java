@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -57,7 +58,7 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
 	public ParallelComposer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator, final ILogger logger) {
 		super(logger, services, backtranslator);
 		mEdgesRemoved = 0;
 		mEdgeBuilder = edgeBuilder;

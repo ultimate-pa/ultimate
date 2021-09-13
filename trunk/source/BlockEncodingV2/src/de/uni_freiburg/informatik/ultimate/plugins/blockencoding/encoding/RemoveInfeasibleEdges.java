@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 
 	public RemoveInfeasibleEdges(final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator, final ILogger logger) {
 		super(logger, services, backtranslator);
 	}
 

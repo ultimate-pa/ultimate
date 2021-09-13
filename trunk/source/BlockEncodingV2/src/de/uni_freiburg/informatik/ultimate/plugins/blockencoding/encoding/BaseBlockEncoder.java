@@ -58,14 +58,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEncoder<LOC> {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-	private final BlockEncodingBacktranslator mBacktranslator;
+	private final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> mBacktranslator;
 
 	protected int mRemovedEdges;
 	protected int mRemovedLocations;
 	private BasicIcfg<LOC> mResult;
 
 	public BaseBlockEncoder(final ILogger logger, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator) {
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator) {
 		assert services != null;
 		mServices = services;
 		mLogger = logger;

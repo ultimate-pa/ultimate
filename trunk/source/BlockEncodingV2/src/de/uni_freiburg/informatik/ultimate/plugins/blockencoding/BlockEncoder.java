@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -81,7 +82,7 @@ public final class BlockEncoder {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final BlockEncodingBacktranslator mBacktranslator;
+	private final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> mBacktranslator;
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
 	private BasicIcfg<IcfgLocation> mIterationResult;
@@ -103,8 +104,8 @@ public final class BlockEncoder {
 	 *            An icfg
 	 */
 	public BlockEncoder(final ILogger logger, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final IcfgEdgeBuilder builder,
-			final BasicIcfg<IcfgLocation> icfg) {
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator,
+			final IcfgEdgeBuilder builder, final BasicIcfg<IcfgLocation> icfg) {
 		mLogger = logger;
 		mServices = services;
 		mIterationResult = null;
@@ -137,7 +138,7 @@ public final class BlockEncoder {
 		mServices = services;
 		mLogger = logger;
 		mRunAsPlugin = false;
-		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+		mBacktranslator = new BlockEncodingBacktranslator<>(IcfgEdge.class, Term.class, mLogger);
 		final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
 		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique, xnfConversionTechnique);
 		final BasicIcfg<IcfgLocation> copiedIcfg =
@@ -149,7 +150,7 @@ public final class BlockEncoder {
 		return mIterationResult;
 	}
 
-	public BlockEncodingBacktranslator getBacktranslator() {
+	public BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> getBacktranslator() {
 		return mBacktranslator;
 	}
 

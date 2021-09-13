@@ -106,7 +106,8 @@ public class ThreadInstanceAdder {
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap,
-			final BlockEncodingBacktranslator backtranslator, final boolean addThreadInUseViolationEdges) {
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator,
+			final boolean addThreadInUseViolationEdges) {
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct : forkCurrentThreads) {
 			if (addThreadInUseViolationEdges) {
 				final IcfgLocation callerNode = fct.getSource();
@@ -204,7 +205,8 @@ public class ThreadInstanceAdder {
 	 */
 	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct,
 			final IProgramNonOldVar[] threadIdVars, final IIcfg<? extends IcfgLocation> icfg,
-			final String threadInstanceName, final BlockEncodingBacktranslator backtranslator,
+			final String threadInstanceName,
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator,
 			final boolean addThreadInUseViolationEdges) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
@@ -253,9 +255,9 @@ public class ThreadInstanceAdder {
 		}
 	}
 
-	private void integrateForkEdge(final IIcfgForkTransitionThreadCurrent<IcfgLocation> originProvider,
-			final BlockEncodingBacktranslator backtranslator, final IcfgLocation source, final IcfgLocation target,
-			final IcfgEdge newEdge) {
+	private static void integrateForkEdge(final IIcfgForkTransitionThreadCurrent<IcfgLocation> originProvider,
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator, final IcfgLocation source,
+			final IcfgLocation target, final IcfgEdge newEdge) {
 		source.addOutgoing(newEdge);
 		target.addIncoming(newEdge);
 
@@ -272,8 +274,8 @@ public class ThreadInstanceAdder {
 		});
 	}
 
-	private IIcfgTransition<IcfgLocation> getOriginalEdge(final IIcfgTransition<IcfgLocation> newEdge,
-			final BlockEncodingBacktranslator backtranslator) {
+	private static IIcfgTransition<IcfgLocation> getOriginalEdge(final IIcfgTransition<IcfgLocation> newEdge,
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator) {
 		final List<IIcfgTransition<IcfgLocation>> transRes =
 				backtranslator.translateTrace(Collections.singletonList(newEdge));
 		if (transRes.size() != 1) {
@@ -291,7 +293,8 @@ public class ThreadInstanceAdder {
 	 */
 	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot,
 			final String threadInstanceName, final IProgramNonOldVar[] threadIdVars,
-			final IIcfg<? extends IcfgLocation> icfg, final BlockEncodingBacktranslator backtranslator,
+			final IIcfg<? extends IcfgLocation> icfg,
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator,
 			final boolean addThreadInUseViolationEdges) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags

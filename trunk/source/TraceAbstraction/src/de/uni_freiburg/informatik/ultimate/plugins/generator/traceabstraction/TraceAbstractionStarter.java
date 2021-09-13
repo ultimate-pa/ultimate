@@ -517,7 +517,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg,
 				IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
 		final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
-		mLocationMap = ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getLocationMapping();
+		mLocationMap = ((BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>>) icfgPetrifier.getBacktranslator())
+				.getLocationMapping();
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		return petrifiedIcfg;
 	}

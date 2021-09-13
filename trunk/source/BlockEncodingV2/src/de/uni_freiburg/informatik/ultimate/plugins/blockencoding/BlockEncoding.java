@@ -38,7 +38,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -57,7 +59,7 @@ public class BlockEncoding implements IGenerator {
 	private ILogger mLogger;
 	private BlockEncodingObserver mObserver;
 	private IUltimateServiceProvider mServices;
-	private BlockEncodingBacktranslator mBacktranslator;
+	private BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> mBacktranslator;
 	private ModelType mOldGraphType;
 
 	@Override
@@ -123,7 +125,7 @@ public class BlockEncoding implements IGenerator {
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+		mBacktranslator = new BlockEncodingBacktranslator<>(IcfgEdge.class, Term.class, mLogger);
 		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 	}
 

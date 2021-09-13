@@ -55,7 +55,7 @@ public final class InterproceduralSequenzer extends BaseBlockEncoder<IcfgLocatio
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
 	public InterproceduralSequenzer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator, final ILogger logger) {
 		super(logger, services, backtranslator);
 		mEdgeBuilder = edgeBuilder;
 	}

@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.BranchEncoderRenaming;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -61,30 +61,26 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class BlockEncodingBacktranslator extends
-		DefaultTranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, IcfgLocation, IcfgLocation> {
+public class BlockEncodingBacktranslator<L extends IAction>
+		extends DefaultTranslator<L, L, Term, Term, IcfgLocation, IcfgLocation> {
 
 	private static final boolean PRINT_MAPPINGS = false;
 
-	private final Map<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> mSequentialCompositions =
-			new HashMap<>();
+	private final Map<L, List<L>> mSequentialCompositions = new HashMap<>();
 
 	// For each sequential compositions, stores renamings applied to branch encoders (or null if there are none). Such
 	// renaming may be necessary when sequentially composing transitions that share branch encoders.
-	private final Map<IIcfgTransition<IcfgLocation>, List<BranchEncoderRenaming>> mBranchEncoderRenamings =
-			new HashMap<>();
+	private final Map<L, List<BranchEncoderRenaming>> mBranchEncoderRenamings = new HashMap<>();
 
-	private final Map<IIcfgTransition<IcfgLocation>, Set<IIcfgTransition<IcfgLocation>>> mParallelCompositions =
-			new HashMap<>();
+	private final Map<L, Set<L>> mParallelCompositions = new HashMap<>();
 
-	private final Map<IIcfgTransition<IcfgLocation>, TermVariable> mBranchEncoderMapping = new HashMap<>();
+	private final Map<L, TermVariable> mBranchEncoderMapping = new HashMap<>();
 
-	private final Map<IIcfgTransition<IcfgLocation>, Consumer<AtomicTraceElementBuilder<IIcfgTransition<IcfgLocation>>>> mAteTransformer =
-			new HashMap<>();
+	private final Map<L, Consumer<AtomicTraceElementBuilder<L>>> mAteTransformer = new HashMap<>();
 
 	private final Map<IcfgLocation, IcfgLocation> mLocationMapping = new HashMap<>();
 	private final ILogger mLogger;
-	private final Set<IIcfgTransition<IcfgLocation>> mIntermediateEdges = new HashSet<>();
+	private final Set<L> mIntermediateEdges = new HashSet<>();
 	/**
 	 * Function that determines how expression (here {@link Term}s) are translated. By default we use the identity.
 	 */
@@ -95,16 +91,15 @@ public class BlockEncodingBacktranslator extends
 	 */
 	private Set<Term> mVariableBlacklist = Collections.emptySet();
 
-	public BlockEncodingBacktranslator(final Class<? extends IIcfgTransition<IcfgLocation>> traceElementType,
-			final Class<Term> expressionType, final ILogger logger) {
+	public BlockEncodingBacktranslator(final Class<? extends L> traceElementType, final Class<Term> expressionType,
+			final ILogger logger) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mLogger = logger;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term>
-			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> oldPe) {
+	public IProgramExecution<L, Term> translateProgramExecution(final IProgramExecution<L, Term> oldPe) {
 		if (oldPe == null) {
 			throw new IllegalArgumentException("programExecution is null");
 		}
@@ -113,36 +108,34 @@ public class BlockEncodingBacktranslator extends
 			throw new IllegalArgumentException("argument is not IcfgProgramExecution but " + oldPe.getClass());
 
 		}
-		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> oldIcfgPe =
-				((IcfgProgramExecution<IIcfgTransition<IcfgLocation>>) oldPe);
+		final IcfgProgramExecution<L> oldIcfgPe = ((IcfgProgramExecution<L>) oldPe);
 		final Map<TermVariable, Boolean>[] oldBranchEncoders = oldIcfgPe.getBranchEncoders();
 		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "wrong branchencoders";
 		assert checkCallStackSourceProgramExecution(mLogger,
 				oldIcfgPe) : "callstack of initial program execution already broken";
 
-		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> newTrace = new ArrayList<>();
+		final List<AtomicTraceElement<L>> newTrace = new ArrayList<>();
 		final List<ProgramState<Term>> newValues = new ArrayList<>();
 		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		if (PRINT_MAPPINGS) {
 			mLogger.info("Using the following mapping");
-			for (final Entry<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> entry : mSequentialCompositions
-					.entrySet()) {
+			for (final Entry<L, List<L>> entry : mSequentialCompositions.entrySet()) {
 				printMapping(entry.getKey(), entry.getValue());
 			}
 		}
 
 		for (int i = 0; i < oldIcfgPe.getLength(); ++i) {
-			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = oldIcfgPe.getTraceElement(i);
+			final AtomicTraceElement<L> currentATE = oldIcfgPe.getTraceElement(i);
 			final var mappedEdges = translateBack(currentATE.getTraceElement(), oldBranchEncoders[i]);
 
 			final var iter = mappedEdges.iterator();
 			while (iter.hasNext()) {
 				final var current = iter.next();
-				final IIcfgTransition<IcfgLocation> currentEdge = current.getFirst();
+				final L currentEdge = current.getFirst();
 				final Map<TermVariable, Boolean> currentBE = current.getSecond();
 
-				final AtomicTraceElementBuilder<IIcfgTransition<IcfgLocation>> builder =
+				final AtomicTraceElementBuilder<L> builder =
 						AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, currentEdge);
 				final var transformer = mAteTransformer.get(currentATE.getTraceElement());
 				if (transformer != null) {
@@ -165,8 +158,8 @@ public class BlockEncodingBacktranslator extends
 			newValuesMap.put(i, newValues.get(i));
 		}
 
-		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> newPe = new IcfgProgramExecution<>(newTrace,
-				newValuesMap, newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent(),
+		final IcfgProgramExecution<L> newPe = new IcfgProgramExecution<>(newTrace, newValuesMap,
+				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent(),
 				IcfgProgramExecution.getClassFromAtomicTraceElements(newTrace));
 		assert checkCallStackTargetProgramExecution(mLogger, newPe) : "callstack broke during translation";
 		return newPe;
@@ -181,21 +174,21 @@ public class BlockEncodingBacktranslator extends
 	 * @param branchEncoders
 	 *            Branch encoders indicating which branch of a choice composition was taken.
 	 */
-	private Collection<Pair<IIcfgTransition<IcfgLocation>, Map<TermVariable, Boolean>>> translateBack(
-			final IIcfgTransition<IcfgLocation> transition, final Map<TermVariable, Boolean> branchEncoders) {
-		final ArrayDeque<Pair<IIcfgTransition<IcfgLocation>, Map<TermVariable, Boolean>>> result = new ArrayDeque<>();
+	private Collection<Pair<L, Map<TermVariable, Boolean>>> translateBack(final L transition,
+			final Map<TermVariable, Boolean> branchEncoders) {
+		final ArrayDeque<Pair<L, Map<TermVariable, Boolean>>> result = new ArrayDeque<>();
 
-		final ArrayDeque<IIcfgTransition<IcfgLocation>> stack = new ArrayDeque<>();
+		final ArrayDeque<L> stack = new ArrayDeque<>();
 		final ArrayDeque<Map<TermVariable, Boolean>> branchEncoderStack = new ArrayDeque<>();
 		stack.push(transition);
 		branchEncoderStack.push(branchEncoders == null ? Map.of() : branchEncoders);
 
 		while (!stack.isEmpty()) {
-			final IIcfgTransition<IcfgLocation> current = stack.pop();
+			final L current = stack.pop();
 			final Map<TermVariable, Boolean> currentBE = branchEncoderStack.pop();
 
 			if (mSequentialCompositions.containsKey(current)) {
-				final List<IIcfgTransition<IcfgLocation>> sequence = mSequentialCompositions.get(current);
+				final List<L> sequence = mSequentialCompositions.get(current);
 				assert sequence != null;
 
 				final List<BranchEncoderRenaming> renamings = mBranchEncoderRenamings.get(current);
@@ -204,7 +197,7 @@ public class BlockEncodingBacktranslator extends
 				// Put the transitions making up this composition on the stack.
 				// Last transition in the sequence is on top.
 				int i = 0;
-				for (final IIcfgTransition<IcfgLocation> component : sequence) {
+				for (final L component : sequence) {
 					stack.push(component);
 
 					final BranchEncoderRenaming renaming = renamings.get(i);
@@ -212,7 +205,7 @@ public class BlockEncodingBacktranslator extends
 					i++;
 				}
 			} else if (mParallelCompositions.containsKey(current)) {
-				final Set<IIcfgTransition<IcfgLocation>> choices = mParallelCompositions.get(current);
+				final Set<L> choices = mParallelCompositions.get(current);
 				assert choices != null;
 
 				if (currentBE == null) {
@@ -222,7 +215,7 @@ public class BlockEncodingBacktranslator extends
 				}
 
 				boolean choiceFound = false;
-				for (final IIcfgTransition<IcfgLocation> choice : choices) {
+				for (final L choice : choices) {
 					assert mBranchEncoderMapping.get(choice) != null : "Choice composition is missing branch encoder";
 					final TermVariable indicator = mBranchEncoderMapping.get(choice);
 					assert currentBE.get(indicator) != null : "Branch indicator value was unknown: " + indicator
@@ -253,8 +246,7 @@ public class BlockEncodingBacktranslator extends
 	 * @param originalEdge
 	 *            The original edge involved in the composition
 	 */
-	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge,
-			final IIcfgTransition<IcfgLocation> originalEdge) {
+	public void mapEdges(final L newEdge, final L originalEdge) {
 		mapEdges(newEdge, originalEdge, (BranchEncoderRenaming) null);
 	}
 
@@ -269,9 +261,8 @@ public class BlockEncodingBacktranslator extends
 	 *            Branch encoder renaming applied at this position in the sequential composition; or null if no such
 	 *            renaming occurred.
 	 */
-	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge, final IIcfgTransition<IcfgLocation> originalEdge,
-			final BranchEncoderRenaming branchEncoderRenaming) {
-		final List<IIcfgTransition<IcfgLocation>> limboEdges = mSequentialCompositions.get(originalEdge);
+	public void mapEdges(final L newEdge, final L originalEdge, final BranchEncoderRenaming branchEncoderRenaming) {
+		final List<L> limboEdges = mSequentialCompositions.get(originalEdge);
 		if (limboEdges != null) {
 			// an intermediate edge is replaced by a new edge
 			mIntermediateEdges.add(originalEdge);
@@ -279,7 +270,7 @@ public class BlockEncodingBacktranslator extends
 			final var limboRenamings = mBranchEncoderRenamings.get(originalEdge);
 
 			int i = 0;
-			for (final IIcfgTransition<IcfgLocation> limboEdge : limboEdges) {
+			for (final L limboEdge : limboEdges) {
 				mapEdges(newEdge, limboEdge,
 						BranchEncoderRenaming.compose(branchEncoderRenaming, limboRenamings.get(i)));
 				i++;
@@ -287,8 +278,7 @@ public class BlockEncodingBacktranslator extends
 			return;
 		}
 
-		final List<IIcfgTransition<IcfgLocation>> originalEdges =
-				mSequentialCompositions.computeIfAbsent(newEdge, x -> new ArrayList<>());
+		final List<L> originalEdges = mSequentialCompositions.computeIfAbsent(newEdge, x -> new ArrayList<>());
 		originalEdges.add(originalEdge);
 		mBranchEncoderRenamings.computeIfAbsent(newEdge, x -> new ArrayList<>()).add(branchEncoderRenaming);
 
@@ -305,10 +295,9 @@ public class BlockEncodingBacktranslator extends
 	 * @param originalEdges
 	 *            A mapping from branch encoders to the composed edges
 	 */
-	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge,
-			final Map<TermVariable, IIcfgTransition<IcfgLocation>> originalEdges) {
+	public void mapEdges(final L newEdge, final Map<TermVariable, L> originalEdges) {
 
-		for (final Map.Entry<TermVariable, IIcfgTransition<IcfgLocation>> entry : originalEdges.entrySet()) {
+		for (final Map.Entry<TermVariable, L> entry : originalEdges.entrySet()) {
 			mapEdges(newEdge, entry.getValue(), entry.getKey());
 		}
 	}
@@ -323,23 +312,21 @@ public class BlockEncodingBacktranslator extends
 	 * @param branchEncoder
 	 *            The branch encoder belonging to the original egde
 	 */
-	public void mapEdges(final IIcfgTransition<IcfgLocation> newEdge, final IIcfgTransition<IcfgLocation> originalEdge,
-			final TermVariable branchEncoder) {
+	public void mapEdges(final L newEdge, final L originalEdge, final TermVariable branchEncoder) {
 		final TermVariable oldEncoder = mBranchEncoderMapping.get(originalEdge);
 		assert oldEncoder == null || oldEncoder == branchEncoder : "Ambiguous branch encoder for transition";
 		mBranchEncoderMapping.put(originalEdge, branchEncoder);
 
-		final Set<IIcfgTransition<IcfgLocation>> limboEdges = mParallelCompositions.get(originalEdge);
+		final Set<L> limboEdges = mParallelCompositions.get(originalEdge);
 		if (limboEdges != null) {
 			mIntermediateEdges.add(originalEdge);
-			for (final IIcfgTransition<IcfgLocation> limboEdge : limboEdges) {
+			for (final L limboEdge : limboEdges) {
 				mapEdges(newEdge, limboEdge, mBranchEncoderMapping.get(limboEdge));
 			}
 			return;
 		}
 
-		final Set<IIcfgTransition<IcfgLocation>> originalEdges =
-				mParallelCompositions.computeIfAbsent(newEdge, x -> new HashSet<>());
+		final Set<L> originalEdges = mParallelCompositions.computeIfAbsent(newEdge, x -> new HashSet<>());
 		originalEdges.add(originalEdge);
 		if (PRINT_MAPPINGS) {
 			printMapping(newEdge, originalEdges);
@@ -353,7 +340,7 @@ public class BlockEncodingBacktranslator extends
 		if (PRINT_MAPPINGS) {
 			mLogger.info("Removing " + getCollectionString(mIntermediateEdges));
 		}
-		for (final IIcfgTransition<IcfgLocation> edge : mIntermediateEdges) {
+		for (final L edge : mIntermediateEdges) {
 			assert mSequentialCompositions.values().stream().noneMatch(
 					s -> s.contains(edge)) : "Intermediate edge should not be used in sequential composition";
 			assert mParallelCompositions.values().stream()
@@ -365,29 +352,26 @@ public class BlockEncodingBacktranslator extends
 		mIntermediateEdges.clear();
 	}
 
-	private void printMapping(final IIcfgTransition<IcfgLocation> newEdge,
-			final List<IIcfgTransition<IcfgLocation>> originalEdges) {
+	private void printMapping(final L newEdge, final List<L> originalEdges) {
 		mLogger.info(
 				markCodeblock(newEdge) + newEdge.hashCode() + " is mapped to " + getCollectionString(originalEdges));
 	}
 
-	private void printMapping(final IIcfgTransition<IcfgLocation> newEdge,
-			final Set<IIcfgTransition<IcfgLocation>> originalEdges) {
+	private void printMapping(final L newEdge, final Set<L> originalEdges) {
 		mLogger.info(markCodeblock(newEdge) + newEdge.hashCode() + " is mapped (in parallel) to "
 				+ getCollectionString(originalEdges));
 	}
 
-	private static String getCollectionString(final Collection<IIcfgTransition<IcfgLocation>> originalEdges) {
+	private static <L extends IAction> String getCollectionString(final Collection<L> originalEdges) {
 		return originalEdges.stream().map(a -> markCodeblock(a) + String.valueOf(a.hashCode()))
 				.collect(Collectors.joining(","));
 	}
 
-	public void addAteTransformer(final IIcfgTransition<IcfgLocation> newEdge,
-			final Consumer<AtomicTraceElementBuilder<IIcfgTransition<IcfgLocation>>> transformer) {
+	public void addAteTransformer(final L newEdge, final Consumer<AtomicTraceElementBuilder<L>> transformer) {
 		mAteTransformer.merge(newEdge, transformer, Consumer::andThen);
 	}
 
-	private static String markCodeblock(final IIcfgTransition<IcfgLocation> newEdge) {
+	private static <L extends IAction> String markCodeblock(final L newEdge) {
 		return "";
 		// 2018-09-14 Matthias: I commented the following lines to get rid
 		// of the dependency to CodeBlock
@@ -421,10 +405,9 @@ public class BlockEncodingBacktranslator extends
 	 * @return Map from new edges to old edges.
 	 */
 	@Deprecated
-	public Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> getEdgeMapping() {
-		final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> rtr = new HashMap<>();
-		for (final Entry<IIcfgTransition<IcfgLocation>, List<IIcfgTransition<IcfgLocation>>> entry : mSequentialCompositions
-				.entrySet()) {
+	public Map<L, L> getEdgeMapping() {
+		final Map<L, L> rtr = new HashMap<>();
+		for (final Entry<L, List<L>> entry : mSequentialCompositions.entrySet()) {
 			if (entry.getValue().size() > 1) {
 				throw new UnsupportedOperationException(
 						"The new edge " + entry.getKey() + " is mapped to multiple edges");
@@ -435,18 +418,15 @@ public class BlockEncodingBacktranslator extends
 	}
 
 	@Override
-	protected void printBrokenCallStackSource(final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> trace,
-			final int breakpointIndex) {
-		final List<IIcfgTransition<IcfgLocation>> teList =
-				trace.stream().limit(breakpointIndex).map(a -> a.getTraceElement()).collect(Collectors.toList());
-		mLogger.fatal(
-				new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider<IIcfgTransition<IcfgLocation>>())
-						.formatProgramExecution(IcfgProgramExecution.create(teList, Collections.emptyMap())));
+	protected void printBrokenCallStackSource(final List<AtomicTraceElement<L>> trace, final int breakpointIndex) {
+		final List<L> teList = trace.stream().limit(breakpointIndex).map(AtomicTraceElement::getTraceElement)
+				.collect(Collectors.toList());
+		mLogger.fatal(new ProgramExecutionFormatter<>(new IcfgBacktranslationValueProvider<L>())
+				.formatProgramExecution(IcfgProgramExecution.create(teList, Collections.emptyMap())));
 	}
 
 	@Override
-	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> trace,
-			final int breakpointIndex) {
+	protected void printBrokenCallStackTarget(final List<AtomicTraceElement<L>> trace, final int breakpointIndex) {
 		printBrokenCallStackSource(trace, breakpointIndex);
 	}
 
@@ -483,5 +463,4 @@ public class BlockEncodingBacktranslator extends
 	public void setVariableBlacklist(final Set<Term> variableBlacklist) {
 		mVariableBlacklist = variableBlacklist;
 	}
-
 }

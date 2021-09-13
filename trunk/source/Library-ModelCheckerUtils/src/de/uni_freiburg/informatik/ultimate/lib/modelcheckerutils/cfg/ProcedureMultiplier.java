@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -92,7 +93,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class ProcedureMultiplier {
 
 	public ProcedureMultiplier(final IUltimateServiceProvider services, final BasicIcfg<IcfgLocation> icfg,
-			final HashRelation<String, String> copyDirectives, final BlockEncodingBacktranslator backtranslator,
+			final HashRelation<String, String> copyDirectives,
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads) {
@@ -312,7 +314,7 @@ public class ProcedureMultiplier {
 	}
 
 	private static IcfgLocation constructCopy(final IcfgLocation oldLoc, final String copy,
-			final BlockEncodingBacktranslator backtranslator) {
+			final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator) {
 		final IcfgLocation newLoc = new IcfgLocation(oldLoc.getDebugIdentifier(), copy);
 		ModelUtils.copyAnnotations(oldLoc, newLoc);
 		backtranslator.mapLocations(newLoc, oldLoc);

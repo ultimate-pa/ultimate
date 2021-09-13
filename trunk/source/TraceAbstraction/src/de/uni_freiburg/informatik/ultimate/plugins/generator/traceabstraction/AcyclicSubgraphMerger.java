@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
@@ -89,8 +90,8 @@ public class AcyclicSubgraphMerger {
 			final Subgraph initialCopyWithOldStartLoc;
 			final IcfgEdge startLocErrorEdgeInCopy;
 			{
-				final BlockEncodingBacktranslator backtranslator =
-						new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+				final BlockEncodingBacktranslator<IIcfgTransition<IcfgLocation>> backtranslator =
+						new BlockEncodingBacktranslator<>(IcfgEdge.class, Term.class, mLogger);
 				final BasicIcfg<IcfgLocation> newCfg = new IcfgDuplicator(mLogger, mServices,
 						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg);
 				final Map<IcfgLocation, IcfgLocation> newLoc2oldLoc = backtranslator.getLocationMapping();
