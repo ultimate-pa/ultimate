@@ -63,12 +63,15 @@ public class TransitionUnifier<LETTER, PLACE> {
 		return null;
 	}
 
+	public void remove(final Transition<LETTER, PLACE> transition) {
+		final int hash = computeHash(transition);
+		mHash2Transitions.removePair(hash, transition);
+	}
 
 	private boolean areSimilar(final Transition<LETTER, PLACE> t1, final Transition<LETTER, PLACE> t2) {
 		return t1.getSymbol().equals(t2.getSymbol()) && t1.getPredecessors().equals(t2.getPredecessors())
 				&& t1.getSuccessors().equals(t2.getSuccessors());
 	}
-
 
 	private int computeHash(final Transition<LETTER, PLACE> t) {
 		final int prime = 31;

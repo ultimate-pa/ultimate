@@ -54,10 +54,7 @@ public class Transition<LETTER, PLACE> implements ITransition<LETTER, PLACE>, Se
 
 	/**
 	 * Constructor.
-	 * <p>
-	 * TODO Christian 2016-08-16: The code assumes that the Collection parameters are of type List. Why not explicitly
-	 * type-check this?
-	 * 
+	 *
 	 * @param symbol
 	 *            symbol
 	 * @param predecessors

@@ -266,36 +266,14 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		return addTransition(letter, preds, succs, mTransitions.size());
 	}
 
-	/**
-	 * @param transition
-	 *            A transition from this net.
-	 * @param marking
-	 *            marking
-	 * @return {@code true} iff the transition is enabled
-	 * @deprecated currently not used
-	 */
-	@Deprecated
-	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition, final Collection<PLACE> marking) {
-		return marking.containsAll(getSuccessors(transition));
-	}
+	public void removeTransition(final ITransition<LETTER, PLACE> transition) {
+		final Transition<LETTER, PLACE> trans = cast(transition);
 
-	/**
-	 * Fires a transition.
-	 *
-	 * @param transition
-	 *            transition
-	 * @param marking
-	 *            marking
-	 * @return resulting marking
-	 * @deprecated currently not used, modifies marking
-	 */
-	@Deprecated
-	private Collection<PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
-			final Collection<PLACE> marking) {
-		marking.removeAll(getPredecessors(transition));
-		marking.addAll(getSuccessors(transition));
-
-		return marking;
+		mTransitionUnifier.remove(trans);
+		mSuccessors.removeRangeElement(trans);
+		mPredecessors.removeRangeElement(trans);
+		mTransitions.remove(trans);
+		mSizeOfFlowRelation -= trans.getPredecessors().size() + trans.getSuccessors().size();
 	}
 
 	@Override
@@ -396,5 +374,4 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	public String toString() {
 		return AutomatonDefinitionPrinter.toString(mServices, "net", this);
 	}
-
 }
