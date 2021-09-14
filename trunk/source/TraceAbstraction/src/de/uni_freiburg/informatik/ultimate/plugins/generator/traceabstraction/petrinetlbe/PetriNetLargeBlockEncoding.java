@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFac
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -94,7 +92,6 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private final BlockEncodingBacktranslator<L> mBacktranslator;
 
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics;
-	private final Map<ITransition<L, IPredicate>, ITransition<L, IPredicate>> mReplacedTransitions = new HashMap<>();
 
 	/**
 	 * Performs Large Block Encoding on the given Petri net.
@@ -253,13 +250,6 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private BlockEncodingBacktranslator<L> createBacktranslator(final Class<L> clazz,
 			final LiptonReduction<L, IPredicate> reduction, final IPLBECompositionFactory<L> compositionFactory) {
 		final BlockEncodingBacktranslator<L> translator = new BlockEncodingBacktranslator<>(clazz, Term.class, mLogger);
-
-		for (final Map.Entry<ITransition<L, IPredicate>, ITransition<L, IPredicate>> entry : mReplacedTransitions
-				.entrySet()) {
-			final L originalEdge = entry.getKey().getSymbol();
-			final L newEdge = entry.getValue().getSymbol();
-			translator.mapEdges(newEdge, originalEdge);
-		}
 
 		final Map<L, BranchEncoderRenaming> renamings = compositionFactory.getBranchEncoderRenamings();
 		for (final Map.Entry<L, List<L>> seq : reduction.getSequentialCompositions().entrySet()) {
