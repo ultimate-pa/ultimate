@@ -403,7 +403,7 @@ public class LiptonReduction<L, P> {
 						composedHere.add(t1);
 						composedHere.add(t2);
 
-						if (isFirstTransitionNeeded(place, t1, t2, petriNet)) {
+						if (!replacementNeeded.contains(t1) && isFirstTransitionNeeded(place, t1, t2, petriNet)) {
 							replacementNeeded.add(t1);
 						}
 
