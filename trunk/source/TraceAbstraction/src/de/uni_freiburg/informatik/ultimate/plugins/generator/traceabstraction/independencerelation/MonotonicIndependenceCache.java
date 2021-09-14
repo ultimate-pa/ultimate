@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -134,7 +135,7 @@ public class MonotonicIndependenceCache<L> implements IIndependenceCache<IPredic
 	 * Currently not supported by this implementation.
 	 */
 	@Override
-	public void mergeIndependencies(final L a, final L b, final L ab) {
+	public void mergeIndependencies(final List<L> components, final L composed) {
 		// Implementing this might require infimum and supremum operations on IPredicate.
 		throw new UnsupportedOperationException("This cache does not yet implement independence merging");
 	}

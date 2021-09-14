@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -108,6 +110,29 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 			for (final L c : relation.getDomain()) {
 				if (relation.containsPair(c, a) && relation.containsPair(c, b)) {
 					relation.addPair(c, ab);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void mergeIndependencies(final List<L> components, final L composed) {
+		if (components.isEmpty()) {
+			return;
+		}
+
+		final L firstComponent = components.get(0);
+		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
+			// [forall x . (x, c) in R] --> (composed, c) in R
+			for (final L c : relation.getImage(firstComponent)) {
+				if (components.stream().allMatch(x -> relation.containsPair(x, c))) {
+					relation.addPair(composed, c);
+				}
+			}
+			// [forall x . (c, x) in R] --> (c, composed) in R
+			for (final Map.Entry<L, HashSet<L>> entry : relation.entrySet()) {
+				if (entry.getValue().containsAll(components)) {
+					entry.getValue().add(composed);
 				}
 			}
 		}

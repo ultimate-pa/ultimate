@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Counter;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
@@ -218,7 +220,24 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 * @param ab
 		 *            The combination (e.g. sequential composition) of the previous two letters.
 		 */
-		void mergeIndependencies(L a, L b, L ab);
+		default void mergeIndependencies(final L a, final L b, final L ab) {
+			mergeIndependencies(List.of(a, b), ab);
+		}
+
+		/**
+		 * Merges cached independencies for several letters into a combined letter. If all are independent from some
+		 * other letter c, the combined letter will be independent from c as well.
+		 *
+		 * This method can be used to transfer knowledge about letters to a (sequential or choice) composition of these
+		 * letters. The caller must ensure soundness, it is not checked against the underlying relation (as this would
+		 * defeat the purpose).
+		 *
+		 * @param components
+		 *            The letters whose independencies are used.
+		 * @param composed
+		 *            The combination (e.g. sequential composition) of the previous letters.
+		 */
+		void mergeIndependencies(List<L> components, L composed);
 
 		/**
 		 * An optional method to provide statistics about the cache.
