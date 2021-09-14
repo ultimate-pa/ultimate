@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -97,6 +98,11 @@ public class NestedMap2<K1, K2, V> {
 
 	public Map<K2, V> get(final K1 key1) {
 		return mK1ToK2ToV.get(key1);
+	}
+
+	public V computeIfAbsent(final K1 key1, final K2 key2, final BiFunction<K1, K2, V> mappingFunction) {
+		final Map<K2, V> k2toV = mK1ToK2ToV.computeIfAbsent(key1, x -> new HashMap<>());
+		return k2toV.computeIfAbsent(key2, x -> mappingFunction.apply(key1, key2));
 	}
 
 	public boolean containsKey(final Object arg0) {
