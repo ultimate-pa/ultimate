@@ -96,7 +96,7 @@ public class LiptonReduction<L, P> {
 	private BoundedPetriNet<L, P> mResult;
 	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
 	private final Map<L, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
-	private final Map<L, Set<ITransition<L, P>>> mChoiceCompositions = new HashMap<>();
+	private final Map<L, List<ITransition<L, P>>> mChoiceCompositions = new HashMap<>();
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -199,10 +199,14 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-14")
 	private BoundedPetriNet<L, P> choiceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final BoundedPetriNet<L, P> copiedNet = copyNetAndUpdateData(petriNet);
-		new ChoiceRule<>(copiedNet, mCoEnabledRelation, mCompositionFactory, mIndependenceCache).apply();
+		final ChoiceRule<L, P> rule =
+				new ChoiceRule<>(mStatistics, copiedNet, mCoEnabledRelation, mCompositionFactory, mIndependenceCache);
+		rule.apply();
 
-		// TODO update mChoiceCompositions
-		// TODO update statistics
+		for (final var entry : rule.getCompositions().entrySet()) {
+			final var old = mChoiceCompositions.put(entry.getKey().getSymbol(), entry.getValue());
+			assert old == null : "choice composition with ambiguous transition";
+		}
 
 		return copiedNet;
 	}
@@ -258,7 +262,7 @@ public class LiptonReduction<L, P> {
 
 					final List<L> parallelLetters = Arrays.asList(t1.getSymbol(), t2.getSymbol());
 					final L composedLetter = mCompositionFactory.composeParallel(parallelLetters);
-					mChoiceCompositions.put(composedLetter, Set.of(t1, t2));
+					mChoiceCompositions.put(composedLetter, List.of(t1, t2));
 
 					// Create new element of pendingCompositions.
 					pendingCompositions.add(new Triple<>(composedLetter, t1, t2));

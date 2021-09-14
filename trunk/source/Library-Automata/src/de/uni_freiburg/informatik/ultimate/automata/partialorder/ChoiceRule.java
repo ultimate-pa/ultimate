@@ -29,8 +29,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,9 +55,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of places in the Petri net
  */
 public class ChoiceRule<L, P> extends ReductionRule<L, P> {
+	private final Map<ITransition<L, P>, List<ITransition<L, P>>> mCompositions = new HashMap<>();
+
 	/**
 	 * Creates a new instance of the rule.
 	 *
+	 * @param statistics
+	 *            Used to collect statistics about the reduction.
 	 * @param net
 	 *            The Petri net to which the rule should be applied.
 	 * @param coenabledRelation
@@ -66,9 +72,10 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 	 *            Optionally, cached independence information. When letters are composed, their independence information
 	 *            stored in the cache is combined for the composed letter.
 	 */
-	public ChoiceRule(final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
-			final ICompositionFactory<L> compositionFactory, final IIndependenceCache<?, L> independenceCache) {
-		super(net, coenabledRelation, compositionFactory, independenceCache);
+	public ChoiceRule(final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
+			final CoenabledRelation<L, P> coenabledRelation, final ICompositionFactory<L> compositionFactory,
+			final IIndependenceCache<?, L> independenceCache) {
+		super(statistics, net, coenabledRelation, compositionFactory, independenceCache);
 	}
 
 	@Override
@@ -83,6 +90,8 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 			// add composed transition
 			final ITransition<L, P> composed = addTransition(composedLetter, net.getPredecessors(firstComponent),
 					net.getSuccessors(firstComponent));
+			assert components.stream().allMatch(x -> mCoenabledRelation.getImage(x).equals(mCoenabledRelation
+					.getImage(firstComponent))) : "parallel letters with different coenabled transitions";
 			mCoenabledRelation.copyRelationships(firstComponent, composed);
 
 			// remove obsolete transitions
@@ -95,8 +104,8 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 			transferMoverProperties(composedLetter,
 					components.stream().map(ITransition::getSymbol).collect(Collectors.toList()));
 
-			// TODO mChoiceCompositions.put(composedLetter, components);
-			// TODO mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
+			mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
+			mCompositions.put(composed, components);
 		}
 	}
 
@@ -108,15 +117,12 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 			group.add(transition);
 		}
 
-		final Set<Pair<L, List<ITransition<L, P>>>> pendingCompositions = new HashSet<>();
+		final Set<Pair<L, List<ITransition<L, P>>>> compositions = new HashSet<>();
 		for (final var triple : groupedTransitions.entrySet()) {
 			final List<ITransition<L, P>> parallelTransitions = triple.getThird();
 			if (parallelTransitions.size() <= 1) {
 				continue;
 			}
-
-			assert parallelTransitions.stream().allMatch(x -> mCoenabledRelation.getImage(x).equals(mCoenabledRelation
-					.getImage(parallelTransitions.get(0)))) : "parallel letters with different coenabled transitions";
 
 			final List<L> parallelLetters =
 					parallelTransitions.stream().map(ITransition::getSymbol).collect(Collectors.toList());
@@ -125,8 +131,12 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 			}
 
 			final L composedLetter = mCompositionFactory.composeParallel(parallelLetters);
-			pendingCompositions.add(new Pair<>(composedLetter, parallelTransitions));
+			compositions.add(new Pair<>(composedLetter, parallelTransitions));
 		}
-		return pendingCompositions;
+		return compositions;
+	}
+
+	public Map<ITransition<L, P>, List<ITransition<L, P>>> getCompositions() {
+		return mCompositions;
 	}
 }
