@@ -194,6 +194,33 @@ public class LiptonReduction<L, P> {
 	}
 
 	/**
+	 * @deprecated This wrapper is only supposed to exist temporarily
+	 */
+	@Deprecated(since = "2021-09-14")
+	private BoundedPetriNet<L, P> choiceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
+		final BoundedPetriNet<L, P> copiedNet = copyNetAndUpdateData(petriNet);
+		new ChoiceRule<>(copiedNet, mCoEnabledRelation, mCompositionFactory, mIndependenceCache).apply();
+
+		// TODO update mChoiceCompositions
+		// TODO update statistics
+
+		return copiedNet;
+	}
+
+	/**
+	 * @deprecated Only needed for wrappers, should be removed in the future
+	 */
+	@Deprecated(since = "2021-09-14")
+	private BoundedPetriNet<L, P> copyNetAndUpdateData(final BoundedPetriNet<L, P> petriNet) {
+		final Map<ITransition<L, P>, ITransition<L, P>> oldToNewTransitions = new HashMap<>();
+		final BoundedPetriNet<L, P> copiedNet = CopySubnet.copy(mServices, petriNet,
+				new HashSet<>(petriNet.getTransitions()), petriNet.getAlphabet(), true, oldToNewTransitions);
+		oldToNewTransitions.forEach((oldT, newT) -> mNewToOldTransitions.put(newT, getOriginalTransition(oldT)));
+		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
+		return copiedNet;
+	}
+
+	/**
 	 * Performs the choice rule on a Petri net.
 	 *
 	 * @param services
@@ -201,7 +228,10 @@ public class LiptonReduction<L, P> {
 	 * @param petriNet
 	 *            The Petri net on which the choice rule should be performed.
 	 * @return new Petri net, where the choice rule has been performed.
+	 *
+	 * @deprecated To be replaced by {@link ChoiceRule} in the future
 	 */
+	@Deprecated(since = "2021-09-14")
 	private BoundedPetriNet<L, P> choiceRule(final BoundedPetriNet<L, P> petriNet) {
 		final Collection<ITransition<L, P>> transitions = petriNet.getTransitions();
 
