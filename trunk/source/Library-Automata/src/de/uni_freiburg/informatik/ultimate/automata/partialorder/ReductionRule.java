@@ -89,6 +89,7 @@ public abstract class ReductionRule<L, P> {
 	protected ITransition<L, P> addTransition(final L letter, final ImmutableSet<P> preds,
 			final ImmutableSet<P> succs) {
 		// TODO record data about PN change
+		mNet.getAlphabet().add(letter);
 		return mNet.addTransition(letter, preds, succs);
 	}
 
