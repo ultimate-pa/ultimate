@@ -166,8 +166,6 @@ public class LiptonReduction<L, P> {
 			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size());
 			mResult = resultCurrentIteration;
 
-			mLogger.info("Checked pairs total: "
-					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.MoverChecksTotal));
 			mLogger.info("Total number of compositions: "
 					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.TotalNumberOfCompositions));
 		} catch (final AutomataOperationCanceledException | ToolchainCanceledException ce) {
@@ -598,8 +596,10 @@ public class LiptonReduction<L, P> {
 	}
 
 	/**
-	 * Returns the equivalent transition as originally used in the Petri net for which the Branching Process was
-	 * calculated.
+	 * Transitions are replaced by new copies whenever the Petri net is copied during the application of a rule.
+	 * Additionally, the sequence rule creates copies of the first composed transition if necessary. Given a transition
+	 * of some net created during the reduction, this method returns the equivalent transition as originally used in the
+	 * Petri net for which the Branching Process was calculated.
 	 *
 	 * @param t
 	 *            A transition. The transition must not be the result of a composition.
@@ -694,7 +694,6 @@ public class LiptonReduction<L, P> {
 	 */
 	private boolean isLeftMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t2,
 			final Set<ITransition<L, P>> coEnabledTransitions) {
-		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		final Set<P> preconditions = petriNet.getPredecessors(t2);
 		return coEnabledTransitions.stream()
 				.allMatch(t3 -> mMoverCheck.contains(
@@ -715,7 +714,6 @@ public class LiptonReduction<L, P> {
 	 */
 	private boolean isRightMover(final BoundedPetriNet<L, P> petriNet, final ITransition<L, P> t1,
 			final Set<ITransition<L, P>> coEnabledTransitions) {
-		mStatistics.reportMoverChecks(coEnabledTransitions.size());
 		final Set<P> preconditions = petriNet.getPredecessors(t1);
 		return coEnabledTransitions.stream()
 				.allMatch(t3 -> mMoverCheck.contains(

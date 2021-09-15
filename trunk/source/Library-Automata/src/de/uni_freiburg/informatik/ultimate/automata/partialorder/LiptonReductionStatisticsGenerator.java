@@ -48,7 +48,6 @@ public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithS
 	private int mPlacesAfterwards = -1;
 	private int mTransitionsAfterwards = -1;
 
-	private int mMoverChecksTotal;
 	private int mNumberOfFixpointIterations;
 
 	private int mTrivialSequentialCompositions;
@@ -60,10 +59,6 @@ public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithS
 
 	public void reportFixpointIteration() {
 		mNumberOfFixpointIterations++;
-	}
-
-	public void reportMoverChecks(final int numberOfChecks) {
-		mMoverChecksTotal += numberOfChecks;
 	}
 
 	public void reportComposition(final LiptonReductionStatisticsDefinitions type) {
@@ -126,8 +121,6 @@ public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithS
 			return mConcurrentYvCompositions;
 		case FixpointIterations:
 			return mNumberOfFixpointIterations;
-		case MoverChecksTotal:
-			return mMoverChecksTotal;
 		case PlacesAfterwards:
 			return mPlacesAfterwards;
 		case PlacesBefore:
@@ -150,7 +143,6 @@ public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithS
 			return mTrivialYvCompositions;
 		default:
 			throw new AssertionError("unknown data: " + key);
-
 		}
 	}
 
