@@ -455,6 +455,7 @@ public class LiptonReduction<L, P> {
 				}
 			}
 
+			// TODO Why do we delay the addition to "composedTransitions" ?
 			composedTransitions.addAll(composedHere);
 			if (!replacementNeeded.isEmpty()) {
 				transitionsToBeReplaced.put(place, replacementNeeded);
@@ -467,6 +468,7 @@ public class LiptonReduction<L, P> {
 
 			// TODO Why again do we need to create this fresh transition rather than keeping the old one?
 			for (final ITransition<L, P> t : entry.getValue()) {
+				// TODO Should the transition have those other successors? Not just deadPlace?
 				final Set<P> post = new HashSet<>(petriNet.getSuccessors(t));
 				post.remove(entry.getKey());
 				post.add(deadPlace);
@@ -544,23 +546,25 @@ public class LiptonReduction<L, P> {
 	}
 
 	private Stream<ITransition<L, P>> getFirstTransitions(final ITransition<L, P> t) {
-		if (mSequentialCompositions.containsKey(t.getSymbol())) {
-			final List<ITransition<L, P>> transitions = mSequentialCompositions.get(t.getSymbol());
+		if (mSequentialCompositions.containsKey(t)) {
+			final List<ITransition<L, P>> transitions = mSequentialCompositions.get(t);
 			return getFirstTransitions(transitions.get(0));
-		} else if (mChoiceCompositions.containsKey(t.getSymbol())) {
-			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(this::getFirstTransitions);
+		} else if (mChoiceCompositions.containsKey(t)) {
+			return mChoiceCompositions.get(t).stream().flatMap(this::getFirstTransitions);
 		} else {
+			// TODO what if a sequential / choice composition is copied as first component in a sequential composition?
 			return Stream.of(getOriginalTransition(t));
 		}
 	}
 
 	private Stream<ITransition<L, P>> getLastTransitions(final ITransition<L, P> t) {
-		if (mSequentialCompositions.containsKey(t.getSymbol())) {
-			final List<ITransition<L, P>> transitions = mSequentialCompositions.get(t.getSymbol());
+		if (mSequentialCompositions.containsKey(t)) {
+			final List<ITransition<L, P>> transitions = mSequentialCompositions.get(t);
 			return getLastTransitions(transitions.get(transitions.size() - 1));
-		} else if (mChoiceCompositions.containsKey(t.getSymbol())) {
-			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(this::getLastTransitions);
+		} else if (mChoiceCompositions.containsKey(t)) {
+			return mChoiceCompositions.get(t).stream().flatMap(this::getLastTransitions);
 		} else {
+			// TODO what if a sequential / choice composition is copied as first component in a sequential composition?
 			return Stream.of(getOriginalTransition(t));
 		}
 	}
