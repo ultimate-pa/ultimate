@@ -95,8 +95,8 @@ public class LiptonReduction<L, P> {
 	private BoundedPetriNet<L, P> mResult;
 	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
 
-	private final Map<L, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
-	private final Map<L, List<ITransition<L, P>>> mChoiceCompositions = new HashMap<>();
+	private final Map<ITransition<L, P>, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
+	private final Map<ITransition<L, P>, List<ITransition<L, P>>> mChoiceCompositions = new HashMap<>();
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -216,11 +216,7 @@ public class LiptonReduction<L, P> {
 				new ChoiceRule<>(mStatistics, copiedNet, mCoEnabledRelation, mCompositionFactory, mIndependenceCache);
 		rule.apply();
 
-		for (final var entry : rule.getCompositions().entrySet()) {
-			final var old = mChoiceCompositions.put(entry.getKey().getSymbol(), entry.getValue());
-			assert old == null : "choice composition with ambiguous transition";
-		}
-
+		mChoiceCompositions.putAll(rule.getCompositions());
 		return copiedNet;
 	}
 
@@ -275,7 +271,6 @@ public class LiptonReduction<L, P> {
 
 					final List<L> parallelLetters = Arrays.asList(t1.getSymbol(), t2.getSymbol());
 					final L composedLetter = mCompositionFactory.composeParallel(parallelLetters);
-					mChoiceCompositions.put(composedLetter, List.of(t1, t2));
 
 					// Create new element of pendingCompositions.
 					pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
@@ -293,8 +288,9 @@ public class LiptonReduction<L, P> {
 
 		// update information for composed transition
 		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> composition : pendingCompositions) {
-			mCoEnabledRelation.copyRelationships(composition.getSecond(),
-					composedLetters2Transitions.get(composition.getFirst()));
+			final ITransition<L, P> composedTransition = composedLetters2Transitions.get(composition.getFirst());
+			mChoiceCompositions.put(composedTransition, List.of(composition.getSecond(), composition.getThird()));
+			mCoEnabledRelation.copyRelationships(composition.getSecond(), composedTransition);
 			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
 		}
@@ -479,9 +475,9 @@ public class LiptonReduction<L, P> {
 
 		// update information for composed transition
 		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> composition : pendingCompositions) {
-			mCoEnabledRelation.copyRelationships(composition.getSecond(),
-					composedLetters2Transitions.get(composition.getFirst()));
-			updateSequentialCompositions(composition.getFirst(), composition.getSecond(), composition.getThird());
+			final ITransition<L, P> composedTransition = composedLetters2Transitions.get(composition.getFirst());
+			mCoEnabledRelation.copyRelationships(composition.getSecond(), composedTransition);
+			updateSequentialCompositions(composedTransition, composition.getSecond(), composition.getThird());
 			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
 		}
@@ -505,9 +501,9 @@ public class LiptonReduction<L, P> {
 	 * @param transition2
 	 *            The second transition that has been sequentially composed.
 	 */
-	private void updateSequentialCompositions(final L composedLetter, final ITransition<L, P> transition1,
+	private void updateSequentialCompositions(final ITransition<L, P> composed, final ITransition<L, P> transition1,
 			final ITransition<L, P> transition2) {
-		mSequentialCompositions.put(composedLetter, List.of(transition1, transition2));
+		mSequentialCompositions.put(composed, List.of(transition1, transition2));
 	}
 
 	/**
@@ -728,12 +724,12 @@ public class LiptonReduction<L, P> {
 	}
 
 	public Map<L, List<L>> getSequentialCompositions() {
-		return mSequentialCompositions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+		return mSequentialCompositions.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getSymbol(),
 				e -> e.getValue().stream().map(ITransition::getSymbol).collect(Collectors.toList())));
 	}
 
 	public Map<L, Set<L>> getChoiceCompositions() {
-		return mChoiceCompositions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+		return mChoiceCompositions.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getSymbol(),
 				e -> e.getValue().stream().map(ITransition::getSymbol).collect(Collectors.toSet())));
 	}
 
