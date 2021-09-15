@@ -55,13 +55,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 	private final boolean mRequireLoop;
+	private final IIndependenceRelation<Set<P>, L> mIndependence;
 	private final ICopyPlaceFactory<P> mPlaceFactory;
 
 	public SynthesizeLockRule(final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
 			final CoenabledRelation<L, P> coenabledRelation, final ICompositionFactory<L> compositionFactory,
-			final IIndependenceCache<?, L> independenceCache, final ICopyPlaceFactory<P> placeFactory,
-			final boolean requireLoop) {
+			final IIndependenceCache<?, L> independenceCache, final IIndependenceRelation<Set<P>, L> independence,
+			final ICopyPlaceFactory<P> placeFactory, final boolean requireLoop) {
 		super(statistics, net, coenabledRelation, compositionFactory, independenceCache);
+		mIndependence = independence;
 		mPlaceFactory = placeFactory;
 		mRequireLoop = requireLoop;
 	}
@@ -146,23 +148,18 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 				continue;
 			}
 
-			// TODO It should be equally possible to consider incoming transitions (and right movers).
-
 			boolean isLeftMover = true;
 			final Set<ITransition<L, P>> inhibitable = new HashSet<>();
 			for (final ITransition<L, P> trans : outgoing) {
 				final Set<ITransition<L, P>> coenabled = mCoenabledRelation.getImage(trans);
-				if (DataStructureUtils.haveNonEmptyIntersection(involved, coenabled)) {
-					isLeftMover = false;
-					break;
-				}
-				if (coenabled.stream().flatMap(t -> net.getSuccessors(t).stream()).anyMatch(net::isAccepting)) {
-					isLeftMover = false;
+				isLeftMover = isLeftMover && DataStructureUtils.haveNonEmptyIntersection(involved, coenabled)
+						&& coenabled.stream().flatMap(t -> net.getSuccessors(t).stream()).anyMatch(net::isAccepting)
+						&& coenabled.stream().allMatch(t -> checkCommutativity(net, t, trans));
+				if (!isLeftMover) {
 					break;
 				}
 				inhibitable.addAll(coenabled);
 			}
-
 			if (!isLeftMover || inhibitable.isEmpty()) {
 				continue;
 			}
@@ -174,5 +171,16 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 		}
 
 		return result;
+	}
+
+	private boolean checkCommutativity(final IPetriNet<L, P> net, final ITransition<L, P> first,
+			final ITransition<L, P> second) {
+		final Set<P> preconditions;
+		if (mIndependence.isConditional()) {
+			preconditions = DataStructureUtils.union(net.getPredecessors(first), net.getPredecessors(second));
+		} else {
+			preconditions = null;
+		}
+		return mIndependence.contains(preconditions, first.getSymbol(), second.getSymbol());
 	}
 }
