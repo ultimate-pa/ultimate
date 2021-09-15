@@ -202,7 +202,7 @@ public class LiptonReduction<L, P> {
 	private BoundedPetriNet<L, P> synthesizeLockRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final BoundedPetriNet<L, P> copiedNet = copyNetAndUpdateData(petriNet);
 		final SynthesizeLockRule<L, P> rule = new SynthesizeLockRule<>(mStatistics, copiedNet, mCoEnabledRelation,
-				mCompositionFactory, mIndependenceCache, mMoverCheck, mPlaceFactory, true);
+				mIndependenceCache, mMoverCheck, mPlaceFactory, true);
 		rule.apply();
 
 		return copiedNet;

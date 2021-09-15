@@ -49,16 +49,13 @@ public abstract class ReductionRule<L, P> {
 	protected final CoenabledRelation<L, P> mCoenabledRelation;
 
 	protected final LiptonReductionStatisticsGenerator mStatistics;
-	protected final ICompositionFactory<L> mCompositionFactory;
 	private final IIndependenceCache<?, L> mIndependenceCache;
 
 	public ReductionRule(final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
-			final CoenabledRelation<L, P> coenabledRelation, final ICompositionFactory<L> compositionFactory,
-			final IIndependenceCache<?, L> independenceCache) {
+			final CoenabledRelation<L, P> coenabledRelation, final IIndependenceCache<?, L> independenceCache) {
 		mNet = net;
 		mCoenabledRelation = coenabledRelation;
 		mStatistics = statistics;
-		mCompositionFactory = compositionFactory;
 		mIndependenceCache = independenceCache;
 	}
 

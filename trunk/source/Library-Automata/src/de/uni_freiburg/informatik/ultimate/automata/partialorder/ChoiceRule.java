@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of places in the Petri net
  */
 public class ChoiceRule<L, P> extends ReductionRule<L, P> {
+	private final ICompositionFactory<L> mCompositionFactory;
 	private final Map<ITransition<L, P>, List<ITransition<L, P>>> mCompositions = new HashMap<>();
 
 	/**
@@ -75,7 +76,8 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 	public ChoiceRule(final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
 			final CoenabledRelation<L, P> coenabledRelation, final ICompositionFactory<L> compositionFactory,
 			final IIndependenceCache<?, L> independenceCache) {
-		super(statistics, net, coenabledRelation, compositionFactory, independenceCache);
+		super(statistics, net, coenabledRelation, independenceCache);
+		mCompositionFactory = compositionFactory;
 	}
 
 	@Override

@@ -59,10 +59,10 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 	private final ICopyPlaceFactory<P> mPlaceFactory;
 
 	public SynthesizeLockRule(final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
-			final CoenabledRelation<L, P> coenabledRelation, final ICompositionFactory<L> compositionFactory,
-			final IIndependenceCache<?, L> independenceCache, final IIndependenceRelation<Set<P>, L> independence,
-			final ICopyPlaceFactory<P> placeFactory, final boolean requireLoop) {
-		super(statistics, net, coenabledRelation, compositionFactory, independenceCache);
+			final CoenabledRelation<L, P> coenabledRelation, final IIndependenceCache<?, L> independenceCache,
+			final IIndependenceRelation<Set<P>, L> independence, final ICopyPlaceFactory<P> placeFactory,
+			final boolean requireLoop) {
+		super(statistics, net, coenabledRelation, independenceCache);
 		mIndependence = independence;
 		mPlaceFactory = placeFactory;
 		mRequireLoop = requireLoop;
