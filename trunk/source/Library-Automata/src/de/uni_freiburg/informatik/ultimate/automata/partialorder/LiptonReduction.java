@@ -31,17 +31,16 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -119,7 +118,7 @@ public class LiptonReduction<L, P> {
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
 			final IPostScriptChecker<L, P> stuckPlaceChecker, final IIndependenceCache<?, L> cache) {
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(LiptonReduction.class);
 		mCompositionFactory = compositionFactory;
 		mPlaceFactory = placeFactory;
 		mMoverCheck = independenceRelation;
@@ -145,6 +144,7 @@ public class LiptonReduction<L, P> {
 			BoundedPetriNet<L, P> resultCurrentIteration = CopySubnet.copy(mServices, mPetriNet,
 					new HashSet<>(mPetriNet.getTransitions()), mPetriNet.getAlphabet(), true);
 
+			// TODO Why call FinitePrefix and not PetriNetUnfolder directly?
 			mBranchingProcess = new FinitePrefix<>(mServices, resultCurrentIteration).getResult();
 			mBranchingProcess.getEvents().stream().filter(Event::isCutoffEvent)
 					.forEach(e -> mCutOffs.addPair(e.getCompanion(), e));
@@ -159,6 +159,8 @@ public class LiptonReduction<L, P> {
 				mStatistics.reportFixpointIteration();
 				resultLastIteration = resultCurrentIteration;
 
+				// TODO decide on best ordering (e.g. choice at the beginning?)
+				// TODO add / allow more rules, e.g. SynthesizeLockRule
 				resultCurrentIteration = sequenceRule(resultLastIteration);
 				resultCurrentIteration = choiceRule(resultCurrentIteration);
 			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size());
@@ -333,10 +335,10 @@ public class LiptonReduction<L, P> {
 				.forEach(relevantTransitions::add);
 
 		final Set<Event<L, P>> events =
-				relevantTransitions.stream().flatMap(t -> getFirstEvents(t).stream()).collect(Collectors.toSet());
+				relevantTransitions.stream().flatMap(this::getFirstEvents).collect(Collectors.toSet());
 		final Set<Event<L, P>> errorEvents =
 				petriNet.getAcceptingPlaces().stream().flatMap(p -> petriNet.getPredecessors(p).stream())
-						.flatMap(t -> getLastEvents(t).stream()).collect(Collectors.toSet());
+						.flatMap(this::getLastEvents).collect(Collectors.toSet());
 
 		for (final Event<L, P> errorEvent : errorEvents) {
 			for (final Event<L, P> e : events) {
@@ -397,48 +399,56 @@ public class LiptonReduction<L, P> {
 					final boolean canCompose =
 							!composedTransitions.contains(t2) && sequenceRuleCheck(t1, t2, place, petriNet);
 					completeComposition = completeComposition && canCompose;
-
-					if (canCompose) {
-						final Set<P> pre2 = new HashSet<>(petriNet.getPredecessors(t2));
-						pre2.removeAll(petriNet.getSuccessors(t1));
-						final Set<P> post1 = new HashSet<>(petriNet.getSuccessors(t1));
-						post1.removeAll(petriNet.getPredecessors(t2));
-
-						if (Collections.disjoint(petriNet.getPredecessors(t1), pre2)
-								&& Collections.disjoint(petriNet.getSuccessors(t2), post1)) {
-							final L composedLetter =
-									mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
-							mLogger.debug("Composing " + t1 + " and " + t2);
-							pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
-						} else {
-							mLogger.debug("Discarding composition of " + t1 + " and " + t2 + ".");
-						}
-						composedHere.add(t1);
-						composedHere.add(t2);
-
-						if (!replacementNeeded.contains(t1) && isFirstTransitionNeeded(place, t1, t2, petriNet)) {
-							replacementNeeded.add(t1);
-						}
-
-						if (isYv) {
-							obsoleteTransitions.add(t1);
-						} else {
-							obsoleteTransitions.add(t2);
-						}
-
-						LiptonReductionStatisticsDefinitions stat;
-						if (mCoEnabledRelation.getImage(t1).isEmpty()) {
-							stat = isYv ? LiptonReductionStatisticsDefinitions.TrivialYvCompositions
-									: LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions;
-						} else {
-							stat = isYv ? LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions
-									: LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions;
-						}
-						mStatistics.reportComposition(stat);
+					if (!canCompose) {
+						continue;
 					}
+
+					final Set<P> pre2 =
+							DataStructureUtils.difference(petriNet.getPredecessors(t2), petriNet.getSuccessors(t1));
+					final Set<P> post1 =
+							DataStructureUtils.difference(petriNet.getSuccessors(t1), petriNet.getPredecessors(t2));
+
+					// TODO Shouldn't this be part of the "structural check" in #sequenceRuleCheck ?
+					if (DataStructureUtils.haveEmptyIntersection(petriNet.getPredecessors(t1), pre2)
+							&& DataStructureUtils.haveEmptyIntersection(petriNet.getSuccessors(t2), post1)) {
+						final L composedLetter = mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
+						mLogger.debug("Composing " + t1 + " and " + t2);
+						pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
+					} else {
+						// TODO Is this sound? All the subsequent modifications (composedHere, replacementNeeded,
+						// statistics, but especially obsoleteTransitions including if completeComposition is true) seem
+						// dangerous.
+						mLogger.debug("Discarding composition of " + t1 + " and " + t2 + ".");
+					}
+					composedHere.add(t1);
+					composedHere.add(t2);
+
+					if (!replacementNeeded.contains(t1) && isFirstTransitionNeeded(place, t1, t2, petriNet)) {
+						replacementNeeded.add(t1);
+					}
+
+					// TODO Doesn't this make the addition in case of completeComposition below redundant?
+					// TODO Are both of them even sound?
+					if (isYv) {
+						obsoleteTransitions.add(t1);
+					} else {
+						obsoleteTransitions.add(t2);
+					}
+
+					LiptonReductionStatisticsDefinitions stat;
+					// TODO Since coenabled(t1) can now differ from coenabled(t2), change this condition.
+					if (mCoEnabledRelation.getImage(t1).isEmpty()) {
+						stat = isYv ? LiptonReductionStatisticsDefinitions.TrivialYvCompositions
+								: LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions;
+					} else {
+						stat = isYv ? LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions
+								: LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions;
+					}
+					mStatistics.reportComposition(stat);
 				}
 			}
 
+			// TODO see redundancy / soundness concerns above
 			if (completeComposition) {
 				if (isYv) {
 					obsoleteTransitions.addAll(outgoingTransitions);
@@ -457,6 +467,7 @@ public class LiptonReduction<L, P> {
 			final P deadPlace = mPlaceFactory.copyPlace(entry.getKey());
 			petriNet.addPlace(deadPlace, false, false);
 
+			// TODO Why again do we need to create this fresh transition rather than keeping the old one?
 			for (final ITransition<L, P> t : entry.getValue()) {
 				final Set<P> post = new HashSet<>(petriNet.getSuccessors(t));
 				post.remove(entry.getKey());
@@ -534,38 +545,34 @@ public class LiptonReduction<L, P> {
 		return performMoverCheck(petriNet, t1, t2);
 	}
 
-	private Set<ITransition<L, P>> getFirstTransitions(final ITransition<L, P> t) {
+	private Stream<ITransition<L, P>> getFirstTransitions(final ITransition<L, P> t) {
 		if (mSequentialCompositions.containsKey(t.getSymbol())) {
 			final List<ITransition<L, P>> transitions = mSequentialCompositions.get(t.getSymbol());
 			return getFirstTransitions(transitions.get(0));
 		} else if (mChoiceCompositions.containsKey(t.getSymbol())) {
-			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(t2 -> getFirstTransitions(t2).stream())
-					.collect(Collectors.toSet());
+			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(this::getFirstTransitions);
 		} else {
-			return Set.of(getOriginalTransition(t));
+			return Stream.of(getOriginalTransition(t));
 		}
 	}
 
-	private Set<ITransition<L, P>> getLastTransitions(final ITransition<L, P> t) {
+	private Stream<ITransition<L, P>> getLastTransitions(final ITransition<L, P> t) {
 		if (mSequentialCompositions.containsKey(t.getSymbol())) {
 			final List<ITransition<L, P>> transitions = mSequentialCompositions.get(t.getSymbol());
 			return getLastTransitions(transitions.get(transitions.size() - 1));
 		} else if (mChoiceCompositions.containsKey(t.getSymbol())) {
-			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(t2 -> getLastTransitions(t2).stream())
-					.collect(Collectors.toSet());
+			return mChoiceCompositions.get(t.getSymbol()).stream().flatMap(this::getLastTransitions);
 		} else {
-			return Set.of(getOriginalTransition(t));
+			return Stream.of(getOriginalTransition(t));
 		}
 	}
 
-	private Set<Event<L, P>> getFirstEvents(final ITransition<L, P> t) {
-		return getFirstTransitions(t).stream().flatMap(t2 -> mBranchingProcess.getEvents(t2).stream())
-				.collect(Collectors.toSet());
+	private Stream<Event<L, P>> getFirstEvents(final ITransition<L, P> t) {
+		return getFirstTransitions(t).flatMap(t2 -> mBranchingProcess.getEvents(t2).stream());
 	}
 
-	private Set<Event<L, P>> getLastEvents(final ITransition<L, P> t) {
-		return getLastTransitions(t).stream().flatMap(t2 -> mBranchingProcess.getEvents(t2).stream())
-				.collect(Collectors.toSet());
+	private Stream<Event<L, P>> getLastEvents(final ITransition<L, P> t) {
+		return getLastTransitions(t).flatMap(t2 -> mBranchingProcess.getEvents(t2).stream());
 	}
 
 	private boolean checkForEventsInBetween(final ITransition<L, P> t1, final ITransition<L, P> t2, final P place,
@@ -576,8 +583,8 @@ public class LiptonReduction<L, P> {
 				petriNet.getSuccessors(place));
 
 		final Set<Event<L, P>> t1Events =
-				transitions.stream().flatMap(t -> getFirstEvents(t).stream()).collect(Collectors.toSet());
-		final Set<Event<L, P>> t2Events = getLastEvents(t2);
+				transitions.stream().flatMap(this::getFirstEvents).collect(Collectors.toSet());
+		final Set<Event<L, P>> t2Events = getLastEvents(t2).collect(Collectors.toSet());
 
 		for (final Event<L, P> e1 : t1Events) {
 			for (final Event<L, P> e2 : t2Events) {
@@ -610,11 +617,8 @@ public class LiptonReduction<L, P> {
 		for (final Event<L, P> e3 : e2.getLocalConfiguration()) {
 			if (mCutOffs.getDomain().contains(e3)) {
 				for (final Event<L, P> cutoff : mCutOffs.getImage(e3)) {
-					if (cutOffsVisited.contains(cutoff)) {
-						continue;
-					}
-					cutOffsVisited.add(cutoff);
-					if (isAncestorEvent(e1, cutoff, cutOffsVisited)) {
+					final boolean unvisited = cutOffsVisited.add(cutoff);
+					if (unvisited && isAncestorEvent(e1, cutoff, cutOffsVisited)) {
 						return true;
 					}
 				}
