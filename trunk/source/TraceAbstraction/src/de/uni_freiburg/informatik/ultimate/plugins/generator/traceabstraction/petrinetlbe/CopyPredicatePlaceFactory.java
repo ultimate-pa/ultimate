@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public class CopyPredicatePlaceFactory implements ICopyPlaceFactory<IPredicate> {
 	private final BasicPredicateFactory mPredicateFactory;
+	private int mFreshPlaceCounter;
 
 	/**
 	 * Creates a PlaceFactory.
@@ -50,5 +51,11 @@ public class CopyPredicatePlaceFactory implements ICopyPlaceFactory<IPredicate> 
 	@Override
 	public IPredicate copyPlace(final IPredicate oldPlace) {
 		return mPredicateFactory.newPredicate(oldPlace.getFormula());
+	}
+
+	@Override
+	public IPredicate createFreshPlace() {
+		mFreshPlaceCounter++;
+		return mPredicateFactory.newDebugPredicate("lipton" + mFreshPlaceCounter);
 	}
 }

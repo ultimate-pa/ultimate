@@ -84,6 +84,11 @@ public abstract class ReductionRule<L, P> {
 		}
 	}
 
+	protected void addPlace(final P place, final boolean isInitial, final boolean isAccepting) {
+		// TODO record data about PN change
+		mNet.addPlace(place, isInitial, isAccepting);
+	}
+
 	protected ITransition<L, P> addTransition(final L letter, final ImmutableSet<P> preds,
 			final ImmutableSet<P> succs) {
 		// TODO record data about PN change
@@ -91,6 +96,7 @@ public abstract class ReductionRule<L, P> {
 	}
 
 	protected void removeTransition(final ITransition<L, P> transition) {
+		// TODO record data about PN change
 		mNet.removeTransition(transition);
 	}
 }

@@ -82,19 +82,19 @@ public class LiptonReduction<L, P> {
 	private final ICompositionFactory<L> mCompositionFactory;
 	private final IPostScriptChecker<L, P> mStuckPlaceChecker;
 	private final ICopyPlaceFactory<P> mPlaceFactory;
-
 	private final IIndependenceRelation<Set<P>, L> mMoverCheck;
 	private final IIndependenceCache<?, L> mIndependenceCache;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
-
 	private BranchingProcess<L, P> mBranchingProcess;
 	private CoenabledRelation<L, P> mCoEnabledRelation;
+
 	private final HashRelation<Event<L, P>, Event<L, P>> mCutOffs = new HashRelation<>();
 	private final Map<ITransition<L, P>, ITransition<L, P>> mNewToOldTransitions = new HashMap<>();
 
 	private BoundedPetriNet<L, P> mResult;
 	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
+
 	private final Map<L, List<ITransition<L, P>>> mSequentialCompositions = new HashMap<>();
 	private final Map<L, List<ITransition<L, P>>> mChoiceCompositions = new HashMap<>();
 
@@ -191,6 +191,19 @@ public class LiptonReduction<L, P> {
 		if (mIndependenceCache != null) {
 			mIndependenceCache.mergeIndependencies(t1, t2, composition);
 		}
+	}
+
+	/**
+	 * @deprecated This wrapper is only supposed to exist temporarily
+	 */
+	@Deprecated(since = "2021-09-15")
+	private BoundedPetriNet<L, P> synthesizeLockRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
+		final BoundedPetriNet<L, P> copiedNet = copyNetAndUpdateData(petriNet);
+		final SynthesizeLockRule<L, P> rule = new SynthesizeLockRule<>(mStatistics, copiedNet, mCoEnabledRelation,
+				mCompositionFactory, mIndependenceCache, mPlaceFactory, true);
+		rule.apply();
+
+		return copiedNet;
 	}
 
 	/**

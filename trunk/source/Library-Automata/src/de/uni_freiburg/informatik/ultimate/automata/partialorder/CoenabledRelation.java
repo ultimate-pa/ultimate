@@ -175,4 +175,9 @@ public final class CoenabledRelation<LETTER, PLACE> {
 		mRelation.replaceDomainElement(oldTransition, newTransition);
 		mRelation.replaceRangeElement(oldTransition, newTransition);
 	}
+
+	public void addPair(final ITransition<LETTER, PLACE> first, final ITransition<LETTER, PLACE> second) {
+		mRelation.addPair(first, second);
+		mRelation.addPair(second, first);
+	}
 }

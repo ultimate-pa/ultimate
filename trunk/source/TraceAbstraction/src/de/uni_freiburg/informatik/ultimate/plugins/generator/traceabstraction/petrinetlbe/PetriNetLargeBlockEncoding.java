@@ -80,6 +80,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
  * @author Elisabeth Schanno
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters in the given Petri net
  */
 public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 

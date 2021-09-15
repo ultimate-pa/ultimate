@@ -42,4 +42,6 @@ public interface ICopyPlaceFactory<P> {
 	 * @return A new place.
 	 */
 	P copyPlace(P oldPlace);
+
+	P createFreshPlace();
 }
