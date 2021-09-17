@@ -617,8 +617,9 @@ public class LiptonReduction<L, P> {
 		final Set<ITransition<L, P>> transitionsToKeep = new HashSet<>(petriNet.getTransitions());
 		transitionsToKeep.removeAll(obsoleteTransitions);
 
-		final BoundedPetriNet<L, P> newPetriNet = CopySubnet.copy(mServices, petriNet, transitionsToKeep,
-				petriNet.getAlphabet(), true, oldToNewTransitions);
+		final Set<L> newAlphabet = transitionsToKeep.stream().map(ITransition::getSymbol).collect(Collectors.toSet());
+		final BoundedPetriNet<L, P> newPetriNet =
+				CopySubnet.copy(mServices, petriNet, transitionsToKeep, newAlphabet, true, oldToNewTransitions);
 		oldToNewTransitions.forEach((oldT, newT) -> mNewToOldTransitions.put(newT, getOriginalTransition(oldT)));
 		letters2Transitions.replaceAll((l, t) -> oldToNewTransitions.get(t));
 		return newPetriNet;
