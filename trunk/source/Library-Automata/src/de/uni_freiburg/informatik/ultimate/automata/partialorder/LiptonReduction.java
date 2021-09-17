@@ -256,8 +256,12 @@ public class LiptonReduction<L, P> {
 		// is an ancestor of an accepting place.
 		final Set<ITransition<L, P>> relevantTransitions = new HashSet<>(mCoEnabledRelation.getImage(t1));
 		relevantTransitions.addAll(mCoEnabledRelation.getImage(t2));
-		petriNet.getSuccessors(t1).stream().filter(p -> p != place).flatMap(p -> petriNet.getSuccessors(p).stream())
-				.forEach(relevantTransitions::add);
+
+		// TODO Which version is correct? Or neither? Or something different? (see tests)
+		// petriNet.getSuccessors(t1).stream().filter(p -> p != place).flatMap(p -> petriNet.getSuccessors(p).stream())
+		// .forEach(relevantTransitions::add);
+		// petriNet.getSuccessors(t1).stream().flatMap(p -> petriNet.getSuccessors(p).stream())
+		// .filter(t -> !petriNet.getSuccessors(place).contains(t)).forEach(relevantTransitions::add);
 
 		final Set<Event<L, P>> events =
 				relevantTransitions.stream().flatMap(this::getFirstEvents).collect(Collectors.toSet());
@@ -528,6 +532,8 @@ public class LiptonReduction<L, P> {
 	private boolean checkForEventsInBetween(final ITransition<L, P> t1, final ITransition<L, P> t2, final P place,
 			final BoundedPetriNet<L, P> petriNet) {
 
+		// TODO What precisely is the purpose of this method? can we simplify it?
+
 		final Set<ITransition<L, P>> transitions = DataStructureUtils.difference(petriNet.getSuccessors(t1).stream()
 				.flatMap(p2 -> petriNet.getSuccessors(p2).stream()).collect(Collectors.toSet()),
 				petriNet.getSuccessors(place));
@@ -569,12 +575,10 @@ public class LiptonReduction<L, P> {
 		}
 
 		for (final Event<L, P> e3 : e2.getLocalConfiguration()) {
-			if (mCutOffs.getDomain().contains(e3)) {
-				for (final Event<L, P> cutoff : mCutOffs.getImage(e3)) {
-					final boolean unvisited = cutOffsVisited.add(cutoff);
-					if (unvisited && isAncestorEvent(e1, cutoff, cutOffsVisited)) {
-						return true;
-					}
+			for (final Event<L, P> cutoff : mCutOffs.getImage(e3)) {
+				final boolean unvisited = cutOffsVisited.add(cutoff);
+				if (unvisited && isAncestorEvent(e1, cutoff, cutOffsVisited)) {
+					return true;
 				}
 			}
 		}
