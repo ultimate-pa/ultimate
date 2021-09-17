@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -132,7 +133,7 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 		final var currentTransitionOpt = DataStructureUtils.getOnly(mOperand.internalSuccessors(currentState, letter),
 				"Automaton must be deterministic");
 		if (currentTransitionOpt.isEmpty()) {
-			return Set.of();
+			return Collections.emptySet();
 		}
 
 		final Comparator<L> comp = mOrder.getOrder(state);
@@ -150,12 +151,12 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	@Override
 	public Iterable<OutgoingCallTransition<L, R>> callSuccessors(final R state, final L letter) {
-		return Set.of();
+		return Collections.emptySet();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<L, R>> returnSuccessors(final R state, final R hier, final L letter) {
-		return Set.of();
+		return Collections.emptySet();
 	}
 
 	private R getSleepSetState(final S state, final ImmutableSet<L> sleepset) {
