@@ -29,8 +29,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -162,7 +160,7 @@ public class LiptonReduction<L, P> {
 				// TODO decide on best ordering (e.g. choice at the beginning?)
 				// TODO add / allow more rules, e.g. SynthesizeLockRule
 				resultCurrentIteration = sequenceRule(resultLastIteration);
-				resultCurrentIteration = choiceRule(resultCurrentIteration);
+				resultCurrentIteration = choiceRuleWrapper(resultCurrentIteration);
 			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size());
 			mResult = resultCurrentIteration;
 
@@ -231,77 +229,6 @@ public class LiptonReduction<L, P> {
 		oldToNewTransitions.forEach((oldT, newT) -> mNewToOldTransitions.put(newT, getOriginalTransition(oldT)));
 		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
 		return copiedNet;
-	}
-
-	/**
-	 * Performs the choice rule on a Petri net.
-	 *
-	 * @param services
-	 *            A {@link AutomataLibraryServices} instance.
-	 * @param petriNet
-	 *            The Petri net on which the choice rule should be performed.
-	 * @return new Petri net, where the choice rule has been performed.
-	 *
-	 * @deprecated To be replaced by {@link ChoiceRule} in the future
-	 */
-	@Deprecated(since = "2021-09-14")
-	private BoundedPetriNet<L, P> choiceRule(final BoundedPetriNet<L, P> petriNet) {
-		final Collection<ITransition<L, P>> transitions = petriNet.getTransitions();
-
-		final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions = new HashSet<>();
-		final Set<ITransition<L, P>> composedTransitions = new HashSet<>();
-
-		for (final ITransition<L, P> t1 : transitions) {
-			for (final ITransition<L, P> t2 : transitions) {
-				if (t1.equals(t2)) {
-					continue;
-				}
-
-				// Make sure transitions not involved in any pending compositions
-				if (composedTransitions.contains(t1) || composedTransitions.contains(t2)) {
-					continue;
-				}
-
-				// Check if Pre- and Postset are identical for t1 and t2.
-				if (petriNet.getPredecessors(t1).equals(petriNet.getPredecessors(t2))
-						&& petriNet.getSuccessors(t1).equals(petriNet.getSuccessors(t2))
-						&& mCompositionFactory.isParallelyComposable(Arrays.asList(t1.getSymbol(), t2.getSymbol()))) {
-
-					assert mCoEnabledRelation.getImage(t1).equals(mCoEnabledRelation.getImage(t2));
-
-					final List<L> parallelLetters = Arrays.asList(t1.getSymbol(), t2.getSymbol());
-					final L composedLetter = mCompositionFactory.composeParallel(parallelLetters);
-
-					// Create new element of pendingCompositions.
-					pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
-					composedTransitions.add(t1);
-					composedTransitions.add(t2);
-
-					mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
-				}
-			}
-		}
-		final Map<L, ITransition<L, P>> composedLetters2Transitions = new HashMap<>();
-		final Map<ITransition<L, P>, ITransition<L, P>> oldToNewTransitions = new HashMap<>();
-		final BoundedPetriNet<L, P> newNet = copyPetriNetWithModification(petriNet, pendingCompositions,
-				composedTransitions, composedLetters2Transitions, oldToNewTransitions);
-
-		// update information for composed transition
-		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> composition : pendingCompositions) {
-			final ITransition<L, P> composedTransition = composedLetters2Transitions.get(composition.getFirst());
-			mChoiceCompositions.put(composedTransition, List.of(composition.getSecond(), composition.getThird()));
-			mCoEnabledRelation.copyRelationships(composition.getSecond(), composedTransition);
-			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
-					composition.getThird().getSymbol());
-		}
-
-		// delete obsolete information
-		for (final ITransition<L, P> t : composedTransitions) {
-			mCoEnabledRelation.deleteElement(t);
-		}
-
-		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
-		return newNet;
 	}
 
 	/**
