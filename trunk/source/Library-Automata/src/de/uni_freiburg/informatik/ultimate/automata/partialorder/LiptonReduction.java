@@ -365,6 +365,7 @@ public class LiptonReduction<L, P> {
 		final Map<P, Set<ITransition<L, P>>> transitionsToBeReplaced = new HashMap<>();
 
 		for (final P place : places) {
+			// TODO what about accepting places?
 			if (initialPlaces.contains(place)) {
 				continue;
 			}
@@ -377,9 +378,17 @@ public class LiptonReduction<L, P> {
 			}
 
 			if (incomingTransitions.size() != 1 && outgoingTransitions.size() != 1) {
+				// At the moment we only allow n:1 or 1:m compositions; because for n:m compositions,
+				// (1) the number of transitions increases (n*m instead of n+m), and
+				// (2) more importantly, it is unclear how to proceed if not all pairs can be composed.
+				//
+				// Possible future extension: If some incoming (resp. outgoing) transition t can be composed with all
+				// outgoing (resp. incoming) transitions, we can perform these compositions and remove transition t.
+				//
+				// Alternatively, we could allow all n:m compositions and redirect the remaining uncomposed transitions
+				// to several different copies of the current place.
 				continue;
 			}
-
 			final boolean isYv = incomingTransitions.size() != 1;
 
 			final Set<ITransition<L, P>> composedHere = new HashSet<>();
@@ -401,41 +410,32 @@ public class LiptonReduction<L, P> {
 						continue;
 					}
 
-					final Set<P> pre2 =
-							DataStructureUtils.difference(petriNet.getPredecessors(t2), petriNet.getSuccessors(t1));
-					final Set<P> post1 =
-							DataStructureUtils.difference(petriNet.getSuccessors(t1), petriNet.getPredecessors(t2));
-
-					// TODO Shouldn't this be part of the "structural check" in #sequenceRuleCheck ?
-					if (DataStructureUtils.haveEmptyIntersection(petriNet.getPredecessors(t1), pre2)
-							&& DataStructureUtils.haveEmptyIntersection(petriNet.getSuccessors(t2), post1)) {
+					if (canFireSequenceInOneSafeNet(petriNet, t1, t2)) {
 						final L composedLetter = mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
 						mLogger.debug("Composing " + t1 + " and " + t2);
 						pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
 					} else {
-						// TODO Is this sound? All the subsequent modifications (composedHere, replacementNeeded,
-						// statistics, but especially obsoleteTransitions including if completeComposition is true) seem
-						// dangerous.
+						// This means the transitions t1.t2 can never be fired in direct sequence in a one-safe net:
+						// Either some place would need to have 2 tokens, or some place would receive 2 tokens.
+						//
+						// TODO What is the best course of action here?
+						// TODO As-is, the subsequent modifications (composedHere, replacementNeeded, statistics,
+						// obsoleteTransitions) seem dangerous.
 						mLogger.debug("Discarding composition of " + t1 + " and " + t2 + ".");
 					}
 					composedHere.add(t1);
 					composedHere.add(t2);
 
 					if (!replacementNeeded.contains(t1) && isFirstTransitionNeeded(place, t1, t2, petriNet)) {
+						// TODO add setting to forbid compositions where t1 must be replaced
 						replacementNeeded.add(t1);
 					}
 
-					// TODO Doesn't this make the addition in case of completeComposition below redundant?
-					// TODO Are both of them even sound?
-					if (isYv) {
-						obsoleteTransitions.add(t1);
-					} else {
-						obsoleteTransitions.add(t2);
-					}
+					// t1 (in an n:1 composition) resp. t2 (in a 1:m composition) is definitely obsolete.
+					obsoleteTransitions.add(isYv ? t1 : t2);
 
 					LiptonReductionStatisticsDefinitions stat;
-					// TODO Since coenabled(t1) can now differ from coenabled(t2), change this condition.
-					if (mCoEnabledRelation.getImage(t1).isEmpty()) {
+					if (mCoEnabledRelation.getImage(t1).isEmpty() && mCoEnabledRelation.getImage(t2).isEmpty()) {
 						stat = isYv ? LiptonReductionStatisticsDefinitions.TrivialYvCompositions
 								: LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions;
 					} else {
@@ -446,13 +446,10 @@ public class LiptonReduction<L, P> {
 				}
 			}
 
-			// TODO see redundancy / soundness concerns above
 			if (completeComposition) {
-				if (isYv) {
-					obsoleteTransitions.addAll(outgoingTransitions);
-				} else {
-					obsoleteTransitions.addAll(incomingTransitions);
-				}
+				// If the composition is complete, the single outgoing (for n:1 compositions) resp. incoming (for 1:m
+				// compositions) transition is also obsolete.
+				obsoleteTransitions.addAll(isYv ? outgoingTransitions : incomingTransitions);
 			}
 
 			// TODO Why do we delay the addition to "composedTransitions" ?
@@ -466,7 +463,7 @@ public class LiptonReduction<L, P> {
 			final P deadPlace = mPlaceFactory.copyPlace(entry.getKey());
 			petriNet.addPlace(deadPlace, false, false);
 
-			// TODO Why again do we need to create this fresh transition rather than keeping the old one?
+			// TODO Why again do we create this fresh transition rather than keeping the old one?
 			for (final ITransition<L, P> t : entry.getValue()) {
 				// TODO Should the transition have those other successors? Not just deadPlace?
 				final Set<P> post = new HashSet<>(petriNet.getSuccessors(t));
@@ -500,6 +497,22 @@ public class LiptonReduction<L, P> {
 
 		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
 		return newNet;
+	}
+
+	/**
+	 * Checks a necessary condition for the two transitions being fireable in direct sequence in a one-safe Petri net.
+	 * Specifically, checks if this firing sequence would either require some place to have two tokens, or would deposit
+	 * two tokens in some place.
+	 */
+	private static <L, P> boolean canFireSequenceInOneSafeNet(final BoundedPetriNet<L, P> petriNet,
+			final ITransition<L, P> first, final ITransition<L, P> second) {
+		final Set<P> firstSucc = petriNet.getSuccessors(first);
+		final Set<P> secondPre = petriNet.getPredecessors(second);
+
+		return DataStructureUtils.intersectionStream(petriNet.getPredecessors(first), secondPre)
+				.allMatch(firstSucc::contains)
+				&& DataStructureUtils.intersectionStream(firstSucc, petriNet.getSuccessors(second))
+						.allMatch(secondPre::contains);
 	}
 
 	/**
@@ -552,8 +565,12 @@ public class LiptonReduction<L, P> {
 		} else if (mChoiceCompositions.containsKey(t)) {
 			return mChoiceCompositions.get(t).stream().flatMap(this::getFirstTransitions);
 		} else {
-			// TODO what if a sequential / choice composition is copied as first component in a sequential composition?
-			return Stream.of(getOriginalTransition(t));
+			final ITransition<L, P> original = getOriginalTransition(t);
+			if (original == t) {
+				assert !mSequentialCompositions.containsKey(original) && !mChoiceCompositions.containsKey(original);
+				return Stream.of(original);
+			}
+			return getFirstTransitions(original);
 		}
 	}
 
@@ -564,8 +581,12 @@ public class LiptonReduction<L, P> {
 		} else if (mChoiceCompositions.containsKey(t)) {
 			return mChoiceCompositions.get(t).stream().flatMap(this::getLastTransitions);
 		} else {
-			// TODO what if a sequential / choice composition is copied as first component in a sequential composition?
-			return Stream.of(getOriginalTransition(t));
+			final ITransition<L, P> original = getOriginalTransition(t);
+			if (original == t) {
+				assert !mSequentialCompositions.containsKey(original) && !mChoiceCompositions.containsKey(original);
+				return Stream.of(original);
+			}
+			return getLastTransitions(original);
 		}
 	}
 
@@ -605,9 +626,11 @@ public class LiptonReduction<L, P> {
 	 * of some net created during the reduction, this method returns the equivalent transition as originally used in the
 	 * Petri net for which the Branching Process was calculated.
 	 *
+	 * However, if the given transition is the result of a composition, the same transition is returned instead.
+	 *
 	 * @param t
-	 *            A transition. The transition must not be the result of a composition.
-	 * @return The equivalent transition used in the original Petri net.
+	 *            A transition
+	 * @return The equivalent transition used in the original Petri net (unless the given transition is a composition)
 	 */
 	private ITransition<L, P> getOriginalTransition(final ITransition<L, P> t) {
 		return mNewToOldTransitions.getOrDefault(t, t);

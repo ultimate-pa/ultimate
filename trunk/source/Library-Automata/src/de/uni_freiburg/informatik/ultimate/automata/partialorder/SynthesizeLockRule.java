@@ -78,6 +78,7 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 
 	private void inhibitTransitions(final IPetriNet<L, P> net, final P place,
 			final Set<ITransition<L, P>> transitions) {
+		// TODO If Lipton is repeatedly applied, a negatedPlace may already exist. Can we find / remember it?
 		final P negatedPlace = mPlaceFactory.createFreshPlace();
 		addPlace(negatedPlace, !net.getInitialPlaces().contains(place), false);
 
@@ -155,6 +156,8 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 				isLeftMover = isLeftMover && DataStructureUtils.haveNonEmptyIntersection(involved, coenabled)
 						&& coenabled.stream().flatMap(t -> net.getSuccessors(t).stream()).anyMatch(net::isAccepting)
 						&& coenabled.stream().allMatch(t -> checkCommutativity(net, t, trans));
+
+				// TODO If only some co-enabled transitions commute, wouldn't it be sound to only block these?
 				if (!isLeftMover) {
 					break;
 				}

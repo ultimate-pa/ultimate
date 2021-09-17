@@ -40,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -61,6 +62,10 @@ public class DataStructureUtils {
 	 * Constructs a new {@link Set} that contains only elements that occur in set1 and that occur in set2.
 	 */
 	public static <T> Set<T> intersection(final Set<T> set1, final Set<T> set2) {
+		return intersectionStream(set1, set2).collect(Collectors.toSet());
+	}
+
+	public static <T> Stream<T> intersectionStream(final Set<T> set1, final Set<T> set2) {
 		final Set<T> larger;
 		final Set<T> smaller;
 		if (set1.size() > set2.size()) {
@@ -70,7 +75,7 @@ public class DataStructureUtils {
 			larger = set2;
 			smaller = set1;
 		}
-		return smaller.stream().filter(larger::contains).collect(Collectors.toSet());
+		return smaller.stream().filter(larger::contains);
 	}
 
 	/**
