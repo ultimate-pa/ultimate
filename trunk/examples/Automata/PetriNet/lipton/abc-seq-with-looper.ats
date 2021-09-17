@@ -1,0 +1,21 @@
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" },
+  places      = { "l1" "l2" "l3" "l4" "phi1" "phi23" "phi4" },
+  transitions = {
+    ({ "l1" "phi1" }  "a" { "l2" "phi23" })
+    ({ "l2" }         "b" { "l3" })
+    ({ "l3" "phi23" } "c" { "l4" "phi4" })
+  },
+  initialMarking = { "l1" "phi1" },
+  acceptingPlaces = { "l4" }
+);
+
+PetriNet expected = (
+  alphabet    = { "abc" },
+  places      = { "l1" "l4" "phi1" "phi4" },
+  transitions = {
+    ({ "l1" "phi1" } "abc" { "l4" "phi4" })
+  },
+  initialMarking = { "l1" "phi1" },
+  acceptingPlaces = { "l4" }
+);

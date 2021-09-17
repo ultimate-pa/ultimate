@@ -1,0 +1,21 @@
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" },
+  places      = { "l11" "l12" "l13" "l21" "l22" },
+  transitions = {
+    ({ "l11" } "a" { "l12" "l21" })
+    ({ "l21" } "c" { "l22" })
+    ({ "l12" "l22" } "b" { "l13" })
+  },
+  initialMarking = { "l11" },
+  acceptingPlaces = { "l13" }
+);
+
+PetriNet expected = (
+  alphabet    = { "acb" },
+  places      = { "l11" "l13" },
+  transitions = {
+    ({ "l11" } "acb" { "l13" })
+  },
+  initialMarking = { "l11" },
+  acceptingPlaces = { "l13" }
+);

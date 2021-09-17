@@ -1,0 +1,24 @@
+// expected commutativity: (b, c), (c, d)
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" "d" },
+  places      = { "l11" "l12" "l13" "l14" "l21" "l22" },
+  transitions = {
+    ({ "l11" } "a" { "l12" "l21" })
+    ({ "l12" } "b" { "l13" })
+    ({ "l21" } "c" { "l22" })
+    ({ "l13" "l22" } "d" { "l12" "l14" })
+  },
+  initialMarking  = { "l11" },
+  acceptingPlaces = { "l14" }
+);
+
+PetriNet expected = (
+  alphabet    = { "abcdb" },
+  places      = { "l11" "l14" "l12" },
+  transitions = {
+    ({ "l11" } "abcdb" { "l14" "l12" })
+  },
+  initialMarking  = { "l11" },
+  acceptingPlaces = { "l14" }
+);
