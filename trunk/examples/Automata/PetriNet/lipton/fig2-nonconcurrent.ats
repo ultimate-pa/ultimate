@@ -1,0 +1,24 @@
+// Figure 2 from Dennis Woelfing's project report
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" },
+  places      = { "l1" "p" "l3" },
+  transitions = {
+    ({ "l1" } "a" { "p" })
+    ({ "p" } "b" { "l3" })
+    ({ "p" } "c" { "l1" })
+  },
+  initialMarking = { "l1" },
+  acceptingPlaces = { "l3" }
+);
+
+PetriNet expected = (
+  alphabet    = { "ab" "ac" },
+  places      = { "l1" "l3" },
+  transitions = {
+    ({ "l1" } "ab" { "l3" })
+    ({ "l1" } "ac" { "l1" })
+  },
+  initialMarking = { "l1" },
+  acceptingPlaces = { "l3" }
+);

@@ -1,3 +1,5 @@
+// Figure 1 (left) from Dennis Woelfing's project report
+
 PetriNet initial = (
   alphabet    = { "a" "b" "c" },
   places      = { "l11" "l12" "l13" "l21" "l22" },
