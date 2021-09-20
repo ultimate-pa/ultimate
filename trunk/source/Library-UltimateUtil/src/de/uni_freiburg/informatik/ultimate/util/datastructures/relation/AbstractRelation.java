@@ -472,6 +472,11 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 								public R setValue(final R arg0) {
 									throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 								}
+
+								@Override
+								public String toString() {
+									return "(" + mKey + ", " + mValue + ")";
+								};
 							};
 						}
 						return null;
@@ -525,6 +530,11 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 			@Override
 			public <T> T[] toArray(final T[] a) {
 				throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
+			}
+
+			@Override
+			public String toString() {
+				return stream().map(Object::toString).collect(Collectors.joining(", ", "[", "]"));
 			}
 
 		};

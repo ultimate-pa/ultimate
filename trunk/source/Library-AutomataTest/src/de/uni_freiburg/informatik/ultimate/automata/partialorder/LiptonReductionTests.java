@@ -36,7 +36,10 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -63,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.Facto
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 @RunWith(FactoryTestRunner.class)
 public class LiptonReductionTests implements IMessagePrinter {
@@ -83,11 +87,11 @@ public class LiptonReductionTests implements IMessagePrinter {
 	public Iterable<TestCase> createTests() throws IOException {
 		final Path dir = Path.of(TestUtil.getPathFromTrunk("examples/Automata/PetriNet/lipton/"));
 		try (var files = Files.list(dir)) {
-			return files.map(TestCase::new).collect(Collectors.toList());
+			return files.map(TestCase::new).sorted().collect(Collectors.toList());
 		}
 	}
 
-	private final class TestCase {
+	private final class TestCase implements Comparable<TestCase> {
 		private final Path mPath;
 
 		public TestCase(final Path path) {
@@ -95,7 +99,7 @@ public class LiptonReductionTests implements IMessagePrinter {
 		}
 
 		@FactoryTestMethod
-		public void run() throws FileNotFoundException, PetriNetNot1SafeException, AutomataOperationCanceledException {
+		public void run() throws PetriNetNot1SafeException, AutomataOperationCanceledException, IOException {
 			runTest(mPath);
 		}
 
@@ -103,10 +107,15 @@ public class LiptonReductionTests implements IMessagePrinter {
 		public String toString() {
 			return mPath.getFileName().toString();
 		}
+
+		@Override
+		public int compareTo(final TestCase other) {
+			return mPath.compareTo(other.mPath);
+		}
 	}
 
 	private void runTest(final Path path)
-			throws FileNotFoundException, PetriNetNot1SafeException, AutomataOperationCanceledException {
+			throws PetriNetNot1SafeException, AutomataOperationCanceledException, IOException {
 		final AutomataTestFileAST parsed = parse(path);
 
 		PetriNetAutomatonAST inputAST = null;
@@ -129,8 +138,9 @@ public class LiptonReductionTests implements IMessagePrinter {
 		final var expected = (BoundedPetriNet<String, String>) mInterpreter.getAutomata().get("expected");
 		assert input != null && expected != null : "either input or expected is missing";
 
+		final HashIndependence indep = new HashIndependence(extractCommutativity(path));
 		final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
-				CopyPlaceFactory.INSTANCE, EmptyIndependence.INSTANCE, PostScriptChecker.INSTANCE, null);
+				CopyPlaceFactory.INSTANCE, indep, PostScriptChecker.INSTANCE, null);
 		reduction.performReduction();
 		final BoundedPetriNet<String, String> actual = reduction.getResult();
 
@@ -141,6 +151,33 @@ public class LiptonReductionTests implements IMessagePrinter {
 		final String filename = path.getFileName().toString();
 		final Reader reader = new BufferedReader(new FileReader(path.toFile()));
 		return new AutomataScriptParserRun(mServices, mLogger, reader, filename, path.toString()).getResult();
+	}
+
+	private HashRelation<String, String> extractCommutativity(final Path path) throws IOException {
+		final String prefix = "//@ commutativity ";
+
+		final Optional<String> commLine;
+		try (final var lines = Files.lines(path)) {
+			commLine = lines.filter(l -> l.startsWith(prefix)).findFirst();
+		}
+
+		final HashRelation<String, String> result = new HashRelation<>();
+		if (!commLine.isPresent()) {
+			mLogger.info("no commutativity specification found");
+			return result;
+		}
+
+		final String relDescr = commLine.get().substring(prefix.length());
+		final Pattern pairPattern = Pattern.compile("\s*\\(([^,]+),([^\\)]+)\\)");
+		final Matcher matcher = pairPattern.matcher(relDescr);
+		while (matcher.find()) {
+			final String left = matcher.group(1).strip();
+			final String right = matcher.group(2).strip();
+			result.addPair(left, right);
+		}
+
+		mLogger.info("commutativity: " + result.getSetOfPairs());
+		return result;
 	}
 
 	@Override
@@ -194,12 +231,27 @@ public class LiptonReductionTests implements IMessagePrinter {
 		}
 	}
 
-	private static final class EmptyIndependence implements IIndependenceRelation<Set<String>, String> {
-		public static final EmptyIndependence INSTANCE = new EmptyIndependence();
+	private static final class HashIndependence implements IIndependenceRelation<Set<String>, String> {
+		private final HashRelation<String, String> mRelation;
+		private final boolean mSymmetric;
+
+		public HashIndependence(final HashRelation<String, String> relation) {
+			mRelation = relation;
+			mSymmetric = isSymmetric(relation);
+		}
+
+		private static boolean isSymmetric(final HashRelation<String, String> relation) {
+			for (final var pair : relation) {
+				if (!relation.containsPair(pair.getValue(), pair.getKey())) {
+					return false;
+				}
+			}
+			return true;
+		}
 
 		@Override
 		public boolean isSymmetric() {
-			return false;
+			return mSymmetric;
 		}
 
 		@Override
@@ -209,7 +261,7 @@ public class LiptonReductionTests implements IMessagePrinter {
 
 		@Override
 		public boolean contains(final Set<String> state, final String a, final String b) {
-			return false;
+			return mRelation.containsPair(a, b);
 		}
 	}
 
