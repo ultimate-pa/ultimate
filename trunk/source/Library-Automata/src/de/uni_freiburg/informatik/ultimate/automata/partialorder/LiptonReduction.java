@@ -296,8 +296,7 @@ public class LiptonReduction<L, P> {
 		final Map<P, Set<ITransition<L, P>>> transitionsToBeReplaced = new HashMap<>();
 
 		for (final P place : places) {
-			// TODO what about accepting places?
-			if (initialPlaces.contains(place)) {
+			if (initialPlaces.contains(place) || petriNet.getAcceptingPlaces().contains(place)) {
 				continue;
 			}
 
