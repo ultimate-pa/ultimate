@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
@@ -76,7 +76,7 @@ public class Req2Pea implements IReq2Pea {
 	private final Durations mDurations;
 
 	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger,
-			final List<InitializationPattern> init, final List<PatternType<?>> reqs) {
+			final List<DeclarationPattern> init, final List<PatternType<?>> reqs) {
 		mLogger = logger;
 		mServices = services;
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
@@ -85,7 +85,7 @@ public class Req2Pea implements IReq2Pea {
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 
 		mDurations = new Durations();
-		for (final InitializationPattern pattern : init) {
+		for (final DeclarationPattern pattern : init) {
 			builder.addInitPattern(pattern);
 			mDurations.addInitPattern(pattern);
 		}

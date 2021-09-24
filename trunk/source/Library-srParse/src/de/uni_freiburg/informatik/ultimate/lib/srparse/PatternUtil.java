@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
@@ -97,7 +97,7 @@ public final class PatternUtil {
 				ReflectionUtil.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
 						.filter(c -> !ReflectionUtil.isAbstractClass(c))
 						.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
-						.filter(c -> !c.equals(InitializationPattern.class)).map(a -> (Class<PatternType<?>>) a)
+						.filter(c -> !c.equals(DeclarationPattern.class)).map(a -> (Class<PatternType<?>>) a)
 						.collect(Collectors.toList());
 		Collections.sort(patternTypeClazzes, new ClassNameComparator());
 

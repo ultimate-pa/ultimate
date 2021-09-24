@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class InvariancePatternPattern extends PatternType<InvariancePatternPattern> {
-	public InvariancePatternPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+public class InvariancePattern extends PatternType<InvariancePattern> {
+	public InvariancePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations,durationNames);
 	}

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.preferences.PeaExampleGeneratorPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
@@ -105,7 +105,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		}
 
 		final List<PatternType<?>> nonInitPatterns =
-				patterns.stream().filter(e -> !(e instanceof InitializationPattern)).collect(Collectors.toList());
+				patterns.stream().filter(e -> !(e instanceof DeclarationPattern)).collect(Collectors.toList());
 
 		if (nonInitPatterns.isEmpty()) {
 			throw new UnsupportedOperationException("No non-init pattern in: " + PatternContainer.class + ", have "

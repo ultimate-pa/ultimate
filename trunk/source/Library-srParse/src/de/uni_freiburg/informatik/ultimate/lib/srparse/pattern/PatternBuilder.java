@@ -64,8 +64,8 @@ public class PatternBuilder {
 			InvarianceBoundL2Pattern.class, BndPossResponsePattern.class, ReccurrenceBoundLPattern.class,
 			ResponseBoundL12Pattern.class, ResponseBoundL1Pattern.class, ResponseDelayPattern.class,
 			TriggerResponseBoundL1Pattern.class, TriggerResponseDelayBoundL1Pattern.class,
-			ConstrainedChainPattern.class, EdgeResponseDelayPattern.class, InitializationPattern.class,
-			AbsencePattern.class, InvariancePatternPattern.class, DurationBoundUPattern.class, DurationBoundLPattern.class,
+			ConstrainedChainPattern.class, EdgeResponseDelayPattern.class, DeclarationPattern.class,
+			AbsencePattern.class, InvariancePattern.class, DurationBoundUPattern.class, DurationBoundLPattern.class,
 			PossibilityPattern.class, PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class,
 			PrecedencePattern.class, ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
 			UniversalityDelayPattern.class };
@@ -191,7 +191,7 @@ public class PatternBuilder {
 	}
 
 	public static PatternType<?> normalize(final PatternType<?> p, final Durations durations) {
-		if (p instanceof InitializationPattern) {
+		if (p instanceof DeclarationPattern) {
 			return p;
 		}
 		final PatternBuilder pb = new PatternBuilder();

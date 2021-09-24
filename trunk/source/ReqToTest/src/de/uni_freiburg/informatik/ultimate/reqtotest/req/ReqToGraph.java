@@ -14,9 +14,9 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL12Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL1Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseDelayPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.AbsencePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePatternPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -54,7 +54,7 @@ public class ReqToGraph {
 	public List<ReqGuardGraph> patternListToBuechi(final List<PatternType<?>> patternList) {
 		final List<ReqGuardGraph> gs = new ArrayList<>();
 		for (final PatternType<?> pattern : patternList) {
-			if (!(pattern instanceof InitializationPattern)) {
+			if (!(pattern instanceof DeclarationPattern)) {
 				final ReqGuardGraph aut = patternToTestAutomaton(pattern);
 				if (aut != null) {
 					gs.add(aut);
@@ -76,7 +76,7 @@ public class ReqToGraph {
 	 */
 
 	public ReqGuardGraph patternToTestAutomaton(final PatternType<?> pattern) {
-		if (pattern instanceof InvariancePatternPattern) {
+		if (pattern instanceof InvariancePattern) {
 			return getInvariantPattern(pattern);
 		} else if (pattern instanceof ResponseDelayPattern) {
 			return getBndResponsePatternUTPattern(pattern);

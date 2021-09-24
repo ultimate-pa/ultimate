@@ -61,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -123,7 +123,7 @@ public class ReqSymboltableBuilder {
 
 	}
 
-	public void addInitPattern(final InitializationPattern initPattern) {
+	public void addInitPattern(final DeclarationPattern initPattern) {
 		final BoogiePrimitiveType type = BoogiePrimitiveType.toPrimitiveType(initPattern.getType());
 		final String name = initPattern.getId();
 		if (type == BoogieType.TYPE_ERROR) {
@@ -247,8 +247,8 @@ public class ReqSymboltableBuilder {
 
 	private void addVar(final String name, final BoogieType type, final PatternType<?> source, final Set<String> kind) {
 		addVarOneKind(name, type, source, kind);
-		if (source instanceof InitializationPattern
-				&& ((InitializationPattern) source).getCategory() == VariableCategory.CONST) {
+		if (source instanceof DeclarationPattern
+				&& ((DeclarationPattern) source).getCategory() == VariableCategory.CONST) {
 			// consts do not need primed variables
 			return;
 		}

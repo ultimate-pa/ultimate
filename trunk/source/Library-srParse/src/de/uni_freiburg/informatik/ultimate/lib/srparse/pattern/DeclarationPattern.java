@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class InitializationPattern extends PatternType<InitializationPattern> {
+public class DeclarationPattern extends PatternType<DeclarationPattern> {
 
 	private static final SrParseScopeGlobally INIT_SCOPE = new SrParseScopeGlobally();
 
@@ -67,11 +67,11 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 	private final VariableCategory mVisibility;
 	private final Expression mExpression;
 
-	public InitializationPattern(final String ident, final String type, final VariableCategory visibility) {
+	public DeclarationPattern(final String ident, final String type, final VariableCategory visibility) {
 		this(ident, type, visibility, null);
 	}
 
-	public InitializationPattern(final String ident, final String type, final VariableCategory visibility,
+	public DeclarationPattern(final String ident, final String type, final VariableCategory visibility,
 			final Expression expr) {
 		super(INIT_SCOPE, ident, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 		mType = type;
@@ -80,7 +80,7 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 	}
 
 	@Override
-	public InitializationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+	public DeclarationPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
 		throw new UnsupportedOperationException();
 	}
@@ -133,7 +133,7 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final InitializationPattern other = (InitializationPattern) obj;
+		final DeclarationPattern other = (DeclarationPattern) obj;
 		if (mVisibility != other.mVisibility) {
 			return false;
 		}
@@ -166,8 +166,8 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 	}
 
 	@Override
-	public InitializationPattern rename(final String newName) {
-		return new InitializationPattern(newName, getType(), getCategory(), getExpression());
+	public DeclarationPattern rename(final String newName) {
+		return new DeclarationPattern(newName, getType(), getCategory(), getExpression());
 	}
 
 	@Override

@@ -11,9 +11,9 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL12Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL1Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseDelayPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.AbsencePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePatternPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -46,7 +46,7 @@ public class ReqToInOut {
 
 	public void requirementToInOut(final List<PatternType<?>> patternList) {
 		for (final PatternType<?> pattern : patternList) {
-			if (!(pattern instanceof InitializationPattern)) {
+			if (!(pattern instanceof DeclarationPattern)) {
 				addRequirement(pattern);
 			}
 		}
@@ -74,7 +74,7 @@ public class ReqToInOut {
 	 */
 
 	public void addRequirement(final PatternType<?> pattern) {
-		if (pattern instanceof InvariancePatternPattern) {
+		if (pattern instanceof InvariancePattern) {
 			addInvariantPattern(pattern);
 		} else if (pattern instanceof ResponseDelayPattern) {
 			addBndResponsePatternUTPattern(pattern);

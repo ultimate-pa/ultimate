@@ -39,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseBound
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseDelayPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseDelayBoundL2Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ExistenceBoundUPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2Pattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilderPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PossibilityPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedencePattern;
@@ -115,7 +115,7 @@ parser code {:
 		return p;
 	}
 
-	public InitializationPattern registerInitPattern(final InitializationPattern init) {
+	public DeclarationPattern registerInitPattern(final DeclarationPattern init) {
 		if (init != null) {
 			mDurations.addInitPattern(init);
 		}
@@ -201,21 +201,21 @@ property ::= propid?:id scope:s COMMA? pattern:p DOT?
             | error
                {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,t,InitializationPattern.VariableCategory.IN)); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,t,DeclarationPattern.VariableCategory.IN)); :}
 		  	| OUTPUT cid:i IS ID:t
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,t,InitializationPattern.VariableCategory.OUT)); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,t,DeclarationPattern.VariableCategory.OUT)); :}
 		 	| INTERNAL cid:i IS ID:t
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,t,InitializationPattern.VariableCategory.HIDDEN)); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,t,DeclarationPattern.VariableCategory.HIDDEN)); :}
 		 	| CONST cid:i IS NUMBER:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"int",DeclarationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v))); :}
 		 	| CONST cid:i IS REALNUMBER:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"real",DeclarationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v))); :}
 		 	| CONST cid:i IS MINUS NUMBER:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v)))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"int",DeclarationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v)))); :}
 		 	| CONST cid:i IS MINUS REALNUMBER:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v)))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"real",DeclarationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v)))); :}
 		 	| CONST cid:i IS bool:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"bool",InitializationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$),BoogieType.TYPE_BOOL, v))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"bool",DeclarationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$),BoogieType.TYPE_BOOL, v))); :}
            ;
 
 propid ::= ID:id IDSEP
