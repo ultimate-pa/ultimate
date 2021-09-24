@@ -33,41 +33,59 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at least
- * "c2" time units
+ * {scope}, it is always the case that "R" holds at least every "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndResponsePatternTT extends PatternType<BndResponsePatternTT> {
-
-	public BndResponsePatternTT(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+public class ReccurrenceBoundLPattern extends PatternType<ReccurrenceBoundLPattern> {
+	public ReccurrenceBoundLPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 2 && durations.length == 2;
+		assert cdds.length == 1 && durations.length == 1;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
-		final CDD R = cdds[1];
-		final CDD S = cdds[0];
+		final CDD R = cdds[0];
 		final int c1 = durations[0];
-		final int c2 = durations[1];
 
+		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			final CounterTrace ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1),
-					phaseE(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
-			return Collections.singletonList(ct);
+			ct = counterTrace(phaseT(), phase(R.negate(), BoundTypes.GREATER, c1), phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R.negate()), BoundTypes.GREATER, c1), phaseT());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()),
+					phase(Q.negate().and(R.negate()), BoundTypes.GREATER, c1), phaseT());
+		} else if (scope instanceof SrParseScopeAfter) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.negate(), BoundTypes.GREATER, c1), phaseT());
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(Q.negate().and(R.negate()), BoundTypes.GREATER, c1), phase(Q.negate()), phase(Q), phaseT());
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+
+		return Collections.singletonList(ct);
 	}
 
 	@Override
@@ -80,25 +98,21 @@ public class BndResponsePatternTT extends PatternType<BndResponsePatternTT> {
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is always the case that if \"");
-		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" holds for at least \"");
-		sb.append(getDurations().get(0));
-		sb.append("\" time units, then \"");
+		sb.append("it is always the case that \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds afterwards for at least \"");
-		sb.append(getDurations().get(1));
+		sb.append("\" holds at least every \"");
+		sb.append(getDurations().get(0));
 		sb.append("\" time units");
 		return sb.toString();
 	}
 
 	@Override
 	public int getExpectedCddSize() {
-		return 2;
+		return 1;
 	}
 
 	@Override
 	public int getExpectedDurationSize() {
-		return 2;
+		return 1;
 	}
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
- * Copyright (C) 2020 University of Freiburg
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-srParse plug-in.
  *
@@ -31,42 +31,58 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
-import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
-/**
- * {scope}, it is always the case that once "R" becomes satisfied, "S" holds after at most "c1" time units.
+/*
+ * {scope}, it is always the case that if "R" holds, then "S" holds as well
  *
- * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
- *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class EdgeResponsePatternDelayed extends PatternType<EdgeResponsePatternDelayed> {
-
-	public EdgeResponsePatternDelayed(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+public class InvariancePatternPattern extends PatternType<InvariancePatternPattern> {
+	public InvariancePatternPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 2 && durations.length == 1;
+		assert cdds.length == 2 && durations.length == 0;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
-		final int c1 = durations[0];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(R.negate()), phase(R.and(S.negate())),
-					phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
+			ct = counterTrace(phaseT(), phase(R.and(S.negate())), phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R).and(S.negate())), phaseT());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R).and(S.negate())),
+					phaseT());
+		} else if (scope instanceof SrParseScopeAfter) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.and(S.negate())), phaseT());
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(Q.negate().and(R).and(S.negate())), phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
+
 		return Collections.singletonList(ct);
 	}
 
@@ -80,13 +96,11 @@ public class EdgeResponsePatternDelayed extends PatternType<EdgeResponsePatternD
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is always the case that once \"");
+		sb.append("it is always the case that if \"");
 		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" becomes satisfied, \"");
+		sb.append("\" holds, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds after at most \"");
-		sb.append(getDurations().get(0));
-		sb.append("\" time units");
+		sb.append("\" holds as well");
 		return sb.toString();
 	}
 
@@ -97,6 +111,6 @@ public class EdgeResponsePatternDelayed extends PatternType<EdgeResponsePatternD
 
 	@Override
 	public int getExpectedDurationSize() {
-		return 1;
+		return 0;
 	}
 }

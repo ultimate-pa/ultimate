@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2018 Amalinda Post
- * Copyright (C) 2018 University of Freiburg
+ * Copyright (C) 2020 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-srParse plug-in.
  *
@@ -34,22 +33,18 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units
+ * {scope}, it is always the case that once "R" becomes satisfied, "S" holds after at most "c1" time units.
  *
- * @author Amalinda Post
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  *
  */
-public class BndResponsePatternUT extends PatternType<BndResponsePatternUT> {
-	public BndResponsePatternUT(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+public class EdgeResponseDelayPattern extends PatternType<EdgeResponseDelayPattern> {
+
+	public EdgeResponseDelayPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations,durationNames);
 	}
@@ -67,26 +62,8 @@ public class BndResponsePatternUT extends PatternType<BndResponsePatternUT> {
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(R.and(S.negate())), phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
-		} else if (scope instanceof SrParseScopeBefore) {
-			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R).and(S.negate())),
-					phase(P.negate().and(S.negate()), BoundTypes.GREATER, c1), phaseT());
-		} else if (scope instanceof SrParseScopeAfterUntil) {
-			final CDD P = scope.getCdd1();
-			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R).and(S.negate())),
-					phase(Q.negate().and(S.negate()), BoundTypes.GREATER, c1), phaseT());
-		} else if (scope instanceof SrParseScopeAfter) {
-			final CDD P = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.and(S.negate())),
+			ct = counterTrace(phaseT(), phase(R.negate()), phase(R.and(S.negate())),
 					phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
-		} else if (scope instanceof SrParseScopeBetween) {
-			final CDD P = scope.getCdd1();
-			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(Q.negate().and(R).and(S.negate())), phase(Q.negate().and(S.negate()), BoundTypes.GREATER, c1),
-					phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
@@ -103,9 +80,9 @@ public class BndResponsePatternUT extends PatternType<BndResponsePatternUT> {
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is always the case that if \"");
+		sb.append("it is always the case that once \"");
 		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" holds, then \"");
+		sb.append("\" becomes satisfied, \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds after at most \"");
 		sb.append(getDurations().get(0));

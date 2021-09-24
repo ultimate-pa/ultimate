@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-srParse plug-in.
@@ -31,62 +31,52 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
-import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, it is always the case that "R" holds after at at most "c1" time units
+ * {scope}, it is never the case that "R" holds
  *
- * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
- *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class UniversalityPatternDelayed extends PatternType<UniversalityPatternDelayed> {
-
-	public UniversalityPatternDelayed(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+public class AbsencePattern extends PatternType<AbsencePattern> {
+	public AbsencePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 1 && durations.length == 1;
+		assert cdds.length == 1 && durations.length == 0;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[0];
-		final int c1 = durations[0];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phase(cddT(), BoundTypes.GREATEREQUAL, c1), phase(R.negate()), phaseT());
-		} else if (scope instanceof SrParseScopeBefore) {
-			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate(), BoundTypes.GREATEREQUAL, c1), phase(P.negate().and(R.negate())),
-					phaseT());
+			ct = counterTrace(phaseT(), phase(R), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate(), BoundTypes.GREATEREQUAL, c1),
-					phase(Q.negate().and(R.negate())), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(P), phase(cddT(), BoundTypes.GREATEREQUAL, c1), phase(R.negate()),
-					phaseT());
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate(), BoundTypes.GREATEREQUAL, c1),
-					phase(Q.negate().and(R.negate())), phaseT(), phase(Q), phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
+					phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
+
 		return Collections.singletonList(ct);
 	}
 
@@ -100,11 +90,9 @@ public class UniversalityPatternDelayed extends PatternType<UniversalityPatternD
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is always the case that \"");
+		sb.append("it is never the case that \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds after at most \"");
-		sb.append(getDurations().get(0));
-		sb.append("\" time units");
+		sb.append("\" holds");
 		return sb.toString();
 	}
 
@@ -115,6 +103,6 @@ public class UniversalityPatternDelayed extends PatternType<UniversalityPatternD
 
 	@Override
 	public int getExpectedDurationSize() {
-		return 1;
+		return 0;
 	}
 }

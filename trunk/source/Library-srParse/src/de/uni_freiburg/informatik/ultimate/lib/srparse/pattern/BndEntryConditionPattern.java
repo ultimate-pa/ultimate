@@ -41,11 +41,15 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
+ * Use Pattern ResponseBoundL1 instead of this pattern!
+ * 
  * {scope}, it is always the case that after "R" holds for at least "c1" time units, then "S" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
+
+@Deprecated
 public class BndEntryConditionPattern extends PatternType<BndEntryConditionPattern> {
 
 	public BndEntryConditionPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,

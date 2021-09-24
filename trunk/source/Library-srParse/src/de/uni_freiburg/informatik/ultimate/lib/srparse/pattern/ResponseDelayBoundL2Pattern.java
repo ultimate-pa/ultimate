@@ -26,58 +26,52 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, it is never the case that "R" holds
+ * {scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units for at least "c2" time
+ * units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public class InstAbsPattern extends PatternType<InstAbsPattern> {
-	public InstAbsPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+public class ResponseDelayBoundL2Pattern extends PatternType<ResponseDelayBoundL2Pattern> {
+
+	public ResponseDelayBoundL2Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 1 && durations.length == 0;
+		assert cdds.length == 2 && durations.length == 2;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
-		final CDD R = cdds[0];
+		final CDD R = cdds[1];
+		final CDD S = cdds[0];
+		final int c1 = durations[0];
+		final int c2 = durations[1];
 
-		final CounterTrace ct;
+		final List<CounterTrace> ct = new ArrayList<>();
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(R), phaseT());
-		} else if (scope instanceof SrParseScopeAfterUntil) {
-			final CDD P = scope.getCdd1();
-			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)), phaseT());
-		} else if (scope instanceof SrParseScopeAfter) {
-			final CDD P = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R), phaseT());
-		} else if (scope instanceof SrParseScopeBetween) {
-			final CDD P = scope.getCdd1();
-			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
-					phase(Q.negate()), phase(Q), phaseT());
+			ct.add(counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.GREATER, c1), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(R), phaseE(S.negate(), BoundTypes.LESSEQUAL, c1),
+					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 
-		return Collections.singletonList(ct);
+		return ct;
 	}
 
 	@Override
@@ -90,19 +84,25 @@ public class InstAbsPattern extends PatternType<InstAbsPattern> {
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is never the case that \"");
+		sb.append("it is always the case that if \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" holds, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds");
+		sb.append("\" holds after at most \"");
+		sb.append(getDurations().get(0));
+		sb.append("\" time units for at least \"");
+		sb.append(getDurations().get(1));
+		sb.append("\" time units");
 		return sb.toString();
 	}
 
 	@Override
 	public int getExpectedCddSize() {
-		return 1;
+		return 2;
 	}
 
 	@Override
 	public int getExpectedDurationSize() {
-		return 0;
+		return 2;
 	}
 }

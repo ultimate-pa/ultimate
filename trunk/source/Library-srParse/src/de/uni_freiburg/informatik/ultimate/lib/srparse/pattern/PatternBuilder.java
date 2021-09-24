@@ -58,17 +58,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 @SuppressWarnings("unchecked")
 public class PatternBuilder {
 
-	private static final Class<?>[] PATTERNS = new Class<?>[] { BndDelayedResponsePatternUT.class,
-			BndDelayedResponsePatternTU.class, BndEdgeResponsePattern.class, BndEdgeResponsePatternDelayed.class,
-			BndEdgeResponsePatternTU.class, BndEntryConditionPattern.class, BndExistencePattern.class,
-			BndInvariancePattern.class, BndPossResponsePattern.class, BndRecurrencePattern.class,
-			BndResponsePatternTT.class, BndResponsePatternTU.class, BndResponsePatternUT.class,
-			BndTriggeredEntryConditionPattern.class, BndTriggeredEntryConditionPatternDelayed.class,
-			ConstrainedChainPattern.class, EdgeResponsePatternDelayed.class, InitializationPattern.class,
-			InstAbsPattern.class, InvariantPattern.class, MaxDurationPattern.class, MinDurationPattern.class,
+	private static final Class<?>[] PATTERNS = new Class<?>[] { ResponseDelayBoundL2Pattern.class,
+			ResponseDelayBoundL1Pattern.class, EdgeResponseBoundL2Pattern.class, EdgeResponseDelayBoundL2Pattern.class,
+			EdgeResponseBoundU1Pattern.class, BndEntryConditionPattern.class, ExistenceBoundUPattern.class,
+			InvarianceBoundL2Pattern.class, BndPossResponsePattern.class, ReccurrenceBoundLPattern.class,
+			ResponseBoundL12Pattern.class, ResponseBoundL1Pattern.class, ResponseDelayPattern.class,
+			TriggerResponseBoundL1Pattern.class, TriggerResponseDelayBoundL1Pattern.class,
+			ConstrainedChainPattern.class, EdgeResponseDelayPattern.class, InitializationPattern.class,
+			AbsencePattern.class, InvariancePatternPattern.class, DurationBoundUPattern.class, DurationBoundLPattern.class,
 			PossibilityPattern.class, PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class,
 			PrecedencePattern.class, ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
-			UniversalityPatternDelayed.class };
+			UniversalityDelayPattern.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 

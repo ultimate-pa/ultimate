@@ -31,6 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
@@ -40,50 +41,46 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, transitions to states in which "R" holds occur at most twice
+ * {scope}, it is always the case that once "R" becomes satisfied, it holds for less than "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndExistencePattern extends PatternType<BndExistencePattern> {
-
-	public BndExistencePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+public class DurationBoundUPattern extends PatternType<DurationBoundUPattern> {
+	public DurationBoundUPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 1 && durations.length == 0;
+		assert cdds.length == 1 && durations.length == 1;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[0];
+		final int c1 = durations[0];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(R), phase(R.negate()), phase(R), phase(R.negate()), phase(R), phaseT());
+			ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R)), phase(P.negate().and(R.negate())),
-					phase(P.negate().and(R)), phase(P.negate().and(R.negate())), phase(P.negate().and(R)), phaseT());
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)),
-					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R)), phase(Q.negate().and(R.negate())),
-					phase(Q.negate().and(R)), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R), phase(R.negate()), phase(R), phase(R.negate()),
-					phase(R), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
-					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R)), phase(Q.negate().and(R.negate())),
-					phase(Q.negate().and(R)), phase(Q.negate()), phase(Q), phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1), phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
@@ -101,9 +98,11 @@ public class BndExistencePattern extends PatternType<BndExistencePattern> {
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("transitions to states in which \"");
+		sb.append("it is always the case that once \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds occur at most twice");
+		sb.append("\" becomes satisfied, it holds for less than \"");
+		sb.append(getDurations().get(0));
+		sb.append("\" time units");
 		return sb.toString();
 	}
 
@@ -114,6 +113,6 @@ public class BndExistencePattern extends PatternType<BndExistencePattern> {
 
 	@Override
 	public int getExpectedDurationSize() {
-		return 0;
+		return 1;
 	}
 }

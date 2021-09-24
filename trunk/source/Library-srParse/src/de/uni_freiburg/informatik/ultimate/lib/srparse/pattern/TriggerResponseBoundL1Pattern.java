@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2020 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
- * Copyright (C) 2020 University of Freiburg
+ * Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-srParse plug-in.
  *
@@ -26,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -37,41 +38,37 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, it is always the case that once "R" becomes satisfied, "S" holds after at most "c1" time units for at least
- * "c2" time units.
+ * {scope}, it is always the case that after "R" holds for at least "c1" time units and "S" holds, then "T" holds
  *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
- *
  */
-public class BndEdgeResponsePatternDelayed extends PatternType<BndEdgeResponsePatternDelayed> {
+public class TriggerResponseBoundL1Pattern extends PatternType<TriggerResponseBoundL1Pattern> {
 
-	public BndEdgeResponsePatternDelayed(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+	public TriggerResponseBoundL1Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations,durationNames);
 	}
 
 	@Override
-	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 2 && durations.length == 2;
+	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+		assert cdds.length == 3 && durations.length == 1;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
-		final CDD R = cdds[1];
-		final CDD S = cdds[0];
+		final CDD T = cdds[2];
+		final CDD S = cdds[1];
+		final CDD R = cdds[0];
 		final int c1 = durations[0];
-		final int c2 = durations[1];
 
-		final List<CounterTrace> ct = new ArrayList<>();
 		if (scope instanceof SrParseScopeGlobally) {
-			ct.add(counterTrace(phaseT(), phase(R.negate()), phase(R.and(S.negate())),
-					phase(S.negate(), BoundTypes.GREATER, c1), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(R.negate()), phase(R), phase(cddT(), BoundTypes.LESS, c1),
-					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
-		} else {
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CounterTrace ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1),
+					phase(T.negate().and(S).and(R)), phaseT());
+			return Collections.singletonList(ct);
 		}
-		return ct;
+
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
 	@Override
@@ -84,25 +81,26 @@ public class BndEdgeResponsePatternDelayed extends PatternType<BndEdgeResponsePa
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is always the case that once \"");
-		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" becomes satisfied, \"");
-		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds after at most \"");
+		sb.append("it is always the case that after \"");
+		sb.append(getCdds().get(2).toBoogieString());
+		sb.append("\" holds for at least \"");
 		sb.append(getDurations().get(0));
-		sb.append("\" time units for at least \"");
-		sb.append(getDurations().get(1));
-		sb.append("\" time units");
+		sb.append("\" time units and \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" holds, then \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds");
 		return sb.toString();
 	}
 
 	@Override
 	public int getExpectedCddSize() {
-		return 2;
+		return 3;
 	}
 
 	@Override
 	public int getExpectedDurationSize() {
-		return 2;
+		return 1;
 	}
+
 }
