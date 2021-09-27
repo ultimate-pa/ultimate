@@ -65,7 +65,7 @@ public class PatternBuilder {
 			ResponseBoundL12Pattern.class, ResponseBoundL1Pattern.class, ResponseDelayPattern.class,
 			TriggerResponseBoundL1Pattern.class, TriggerResponseDelayBoundL1Pattern.class,
 			ConstrainedChainPattern.class, EdgeResponseDelayPattern.class, DeclarationPattern.class,
-			AbsencePattern.class, InvariancePattern.class, DurationBoundUPattern.class, DurationBoundLPattern.class,
+			AbsencePattern.class, InitializationPattern.class, InvariancePattern.class, DurationBoundUPattern.class, DurationBoundLPattern.class,
 			PossibilityPattern.class, PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class,
 			PrecedencePattern.class, ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
 			UniversalityDelayPattern.class };

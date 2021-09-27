@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseDelay
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseDelayBoundL2Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ExistenceBoundUPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
@@ -239,6 +240,8 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(AbsencePattern.class); RESULT.addCdd(r); :}
   		| IT IS ALWAYS THE CASE THAT expression:r HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(r); :}
+		| IT IS ALWAYS THE CASE THAT INITIALLY expression:r HOLDS 
+			{: RESULT = new PatternBuilder(); RESULT.setType(InitializationPattern.class); RESULT.addCdd(r); :}	
   		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
       		{: RESULT = new PatternBuilder(); RESULT.setType(InvariancePattern.class); RESULT.addCdd(s,r); :}
 	  	| expression:r EVENTUALLY HOLDS
