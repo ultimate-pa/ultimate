@@ -61,14 +61,13 @@ public class PatternBuilder {
 	private static final Class<?>[] PATTERNS = new Class<?>[] { ResponseDelayBoundL2Pattern.class,
 			ResponseDelayBoundL1Pattern.class, EdgeResponseBoundL2Pattern.class, EdgeResponseDelayBoundL2Pattern.class,
 			EdgeResponseBoundU1Pattern.class, BndEntryConditionPattern.class, ExistenceBoundUPattern.class,
-			InvarianceBoundL2Pattern.class, BndPossResponsePattern.class, ReccurrenceBoundLPattern.class,
-			ResponseBoundL12Pattern.class, ResponseBoundL1Pattern.class, ResponseDelayPattern.class,
-			TriggerResponseBoundL1Pattern.class, TriggerResponseDelayBoundL1Pattern.class,
-			ConstrainedChainPattern.class, EdgeResponseDelayPattern.class, DeclarationPattern.class,
-			AbsencePattern.class, InitializationPattern.class, InvariancePattern.class, DurationBoundUPattern.class, DurationBoundLPattern.class,
-			PossibilityPattern.class, PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class,
-			PrecedencePattern.class, ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
-			UniversalityDelayPattern.class };
+			InvarianceBoundL2Pattern.class, ReccurrenceBoundLPattern.class, ResponseBoundL12Pattern.class,
+			ResponseBoundL1Pattern.class, ResponseDelayPattern.class, TriggerResponseBoundL1Pattern.class,
+			TriggerResponseDelayBoundL1Pattern.class, ConstrainedChainPattern.class, EdgeResponseDelayPattern.class,
+			DeclarationPattern.class, AbsencePattern.class, InitializationPattern.class, InvariancePattern.class,
+			DurationBoundUPattern.class, DurationBoundLPattern.class, PrecedenceChain12Pattern.class,
+			PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
+			ResponsePattern.class, UniversalityPattern.class, UniversalityDelayPattern.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
