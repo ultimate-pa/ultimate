@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 public class AbsencePattern extends PatternType<AbsencePattern> {
 	public AbsencePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
@@ -61,6 +62,9 @@ public class AbsencePattern extends PatternType<AbsencePattern> {
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
 			ct = counterTrace(phaseT(), phase(R), phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R)), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
