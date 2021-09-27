@@ -26,11 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.ArrayList;
 /**
  * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T", where "U" does
- * not hold between "V" and "W"
+ * not hold between "S" and "T"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  *
  */
 import java.util.List;
@@ -38,13 +40,16 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern> {
 
 	public ConstrainedChainPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
@@ -54,8 +59,53 @@ public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
+		final CDD R = cdds[5];
+		final CDD S = cdds[4];
+		final CDD T = cdds[3];
+		final CDD U = cdds[2];
+		final CDD V = cdds[1];
+		final CDD W = cdds[0];
 
-		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		assert S == V && T == W;
+
+		final List<CounterTrace> ct = new ArrayList<>();
+		if (scope instanceof SrParseScopeBefore) {
+			final CDD P = scope.getCdd1();
+			ct.add(counterTrace(phase(P.negate()), phase(P.negate().and(R)), phase(P.negate().and(S.negate())),
+					phase(P), phaseT()));
+			ct.add(counterTrace(phase(P.negate()), phase(P.negate().and(R)), phase(P.negate()),
+					phase(P.negate().and(S)), phase(P.negate().and(T.negate())), phase(P), phaseT()));
+			ct.add(counterTrace(phase(P.negate()), phase(P.negate().and(R)), phase(P.negate()),
+					phase(P.negate().and(S)), phase(P.negate().and(T.negate())),
+					phase(P.negate().and(T.negate().and(U))), phase(P.negate()), phase(P.negate().and(T)),
+					phase(P.negate()), phase(P), phaseT()));
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)),
+					phase(Q.negate().and(S.negate())), phase(Q), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)), phase(Q.negate()),
+					phase(Q.negate().and(S)), phase(Q.negate().and(T.negate())), phase(Q), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)), phase(Q.negate()),
+					phase(Q.negate().and(S)), phase(Q.negate().and(T.negate())),
+					phase(Q.negate().and(T.negate().and(U))), phase(Q.negate()), phase(Q.negate().and(T)),
+					phase(Q.negate()), phase(Q), phaseT()));
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
+					phase(Q.negate().and(S.negate())), phase(Q), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
+					phase(Q.negate()), phase(Q.negate().and(S)), phase(Q.negate().and(T.negate())), phase(Q),
+					phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
+					phase(Q.negate()), phase(Q.negate().and(S)), phase(Q.negate().and(T.negate())),
+					phase(Q.negate().and(T.negate().and(U))), phase(Q.negate()), phase(Q.negate().and(T)),
+					phase(Q.negate()), phase(Q), phaseT()));
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		}
+		return ct;
 	}
 
 	@Override
@@ -77,9 +127,9 @@ public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern
 		sb.append("\" where \"");
 		sb.append(getCdds().get(2).toBoogieString());
 		sb.append("\" does not hold between \"");
-		sb.append(getCdds().get(1).toBoogieString());
+		sb.append(getCdds().get(4).toBoogieString());
 		sb.append("\" and \"");
-		sb.append(getCdds().get(0).toBoogieString());
+		sb.append(getCdds().get(3).toBoogieString());
 		sb.append("\"");
 		return sb.toString();
 	}
