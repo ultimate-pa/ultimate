@@ -260,8 +260,8 @@ public class LiptonReduction<L, P> {
 		// TODO Which version is correct? Or neither? Or something different? (see tests)
 		// petriNet.getSuccessors(t1).stream().filter(p -> p != place).flatMap(p -> petriNet.getSuccessors(p).stream())
 		// .forEach(relevantTransitions::add);
-		// petriNet.getSuccessors(t1).stream().flatMap(p -> petriNet.getSuccessors(p).stream())
-		// .filter(t -> !petriNet.getSuccessors(place).contains(t)).forEach(relevantTransitions::add);
+		petriNet.getSuccessors(t1).stream().flatMap(p -> petriNet.getSuccessors(p).stream())
+				.filter(t -> !petriNet.getSuccessors(place).contains(t)).forEach(relevantTransitions::add);
 
 		final Set<Event<L, P>> events =
 				relevantTransitions.stream().flatMap(this::getFirstEvents).collect(Collectors.toSet());
