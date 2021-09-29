@@ -27,14 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.ArrayList;
-/**
- * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T", where "U" does
- * not hold between "S" and "T"
- *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
- *
- */
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -45,6 +37,14 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
+/**
+ * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T", where "U" does
+ * not hold between "S" and "T"
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ *
+ */
 public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern> {
 
 	public ConstrainedChainPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,

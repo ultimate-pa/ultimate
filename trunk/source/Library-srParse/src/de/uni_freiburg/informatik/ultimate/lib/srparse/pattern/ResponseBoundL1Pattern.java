@@ -50,7 +50,7 @@ public class ResponseBoundL1Pattern extends PatternType<ResponseBoundL1Pattern> 
 
 	public ResponseBoundL1Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
