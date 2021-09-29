@@ -84,7 +84,8 @@ public class ResponseBoundL12Pattern extends PatternType<ResponseBoundL12Pattern
 			final CDD Q = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
 					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1),
-					phaseE(Q.negate().and(S), BoundTypes.LESS, c2), phase(Q.negate().and(S.negate())), phaseT());
+					phaseE(Q.negate().and(S), BoundTypes.LESS, c2), phase(Q.negate().and(S.negate())), phaseT(),
+					phase(Q), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();

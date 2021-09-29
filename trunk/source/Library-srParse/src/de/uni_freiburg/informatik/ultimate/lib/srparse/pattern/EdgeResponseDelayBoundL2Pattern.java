@@ -91,18 +91,19 @@ public class EdgeResponseDelayBoundL2Pattern extends PatternType<EdgeResponseDel
 			final CDD Q = scope.getCdd2();
 			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
 					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R.and(S.negate()))),
-					phase(Q.negate().and(S.negate()), BoundTypes.GREATER, c1), phaseT()));
+					phase(Q.negate().and(S.negate()), BoundTypes.GREATER, c1), phaseT(), phase(Q), phaseT()));
 			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
 					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R)), phase(Q.negate(), BoundTypes.LESS, c1),
-					phase(Q.negate().and(S), BoundTypes.LESS, c2), phase(Q.negate().and(S.negate())), phaseT()));
+					phase(Q.negate().and(S), BoundTypes.LESS, c2), phase(Q.negate().and(S.negate())), phaseT(),
+					phase(Q), phaseT()));
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()),
-					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R.and(S.negate()))),
-					phase(Q.negate().and(S.negate()), BoundTypes.GREATER, c1), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()),
-					phase(Q.negate().and(R.negate())), phase(Q.negate().and(R)), phase(Q.negate(), BoundTypes.LESS, c1),
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R.negate())),
+					phase(Q.negate().and(R.and(S.negate()))), phase(Q.negate().and(S.negate()), BoundTypes.GREATER, c1),
+					phaseT()));
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R.negate())),
+					phase(Q.negate().and(R)), phase(Q.negate(), BoundTypes.LESS, c1),
 					phase(Q.negate().and(S), BoundTypes.LESS, c2), phase(Q.negate().and(S.negate())), phaseT()));
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());

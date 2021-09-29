@@ -82,7 +82,7 @@ public class EdgeResponseDelayPattern extends PatternType<EdgeResponseDelayPatte
 			final CDD Q = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R.negate())),
 					phase(Q.negate().and(R.and(S.negate()))), phase(Q.negate().and(S.negate()), BoundTypes.GREATER, c1),
-					phaseT());
+					phaseT(), phase(Q), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();

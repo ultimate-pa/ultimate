@@ -75,8 +75,8 @@ public class InitializationPattern extends PatternType<InitializationPattern> {
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(R.negate())),
-					phase(Q.negate()), phase(Q), phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate().and(R.negate())), phaseT(), phase(Q),
+					phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
