@@ -34,6 +34,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
@@ -47,7 +51,7 @@ public class TriggerResponseBoundL1Pattern extends PatternType<TriggerResponseBo
 
 	public TriggerResponseBoundL1Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
@@ -57,18 +61,40 @@ public class TriggerResponseBoundL1Pattern extends PatternType<TriggerResponseBo
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
-		final CDD T = cdds[2];
+		final CDD R = cdds[2];
 		final CDD S = cdds[1];
-		final CDD R = cdds[0];
+		final CDD T = cdds[0];
 		final int c1 = durations[0];
 
+		CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			final CounterTrace ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1),
-					phase(T.negate().and(S).and(R)), phaseT());
-			return Collections.singletonList(ct);
+			ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phase(R.and(S).and(T.negate())),
+					phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1),
+					phase(P.negate().and(R).and(S).and(T.negate())), phaseT());
+		} else if (scope instanceof SrParseScopeAfter) {
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1),
+					phase(R.and(S).and(T.negate())), phaseT());
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1),
+					phase(Q.negate().and(R).and(S).and(T.negate())), phaseT(), phase(Q), phaseT());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1),
+					phase(Q.negate().and(R).and(S).and(T.negate())), phaseT());
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 
-		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		return Collections.singletonList(ct);
 	}
 
 	@Override
