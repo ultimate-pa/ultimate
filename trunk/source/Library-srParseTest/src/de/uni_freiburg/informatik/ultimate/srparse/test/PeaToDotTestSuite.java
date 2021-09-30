@@ -198,8 +198,8 @@ public class PeaToDotTestSuite {
 
 		fmt.format("#### Examples%s%s", LINE_SEP, LINE_SEP);
 		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
-			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
-			fmt.format("| Positive Example | Negative Example |%s", LINE_SEP);
+			fmt.format("| Positive Example { .negative-example } | Negative Example { .positive-example } |%s",
+					LINE_SEP);
 			fmt.format("| --- | --- |%s", LINE_SEP);
 
 			for (int i = 0; i < Math.max(posFailureImages.length, negFailureImages.length); i++) {
