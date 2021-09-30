@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final boolean CREATE_NEW_FILES = true;
+	private static final boolean CREATE_NEW_FILES = false;
 
 	private static final File ROOT_DIR = new File("/mnt/Data/Developement/hanfor/documentation");
 	private static final File DOCS_DIR = new File(ROOT_DIR + "/docs");
@@ -198,8 +198,8 @@ public class PeaToDotTestSuite {
 
 		fmt.format("#### Examples%s%s", LINE_SEP, LINE_SEP);
 		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
-			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
-			fmt.format("| Positive Example | Negative Example |%s", LINE_SEP);
+			fmt.format("| Positive Example { .negative-example } | Negative Example { .positive-example } |%s",
+					LINE_SEP);
 			fmt.format("| --- | --- |%s", LINE_SEP);
 
 			for (int i = 0; i < Math.max(posFailureImages.length, negFailureImages.length); i++) {
