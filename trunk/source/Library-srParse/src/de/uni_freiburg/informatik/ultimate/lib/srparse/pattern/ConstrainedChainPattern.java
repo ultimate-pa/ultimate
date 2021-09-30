@@ -66,7 +66,7 @@ public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern
 		final CDD V = cdds[1];
 		final CDD W = cdds[0];
 
-		assert S == V && T == W;
+		
 
 		final List<CounterTrace> ct = new ArrayList<>();
 		if (scope instanceof SrParseScopeBefore) {
