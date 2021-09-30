@@ -2,12 +2,12 @@
 # 
 # Author: Nico Hauff (hauffn@informatik.uni-freiburg.de)
 
-ultimate_dir="/mnt/data/projects/ultimate/ultimate"
+ultimate_dir="/mnt/Data/Developement/ultimate"
 ultimate_adds_dir="${ultimate_dir}/releaseScripts/default/adds"
 ultimate_maven_dir="${ultimate_dir}/trunk/source/BA_MavenParentUltimate"
 ultimate_failure_paths_image_dir="${ultimate_dir}/trunk/examples/Requirements/failure-paths/img"
-hanfor_dir="/mnt/data/projects/hanfor"
-hanfor_pattern_dir="${hanfor_dir}/documentation/docs/references/patterns"
+hanfor_dir="/mnt/Data/Developement/hanfor"
+hanfor_pattern_dir="${hanfor_dir}/documentation/includes/patterns"
 hanfor_failure_paths_image_dir="${hanfor_dir}/documentation/docs/img/failure_paths/positive"
 
 run_req_checker_failure_path_generation=false
@@ -35,10 +35,10 @@ fi
 cd $ultimate_dir
 
 current_branch=$(git branch --show-current)
-#if [ "$current_branch" != "dev" ]; then
-#	echo "Current branch must be 'dev', but it is: $current_branch"
-#	exit 1
-#fi
+if [ "$current_branch" != "dev" ]; then
+	echo "Current branch must be 'dev', but it is: $current_branch"
+	exit 1
+fi
 
 if ! git diff-index --quiet HEAD
 then
