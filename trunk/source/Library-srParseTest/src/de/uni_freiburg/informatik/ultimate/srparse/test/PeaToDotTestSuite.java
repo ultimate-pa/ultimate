@@ -91,7 +91,7 @@ public class PeaToDotTestSuite {
 	private static final File PEA_IMAGE_DIR = new File(DOCS_DIR + "/img/patterns");
 	private static final File POS_FAILURE_IMAGE_DIR = new File(DOCS_DIR + "/img/failure_paths/positive");
 	private static final File NEG_FAILURE_IMAGE_DIR = new File(DOCS_DIR + "/img/failure_paths/negative");
-	private static final File ULTIMATE_REVISION_FILE = new File(MARKDOWN_DIR + "/includes/ultimate_revision.txt");
+	private static final File ULTIMATE_REVISION_FILE = new File(MARKDOWN_DIR + "/ultimate_revision.txt");
 
 	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
 
