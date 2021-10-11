@@ -156,7 +156,7 @@ public final class DataRaceChecker {
 	}
 
 	private String getRaceVariableName(final LeftHandSide lhs) {
-		final String name = "#race_detect" + getKey(lhs);
+		final String name = "#race" + getKey(lhs);
 		mRaceVars.add(name);
 		return name;
 	}

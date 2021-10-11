@@ -188,7 +188,10 @@ public final class SFO {
 	public static final String TO_INT = "#to_int";
 	public static final String MEMSET = "ULTIMATE.memset";
 
-	public static final String MEMORY_RACE = "#memoryRace";
+	/**
+	 * used for detecting data races
+	 */
+	public static final String MEMORY_RACE = "#race";
 
 	/**
 	 * name of C's "main" procedure
