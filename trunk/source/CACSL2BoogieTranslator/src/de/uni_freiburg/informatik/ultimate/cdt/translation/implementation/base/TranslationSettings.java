@@ -75,6 +75,7 @@ public final class TranslationSettings {
 	private final boolean mCheckAllocationPurity;
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mCheckSignedIntegerBounds;
+	private final boolean mCheckDataRaces;
 	private final boolean mUseConstantArrays;
 	private final boolean mUseStoreChains;
 	private final boolean mEnableFesetround;
@@ -83,6 +84,7 @@ public final class TranslationSettings {
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
+		mCheckDataRaces = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_DATA_RACES);
 		mIsSvcompMemtrackCompatibilityMode =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE);
 		mCheckAllocationPurity = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY);
@@ -142,8 +144,9 @@ public final class TranslationSettings {
 			final boolean smtBoolArraysWorkaround, final String checkedMethod, final TranslationMode translationMode,
 			final boolean checkSvcompErrorFunction, final boolean isSvcompMemtrackCompatibilityMode,
 			final boolean checkAllocationPurity, final boolean checkMemoryLeakInMain,
-			final boolean checkSignedIntegerBounds, final boolean useConstantArrays, final boolean useStoreChains,
-			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
+			final boolean checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
+			final boolean useStoreChains, final boolean enableFesetround,
+			final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryModelResolutionOnPointerCasts) {
 		super();
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
@@ -169,6 +172,7 @@ public final class TranslationSettings {
 		mCheckAllocationPurity = checkAllocationPurity;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
 		mCheckSignedIntegerBounds = checkSignedIntegerBounds;
+		mCheckDataRaces = checkDataRaces;
 		mUseConstantArrays = useConstantArrays;
 		mUseStoreChains = useStoreChains;
 		mEnableFesetround = enableFesetround;
@@ -289,6 +293,10 @@ public final class TranslationSettings {
 		return mCheckSignedIntegerBounds;
 	}
 
+	public boolean checkDataRaces() {
+		return mCheckDataRaces;
+	}
+
 	public boolean useConstantArrays() {
 		return mUseConstantArrays;
 	}
@@ -321,8 +329,8 @@ public final class TranslationSettings {
 				mCheckPointerSubtractionAndComparisonValidity, memoryModel, mFpToIeeeBvExtension,
 				mSmtBoolArraysWorkaround, mEntryMethod, mTranslationMode, mCheckSvcompErrorFunction,
 				mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
-				mCheckSignedIntegerBounds, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
-				mAdaptMemoryModelResolutionOnPointerCasts);
+				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
+				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts);
 	}
 
 	/**
