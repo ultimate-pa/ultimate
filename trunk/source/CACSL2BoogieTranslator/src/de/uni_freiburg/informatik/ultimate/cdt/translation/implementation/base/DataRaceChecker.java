@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
@@ -121,7 +120,7 @@ public final class DataRaceChecker {
 		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
 			// FIXME Probably incorrect in the presence of pointer casts; havoc "race" for every byte in memory
-			return new LeftHandSide[] { new ArrayLHS(loc, BoogieType.TYPE_BOOL,
+			return new LeftHandSide[] { ExpressionFactory.constructNestedArrayLHS(loc,
 					mMemoryHandler.getMemoryRaceArrayLhs(loc), new Expression[] { hlv.getAddress() }) };
 		}
 		if (lrVal instanceof LocalLValue) {
