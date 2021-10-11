@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -129,11 +130,12 @@ public class ExpressionResultTransformer {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final ITypeHandler mTypeHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+	private final DataRaceChecker mDataRaceChecker;
 
 	public ExpressionResultTransformer(final CHandler chandler, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final ExpressionTranslation exprTrans, final TypeSizes typeSizes,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ITypeHandler typeHandler,
-			final TypeSizeAndOffsetComputer typeAndOffsetComputer) {
+			final TypeSizeAndOffsetComputer typeAndOffsetComputer, final DataRaceChecker dataRaceChecker) {
 		mCHandler = chandler;
 		mMemoryHandler = memoryHandler;
 		mStructHandler = structHandler;
@@ -142,6 +144,7 @@ public class ExpressionResultTransformer {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mTypeHandler = typeHandler;
 		mTypeSizeAndOffsetComputer = typeAndOffsetComputer;
+		mDataRaceChecker = dataRaceChecker;
 	}
 
 	private ExpressionResult transform(final ExpressionResult expr, final CType targetCType, final ILocation loc,
@@ -234,16 +237,17 @@ public class ExpressionResultTransformer {
 	}
 
 	public ExpressionResult switchToRValue(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
+		final LRValue lrVal = expr.getLrValue();
+
 		final ExpressionResult result;
-		if (expr.getLrValue() == null) {
+		if (lrVal == null) {
 			return expr;
-		} else if (expr.getLrValue() instanceof RValue) {
+		} else if (lrVal instanceof RValue) {
 			final ExpressionResult replaced = replaceCFunctionByCPointer(expr);
 			return replaceEnumByInt(replaced);
-		} else if (expr.getLrValue() instanceof LocalLValue) {
-			final CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
-			mCHandler.moveArrayAndStructIdsOnHeap(loc, underlyingType, expr.getLrValue().getValue(), expr.getAuxVars(),
-					hook);
+		} else if (lrVal instanceof LocalLValue) {
+			final CType underlyingType = lrVal.getCType().getUnderlyingType();
+			mCHandler.moveArrayAndStructIdsOnHeap(loc, underlyingType, lrVal.getValue(), expr.getAuxVars(), hook);
 
 			final CType resultType;
 			if (underlyingType instanceof CArray) {
@@ -255,44 +259,51 @@ public class ExpressionResultTransformer {
 			} else {
 				resultType = underlyingType;
 			}
-			final RValue newRVal = new RValue(((LocalLValue) expr.getLrValue()).getValue(), resultType,
-					expr.getLrValue().isBoogieBool());
-			result = new ExpressionResultBuilder(expr).setOrResetLrValue(newRVal).build();
-		} else if (expr.getLrValue() instanceof HeapLValue) {
-			final HeapLValue hlv = (HeapLValue) expr.getLrValue();
+			final RValue newRVal = new RValue(lrVal.getValue(), resultType, lrVal.isBoogieBool());
+			final ExpressionResultBuilder erb = new ExpressionResultBuilder(expr).setOrResetLrValue(newRVal);
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnRead(erb, loc, lrVal);
+			}
+			result = erb.build();
+		} else if (lrVal instanceof HeapLValue) {
+			final HeapLValue hlv = (HeapLValue) lrVal;
 			CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
 				underlyingType = new CPrimitive(CPrimitives.INT);
 			}
 
+			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
 				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, hook);
 				newValue = (RValue) rex.getLrValue();
-				result = new ExpressionResultBuilder().addAllExceptLrValue(expr, rex).setLrValue(newValue).build();
+				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, hook);
 				newValue = (RValue) rex.getLrValue();
-				result = new ExpressionResultBuilder().addAllExceptLrValue(expr, rex).setLrValue(newValue).build();
+				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CArray) {
 				final CArray cArray = (CArray) underlyingType;
 				newValue = new RValue(hlv.getAddress(), new CPointer(cArray.getValueType()), false, false);
-				result = new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(newValue).build();
 			} else if (underlyingType instanceof CEnum) {
 				throw new AssertionError("handled above");
 			} else if (underlyingType instanceof CStructOrUnion) {
 				final ExpressionResult rex =
 						readStructFromHeap(expr, loc, hlv.getAddress(), (CStructOrUnion) underlyingType, hook);
 				newValue = (RValue) rex.getLrValue();
-				result = new ExpressionResultBuilder().addAllExceptLrValue(expr, rex).setLrValue(newValue).build();
+				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CNamed) {
 				throw new AssertionError("This should not be the case as we took the underlying type.");
 			} else if (underlyingType instanceof CFunction) {
 				newValue = new RValue(hlv.getAddress(), new CPointer(underlyingType), false, false);
-				result = new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(newValue).build();
 			} else {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
+
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnRead(erb, loc, lrVal);
+			}
+			result = erb.setLrValue(newValue).build();
 		} else {
 			throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 		}
