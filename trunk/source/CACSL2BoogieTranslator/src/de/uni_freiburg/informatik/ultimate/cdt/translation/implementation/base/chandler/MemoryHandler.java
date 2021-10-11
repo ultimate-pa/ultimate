@@ -179,6 +179,11 @@ public class MemoryHandler {
 		 */
 		ULTIMATE_STACK_HEAP_BARRIER("#StackHeapBarrier"),
 
+		/**
+		 * Used to detect data races between concurrent accesses to the same memory location.
+		 */
+		ULTIMATE_DATA_RACE_MEMORY(SFO.MEMORY_RACE),
+
 		;
 
 		private final String mName;
@@ -629,7 +634,7 @@ public class MemoryHandler {
 		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_LENGTH);
 		final MemoryModelDeclarationInfo validMmfInfo =
 				getMemoryModelDeclarationInfo(MemoryModelDeclarations.ULTIMATE_LENGTH);
-		return validMmfInfo.constructIdentiferExpression(loc);
+		return validMmfInfo.constructIdentifierExpression(loc);
 	}
 
 	/**
@@ -651,24 +656,35 @@ public class MemoryHandler {
 	 * @return new IdentifierExpression that represents the <em>#valid array</em>
 	 */
 	public Expression getValidArray(final ILocation loc) {
-		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_VALID);
-		final MemoryModelDeclarationInfo validMmfInfo =
-				getMemoryModelDeclarationInfo(MemoryModelDeclarations.ULTIMATE_VALID);
-		return validMmfInfo.constructIdentiferExpression(loc);
+		return getMemoryModelFeatureExpression(loc, MemoryModelDeclarations.ULTIMATE_VALID);
 	}
 
 	public VariableLHS getValidArrayLhs(final ILocation loc) {
-		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_VALID);
-		final MemoryModelDeclarationInfo validMmfInfo =
-				getMemoryModelDeclarationInfo(MemoryModelDeclarations.ULTIMATE_VALID);
-		return validMmfInfo.constructVariableLHS(loc);
+		return getMemoryModelFeatureLhs(loc, MemoryModelDeclarations.ULTIMATE_VALID);
 	}
 
 	public Expression getStackHeapBarrier(final ILocation loc) {
-		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
-		final MemoryModelDeclarationInfo mmdi =
-				getMemoryModelDeclarationInfo(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
-		return mmdi.constructIdentiferExpression(loc);
+		return getMemoryModelFeatureExpression(loc, MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
+	}
+
+	public Expression getMemoryRaceArray(final ILocation loc) {
+		return getMemoryModelFeatureExpression(loc, MemoryModelDeclarations.ULTIMATE_DATA_RACE_MEMORY);
+	}
+
+	public VariableLHS getMemoryRaceArrayLhs(final ILocation loc) {
+		return getMemoryModelFeatureLhs(loc, MemoryModelDeclarations.ULTIMATE_DATA_RACE_MEMORY);
+	}
+
+	private Expression getMemoryModelFeatureExpression(final ILocation loc, final MemoryModelDeclarations decl) {
+		requireMemoryModelFeature(decl);
+		final MemoryModelDeclarationInfo mmdi = getMemoryModelDeclarationInfo(decl);
+		return mmdi.constructIdentifierExpression(loc);
+	}
+
+	private VariableLHS getMemoryModelFeatureLhs(final ILocation loc, final MemoryModelDeclarations decl) {
+		requireMemoryModelFeature(decl);
+		final MemoryModelDeclarationInfo mmdi = getMemoryModelDeclarationInfo(decl);
+		return mmdi.constructVariableLHS(loc);
 	}
 
 	public Collection<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed) {
@@ -1838,11 +1854,7 @@ public class MemoryHandler {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
-
-			if (rda.alsoUncheckedRead()) {
-				result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, true, hook));
-			}
-			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, false, hook));
+			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, rda.alsoUncheckedRead(), hook));
 		}
 		return result;
 	}
@@ -2827,6 +2839,9 @@ public class MemoryHandler {
 									getBooleanArrayHelper().constructBoolReplacementType())));
 		case ULTIMATE_STACK_HEAP_BARRIER:
 			return new MemoryModelDeclarationInfo(mmd, mTypeHandler.getBoogieTypeForPointerComponents());
+		case ULTIMATE_DATA_RACE_MEMORY:
+			return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
+					new BoogieType[] { mTypeHandler.getBoogiePointerType() }, BoogieType.TYPE_BOOL));
 		default:
 			break;
 		}
@@ -3711,7 +3726,7 @@ public class MemoryHandler {
 			mBoogieType = boogieType;
 		}
 
-		IdentifierExpression constructIdentiferExpression(final ILocation loc) {
+		IdentifierExpression constructIdentifierExpression(final ILocation loc) {
 			return ExpressionFactory.constructIdentifierExpression(loc, mBoogieType, mMmd.getName(),
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		}

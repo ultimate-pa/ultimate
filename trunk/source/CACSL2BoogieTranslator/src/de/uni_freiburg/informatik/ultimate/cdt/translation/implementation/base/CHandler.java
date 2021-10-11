@@ -361,6 +361,8 @@ public class CHandler {
 
 	private final CExpressionTranslator mCExpressionTranslator;
 
+	private final DataRaceChecker mDataRaceChecker;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -416,8 +418,12 @@ public class CHandler {
 
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
-		mExprResultTransformer = new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler,
-				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer);
+		mDataRaceChecker =
+				mSettings.checkDataRaces() ? new DataRaceChecker(mAuxVarInfoBuilder, mTypeHandler, mMemoryHandler)
+						: null;
+		mExprResultTransformer =
+				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
+						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, mProcedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap);
@@ -501,8 +507,12 @@ public class CHandler {
 				expressionTranslation, procedureManager, typeSizeAndOffsetComputer, mAuxVarInfoBuilder, mSettings);
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
-		mExprResultTransformer = new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler,
-				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer);
+		mDataRaceChecker =
+				mSettings.checkDataRaces() ? new DataRaceChecker(mAuxVarInfoBuilder, mTypeHandler, mMemoryHandler)
+						: null;
+		mExprResultTransformer =
+				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
+						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, procedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap);
@@ -618,6 +628,9 @@ public class CHandler {
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
 		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, globalHook));
 		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
+		if (mDataRaceChecker != null) {
+			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
+		}
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
 		mDeclarations.addAll(
@@ -666,7 +679,6 @@ public class CHandler {
 				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		mExpressionTranslation.getFunctionDeclarations().finish();
 		mDeclarations.addAll(declaredFunctions);
-
 
 		// the overall translation result:
 		final Unit boogieUnit = new Unit(
@@ -2597,6 +2609,9 @@ public class CHandler {
 			// the value of an assignment statement expression is the right hand side of the assignment
 			builder.setLrValue(rightHandSideValueWithConversionsApplied);
 
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
+			}
 			return builder.build();
 		} else if (leftHandSide instanceof LocalLValue) {
 			// left hand side of assignment is off heap
@@ -2641,6 +2656,10 @@ public class CHandler {
 			// (RValue) rhsConverted.getLrValue(), rhsConverted.getNeighbourUnionFields(),
 			// rightHandSideValueWithConversionsApplied, builder, hook);
 			// return builderWithUnionFieldAndNeighboursUpdated.build();
+
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
+			}
 			return builder.build();
 		} else {
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
