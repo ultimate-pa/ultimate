@@ -35,11 +35,11 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -94,7 +94,7 @@ public final class DataRaceChecker {
 				Arrays.stream(getRaceExpressions(loc, erb, lrVal))
 						.map(expr -> ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, expr, tmp.getExp()))
 						.collect(Collectors.toList()));
-		final AssertStatement assertStmt = new AssertStatement(loc, formula);
+		final Statement assertStmt = new AssertStatement(loc, formula);
 		check.annotate(assertStmt);
 		erb.addStatement(assertStmt);
 	}
@@ -104,13 +104,14 @@ public final class DataRaceChecker {
 		final AuxVarInfo tmp = mAuxVarInfoBuilder.constructAuxVarInfo(loc, boolType, SFO.AUXVAR.NONDET);
 		erb.addDeclaration(tmp.getVarDec());
 		erb.addAuxVar(tmp);
+		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { tmp.getLhs() });
 
-		final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { tmp.getLhs() });
 		final LeftHandSide[] lhs = getRaceLhs(loc, erb, lrVal);
 		final Expression[] exprs = new Expression[lhs.length];
 		Arrays.fill(exprs, tmp.getExp());
-		final AssignmentStatement assign = new AssignmentStatement(loc, lhs, exprs);
-		final AtomicStatement atomic = new AtomicStatement(loc, new Statement[] { havoc, assign });
+		final Statement assign = StatementFactory.constructAssignmentStatement(loc, lhs, exprs);
+
+		final Statement atomic = new AtomicStatement(loc, new Statement[] { havoc, assign });
 		erb.addStatement(atomic);
 
 		return tmp;
