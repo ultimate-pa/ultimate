@@ -121,8 +121,8 @@ public final class DataRaceChecker {
 		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
 			// FIXME Probably incorrect in the presence of pointer casts; havoc "race" for every byte in memory
-			return new LeftHandSide[] { new ArrayLHS(loc, mMemoryHandler.getMemoryRaceArrayLhs(loc),
-					new Expression[] { hlv.getAddress() }) };
+			return new LeftHandSide[] { new ArrayLHS(loc, BoogieType.TYPE_BOOL,
+					mMemoryHandler.getMemoryRaceArrayLhs(loc), new Expression[] { hlv.getAddress() }) };
 		}
 		if (lrVal instanceof LocalLValue) {
 			return new LeftHandSide[] { getRaceVariableLhs(loc, erb, (LocalLValue) lrVal) };
