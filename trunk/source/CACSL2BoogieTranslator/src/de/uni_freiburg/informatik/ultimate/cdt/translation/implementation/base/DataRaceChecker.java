@@ -29,10 +29,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -62,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -72,7 +72,7 @@ public final class DataRaceChecker {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
 
-	private final Map<String, AuxVarInfo> mRaceVars = new HashMap<>();
+	private final Set<String> mRaceVars = new HashSet<>();
 	private final ITypeHandler mTypeHandler;
 
 	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final ITypeHandler typeHandler,
@@ -124,8 +124,7 @@ public final class DataRaceChecker {
 					new Expression[] { hlv.getAddress() }) };
 		}
 		if (lrVal instanceof LocalLValue) {
-			final AuxVarInfo aux = getOrCreateRaceVariable(loc, erb, (LocalLValue) lrVal);
-			return new LeftHandSide[] { aux.getLhs() };
+			return new LeftHandSide[] { getRaceVariableLhs(loc, erb, (LocalLValue) lrVal) };
 		}
 		throw new UnsupportedOperationException();
 	}
@@ -139,15 +138,27 @@ public final class DataRaceChecker {
 					mMemoryHandler.getMemoryRaceArray(loc), new Expression[] { hlv.getAddress() }) };
 		}
 		if (lrVal instanceof LocalLValue) {
-			final AuxVarInfo aux = getOrCreateRaceVariable(loc, erb, (LocalLValue) lrVal);
-			return new Expression[] { aux.getExp() };
+			return new Expression[] { getRaceVariableExpression(loc, erb, (LocalLValue) lrVal) };
 		}
 		throw new UnsupportedOperationException();
 	}
 
-	private AuxVarInfo getOrCreateRaceVariable(final ILocation loc, final ExpressionResultBuilder erb,
+	private Expression getRaceVariableExpression(final ILocation loc, final ExpressionResultBuilder erb,
 			final LocalLValue lval) {
-		return mRaceVars.computeIfAbsent(getKey(lval.getLhs()), x -> createRaceVariable(loc, erb));
+		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_BOOL,
+				getRaceVariableName(lval.getLhs()), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+	}
+
+	private VariableLHS getRaceVariableLhs(final ILocation loc, final ExpressionResultBuilder erb,
+			final LocalLValue lval) {
+		return ExpressionFactory.constructVariableLHS(loc, BoogieType.TYPE_BOOL, getRaceVariableName(lval.getLhs()),
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+	}
+
+	private String getRaceVariableName(final LeftHandSide lhs) {
+		final String name = "#race_detect" + getKey(lhs);
+		mRaceVars.add(name);
+		return name;
 	}
 
 	private String getKey(final LeftHandSide lhs) {
@@ -160,21 +171,12 @@ public final class DataRaceChecker {
 		throw new UnsupportedOperationException();
 	}
 
-	private AuxVarInfo createRaceVariable(final ILocation loc, final ExpressionResultBuilder erb) {
-		final ASTType boolType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, "bool");
-		final AuxVarInfo aux = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(loc, null, boolType, AUXVAR.RACE_DETECT);
-		// erb.addAuxVar(aux);
-		// erb.addDeclaration(aux.getVarDec());
-		return aux;
-	}
-
 	public Collection<Declaration> declareRaceCheckingInfrastructure(final ILocation loc) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		decl.add(constructMemoryRaceArrayDeclaration(loc));
 
 		final ASTType astType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, "bool");
-		final VarList vlV = new VarList(loc,
-				mRaceVars.values().stream().map(i -> i.getExp().getIdentifier()).toArray(String[]::new), astType);
+		final VarList vlV = new VarList(loc, mRaceVars.toArray(String[]::new), astType);
 		decl.add(new VariableDeclaration(loc, new Attribute[0], new VarList[] { vlV }));
 		return decl;
 	}
