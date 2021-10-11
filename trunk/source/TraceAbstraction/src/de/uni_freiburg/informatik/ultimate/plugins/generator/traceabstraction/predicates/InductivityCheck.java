@@ -86,7 +86,7 @@ public class InductivityCheck<LETTER extends IAction> {
 			mLogger.info("Starting indutivity check of a Floyd-Hoare automaton with " + nwa.sizeInformation());
 		}
 
-		final boolean result = true;
+		boolean result = true;
 		// yield[0] is the number of edges whose inductiveness could be
 		// proven
 		// yield[1] is the number of edges whose inductiveness could be
@@ -100,17 +100,20 @@ public class InductivityCheck<LETTER extends IAction> {
 			for (final OutgoingInternalTransition<LETTER, IPredicate> outTrans : nwa.internalSuccessors(state)) {
 				final Validity inductivity = mHoareTripleChecker.checkInternal(state,
 						(IInternalAction) outTrans.getLetter(), outTrans.getSucc());
-				evaluateResult(inductivity, state, outTrans);
+				final boolean newResult = evaluateResult(inductivity, state, outTrans);
+				result = result && newResult;
 			}
 			for (final OutgoingCallTransition<LETTER, IPredicate> outTrans : nwa.callSuccessors(state)) {
 				final Validity inductivity = mHoareTripleChecker.checkCall(state, (ICallAction) outTrans.getLetter(),
 						outTrans.getSucc());
-				evaluateResult(inductivity, state, outTrans);
+				final boolean newResult = evaluateResult(inductivity, state, outTrans);
+				result = result && newResult;
 			}
 			for (final OutgoingReturnTransition<LETTER, IPredicate> outTrans : nwa.returnSuccessors(state)) {
 				final Validity inductivity = mHoareTripleChecker.checkReturn(state, outTrans.getHierPred(),
 						(IReturnAction) outTrans.getLetter(), outTrans.getSucc());
-				evaluateResult(inductivity, state, outTrans);
+				final boolean newResult = evaluateResult(inductivity, state, outTrans);
+				result = result && newResult;
 			}
 		}
 		if (mHoareTripleChecker instanceof IncrementalHoareTripleChecker) {
