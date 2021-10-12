@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -99,8 +98,7 @@ public final class DataRaceChecker {
 	}
 
 	private AuxVarInfo checkOnAccess(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
-		final ASTType boolType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, "bool");
-		final AuxVarInfo tmp = mAuxVarInfoBuilder.constructAuxVarInfo(loc, boolType, SFO.AUXVAR.NONDET);
+		final AuxVarInfo tmp = mAuxVarInfoBuilder.constructAuxVarInfo(loc, getBoolASTType(), SFO.AUXVAR.NONDET);
 		erb.addDeclaration(tmp.getVarDec());
 		erb.addAuxVar(tmp);
 		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { tmp.getLhs() });
@@ -145,13 +143,13 @@ public final class DataRaceChecker {
 
 	private Expression getRaceVariableExpression(final ILocation loc, final ExpressionResultBuilder erb,
 			final LocalLValue lval) {
-		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_BOOL,
-				getRaceVariableName(lval.getLhs()), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		return ExpressionFactory.constructIdentifierExpression(loc, getBoolType(), getRaceVariableName(lval.getLhs()),
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	private VariableLHS getRaceVariableLhs(final ILocation loc, final ExpressionResultBuilder erb,
 			final LocalLValue lval) {
-		return ExpressionFactory.constructVariableLHS(loc, BoogieType.TYPE_BOOL, getRaceVariableName(lval.getLhs()),
+		return ExpressionFactory.constructVariableLHS(loc, getBoolType(), getRaceVariableName(lval.getLhs()),
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
@@ -175,21 +173,26 @@ public final class DataRaceChecker {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		decl.add(constructMemoryRaceArrayDeclaration(loc));
 
-		final ASTType astType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, "bool");
-		final VarList vlV = new VarList(loc, mRaceVars.toArray(String[]::new), astType);
+		final VarList vlV = new VarList(loc, mRaceVars.toArray(String[]::new), getBoolASTType());
 		decl.add(new VariableDeclaration(loc, new Attribute[0], new VarList[] { vlV }));
 		return decl;
 	}
 
 	private Declaration constructMemoryRaceArrayDeclaration(final ILocation loc) {
-		final ASTType boolType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, "bool");
-
-		final BoogieType boogieType = BoogieType.createArrayType(0,
-				new BoogieType[] { mTypeHandler.getBoogiePointerType() }, BoogieType.TYPE_BOOL);
+		final BoogieType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, getBoolType());
 		final ASTType astType = new ArrayType(loc, boogieType, new String[0],
-				new ASTType[] { mTypeHandler.constructPointerType(loc) }, boolType);
+				new ASTType[] { mTypeHandler.constructPointerType(loc) }, getBoolASTType());
 		final VarList vlV =
 				new VarList(loc, new String[] { MemoryModelDeclarations.ULTIMATE_DATA_RACE_MEMORY.getName() }, astType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { vlV });
+	}
+
+	private ASTType getBoolASTType() {
+		return mMemoryHandler.getBooleanArrayHelper().constructBoolReplacementType();
+	}
+
+	private BoogieType getBoolType() {
+		return mTypeHandler.getBoogieTypeForBoogieASTType(getBoolASTType());
 	}
 }
