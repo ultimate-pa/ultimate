@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
@@ -90,11 +91,14 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			if (!SmtSortUtils.isArraySort(eliminatee.getSort())) {
 				continue;
 			}
+			final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
+			final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+
+			final EliminationTaskPlain inputEtp = new EliminationTaskPlain(inputEt.getQuantifier(),
+					Collections.singleton(eliminatee), qs.getInnerTerm(), inputEt.getContext().getCriticalConstraint());
 			EliminationTaskPlain res;
 			try {
-				res = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript,
-						new EliminationTaskPlain(inputEt.getQuantifier(), Collections.singleton(eliminatee),
-								inputEt.getTerm(), inputEt.getContext().getCriticalConstraint()));
+				res = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, inputEtp);
 			} catch (final SMTLIBException e) {
 				throw new AssertionError(e);
 			} catch (final ElimStorePlainException e) {
@@ -109,10 +113,12 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 				if (Arrays.asList(res.getTerm().getFreeVars()).contains(eliminatee)) {
 					throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEt.toTerm(mScript));
 				}
+				final QuantifierSequence qsResult = new QuantifierSequence(mScript, res.getTerm(),
+						qs.getQuantifierBlocks());
 				final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(inputEt.getEliminatees());
 				resultEliminatees.remove(eliminatee);
 				resultEliminatees.addAll(res.getEliminatees());
-				return inputEt.update(resultEliminatees, res.getTerm());
+				return inputEt.update(resultEliminatees, qsResult.toTerm());
 			}
 		}
 		return null;
