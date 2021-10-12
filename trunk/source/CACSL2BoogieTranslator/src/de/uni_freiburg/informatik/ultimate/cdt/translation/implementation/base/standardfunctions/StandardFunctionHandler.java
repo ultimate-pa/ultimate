@@ -1086,7 +1086,7 @@ public class StandardFunctionHandler {
 
 			final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
 			final String prefix = idExpr.getIdentifier().substring(0, 9);
-			if (!prefix.equals("#funAddr~")) {
+			if (!prefix.equals(SFO.FUNCTION_ADDRESS)) {
 				throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
 			}
 			methodName = idExpr.getIdentifier().substring(9);
