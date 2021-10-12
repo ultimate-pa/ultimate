@@ -978,48 +978,46 @@ public class CHandler {
 		try {
 			operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType, node);
 		} catch (final UnsupportedOperationException e) {
-			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
+			mLogger.warn("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
 			return;
 		}
-		final BigInteger operandTypeByteSize =
-				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+		final int operandTypeByteSize = mTypeSizes
+				.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node).intValueExact();
 
 		final Expression castTargetByteSizeExp;
 		try {
 			castTargetByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType, node);
 		} catch (final UnsupportedOperationException e) {
-			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
+			mLogger.warn("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
 			return;
 		}
-		final BigInteger castTargetByteSize =
-				mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+		final int castTargetByteSize = mTypeSizes
+				.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT(), node).intValueExact();
 
-		if (castTargetByteSize.compareTo(operandTypeByteSize) <= 0) {
+		if (castTargetByteSize == operandTypeByteSize) {
 			// type sizes are already compatible
 			return;
 		}
+		final int minimumSize = Integer.min(operandTypeByteSize, castTargetByteSize);
 
 		final String msg;
 		if (mSettings.getMemoryModelPreference() == MemoryModel.HoenickeLindenmann_Original) {
-			// memory model has no resolution and the operand is
-			// cast to a bigger type
-			msg = "Found a cast between two array/pointer types where the value type is smaller than the "
-					+ "cast-to type while using memory model " + MemoryModel.HoenickeLindenmann_Original;
-		} else if (BigInteger.valueOf(mSettings.getMemoryModelPreference().getByteSize())
-				.compareTo(operandTypeByteSize) > 0) {
-			// memory model resolution is strictly bigger than the operand's type's, and the operand is
-			// cast to a bigger type
-			msg = "Found a cast between two array/pointer types where the value type is smaller than the"
-					+ " cast-to type, and where that value type is smaller than our current memory "
-					+ "model resolution";
+			// memory model has no resolution and the operand is cast to a type with different size
+			msg = "Found a cast between two array/pointer types where the value types have different sizes "
+					+ "while using memory model " + MemoryModel.HoenickeLindenmann_Original;
+		} else if (mSettings.getMemoryModelPreference().getByteSize() > minimumSize) {
+			// the operand is cast to a type with different size, and memory model resolution is strictly bigger than
+			// the smaller value type's size.
+			msg = "Found a cast between two array/pointer types where the value types have different sizes, "
+					+ "and where the smaller type's size is less than our current memory model resolution";
 		} else {
 			// no need to change memory model
 			return;
 		}
 
-		if (operandTypeByteSize.intValueExact() == 0) {
+		if (operandTypeByteSize == 0) {
 			// operand's type has size 0 -- not sure what makes sense to do here, doing nothing
 			// case where I encountered it was a struct with a 0-sized array in it; if someone wants to read more on
 			// that phenomenon:
@@ -1035,7 +1033,7 @@ public class CHandler {
 		// signal a restart of the translation with a memory model precise
 		// enough for the operands
 		signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(loc, msg,
-				MemoryModel.getPreciseEnoughMemoryModelFor(operandTypeByteSize.intValueExact())));
+				MemoryModel.getPreciseEnoughMemoryModelFor(minimumSize)));
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {
