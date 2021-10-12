@@ -2833,8 +2833,9 @@ public class MemoryHandler {
 		case ULTIMATE_STACK_HEAP_BARRIER:
 			return new MemoryModelDeclarationInfo(mmd, mTypeHandler.getBoogieTypeForPointerComponents());
 		case ULTIMATE_DATA_RACE_MEMORY:
-			return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
-					new BoogieType[] { mTypeHandler.getBoogiePointerType() }, BoogieType.TYPE_BOOL));
+			return new MemoryModelDeclarationInfo(mmd,
+					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, mTypeHandler
+							.getBoogieTypeForBoogieASTType(getBooleanArrayHelper().constructBoolReplacementType())));
 		default:
 			break;
 		}
