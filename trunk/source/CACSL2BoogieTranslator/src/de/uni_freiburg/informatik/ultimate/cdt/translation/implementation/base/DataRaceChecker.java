@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -81,10 +82,16 @@ public final class DataRaceChecker {
 	}
 
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
-		checkOnAccess(erb, loc, lrVal);
+		if (!isRaceImpossible(lrVal)) {
+			checkOnAccess(erb, loc, lrVal);
+		}
 	}
 
 	public void checkOnWrite(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
+		if (isRaceImpossible(lrVal)) {
+			return;
+		}
+
 		final AuxVarInfo tmp = checkOnAccess(erb, loc, lrVal);
 
 		final Check check = new Check(Spec.DATA_RACE);
@@ -112,6 +119,20 @@ public final class DataRaceChecker {
 		erb.addStatement(atomic);
 
 		return tmp;
+	}
+
+	private static boolean isRaceImpossible(final LRValue lrVal) {
+		if (!(lrVal instanceof LocalLValue)) {
+			return false;
+		}
+		final LocalLValue locLv = (LocalLValue) lrVal;
+		if (!(locLv.getLhs() instanceof VariableLHS)) {
+			return false;
+		}
+		final VariableLHS varLhs = (VariableLHS) locLv.getLhs();
+		final StorageClass storageCls = varLhs.getDeclarationInformation().getStorageClass();
+		return storageCls == StorageClass.LOCAL || storageCls == StorageClass.IMPLEMENTATION_INPARAM
+				|| storageCls == StorageClass.IMPLEMENTATION_OUTPARAM || storageCls == StorageClass.PROC_FUNC;
 	}
 
 	private LeftHandSide[] getRaceLhs(final ILocation loc, final ExpressionResultBuilder erb, final LRValue lrVal) {
