@@ -631,10 +631,7 @@ public class MemoryHandler {
 	 * @return new IdentifierExpression that represents the <em>#length array</em>
 	 */
 	public Expression getLengthArray(final ILocation loc) {
-		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_LENGTH);
-		final MemoryModelDeclarationInfo validMmfInfo =
-				getMemoryModelDeclarationInfo(MemoryModelDeclarations.ULTIMATE_LENGTH);
-		return validMmfInfo.constructIdentifierExpression(loc);
+		return getMemoryModelFeatureExpression(loc, MemoryModelDeclarations.ULTIMATE_LENGTH);
 	}
 
 	/**
@@ -643,11 +640,7 @@ public class MemoryHandler {
 	 * @return new IdentifierExpression that represents the <em>#length array</em>
 	 */
 	public VariableLHS getLengthArrayLhs(final ILocation loc) {
-		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_LENGTH);
-		final MemoryModelDeclarationInfo validMmfInfo =
-				getMemoryModelDeclarationInfo(MemoryModelDeclarations.ULTIMATE_LENGTH);
-		return validMmfInfo.constructVariableLHS(loc);
-
+		return getMemoryModelFeatureLhs(loc, MemoryModelDeclarations.ULTIMATE_LENGTH);
 	}
 
 	/**
