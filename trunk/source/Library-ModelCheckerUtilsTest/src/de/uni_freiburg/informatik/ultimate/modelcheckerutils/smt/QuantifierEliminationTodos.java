@@ -346,5 +346,17 @@ public class QuantifierEliminationTodos {
 	}
 
 
+	@Test
+	public void alegedAlternation() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "min"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "A"),
+			};
+		final String formulaAsString = "(exists ((v_l_26 Int) (v_A_17 (Array Int Int))) (and (= A (store v_A_17 v_l_26 (+ (- 1) (select v_A_17 v_l_26)))) (or (exists ((v_i_24 Int)) (and (<= (select v_A_17 v_i_24) (+ (select v_A_17 0) 1)) (<= min (select v_A_17 v_i_24)))) (and (exists ((v_i_24 Int)) (< min (select v_A_17 v_i_24))) (<= min (+ (select v_A_17 0) 1)))) (<= 1 v_l_26)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 	//@formatter:on
 }
