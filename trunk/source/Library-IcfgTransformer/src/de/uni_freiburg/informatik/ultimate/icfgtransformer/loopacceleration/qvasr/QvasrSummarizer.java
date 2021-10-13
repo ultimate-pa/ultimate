@@ -77,7 +77,7 @@ public class QvasrSummarizer {
 
 		final QvasrAbstractor qvasrAbstractor = new QvasrAbstractor(mScript, mLogger);
 
-		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf, mServices);
+		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
 
 		for (final Term disjunct : disjuncts) {
 			final LBool isSat = SmtUtils.checkSatTerm(mScript.getScript(), disjunct);

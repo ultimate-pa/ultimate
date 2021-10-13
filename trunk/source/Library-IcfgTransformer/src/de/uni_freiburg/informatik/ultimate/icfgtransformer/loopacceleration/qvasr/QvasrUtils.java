@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -14,13 +13,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public class QvasrUtils {
+	private QvasrUtils() {
+		// Prevent instantiation of this utility class
+	}
+
 	/**
 	 * Split a {@link Term} in DNF into its conjuncts.
 	 *
 	 * @param loopRelation
 	 * @return
 	 */
-	public static List<Term> splitDisjunction(final Term loopRelation, final IUltimateServiceProvider services) {
+	public static List<Term> splitDisjunction(final Term loopRelation) {
 		final List<Term> result = new ArrayList<>();
 		final ApplicationTerm dnfAppTerm = (ApplicationTerm) loopRelation;
 		if (!dnfAppTerm.getFunction().getName().equals("or")) {
