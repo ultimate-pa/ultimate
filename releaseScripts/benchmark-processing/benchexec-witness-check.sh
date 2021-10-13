@@ -106,11 +106,19 @@ function move_results_create_overview(){
   echo "Results available at https://${remote_host}/logs/$(basename ${tag_dir})/${target_dir_name}"
 }
 
+# benchexec -o "${VERIFIER_RESULTS_FOLDER}/" --tool-directory "${UAUTOMIZER_FOLDER}" "${BENCH_DEF_FOLDER}/uautomizer-local.xml" ${DIVISION_PARAMS}
+# benchexec_validator "/storage/repos/cpachecker" "${BENCH_DEF_FOLDER}/cpa-seq-validate-violation-witnesses.xml"
+# benchexec_validator "/storage/repos/sv-witnesses/lint" "${BENCH_DEF_FOLDER}/witnesslint-validate-witnesses.xml"
 
-#benchexec -o "${VERIFIER_RESULTS_FOLDER}/" --tool-directory "${UAUTOMIZER_FOLDER}" "${BENCH_DEF_FOLDER}/uautomizer-local.xml" ${DIVISION_PARAMS}
-benchexec_validator "/storage/repos/cpachecker" "${BENCH_DEF_FOLDER}/cpa-seq-validate-correctness-witnesses.xml"
-#benchexec_validator "/storage/repos/cpachecker" "${BENCH_DEF_FOLDER}/cpa-seq-validate-violation-witnesses.xml"
-#benchexec_validator "/storage/repos/sv-witnesses/lint" "${BENCH_DEF_FOLDER}/witnesslint-validate-witnesses.xml"
-benchexec_validator "${UAUTOMIZER_FOLDER}" "${BENCH_DEF_FOLDER}/uautomizer-validate-correctness-witnesses.xml"
-benchexec_validator "${UAUTOMIZER_FOLDER}" "${BENCH_DEF_FOLDER}/uautomizer-validate-violation-witnesses.xml"
+# these are setup but do not support concurrency
+#benchexec_validator "/storage/repos/cpachecker" "${BENCH_DEF_FOLDER}/cpa-seq-validate-correctness-witnesses.xml"
+#benchexec_validator "${UAUTOMIZER_FOLDER}" "${BENCH_DEF_FOLDER}/uautomizer-validate-correctness-witnesses.xml"
+#benchexec_validator "${UAUTOMIZER_FOLDER}" "${BENCH_DEF_FOLDER}/uautomizer-validate-violation-witnesses.xml"
+
+# these may be interesting but still need setting up 
+# ../benchexec/fshell-witness2test-validate-violation-witnesses.xml
+# ../benchexec/nitwit-validate-violation-witnesses.xml
+# ../benchexec/veriabs-validate-correctness-witnesses.xml
+# ../benchexec/veriabs-validate-violation-witnesses.xml
+
 move_results_create_overview
