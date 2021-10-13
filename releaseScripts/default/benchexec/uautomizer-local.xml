@@ -3,6 +3,8 @@
 <benchmark tool="ultimateautomizer" timelimit="15 min" hardtimelimit="16 min" memlimit="8 GB" cpuCores="2">
 
 <option name="--full-output"/>
+
+<resultfiles>**.graphml</resultfiles>
     
 <rundefinition name="SV-COMP21_unreach-call">
   <tasks name="ReachSafety-Arrays">
