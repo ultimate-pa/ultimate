@@ -1165,20 +1165,11 @@ public class MemoryHandler {
 		if (bitvectorTranslation) {
 			switch (memoryModelPreference) {
 			case HoenickeLindenmann_1ByteResolution:
-				memoryModel = new MemoryModel_SingleBitprecise(1, mTypeSizes, (TypeHandler) mTypeHandler,
-						mExpressionTranslation);
-				break;
 			case HoenickeLindenmann_2ByteResolution:
-				memoryModel = new MemoryModel_SingleBitprecise(2, mTypeSizes, (TypeHandler) mTypeHandler,
-						mExpressionTranslation);
-				break;
 			case HoenickeLindenmann_4ByteResolution:
-				memoryModel = new MemoryModel_SingleBitprecise(4, mTypeSizes, (TypeHandler) mTypeHandler,
-						mExpressionTranslation);
-				break;
 			case HoenickeLindenmann_8ByteResolution:
-				memoryModel = new MemoryModel_SingleBitprecise(8, mTypeSizes, (TypeHandler) mTypeHandler,
-						mExpressionTranslation);
+				memoryModel = new MemoryModel_SingleBitprecise(memoryModelPreference.getByteSize(), mTypeSizes,
+						(TypeHandler) mTypeHandler, mExpressionTranslation);
 				break;
 			case HoenickeLindenmann_Original:
 				memoryModel = new MemoryModel_MultiBitprecise(mTypeSizes, mTypeHandler, mExpressionTranslation);
@@ -2142,7 +2133,7 @@ public class MemoryHandler {
 		return Collections.emptyList();
 	}
 
-	private Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
+	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
 			final BigInteger integerConstant) {
 		final Expression base = getPointerBaseAddress(ptrExpr, loc);
 		final Expression offset = getPointerOffset(ptrExpr, loc);

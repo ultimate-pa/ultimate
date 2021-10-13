@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,7 +35,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
@@ -54,8 +55,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
@@ -69,15 +73,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public final class DataRaceChecker {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
+	private final ITypeHandler mTypeHandler;
+	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
+	private final TypeSizes mTypeSizes;
 
 	private final Set<String> mRaceVars = new HashSet<>();
-	private final ITypeHandler mTypeHandler;
 
-	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final ITypeHandler typeHandler,
-			final MemoryHandler memoryHandler) {
+	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
+			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeComputer,
+			final TypeSizes typeSizes) {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
-		mTypeHandler = typeHandler;
 		mMemoryHandler = memoryHandler;
+		mTypeHandler = typeHandler;
+		mTypeSizeComputer = typeSizeComputer;
+		mTypeSizes = typeSizes;
 	}
 
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
@@ -107,24 +116,28 @@ public final class DataRaceChecker {
 		final AuxVarInfo tmp = mAuxVarInfoBuilder.constructAuxVarInfo(loc, getBoolASTType(), SFO.AUXVAR.NONDET);
 		erb.addDeclaration(tmp.getVarDec());
 		erb.addAuxVar(tmp);
-		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { tmp.getLhs() });
 
+		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { tmp.getLhs() });
 		final LeftHandSide[] lhs = getRaceLhs(loc, erb, lrVal);
-		final Expression[] exprs = new Expression[lhs.length];
-		Arrays.fill(exprs, tmp.getExp());
-		final Statement assign = StatementFactory.constructAssignmentStatement(loc, lhs, exprs);
 
 		// TODO We can make these atomic, to reduce the verification cost. However, CfgBuilder.LargeBlockEncoding
 		// currently does not support nested atomic blocks, and thus leads to false negatives in data race checking.
-		// final Statement atomic = new AtomicStatement(loc, new Statement[] { havoc, assign });
-		// erb.addStatement(atomic);
 		erb.addStatement(havoc);
-		erb.addStatement(assign);
+		for (int i = 0; i < lhs.length; ++i) {
+			erb.addStatement(StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { lhs[i] },
+					new Expression[] { tmp.getExp() }));
+		}
 
 		return tmp;
 	}
 
 	private static boolean isRaceImpossible(final LRValue lrVal) {
+		if (lrVal instanceof HeapLValue) {
+			final Expression address = ((HeapLValue) lrVal).getAddress();
+			return address instanceof IdentifierExpression
+					&& ((IdentifierExpression) address).getIdentifier().startsWith(SFO.FUNCTION_ADDRESS);
+		}
+
 		if (!(lrVal instanceof LocalLValue)) {
 			return false;
 		}
@@ -133,17 +146,29 @@ public final class DataRaceChecker {
 			return false;
 		}
 		final VariableLHS varLhs = (VariableLHS) locLv.getLhs();
-		final StorageClass storageCls = varLhs.getDeclarationInformation().getStorageClass();
-		return storageCls == StorageClass.LOCAL || storageCls == StorageClass.IMPLEMENTATION_INPARAM
-				|| storageCls == StorageClass.IMPLEMENTATION_OUTPARAM || storageCls == StorageClass.PROC_FUNC;
+		switch (varLhs.getDeclarationInformation().getStorageClass()) {
+		case LOCAL:
+		case IMPLEMENTATION_INPARAM:
+		case IMPLEMENTATION_OUTPARAM:
+		case PROC_FUNC:
+			return true;
+		default:
+			return false;
+		}
 	}
 
 	private LeftHandSide[] getRaceLhs(final ILocation loc, final ExpressionResultBuilder erb, final LRValue lrVal) {
 		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
-			// FIXME Probably incorrect in the presence of pointer casts; havoc "race" for every byte in memory
-			return new LeftHandSide[] { ExpressionFactory.constructNestedArrayLHS(loc,
-					mMemoryHandler.getMemoryRaceArrayLhs(loc), new Expression[] { hlv.getAddress() }) };
+			final LeftHandSide raceLhs = mMemoryHandler.getMemoryRaceArrayLhs(loc);
+
+			final LeftHandSide[] lhs = new LeftHandSide[getTypeSize(loc, hlv.getUnderlyingType())];
+			for (int i = 0; i < lhs.length; ++i) {
+				final Expression ptrPlusI =
+						mMemoryHandler.addIntegerConstantToPointer(loc, hlv.getAddress(), BigInteger.valueOf(i));
+				lhs[i] = ExpressionFactory.constructNestedArrayLHS(loc, raceLhs, new Expression[] { ptrPlusI });
+			}
+			return lhs;
 		}
 		if (lrVal instanceof LocalLValue) {
 			return new LeftHandSide[] { getRaceVariableLhs(loc, erb, (LocalLValue) lrVal) };
@@ -155,14 +180,27 @@ public final class DataRaceChecker {
 			final LRValue lrVal) {
 		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
-			// FIXME Probably incorrect in the presence of pointer casts; check "race" for every byte in memory
-			return new Expression[] { ExpressionFactory.constructNestedArrayAccessExpression(loc,
-					mMemoryHandler.getMemoryRaceArray(loc), new Expression[] { hlv.getAddress() }) };
+			final Expression raceLhs = mMemoryHandler.getMemoryRaceArray(loc);
+
+			final Expression[] lhs = new Expression[getTypeSize(loc, hlv.getUnderlyingType())];
+			for (int i = 0; i < lhs.length; ++i) {
+				final Expression ptrPlusI =
+						mMemoryHandler.addIntegerConstantToPointer(loc, hlv.getAddress(), BigInteger.valueOf(i));
+				lhs[i] = ExpressionFactory.constructNestedArrayAccessExpression(loc, raceLhs,
+						new Expression[] { ptrPlusI });
+			}
+			return lhs;
 		}
 		if (lrVal instanceof LocalLValue) {
 			return new Expression[] { getRaceVariableExpression(loc, erb, (LocalLValue) lrVal) };
 		}
 		throw new UnsupportedOperationException();
+	}
+
+	private int getTypeSize(final ILocation loc, final CType type) {
+		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type, null);
+		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), null)
+				.intValueExact();
 	}
 
 	private Expression getRaceVariableExpression(final ILocation loc, final ExpressionResultBuilder erb,
