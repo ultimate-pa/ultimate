@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -115,8 +114,12 @@ public final class DataRaceChecker {
 		Arrays.fill(exprs, tmp.getExp());
 		final Statement assign = StatementFactory.constructAssignmentStatement(loc, lhs, exprs);
 
-		final Statement atomic = new AtomicStatement(loc, new Statement[] { havoc, assign });
-		erb.addStatement(atomic);
+		// TODO We can make these atomic, to reduce the verification cost. However, CfgBuilder.LargeBlockEncoding
+		// currently does not support nested atomic blocks, and thus leads to false negatives in data race checking.
+		// final Statement atomic = new AtomicStatement(loc, new Statement[] { havoc, assign });
+		// erb.addStatement(atomic);
+		erb.addStatement(havoc);
+		erb.addStatement(assign);
 
 		return tmp;
 	}
