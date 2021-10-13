@@ -34,9 +34,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -77,8 +77,10 @@ public class QvasrAbstractor {
 	public QvasrAbstraction computeAbstraction(final Term transitionTerm,
 			final UnmodifiableTransFormula transitionFormula) {
 
-		final Map<TermVariable, Set<ApplicationTerm>> updates =
-				getUpdates(transitionTerm, transitionFormula.getOutVars());
+		final Map<TermVariable, Set<Term>> updatesInFormula = getUpdates(transitionTerm, transitionFormula);
+		final Set<Term> newUpdates = constructBaseFormula(updatesInFormula, transitionTerm, transitionFormula, "");
+		final Term[][] newUpdatesMatrix = constructBaseMatrix(updatesInFormula, transitionTerm, transitionFormula, "");
+
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
 		return new QvasrAbstraction(out, qvasr);
@@ -92,17 +94,91 @@ public class QvasrAbstractor {
 	 * @param outVariables
 	 * @return
 	 */
-	private Map<TermVariable, Set<ApplicationTerm>> getUpdates(final Term transitionTerm,
-			final Map<IProgramVar, TermVariable> outVariables) {
-		final Map<TermVariable, Set<ApplicationTerm>> assignments = new HashMap<>();
+	private Map<TermVariable, Set<Term>> getUpdates(final Term transitionTerm,
+			final UnmodifiableTransFormula transitionFormula) {
+		final Map<TermVariable, Set<Term>> assignments = new HashMap<>();
 		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("=", false);
-		for (final TermVariable outVar : outVariables.values()) {
-			final Set<TermVariable> tv = new HashSet<TermVariable>();
-			tv.add(outVar);
-			final Term filtered = SmtUtils.filterFormula(transitionTerm, tv, mScript.getScript());
+		for (final TermVariable outVar : transitionFormula.getOutVars().values()) {
+			final Set<TermVariable> out = new HashSet<>();
+			out.add(outVar);
+			final Term filtered = SmtUtils.filterFormula(transitionTerm, out, mScript.getScript());
 			final Set<ApplicationTerm> varAssignment = applicationTermFinder.findMatchingSubterms(filtered);
-			assignments.put(outVar, varAssignment);
+			final Set<Term> trueAssignment = new HashSet<>();
+			for (final ApplicationTerm app : varAssignment) {
+				for (final Term param : app.getParameters()) {
+					if (!(param instanceof TermVariable) || (param instanceof TermVariable && param != outVar)) {
+						trueAssignment.add(param);
+					}
+				}
+			}
+			assignments.put(outVar, trueAssignment);
 		}
 		return assignments;
+	}
+
+	/**
+	 * Construct a matrix representing a set of linear equations that model updates to variables in a given transition
+	 * formula. The matrix has 2^#outVariables columns because we have to set each variable to 0 to be able to use
+	 * Gaussian elimination.
+	 *
+	 * @param updates
+	 * @param transitionTerm
+	 * @param transitionFormula
+	 * @param typeOfBase
+	 * @return
+	 */
+	private Term[][] constructBaseMatrix(final Map<TermVariable, Set<Term>> updates, final Term transitionTerm,
+			final UnmodifiableTransFormula transitionFormula, final String typeOfBase) {
+		final int rowDimension = (int) Math.pow(2, transitionFormula.getOutVars().size());
+		final int columnDimension = transitionFormula.getOutVars().size();
+		final Term[][] baseMatrix = new Term[rowDimension][columnDimension];
+
+		for (int j = 0; j < rowDimension; j++) {
+			int i = 0;
+			for (final Set<Term> update : updates.values()) {
+				for (final Term updateTerm : update) {
+					baseMatrix[j][i] = updateTerm;
+					// TODO!
+					/*
+					 * for (final Term updateTerm : update) { for (final TermVariable inVar :
+					 * transitionFormula.getInVars().values()) { final Set<TermVariable> tv = new HashSet<>();
+					 * tv.add(inVar); final Map<TermVariable, Term> replaceTermVars = new HashMap<>();
+					 * replaceTermVars.put(inVar, mScript.getScript().numeral("0")); final Substitution sub = new
+					 * Substitution(mScript, replaceTermVars); final Term newUpdate = sub.transform(updateTerm);
+					 * mLogger.debug(""); }
+					 *
+					 * for (int i = 0; i < rowDimension; i++) { baseMatrix[i][j] = updateTerm; }
+					 */
+				}
+				i++;
+			}
+		}
+		return baseMatrix;
+	}
+
+	/**
+	 * Construct a formula modeling updates to variables done in a transition formula in relation to a new termvariable
+	 * s. (May not be needed, as we can skip this construction)
+	 *
+	 * @param updates
+	 * @param transitionTerm
+	 * @param transitionFormula
+	 * @param typeOfBase
+	 * @return
+	 */
+	private Set<Term> constructBaseFormula(final Map<TermVariable, Set<Term>> updates, final Term transitionTerm,
+			final UnmodifiableTransFormula transitionFormula, final String typeOfBase) {
+		int sCount = 0;
+		final Set<Term> newUpdates = new HashSet<>();
+		for (final var variableUpdate : updates.entrySet()) {
+			// TODO: Don't we need a float/rational here instead of intSort?
+			final TermVariable s = mScript.constructFreshTermVariable("s" + sCount, SmtSortUtils.getIntSort(mScript));
+			for (final Term update : variableUpdate.getValue()) {
+				final Term mult = SmtUtils.mul(mScript.getScript(), "*", s, update);
+				newUpdates.add(mult);
+			}
+			sCount++;
+		}
+		return newUpdates;
 	}
 }
