@@ -418,9 +418,9 @@ public class CHandler {
 
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
-		mDataRaceChecker =
-				mSettings.checkDataRaces() ? new DataRaceChecker(mAuxVarInfoBuilder, mTypeHandler, mMemoryHandler)
-						: null;
+		mDataRaceChecker = mSettings.checkDataRaces()
+				? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer, mTypeSizes)
+				: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
@@ -507,9 +507,9 @@ public class CHandler {
 				expressionTranslation, procedureManager, typeSizeAndOffsetComputer, mAuxVarInfoBuilder, mSettings);
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
-		mDataRaceChecker =
-				mSettings.checkDataRaces() ? new DataRaceChecker(mAuxVarInfoBuilder, mTypeHandler, mMemoryHandler)
-						: null;
+		mDataRaceChecker = mSettings.checkDataRaces()
+				? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer, mTypeSizes)
+				: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
