@@ -60,6 +60,13 @@ public class QvasrAbstractor {
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
 
+	/**
+	 *
+	 * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) Define which kind of base matrix. Resets: Where the
+	 *         outvars only depend on the invars and addition vector a. Additions: Where outvars depend on invars and
+	 *         addition vector a.
+	 *
+	 */
 	private enum BaseType {
 		RESETS, ADDITIONS
 	};
@@ -146,8 +153,10 @@ public class QvasrAbstractor {
 
 	/**
 	 * Construct a matrix representing a set of linear equations that model updates to variables in a given transition
-	 * formula. The matrix has 2^#outVariables columns because we have to set each variable to 0 to be able to use
-	 * Gaussian elimination.
+	 * formula. The matrix has 2^n columns with n being the number of outvars, because we have to set each variable to 0
+	 * to be able to use Gaussian elimination. We want to have a matrix for the bases of resets Res: {[s_1, s_2, ...,
+	 * s_n] [x_1', x_2', ...] = a} and additions Inc: {[s_1, s_2, ..., s_n] [x_1', x_2', ...] = [s_1, s_2, ..., s_n]
+	 * [x_1, x_2, ..., x_n] + a}
 	 *
 	 * @param updates
 	 * @param transitionFormula
@@ -166,6 +175,9 @@ public class QvasrAbstractor {
 			inVar.add(tv);
 			setToZero.add(inVar);
 		}
+		/*
+		 * To get a linear set of equations, which we want to solve, we set the various variables to 0.
+		 */
 		Set<Set<TermVariable>> powerset = new HashSet<>(setToZero);
 		for (final Set<TermVariable> inTv : setToZero) {
 			powerset = QvasrUtils.joinSet(powerset, inTv);
