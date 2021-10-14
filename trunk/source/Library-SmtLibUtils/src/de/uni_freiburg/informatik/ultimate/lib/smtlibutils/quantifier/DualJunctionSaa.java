@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
@@ -93,26 +94,9 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			}
 			final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
 			final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
-
-			final EliminationTaskPlain inputEtp = new EliminationTaskPlain(inputEt.getQuantifier(),
-					Collections.singleton(eliminatee), qs.getInnerTerm(), inputEt.getContext().getCriticalConstraint());
-			EliminationTaskPlain res;
-			try {
-				res = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, inputEtp);
-			} catch (final SMTLIBException e) {
-				throw new AssertionError(e);
-			} catch (final ElimStorePlainException e) {
-				if (e.getMessage().equals(ElimStorePlainException.NON_TOP_LEVEL_DER)
-						|| e.getMessage().equals(ElimStorePlainException.CAPTURED_INDEX)) {
-					res = null;
-				} else {
-					throw new AssertionError(e);
-				}
-			}
+			EliminationTaskPlain res = tryToEliminate(inputEt.getQuantifier(), qs.getInnerTerm(), inputEt.getContext(),
+					eliminatee);
 			if (res != null) {
-				if (Arrays.asList(res.getTerm().getFreeVars()).contains(eliminatee)) {
-					throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEt.toTerm(mScript));
-				}
 				final QuantifierSequence qsResult = new QuantifierSequence(mScript, res.getTerm(),
 						qs.getQuantifierBlocks());
 				final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(inputEt.getEliminatees());
@@ -122,6 +106,30 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			}
 		}
 		return null;
+	}
+	
+	private EliminationTaskPlain tryToEliminate(int quantifier, Term term, Context context, TermVariable eliminatee) {
+		final EliminationTaskPlain inputEtp = new EliminationTaskPlain(quantifier, Collections.singleton(eliminatee),
+				term, context.getCriticalConstraint());
+		EliminationTaskPlain res1;
+		try {
+			res1 = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, inputEtp);
+		} catch (final SMTLIBException e) {
+			throw new AssertionError(e);
+		} catch (final ElimStorePlainException e) {
+			if (e.getMessage().equals(ElimStorePlainException.NON_TOP_LEVEL_DER)
+					|| e.getMessage().equals(ElimStorePlainException.CAPTURED_INDEX)) {
+				res1 = null;
+			} else {
+				throw new AssertionError(e);
+			}
+		}
+		if (res1 != null) {
+			if (Arrays.asList(res1.getTerm().getFreeVars()).contains(eliminatee)) {
+				throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEtp.toTerm(mScript));
+			}
+		}
+		return res1;
 	}
 
 }
