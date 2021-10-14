@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.util.Arrays;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
@@ -78,6 +80,6 @@ public class QvasrAbstraction {
 	 */
 	@Override
 	public String toString() {
-		return mSimulationMatrix.toString() + "  " + mQvasr.toString();
+		return Arrays.toString(mSimulationMatrix) + "  " + mQvasr.toString();
 	}
 }
