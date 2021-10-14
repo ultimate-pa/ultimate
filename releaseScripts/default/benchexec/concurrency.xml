@@ -164,6 +164,8 @@
 
 	<tasks name="SVCOMP ConcurrencySafety-DataRaces">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
 		<includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
 		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
