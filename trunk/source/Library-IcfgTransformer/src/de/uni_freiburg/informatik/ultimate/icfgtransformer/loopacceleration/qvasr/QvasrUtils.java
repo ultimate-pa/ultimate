@@ -1,10 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  *
@@ -34,5 +37,16 @@ public class QvasrUtils {
 			}
 		}
 		return result;
+	}
+
+	public static Set<Set<TermVariable>> joinSet(final Set<Set<TermVariable>> inSet, final Set<TermVariable> variable) {
+		final Set<Set<TermVariable>> joinedSet = new HashSet<Set<TermVariable>>(inSet);
+		for (final Set<TermVariable> toBeJoined : inSet) {
+			final Set<TermVariable> varJoin = new HashSet<>();
+			varJoin.addAll(toBeJoined);
+			varJoin.addAll(variable);
+			joinedSet.add(varJoin);
+		}
+		return joinedSet;
 	}
 }
