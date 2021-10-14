@@ -27,21 +27,26 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
 /**
  *
@@ -54,6 +59,10 @@ public class QvasrAbstractor {
 
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
+
+	private enum BaseType {
+		RESETS, ADDITIONS
+	};
 
 	/**
 	 * Computes a Q-Vasr-abstraction (S, V), with linear simulation matrix S and Q-Vasr V. A transition formula can be
@@ -77,9 +86,16 @@ public class QvasrAbstractor {
 	public QvasrAbstraction computeAbstraction(final Term transitionTerm,
 			final UnmodifiableTransFormula transitionFormula) {
 
-		final Map<TermVariable, Set<Term>> updatesInFormula = getUpdates(transitionTerm, transitionFormula);
-		final Set<Term> newUpdates = constructBaseFormula(updatesInFormula, transitionTerm, transitionFormula, "");
-		final Term[][] newUpdatesMatrix = constructBaseMatrix(updatesInFormula, transitionTerm, transitionFormula, "");
+		final Map<TermVariable, Set<Term>> updatesInFormulaAdditions =
+				getUpdates(transitionTerm, transitionFormula, BaseType.ADDITIONS);
+		final Map<TermVariable, Set<Term>> updatesInFormulaResets =
+				getUpdates(transitionTerm, transitionFormula, BaseType.RESETS);
+
+		final Term[][] newUpdatesMatrixResets =
+				constructBaseMatrix(updatesInFormulaResets, transitionFormula, BaseType.RESETS);
+
+		final Term[][] newUpdatesMatrixAdditions =
+				constructBaseMatrix(updatesInFormulaAdditions, transitionFormula, BaseType.ADDITIONS);
 
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
@@ -95,7 +111,7 @@ public class QvasrAbstractor {
 	 * @return
 	 */
 	private Map<TermVariable, Set<Term>> getUpdates(final Term transitionTerm,
-			final UnmodifiableTransFormula transitionFormula) {
+			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
 		final Map<TermVariable, Set<Term>> assignments = new HashMap<>();
 		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("=", false);
 		for (final TermVariable outVar : transitionFormula.getOutVars().values()) {
@@ -105,8 +121,20 @@ public class QvasrAbstractor {
 			final Set<ApplicationTerm> varAssignment = applicationTermFinder.findMatchingSubterms(filtered);
 			final Set<Term> trueAssignment = new HashSet<>();
 			for (final ApplicationTerm app : varAssignment) {
-				for (final Term param : app.getParameters()) {
+				for (Term param : app.getParameters()) {
 					if (!(param instanceof TermVariable) || (param instanceof TermVariable && param != outVar)) {
+						if (baseType == BaseType.ADDITIONS) {
+							final IProgramVar programVar =
+									(IProgramVar) TransFormulaUtils.getProgramVarForTerm(transitionFormula, outVar);
+							if (transitionFormula.getInVars().containsKey(programVar)) {
+								final TermVariable inVar = transitionFormula.getInVars().get(programVar);
+								param = SmtUtils.sum(mScript.getScript(), "+", param,
+										SmtUtils.neg(mScript.getScript(), inVar));
+							} else {
+								param = SmtUtils.sum(mScript.getScript(), "+", param,
+										SmtUtils.neg(mScript.getScript(), outVar));
+							}
+						}
 						trueAssignment.add(param);
 					}
 				}
@@ -122,36 +150,50 @@ public class QvasrAbstractor {
 	 * Gaussian elimination.
 	 *
 	 * @param updates
-	 * @param transitionTerm
 	 * @param transitionFormula
 	 * @param typeOfBase
 	 * @return
 	 */
-	private Term[][] constructBaseMatrix(final Map<TermVariable, Set<Term>> updates, final Term transitionTerm,
-			final UnmodifiableTransFormula transitionFormula, final String typeOfBase) {
-		final int rowDimension = (int) Math.pow(2, transitionFormula.getOutVars().size());
-		final int columnDimension = transitionFormula.getOutVars().size();
+	private Term[][] constructBaseMatrix(final Map<TermVariable, Set<Term>> updates,
+			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
+		final int rowDimension = (int) Math.pow(2, transitionFormula.getInVars().size());
+		final int columnDimension = transitionFormula.getOutVars().size() + 1;
 		final Term[][] baseMatrix = new Term[rowDimension][columnDimension];
 
-		for (int j = 0; j < rowDimension; j++) {
+		final Set<Set<TermVariable>> setToZero = new HashSet<>();
+		for (final TermVariable tv : transitionFormula.getInVars().values()) {
+			final Set<TermVariable> inVar = new HashSet<>();
+			inVar.add(tv);
+			setToZero.add(inVar);
+		}
+		Set<Set<TermVariable>> powerset = new HashSet<>(setToZero);
+		for (final Set<TermVariable> inTv : setToZero) {
+			powerset = QvasrUtils.joinSet(powerset, inTv);
+		}
+		final Deque<Set<TermVariable>> zeroStack = new HashDeque<>();
+		zeroStack.addAll(powerset);
+		int j = 0;
+		final TermVariable a = mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript));
+		while (!zeroStack.isEmpty()) {
 			int i = 0;
+			baseMatrix[j][columnDimension - 1] = a;
+			final Map<Term, Term> subMapping = new HashMap<>();
+			if (j > 0) {
+				final Set<TermVariable> toBeSetZero = zeroStack.pop();
+				for (final TermVariable tv : toBeSetZero) {
+					subMapping.put(tv, mScript.getScript().numeral("0"));
+				}
+			}
 			for (final Set<Term> update : updates.values()) {
 				for (final Term updateTerm : update) {
-					baseMatrix[j][i] = updateTerm;
-					// TODO!
-					/*
-					 * for (final Term updateTerm : update) { for (final TermVariable inVar :
-					 * transitionFormula.getInVars().values()) { final Set<TermVariable> tv = new HashSet<>();
-					 * tv.add(inVar); final Map<TermVariable, Term> replaceTermVars = new HashMap<>();
-					 * replaceTermVars.put(inVar, mScript.getScript().numeral("0")); final Substitution sub = new
-					 * Substitution(mScript, replaceTermVars); final Term newUpdate = sub.transform(updateTerm);
-					 * mLogger.debug(""); }
-					 *
-					 * for (int i = 0; i < rowDimension; i++) { baseMatrix[i][j] = updateTerm; }
-					 */
+					Term toBeUpdated;
+					final Substitution sub = new Substitution(mScript, subMapping);
+					toBeUpdated = sub.transform(updateTerm);
+					baseMatrix[j][i] = toBeUpdated;
 				}
 				i++;
 			}
+			j++;
 		}
 		return baseMatrix;
 	}
@@ -161,13 +203,12 @@ public class QvasrAbstractor {
 	 * s. (May not be needed, as we can skip this construction)
 	 *
 	 * @param updates
-	 * @param transitionTerm
 	 * @param transitionFormula
 	 * @param typeOfBase
 	 * @return
 	 */
-	private Set<Term> constructBaseFormula(final Map<TermVariable, Set<Term>> updates, final Term transitionTerm,
-			final UnmodifiableTransFormula transitionFormula, final String typeOfBase) {
+	private Set<Term> constructBaseFormula(final Map<TermVariable, Set<Term>> updates,
+			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
 		int sCount = 0;
 		final Set<Term> newUpdates = new HashSet<>();
 		for (final var variableUpdate : updates.entrySet()) {
