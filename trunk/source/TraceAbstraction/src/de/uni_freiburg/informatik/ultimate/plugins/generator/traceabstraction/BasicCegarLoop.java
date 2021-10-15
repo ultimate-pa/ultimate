@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -82,6 +83,10 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -624,6 +629,62 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		IProgramExecution<L, Term> rcfgProgramExecution = null;
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
+
+			if (feasibility == LBool.SAT) {
+				final Object lastState =
+						mCounterexample.getStateSequence().get(mCounterexample.getStateSequence().size() - 1);
+				if (lastState instanceof IMLPredicate) {
+					final IcfgLocation[] locs = ((IMLPredicate) lastState).getProgramPoints();
+					final var raceLoc = Arrays.stream(locs).filter(l -> Check.getAnnotation(l) != null
+							&& Check.getAnnotation(l).getSpec().contains(Spec.DATA_RACE)).findAny();
+
+					if (raceLoc.isPresent()) {
+						final DataRaceAnnotation annot = DataRaceAnnotation.getAnnotation(raceLoc.get());
+						final Map<Race, Set<Race>> possibleConflicts =
+								annot.getRaces().stream().collect(Collectors.toMap(x -> x, x -> new LinkedHashSet<>()));
+						Race definiteCheck = null;
+						Race definiteAccess = null;
+
+						lab: for (int i = mCounterexample.getWord().length() - 2; i >= 0; i--) {
+							final DataRaceAnnotation current =
+									DataRaceAnnotation.getAnnotation(mCounterexample.getWord().getSymbol(i));
+							if (current == null) {
+								continue;
+							}
+							for (final Map.Entry<Race, Set<Race>> entry : possibleConflicts.entrySet()) {
+								final Race race = entry.getKey();
+								final Optional<Race> defConflict = current.getRaces().stream()
+										.filter(r -> race.isConflictingAccess(r).orElse(false)).findAny();
+								if (defConflict.isPresent()) {
+									definiteCheck = race;
+									definiteAccess = defConflict.get();
+									break lab; // TODO return
+								}
+								current.getRaces().stream().filter(r -> race.isConflictingAccess(r).isEmpty())
+										.forEach(entry.getValue()::add);
+							}
+						}
+						if (definiteCheck != null) {
+							if (definiteCheck.isHeapRace()) {
+								mLogger.warn("Found heap data race between %s and %s",
+										definiteAccess.getOriginalLocation(), definiteCheck.getOriginalLocation());
+							} else {
+								mLogger.warn("Found data race on %s between %s and %s", definiteAccess.getVariable(),
+										definiteAccess.getOriginalLocation(), definiteCheck.getOriginalLocation());
+							}
+						} else {
+							mLogger.warn("Found a data race, but unable to determine exactly"
+									+ " which statements and variables are involved.");
+							for (final Map.Entry<Race, Set<Race>> entry : possibleConflicts.entrySet()) {
+								mLogger.warn("%s might race with any of %s", entry.getKey().getOriginalLocation(),
+										entry.getValue().stream().map(x -> x.getOriginalLocation().toString())
+												.collect(Collectors.joining(", or ")));
+							}
+						}
+					}
+				}
+			}
+
 			if (mRefinementResult.providesIcfgProgramExecution()) {
 				rcfgProgramExecution = mRefinementResult.getIcfgProgramExecution();
 			} else {
