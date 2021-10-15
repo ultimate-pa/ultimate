@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgram
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -294,7 +296,17 @@ public final class TraceCheckUtils {
 	public static <L extends IAction> IcfgProgramExecution<L>
 			computeSomeIcfgProgramExecutionWithoutValues(final Word<L> trace) {
 		@SuppressWarnings("unchecked")
-		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
+		final Map<TermVariable, Boolean>[] branchEncoders = new Map[trace.length()];
+		for (int i = 0; i < branchEncoders.length; ++i) {
+			final L letter = trace.getSymbol(i);
+			if (letter instanceof IActionWithBranchEncoders) {
+				final Set<TermVariable> enc = ((IActionWithBranchEncoders) letter)
+						.getTransitionFormulaWithBranchEncoders().getBranchEncoders();
+				branchEncoders[i] = enc.stream().collect(Collectors.toUnmodifiableMap(x -> x, x -> true));
+			} else {
+				branchEncoders[i] = Collections.emptyMap();
+			}
+		}
 		return IcfgProgramExecution.create(trace.asList(), Collections.emptyMap(), branchEncoders);
 	}
 

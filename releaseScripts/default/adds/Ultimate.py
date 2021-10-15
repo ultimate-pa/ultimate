@@ -62,6 +62,7 @@ class _PropParser:
         "end",
         "overflow",
         "call",
+        "data-race",
     ]
 
     def __init__(self, propfile):
@@ -77,6 +78,7 @@ class _PropParser:
         self.init = None
         self.ltlformula = None
         self.mem_cleanup = False
+        self.data_race = False
 
         for match in self.prop_regex.finditer(self.content):
             init, formula = match.groups()
@@ -109,6 +111,8 @@ class _PropParser:
                 self.overflow = True
             elif formula == "G valid-memcleanup":
                 self.mem_cleanup = True
+            elif formula == "G ! data-race":
+                self.data_race = True
             elif not check_string_contains(
                 self.word_regex.findall(formula), self.forbidden_words
             ):
@@ -159,6 +163,9 @@ class _PropParser:
 
     def get_ltl_formula(self):
         return self.ltlformula
+
+    def is_data_race(self):
+        return self.data_race
 
 
 class _AbortButPrint(Exception):
@@ -788,6 +795,9 @@ def create_settings_search_string(prop, architecture):
     elif prop.is_ltl():
         print("Checking for LTL property {0}".format(prop.get_ltl_formula()))
         settings_search_string = "LTL"
+    elif prop.is_data_race():
+        print("Checking for data races")
+        settings_search_string = "DataRace"
     else:
         print("Checking for ERROR reachability")
         settings_search_string = "Reach"
@@ -924,7 +934,7 @@ def main():
         )
         err_output_file = open(error_path_file_name, "wb")
         err_output_file.write(error_path.encode("utf-8"))
-        if not prop.is_reach():
+        if not prop.is_reach() and not prop.is_data_race():
             result = "FALSE({})".format(result_msg)
 
     print("Result:")

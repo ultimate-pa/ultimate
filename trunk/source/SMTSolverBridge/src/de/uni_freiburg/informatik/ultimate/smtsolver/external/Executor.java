@@ -66,10 +66,12 @@ class Executor {
 
 	private MonitoredProcess mProcess;
 	private Lexer mLexer;
+
 	private BufferedWriter mWriter;
 	private InputStream mStdErr;
 
 	private final Script mScript;
+	private final Parser mParser;
 	private final String mSolverCmd;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -103,6 +105,8 @@ class Executor {
 		mLogger = logger;
 		mName = solverName;
 		mFullPathOfDumpedFile = fullPathOfDumpedFile;
+		mParser = new Parser();
+		mParser.setScript(mScript);
 		createProcess();
 	}
 
@@ -227,12 +231,10 @@ class Executor {
 			// we don't care what happens on stdErr
 		}
 
-		final Parser parser = new Parser();
-		parser.setScript(mScript);
 		answer.add(0, new Symbol(what));
-		parser.setAnswer(answer);
+		mParser.setAnswer(answer);
 		try {
-			return parser.parse();
+			return mParser.parse();
 		} catch (final SMTLIBException ex) {
 			if (mServices.getProgressMonitorService().continueProcessing()) {
 				if (ex.getMessage().equals(Parser.s_EOF)) {

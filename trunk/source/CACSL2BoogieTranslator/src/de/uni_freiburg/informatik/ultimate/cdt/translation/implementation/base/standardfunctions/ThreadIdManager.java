@@ -83,7 +83,7 @@ public class ThreadIdManager {
 	private static final boolean UNAMBIGUOUS_THREAD_ID_OPTIMIZATION = true;
 
 	/**
-	 * Use the symbol table to determine the scope of a variable and only search for references with this scope.
+	 * Use the symbol table to determine the scope of a variable and only search for references within this scope.
 	 */
 	private static final boolean SYMBOL_TABLE_BASED_REFERENCE_SEARCH = true;
 

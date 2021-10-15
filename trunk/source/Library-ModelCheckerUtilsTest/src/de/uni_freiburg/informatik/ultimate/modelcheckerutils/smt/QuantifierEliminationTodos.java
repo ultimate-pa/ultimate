@@ -346,5 +346,46 @@ public class QuantifierEliminationTodos {
 	}
 
 
+	@Test
+	public void alegedAlternation() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "min"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "A"),
+			};
+		final String formulaAsString = "(exists ((v_l_26 Int) (v_A_17 (Array Int Int))) (and (= A (store v_A_17 v_l_26 (+ (- 1) (select v_A_17 v_l_26)))) (or (exists ((v_i_24 Int)) (and (<= (select v_A_17 v_i_24) (+ (select v_A_17 0) 1)) (<= min (select v_A_17 v_i_24)))) (and (exists ((v_i_24 Int)) (< min (select v_A_17 v_i_24))) (<= min (+ (select v_A_17 0) 1)))) (<= 1 v_l_26)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+//	// read_type_#64._token is function symbol with
+//	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
+//    // and return sort Int
+//	@Test
+//	public void daxus01() {
+//		final FunDecl[] funDecls = new FunDecl[] {
+//				new FunDecl(SmtSortUtils::getIntSort, "routine_#33910_luaX_next_local_#4227_ls_IN.base", "routine_#33910_luaX_next_local_#4227_ls_IN.offset"),
+//				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "_memory", "old(_memory)", "read_type_#64._token"),
+//			};
+//		final String formulaAsString = "(exists ((v__memory_1153 (Array Int (Array Int Int))) (v__memory_ptr.base_1009 (Array Int (Array Int Int))) (v__memory_ptr.offset_1009 (Array Int (Array Int Int))) (|routine_#33910_luaX_next_local_#4227_ls.offset| Int)) (and (<= |routine_#33910_luaX_next_local_#4227_ls.offset| |routine_#33910_luaX_next_local_#4227_ls_IN.offset|) (= (store v__memory_1153 |routine_#33910_luaX_next_local_#4227_ls_IN.base| (let ((.cse0 (+ 32 |routine_#33910_luaX_next_local_#4227_ls.offset|))) (store (store (store (select v__memory_1153 |routine_#33910_luaX_next_local_#4227_ls_IN.base|) (+ 16 |routine_#33910_luaX_next_local_#4227_ls.offset|) (|read_type_#64._token| v__memory_1153 v__memory_ptr.base_1009 v__memory_ptr.offset_1009 |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse0)) (+ |routine_#33910_luaX_next_local_#4227_ls.offset| 24) (|read_type_#64._seminfo._i| v__memory_1153 v__memory_ptr.base_1009 v__memory_ptr.offset_1009 |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse0)) .cse0 289))) _memory) (<= |routine_#33910_luaX_next_local_#4227_ls_IN.offset| |routine_#33910_luaX_next_local_#4227_ls.offset|)))";
+//		final String expectedResult = null;
+//		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+//	}
+//
+//
+//	// read_type_#64._token is function symbol with
+//	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
+//    // and return sort Int
+//	@Test
+//	public void daxus02() {
+//		final FunDecl[] funDecls = new FunDecl[] {
+//				new FunDecl(SmtSortUtils::getIntSort, "routine_#33910_luaX_next_local_#4227_ls_IN.base", "routine_#33910_luaX_next_local_#4227_ls_IN.offset"),
+//				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "_memory", "old(_memory)", "read_type_#64._token"),
+//			};
+//		final String formulaAsString = "(exists ((v__memory_ptr.offset_1308 (Array Int (Array Int Int))) (v__memory_ptr.base_1308 (Array Int (Array Int Int)))) (= _memory (store |old(_memory)| |routine_#33910_luaX_next_local_#4227_ls_IN.base| (let ((.cse2 (+ 32 |routine_#33910_luaX_next_local_#4227_ls_IN.offset|))) (store (let ((.cse0 (let ((.cse3 (select |old(_memory)| |routine_#33910_luaX_next_local_#4227_ls_IN.base|))) (store .cse3 (+ |routine_#33910_luaX_next_local_#4227_ls_IN.offset| 8) (select .cse3 (+ |routine_#33910_luaX_next_local_#4227_ls_IN.offset| 4)))))) (let ((.cse1 (store |old(_memory)| |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse0))) (store (store .cse0 (+ 16 |routine_#33910_luaX_next_local_#4227_ls_IN.offset|) (|read_type_#64._token| .cse1 v__memory_ptr.base_1308 v__memory_ptr.offset_1308 |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse2)) (+ |routine_#33910_luaX_next_local_#4227_ls_IN.offset| 24) (|read_type_#64._seminfo._i| .cse1 v__memory_ptr.base_1308 v__memory_ptr.offset_1308 |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse2)))) .cse2 289)))))";
+//		final String expectedResult = null;
+//		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+//	}
+
 	//@formatter:on
 }

@@ -806,12 +806,16 @@ public class emit {
       	do_action_table(grammar) +
       	do_reduce_table(grammar);
 
-      /* instance of the action encapsulation class */
-      out.println("  /** Return action table */");
-      out.println("  protected String[] action_table() { ");
-      out.println("    return new String[] {");
+      out.println("  /** The static parse table */");
+      out.println("  static " + RUNTIME_PACKAGE + ".ParseTable " + pre("parse_table") + " =");
+      out.println("    new " + RUNTIME_PACKAGE + ".ParseTable(new String[] {");
       output_string(out, tables);
-      out.println("    };");
+      out.println("    });");
+      out.println();
+
+      out.println("  /** Return parse table */");
+      out.println("  protected " + RUNTIME_PACKAGE + ".ParseTable parse_table() {");
+      out.println("    return " + pre("parse_table") + ";");
       out.println("  }");
       out.println();
 
