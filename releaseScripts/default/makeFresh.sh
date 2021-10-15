@@ -26,6 +26,9 @@ for platform in {linux,win32}; do
     # Kojak
     exitOnFail bash makeZip.sh Kojak $platform KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE NONE
 
+    # GemCutter
+    exitOnFail bash makeZip.sh GemCutter $platform AutomizerCInline_WitnessPrinter.xml NONE NONE NONE NONE NONE
+
     # DeltaDebugger
     exitOnFail bash createDeltaDebuggerDir.sh $platform
 
