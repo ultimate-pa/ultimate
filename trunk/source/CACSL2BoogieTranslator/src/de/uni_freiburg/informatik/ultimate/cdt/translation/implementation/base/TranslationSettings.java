@@ -201,13 +201,6 @@ public final class TranslationSettings {
 	}
 
 	public CPrimitive getCTypeOfPointerComponents() {
-		if (mBitvectorTranslation) {
-			// 2015-10-29 Matthias: using int is unsound on 64bit systems, but it
-			// probably saves a lot of conversions and I guess this unsoundness
-			// is never a problem in the SV-COMP and most other code
-			// 2020-12-08 Dominik: But this does lead to type errors, for instance in the aws benchmarks in SV-COMP.
-			return new CPrimitive(CPrimitives.INT);
-		}
 		return new CPrimitive(CPrimitives.LONG);
 	}
 
