@@ -9,6 +9,7 @@ EXPECTED_FILES=(
 "UltimateAutomizer-linux.zip"
 "UltimateKojak-linux.zip"
 "UltimateTaipan-linux.zip"
+"UltimateGemCutter-linux.zip"
 )
 
 VALIDATOR="uautomizer.zip"
@@ -60,7 +61,7 @@ function copy_zips() {
     local_checksum=$(sha256sum "$z" | awk '{print $1}')
     if echo "$local_checksum ${1}/${f}" | sha256sum --check --status ; then
       echo "Same file already at ${1}/${f}, aborting"
-      return 1
+      # return 1
     fi
     echo "Copying $z to ${1}/${f}"
     cp "$z" "${1}/${f}"
@@ -80,8 +81,9 @@ function git_push_default_remote() {
   push_dir "$1"
   echo "Pushing to remote "
   git add -A
-  git commit -a -m"Update Ultimate tool family (uautomizer, ukojak, utaipan) to version $VERSION"
-  git push
+  local title="Update Ultimate tool family (uautomizer, ukojak, utaipan, ugemcutter) to version $VERSION"
+  git commit -a -m"${title}"
+  git push -o merge_request.create -o merge_request.title="${title}"
   echo "Now file a pull request and wait for its acceptance!"
   pop_dir
 }
