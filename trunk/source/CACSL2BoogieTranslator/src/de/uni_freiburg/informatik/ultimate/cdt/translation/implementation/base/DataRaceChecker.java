@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -79,26 +80,36 @@ public final class DataRaceChecker {
 	private final ITypeHandler mTypeHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 	private final TypeSizes mTypeSizes;
+	private final ProcedureManager mProcedureManager;
 
 	private final Set<String> mRaceVars = new HashSet<>();
 
 	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
-			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeComputer,
-			final TypeSizes typeSizes) {
+			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeComputer, final TypeSizes typeSizes,
+			final ProcedureManager procMan) {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mMemoryHandler = memoryHandler;
 		mTypeHandler = typeHandler;
 		mTypeSizeComputer = typeSizeComputer;
 		mTypeSizes = typeSizes;
+		mProcedureManager = procMan;
 	}
 
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
+		if (mProcedureManager.isGlobalScope()) {
+			// TODO find a cleaner way to fix this
+			return;
+		}
 		if (!isRaceImpossible(lrVal)) {
 			checkOnAccess(erb, loc, lrVal);
 		}
 	}
 
 	public void checkOnWrite(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
+		if (mProcedureManager.isGlobalScope()) {
+			// TODO find a cleaner way to fix this
+			return;
+		}
 		if (isRaceImpossible(lrVal)) {
 			return;
 		}
