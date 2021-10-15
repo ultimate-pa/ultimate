@@ -281,8 +281,13 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_key_create", die);
 		fill(map, "pthread_getspecific", die);
 		fill(map, "pthread_setspecific", die);
+		// further unsupported pthread functions
+		fill(map, "pthread_rwlock_wrlock", die);
+		fill(map, "pthread_rwlock_rdlock", die);
+		fill(map, "pthread_mutex_trylock", die);
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+		fill(map, "scanf", die);
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
