@@ -624,10 +624,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public CPrimitive getCTypeOfPointerComponents() {
-		// 2015-10-29 Matthias: using int is unsound on 64bit systems, but it
-		// probably saves a lot of conversions and I guess this unsoundness
-		// is never a problem in the SV-COMP and most other code
-		return new CPrimitive(CPrimitives.UINT);
+		return new CPrimitive(CPrimitives.ULONG);
 	}
 
 	@Override
