@@ -68,7 +68,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public final class DataRaceChecker {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
@@ -100,7 +103,9 @@ public final class DataRaceChecker {
 			return;
 		}
 
-		final AuxVarInfo tmp = checkOnAccess(erb, loc, lrVal);
+		final Pair<AuxVarInfo, Race[]> result = checkOnAccess(erb, loc, lrVal);
+		final AuxVarInfo tmp = result.getFirst();
+		final Race[] races = result.getSecond();
 
 		final Check check = new Check(Spec.DATA_RACE);
 		final Expression formula = ExpressionFactory.and(loc,
@@ -109,10 +114,12 @@ public final class DataRaceChecker {
 						.collect(Collectors.toList()));
 		final Statement assertStmt = new AssertStatement(loc, formula);
 		check.annotate(assertStmt);
+		DataRaceAnnotation.annotateCheck(assertStmt, getAccessedVariable(lrVal), races, loc);
 		erb.addStatement(assertStmt);
 	}
 
-	private AuxVarInfo checkOnAccess(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
+	private Pair<AuxVarInfo, Race[]> checkOnAccess(final ExpressionResultBuilder erb, final ILocation loc,
+			final LRValue lrVal) {
 		final AuxVarInfo tmp = mAuxVarInfoBuilder.constructAuxVarInfo(loc, getBoolASTType(), SFO.AUXVAR.NONDET);
 		erb.addDeclaration(tmp.getVarDec());
 		erb.addAuxVar(tmp);
@@ -123,12 +130,22 @@ public final class DataRaceChecker {
 		// TODO We can make these atomic, to reduce the verification cost. However, CfgBuilder.LargeBlockEncoding
 		// currently does not support nested atomic blocks, and thus leads to false negatives in data race checking.
 		erb.addStatement(havoc);
+		final Race[] races = new Race[lhs.length];
 		for (int i = 0; i < lhs.length; ++i) {
-			erb.addStatement(StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { lhs[i] },
-					new Expression[] { tmp.getExp() }));
+			final Statement assign = StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { lhs[i] },
+					new Expression[] { tmp.getExp() });
+			races[i] = DataRaceAnnotation.annotateAccess(assign, getAccessedVariable(lrVal), loc);
+			erb.addStatement(assign);
 		}
 
-		return tmp;
+		return new Pair<>(tmp, races);
+	}
+
+	private static String getAccessedVariable(final LRValue lrVal) {
+		if (lrVal instanceof LocalLValue && ((LocalLValue) lrVal).getLhs() instanceof VariableLHS) {
+			return ((VariableLHS) ((LocalLValue) lrVal).getLhs()).getIdentifier();
+		}
+		return null;
 	}
 
 	private static boolean isRaceImpossible(final LRValue lrVal) {
