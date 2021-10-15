@@ -166,8 +166,15 @@
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<includesfile>../../../trunk/examples/svcomp-weaver.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+	</tasks>
+
+	<tasks name="SVCOMP Weaver">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
 		<includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
-		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
 
@@ -193,8 +200,8 @@
 
 	<!--tasks name="Weaver Benchmarks">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
-    <includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
-    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+		<includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
 	</tasks-->
 
 	<!--tasks name="POPL2022 Benchmarks">
