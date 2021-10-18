@@ -37,6 +37,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
@@ -128,19 +129,26 @@ public class QuantifierSequence {
 		return prependQuantifierSequence(mScript, mQuantifierBlocks, mInnerTerm);
 	}
 
-	public void replace(final Set<TermVariable> forbiddenVariables,
-			final ManagedScript freshVarConstructor,
-			final String replacementName) {
+	/**
+	 * Modifies this {@link QuantifierSequence} such that each quantified variables
+	 * whose name is identical to one of the forbidden variables' names is replaced
+	 * by a fresh variable.
+	 */
+	public void replace(final Set<TermVariable> forbiddenVariables, final ManagedScript freshVarConstructor,
+			final String replacementPrefix) {
+		final Set<String> forbiddenNames = forbiddenVariables.stream().map(TermVariable::getName)
+				.collect(Collectors.toSet());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final QuantifiedVariables qv : mQuantifierBlocks) {
-			for (final TermVariable tv : forbiddenVariables) {
-				if (qv.mVariables.contains(tv)) {
-					final TermVariable fresh = freshVarConstructor.constructFreshTermVariable(
-							replacementName, tv.getSort());
+			for (final TermVariable tv : new ArrayList<TermVariable>(qv.getVariables())) {
+				if (forbiddenNames.contains(tv.getName())) {
+					final TermVariable fresh = freshVarConstructor.constructFreshTermVariable(replacementPrefix,
+							tv.getSort());
 					substitutionMapping.put(tv, fresh);
 					qv.mVariables.remove(tv);
 					qv.mVariables.add(fresh);
 				}
+
 			}
 		}
 		mInnerTerm = (new Substitution(mScript, substitutionMapping)).transform(mInnerTerm);
