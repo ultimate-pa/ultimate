@@ -30,14 +30,14 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -52,6 +52,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
@@ -71,9 +74,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public final class DataRaceChecker {
+	private static final boolean SUPPORT_ARRAY_STRUCT_LHS = false;
+
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
 	private final ITypeHandler mTypeHandler;
@@ -81,7 +87,7 @@ public final class DataRaceChecker {
 	private final TypeSizes mTypeSizes;
 	private final ProcedureManager mProcedureManager;
 
-	private final Set<String> mRaceVars = new HashSet<>();
+	private final Map<String, BoogieType> mRaceIndicators = new HashMap<>();
 
 	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeComputer, final TypeSizes typeSizes,
@@ -215,7 +221,7 @@ public final class DataRaceChecker {
 			return lhs;
 		}
 		if (lrVal instanceof LocalLValue) {
-			return new LeftHandSide[] { getRaceVariableLhs(loc, (LocalLValue) lrVal) };
+			return new LeftHandSide[] { getRaceIndicatorLhs(loc, (LocalLValue) lrVal) };
 		}
 		throw new UnsupportedOperationException();
 	}
@@ -236,7 +242,7 @@ public final class DataRaceChecker {
 			return lhs;
 		}
 		if (lrVal instanceof LocalLValue) {
-			return new Expression[] { getRaceVariableExpression(loc, (LocalLValue) lrVal) };
+			return new Expression[] { getRaceIndicatorExpression(loc, (LocalLValue) lrVal) };
 		}
 		throw new UnsupportedOperationException();
 	}
@@ -247,38 +253,78 @@ public final class DataRaceChecker {
 				.intValueExact();
 	}
 
-	private Expression getRaceVariableExpression(final ILocation loc, final LocalLValue lval) {
-		return ExpressionFactory.constructIdentifierExpression(loc, getBoolType(), getRaceVariableName(lval.getLhs()),
-				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+	private Expression getRaceIndicatorExpression(final ILocation loc, final LocalLValue lval) {
+		return CTranslationUtil.convertLhsToExpression(getRaceIndicatorLhs(loc, lval));
 	}
 
-	private VariableLHS getRaceVariableLhs(final ILocation loc, final LocalLValue lval) {
-		return ExpressionFactory.constructVariableLHS(loc, getBoolType(), getRaceVariableName(lval.getLhs()),
-				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+	private LeftHandSide getRaceIndicatorLhs(final ILocation loc, final LocalLValue lval) {
+		final LeftHandSide lhs = createRaceIndicatorLhs(loc, lval.getLhs());
+		assert lhs.getType().equals(getBoolType()) : "race indicator must have type " + getBoolType() + " but found "
+				+ lhs.getType();
+		return lhs;
 	}
 
-	private String getRaceVariableName(final LeftHandSide lhs) {
-		final String name = "#race" + getKey(lhs);
-		mRaceVars.add(name);
-		return name;
-	}
-
-	private static String getKey(final LeftHandSide lhs) {
+	private LeftHandSide createRaceIndicatorLhs(final ILocation loc, final LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
-			return ((VariableLHS) lhs).getIdentifier();
+			final String name = "#race" + ((VariableLHS) lhs).getIdentifier();
+			final VariableLHS raceLhs = new VariableLHS(loc, getRaceIndicatorType(lhs.getType()), name,
+					((VariableLHS) lhs).getDeclarationInformation());
+			assert mRaceIndicators.getOrDefault(name, (BoogieType) raceLhs.getType())
+					.equals(raceLhs.getType()) : "Ambiguous types for " + name + ": " + mRaceIndicators.get(name)
+							+ " vs. " + raceLhs.getType();
+			mRaceIndicators.put(name, (BoogieType) raceLhs.getType());
+			return raceLhs;
 		}
+
+		if (!SUPPORT_ARRAY_STRUCT_LHS) {
+			throw new UnsupportedOperationException(
+					"Race detection currently only supports simple variables and data on heap. "
+							+ "Structs and arrays are not yet supported (unless they are on the heap).");
+		}
+
+		if (lhs instanceof ArrayLHS) {
+			final LeftHandSide raceLhs = createRaceIndicatorLhs(loc, ((ArrayLHS) lhs).getArray());
+			return ExpressionFactory.constructNestedArrayLHS(loc, raceLhs, ((ArrayLHS) lhs).getIndices());
+		}
+
 		if (lhs instanceof StructLHS) {
-			return getKey(((StructLHS) lhs).getStruct()) + "." + ((StructLHS) lhs).getField();
+			final LeftHandSide raceLhs = createRaceIndicatorLhs(loc, ((StructLHS) lhs).getStruct());
+			return ExpressionFactory.constructStructAccessLhs(loc, raceLhs, ((StructLHS) lhs).getField());
 		}
-		throw new UnsupportedOperationException("cannot create race variable for " + lhs);
+
+		throw new UnsupportedOperationException("Cannot detect races for " + lhs);
+	}
+
+	private BoogieType getRaceIndicatorType(final IBoogieType type) {
+		if (type instanceof BoogiePrimitiveType || type.equals(mTypeHandler.getBoogiePointerType())) {
+			return getBoolType();
+		}
+		if (type instanceof BoogieArrayType) {
+			final BoogieArrayType arrType = (BoogieArrayType) type;
+			assert arrType.getNumPlaceholders() == 0;
+			final BoogieType[] indices = new BoogieType[arrType.getIndexCount()];
+			for (int i = 0; i < indices.length; ++i) {
+				indices[i] = arrType.getIndexType(i);
+			}
+			return BoogieType.createArrayType(0, indices, getRaceIndicatorType(arrType.getValueType()));
+		}
+		if (type instanceof BoogieStructType) {
+			final BoogieStructType strType = (BoogieStructType) type;
+			final BoogieType[] fieldTypes =
+					Arrays.stream(strType.getFieldTypes()).map(this::getRaceIndicatorType).toArray(BoogieType[]::new);
+			return BoogieType.createStructType(strType.getFieldIds(), fieldTypes);
+		}
+		throw new UnsupportedOperationException("Cannot detect races for values of type " + type);
 	}
 
 	public Collection<Declaration> declareRaceCheckingInfrastructure(final ILocation loc) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		decl.add(constructMemoryRaceArrayDeclaration(loc));
 
-		final VarList vlV = new VarList(loc, mRaceVars.toArray(String[]::new), getBoolASTType());
-		decl.add(new VariableDeclaration(loc, new Attribute[0], new VarList[] { vlV }));
+		for (final Map.Entry<String, BoogieType> raceVar : mRaceIndicators.entrySet()) {
+			final VarList vlV = new VarList(loc, new String[] { raceVar.getKey() }, raceVar.getValue().toASTType(loc));
+			decl.add(new VariableDeclaration(loc, new Attribute[0], new VarList[] { vlV }));
+		}
 		return decl;
 	}
 
