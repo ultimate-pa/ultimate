@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public final class DataRaceChecker {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
@@ -100,9 +99,17 @@ public final class DataRaceChecker {
 			// TODO find a cleaner way to fix this
 			return;
 		}
-		if (!isRaceImpossible(lrVal)) {
-			checkOnAccess(erb, loc, lrVal);
+		if (isRaceImpossible(lrVal)) {
+			return;
 		}
+
+		final Expression raceValue = createRaceRead();
+		final Race[] races = updateRaceIndicator(erb, loc, lrVal, raceValue, false);
+		addAssert(erb, loc, lrVal, raceValue, races);
+	}
+
+	private Expression createRaceRead() {
+		return mMemoryHandler.getBooleanArrayHelper().constructFalse();
 	}
 
 	public void checkOnWrite(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
@@ -114,42 +121,50 @@ public final class DataRaceChecker {
 			return;
 		}
 
-		final Pair<AuxVarInfo, Race[]> result = checkOnAccess(erb, loc, lrVal);
-		final AuxVarInfo tmp = result.getFirst();
-		final Race[] races = result.getSecond();
-
-		final Check check = new Check(Spec.DATA_RACE);
-		final Expression formula = ExpressionFactory.and(loc,
-				Arrays.stream(getRaceExpressions(loc, erb, lrVal))
-						.map(expr -> ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, expr, tmp.getExp()))
-						.collect(Collectors.toList()));
-		final Statement assertStmt = new AssertStatement(loc, formula);
-		check.annotate(assertStmt);
-		DataRaceAnnotation.annotateCheck(assertStmt, getAccessedVariable(lrVal), races, loc);
-		erb.addStatement(assertStmt);
+		// TODO For better performance, make the statements created by #createRaceWrite and #updateRaceIndicator atomic.
+		// TODO This requires support for nested atomic blocks in CfgBuilder.LargeBlockEncoding.
+		final Expression raceValue = createRaceWrite(erb, loc);
+		final Race[] races = updateRaceIndicator(erb, loc, lrVal, raceValue, true);
+		addAssert(erb, loc, lrVal, raceValue, races);
 	}
 
-	private Pair<AuxVarInfo, Race[]> checkOnAccess(final ExpressionResultBuilder erb, final ILocation loc,
-			final LRValue lrVal) {
+	private Expression createRaceWrite(final ExpressionResultBuilder erb, final ILocation loc) {
 		final AuxVarInfo tmp = mAuxVarInfoBuilder.constructAuxVarInfo(loc, getBoolASTType(), SFO.AUXVAR.NONDET);
 		erb.addDeclaration(tmp.getVarDec());
 		erb.addAuxVar(tmp);
 
 		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { tmp.getLhs() });
-		final LeftHandSide[] lhs = getRaceLhs(loc, erb, lrVal);
-
-		// TODO We can make these atomic, to reduce the verification cost. However, CfgBuilder.LargeBlockEncoding
-		// currently does not support nested atomic blocks, and thus leads to false negatives in data race checking.
 		erb.addStatement(havoc);
+
+		return tmp.getExp();
+	}
+
+	private Race[] updateRaceIndicator(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal,
+			final Expression newValue, final boolean isWrite) {
+		final LeftHandSide[] lhs = getRaceLhs(loc, lrVal);
+
 		final Race[] races = new Race[lhs.length];
 		for (int i = 0; i < lhs.length; ++i) {
 			final Statement assign = StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { lhs[i] },
-					new Expression[] { tmp.getExp() });
-			races[i] = DataRaceAnnotation.annotateAccess(assign, getAccessedVariable(lrVal), loc);
+					new Expression[] { newValue });
+			races[i] = DataRaceAnnotation.annotateAccess(assign, getAccessedVariable(lrVal), loc, isWrite);
 			erb.addStatement(assign);
 		}
 
-		return new Pair<>(tmp, races);
+		return races;
+	}
+
+	private void addAssert(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal,
+			final Expression expected, final Race[] races) {
+		final Check check = new Check(Spec.DATA_RACE);
+		final Expression formula = ExpressionFactory.and(loc,
+				Arrays.stream(getRaceExpressions(loc, erb, lrVal))
+						.map(expr -> ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, expr, expected))
+						.collect(Collectors.toList()));
+		final Statement assertStmt = new AssertStatement(loc, formula);
+		check.annotate(assertStmt);
+		DataRaceAnnotation.annotateCheck(assertStmt, races, loc);
+		erb.addStatement(assertStmt);
 	}
 
 	private static String getAccessedVariable(final LRValue lrVal) {
@@ -185,13 +200,14 @@ public final class DataRaceChecker {
 		}
 	}
 
-	private LeftHandSide[] getRaceLhs(final ILocation loc, final ExpressionResultBuilder erb, final LRValue lrVal) {
+	private LeftHandSide[] getRaceLhs(final ILocation loc, final LRValue lrVal) {
 		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
 			final LeftHandSide raceLhs = mMemoryHandler.getMemoryRaceArrayLhs(loc);
 
 			final LeftHandSide[] lhs = new LeftHandSide[getTypeSize(loc, hlv.getUnderlyingType())];
 			for (int i = 0; i < lhs.length; ++i) {
+				// TODO For better performance, use memory model resultion to have fewer LHS here
 				final Expression ptrPlusI =
 						mMemoryHandler.addIntegerConstantToPointer(loc, hlv.getAddress(), BigInteger.valueOf(i));
 				lhs[i] = ExpressionFactory.constructNestedArrayLHS(loc, raceLhs, new Expression[] { ptrPlusI });
@@ -199,7 +215,7 @@ public final class DataRaceChecker {
 			return lhs;
 		}
 		if (lrVal instanceof LocalLValue) {
-			return new LeftHandSide[] { getRaceVariableLhs(loc, erb, (LocalLValue) lrVal) };
+			return new LeftHandSide[] { getRaceVariableLhs(loc, (LocalLValue) lrVal) };
 		}
 		throw new UnsupportedOperationException();
 	}
@@ -220,7 +236,7 @@ public final class DataRaceChecker {
 			return lhs;
 		}
 		if (lrVal instanceof LocalLValue) {
-			return new Expression[] { getRaceVariableExpression(loc, erb, (LocalLValue) lrVal) };
+			return new Expression[] { getRaceVariableExpression(loc, (LocalLValue) lrVal) };
 		}
 		throw new UnsupportedOperationException();
 	}
@@ -231,14 +247,12 @@ public final class DataRaceChecker {
 				.intValueExact();
 	}
 
-	private Expression getRaceVariableExpression(final ILocation loc, final ExpressionResultBuilder erb,
-			final LocalLValue lval) {
+	private Expression getRaceVariableExpression(final ILocation loc, final LocalLValue lval) {
 		return ExpressionFactory.constructIdentifierExpression(loc, getBoolType(), getRaceVariableName(lval.getLhs()),
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
-	private VariableLHS getRaceVariableLhs(final ILocation loc, final ExpressionResultBuilder erb,
-			final LocalLValue lval) {
+	private VariableLHS getRaceVariableLhs(final ILocation loc, final LocalLValue lval) {
 		return ExpressionFactory.constructVariableLHS(loc, getBoolType(), getRaceVariableName(lval.getLhs()),
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
@@ -249,14 +263,14 @@ public final class DataRaceChecker {
 		return name;
 	}
 
-	private String getKey(final LeftHandSide lhs) {
+	private static String getKey(final LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			return ((VariableLHS) lhs).getIdentifier();
 		}
 		if (lhs instanceof StructLHS) {
 			return getKey(((StructLHS) lhs).getStruct()) + "." + ((StructLHS) lhs).getField();
 		}
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("cannot create race variable for " + lhs);
 	}
 
 	public Collection<Declaration> declareRaceCheckingInfrastructure(final ILocation loc) {

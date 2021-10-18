@@ -66,15 +66,18 @@ public class DataRaceAnnotation extends ModernAnnotations {
 		return super.merge(other);
 	}
 
-	public static Race annotateAccess(final IElement node, final String variable, final ILocation loc) {
-		final Race race = new Race(variable, null, loc);
+	public static Race annotateAccess(final IElement node, final String variable, final ILocation loc,
+			final boolean isWrite) {
+		final Race race = new Race(isWrite, variable, null, loc);
 		node.getPayload().getAnnotations().put(KEY, new DataRaceAnnotation(race));
 		return race;
 	}
 
-	public static void annotateCheck(final IElement node, final String variable, final Race[] twinAccesses,
-			final ILocation loc) {
-		node.getPayload().getAnnotations().put(KEY, new DataRaceAnnotation(new Race(variable, twinAccesses, loc)));
+	public static void annotateCheck(final IElement node, final Race[] twinAccesses, final ILocation loc) {
+		final boolean isWrite = twinAccesses[0].isWrite();
+		final String variable = twinAccesses[0].mVariable;
+		node.getPayload().getAnnotations().put(KEY,
+				new DataRaceAnnotation(new Race(isWrite, variable, twinAccesses, loc)));
 	}
 
 	public static DataRaceAnnotation getAnnotation(final IElement node) {
@@ -82,11 +85,14 @@ public class DataRaceAnnotation extends ModernAnnotations {
 	}
 
 	public static class Race {
+		private final boolean mIsWrite;
 		private final String mVariable;
 		private final Set<Race> mTwinAccesses;
 		private final ILocation mOriginalLocation;
 
-		private Race(final String variable, final Race[] twinAccesses, final ILocation location) {
+		private Race(final boolean isWrite, final String variable, final Race[] twinAccesses,
+				final ILocation location) {
+			mIsWrite = isWrite;
 			mVariable = variable;
 			mTwinAccesses = twinAccesses == null ? null : Set.of(twinAccesses);
 			mOriginalLocation = location;
@@ -106,7 +112,11 @@ public class DataRaceAnnotation extends ModernAnnotations {
 			if (!isCheck()) {
 				throw new UnsupportedOperationException("Conflicting accesses can only be found for data race checks");
 			}
-			if (mTwinAccesses.contains(other) || other.isCheck() || (isHeapRace() != other.isHeapRace())) {
+			if ((!isWrite() && !other.isWrite()) || mTwinAccesses.contains(other)) {
+				// accesses do not conflict because both are reads, or they are twins
+				return Optional.of(false);
+			}
+			if (other.isCheck() || (isHeapRace() != other.isHeapRace())) {
 				return Optional.of(false);
 			}
 			if (isHeapRace()) {
@@ -120,6 +130,10 @@ public class DataRaceAnnotation extends ModernAnnotations {
 				throw new IllegalStateException("heap race has no variable");
 			}
 			return mVariable;
+		}
+
+		public boolean isWrite() {
+			return mIsWrite;
 		}
 
 		public boolean isCheck() {
