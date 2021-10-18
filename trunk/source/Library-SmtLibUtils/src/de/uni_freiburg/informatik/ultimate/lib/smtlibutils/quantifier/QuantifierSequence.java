@@ -270,8 +270,9 @@ public class QuantifierSequence {
 		}
 
 
-		public QuantifiedVariables addVariables(final Collection<TermVariable> variables) {
-			final Set<TermVariable> resVariables = new LinkedHashSet<>(variables);
+		public QuantifiedVariables addVariables(final Collection<TermVariable> newVariables) {
+			final Set<TermVariable> resVariables = new LinkedHashSet<>(mVariables);
+			resVariables.addAll(newVariables);
 			return new QuantifiedVariables(mQuantifier, resVariables);
 		}
 
