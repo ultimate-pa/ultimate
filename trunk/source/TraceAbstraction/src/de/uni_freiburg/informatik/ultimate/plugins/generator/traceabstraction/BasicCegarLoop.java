@@ -1318,7 +1318,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	private final boolean isSequential() {
-		return super.mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
+		return !IcfgUtils.isConcurrent(super.mIcfg);
 	}
 
 	private class TimeoutRefinementEngineResult

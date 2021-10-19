@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -179,7 +180,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			throw new UnsupportedOperationException(
 					"AbsInt only supports BoogieIcfgLocations and Codeblocks at the moment");
 		}
-		if (!mRoot.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (IcfgUtils.isConcurrent(mRoot)) {
 			throw new UnsupportedOperationException("AbsInt currently does not support concurrent programs");
 		}
 

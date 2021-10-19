@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -96,7 +97,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Set<IcfgLocation> threadErrorLocations;
-		if (!csToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (IcfgUtils.isConcurrent(petrifiedIcfg)) {
 			throw new UnsupportedOperationException();
 		}
 		// no fork or join

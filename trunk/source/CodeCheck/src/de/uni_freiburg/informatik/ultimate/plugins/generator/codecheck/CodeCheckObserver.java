@@ -170,7 +170,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @return
 	 */
 	private boolean initialize(final IIcfg<IcfgLocation> root) {
-		if (!root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (IcfgUtils.isConcurrent(root)) {
 			throw new UnsupportedOperationException("Concurrent programs are currently unsupported");
 		}
 
