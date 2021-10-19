@@ -83,6 +83,10 @@ public class IcfgUtils {
 		})).collect(Collectors.toSet());
 	}
 
+	public static boolean isConcurrent(final IIcfg<?> icfg) {
+		return !icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
+	}
+
 	/**
 	 * @return {@link List} that contains all {@link IcfgEdge}s that originate from an initial location.
 	 */
