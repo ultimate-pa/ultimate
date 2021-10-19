@@ -69,7 +69,7 @@ public final class TAPreferences {
 	private final InterpolantAutomatonEnhancement mDeterminiation;
 	private final Minimization mMinimize;
 	private final boolean mHoare;
-	private final Concurrency mConcurrency;
+	private final Concurrency mAutomataTypeConcurrency;
 	private final HoareTripleChecks mHoareTripleChecks;
 	@ExcludeFromToString
 	private final IPreferenceProvider mPrefs;
@@ -144,7 +144,7 @@ public final class TAPreferences {
 
 		mMinimize = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE, Minimization.class);
 
-		mConcurrency = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
+		mAutomataTypeConcurrency = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
 
 		mLimitTraceHistogram = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TRACE_HISTOGRAM);
 		mErrorLocTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
@@ -325,8 +325,8 @@ public final class TAPreferences {
 		return mMinimize;
 	}
 
-	public Concurrency getConcurrency() {
-		return mConcurrency;
+	public Concurrency getAutomataTypeConcurrency() {
+		return mAutomataTypeConcurrency;
 	}
 
 	public boolean computeHoareAnnotation() {
