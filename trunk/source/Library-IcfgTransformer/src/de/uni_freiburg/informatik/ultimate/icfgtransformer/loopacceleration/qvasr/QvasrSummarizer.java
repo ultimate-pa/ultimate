@@ -75,7 +75,7 @@ public class QvasrSummarizer {
 		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final QvasrAbstractor qvasrAbstractor = new QvasrAbstractor(mScript, mLogger);
+		final QvasrAbstractor qvasrAbstractor = new QvasrAbstractor(mScript, mLogger, mServices);
 
 		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
 

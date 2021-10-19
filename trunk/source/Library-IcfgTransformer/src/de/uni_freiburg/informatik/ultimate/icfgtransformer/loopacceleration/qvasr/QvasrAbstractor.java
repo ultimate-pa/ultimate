@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -41,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -58,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 public class QvasrAbstractor {
 
 	private final ManagedScript mScript;
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
 	/**
@@ -78,9 +82,10 @@ public class QvasrAbstractor {
 	 * @param script
 	 * @param logger
 	 */
-	public QvasrAbstractor(final ManagedScript script, final ILogger logger) {
+	public QvasrAbstractor(final ManagedScript script, final ILogger logger, final IUltimateServiceProvider services) {
 		mScript = script;
 		mLogger = logger;
+		mServices = services;
 	}
 
 	/**
@@ -98,15 +103,111 @@ public class QvasrAbstractor {
 		final Map<TermVariable, Set<Term>> updatesInFormulaResets =
 				getUpdates(transitionTerm, transitionFormula, BaseType.RESETS);
 
-		final Term[][] newUpdatesMatrixResets =
-				constructBaseMatrix(updatesInFormulaResets, transitionFormula, BaseType.RESETS);
+		final Term[][] newUpdatesMatrixResets = constructBaseMatrix(updatesInFormulaResets, transitionFormula);
 
-		final Term[][] newUpdatesMatrixAdditions =
-				constructBaseMatrix(updatesInFormulaAdditions, transitionFormula, BaseType.ADDITIONS);
+		final Term[][] newUpdatesMatrixAdditions = constructBaseMatrix(updatesInFormulaAdditions, transitionFormula);
+
+		gaussPartialPivot(newUpdatesMatrixResets);
 
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
 		return new QvasrAbstraction(out, qvasr);
+	}
+
+	/**
+	 * Bring a given matrix into row echelon form.
+	 *
+	 * @param matrix
+	 * @return
+	 */
+	private Term[][] gaussPartialPivot(Term[][] matrix) {
+		for (int k = 0; k < matrix.length; k++) {
+			int max = 0;
+
+			if ((k + 1) < matrix.length) {
+				max = findPivot(matrix, k);
+			}
+			if (max == -1) {
+				mLogger.warn("Gaussian Elimination failed: Pivot is 0");
+				return new Term[0][0];
+			}
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Pre swap of " + max, k);
+				printMatrix(matrix);
+			}
+			if (max != 0) {
+				matrix = swap(matrix, k, max);
+			}
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Post swap: ");
+				printMatrix(matrix);
+			}
+			final Term pivot = matrix[k][k];
+			// i is the row
+			for (int i = k + 1; i < matrix.length; i++) {
+				final Term toBeEliminated = matrix[i][k];
+				final Term newDiv = SmtUtils.div(mScript.getScript(), toBeEliminated, pivot);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Divide: " + matrix[i][k].toString() + " by " + matrix[k][k].toString() + "\n"
+							+ newDiv.toStringDirect());
+				}
+				// matrix[i][k] = mScript.getScript().numeral("0");
+
+				// k is the column
+				for (int j = k; j < matrix[0].length; j++) {
+					final Term currentColumn = matrix[k][j];
+					final Term newMul = SmtUtils.mul(mScript.getScript(), "*", newDiv, currentColumn);
+					final Term newSub = SmtUtils.minus(mScript.getScript(), matrix[i][j], newMul);
+					final Term newSimp =
+							SmtUtils.simplify(mScript, newSub, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Multiplication: " + newMul.toStringDirect());
+						mLogger.debug("Difference: " + newSub.toStringDirect());
+						mLogger.debug("Simplified " + newSimp.toStringDirect());
+					}
+					matrix[i][j] = newSimp;
+				}
+			}
+			mLogger.debug("Gauss done?");
+		}
+		return matrix;
+	}
+
+	/**
+	 * Find a column to use as pivot in the gaussian elimination algorithm.
+	 *
+	 * @param matrix
+	 * @param col
+	 * @return
+	 */
+	private int findPivot(final Term[][] matrix, final int col) {
+		int maxRow = -1;
+		for (int row = col; row < matrix.length; row++) {
+			if (!SmtUtils.areFormulasEquivalent(matrix[row][col], mScript.getScript().numeral("0"),
+					mScript.getScript())) {
+				maxRow = row;
+				break;
+			}
+		}
+		return maxRow;
+	}
+
+	/**
+	 * Swap two rows in a matrix.
+	 *
+	 * @param matrix
+	 * @param col
+	 * @param row
+	 * @return
+	 */
+	private static Term[][] swap(final Term[][] matrix, final int col, final int row) {
+		Term temp;
+		for (int i = col; i < matrix[col].length; i++) {
+			temp = matrix[col][i];
+			matrix[col][i] = matrix[row][i];
+			matrix[row][i] = temp;
+		}
+		return matrix;
 	}
 
 	/**
@@ -142,6 +243,7 @@ public class QvasrAbstractor {
 										SmtUtils.neg(mScript.getScript(), outVar));
 							}
 						}
+						SmtUtils.simplify(mScript, param, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 						trueAssignment.add(param);
 					}
 				}
@@ -164,7 +266,7 @@ public class QvasrAbstractor {
 	 * @return
 	 */
 	private Term[][] constructBaseMatrix(final Map<TermVariable, Set<Term>> updates,
-			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
+			final UnmodifiableTransFormula transitionFormula) {
 		final int rowDimension = (int) Math.pow(2, transitionFormula.getInVars().size());
 		final int columnDimension = transitionFormula.getOutVars().size() + 1;
 		final Term[][] baseMatrix = new Term[rowDimension][columnDimension];
@@ -201,7 +303,10 @@ public class QvasrAbstractor {
 					Term toBeUpdated;
 					final Substitution sub = new Substitution(mScript, subMapping);
 					toBeUpdated = sub.transform(updateTerm);
-					baseMatrix[j][i] = toBeUpdated;
+					toBeUpdated =
+							SmtUtils.simplify(mScript, toBeUpdated, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+					baseMatrix[j][i] =
+							SmtUtils.simplify(mScript, toBeUpdated, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 				}
 				i++;
 			}
@@ -233,5 +338,13 @@ public class QvasrAbstractor {
 			sCount++;
 		}
 		return newUpdates;
+	}
+
+	// function to print matrix content at any stage
+	private void printMatrix(final Term matrix[][]) {
+		mLogger.debug("Matrix: ");
+		for (int i = 0; i < matrix.length; i++) {
+			mLogger.debug(Arrays.toString(matrix[i]));
+		}
 	}
 }
