@@ -43,6 +43,9 @@ function prepare_repo() {
   echo "Updating..."
   git fetch --all
   git reset --hard origin/main
+  if git ls-remote --exit-code upstream > /dev/null 2&>1 ; then
+    git rebase upstream/main
+  fi
   pop_dir
 }
 
