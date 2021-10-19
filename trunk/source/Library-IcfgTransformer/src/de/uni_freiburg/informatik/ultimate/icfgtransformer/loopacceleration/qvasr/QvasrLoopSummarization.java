@@ -45,6 +45,13 @@ public class QvasrLoopSummarization {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mScript;
 
+	/**
+	 * Construct a new Qvasr-Loopsummarizer.
+	 *
+	 * @param logger
+	 * @param services
+	 * @param script
+	 */
 	public QvasrLoopSummarization(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript script) {
 		mLogger = logger;
