@@ -1504,7 +1504,7 @@ public class StandardFunctionHandler {
 			throw new IllegalArgumentException("unknown allocation method; " + methodName);
 		}
 		erb.addStatement(
-				mMemoryHandler.getUltimateMemAllocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc, memArea));
+				mMemoryHandler.getUltimateMemAllocCall(exprResConverted.getLrValue().getValue(), auxvar.getLhs(), loc, memArea));
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the
