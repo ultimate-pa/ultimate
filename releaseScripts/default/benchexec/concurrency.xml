@@ -5,13 +5,13 @@
 	<!-- === No Partial Order Reduction === -->
 	<!-- ================================== -->
 
-	<rundefinition name="Automizer FA">
+	<!--rundefinition name="Automizer FA">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.None">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.None">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-None-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer PN">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
@@ -21,9 +21,9 @@
 	<!-- === Cassez/Ziegler-style: single-shot up-front reduction, then normal verification === -->
 	<!-- ====================================================================================== -->
 
-	<rundefinition name="Automizer FA.Delay">
+	<!--rundefinition name="Automizer FA.Delay">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-Delay.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer FA.NewStates">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-NewStates.epf</option>
@@ -65,7 +65,7 @@
 	<!-- === Sleep Set Reduction (with unrolling, minimal) integrated in TAR === -->
 	<!-- ======================================================================= -->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
 	</rundefinition>
 
@@ -91,15 +91,15 @@
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepUncond">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepUncond-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 
 	<!-- === Persistent Set Reduction integrated in TAR === -->
 	<!-- ================================================== -->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.Persistent">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.Persistent">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-Persistent-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 
 	<!-- === Sleep Set Reduction (prune only, non-minimal) and Persistent Set Reduction integrated in TAR === -->
@@ -117,13 +117,13 @@
 	<!-- === Sleep Set Reduction (with unrolling, minimal) and Persistent Set Reduction integrated in TAR === -->
 	<!-- ==================================================================================================== -->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistent">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistent">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe.epf</option>
 	</rundefinition>
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistent.OrderLockstep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-Lockstep.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
@@ -143,6 +143,26 @@
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom7777">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random7777.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.Uncond.NewStatesSleepPersistentFixedOrder">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-Uncond-NoLbe.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.Uncond.NewStatesSleepPersistentFixedOrder.OrderLockstep">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-Uncond-NoLbe-Lockstep.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.Uncond.NewStatesSleepPersistentFixedOrder.OrderRandom42">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-Uncond-NoLbe-Random42.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.Uncond.NewStatesSleepPersistentFixedOrder.OrderRandom521">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-Uncond-NoLbe-Random521.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.Uncond.NewStatesSleepPersistentFixedOrder.OrderRandom7777">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-Uncond-NoLbe-Random7777.epf</option>
 	</rundefinition>
 
 
