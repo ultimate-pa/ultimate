@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -164,7 +165,7 @@ public final class DataRaceChecker {
 			final Expression expected, final Race[] races) {
 		final Check check = new Check(Spec.DATA_RACE);
 		final Expression formula = ExpressionFactory.and(loc,
-				Arrays.stream(getRaceExpressions(loc, erb, lrVal))
+				getRaceExpressions(loc, lrVal)
 						.map(expr -> ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, expr, expected))
 						.collect(Collectors.toList()));
 		final Statement assertStmt = new AssertStatement(loc, formula);
@@ -226,35 +227,14 @@ public final class DataRaceChecker {
 		throw new UnsupportedOperationException();
 	}
 
-	private Expression[] getRaceExpressions(final ILocation loc, final ExpressionResultBuilder erb,
-			final LRValue lrVal) {
-		if (lrVal instanceof HeapLValue) {
-			final HeapLValue hlv = (HeapLValue) lrVal;
-			final Expression raceLhs = mMemoryHandler.getMemoryRaceArray(loc);
-
-			final Expression[] lhs = new Expression[getTypeSize(loc, hlv.getUnderlyingType())];
-			for (int i = 0; i < lhs.length; ++i) {
-				final Expression ptrPlusI =
-						mMemoryHandler.addIntegerConstantToPointer(loc, hlv.getAddress(), BigInteger.valueOf(i));
-				lhs[i] = ExpressionFactory.constructNestedArrayAccessExpression(loc, raceLhs,
-						new Expression[] { ptrPlusI });
-			}
-			return lhs;
-		}
-		if (lrVal instanceof LocalLValue) {
-			return new Expression[] { getRaceIndicatorExpression(loc, (LocalLValue) lrVal) };
-		}
-		throw new UnsupportedOperationException();
+	private Stream<Expression> getRaceExpressions(final ILocation loc, final LRValue lrVal) {
+		return Arrays.stream(getRaceLhs(loc, lrVal)).map(CTranslationUtil::convertLhsToExpression);
 	}
 
 	private int getTypeSize(final ILocation loc, final CType type) {
 		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type, null);
 		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), null)
 				.intValueExact();
-	}
-
-	private Expression getRaceIndicatorExpression(final ILocation loc, final LocalLValue lval) {
-		return CTranslationUtil.convertLhsToExpression(getRaceIndicatorLhs(loc, lval));
 	}
 
 	private LeftHandSide getRaceIndicatorLhs(final ILocation loc, final LocalLValue lval) {
