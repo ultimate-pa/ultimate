@@ -125,7 +125,7 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-Lockstep.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
 	</rundefinition>
 
@@ -143,7 +143,7 @@
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom7777">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random7777.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.Uncond.NewStatesSleepPersistentFixedOrder">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-Uncond-NoLbe.epf</option>
