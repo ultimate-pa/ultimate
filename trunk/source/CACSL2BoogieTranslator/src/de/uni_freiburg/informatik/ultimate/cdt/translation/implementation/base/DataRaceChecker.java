@@ -214,7 +214,7 @@ public final class DataRaceChecker {
 
 			final LeftHandSide[] lhs = new LeftHandSide[getTypeSize(loc, hlv.getUnderlyingType())];
 			for (int i = 0; i < lhs.length; ++i) {
-				// TODO For better performance, use memory model resultion to have fewer LHS here
+				// TODO For better performance, use memory model resolution to have fewer LHS here
 				final Expression ptrPlusI =
 						mMemoryHandler.addIntegerConstantToPointer(loc, hlv.getAddress(), BigInteger.valueOf(i));
 				lhs[i] = ExpressionFactory.constructNestedArrayLHS(loc, raceLhs, new Expression[] { ptrPlusI });
