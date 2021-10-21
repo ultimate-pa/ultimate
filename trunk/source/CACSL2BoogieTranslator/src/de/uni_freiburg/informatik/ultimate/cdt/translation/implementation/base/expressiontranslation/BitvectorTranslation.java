@@ -520,12 +520,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (resultType == null) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);
 		}
-		final CPrimitive resultPrimitive = resultType;
-		if (resultPrimitive.getGeneralType() != CPrimitiveCategory.INTTYPE) {
+		if (resultType.getGeneralType() != CPrimitiveCategory.INTTYPE) {
 			throw new UnsupportedOperationException("non-integer types not supported yet " + resultType);
 		}
 
-		final int resultLength = mTypeSizes.getSize(resultPrimitive.getType()) * 8;
+		final int resultLength = mTypeSizes.getSize(resultType.getType()) * 8;
 
 		final int operandLength =
 				mTypeSizes.getSize(((CPrimitive) operand.getLrValue().getCType().getUnderlyingType()).getType()) * 8;
@@ -537,7 +536,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
 		}
 		if (resultLength > operandLength) {
-			return extend(loc, operand, resultType, resultPrimitive, resultLength, operandLength);
+			return extend(loc, operand, resultType, resultLength, operandLength);
 		}
 		final Expression bv = extractBits(loc, operand.getLrValue().getValue(), resultLength, 0);
 		final RValue rVal = new RValue(bv, resultType);
@@ -598,9 +597,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return ExpressionFactory.constructBitvectorAccessExpression(loc, operand, high, low);
 	}
 
-	private ExpressionResult extend(final ILocation loc, final ExpressionResult operand, final CType resultType,
-			final CPrimitive resultPrimitive, final int resultLength, final int operandLength) {
-		final int[] indices = new int[] { resultLength - operandLength };
+	private ExpressionResult extend(final ILocation loc, final ExpressionResult operand,
+			final CPrimitive resultType, final int resultLength, final int operandLength) {
 		final String smtFunctionName;
 		if (mTypeSizes.isUnsigned((CPrimitive) operand.getLrValue().getCType().getUnderlyingType())) {
 			smtFunctionName = "zero_extend";
@@ -608,14 +606,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			smtFunctionName = "sign_extend";
 		}
 		final String boogieFunctionName = smtFunctionName + "From"
-				+ mFunctionDeclarations.computeBitsize(
-						(CPrimitive) operand.getLrValue().getCType().getUnderlyingType())
-				+ "To" + mFunctionDeclarations.computeBitsize(resultPrimitive);
-		declareBitvectorFunction(loc, smtFunctionName, boogieFunctionName, false, resultPrimitive, indices,
+				+ mFunctionDeclarations.computeBitsize((CPrimitive) operand.getLrValue().getCType().getUnderlyingType())
+				+ "To" + mFunctionDeclarations.computeBitsize(resultType);
+		final int[] indices = new int[] { resultLength - operandLength };
+		declareBitvectorFunction(loc, smtFunctionName, boogieFunctionName, false, resultType, indices,
 				(CPrimitive) operand.getLrValue().getCType().getUnderlyingType());
 		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName;
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { operand.getLrValue().getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
+				new Expression[] { operand.getLrValue().getValue() },
+				mTypeHandler.getBoogieTypeForCType(resultType));
 		final RValue rVal = new RValue(func, resultType);
 		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
 	}
