@@ -300,11 +300,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		default:
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
-		declareBitvectorFunction(loc, functionName,
-				functionName + mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), true,
+		assert type1.getType() == type2.getType() : "Probably incompatible types! Did you forget a conversion?";
+		declareBitvectorFunction(loc, functionName, functionName + mFunctionDeclarations.computeBitsize(type1), true,
 				new CPrimitive(CPrimitives.BOOL), null, type1, type2);
 		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + functionName
-				+ mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2);
+				+ mFunctionDeclarations.computeBitsize(type1);
 		final Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
 				new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		return result;
@@ -346,11 +346,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareBitvectorFunction(loc, funcname,
-				funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), false, typeLeft,
-				null, typeLeft, typeRight);
+		declareBitvectorFunction(loc, funcname, funcname + mFunctionDeclarations.computeBitsize(typeLeft), false,
+				typeLeft, null, typeLeft, typeRight);
 		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname
-				+ mFunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight);
+				+ mFunctionDeclarations.computeBitsize(typeLeft);
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
 				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 		return func;
@@ -371,10 +370,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareBitvectorFunction(loc, funcname, funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type),
-				false, type, null, type);
+		declareBitvectorFunction(loc, funcname, funcname + mFunctionDeclarations.computeBitsize(type), false, type,
+				null, type);
 		final String fullFunctionName =
-				SFO.AUXILIARY_FUNCTION_PREFIX + funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type);
+				SFO.AUXILIARY_FUNCTION_PREFIX + funcname + mFunctionDeclarations.computeBitsize(type);
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
 				new Expression[] { expr }, mTypeHandler.getBoogieTypeForCType(type));
 		return func;
@@ -425,11 +424,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 
-		declareBitvectorFunction(loc, funcname,
-				funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), false, type1, null, type1,
-				type2);
+		declareBitvectorFunction(loc, funcname, funcname + mFunctionDeclarations.computeBitsize(type1), false, type1,
+				null, type1, type2);
 		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname
-				+ mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2);
+				+ mFunctionDeclarations.computeBitsize(type1);
 		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] { exp1, exp2 },
 				mTypeHandler.getBoogieTypeForCType(type1));
 	}
@@ -610,9 +608,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			smtFunctionName = "sign_extend";
 		}
 		final String boogieFunctionName = smtFunctionName + "From"
-				+ mFunctionDeclarations.computeBitvectorSuffix(loc,
+				+ mFunctionDeclarations.computeBitsize(
 						(CPrimitive) operand.getLrValue().getCType().getUnderlyingType())
-				+ "To" + mFunctionDeclarations.computeBitvectorSuffix(loc, resultPrimitive);
+				+ "To" + mFunctionDeclarations.computeBitsize(resultPrimitive);
 		declareBitvectorFunction(loc, smtFunctionName, boogieFunctionName, false, resultPrimitive, indices,
 				(CPrimitive) operand.getLrValue().getCType().getUnderlyingType());
 		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName;
@@ -1323,7 +1321,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
 				if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 					declareBitvectorFunction(loc, funcname,
-							funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, cPrimitiveO, cPrimitiveO),
+							funcname + mFunctionDeclarations.computeBitsize(cPrimitiveO),
 							false, cPrimitiveO, null, cPrimitiveO, cPrimitiveO);
 				}
 			}
