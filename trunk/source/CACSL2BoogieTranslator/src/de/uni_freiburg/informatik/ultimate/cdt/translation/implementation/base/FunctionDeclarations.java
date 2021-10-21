@@ -144,12 +144,6 @@ public class FunctionDeclarations {
 		return mDeclaredFunctions;
 	}
 
-	public String computeBitsize(final CPrimitive cType) {
-		final Integer bytesize = mTypeSizeConstants.getSize(cType.getType());
-		final int bitsize = bytesize * 8;
-		return String.valueOf(bitsize);
-	}
-
 	/**
 	 * Check if all CPrimitives in a sequence are equivalent.
 	 *
