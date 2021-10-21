@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -107,6 +107,14 @@ public class QvasrAbstractor {
 
 		final Term[][] newUpdatesMatrixAdditions = constructBaseMatrix(updatesInFormulaAdditions, transitionFormula);
 
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Resets: ");
+			printMatrix(newUpdatesMatrixResets);
+
+			mLogger.debug("Additions: ");
+			printMatrix(newUpdatesMatrixAdditions);
+		}
+
 		gaussPartialPivot(newUpdatesMatrixResets);
 
 		final Rational[][] out = new Rational[2][2];
@@ -146,17 +154,18 @@ public class QvasrAbstractor {
 			// i is the row
 			for (int i = k + 1; i < matrix.length; i++) {
 				final Term toBeEliminated = matrix[i][k];
-				final Term newDiv = SmtUtils.div(mScript.getScript(), toBeEliminated, pivot);
+				final Term newDiv = SmtUtils.divReal(mScript.getScript(), toBeEliminated, pivot);
+				// final Term newDiv = mScript.getScript().term("/", toBeEliminated, pivot);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Divide: " + matrix[i][k].toString() + " by " + matrix[k][k].toString() + "\n"
 							+ newDiv.toStringDirect());
 				}
-				// matrix[i][k] = mScript.getScript().numeral("0");
 
 				// k is the column
 				for (int j = k; j < matrix[0].length; j++) {
 					final Term currentColumn = matrix[k][j];
-					final Term newMul = SmtUtils.mul(mScript.getScript(), "*", newDiv, currentColumn);
+					Term newMul = mScript.getScript().term("*", newDiv, currentColumn);
+					newMul = SmtUtils.simplify(mScript, newMul, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 					final Term newSub = SmtUtils.minus(mScript.getScript(), matrix[i][j], newMul);
 					final Term newSimp =
 							SmtUtils.simplify(mScript, newSub, mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -183,7 +192,7 @@ public class QvasrAbstractor {
 	private int findPivot(final Term[][] matrix, final int col) {
 		int maxRow = -1;
 		for (int row = col; row < matrix.length; row++) {
-			if (!SmtUtils.areFormulasEquivalent(matrix[row][col], mScript.getScript().numeral("0"),
+			if (!SmtUtils.areFormulasEquivalent(matrix[row][col], mScript.getScript().decimal("0"),
 					mScript.getScript())) {
 				maxRow = row;
 				break;
@@ -272,10 +281,14 @@ public class QvasrAbstractor {
 		final Term[][] baseMatrix = new Term[rowDimension][columnDimension];
 
 		final Set<Set<TermVariable>> setToZero = new HashSet<>();
+		final Map<Term, Term> intToReal = new HashMap<>();
 		for (final TermVariable tv : transitionFormula.getInVars().values()) {
 			final Set<TermVariable> inVar = new HashSet<>();
 			inVar.add(tv);
 			setToZero.add(inVar);
+
+			intToReal.put(tv,
+					mScript.constructFreshTermVariable(tv.getName() + "_real", SmtSortUtils.getRealSort(mScript)));
 		}
 		/*
 		 * To get a linear set of equations, which we want to solve, we set the various variables to 0.
@@ -301,12 +314,14 @@ public class QvasrAbstractor {
 			for (final Set<Term> update : updates.values()) {
 				for (final Term updateTerm : update) {
 					Term toBeUpdated;
-					final Substitution sub = new Substitution(mScript, subMapping);
+					final SubstitutionWithLocalSimplification sub =
+							new SubstitutionWithLocalSimplification(mScript, subMapping);
 					toBeUpdated = sub.transform(updateTerm);
-					toBeUpdated =
-							SmtUtils.simplify(mScript, toBeUpdated, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-					baseMatrix[j][i] =
-							SmtUtils.simplify(mScript, toBeUpdated, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+					final SubstitutionWithLocalSimplification subReal =
+							new SubstitutionWithLocalSimplification(mScript, intToReal);
+					final Term toBeUpdatedReal = subReal.transform(toBeUpdated);
+
+					baseMatrix[j][i] = toBeUpdatedReal;
 				}
 				i++;
 			}
@@ -324,7 +339,7 @@ public class QvasrAbstractor {
 	 * @param typeOfBase
 	 * @return
 	 */
-	private Set<Term> constructBaseFormula(final Map<TermVariable, Set<Term>> updates,
+	private Term constructBaseFormula(final Map<TermVariable, Set<Term>> updates,
 			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
 		int sCount = 0;
 		final Set<Term> newUpdates = new HashSet<>();
@@ -337,7 +352,13 @@ public class QvasrAbstractor {
 			}
 			sCount++;
 		}
-		return newUpdates;
+		Term addition = mScript.getScript().numeral("1");
+		for (final Term update : newUpdates) {
+			addition = SmtUtils.sum(mScript.getScript(), "+", addition, update);
+		}
+		addition = SmtUtils.equality(mScript.getScript(), addition,
+				mScript.constructFreshTermVariable("a", SmtSortUtils.getIntSort(mScript)));
+		return addition;
 	}
 
 	// function to print matrix content at any stage
