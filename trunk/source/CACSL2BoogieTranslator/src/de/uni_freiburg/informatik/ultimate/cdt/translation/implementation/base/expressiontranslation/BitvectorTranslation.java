@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
 
 public class BitvectorTranslation extends ExpressionTranslation {
 
@@ -597,27 +598,29 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return ExpressionFactory.constructBitvectorAccessExpression(loc, operand, high, low);
 	}
 
-	private ExpressionResult extend(final ILocation loc, final ExpressionResult operand,
-			final CPrimitive resultType, final int resultLength, final int operandLength) {
-		final String smtFunctionName;
-		if (mTypeSizes.isUnsigned((CPrimitive) operand.getLrValue().getCType().getUnderlyingType())) {
-			smtFunctionName = "zero_extend";
+	private ExpressionResult extend(final ILocation loc, final ExpressionResult operand, final CPrimitive resultType,
+			final int resultLength, final int operandLength) {
+		final ExtendOperation extendOperation;
+		final CPrimitive operandType = (CPrimitive) operand.getLrValue().getCType().getUnderlyingType();
+		if (mTypeSizes.isUnsigned(operandType)) {
+			extendOperation = ExtendOperation.zero_extend;
 		} else {
-			smtFunctionName = "sign_extend";
+			extendOperation = ExtendOperation.sign_extend;
 		}
-		final String boogieFunctionName = smtFunctionName + "From"
-				+ computeBitsize((CPrimitive) operand.getLrValue().getCType().getUnderlyingType()) + "To"
+		final String boogieFunctionName = extendOperation + "From" + computeBitsize(operandType) + "To"
 				+ computeBitsize(resultType);
 		final int[] indices = new int[] { resultLength - operandLength };
-		declareBitvectorFunction(loc, smtFunctionName, boogieFunctionName, false, resultType, indices,
-				(CPrimitive) operand.getLrValue().getCType().getUnderlyingType());
+		declareBitvectorFunction(loc, extendOperation.getSmtFunctionName(), boogieFunctionName, false, resultType, indices, operandType);
 		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName;
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { operand.getLrValue().getValue() },
-				mTypeHandler.getBoogieTypeForCType(resultType));
+		final Expression operandExpression = operand.getLrValue().getValue();
+		final BoogieType resultBoogieType = mTypeHandler.getBoogieTypeForCType(resultType);
+		final Expression func = ExpressionFactory.extend(loc, extendOperation, fullFunctionName, operandExpression, resultBoogieType,
+				BigInteger.valueOf(indices[0]));
 		final RValue rVal = new RValue(func, resultType);
 		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
 	}
+
+
 
 	@Override
 	public CPrimitive getCTypeOfPointerComponents() {
