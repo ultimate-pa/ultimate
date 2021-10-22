@@ -414,7 +414,7 @@ public class TypeSizes {
 	 */
 	private Boolean extractBooleanValue(final Expression expr, final CType cType, final IASTNode hook) {
 		if (expr instanceof BooleanLiteral) {
-			return new Boolean(((BooleanLiteral) expr).getValue());
+			return Boolean.valueOf((((BooleanLiteral) expr).getValue()));
 		}
 
 		if (expr instanceof BinaryExpression) {
