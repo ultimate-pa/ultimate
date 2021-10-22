@@ -544,8 +544,8 @@ public class BitvectorConstant {
 		return result;
 	}
 
-	public static BitvectorConstant zero_extend(final BitvectorConstant bv, final BigInteger index) {
-		return new BitvectorConstant(bv.getValue(), bv.getIndex().add(index));
+	public static BitvectorConstant zero_extend(final BitvectorConstant bv, final BigInteger indexExtension) {
+		return new BitvectorConstant(bv.getValue(), bv.getIndex().add(indexExtension));
 	}
 
 	public static BigInteger toSignedInt(final BigInteger bvValue, final BigInteger bvIndex) {
