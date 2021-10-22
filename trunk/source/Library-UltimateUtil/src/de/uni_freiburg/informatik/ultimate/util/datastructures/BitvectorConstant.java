@@ -263,6 +263,22 @@ public class BitvectorConstant {
 
 	}
 
+	public enum ExtendOperation {
+		sign_extend("sign_extend"),
+		zero_extend("zero_extend"),;
+
+		private final String mSmtFunctionName;
+
+		private ExtendOperation(final String smtFunctionName) {
+			mSmtFunctionName = smtFunctionName;
+		}
+
+		public String getSmtFunctionName() {
+			return mSmtFunctionName;
+		}
+
+	}
+
 	private final BigInteger mValue;
 	private final BigInteger mIndex;
 
@@ -546,6 +562,11 @@ public class BitvectorConstant {
 
 	public static BitvectorConstant zero_extend(final BitvectorConstant bv, final BigInteger indexExtension) {
 		return new BitvectorConstant(bv.getValue(), bv.getIndex().add(indexExtension));
+	}
+
+	public static BitvectorConstant sign_extend(final BitvectorConstant bv, final BigInteger indexExtension) {
+		final BigInteger signed = bv.toSignedInt();
+		return new BitvectorConstant(signed, bv.getIndex().add(indexExtension));
 	}
 
 	public static BigInteger toSignedInt(final BigInteger bvValue, final BigInteger bvIndex) {
