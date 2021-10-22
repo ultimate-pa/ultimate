@@ -781,11 +781,8 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CEnum) {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
 		} else if (cType instanceof CArray) {
-
-			// may have to change this from int to something depending on bitvector settings and stuff..
-			final BoogieType[] indexTypes =
-					new BoogieType[] { getBoogieTypeForCType(new CPrimitive(CPrimitives.UINT)) };
-
+			final BoogieType[] indexTypes = new BoogieType[] {
+					getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
 			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
