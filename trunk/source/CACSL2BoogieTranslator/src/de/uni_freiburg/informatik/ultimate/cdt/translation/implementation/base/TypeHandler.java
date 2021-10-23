@@ -288,12 +288,17 @@ public class TypeHandler implements ITypeHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (node instanceof CASTTypedefNameSpecifier) {
 			final String cId = node.getName().toString();
-
 			// quick solution --> TODO: maybe make this dependent on includes,
 			// maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
-			if (cId.equals("size_t") || cId.equals("ssize_t")) {
+			if (cId.equals("size_t")) {
 				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						new CPrimitive(CPrimitives.UINT)));
+						mTranslationSettings.getCTypeOfPointerComponents()));
+			} else if (cId.equals("ssize_t")) {
+				if (mTranslationSettings.getCTypeOfPointerComponents().getType() != CPrimitives.LONG) {
+					throw new AssertionError("has to be signed: ssize_t");
+				}
+				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
+						mTranslationSettings.getCTypeOfPointerComponents()));
 			} else if (cId.equals("__builtin_va_list")) {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.CHAR))));
