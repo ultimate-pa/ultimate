@@ -485,8 +485,8 @@ public class ExpressionResultTransformer {
 			builder.setOrResetLrValue(readRex.getLrValue());
 
 			final ArrayLHS arrayAccLhs = ExpressionFactory.constructNestedArrayLHS(loc, newArrayAuxvar.getLhs(),
-					new Expression[] { mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT),
-							BigInteger.valueOf(pos)) });
+					new Expression[] { mTypeSizes.constructLiteralForIntegerType(loc,
+							mExprTrans.getCTypeOfPointerComponents(), BigInteger.valueOf(pos)) });
 			final ExpressionResult assRex =
 					mCHandler.makeAssignment(loc, new LocalLValue(arrayAccLhs, arrayType.getValueType(), null),
 							Collections.emptyList(), builder.build(), hook);
