@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -73,7 +74,7 @@ public class QvasrAbstractor {
 	 */
 	private enum BaseType {
 		RESETS, ADDITIONS
-	};
+	}
 
 	/**
 	 * Computes a Q-Vasr-abstraction (S, V), with linear simulation matrix S and Q-Vasr V. A transition formula can be
@@ -102,20 +103,18 @@ public class QvasrAbstractor {
 				getUpdates(transitionTerm, transitionFormula, BaseType.ADDITIONS);
 		final Map<TermVariable, Set<Term>> updatesInFormulaResets =
 				getUpdates(transitionTerm, transitionFormula, BaseType.RESETS);
-
 		final Term[][] newUpdatesMatrixResets = constructBaseMatrix(updatesInFormulaResets, transitionFormula);
-
 		final Term[][] newUpdatesMatrixAdditions = constructBaseMatrix(updatesInFormulaAdditions, transitionFormula);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Resets: ");
 			printMatrix(newUpdatesMatrixResets);
-
 			mLogger.debug("Additions: ");
 			printMatrix(newUpdatesMatrixAdditions);
 		}
 
-		gaussPartialPivot(newUpdatesMatrixResets);
+		final Term[][] gaussed = gaussPartialPivot(newUpdatesMatrixResets);
+		printMatrix(gaussed);
 
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
@@ -139,30 +138,22 @@ public class QvasrAbstractor {
 				mLogger.warn("Gaussian Elimination failed: Pivot is 0");
 				return new Term[0][0];
 			}
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Pre swap of " + max, k);
-				printMatrix(matrix);
-			}
 			if (max != 0) {
 				matrix = swap(matrix, k, max);
-			}
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Post swap: ");
-				printMatrix(matrix);
 			}
 			final Term pivot = matrix[k][k];
 			// i is the row
 			for (int i = k + 1; i < matrix.length; i++) {
 				final Term toBeEliminated = matrix[i][k];
+				matrix[i][k] = mScript.getScript().decimal("0");
 				final Term newDiv = SmtUtils.divReal(mScript.getScript(), toBeEliminated, pivot);
 				// final Term newDiv = mScript.getScript().term("/", toBeEliminated, pivot);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Divide: " + matrix[i][k].toString() + " by " + matrix[k][k].toString() + "\n"
 							+ newDiv.toStringDirect());
 				}
-
 				// k is the column
-				for (int j = k; j < matrix[0].length; j++) {
+				for (int j = k + 1; j < matrix[0].length; j++) {
 					final Term currentColumn = matrix[k][j];
 					Term newMul = mScript.getScript().term("*", newDiv, currentColumn);
 					newMul = SmtUtils.simplify(mScript, newMul, mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -231,6 +222,7 @@ public class QvasrAbstractor {
 			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
 		final Map<TermVariable, Set<Term>> assignments = new HashMap<>();
 		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("=", false);
+
 		for (final TermVariable outVar : transitionFormula.getOutVars().values()) {
 			final Set<TermVariable> out = new HashSet<>();
 			out.add(outVar);
@@ -240,6 +232,12 @@ public class QvasrAbstractor {
 			for (final ApplicationTerm app : varAssignment) {
 				for (Term param : app.getParameters()) {
 					if (!(param instanceof TermVariable) || (param instanceof TermVariable && param != outVar)) {
+
+						if (param instanceof ConstantTerm) {
+							final ConstantTerm paramConst = (ConstantTerm) param;
+							final Rational paramValue = (Rational) paramConst.getValue();
+							param = paramValue.toTerm(SmtSortUtils.getRealSort(mScript));
+						}
 						if (baseType == BaseType.ADDITIONS) {
 							final IProgramVar programVar =
 									(IProgramVar) TransFormulaUtils.getProgramVarForTerm(transitionFormula, outVar);
@@ -247,9 +245,6 @@ public class QvasrAbstractor {
 								final TermVariable inVar = transitionFormula.getInVars().get(programVar);
 								param = SmtUtils.sum(mScript.getScript(), "+", param,
 										SmtUtils.neg(mScript.getScript(), inVar));
-							} else {
-								param = SmtUtils.sum(mScript.getScript(), "+", param,
-										SmtUtils.neg(mScript.getScript(), outVar));
 							}
 						}
 						SmtUtils.simplify(mScript, param, mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -286,7 +281,6 @@ public class QvasrAbstractor {
 			final Set<TermVariable> inVar = new HashSet<>();
 			inVar.add(tv);
 			setToZero.add(inVar);
-
 			intToReal.put(tv,
 					mScript.constructFreshTermVariable(tv.getName() + "_real", SmtSortUtils.getRealSort(mScript)));
 		}
@@ -308,7 +302,7 @@ public class QvasrAbstractor {
 			if (j > 0) {
 				final Set<TermVariable> toBeSetZero = zeroStack.pop();
 				for (final TermVariable tv : toBeSetZero) {
-					subMapping.put(tv, mScript.getScript().numeral("0"));
+					subMapping.put(tv, mScript.getScript().decimal("0"));
 				}
 			}
 			for (final Set<Term> update : updates.values()) {
@@ -344,25 +338,28 @@ public class QvasrAbstractor {
 		int sCount = 0;
 		final Set<Term> newUpdates = new HashSet<>();
 		for (final var variableUpdate : updates.entrySet()) {
-			// TODO: Don't we need a float/rational here instead of intSort?
-			final TermVariable s = mScript.constructFreshTermVariable("s" + sCount, SmtSortUtils.getIntSort(mScript));
+			final TermVariable s = mScript.constructFreshTermVariable("s" + sCount, SmtSortUtils.getRealSort(mScript));
 			for (final Term update : variableUpdate.getValue()) {
 				final Term mult = SmtUtils.mul(mScript.getScript(), "*", s, update);
 				newUpdates.add(mult);
 			}
 			sCount++;
 		}
-		Term addition = mScript.getScript().numeral("1");
+		Term addition = mScript.getScript().decimal("1");
 		for (final Term update : newUpdates) {
 			addition = SmtUtils.sum(mScript.getScript(), "+", addition, update);
 		}
 		addition = SmtUtils.equality(mScript.getScript(), addition,
-				mScript.constructFreshTermVariable("a", SmtSortUtils.getIntSort(mScript)));
+				mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript)));
 		return addition;
 	}
 
-	// function to print matrix content at any stage
-	private void printMatrix(final Term matrix[][]) {
+	/**
+	 * Print the given matrix in readable form.
+	 *
+	 * @param matrix
+	 */
+	private void printMatrix(final Term[][] matrix) {
 		mLogger.debug("Matrix: ");
 		for (int i = 0; i < matrix.length; i++) {
 			mLogger.debug(Arrays.toString(matrix[i]));
