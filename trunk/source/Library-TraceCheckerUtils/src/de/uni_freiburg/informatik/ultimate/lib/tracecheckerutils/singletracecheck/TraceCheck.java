@@ -248,6 +248,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			mFeasibilityResult = feasibilityResult;
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
 			mRcfgProgramExecution = icfgProgramExecution;
+			mTraceCheckFinished = true;
 		}
 	}
 
@@ -486,8 +487,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	public TraceCheckStatisticsGenerator getStatistics() {
 		if (mTraceCheckFinished) {
 			return mTraceCheckBenchmarkGenerator;
+		} else {
+			throw new IllegalStateException("Cannot obtain statistics from unfinished TraceCheck");
 		}
-		return null;
 	}
 
 	private void lockAndPrepareSolverForTraceCheck() {
