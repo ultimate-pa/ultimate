@@ -47,6 +47,12 @@ public class BitvectorConstant {
 	 */
 	public enum SupportedBitvectorOperations {
 		/**
+		 * ((_ sign_extend i) x)
+		 *
+		 * extend x with sign bits to the (signed) equivalent bitvector of size m+i
+		 */
+		sign_extend(2, false, false),
+		/**
 		 * ((_ zero_extend i) x)
 		 *
 		 * extend x with zeroes to the (unsigned) equivalent bitvector of size m+i
@@ -60,6 +66,13 @@ public class BitvectorConstant {
 		 * + 1
 		 */
 		extract(3, false, false),
+
+		/**
+		 * (concat(_ BitVec m) (_ BitVec n))
+		 *
+		 * concatinates two bitvectors to a bitvector of size m+n
+		 */
+		concat(2, false, false),
 
 		/**
 		 * (bvadd (_ BitVec m) (_ BitVec m) (_ BitVec m))
@@ -531,6 +544,13 @@ public class BitvectorConstant {
 	public static boolean bvsge(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2,
 				x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) >= 0);
+	}
+
+	public static BitvectorConstant concat(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		final BigInteger concatSize = bv1.getIndex().add(bv2.getIndex());
+		final BigInteger concatValue =
+				bv1.getValue().multiply(BigInteger.TWO.pow(bv2.getIndex().intValue())).add(bv2.getValue());
+		return new BitvectorConstant(concatValue, concatSize);
 	}
 
 	public static BitvectorConstant extract(final BitvectorConstant bv, final int upperIndex, final int lowerIndex) {
