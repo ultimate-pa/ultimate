@@ -84,7 +84,7 @@ public class QvasrSummarizer {
 			if (isSat == LBool.SAT) {
 				final QvasrAbstraction qvasrAbstraction =
 						qvasrAbstractor.computeAbstraction(disjunct, transitionFormula);
-				mLogger.debug(qvasrAbstraction);
+				// mLogger.debug(qvasrAbstraction);
 			} else {
 				// TODO:
 				continue;

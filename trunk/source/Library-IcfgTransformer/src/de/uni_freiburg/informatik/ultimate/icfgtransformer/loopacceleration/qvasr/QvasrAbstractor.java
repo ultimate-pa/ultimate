@@ -45,6 +45,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermOperations;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -115,6 +120,8 @@ public class QvasrAbstractor {
 
 		final Term[][] gaussed = gaussPartialPivot(newUpdatesMatrixResets);
 		printMatrix(gaussed);
+		final Term[][] gaussedOnes = gaussRowEchelonFormPolynomial(gaussed);
+		printMatrix(gaussedOnes);
 
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
@@ -122,7 +129,69 @@ public class QvasrAbstractor {
 	}
 
 	/**
-	 * Bring a given matrix into row echelon form.
+	 * Convert a matrix in upper triangular form into row echelon form -> only leading 1s using {@link PolynomialTerm}
+	 *
+	 * @param matrix
+	 * @return
+	 */
+	private Term[][] gaussRowEchelonFormPolynomial(final Term[][] matrix) {
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[0].length; j++) {
+				if (!SmtUtils.areFormulasEquivalent(matrix[i][j], mScript.getScript().decimal("0"),
+						mScript.getScript())) {
+
+					final IPolynomialTerm divider = PolynomialTermOperations.convert(mScript.getScript(), matrix[i][j]);
+					matrix[i][j] = mScript.getScript().decimal("1");
+					for (int k = j + 1; k < matrix[0].length; k++) {
+						final IPolynomialTerm[] polyArr = new IPolynomialTerm[2];
+						final IPolynomialTerm toBeDivided =
+								PolynomialTermOperations.convert(mScript.getScript(), matrix[i][k]);
+
+						polyArr[0] = toBeDivided;
+						polyArr[1] = divider;
+
+						final IPolynomialTerm polyDiv;
+						if (PolynomialTerm.divisionPossible(polyArr)) {
+							polyDiv = AffineTerm.divide(polyArr, mScript.getScript());
+						} else {
+							polyDiv = PolynomialTermUtils.simplifyImpossibleDivision("/", polyArr, mScript.getScript());
+						}
+						matrix[i][k] = polyDiv.toTerm(mScript.getScript());
+					}
+					break;
+				}
+			}
+		}
+		return matrix;
+	}
+
+	/**
+	 * Convert a matrix in upper triangular form into row echelon form -> only leading 1s using Standard Real Division.
+	 *
+	 * @param matrix
+	 * @return
+	 */
+	private Term[][] gaussRowEchelonForm(final Term[][] matrix) {
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[0].length; j++) {
+				if (!SmtUtils.areFormulasEquivalent(matrix[i][j], mScript.getScript().decimal("0"),
+						mScript.getScript())) {
+					final Term divider = matrix[i][j];
+					matrix[i][j] = mScript.getScript().decimal("1");
+					for (int k = j + 1; k < matrix[0].length; k++) {
+						final Term toBeDivided = matrix[i][k];
+						final Term division = SmtUtils.divReal(mScript.getScript(), toBeDivided, divider);
+						matrix[i][k] = division;
+					}
+					break;
+				}
+			}
+		}
+		return matrix;
+	}
+
+	/**
+	 * Bring a given matrix into upper triangle form.
 	 *
 	 * @param matrix
 	 * @return
