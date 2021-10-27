@@ -47,6 +47,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	TraceHistogramMax(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 
+	PathProgramHistogramMax(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
+
 	EmptinessCheckTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	AutomataDifference(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),

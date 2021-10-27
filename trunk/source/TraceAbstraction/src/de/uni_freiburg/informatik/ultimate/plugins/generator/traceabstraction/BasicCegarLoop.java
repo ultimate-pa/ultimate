@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -726,6 +727,10 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	@Override
 	protected void finish() {
 		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
+		final List<Integer> sortedHistogram = mStrategyFactory.getPathProgramCache().computeSortedHistrogram();
+		mLogger.info("Path program histogram: " + sortedHistogram);
+		final int max = HistogramOfIterable.getMaxOfVisualizationArray(sortedHistogram);
+		mCegarLoopBenchmark.reportPathProgramHistogramMaximum(max);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 	}
