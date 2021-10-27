@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 /**
  * {@link PathProgramCache} saves a hash of the trace and the path program that is analyzed in each iteration.
@@ -97,6 +100,11 @@ public class PathProgramCache<LETTER> {
 			return 0;
 		}
 		return count.intValue();
+	}
+
+	public List<Integer> computeSortedHistrogram() {
+		final Integer[] visualizationArray = HistogramOfIterable.generateVisualizationArray(mKnownPathPrograms);
+		return Collections.unmodifiableList(Arrays.asList(visualizationArray));
 	}
 
 }
