@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -35,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  *
  */
 public class CegarLoopUtils {
+
+	private static final boolean FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS = true;
 
 	private CegarLoopUtils() {
 		// do not instantiate utility class
@@ -70,45 +73,32 @@ public class CegarLoopUtils {
 				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), services, compositionFactory,
 						transitionClazz);
+			} else if (FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root)) {
+				result = createFiniteAutomataCegarLoop(services, name, root, taPrefs, csToolkit, predicateFactory,
+						errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, compositionFactory,
+						transitionClazz);
 			} else {
 				switch (automataType) {
-				case FINITE_AUTOMATA: {
-					switch (taPrefs.getFloydHoareAutomataReuse()) {
-					case EAGER:
-						result = new EagerReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-								taPrefs.interpolation(), computeHoareAnnotation, services, Collections.emptyList(),
-								rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
-						break;
-					case LAZY_IN_ORDER:
-						result = new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-								taPrefs.interpolation(), computeHoareAnnotation, services, Collections.emptyList(),
-								rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
-						break;
-					case NONE:
-						result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-								taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
-								transitionClazz);
-						break;
-					default:
-						throw new AssertionError("Unknown Setting: " + taPrefs.getFloydHoareAutomataReuse());
-					}
-				}
+				case FINITE_AUTOMATA:
+					result = createFiniteAutomataCegarLoop(services, name, root, taPrefs, csToolkit, predicateFactory,
+							errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, compositionFactory,
+							transitionClazz);
 					break;
 				case PARTIAL_ORDER_FA:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
-						throw new UnsupportedOperationException("Reuse with sleep set-based analysis");
+						throw new UnsupportedOperationException("Reuse with POR-based analysis");
 					}
 					result = new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
 							transitionClazz);
 					break;
-				case PETRI_NET: {
+				case PETRI_NET:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 						throw new UnsupportedOperationException("Reuse with Petri net-based analysis");
 					}
 					result = new CegarLoopForPetriNet<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							services, compositionFactory, transitionClazz);
-				}
+
 					break;
 				default:
 					throw new AssertionError("Unknown Setting: " + automataType);
@@ -121,6 +111,30 @@ public class CegarLoopUtils {
 		}
 		result.setWitnessAutomaton(witnessAutomaton);
 		return result;
+	}
+
+	private static <L extends IIcfgTransition<?>> BasicCegarLoop<L> createFiniteAutomataCegarLoop(
+			final IUltimateServiceProvider services, final DebugIdentifier name, final IIcfg<IcfgLocation> root,
+			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final Set<IcfgLocation> errorLocs,
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final boolean computeHoareAnnotation, final IPLBECompositionFactory<L> compositionFactory,
+			final Class<L> transitionClazz) {
+		switch (taPrefs.getFloydHoareAutomataReuse()) {
+		case EAGER:
+			return new EagerReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+					taPrefs.interpolation(), computeHoareAnnotation, services, Collections.emptyList(),
+					rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
+		case LAZY_IN_ORDER:
+			return new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+					taPrefs.interpolation(), computeHoareAnnotation, services, Collections.emptyList(),
+					rawFloydHoareAutomataFromFile, compositionFactory, transitionClazz);
+		case NONE:
+			return new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+					taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory, transitionClazz);
+		default:
+			throw new AssertionError("Unknown Setting: " + taPrefs.getFloydHoareAutomataReuse());
+		}
 	}
 
 	public static <L extends IIcfgTransition<?>> boolean hasSufficientThreadInstances(final CegarLoopResult<L> clres) {

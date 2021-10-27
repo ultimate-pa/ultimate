@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class TranslationManager {
 	private final ManagedScript mMgdScript;
 	private final Script mScript;
-	private FunctionSymbol mIntand;
+	private final FunctionSymbol mIntand;
 	private LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
 	private LinkedHashMap<Term, Term> mReversedVarMap;
 	private final TranslationConstrainer mTc;
@@ -34,6 +34,7 @@ public class TranslationManager {
 
 		mConstraintSet = new HashSet<Term>();
 		mTc = new TranslationConstrainer(mMgdScript);
+		mIntand = mTc.getIntAndFunctionSymbol();
 	}
 
 	public void setReplacementVarMaps(final LinkedHashMap replacementVarMap) {
@@ -54,22 +55,25 @@ public class TranslationManager {
 
 		final Term integerFormula =
 				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
-
 		return integerFormula;
 
 	}
 
-	public Term translateIntBacktoBv(final Term integerFromula) {
+
+	public Term translateIntBacktoBv(final Term integerFormula) {
 
 		final UnfTransformer unfT = new UnfTransformer(mScript);
-		final Term simplifiedInput = unfT.transform(integerFromula);
+		final Term simplifiedInput = unfT.transform(integerFormula); // very helpfull
 
 		final HashSet<Term> constraints = mConstraintSet;
 		constraints.addAll(mTc.getTvConstraints());
-		final IntToBvBackTranslation intToBv = new IntToBvBackTranslation(mMgdScript, mReversedVarMap, constraints);
-
+		System.out.println(constraints);
+		final IntToBvBackTranslation intToBv =
+				new IntToBvBackTranslation(mMgdScript, mReversedVarMap, constraints, mIntand);
+		// TODO postpreocessing select propagation
 		return intToBv.transform(simplifiedInput);
 	}
+
 
 
 	public LinkedHashMap<Term, Term> getVarMap() {

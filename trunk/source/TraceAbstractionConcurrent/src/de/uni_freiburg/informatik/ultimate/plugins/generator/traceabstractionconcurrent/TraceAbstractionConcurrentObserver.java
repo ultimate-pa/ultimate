@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -96,7 +97,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Set<IcfgLocation> threadErrorLocations;
-		if (!csToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (IcfgUtils.isConcurrent(petrifiedIcfg)) {
 			throw new UnsupportedOperationException();
 		}
 		// no fork or join
@@ -115,10 +116,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		BasicCegarLoop<IcfgEdge> abstractCegarLoop;
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
 		final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(mServices, csToolkit);
-		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
+		if (taPrefs.getAutomataTypeConcurrency() == Concurrency.PETRI_NET) {
 			abstractCegarLoop = new CegarLoopForPetriNet<>(name, petrifiedIcfg, csToolkit, predicateFactory, taPrefs,
 					errNodesOfAllProc, mServices, compositionFactory, IcfgEdge.class);
-		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
+		} else if (taPrefs.getAutomataTypeConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
 					timingStatistics, taPrefs, errNodesOfAllProc, mServices, compositionFactory, IcfgEdge.class);
 		} else {

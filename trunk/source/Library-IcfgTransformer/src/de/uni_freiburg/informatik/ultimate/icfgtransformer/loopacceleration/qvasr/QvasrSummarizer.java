@@ -75,16 +75,16 @@ public class QvasrSummarizer {
 		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
-		final QvasrAbstractor qvasrAbstractor = new QvasrAbstractor(mScript, mLogger);
+		final QvasrAbstractor qvasrAbstractor = new QvasrAbstractor(mScript, mLogger, mServices);
 
-		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf, mServices);
+		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
 
 		for (final Term disjunct : disjuncts) {
 			final LBool isSat = SmtUtils.checkSatTerm(mScript.getScript(), disjunct);
 			if (isSat == LBool.SAT) {
 				final QvasrAbstraction qvasrAbstraction =
 						qvasrAbstractor.computeAbstraction(disjunct, transitionFormula);
-				mLogger.debug(qvasrAbstraction);
+				// mLogger.debug(qvasrAbstraction);
 			} else {
 				// TODO:
 				continue;

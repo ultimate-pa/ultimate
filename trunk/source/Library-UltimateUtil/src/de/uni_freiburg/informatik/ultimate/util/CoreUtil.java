@@ -83,7 +83,7 @@ public class CoreUtil {
 	public static String getIsoUtcTimestamp() {
 		final Instant now = Instant.now();
 		final DateTimeFormatter format = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC"));
-		return format.format(now.truncatedTo(ChronoUnit.SECONDS));
+		return format.format(now.truncatedTo(ChronoUnit.SECONDS)) + "Z";
 	}
 
 	public static String getIsoUtcTimestampWithUtcOffset() {

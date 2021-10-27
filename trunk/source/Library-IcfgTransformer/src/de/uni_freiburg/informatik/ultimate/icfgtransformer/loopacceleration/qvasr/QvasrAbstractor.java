@@ -27,21 +27,35 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermOperations;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
 /**
  *
@@ -53,7 +67,19 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class QvasrAbstractor {
 
 	private final ManagedScript mScript;
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+
+	/**
+	 *
+	 * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) Define which kind of base matrix. Resets: Where the
+	 *         outvars only depend on the invars and addition vector a. Additions: Where outvars depend on invars and
+	 *         addition vector a.
+	 *
+	 */
+	private enum BaseType {
+		RESETS, ADDITIONS
+	}
 
 	/**
 	 * Computes a Q-Vasr-abstraction (S, V), with linear simulation matrix S and Q-Vasr V. A transition formula can be
@@ -62,9 +88,10 @@ public class QvasrAbstractor {
 	 * @param script
 	 * @param logger
 	 */
-	public QvasrAbstractor(final ManagedScript script, final ILogger logger) {
+	public QvasrAbstractor(final ManagedScript script, final ILogger logger, final IUltimateServiceProvider services) {
 		mScript = script;
 		mLogger = logger;
+		mServices = services;
 	}
 
 	/**
@@ -77,11 +104,179 @@ public class QvasrAbstractor {
 	public QvasrAbstraction computeAbstraction(final Term transitionTerm,
 			final UnmodifiableTransFormula transitionFormula) {
 
-		final Map<TermVariable, Set<ApplicationTerm>> updates =
-				getUpdates(transitionTerm, transitionFormula.getOutVars());
+		final Map<TermVariable, Set<Term>> updatesInFormulaAdditions =
+				getUpdates(transitionTerm, transitionFormula, BaseType.ADDITIONS);
+		final Map<TermVariable, Set<Term>> updatesInFormulaResets =
+				getUpdates(transitionTerm, transitionFormula, BaseType.RESETS);
+		final Term[][] newUpdatesMatrixResets = constructBaseMatrix(updatesInFormulaResets, transitionFormula);
+		final Term[][] newUpdatesMatrixAdditions = constructBaseMatrix(updatesInFormulaAdditions, transitionFormula);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Resets: ");
+			printMatrix(newUpdatesMatrixResets);
+			mLogger.debug("Additions: ");
+			printMatrix(newUpdatesMatrixAdditions);
+		}
+
+		final Term[][] gaussed = gaussPartialPivot(newUpdatesMatrixResets);
+		printMatrix(gaussed);
+		final Term[][] gaussedOnes = gaussRowEchelonFormPolynomial(gaussed);
+		printMatrix(gaussedOnes);
+
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
 		return new QvasrAbstraction(out, qvasr);
+	}
+
+	/**
+	 * Convert a matrix in upper triangular form into row echelon form -> only leading 1s using {@link PolynomialTerm}
+	 *
+	 * @param matrix
+	 * @return
+	 */
+	private Term[][] gaussRowEchelonFormPolynomial(final Term[][] matrix) {
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[0].length; j++) {
+				if (!SmtUtils.areFormulasEquivalent(matrix[i][j], mScript.getScript().decimal("0"),
+						mScript.getScript())) {
+
+					final IPolynomialTerm divider = PolynomialTermOperations.convert(mScript.getScript(), matrix[i][j]);
+					matrix[i][j] = mScript.getScript().decimal("1");
+					for (int k = j + 1; k < matrix[0].length; k++) {
+						final IPolynomialTerm[] polyArr = new IPolynomialTerm[2];
+						final IPolynomialTerm toBeDivided =
+								PolynomialTermOperations.convert(mScript.getScript(), matrix[i][k]);
+
+						polyArr[0] = toBeDivided;
+						polyArr[1] = divider;
+
+						final IPolynomialTerm polyDiv;
+						if (PolynomialTerm.divisionPossible(polyArr)) {
+							polyDiv = AffineTerm.divide(polyArr, mScript.getScript());
+						} else {
+							polyDiv = PolynomialTermUtils.simplifyImpossibleDivision("/", polyArr, mScript.getScript());
+						}
+						matrix[i][k] = polyDiv.toTerm(mScript.getScript());
+					}
+					break;
+				}
+			}
+		}
+		return matrix;
+	}
+
+	/**
+	 * Convert a matrix in upper triangular form into row echelon form -> only leading 1s using Standard Real Division.
+	 *
+	 * @param matrix
+	 * @return
+	 */
+	private Term[][] gaussRowEchelonForm(final Term[][] matrix) {
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[0].length; j++) {
+				if (!SmtUtils.areFormulasEquivalent(matrix[i][j], mScript.getScript().decimal("0"),
+						mScript.getScript())) {
+					final Term divider = matrix[i][j];
+					matrix[i][j] = mScript.getScript().decimal("1");
+					for (int k = j + 1; k < matrix[0].length; k++) {
+						final Term toBeDivided = matrix[i][k];
+						final Term division = SmtUtils.divReal(mScript.getScript(), toBeDivided, divider);
+						matrix[i][k] = division;
+					}
+					break;
+				}
+			}
+		}
+		return matrix;
+	}
+
+	/**
+	 * Bring a given matrix into upper triangle form.
+	 *
+	 * @param matrix
+	 * @return
+	 */
+	private Term[][] gaussPartialPivot(Term[][] matrix) {
+		for (int k = 0; k < matrix.length; k++) {
+			int max = 0;
+
+			if ((k + 1) < matrix.length) {
+				max = findPivot(matrix, k);
+			}
+			if (max == -1) {
+				mLogger.warn("Gaussian Elimination failed: Pivot is 0");
+				return new Term[0][0];
+			}
+			if (max != 0) {
+				matrix = swap(matrix, k, max);
+			}
+			final Term pivot = matrix[k][k];
+			// i is the row
+			for (int i = k + 1; i < matrix.length; i++) {
+				final Term toBeEliminated = matrix[i][k];
+				matrix[i][k] = mScript.getScript().decimal("0");
+				final Term newDiv = SmtUtils.divReal(mScript.getScript(), toBeEliminated, pivot);
+				// final Term newDiv = mScript.getScript().term("/", toBeEliminated, pivot);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Divide: " + matrix[i][k].toString() + " by " + matrix[k][k].toString() + "\n"
+							+ newDiv.toStringDirect());
+				}
+				// k is the column
+				for (int j = k + 1; j < matrix[0].length; j++) {
+					final Term currentColumn = matrix[k][j];
+					Term newMul = mScript.getScript().term("*", newDiv, currentColumn);
+					newMul = SmtUtils.simplify(mScript, newMul, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+					final Term newSub = SmtUtils.minus(mScript.getScript(), matrix[i][j], newMul);
+					final Term newSimp =
+							SmtUtils.simplify(mScript, newSub, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Multiplication: " + newMul.toStringDirect());
+						mLogger.debug("Difference: " + newSub.toStringDirect());
+						mLogger.debug("Simplified " + newSimp.toStringDirect());
+					}
+					matrix[i][j] = newSimp;
+				}
+			}
+			mLogger.debug("Gauss done?");
+		}
+		return matrix;
+	}
+
+	/**
+	 * Find a column to use as pivot in the gaussian elimination algorithm.
+	 *
+	 * @param matrix
+	 * @param col
+	 * @return
+	 */
+	private int findPivot(final Term[][] matrix, final int col) {
+		int maxRow = -1;
+		for (int row = col; row < matrix.length; row++) {
+			if (!SmtUtils.areFormulasEquivalent(matrix[row][col], mScript.getScript().decimal("0"),
+					mScript.getScript())) {
+				maxRow = row;
+				break;
+			}
+		}
+		return maxRow;
+	}
+
+	/**
+	 * Swap two rows in a matrix.
+	 *
+	 * @param matrix
+	 * @param col
+	 * @param row
+	 * @return
+	 */
+	private static Term[][] swap(final Term[][] matrix, final int col, final int row) {
+		Term temp;
+		for (int i = col; i < matrix[col].length; i++) {
+			temp = matrix[col][i];
+			matrix[col][i] = matrix[row][i];
+			matrix[row][i] = temp;
+		}
+		return matrix;
 	}
 
 	/**
@@ -92,17 +287,151 @@ public class QvasrAbstractor {
 	 * @param outVariables
 	 * @return
 	 */
-	private Map<TermVariable, Set<ApplicationTerm>> getUpdates(final Term transitionTerm,
-			final Map<IProgramVar, TermVariable> outVariables) {
-		final Map<TermVariable, Set<ApplicationTerm>> assignments = new HashMap<>();
+	private Map<TermVariable, Set<Term>> getUpdates(final Term transitionTerm,
+			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
+		final Map<TermVariable, Set<Term>> assignments = new HashMap<>();
 		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("=", false);
-		for (final TermVariable outVar : outVariables.values()) {
-			final Set<TermVariable> tv = new HashSet<TermVariable>();
-			tv.add(outVar);
-			final Term filtered = SmtUtils.filterFormula(transitionTerm, tv, mScript.getScript());
+
+		for (final TermVariable outVar : transitionFormula.getOutVars().values()) {
+			final Set<TermVariable> out = new HashSet<>();
+			out.add(outVar);
+			final Term filtered = SmtUtils.filterFormula(transitionTerm, out, mScript.getScript());
 			final Set<ApplicationTerm> varAssignment = applicationTermFinder.findMatchingSubterms(filtered);
-			assignments.put(outVar, varAssignment);
+			final Set<Term> trueAssignment = new HashSet<>();
+			for (final ApplicationTerm app : varAssignment) {
+				for (Term param : app.getParameters()) {
+					if (!(param instanceof TermVariable) || (param instanceof TermVariable && param != outVar)) {
+
+						if (param instanceof ConstantTerm) {
+							final ConstantTerm paramConst = (ConstantTerm) param;
+							final Rational paramValue = (Rational) paramConst.getValue();
+							param = paramValue.toTerm(SmtSortUtils.getRealSort(mScript));
+						}
+						if (baseType == BaseType.ADDITIONS) {
+							final IProgramVar programVar =
+									(IProgramVar) TransFormulaUtils.getProgramVarForTerm(transitionFormula, outVar);
+							if (transitionFormula.getInVars().containsKey(programVar)) {
+								final TermVariable inVar = transitionFormula.getInVars().get(programVar);
+								param = SmtUtils.sum(mScript.getScript(), "+", param,
+										SmtUtils.neg(mScript.getScript(), inVar));
+							}
+						}
+						SmtUtils.simplify(mScript, param, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+						trueAssignment.add(param);
+					}
+				}
+			}
+			assignments.put(outVar, trueAssignment);
 		}
 		return assignments;
+	}
+
+	/**
+	 * Construct a matrix representing a set of linear equations that model updates to variables in a given transition
+	 * formula. The matrix has 2^n columns with n being the number of outvars, because we have to set each variable to 0
+	 * to be able to use Gaussian elimination. We want to have a matrix for the bases of resets Res: {[s_1, s_2, ...,
+	 * s_n] [x_1', x_2', ...] = a} and additions Inc: {[s_1, s_2, ..., s_n] [x_1', x_2', ...] = [s_1, s_2, ..., s_n]
+	 * [x_1, x_2, ..., x_n] + a}
+	 *
+	 * @param updates
+	 * @param transitionFormula
+	 * @param typeOfBase
+	 * @return
+	 */
+	private Term[][] constructBaseMatrix(final Map<TermVariable, Set<Term>> updates,
+			final UnmodifiableTransFormula transitionFormula) {
+		final int rowDimension = (int) Math.pow(2, transitionFormula.getInVars().size());
+		final int columnDimension = transitionFormula.getOutVars().size() + 1;
+		final Term[][] baseMatrix = new Term[rowDimension][columnDimension];
+
+		final Set<Set<TermVariable>> setToZero = new HashSet<>();
+		final Map<Term, Term> intToReal = new HashMap<>();
+		for (final TermVariable tv : transitionFormula.getInVars().values()) {
+			final Set<TermVariable> inVar = new HashSet<>();
+			inVar.add(tv);
+			setToZero.add(inVar);
+			intToReal.put(tv,
+					mScript.constructFreshTermVariable(tv.getName() + "_real", SmtSortUtils.getRealSort(mScript)));
+		}
+		/*
+		 * To get a linear set of equations, which we want to solve, we set the various variables to 0.
+		 */
+		Set<Set<TermVariable>> powerset = new HashSet<>(setToZero);
+		for (final Set<TermVariable> inTv : setToZero) {
+			powerset = QvasrUtils.joinSet(powerset, inTv);
+		}
+		final Deque<Set<TermVariable>> zeroStack = new HashDeque<>();
+		zeroStack.addAll(powerset);
+		int j = 0;
+		final TermVariable a = mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript));
+		while (!zeroStack.isEmpty()) {
+			int i = 0;
+			baseMatrix[j][columnDimension - 1] = a;
+			final Map<Term, Term> subMapping = new HashMap<>();
+			if (j > 0) {
+				final Set<TermVariable> toBeSetZero = zeroStack.pop();
+				for (final TermVariable tv : toBeSetZero) {
+					subMapping.put(tv, mScript.getScript().decimal("0"));
+				}
+			}
+			for (final Set<Term> update : updates.values()) {
+				for (final Term updateTerm : update) {
+					Term toBeUpdated;
+					final SubstitutionWithLocalSimplification sub =
+							new SubstitutionWithLocalSimplification(mScript, subMapping);
+					toBeUpdated = sub.transform(updateTerm);
+					final SubstitutionWithLocalSimplification subReal =
+							new SubstitutionWithLocalSimplification(mScript, intToReal);
+					final Term toBeUpdatedReal = subReal.transform(toBeUpdated);
+
+					baseMatrix[j][i] = toBeUpdatedReal;
+				}
+				i++;
+			}
+			j++;
+		}
+		return baseMatrix;
+	}
+
+	/**
+	 * Construct a formula modeling updates to variables done in a transition formula in relation to a new termvariable
+	 * s. (May not be needed, as we can skip this construction)
+	 *
+	 * @param updates
+	 * @param transitionFormula
+	 * @param typeOfBase
+	 * @return
+	 */
+	private Term constructBaseFormula(final Map<TermVariable, Set<Term>> updates,
+			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
+		int sCount = 0;
+		final Set<Term> newUpdates = new HashSet<>();
+		for (final var variableUpdate : updates.entrySet()) {
+			final TermVariable s = mScript.constructFreshTermVariable("s" + sCount, SmtSortUtils.getRealSort(mScript));
+			for (final Term update : variableUpdate.getValue()) {
+				final Term mult = SmtUtils.mul(mScript.getScript(), "*", s, update);
+				newUpdates.add(mult);
+			}
+			sCount++;
+		}
+		Term addition = mScript.getScript().decimal("1");
+		for (final Term update : newUpdates) {
+			addition = SmtUtils.sum(mScript.getScript(), "+", addition, update);
+		}
+		addition = SmtUtils.equality(mScript.getScript(), addition,
+				mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript)));
+		return addition;
+	}
+
+	/**
+	 * Print the given matrix in readable form.
+	 *
+	 * @param matrix
+	 */
+	private void printMatrix(final Term[][] matrix) {
+		mLogger.debug("Matrix: ");
+		for (int i = 0; i < matrix.length; i++) {
+			mLogger.debug(Arrays.toString(matrix[i]));
+		}
 	}
 }

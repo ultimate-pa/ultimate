@@ -69,6 +69,7 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 			}
+
 			if (fsym.isIntern()) {
 				switch (fsym.getName()) {
 				case "bvor": {
@@ -194,7 +195,6 @@ public class BvToIntTranslation extends TermTransformer {
 	 * TODO bvsdiv bvsrem // testen ob auf argumente signed to unsgined angewendet werfden muss
 	 * TODO check if we have to do sth for extend's
 	 * TODO modularer
-	 * TODO bitvectorutils mod finden und testen
 	 */
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] args) {
@@ -207,10 +207,7 @@ public class BvToIntTranslation extends TermTransformer {
 			case "or":
 			case "not":
 			case "=>":
-			case "store": {
-				setResult(mScript.term(fsym.getName(), args));
-				return;
-			}
+			case "store":
 			case "select": {
 				setResult(mScript.term(fsym.getName(), args));
 				return;
@@ -286,69 +283,79 @@ public class BvToIntTranslation extends TermTransformer {
 					throw new UnsupportedOperationException("TODOmessage " + fsym.getName());
 				}
 			}
-		} else if (appTerm.getParameters().length == 2) {
-			// TODO array sort pra0
-			int width = 0; // TODO schön array sort is das problem
+		} else {
+			int width = 0;
 			if (SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort())) {
 				width = Integer.valueOf(appTerm.getParameters()[1].getSort().getIndices()[0]);
 			}
 			final Term maxNumber =
 					SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
-			final Term translatedLHS = args[0];
-			final Term translatedRHS = args[1];
-			final Term tLhs;
-			final Term tRhs;
+			final Term[] translatedArgs = args;
 			if (mNutzTransformation) {
-				tLhs = mScript.term("mod", translatedLHS, maxNumber);
-				tRhs = mScript.term("mod", translatedRHS, maxNumber);
-			} else {
-				tLhs = translatedLHS;
-				tRhs = translatedRHS;
+				for (int i = 0; i < args.length; i++) {
+					translatedArgs[i] = mScript.term("mod", args[i], maxNumber);
+				}
 			}
 			if (fsym.isIntern()) {
 				switch (fsym.getName()) {
 				case "=": {
-					setResult(mScript.term("=", tLhs, tRhs));
+					setResult(mScript.term("=", translatedArgs));
 					return;
 				}
 				case "distinct": {
-					setResult(mScript.term("distinct", tLhs, tRhs));
+					setResult(mScript.term("distinct", translatedArgs));
 					return;
 				}
 				case "bvult": {
-					setResult(mScript.term("<", tLhs, tRhs));
+					setResult(mScript.term("<", translatedArgs));
 					return;
 				}
 				case "bvule": {
-					setResult(mScript.term("<=", tLhs, tRhs));
+					setResult(mScript.term("<=", translatedArgs));
 					return;
 				}
 				case "bvugt": {
-					setResult(mScript.term(">", tLhs, tRhs));
+					setResult(mScript.term(">", translatedArgs));
 					return;
 				}
 				case "bvuge": {
-					setResult(mScript.term(">=", tLhs, tRhs));
+					setResult(mScript.term(">=", translatedArgs));
 					return;
 				}
 				case "bvslt": {
-					setResult(mScript.term("<", uts(width, tLhs), uts(width, tRhs)));
+					final Term[] utsArgs = args;
+					for (int i = 0; i < args.length; i++) {
+						utsArgs[i] = uts(width, translatedArgs[i]);
+					}
+					setResult(mScript.term("<", utsArgs));
 					return;
 				}
 				case "bvsle": {
-					setResult(mScript.term("<=", uts(width, tLhs), uts(width, tRhs)));
+					final Term[] utsArgs = args;
+					for (int i = 0; i < args.length; i++) {
+						utsArgs[i] = uts(width, translatedArgs[i]);
+					}
+					setResult(mScript.term("<=", utsArgs));
 					return;
 				}
 				case "bvsgt": {
-					setResult(mScript.term(">", uts(width, tLhs), uts(width, tRhs)));
+					final Term[] utsArgs = args;
+					for (int i = 0; i < args.length; i++) {
+						utsArgs[i] = uts(width, translatedArgs[i]);
+					}
+					setResult(mScript.term(">", utsArgs));
 					return;
 				}
 				case "bvsge": {
-					setResult(mScript.term(">=", uts(width, tLhs), uts(width, tRhs)));
+					final Term[] utsArgs = args;
+					for (int i = 0; i < args.length; i++) {
+						utsArgs[i] = uts(width, translatedArgs[i]);
+					}
+					setResult(mScript.term(">=", utsArgs));
 					return;
 				}
 				case "bvadd": {
-					final Term addition = mScript.term("+", translatedLHS, translatedRHS);
+					final Term addition = mScript.term("+", translatedArgs);
 					if (mNutzTransformation) {
 						setResult(addition);
 						return;
@@ -357,7 +364,7 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 				case "bvsub": {
-					final Term substraction = mScript.term("-", translatedLHS, translatedRHS);
+					final Term substraction = mScript.term("-", translatedArgs);
 					if (mNutzTransformation) {
 						setResult(substraction);
 						return;
@@ -366,7 +373,7 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 				case "bvmul": {
-					final Term multiplication = mScript.term("*", translatedLHS, translatedRHS);
+					final Term multiplication = mScript.term("*", translatedArgs);
 					if (mNutzTransformation) {
 						setResult(multiplication);
 						return;
@@ -374,127 +381,136 @@ public class BvToIntTranslation extends TermTransformer {
 					setResult(mScript.term("mod", multiplication, maxNumber));
 					return;
 				}
-				case "bvshl": {
-					final boolean iteMode = true;
-					if (iteMode && !(translatedRHS instanceof ConstantTerm)) {
-						Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
-						for (int i = width - 1; i >= 0; i--) {
-							if (i == 0) {
-								final Term constInt = SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
-								iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
-										translatedLHS, iteChain);
-							} else {
-								final Rational powResult = Rational.valueOf(i, 1);
-								final Term ifTerm = mScript.term("=", translatedRHS,
-										SmtUtils.rational2Term(mScript, powResult, intSort));
-								final int pow = (int) Math.pow(2, i);
-								final Term thenTerm = mScript.term("mod",
-										mScript.term("*",
-												SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort),
-												translatedLHS),
-										maxNumber);
-								iteChain = mScript.term("ite", ifTerm, thenTerm, iteChain);
+				}
+
+				if (appTerm.getParameters().length == 2) {
+					final Term translatedLHS = translatedArgs[0];
+					final Term translatedRHS = translatedArgs[1];
+					switch (fsym.getName()) {
+					case "bvshl": {
+						final boolean iteMode = true;
+						if (iteMode && !(translatedRHS instanceof ConstantTerm)) {
+							Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
+							for (int i = width - 1; i >= 0; i--) {
+								if (i == 0) {
+									final Term constInt =
+											SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
+									iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
+											translatedLHS, iteChain);
+								} else {
+									final Rational powResult = Rational.valueOf(i, 1);
+									final Term ifTerm = mScript.term("=", translatedRHS,
+											SmtUtils.rational2Term(mScript, powResult, intSort));
+									final int pow = (int) Math.pow(2, i);
+									final Term thenTerm =
+											mScript.term("mod",
+													mScript.term("*", SmtUtils.rational2Term(mScript,
+															Rational.valueOf(pow, 1), intSort), translatedLHS),
+													maxNumber);
+									iteChain = mScript.term("ite", ifTerm, thenTerm, iteChain);
+								}
+
 							}
-
+							setResult(iteChain);
+							return;
+						} else {
+							final Term shift = mScript.term("*", translatedLHS, pow2(translatedRHS));
+							setResult(mScript.term("mod", shift, maxNumber));
+							return;
 						}
-						setResult(iteChain);
-						return;
-					} else {
-						final Term shift = mScript.term("*", translatedLHS, pow2(translatedRHS));
-						setResult(mScript.term("mod", shift, maxNumber));
-						return;
 					}
-				}
-				case "bvlshr": {
-					final boolean iteMode = true;
-					if (iteMode && !(translatedRHS instanceof ConstantTerm)) {
-						Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
-						for (int i = width - 1; i >= 0; i--) {
-							if (i == 0) {
-								final Term constInt = SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
-								iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
-										translatedLHS, iteChain);
-							} else {
-								final Rational powResult = Rational.valueOf(i, 1);
-								final Term ifTerm = mScript.term("=", translatedRHS,
-										SmtUtils.rational2Term(mScript, powResult, intSort));
-								final int pow = (int) Math.pow(2, i);
-								final Term thenTerm = mScript.term("div", translatedLHS,
-										SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort));
-								iteChain = mScript.term("ite", ifTerm, thenTerm, iteChain);
+					case "bvlshr": {
+						final boolean iteMode = true;
+						if (iteMode && !(translatedRHS instanceof ConstantTerm)) {
+							Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
+							for (int i = width - 1; i >= 0; i--) {
+								if (i == 0) {
+									final Term constInt =
+											SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
+									iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
+											translatedLHS, iteChain);
+								} else {
+									final Rational powResult = Rational.valueOf(i, 1);
+									final Term ifTerm = mScript.term("=", translatedRHS,
+											SmtUtils.rational2Term(mScript, powResult, intSort));
+									final int pow = (int) Math.pow(2, i);
+									final Term thenTerm = mScript.term("div", translatedLHS,
+											SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort));
+									iteChain = mScript.term("ite", ifTerm, thenTerm, iteChain);
+								}
+
 							}
-
+							setResult(iteChain);
+							return;
+						} else {
+							final Term shift = mScript.term("div", translatedLHS, pow2(translatedRHS));
+							setResult(shift);
+							return;
 						}
-						setResult(iteChain);
+					}
+
+					case "bvashr": {
+						throw new UnsupportedOperationException("TODO " + fsym.getName());
+					}
+					case "concat": {
+						final Term multiplication = mScript.term("*", translatedLHS, maxNumber);
+						if (mNutzTransformation) {
+							throw new UnsupportedOperationException("TODO Nutz" + fsym.getName());
+						}
+						setResult(mScript.term("+", multiplication, translatedRHS));
 						return;
-					} else {
-						final Term shift = mScript.term("div", translatedLHS, pow2(translatedRHS));
-						setResult(shift);
+					}
+					case "bvsdiv": {
+						// TODO //nees to be replaced by unsigned definition
+						throw new UnsupportedOperationException("TODO " + fsym.getName());
+					}
+					case "bvudiv": {
+						Term rhs;
+						Term lhs;
+						if (mNutzTransformation) {
+							rhs = mScript.term("mod", translatedRHS, maxNumber);
+							lhs = mScript.term("mod", translatedLHS, maxNumber);
+						} else {
+							rhs = translatedRHS;
+							lhs = translatedLHS;
+						}
+						final Term ifTerm =
+								mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
+						final Term thenTerm =
+								mScript.term("-", maxNumber, SmtUtils.rational2Term(mScript, Rational.ONE, intSort));
+						final Term elseTerm = mScript.term("div", lhs, rhs);
+						setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
 						return;
 					}
-				}
-
-				case "bvashr": {
-					throw new UnsupportedOperationException("TODO " + fsym.getName());
-				}
-				case "concat": {
-					final Term multiplication = mScript.term("*", translatedLHS, maxNumber);
-					if (mNutzTransformation) {
-						throw new UnsupportedOperationException("TODO Nutz" + fsym.getName());
+					case "bvsrem": {
+						// TODO //nees to be replaced by unsigned definition
+						throw new UnsupportedOperationException("TODO " + fsym.getName());
 					}
-					setResult(mScript.term("+", multiplication, translatedRHS));
-					return;
-				}
-				case "bvsdiv": {
-					// TODO
-
-				}
-				case "bvudiv": {
-					Term rhs;
-					Term lhs;
-					if (mNutzTransformation) {
-						rhs = mScript.term("mod", translatedRHS, maxNumber);
-						lhs = mScript.term("mod", translatedLHS, maxNumber);
-					} else {
-						rhs = translatedRHS;
-						lhs = translatedLHS;
+					case "bvurem": {
+						Term rhs;
+						Term lhs;
+						if (mNutzTransformation) {
+							rhs = mScript.term("mod", translatedRHS, maxNumber);
+							lhs = mScript.term("mod", translatedLHS, maxNumber);
+						} else {
+							rhs = translatedRHS;
+							lhs = translatedLHS;
+						}
+						final Term ifTerm =
+								mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
+						final Term thenTerm = lhs;
+						final Term elseTerm = mScript.term("mod", lhs, rhs);
+						setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
+						return;
 					}
-					final Term ifTerm = mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
-					final Term thenTerm =
-							mScript.term("-", maxNumber, SmtUtils.rational2Term(mScript, Rational.ONE, intSort));
-					final Term elseTerm = mScript.term("div", lhs, rhs);
-					setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
-					return;
-				}
-				case "bvsrem": {
-					// TODO
-				}
-				case "bvurem": {
-					Term rhs;
-					Term lhs;
-					if (mNutzTransformation) {
-						rhs = mScript.term("mod", translatedRHS, maxNumber);
-						lhs = mScript.term("mod", translatedLHS, maxNumber);
-					} else {
-						rhs = translatedRHS;
-						lhs = translatedLHS;
+					case "bvand": {
+						final Term intAnd =
+								mScript.term(mTc.getIntAndFunctionSymbol().getName(), translatedLHS, translatedRHS);
+						mTc.bvandConstraint(intAnd, width);
+						setResult(intAnd);
+						return;
 					}
-					final Term ifTerm = mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
-					final Term thenTerm = lhs;
-					final Term elseTerm = mScript.term("mod", lhs, rhs);
-					setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
-					return;
-				}
-				case "bvand": {
-					final Term intAnd =
-							mScript.term(mTc.getIntAndFunctionSymbol().getName(), translatedLHS, translatedRHS);
-					mTc.bvandConstraint(intAnd, width);
-					setResult(intAnd);
-					return;
-				}
-
-				default:
-					throw new UnsupportedOperationException("TODOmessage " + fsym.getName());
+					}
 				}
 			}
 		}

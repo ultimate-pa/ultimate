@@ -141,7 +141,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mResultsPerLocation = new LinkedHashMap<>();
 		mWitnessAutomaton = witnessAutomaton;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
-		mIsConcurrent = isConcurrent(icfg);
+		mIsConcurrent = IcfgUtils.isConcurrent(icfg);
 		mResultReporter = new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME,
 				this::recordLocationResult);
 
@@ -170,7 +170,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		mArtifact = null;
 		final List<CegarLoopResult<L>> results;
-		if (isConcurrent(icfg)) {
+		if (IcfgUtils.isConcurrent(icfg)) {
 			results = analyseConcurrentProgram(icfg);
 		} else {
 			results = analyseSequentialProgram(icfg);
@@ -230,7 +230,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						+ " thread instances");
 				return results;
 			}
-			assert isConcurrent(icfg) : "Insufficient thread instances for sequential program";
+			assert IcfgUtils.isConcurrent(icfg) : "Insufficient thread instances for sequential program";
 			mLogger.warn(numberOfThreadInstances
 					+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 			numberOfThreadInstances++;
@@ -389,9 +389,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private CegarLoopResult<L> executeCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<IcfgLocation> icfg, final TraceAbstractionBenchmarks taBenchmark,
 			final Set<IcfgLocation> errorLocs) {
-		final CegarLoopResult<L> clres = CegarLoopUtils.getCegarLoopResult(services, name, icfg, mPrefs,
-				getPredicateFactory(icfg), errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile,
-				mComputeHoareAnnotation, mPrefs.getConcurrency(), mCreateCompositionFactory.get(), mTransitionClazz);
+		final CegarLoopResult<L> clres =
+				CegarLoopUtils.getCegarLoopResult(services, name, icfg, mPrefs, getPredicateFactory(icfg), errorLocs,
+						mWitnessAutomaton, mRawFloydHoareAutomataFromFile, mComputeHoareAnnotation,
+						mPrefs.getAutomataTypeConcurrency(), mCreateCompositionFactory.get(), mTransitionClazz);
 		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
 		return clres;
 	}
@@ -506,12 +507,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return false;
 	}
 
-	private static boolean isConcurrent(final IIcfg<IcfgLocation> icfg) {
-		return !icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
-	}
-
 	private IIcfg<IcfgLocation> petrify(final IIcfg<IcfgLocation> icfg, final int numberOfThreadInstances) {
-		assert isConcurrent(icfg) : "Petrification unnecessary for sequential programs";
+		assert IcfgUtils.isConcurrent(icfg) : "Petrification unnecessary for sequential programs";
 
 		mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
 		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg,

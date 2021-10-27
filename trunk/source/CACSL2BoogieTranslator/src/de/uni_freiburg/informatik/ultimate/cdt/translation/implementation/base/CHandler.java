@@ -1186,10 +1186,16 @@ public class CHandler {
 						// this may happen in a function parameter..
 						intSizeFactor = CArray.INCOMPLETE_ARRY_MAGIC_NUMBER;
 					}
-					final CPrimitive ctype = mExpressionTranslation.getCTypeOfPointerComponents();
-					final Expression sizeExpression =
-							mTypeSizes.constructLiteralForIntegerType(loc, ctype, BigInteger.valueOf(intSizeFactor));
-					sizeFactor = new RValue(sizeExpression, ctype, false, false);
+					// Index type of the array. All C expressions that access the array are
+					// converted to this type.
+					// In the past we wanted a type that is large enough for the
+					// CArray.INCOMPLETE_ARRY_MAGIC_NUMBER.
+					// If we work with an unsigned type for pointer components we have to rethink
+					// the use of the magic number.
+					final CPrimitive arrayIndexCtype = mExpressionTranslation.getCTypeOfPointerComponents();
+					final Expression sizeExpression = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
+							BigInteger.valueOf(intSizeFactor));
+					sizeFactor = new RValue(sizeExpression, arrayIndexCtype, false, false);
 
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");

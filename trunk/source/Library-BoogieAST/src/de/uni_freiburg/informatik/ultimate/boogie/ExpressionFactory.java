@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 
 /**
@@ -828,6 +829,29 @@ public class ExpressionFactory {
 	@Deprecated
 	private static String getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
 		return name.substring(1).replaceAll("\\d+", "");
+	}
+
+	public static Expression extend(final ILocation loc, final ExtendOperation extendOperation,
+			final String fullFunctionName, final Expression operandExpression, final BoogieType resultBoogieType,
+			final BigInteger indexExtension) {
+		if (operandExpression instanceof BitvecLiteral) {
+			final BitvectorConstant bc = toConstant((BitvecLiteral) operandExpression);
+			final BitvectorConstant extendedBc;
+			switch (extendOperation) {
+			case sign_extend:
+				extendedBc = BitvectorConstant.sign_extend(bc, indexExtension);
+				break;
+			case zero_extend:
+				extendedBc = BitvectorConstant.zero_extend(bc, indexExtension);
+				break;
+			default:
+				throw new AssertionError("unknown value " + extendOperation);
+			}
+			return createBitvecLiteral(loc, extendedBc.getValue().toString(), extendedBc.getIndex().intValueExact());
+		} else {
+			return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+					new Expression[] { operandExpression }, resultBoogieType);
+		}
 	}
 
 	private static Expression simplifyBitvectorExpression(final FunctionApplication node,

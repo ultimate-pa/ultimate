@@ -144,14 +144,6 @@ public class FunctionDeclarations {
 		return mDeclaredFunctions;
 	}
 
-	public String computeBitvectorSuffix(final ILocation loc, final CPrimitive... paramCTypes) {
-		final CPrimitive firstParam = paramCTypes[0];
-		final Integer bytesize = mTypeSizeConstants.getSize(firstParam.getType());
-		final int bitsize = bytesize * 8;
-
-		return String.valueOf(bitsize);
-	}
-
 	/**
 	 * Check if all CPrimitives in a sequence are equivalent.
 	 *

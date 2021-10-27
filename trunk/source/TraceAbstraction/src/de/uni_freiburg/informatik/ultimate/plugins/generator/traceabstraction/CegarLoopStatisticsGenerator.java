@@ -53,6 +53,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
 	private int mTraceHistogramMaximum = 0;
 	private int mInterpolantAutomatonStates = 0;
+	private int mPathProgramHistogramMaximum = 0;
 
 	@Override
 	public Collection<String> getKeys() {
@@ -116,6 +117,12 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		}
 	}
 
+	public void reportPathProgramHistogramMaximum(final int pathProgramHistogramMax) {
+		if (pathProgramHistogramMax > mPathProgramHistogramMaximum) {
+			mPathProgramHistogramMaximum = pathProgramHistogramMax;
+		}
+	}
+
 	public void reportInterpolantAutomatonStates(final int count) {
 		mInterpolantAutomatonStates += count;
 	}
@@ -156,6 +163,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mIterations;
 		case TraceHistogramMax:
 			return mTraceHistogramMaximum;
+		case PathProgramHistogramMax:
+			return mPathProgramHistogramMaximum;
 		case BiggestAbstraction:
 			return mBiggestAbstraction;
 		case InterpolantAutomatonStates:
