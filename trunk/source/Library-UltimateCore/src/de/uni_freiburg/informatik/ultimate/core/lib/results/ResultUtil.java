@@ -242,7 +242,10 @@ public final class ResultUtil {
 	 * @return the combined result
 	 */
 	public static IResult combineLocationResults(final IResult oldResult, final IResult newResult) {
-		if (newResult instanceof CounterExampleResult<?, ?, ?>) {
+		if (oldResult instanceof DataRaceFoundResult<?, ?, ?>) {
+			return oldResult;
+		}
+		if (newResult instanceof CounterExampleResult<?, ?, ?> || newResult instanceof DataRaceFoundResult<?, ?, ?>) {
 			return newResult;
 		}
 		if (oldResult instanceof TimeoutResultAtElement<?>
