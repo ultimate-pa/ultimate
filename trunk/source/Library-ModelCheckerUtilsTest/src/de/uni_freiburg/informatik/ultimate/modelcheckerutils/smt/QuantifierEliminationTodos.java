@@ -357,6 +357,17 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void brig() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_aws_array_list_is_valid_~list.base", "ULTIMATE.start_aws_array_list_is_valid_~list.offset", "ULTIMATE.start_aws_array_list_init_static_harness_~#list~0.base"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			};
+		final String formulaAsString = "(and (exists ((ULTIMATE.start_aws_mul_u64_checked_~r.base Int) (ULTIMATE.start_aws_mul_u64_checked_~b Int) (ULTIMATE.start_aws_mul_u64_checked_~a Int) (ULTIMATE.start_aws_mul_u64_checked_~r.offset Int) (|v_#memory_int_81| (Array Int (Array Int Int)))) (let ((.cse0 (select |v_#memory_int_81| ULTIMATE.start_aws_array_list_is_valid_~list.base))) (and (<= ULTIMATE.start_aws_mul_u64_checked_~r.offset 0) (or (= (select .cse0 8) 0) (exists ((v_ULTIMATE.start_aws_mul_u64_checked_~a_33 Int)) (let ((.cse1 (select |v_#memory_int_81| ULTIMATE.start_aws_array_list_is_valid_~list.base))) (let ((.cse2 (select .cse1 8))) (and (< 0 v_ULTIMATE.start_aws_mul_u64_checked_~a_33) (<= (select .cse1 24) (div .cse2 v_ULTIMATE.start_aws_mul_u64_checked_~a_33)) (= (mod .cse2 v_ULTIMATE.start_aws_mul_u64_checked_~a_33) 0)))))) (= (select .cse0 16) 0) (= |#memory_int| (store |v_#memory_int_81| ULTIMATE.start_aws_mul_u64_checked_~r.base (store (select |v_#memory_int_81| ULTIMATE.start_aws_mul_u64_checked_~r.base) ULTIMATE.start_aws_mul_u64_checked_~r.offset (* ULTIMATE.start_aws_mul_u64_checked_~b ULTIMATE.start_aws_mul_u64_checked_~a)))) (< 0 (select .cse0 24))))) (= ULTIMATE.start_aws_array_list_is_valid_~list.offset 0) (= ULTIMATE.start_aws_array_list_is_valid_~list.base |ULTIMATE.start_aws_array_list_init_static_harness_~#list~0.base|))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
