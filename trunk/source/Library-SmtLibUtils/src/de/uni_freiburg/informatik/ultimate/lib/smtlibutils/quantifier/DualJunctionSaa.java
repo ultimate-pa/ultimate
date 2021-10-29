@@ -49,6 +49,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 
 	/**
+	 * Our array elimination does not support if the term of the elimination task
+	 * contains quantified formulas. If this variable is set, we bring the term in
+	 * prenex normal form. Apply the elimination to the "matrix" of the prenex
+	 * normal form and add prepend the quantifiers to the result. If the elimination
+	 * new introduces auxiliary quantified variables, these have to be added at the
+	 * same level as the eliminatee, i.e., have to be prepended to the result. If
+	 * this variable is not set the elimination may crash or return unsound results.
+	 */
+	private static final boolean PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS = true;
+
+	/**
 	 * @see constructor
 	 */
 	private final boolean mExpensiveEliminations;
@@ -92,23 +103,36 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			if (!SmtSortUtils.isArraySort(eliminatee.getSort())) {
 				continue;
 			}
-			final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
-			final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
-			EliminationTaskPlain res = tryToEliminate(inputEt.getQuantifier(), qs.getInnerTerm(), inputEt.getContext(),
+			final Term term;
+			final QuantifierSequence qs;
+			if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
+				final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
+				qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+				term = qs.getInnerTerm();
+			} else {
+				term = inputEt.getTerm();
+			}
+			final EliminationTaskPlain res = tryToEliminate(inputEt.getQuantifier(), term, inputEt.getContext(),
 					eliminatee);
 			if (res != null) {
-				final QuantifierSequence qsResult = new QuantifierSequence(mScript, res.getTerm(),
-						qs.getQuantifierBlocks());
 				final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(inputEt.getEliminatees());
 				resultEliminatees.remove(eliminatee);
 				resultEliminatees.addAll(res.getEliminatees());
-				return inputEt.update(resultEliminatees, qsResult.toTerm());
+				final Term resultTerm;
+				if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
+					final QuantifierSequence qsForResult = new QuantifierSequence(mScript, res.getTerm(),
+							qs.getQuantifierBlocks());
+					resultTerm = qsForResult.toTerm();
+				} else {
+					resultTerm = res.getTerm();
+				}
+				return inputEt.update(resultEliminatees, resultTerm);
 			}
 		}
 		return null;
 	}
-	
-	private EliminationTaskPlain tryToEliminate(int quantifier, Term term, Context context, TermVariable eliminatee) {
+
+	private EliminationTaskPlain tryToEliminate(final int quantifier, final Term term, final Context context, final TermVariable eliminatee) {
 		final EliminationTaskPlain inputEtp = new EliminationTaskPlain(quantifier, Collections.singleton(eliminatee),
 				term, context.getCriticalConstraint());
 		EliminationTaskPlain res1;
