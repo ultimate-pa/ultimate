@@ -1858,7 +1858,10 @@ public class MemoryHandler {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
-			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, rda.alsoUncheckedRead(), hook));
+			if (rda.alsoUncheckedRead()) {
+				result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, true, hook));
+			}
+			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, false, hook));
 		}
 		return result;
 	}
