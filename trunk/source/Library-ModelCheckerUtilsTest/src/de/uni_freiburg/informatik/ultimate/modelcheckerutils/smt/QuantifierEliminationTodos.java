@@ -368,6 +368,17 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void maybeTooDifficult() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_save_byte_from_array_~storage.base", "ULTIMATE.start_save_byte_from_array_~storage.offset", "ULTIMATE.start_save_byte_from_array_~array.base", "ULTIMATE.start_save_byte_from_array_~array.offset", "ULTIMATE.start_aws_array_eq_harness_~rhs~0.base", "ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.base", "ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.offset", "ULTIMATE.start_aws_array_eq_harness_~lhs~0.offset", "ULTIMATE.start_aws_array_eq_harness_~lhs~0.base", "#StackHeapBarrier"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+			};
+		final String formulaAsString = "(forall ((|#memory_int| (Array Int (Array Int Int))) (v_ULTIMATE.start_save_byte_from_array_~array.offset_44 Int) (v_ULTIMATE.start_save_byte_from_array_~storage.offset_46 Int) (|v_ULTIMATE.start_nondet_size_t_#res_14| Int) (|ULTIMATE.start_nondet_size_t_#res| Int) (|v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24| Int)) (or (let ((.cse1 (let ((.cse2 (store |#memory_int| ULTIMATE.start_save_byte_from_array_~storage.base (let ((.cse4 (store (select |#memory_int| ULTIMATE.start_save_byte_from_array_~storage.base) ULTIMATE.start_save_byte_from_array_~storage.offset |ULTIMATE.start_nondet_size_t_#res|))) (store .cse4 (+ 8 ULTIMATE.start_save_byte_from_array_~storage.offset) (select (select (store |#memory_int| ULTIMATE.start_save_byte_from_array_~storage.base .cse4) ULTIMATE.start_save_byte_from_array_~array.base) (+ ULTIMATE.start_save_byte_from_array_~array.offset |ULTIMATE.start_nondet_size_t_#res|))))))) (store .cse2 |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24| (let ((.cse3 (store (select .cse2 |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24|) v_ULTIMATE.start_save_byte_from_array_~storage.offset_46 |v_ULTIMATE.start_nondet_size_t_#res_14|))) (store .cse3 (+ 8 v_ULTIMATE.start_save_byte_from_array_~storage.offset_46) (select (select (store .cse2 |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24| .cse3) ULTIMATE.start_aws_array_eq_harness_~rhs~0.base) (+ v_ULTIMATE.start_save_byte_from_array_~array.offset_44 |v_ULTIMATE.start_nondet_size_t_#res_14|)))))))) (let ((.cse0 (select .cse1 |ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.base|))) (= (mod (select .cse0 (+ 8 |ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.offset|)) 256) (mod (select (select .cse1 ULTIMATE.start_aws_array_eq_harness_~lhs~0.base) (+ ULTIMATE.start_aws_array_eq_harness_~lhs~0.offset (select .cse0 |ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.offset|))) 256)))) (not (= (select |#valid| |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24|) 0)) (<= |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24| |#StackHeapBarrier|)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
