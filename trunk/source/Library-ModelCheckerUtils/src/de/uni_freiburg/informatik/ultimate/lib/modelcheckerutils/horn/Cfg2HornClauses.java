@@ -251,8 +251,6 @@ public class Cfg2HornClauses {
 		assertInductivity(List.of(edge.getSource()), edge, List.of(edge.getTarget()));
 	}
 
-	// TODO: Add the possibility that the fork/join does nothing, i.e. works on an "invisible" thread
-
 	public void assertNonInterference(final IIcfgTransition<?> edge) {
 		final String proc = edge.getPrecedingProcedure();
 		final int n = mNumberOfThreads.get(proc);

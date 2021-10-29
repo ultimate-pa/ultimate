@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.horn;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -7,6 +8,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -39,7 +41,16 @@ public class Cfg2HornClauseUtils {
 		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
 		for (final String proc : numberOfThreads.keySet()) {
 			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
-			edges.forEachRemaining(result::assertInductivity);
+			while (edges.hasNext()) {
+				// TODO: Add the handling of joins (needs thread id?)
+				final IcfgEdge edge = edges.next();
+				if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
+					final String forked = ((IIcfgForkTransitionThreadCurrent<?>) edge).getNameOfForkedProcedure();
+					result.assertInductivity(List.of(edge.getSource()), edge,
+							List.of(edge.getTarget(), entryNodes.get(forked)));
+				}
+				result.assertInductivity(edge);
+			}
 		}
 		// TODO: For unbounded threads we need non-interference!
 		return result;
