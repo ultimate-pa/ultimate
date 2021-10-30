@@ -32,14 +32,14 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -104,10 +104,8 @@ public class QvasrAbstractor {
 	public QvasrAbstraction computeAbstraction(final Term transitionTerm,
 			final UnmodifiableTransFormula transitionFormula) {
 
-		final Map<TermVariable, Set<Term>> updatesInFormulaAdditions =
-				getUpdates(transitionTerm, transitionFormula, BaseType.ADDITIONS);
-		final Map<TermVariable, Set<Term>> updatesInFormulaResets =
-				getUpdates(transitionTerm, transitionFormula, BaseType.RESETS);
+		final Map<Term, Term> updatesInFormulaAdditions = getUpdates(transitionFormula, BaseType.ADDITIONS);
+		final Map<Term, Term> updatesInFormulaResets = getUpdates(transitionFormula, BaseType.RESETS);
 		final Term[][] newUpdatesMatrixResets = constructBaseMatrix(updatesInFormulaResets, transitionFormula);
 		final Term[][] newUpdatesMatrixAdditions = constructBaseMatrix(updatesInFormulaAdditions, transitionFormula);
 
@@ -120,7 +118,7 @@ public class QvasrAbstractor {
 
 		final Term[][] gaussed = gaussPartialPivot(newUpdatesMatrixResets);
 		printMatrix(gaussed);
-		final Term[][] gaussedOnes = gaussRowEchelonFormPolynomial(gaussed);
+		final Term[][] gaussedOnes = gaussRowEchelonForm(gaussed);
 		printMatrix(gaussedOnes);
 
 		final Rational[][] out = new Rational[2][2];
@@ -141,8 +139,8 @@ public class QvasrAbstractor {
 						mScript.getScript())) {
 
 					final IPolynomialTerm divider = PolynomialTermOperations.convert(mScript.getScript(), matrix[i][j]);
-					matrix[i][j] = mScript.getScript().decimal("1");
-					for (int k = j + 1; k < matrix[0].length; k++) {
+					// matrix[i][j] = mScript.getScript().decimal("1");
+					for (int k = j; k < matrix[0].length; k++) {
 						final IPolynomialTerm[] polyArr = new IPolynomialTerm[2];
 						final IPolynomialTerm toBeDivided =
 								PolynomialTermOperations.convert(mScript.getScript(), matrix[i][k]);
@@ -180,7 +178,8 @@ public class QvasrAbstractor {
 					matrix[i][j] = mScript.getScript().decimal("1");
 					for (int k = j + 1; k < matrix[0].length; k++) {
 						final Term toBeDivided = matrix[i][k];
-						final Term division = SmtUtils.divReal(mScript.getScript(), toBeDivided, divider);
+						final Term division = simplifyRealDivision(toBeDivided, divider);
+						// final Term division = SmtUtils.divReal(mScript.getScript(), toBeDivided, divider);
 						matrix[i][k] = division;
 					}
 					break;
@@ -188,6 +187,19 @@ public class QvasrAbstractor {
 			}
 		}
 		return matrix;
+	}
+
+	private final Term simplifyRealDivision(final Term dividend, final Term divisor) {
+		if (SmtUtils.areFormulasEquivalent(divisor, mScript.getScript().decimal("0"), mScript.getScript())) {
+			throw new UnsupportedOperationException("cannot divide by 0!");
+		}
+		if (SmtUtils.areFormulasEquivalent(divisor, mScript.getScript().decimal("1"), mScript.getScript())) {
+			return dividend;
+		}
+		if (SmtUtils.areFormulasEquivalent(dividend, mScript.getScript().decimal("0"), mScript.getScript())) {
+			return mScript.getScript().decimal("0");
+		}
+		return SmtUtils.divReal(mScript.getScript(), dividend, divisor);
 	}
 
 	/**
@@ -224,8 +236,7 @@ public class QvasrAbstractor {
 				// k is the column
 				for (int j = k + 1; j < matrix[0].length; j++) {
 					final Term currentColumn = matrix[k][j];
-					Term newMul = mScript.getScript().term("*", newDiv, currentColumn);
-					newMul = SmtUtils.simplify(mScript, newMul, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+					final Term newMul = mScript.getScript().term("*", newDiv, currentColumn);
 					final Term newSub = SmtUtils.minus(mScript.getScript(), matrix[i][j], newMul);
 					final Term newSimp =
 							SmtUtils.simplify(mScript, newSub, mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -287,43 +298,71 @@ public class QvasrAbstractor {
 	 * @param outVariables
 	 * @return
 	 */
-	private Map<TermVariable, Set<Term>> getUpdates(final Term transitionTerm,
-			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
-		final Map<TermVariable, Set<Term>> assignments = new HashMap<>();
-		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("=", false);
-
-		for (final TermVariable outVar : transitionFormula.getOutVars().values()) {
-			final Set<TermVariable> out = new HashSet<>();
-			out.add(outVar);
-			final Term filtered = SmtUtils.filterFormula(transitionTerm, out, mScript.getScript());
-			final Set<ApplicationTerm> varAssignment = applicationTermFinder.findMatchingSubterms(filtered);
-			final Set<Term> trueAssignment = new HashSet<>();
-			for (final ApplicationTerm app : varAssignment) {
-				for (Term param : app.getParameters()) {
-					if (!(param instanceof TermVariable) || (param instanceof TermVariable && param != outVar)) {
-
-						if (param instanceof ConstantTerm) {
-							final ConstantTerm paramConst = (ConstantTerm) param;
-							final Rational paramValue = (Rational) paramConst.getValue();
-							param = paramValue.toTerm(SmtSortUtils.getRealSort(mScript));
-						}
-						if (baseType == BaseType.ADDITIONS) {
-							final IProgramVar programVar =
-									(IProgramVar) TransFormulaUtils.getProgramVarForTerm(transitionFormula, outVar);
-							if (transitionFormula.getInVars().containsKey(programVar)) {
-								final TermVariable inVar = transitionFormula.getInVars().get(programVar);
-								param = SmtUtils.sum(mScript.getScript(), "+", param,
-										SmtUtils.neg(mScript.getScript(), inVar));
-							}
-						}
-						SmtUtils.simplify(mScript, param, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-						trueAssignment.add(param);
-					}
-				}
+	private Map<Term, Term> getUpdates(final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
+		final Map<Term, Term> assignments = new HashMap<>();
+		final Map<Term, Term> realTvs = new HashMap<>();
+		final HashMap<IProgramVar, Term> realUpdates = new HashMap<>();
+		final SimultaneousUpdate su;
+		try {
+			su = SimultaneousUpdate.fromTransFormula(transitionFormula, mScript);
+		} catch (final Exception e) {
+			throw new UnsupportedOperationException("Could not compute Simultaneous Update!");
+		}
+		/*
+		 * Create a new real sort termvariable.
+		 */
+		final Map<IProgramVar, Term> updates = su.getDeterministicAssignment();
+		for (final IProgramVar pv : updates.keySet()) {
+			realTvs.put(pv.getTermVariable(), mScript.constructFreshTermVariable(pv.getGloballyUniqueId() + "_real",
+					SmtSortUtils.getRealSort(mScript)));
+		}
+		/*
+		 * Transform the updates to variables to real sort.
+		 */
+		final SubstitutionWithLocalSimplification subTv = new SubstitutionWithLocalSimplification(mScript, realTvs);
+		for (final Entry<IProgramVar, Term> update : updates.entrySet()) {
+			final Term intUpdate = update.getValue();
+			final Term realUpdate = subTv.transform(intUpdate);
+			realUpdates.put(update.getKey(), realUpdate);
+		}
+		for (final Entry<IProgramVar, Term> varUpdate : realUpdates.entrySet()) {
+			final IProgramVar progVar = varUpdate.getKey();
+			final Term varUpdateTerm = varUpdate.getValue();
+			final HashMap<Term, Term> subMappingTerm = new HashMap<>();
+			Term realTerm;
+			if (varUpdateTerm instanceof ApplicationTerm) {
+				final ApplicationTerm varUpdateAppterm = (ApplicationTerm) varUpdateTerm;
+				subMappingTerm.putAll(appTermToReal(varUpdateAppterm));
+				final SubstitutionWithLocalSimplification subTerm =
+						new SubstitutionWithLocalSimplification(mScript, subMappingTerm);
+				realTerm = subTerm.transform(varUpdateAppterm);
+			} else {
+				realTerm = realTvs.get(progVar.getTermVariable());
 			}
-			assignments.put(outVar, trueAssignment);
+			if (baseType == BaseType.ADDITIONS) {
+				final Term realVar = realTvs.get(progVar.getTermVariable());
+				realTerm = SmtUtils.minus(mScript.getScript(), realTerm, realVar);
+			}
+			assignments.put(realTvs.get(progVar.getTermVariable()), realTerm);
 		}
 		return assignments;
+	}
+
+	private Map<Term, Term> appTermToReal(final ApplicationTerm appTerm) {
+		final Map<Term, Term> subMap = new HashMap<>();
+		for (final Term param : appTerm.getParameters()) {
+			if (param.getSort() == SmtSortUtils.getRealSort(mScript)) {
+				continue;
+			}
+			if (param instanceof ConstantTerm) {
+				final ConstantTerm paramConst = (ConstantTerm) param;
+				final Rational paramValue = (Rational) paramConst.getValue();
+				subMap.put(param, paramValue.toTerm(SmtSortUtils.getRealSort(mScript)));
+			} else {
+				subMap.putAll(appTermToReal((ApplicationTerm) param));
+			}
+		}
+		return subMap;
 	}
 
 	/**
@@ -338,29 +377,27 @@ public class QvasrAbstractor {
 	 * @param typeOfBase
 	 * @return
 	 */
-	private Term[][] constructBaseMatrix(final Map<TermVariable, Set<Term>> updates,
+	private Term[][] constructBaseMatrix(final Map<Term, Term> updates,
 			final UnmodifiableTransFormula transitionFormula) {
 		final int rowDimension = (int) Math.pow(2, transitionFormula.getInVars().size());
 		final int columnDimension = transitionFormula.getOutVars().size() + 1;
 		final Term[][] baseMatrix = new Term[rowDimension][columnDimension];
 
-		final Set<Set<TermVariable>> setToZero = new HashSet<>();
+		final Set<Set<Term>> setToZero = new HashSet<>();
 		final Map<Term, Term> intToReal = new HashMap<>();
-		for (final TermVariable tv : transitionFormula.getInVars().values()) {
-			final Set<TermVariable> inVar = new HashSet<>();
+		for (final Term tv : updates.keySet()) {
+			final Set<Term> inVar = new HashSet<>();
 			inVar.add(tv);
 			setToZero.add(inVar);
-			intToReal.put(tv,
-					mScript.constructFreshTermVariable(tv.getName() + "_real", SmtSortUtils.getRealSort(mScript)));
 		}
 		/*
 		 * To get a linear set of equations, which we want to solve, we set the various variables to 0.
 		 */
-		Set<Set<TermVariable>> powerset = new HashSet<>(setToZero);
-		for (final Set<TermVariable> inTv : setToZero) {
+		Set<Set<Term>> powerset = new HashSet<>(setToZero);
+		for (final Set<Term> inTv : setToZero) {
 			powerset = QvasrUtils.joinSet(powerset, inTv);
 		}
-		final Deque<Set<TermVariable>> zeroStack = new HashDeque<>();
+		final Deque<Set<Term>> zeroStack = new HashDeque<>();
 		zeroStack.addAll(powerset);
 		int j = 0;
 		final TermVariable a = mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript));
@@ -369,23 +406,23 @@ public class QvasrAbstractor {
 			baseMatrix[j][columnDimension - 1] = a;
 			final Map<Term, Term> subMapping = new HashMap<>();
 			if (j > 0) {
-				final Set<TermVariable> toBeSetZero = zeroStack.pop();
-				for (final TermVariable tv : toBeSetZero) {
+				final Set<Term> toBeSetZero = zeroStack.pop();
+				for (final Term tv : toBeSetZero) {
 					subMapping.put(tv, mScript.getScript().decimal("0"));
 				}
 			}
-			for (final Set<Term> update : updates.values()) {
-				for (final Term updateTerm : update) {
-					Term toBeUpdated;
-					final SubstitutionWithLocalSimplification sub =
-							new SubstitutionWithLocalSimplification(mScript, subMapping);
-					toBeUpdated = sub.transform(updateTerm);
-					final SubstitutionWithLocalSimplification subReal =
-							new SubstitutionWithLocalSimplification(mScript, intToReal);
-					final Term toBeUpdatedReal = subReal.transform(toBeUpdated);
+			for (final Entry<Term, Term> update : updates.entrySet()) {
+				final Term updateTerm = update.getValue();
+				Term toBeUpdated;
+				final SubstitutionWithLocalSimplification sub =
+						new SubstitutionWithLocalSimplification(mScript, subMapping);
+				toBeUpdated = sub.transform(updateTerm);
+				final SubstitutionWithLocalSimplification subReal =
+						new SubstitutionWithLocalSimplification(mScript, intToReal);
+				final Term toBeUpdatedReal = subReal.transform(toBeUpdated);
 
-					baseMatrix[j][i] = toBeUpdatedReal;
-				}
+				baseMatrix[j][i] = toBeUpdatedReal;
+
 				i++;
 			}
 			j++;
