@@ -8,7 +8,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  *
@@ -45,10 +44,10 @@ public class QvasrUtils {
 	 * @param variable
 	 * @return
 	 */
-	public static Set<Set<TermVariable>> joinSet(final Set<Set<TermVariable>> inSet, final Set<TermVariable> variable) {
-		final Set<Set<TermVariable>> joinedSet = new HashSet<>(inSet);
-		for (final Set<TermVariable> toBeJoined : inSet) {
-			final Set<TermVariable> varJoin = new HashSet<>();
+	public static Set<Set<Term>> joinSet(final Set<Set<Term>> inSet, final Set<Term> variable) {
+		final Set<Set<Term>> joinedSet = new HashSet<>(inSet);
+		for (final Set<Term> toBeJoined : inSet) {
+			final Set<Term> varJoin = new HashSet<>();
 			varJoin.addAll(toBeJoined);
 			varJoin.addAll(variable);
 			joinedSet.add(varJoin);
