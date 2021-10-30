@@ -95,8 +95,6 @@ public final class SolverBuilder {
 		}
 	}
 
-	public static final Logics LOGIC_CVC4_DEFAULT = Logics.AUFLIRA;
-	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.ALL;
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
 
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
@@ -790,7 +788,7 @@ public final class SolverBuilder {
 		Z3("z3 -smt2 -in SMTLIB2_COMPLIANT=true", "z3 -smt2 -in SMTLIB2_COMPLIANT=true" + " -t:%d", Logics.ALL),
 
 		CVC4("cvc4 --incremental --print-success --lang smt",
-				"cvc4 --incremental --print-success --lang smt" + " --tlimit-per=%d", LOGIC_CVC4_DEFAULT),
+				"cvc4 --incremental --print-success --lang smt" + " --tlimit-per=%d", Logics.ALL),
 
 		MATHSAT("mathsat -unsat_core_generation=3", null, Logics.ALL),
 
