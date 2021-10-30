@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
@@ -67,7 +66,7 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>> extends B
 			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBP));
 		}
-		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP, Logics.ALL));
+		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP));
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}

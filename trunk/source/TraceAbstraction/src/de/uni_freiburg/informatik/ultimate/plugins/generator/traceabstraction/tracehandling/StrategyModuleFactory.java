@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -163,16 +162,16 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 	}
 
 	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC4(final InterpolationTechnique technique,
-			final Logics logic, final AssertCodeBlockOrder... order) {
-		return createIpTcStrategyModuleCVC4(-1, technique, logic, order);
+			final AssertCodeBlockOrder... order) {
+		return createIpTcStrategyModuleCVC4(-1, technique, order);
 	}
 
 	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC4(final long timeoutInMillis,
-			final InterpolationTechnique technique, final Logics logic, final AssertCodeBlockOrder... order) {
+			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(
 				new IpTcStrategyModuleCvc4<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
 						mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-						mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique, logic));
+						mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
 	}
 
 	public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAbstractInterpretation() {

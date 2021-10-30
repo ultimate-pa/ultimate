@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 
 /**
  * Creates external instance of CVC 4 using {@link TraceCheckSpWp}.
@@ -58,19 +57,17 @@ public class IpTcStrategyModuleCvc4<LETTER extends IIcfgTransition<?>> extends I
 
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final long mTimeoutInMillis;
-	private final Logics mLogic;
 
 	public IpTcStrategyModuleCvc4(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
 			final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final long timeoutInMillis,
-			final InterpolationTechnique interpolationTechnique, final Logics cvc4Logic) {
+			final InterpolationTechnique interpolationTechnique) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
 				predicateUnifier, predicateFactory);
 		mTimeoutInMillis = timeoutInMillis;
 		mInterpolationTechnique = interpolationTechnique;
-		mLogic = cvc4Logic;
 		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
 				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
 	}
@@ -79,7 +76,7 @@ public class IpTcStrategyModuleCvc4<LETTER extends IIcfgTransition<?>> extends I
 	protected ManagedScript constructManagedScript() {
 		final long timeout = computeTimeout(mTimeoutInMillis);
 		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
-				.setUseExternalSolver(ExternalSolver.CVC4, mLogic, timeout)
+				.setUseExternalSolver(ExternalSolver.CVC4, timeout)
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
 		return createExternalManagedScript(solverSettings);
 	}
