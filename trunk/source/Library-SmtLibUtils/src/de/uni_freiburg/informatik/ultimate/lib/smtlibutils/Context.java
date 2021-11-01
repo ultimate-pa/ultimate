@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * While considering a subformula φ of a formula. The <i>context</i> provides
@@ -109,6 +110,12 @@ public class Context {
 
 	public Context constructChildContextForQuantifiedFormula(final Script script,
 			final List<TermVariable> quantifiedVars) {
+		final Set<TermVariable> intersection = DataStructureUtils.intersection(
+				Arrays.asList(mCriticalConstraint.getFreeVars()).stream().collect(Collectors.toSet()),
+				quantifiedVars.stream().collect(Collectors.toSet()));
+		if (!intersection.isEmpty()) {
+			throw new UnsupportedOperationException("Shadow problem: " + intersection);
+		}
 		final Term criticalConstraint = buildCriticalContraintForQuantifiedFormula(script, mCriticalConstraint,
 				quantifiedVars, mCcTransformation);
 		final Set<TermVariable> boundByAncestors = new HashSet<>(mBoundByAncestors);
