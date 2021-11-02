@@ -2527,8 +2527,13 @@ public final class SmtUtils {
 				.collect(Collectors.toSet());
 	}
 
-	public static Set<Term> extractApplicationTerms(final String fun, final Term term) {
-		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), false);
+	/**
+	 *
+	 * @param onlyOutermost if set to true we do not descend to subterms of a term
+	 *                      that has been found
+	 */
+	public static Set<Term> extractApplicationTerms(final String fun, final Term term, final boolean onlyOutermost) {
+		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
 	}
 
 	public static Term unzipNot(final Term term) {

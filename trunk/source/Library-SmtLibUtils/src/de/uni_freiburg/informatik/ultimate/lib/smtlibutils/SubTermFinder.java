@@ -83,8 +83,8 @@ public class SubTermFinder extends NonRecursive {
 	 *
 	 * @param predicate     subterms for which this predicate evaluates to true are
 	 *                      returned
-	 * @param onlyOutermost if the predicate evaluates to true for a subterm then,
-	 *                      don't consider subterms of this subterm
+	 * @param onlyOutermost if set to true we do not descend to subterms of a term
+	 *                      that has been found
 	 * @return subterms of the given term for which the predicate evaluates to true
 	 */
 	public static Set<Term> find(final Term term, final Predicate<Term> predicate, final boolean onlyOutermost) {
