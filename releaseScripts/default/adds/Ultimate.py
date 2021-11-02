@@ -47,6 +47,8 @@ ltl_true_string = "Buchi Automizer proved that the LTL property"
 error_path_begin_string = "We found a FailurePath:"
 termination_path_end = "End of lasso representation."
 overflow_false_string = "overflow possible"
+data_race_found_string = "DataRaceFoundResult"
+data_race_error_path_begin_string = "The following path leads to a data race"
 
 
 class _PropParser:
@@ -309,8 +311,10 @@ def contains_overapproximation_result(line):
     return False
 
 
-def run_ultimate(ultimate_call, prop):
+def run_ultimate(ultimate_call, prop, verbose=False):
     print("Calling Ultimate with: " + " ".join(ultimate_call))
+    if verbose:
+        print("--- Real Ultimate output ---")
 
     ultimate_process = call_desperate(ultimate_call)
 
@@ -327,6 +331,7 @@ def run_ultimate(ultimate_call, prop):
 
         ultimate_process.poll()
         if ultimate_process.returncode is not None and not line:
+            print("--- End real Ultimate output ---")
             if ultimate_process.returncode == 0:
                 print("\nExecution finished normally")
             else:
@@ -339,8 +344,10 @@ def run_ultimate(ultimate_call, prop):
         if reading_error_path:
             error_path += line
         ultimate_output += line
-        sys.stdout.write(".")
-        # sys.stdout.write('Ultimate: ' + line)
+        if verbose:
+            sys.stdout.write(line)
+        else:
+            sys.stdout.write(".")
         sys.stdout.flush()
         if line.find(unsupported_syntax_errorstring) != -1:
             result = "ERROR: UNSUPPORTED SYNTAX"
@@ -375,6 +382,19 @@ def run_ultimate(ultimate_call, prop):
                 result = "TRUE"
             if line.find(termination_path_end) != -1:
                 reading_error_path = False
+        elif prop.is_data_race():
+            if line.find(data_race_found_string) != -1:
+                result = "FALSE"
+            if line.find(all_spec_string) != -1:
+                result = "TRUE"
+            if line.find(data_race_error_path_begin_string) != -1:
+                blank_lines = 0
+                reading_error_path = True
+            if reading_error_path and line.strip() == "":
+                if blank_lines < 1:
+                    blank_lines += 1
+                else:
+                    reading_error_path = False
         else:
             if line.find(safety_string) != -1 or line.find(all_spec_string) != -1:
                 result = "TRUE"
@@ -883,7 +903,7 @@ def main():
 
     # actually run Ultimate, first in integer mode
     result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(
-        ultimate_call, prop
+        ultimate_call, prop, verbose
     )
 
     if overapprox or result.startswith("ERROR") or result.startswith("UNKNOWN"):
@@ -909,16 +929,22 @@ def main():
             )
             if extras:
                 ultimate_call = ultimate_call + extras
+
+            bit_precise_marker = "### Bit-precise run ###"
+            if verbose:
+                print()
+                print(bit_precise_marker)
+
             (
                 result,
                 result_msg,
                 overapprox,
                 ultimate_bitprecise_output,
                 error_path,
-            ) = run_ultimate(ultimate_call, prop)
+            ) = run_ultimate(ultimate_call, prop, verbose)
             ultimate_output = (
                 ultimate_output
-                + "\n### Bit-precise run ###\n"
+                + f"\n{bit_precise_marker}\n"
                 + ultimate_bitprecise_output
             )
 
@@ -939,14 +965,9 @@ def main():
 
     print("Result:")
     print(result)
-    if verbose:
-        print("--- Real Ultimate output ---")
-        print(ultimate_output)
-
-    if result.startswith("ERROR"):
-        sys.exit(ExitCode.FAIL_ULTIMATE_ERROR)
-
-    sys.exit(ExitCode.SUCCESS)
+    sys.exit(
+        ExitCode.FAIL_ULTIMATE_ERROR if result.startswith("ERROR") else ExitCode.SUCCESS
+    )
 
 
 def signal_handler(sig, frame):
