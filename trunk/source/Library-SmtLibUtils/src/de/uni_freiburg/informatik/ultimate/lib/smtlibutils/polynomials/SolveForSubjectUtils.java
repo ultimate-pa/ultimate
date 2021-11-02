@@ -598,7 +598,7 @@ public class SolveForSubjectUtils {
 
 	@Deprecated
 	private static boolean someGivenTermVariableOccursInTerm(final Term term, final Set<TermVariable> termVariables) {
-		final Set<Term> divSubterms = SmtUtils.extractApplicationTerms("div", term);
+		final Set<Term> divSubterms = SmtUtils.extractApplicationTerms("div", term, false);
 		return divSubterms.stream().anyMatch(x -> Arrays.stream(x.getFreeVars()).anyMatch(termVariables::contains));
 	}
 
