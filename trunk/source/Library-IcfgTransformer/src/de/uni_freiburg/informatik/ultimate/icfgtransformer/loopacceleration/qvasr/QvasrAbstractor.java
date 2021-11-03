@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
@@ -116,10 +115,11 @@ public class QvasrAbstractor {
 			printMatrix(newUpdatesMatrixAdditions);
 		}
 
-		final Term[][] gaussed = gaussPartialPivot(newUpdatesMatrixResets);
+		final Term[][] gaussed = gaussPartialPivot(newUpdatesMatrixAdditions);
 		printMatrix(gaussed);
 		final Term[][] gaussedOnes = gaussRowEchelonForm(gaussed);
 		printMatrix(gaussedOnes);
+		final Term[] solutions = backSub(gaussed);
 
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
@@ -168,6 +168,7 @@ public class QvasrAbstractor {
 	 *
 	 * @param matrix
 	 * @return
+	 *
 	 */
 	private Term[][] gaussRowEchelonForm(final Term[][] matrix) {
 		for (int i = 0; i < matrix.length; i++) {
@@ -175,10 +176,14 @@ public class QvasrAbstractor {
 				if (!SmtUtils.areFormulasEquivalent(matrix[i][j], mScript.getScript().decimal("0"),
 						mScript.getScript())) {
 					final Term divider = matrix[i][j];
-					matrix[i][j] = mScript.getScript().decimal("1");
-					for (int k = j + 1; k < matrix[0].length; k++) {
+					// matrix[i][j] = mScript.getScript().decimal("1");
+					for (int k = j; k < matrix[0].length; k++) {
 						final Term toBeDivided = matrix[i][k];
-						final Term division = simplifyRealDivision(toBeDivided, divider);
+						final Term division =
+								simplifyRealDivision(toBeDivided, divider, mScript.getScript().decimal("1"));
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("Matrix " + i + k + " =  " + division.toStringDirect());
+						}
 						// final Term division = SmtUtils.divReal(mScript.getScript(), toBeDivided, divider);
 						matrix[i][k] = division;
 					}
@@ -189,17 +194,28 @@ public class QvasrAbstractor {
 		return matrix;
 	}
 
-	private final Term simplifyRealDivision(final Term dividend, final Term divisor) {
-		if (SmtUtils.areFormulasEquivalent(divisor, mScript.getScript().decimal("0"), mScript.getScript())) {
-			throw new UnsupportedOperationException("cannot divide by 0!");
+	/**
+	 * TODO
+	 *
+	 * @param matrix
+	 * @return
+	 */
+	private Term[] backSub(final Term[][] matrix) {
+		final Term[] solutions = new Term[matrix[0].length];
+		for (int k = 0; k < matrix[0].length; k++) {
+			solutions[k] = mScript.getScript().decimal("0");
 		}
-		if (SmtUtils.areFormulasEquivalent(divisor, mScript.getScript().decimal("1"), mScript.getScript())) {
-			return dividend;
+		final int columns = matrix[0].length - 1;
+		final int solCounter = columns;
+		for (int i = matrix.length - 1; 0 <= i; i--) {
+			solutions[solCounter] = matrix[i][columns];
+			for (int j = 0; j < columns - 1; j++) {
+				final Term mul = SmtUtils.mul(mScript.getScript(), "*", matrix[i][j], solutions[j]);
+				final Term sub = SmtUtils.minus(mScript.getScript(), solutions[solCounter], mul);
+				solutions[solCounter] = sub;
+			}
 		}
-		if (SmtUtils.areFormulasEquivalent(dividend, mScript.getScript().decimal("0"), mScript.getScript())) {
-			return mScript.getScript().decimal("0");
-		}
-		return SmtUtils.divReal(mScript.getScript(), dividend, divisor);
+		return solutions;
 	}
 
 	/**
@@ -209,15 +225,14 @@ public class QvasrAbstractor {
 	 * @return
 	 */
 	private Term[][] gaussPartialPivot(Term[][] matrix) {
-		for (int k = 0; k < matrix.length; k++) {
+		for (int k = 0; k < matrix.length - 1; k++) {
 			int max = 0;
-
 			if ((k + 1) < matrix.length) {
 				max = findPivot(matrix, k);
 			}
 			if (max == -1) {
-				mLogger.warn("Gaussian Elimination failed: Pivot is 0");
-				return new Term[0][0];
+				mLogger.warn("Gaussian Elimination Done.");
+				return matrix;
 			}
 			if (max != 0) {
 				matrix = swap(matrix, k, max);
@@ -226,31 +241,52 @@ public class QvasrAbstractor {
 			// i is the row
 			for (int i = k + 1; i < matrix.length; i++) {
 				final Term toBeEliminated = matrix[i][k];
-				matrix[i][k] = mScript.getScript().decimal("0");
+				// matrix[i][k] = mScript.getScript().decimal("0");
 				final Term newDiv = SmtUtils.divReal(mScript.getScript(), toBeEliminated, pivot);
-				// final Term newDiv = mScript.getScript().term("/", toBeEliminated, pivot);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Divide: " + matrix[i][k].toString() + " by " + matrix[k][k].toString() + "\n"
 							+ newDiv.toStringDirect());
 				}
 				// k is the column
-				for (int j = k + 1; j < matrix[0].length; j++) {
+				for (int j = k; j < matrix[0].length; j++) {
 					final Term currentColumn = matrix[k][j];
-					final Term newMul = mScript.getScript().term("*", newDiv, currentColumn);
+					final Term newMul = simplifyRealDivision(toBeEliminated, pivot, currentColumn);
 					final Term newSub = SmtUtils.minus(mScript.getScript(), matrix[i][j], newMul);
-					final Term newSimp =
-							SmtUtils.simplify(mScript, newSub, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(" ");
+						mLogger.debug("Matrix: " + i + " " + j + "   " + matrix[i][j].toStringDirect());
+						mLogger.debug("Division: " + newDiv.toStringDirect());
+						mLogger.debug("Times: " + currentColumn.toStringDirect());
 						mLogger.debug("Multiplication: " + newMul.toStringDirect());
-						mLogger.debug("Difference: " + newSub.toStringDirect());
-						mLogger.debug("Simplified " + newSimp.toStringDirect());
+						mLogger.debug("Result: " + newSub.toStringDirect());
+						mLogger.debug(" ");
 					}
-					matrix[i][j] = newSimp;
+					matrix[i][j] = newSub;
 				}
 			}
 			mLogger.debug("Gauss done?");
 		}
 		return matrix;
+	}
+
+	private final Term simplifyRealDivision(final Term dividend, final Term divisor, final Term mult) {
+		if (SmtUtils.areFormulasEquivalent(divisor, mScript.getScript().decimal("0"), mScript.getScript())) {
+			throw new UnsupportedOperationException("cannot divide by 0!");
+		}
+		if (SmtUtils.areFormulasEquivalent(divisor, mScript.getScript().decimal("1"), mScript.getScript())) {
+			return mScript.getScript().term("*", dividend, mult);
+		}
+		if (SmtUtils.areFormulasEquivalent(dividend, mScript.getScript().decimal("0"), mScript.getScript())) {
+			return mScript.getScript().decimal("0");
+		}
+		if (SmtUtils.areFormulasEquivalent(dividend, divisor, mScript.getScript())) {
+			return mScript.getScript().term("*", mScript.getScript().decimal("1"), mult);
+		}
+		if (SmtUtils.areFormulasEquivalent(mult, divisor, mScript.getScript())) {
+			return dividend;
+		}
+		final Term div = SmtUtils.divReal(mScript.getScript(), dividend, divisor);
+		return SmtUtils.mul(mScript.getScript(), "*", div, mult);
 	}
 
 	/**
@@ -348,6 +384,12 @@ public class QvasrAbstractor {
 		return assignments;
 	}
 
+	/**
+	 * Converts a give application term to real sort.
+	 *
+	 * @param appTerm
+	 * @return
+	 */
 	private Map<Term, Term> appTermToReal(final ApplicationTerm appTerm) {
 		final Map<Term, Term> subMap = new HashMap<>();
 		for (final Term param : appTerm.getParameters()) {
