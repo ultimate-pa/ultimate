@@ -187,6 +187,7 @@ str_benchexec_timeout: str = "Timeout by benchexec"
 str_benchexec_oom: str = "OOM by benchexec"
 version_matcher: Pattern[str] = re.compile(r"^.*(\d+\.\d+\.\d+-\w+).*$")
 enable_debug: bool = False
+enable_trace: bool = False
 
 
 def class_idx(result: Classification) -> int:
@@ -249,6 +250,11 @@ def debug(msg: str) -> None:
         print(msg)
 
 
+def trace(msg: str) -> None:
+    if enable_trace:
+        print(msg)
+
+
 def parse_args() -> argparse.Namespace:
     try:
         parser = argparse.ArgumentParser(
@@ -289,7 +295,7 @@ def scan_line(
     line: str, result: Optional[Classification], line_iter: Iterator[str]
 ) -> Classification:
     new_result = None
-    debug("Looking at line {}".format(line))
+    trace("Looking at line {}".format(line))
 
     for message, mc in interesting_strings.items():
         if message in line:
@@ -324,16 +330,6 @@ def rescan_wrapper_preamble(file: str, call: str, version: str) -> List[Result]:
     the wrapper script
     """
     debug("Rescanning wrapper preamble")
-    with open(file, "rb") as f:
-        # If the wrapper script was killed without any chance to print a message, the last elements are dots.
-        # In this case we group the result as timeout and return a hardcoded line
-        f.seek(-3, 2)
-        last_elems = f.read()
-        if b"..." == last_elems:
-            return [Result(file, ("Killed from outside", "..."), call, version)]
-        else:
-            debug("Last 3 elements of file are {}".format(last_elems))
-
     with open(file) as f:
         lines = [line.rstrip("\n") for line in f].__iter__()
 
@@ -352,12 +348,15 @@ def rescan_wrapper_preamble(file: str, call: str, version: str) -> List[Result]:
                 classification = scan_line(line, classification, lines)
 
         return [Result(file, classification, call, version)]
+    # We just assume that the wrapper script was killed without any chance to print a message.
+    # In this case we group the result as timeout and return a hardcoded line
+    return [Result(file, ("Killed from outside", "..."), call, version)]
 
 
 def process_wrapper_script_log(file: str) -> List[Result]:
     results: List[Result] = []
     default: bool = True
-    wrapper_preamble: bool = True
+    wrapper_output: bool = True
     collect_call: bool = False
     version: Optional[str] = None
     classification: Optional[Classification] = None
@@ -368,25 +367,24 @@ def process_wrapper_script_log(file: str) -> List[Result]:
         for line in lines:
             if not line:
                 continue
-            if wrapper_preamble:
-                if "Using bit-precise analysis" in line:
+            if wrapper_output:
+                if "### Bit-precise run ###" in line:
                     default = False
                 elif line.startswith("Calling Ultimate with:"):
                     call: List[str] = [line]
                     collect_call = True
-                elif collect_call:
-                    if "Execution finished normally" in line:
+                elif "--- Real Ultimate output ---" in line:
+                    wrapper_output = False
+                    if collect_call:
                         collect_call = False
                         if default:
-                            default_call = " ".join(call[:-1])
+                            default_call = " ".join(call)
                             debug("Found default call {}".format(default_call))
                         else:
-                            bitvec_call = " ".join(call[:-1])
+                            bitvec_call = " ".join(call)
                             debug("Found bitvector call {}".format(bitvec_call))
-                    else:
-                        call += [line]
-                elif "--- Real Ultimate output ---" in line:
-                    wrapper_preamble = False
+                elif collect_call:
+                    call += [line]
             else:
                 if line.startswith("This is Ultimate"):
                     new_version = version_matcher.findall(line)[0]
@@ -398,26 +396,34 @@ def process_wrapper_script_log(file: str) -> List[Result]:
                         )
                     version = new_version
                     debug("Found Ultimate version {}".format(version))
-                elif "### Bit-precise run ###" in line:
-                    debug("Found default result: {}".format(classification))
-                    results += [Result(file, classification, default_call, version)]
-                    classification = None
+                elif line.startswith("--- End real Ultimate output ---"):
+                    if default:
+                        debug(f"Final result for default mode: {classification}")
+                        results += [Result(file, classification, default_call, version)]
+                        classification = None
+                        wrapper_output = True
+                    else:
+                        debug(f"Final result for bitvec mode: {classification}")
+                        results += [Result(file, classification, bitvec_call, version)]
+                        classification = None
+                        wrapper_output = True
                 else:
                     classification = scan_line(line, classification, lines)
-    if bitvec_call:
-        debug("Found bitvec result: {}".format(classification))
-        results += [Result(file, classification, bitvec_call, version)]
-    if not results:
-        if classification and default_call:
-            # case where the bitvector run did not start, e.g., termination
-            debug("Using default result: {}".format(classification))
-            return [Result(file, classification, default_call, version)]
-        debug("No results for file {}".format(file))
-        return rescan_wrapper_preamble(
-            file,
-            default_call if default_call else (bitvec_call if bitvec_call else None),
-            version,
-        )
+    if classification is None and results:
+        # Scanned wrapper log successfully
+        debug(f"File {file} has {len(results)} results, run completed as expected")
+        return results
+
+    results += rescan_wrapper_preamble(
+        file,
+        default_call if default_call else (bitvec_call if bitvec_call else None),
+        version,
+    )
+    if classification:
+        # use last result we got from the Ultimate log as well
+        results += [Result(file, classification, default_call, version)]
+
+    debug(f"File {file} has {len(results)} results, run was interrupted")
     return results
 
 
@@ -448,10 +454,10 @@ def process_log_file(file: str) -> List[Result]:
         lines = [line.rstrip("\n") for line in f]
         for line in lines:
             if "Ultimate.py" in line:
-                debug("Wrapper script detected")
+                debug(f"Wrapper script detected for {file}")
                 return process_wrapper_script_log(file)
             elif "This is Ultimate" in line:
-                debug("No wrapper script detected")
+                debug(f"No wrapper script detected for {file}")
                 return process_direct_call_log(file)
     raise UnsupportedLogFile(
         "Encountered unrecognized file (not an Ultimate log file): {}".format(file)
@@ -634,7 +640,7 @@ def process_input_dir(input_dir: str, runs: Dict[str, Run]) -> Tuple[int, List[R
         results += set_unknowns(process_log_file(input_dir), input_dir, runs)
         log_file_count = 1
     else:
-        local_cores = max(multiprocessing.cpu_count() - 4, 1)
+        local_cores = 1 if enable_debug else max(multiprocessing.cpu_count() - 4, 1)
         queue = multiprocessing.Queue(maxsize=local_cores)
         pool = multiprocessing.Pool(
             local_cores,
