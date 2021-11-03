@@ -115,11 +115,17 @@ public class QvasrAbstractor {
 			printMatrix(newUpdatesMatrixAdditions);
 		}
 
-		final Term[][] gaussed = gaussPartialPivot(newUpdatesMatrixAdditions);
-		printMatrix(gaussed);
-		final Term[][] gaussedOnes = gaussRowEchelonForm(gaussed);
-		printMatrix(gaussedOnes);
-		final Term[] solutions = backSub(gaussed);
+		final Term[][] gaussedAdditions = gaussPartialPivot(newUpdatesMatrixAdditions);
+		printMatrix(gaussedAdditions);
+		final Term[][] gaussedAdditionsOnes = gaussRowEchelonForm(gaussedAdditions);
+		printMatrix(gaussedAdditionsOnes);
+		final Term[] solutions = backSub(gaussedAdditionsOnes);
+
+		final Term[][] gaussedResets = gaussPartialPivot(newUpdatesMatrixResets);
+		printMatrix(gaussedResets);
+		final Term[][] gaussedResetsOnes = gaussRowEchelonForm(gaussedResets);
+		printMatrix(gaussedResetsOnes);
+		final Term[] solutionsResets = backSub(gaussedResetsOnes);
 
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
@@ -372,6 +378,9 @@ public class QvasrAbstractor {
 				final SubstitutionWithLocalSimplification subTerm =
 						new SubstitutionWithLocalSimplification(mScript, subMappingTerm);
 				realTerm = subTerm.transform(varUpdateAppterm);
+			} else if (varUpdateTerm instanceof ConstantTerm) {
+				final Rational value = SmtUtils.toRational((ConstantTerm) varUpdateTerm);
+				realTerm = value.toTerm(SmtSortUtils.getRealSort(mScript));
 			} else {
 				realTerm = realTvs.get(progVar.getTermVariable());
 			}
@@ -422,8 +431,7 @@ public class QvasrAbstractor {
 	private Term[][] constructBaseMatrix(final Map<Term, Term> updates,
 			final UnmodifiableTransFormula transitionFormula) {
 		final int rowDimension = (int) Math.pow(2, transitionFormula.getInVars().size());
-		final int columnDimension = transitionFormula.getOutVars().size() + 1;
-		final Term[][] baseMatrix = new Term[rowDimension][columnDimension];
+		final int columnDimension = transitionFormula.getOutVars().size();
 
 		final Set<Set<Term>> setToZero = new HashSet<>();
 		final Map<Term, Term> intToReal = new HashMap<>();
@@ -436,6 +444,7 @@ public class QvasrAbstractor {
 		 * To get a linear set of equations, which we want to solve, we set the various variables to 0.
 		 */
 		Set<Set<Term>> powerset = new HashSet<>(setToZero);
+		final Term[][] baseMatrix = new Term[powerset.size() + 2][columnDimension + 1];
 		for (final Set<Term> inTv : setToZero) {
 			powerset = QvasrUtils.joinSet(powerset, inTv);
 		}
@@ -445,7 +454,7 @@ public class QvasrAbstractor {
 		final TermVariable a = mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript));
 		while (!zeroStack.isEmpty()) {
 			int i = 0;
-			baseMatrix[j][columnDimension - 1] = a;
+			baseMatrix[j][columnDimension] = a;
 			final Map<Term, Term> subMapping = new HashMap<>();
 			if (j > 0) {
 				final Set<Term> toBeSetZero = zeroStack.pop();
