@@ -183,8 +183,8 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		if (!mLogger.isInfoEnabled()) {
 			return;
 		}
-		mLogger.info("Constructing automaton from %s perfect and %s imperfect interpolant sequences.",
-				perfectIpps.size(), imperfectIpps.size());
+		mLogger.info("Found %s perfect and %s imperfect interpolant sequences.", perfectIpps.size(),
+				imperfectIpps.size());
 		final List<Integer> numberInterpolantsPerfect = new ArrayList<>();
 		final Set<IPredicate> allInterpolants = new HashSet<>();
 		for (final QualifiedTracePredicates qtp : perfectIpps) {

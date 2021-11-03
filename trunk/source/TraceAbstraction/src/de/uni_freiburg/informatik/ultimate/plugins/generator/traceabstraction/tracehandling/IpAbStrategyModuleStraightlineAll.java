@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -56,11 +57,13 @@ public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyM
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
 	private IpAbStrategyModuleResult<LETTER> mResult;
+	private final ILogger mLogger;
 
-	public IpAbStrategyModuleStraightlineAll(final IUltimateServiceProvider services,
+	public IpAbStrategyModuleStraightlineAll(final IUltimateServiceProvider services, final ILogger logger,
 			final IAutomaton<LETTER, IPredicate> abstraction, final IRun<LETTER, ?> counterexample,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
+		mLogger = logger;
 		mAbstraction = abstraction;
 		mCounterexample = counterexample;
 		mEmptyStackFactory = emptyStackFactory;
@@ -70,11 +73,16 @@ public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyM
 	public IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(final List<QualifiedTracePredicates> perfectIpps,
 			final List<QualifiedTracePredicates> imperfectIpps) {
 		final List<QualifiedTracePredicates> usedIpps;
+		final String logMsg;
 		if (perfectIpps.isEmpty()) {
 			usedIpps = imperfectIpps;
+			logMsg = String.format("Using %s imperfect interpolants to construct interpolant automaton",
+					usedIpps.size());
 		} else {
 			usedIpps = perfectIpps;
+			logMsg = String.format("Using %s perfect interpolants to construct interpolant automaton", usedIpps.size());
 		}
+		mLogger.info(logMsg);
 		if (mResult == null) {
 			final StraightLineInterpolantAutomatonBuilder<LETTER> automatonBuilder =
 					new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),

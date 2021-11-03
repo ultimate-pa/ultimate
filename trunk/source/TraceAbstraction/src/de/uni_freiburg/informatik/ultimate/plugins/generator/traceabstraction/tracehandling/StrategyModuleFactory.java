@@ -222,7 +222,7 @@ public class StrategyModuleFactory<L extends IIcfgTransition<?>> {
 				mTaPrefs.overrideInterpolantAutomaton() ? mTaPrefs.interpolantAutomaton() : setting;
 		switch (realSetting) {
 		case STRAIGHT_LINE:
-			return new IpAbStrategyModuleStraightlineAll<>(mServices, mAbstraction, mCounterexample,
+			return new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction, mCounterexample,
 					mEmptyStackFactory);
 		case CANONICAL:
 			return new IpAbStrategyModuleCanonical<>(mServices, mLogger, mAbstraction, mCounterexample,
