@@ -11,7 +11,17 @@ import sys
 import xml.etree.ElementTree as ET
 from functools import lru_cache
 from pathlib import Path
-from typing import Tuple, List, Iterator, Any, Dict, Optional, Pattern, ChainMap, TypeVar
+from typing import (
+    Tuple,
+    List,
+    Iterator,
+    Any,
+    Dict,
+    Optional,
+    Pattern,
+    ChainMap,
+    TypeVar,
+)
 
 import yaml
 from tqdm import tqdm
@@ -19,7 +29,7 @@ from tqdm import tqdm
 # some type defs
 # first is category, second is message
 Classification = Tuple[str, str]
-T = TypeVar('T', bound=Any)
+T = TypeVar("T", bound=Any)
 
 
 class UnsupportedLogFile(ValueError):
@@ -37,11 +47,11 @@ class Result:
     logfile: str
 
     def __init__(
-            self,
-            logfile: Optional[str],
-            result: Optional[Classification],
-            call: Optional[str],
-            version: Optional[str],
+        self,
+        logfile: Optional[str],
+        result: Optional[Classification],
+        call: Optional[str],
+        version: Optional[str],
     ) -> None:
         self.logfile = logfile
         self.version = version
@@ -140,7 +150,7 @@ class MessageClassifier:
     delta_debug_category: bool
 
     def __init__(
-            self, category: str, message: str, values: Dict[str, Any] = None
+        self, category: str, message: str, values: Dict[str, Any] = None
     ) -> None:
         self.category = category
         self.message = message
@@ -155,9 +165,15 @@ class MessageClassifier:
             self.show_line = values.get("show_line", self.show_line)
             self.dump_smt = values.get("dump_smt", self.dump_smt)
             self.delta_debug = values.get("delta_debug", self.delta_debug)
-            self.delta_debug_result_type = values.get("delta_debug_result_type", self.delta_debug_result_type)
-            self.delta_debug_short = values.get("delta_debug_short", self.delta_debug_short)
-            self.delta_debug_category = values.get("delta_debug_category", self.delta_debug_category)
+            self.delta_debug_result_type = values.get(
+                "delta_debug_result_type", self.delta_debug_result_type
+            )
+            self.delta_debug_short = values.get(
+                "delta_debug_short", self.delta_debug_short
+            )
+            self.delta_debug_category = values.get(
+                "delta_debug_category", self.delta_debug_category
+            )
 
     def __str__(self) -> str:
         return f"[{type(self).__name__}] {self.category}: {self.message} show_line={self.show_line} dump_smt={self.dump_smt} delta_debug={self.delta_debug}"
@@ -190,7 +206,7 @@ def limit(msg: str, lim: int) -> str:
     if lim < 4:
         raise ValueError("limit must be larger or equal 4 but was {}".format(lim))
     if len(msg) > lim:
-        return msg[0: lim - 3] + "..."
+        return msg[0 : lim - 3] + "..."
     return msg.ljust(lim, " ")
 
 
@@ -225,7 +241,7 @@ def is_positive(value: str) -> int:
 def format_number(number: float, number_of_digits: int) -> str:
     if number is None:
         return ""
-    return f'{number:.{number_of_digits}f}'
+    return f"{number:.{number_of_digits}f}"
 
 
 def debug(msg: str) -> None:
@@ -246,12 +262,22 @@ def parse_args() -> argparse.Namespace:
             type=is_file,
             help="Specify directory containing Ultimate log files or single log file",
         )
-        parser.add_argument("--fastest-n", metavar="<n>", type=is_positive, default=1,
-                            help="Specify how many of the fastest examples per category should be shown."
-                                 "Default: 1")
-        parser.add_argument("--cut-off", metavar="<n>", type=is_positive, default=10,
-                            help="The size of the result class that should be grouped separately at the bottom."
-                                 "Default: 10")
+        parser.add_argument(
+            "--fastest-n",
+            metavar="<n>",
+            type=is_positive,
+            default=1,
+            help="Specify how many of the fastest examples per category should be shown."
+            "Default: 1",
+        )
+        parser.add_argument(
+            "--cut-off",
+            metavar="<n>",
+            type=is_positive,
+            default=10,
+            help="The size of the result class that should be grouped separately at the bottom."
+            "Default: 10",
+        )
 
         return parser.parse_args()
     except argparse.ArgumentError as exc:
@@ -260,7 +286,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def scan_line(
-        line: str, result: Optional[Classification], line_iter: Iterator[str]
+    line: str, result: Optional[Classification], line_iter: Iterator[str]
 ) -> Classification:
     new_result = None
     debug("Looking at line {}".format(line))
@@ -352,10 +378,10 @@ def process_wrapper_script_log(file: str) -> List[Result]:
                     if "Execution finished normally" in line:
                         collect_call = False
                         if default:
-                            default_call = ' '.join(call[:-1])
+                            default_call = " ".join(call[:-1])
                             debug("Found default call {}".format(default_call))
                         else:
-                            bitvec_call = ' '.join(call[:-1])
+                            bitvec_call = " ".join(call[:-1])
                             debug("Found bitvector call {}".format(bitvec_call))
                     else:
                         call += [line]
@@ -432,15 +458,17 @@ def process_log_file(file: str) -> List[Result]:
     )
 
 
-def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: argparse.Namespace) -> None:
+def print_results(
+    results: List[Result], runs: Optional[Dict[str, Run]], args: argparse.Namespace
+) -> None:
     cat_cnt = collections.Counter()
     result_cnt = collections.Counter()
     processed = {}
     for r in results:
         cat_cnt[r.category()] += 1
         if (
-                r.category() == str_no_result_unknown
-                or not interesting_strings[r.category()].show_line
+            r.category() == str_no_result_unknown
+            or not interesting_strings[r.category()].show_line
         ):
             key = r.message()
         else:
@@ -463,33 +491,51 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
         msg_detail = msg
 
         if runs:
-            fastest = n_min([x for x in results if x.category() == r.category() and x.message() == r.message() and os.path.basename(x.logfile) in runs],
-                            args.fastest_n,
-                            key=lambda y: runs[os.path.basename(y.logfile)].walltime)
+            fastest = n_min(
+                [
+                    x
+                    for x in results
+                    if x.category() == r.category()
+                    and x.message() == r.message()
+                    and os.path.basename(x.logfile) in runs
+                ],
+                args.fastest_n,
+                key=lambda y: runs[os.path.basename(y.logfile)].walltime,
+            )
             for f in fastest:
                 run = runs[os.path.basename(f.logfile)]
-                msg_detail += f'\n{" ":<8} {format_number(run.walltime, 2):>8}s {f.logfile}'
+                msg_detail += (
+                    f'\n{" ":<8} {format_number(run.walltime, 2):>8}s {f.logfile}'
+                )
                 msg_detail += f'\n{" ":<18} {"Call:":<8} {f.call}'
                 if r.category() not in interesting_strings:
                     print(f"{r.category()} not in interesting_strings")
                     continue
                 mc = interesting_strings[r.category()]
                 if mc.delta_debug:
-                    desc = "--deltadebugger.result.short.description.prefix" if mc.delta_debug_short else "--deltadebugger.result.long.description.prefix"
-                    msg_detail += f'\n{" ":<18} {"Delta:":<8} {f.call} ' \
-                                f'--deltadebugger.look.for.result.of.type "{mc.delta_debug_result_type}" ' \
-                                f'{desc} "{r.category() if mc.delta_debug_category else r.message()}" '
+                    desc = (
+                        "--deltadebugger.result.short.description.prefix"
+                        if mc.delta_debug_short
+                        else "--deltadebugger.result.long.description.prefix"
+                    )
+                    msg_detail += (
+                        f'\n{" ":<18} {"Delta:":<8} {f.call} '
+                        f'--deltadebugger.look.for.result.of.type "{mc.delta_debug_result_type}" '
+                        f'{desc} "{r.category() if mc.delta_debug_category else r.message()}" '
+                    )
 
                 if mc.dump_smt:
                     dump_dir = Path(f"{os.path.dirname(f.logfile)}-dump")
                     dump_dir.mkdir(parents=True, exist_ok=True)
-                    msg_detail += f'\n{" ":<18} {"Dump SMT:":<8} {f.call} ' \
-                                f'--rcfgbuilder.dump.smt.script.to.file true ' \
-                                f'--rcfgbuilder.compress.dumped.smt.script true ' \
-                                f'--rcfgbuilder.to.the.following.directory "{dump_dir}" ' \
-                                f'--traceabstraction.dump.smt.script.to.file true ' \
-                                f'--traceabstraction.compress.dumped.smt.script true ' \
-                                f'--traceabstraction.to.the.following.directory "{dump_dir}" '
+                    msg_detail += (
+                        f'\n{" ":<18} {"Dump SMT:":<8} {f.call} '
+                        f"--rcfgbuilder.dump.smt.script.to.file true "
+                        f"--rcfgbuilder.compress.dumped.smt.script true "
+                        f'--rcfgbuilder.to.the.following.directory "{dump_dir}" '
+                        f"--traceabstraction.dump.smt.script.to.file true "
+                        f"--traceabstraction.compress.dumped.smt.script true "
+                        f'--traceabstraction.to.the.following.directory "{dump_dir}" '
+                    )
 
         if j < args.cut_off:
             print_cutoff += [msg]
@@ -518,13 +564,13 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
 
 
 def set_unknowns(
-        results: List[Result], file: str, runs: Dict[str, Run]
+    results: List[Result], file: str, runs: Dict[str, Run]
 ) -> List[Result]:
     real_results = []
     for r in results:
         if r.classification is None:
             basename = ntpath.basename(file)
-            run = runs.get(basename,None)
+            run = runs.get(basename, None)
             if not run:
                 raise UnsupportedLogFile(f"There is no run for {file}")
             if run.is_timeout():
@@ -560,11 +606,11 @@ def list_xml_filepaths(input_dir: str) -> Iterator[str]:
 
 
 def consume_task(
-        queue: multiprocessing.Queue,
-        results: List[Result],
-        runs: Dict[str, Run],
-        o: List[Dict[str, MessageClassifier]],
-        i: ChainMap[str, MessageClassifier],
+    queue: multiprocessing.Queue,
+    results: List[Result],
+    runs: Dict[str, Run],
+    o: List[Dict[str, MessageClassifier]],
+    i: ChainMap[str, MessageClassifier],
 ) -> None:
     global order
     global interesting_strings
@@ -602,7 +648,7 @@ def process_input_dir(input_dir: str, runs: Dict[str, Run]) -> Tuple[int, List[R
         for path in progress_bar:
             progress_bar.set_description(
                 "Processing ...{:100.100} [{:>3}C]".format(
-                    path[len(input_dir):], local_cores
+                    path[len(input_dir) :], local_cores
                 )
             )
             queue.put(path)
@@ -632,7 +678,9 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
         result = root.find(".")
         name_attr = result.attrib.get("name", None)
         if not name_attr:
-            print(f"Run in xml file {xml} has no name! Cannot detect toolname, ignoring .xml")
+            print(
+                f"Run in xml file {xml} has no name! Cannot detect toolname, ignoring .xml"
+            )
             continue
         name = name_attr.split(".")
         tool_name = name[0]
