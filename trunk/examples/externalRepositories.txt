@@ -1,5 +1,5 @@
 Further examples can be found in the following repositories.
- * SVCOMP: https://github.com/dbeyer/sv-benchmarks
+ * SVCOMP: https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
  * ultimate-benchmarks: https://github.com/ultimate-pa/ultimate-benchmarks.git
 
 Notes:
