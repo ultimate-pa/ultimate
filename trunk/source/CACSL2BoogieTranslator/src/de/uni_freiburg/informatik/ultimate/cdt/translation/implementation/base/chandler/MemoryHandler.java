@@ -169,6 +169,8 @@ public class MemoryHandler {
 
 		ULTIMATE_PTHREADS_MUTEX_LOCK("#PthreadsMutexLock"),
 
+		ULTIMATE_PTHREADS_MUTEX_TRYLOCK("#PthreadsMutexTryLock"),
+
 		ULTIMATE_VALID(SFO.VALID),
 
 		/**
@@ -557,7 +559,12 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK)) {
-			decl.addAll(declarePthreadMutexLock(main, mTypeHandler, tuLoc, hook));
+			decl.addAll(declarePthreadMutexLock(main, mTypeHandler, tuLoc));
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK)) {
+			decl.addAll(declarePthreadMutexTryLock(main, mTypeHandler, tuLoc));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -591,6 +598,13 @@ public class MemoryHandler {
 		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK);
 		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { variableLHS },
 				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName(), new Expression[] { pointer });
+	}
+
+	public CallStatement constructPthreadMutexTryLockCall(final ILocation loc, final Expression pointer,
+			final VariableLHS variableLHS) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK);
+		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { variableLHS },
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK.getName(), new Expression[] { pointer });
 	}
 
 	/**
@@ -2223,8 +2237,7 @@ public class MemoryHandler {
 		final Expression oldArray =
 				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
 		final Expression ase = constructOneDimensionalArrayStore(loc, oldArray, index, newValue);
-		final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
-		return eq;
+		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
 	}
 
 	private static Expression ensuresArrayNestedUpdate(final ILocation loc, final List<Expression> newValues,
@@ -2862,7 +2875,7 @@ public class MemoryHandler {
 	 * locked, then the thread blocks.
 	 */
 	private ArrayList<Declaration> declarePthreadMutexLock(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc, final IASTNode hook) {
+			final ILocation tuLoc) {
 		final String inputPointerIdentifier = "#inputPtr";
 		final ASTType inputPointerAstType =
 				typeHandler.cType2AstType(tuLoc, new CPointer(new CPrimitive(CPrimitives.VOID)));
@@ -2884,7 +2897,6 @@ public class MemoryHandler {
 
 		final Expression mutexArray = constructMutexArrayIdentifierExpression(tuLoc);
 		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
-		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
 
 		final Procedure procDecl = new Procedure(tuLoc, new Attribute[0],
 				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName(), new String[0],
@@ -2898,13 +2910,7 @@ public class MemoryHandler {
 
 		// old(#PthreadsMutex)[#ptr] == false
 		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
-						ExpressionFactory.constructNestedArrayAccessExpression(tuLoc,
-								ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD,
-										mutexArray),
-								new Expression[] { inputPointerExpression }),
-						bLFalse),
-				Collections.emptySet()));
+				constructOldMutexUnlockedCheckExpression(tuLoc, inputPointerExpression), Collections.emptySet()));
 		// #PthreadsMutex == old(#PthreadsMutex)[#ptr := true]
 		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, true,
 				ensuresArrayUpdate(tuLoc, bLTrue, inputPointerExpression, mutexArray),
@@ -2921,6 +2927,82 @@ public class MemoryHandler {
 		mProcedureManager.endCustomProcedure(main, MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName());
 		// result.add(procDecl);
 		return result;
+	}
+
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
+	 * locked, then the function returns an error (non-zero value).
+	 */
+	private ArrayList<Declaration> declarePthreadMutexTryLock(final CHandler main, final ITypeHandler typeHandler,
+			final ILocation tuLoc) {
+		final String inputPointerIdentifier = "#inputPtr";
+		final ASTType inputPointerAstType =
+				typeHandler.cType2AstType(tuLoc, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		final String resultIdentifier = SFO.RES;
+		final CType resultCType = new CPrimitive(CPrimitives.INT);
+		final ASTType resultAstType = typeHandler.cType2AstType(tuLoc, resultCType);
+		final BoogieType resultBoogieType = typeHandler.getBoogieTypeForCType(resultCType);
+
+		final Expression zero =
+				mTypeSizes.constructLiteralForIntegerType(tuLoc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		final Expression inputPointerExpression =
+				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(),
+						inputPointerIdentifier, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
+								MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK.getName()));
+
+		final Expression resultIdentifierExpression = ExpressionFactory.constructIdentifierExpression(tuLoc,
+				resultBoogieType, resultIdentifier, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
+						MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK.getName()));
+
+		final Expression mutexArray = constructMutexArrayIdentifierExpression(tuLoc);
+		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
+
+		final Procedure procDecl = new Procedure(tuLoc, new Attribute[0],
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK.getName(), new String[0],
+				new VarList[] { new VarList(tuLoc, new String[] { inputPointerIdentifier }, inputPointerAstType) },
+				new VarList[] { new VarList(tuLoc, new String[] { resultIdentifier }, resultAstType) },
+				new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(main, tuLoc,
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK.getName(), procDecl);
+
+		// condition: if mutex unlocked
+		final Expression unlocked = constructOldMutexUnlockedCheckExpression(tuLoc, inputPointerExpression);
+
+		// then case: lock the mutex, return 0 (success)
+		final Expression lockUpdate = ensuresArrayUpdate(tuLoc, bLTrue, inputPointerExpression, mutexArray);
+		final Expression successResult =
+				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, resultIdentifierExpression, zero);
+
+		// else case: mutex unchanged, return non-zero error value
+		final Expression lockUnchanged = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, mutexArray,
+				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, mutexArray));
+		final Expression errorResult =
+				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.LOGICNEG, successResult);
+
+		final List<Specification> specs = new ArrayList<>();
+		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+				ExpressionFactory.constructIfThenElseExpression(tuLoc, unlocked,
+						ExpressionFactory.and(tuLoc, List.of(lockUpdate, successResult)),
+						ExpressionFactory.and(tuLoc, List.of(lockUnchanged, errorResult))),
+				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))));
+		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
+
+		final ArrayList<Declaration> result = new ArrayList<>();
+		mProcedureManager.endCustomProcedure(main, MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK.getName());
+		// result.add(procDecl);
+		return result;
+	}
+
+	// old(#PthreadsMutex)[#inputPtr] == false
+	private Expression constructOldMutexUnlockedCheckExpression(final ILocation loc, final Expression inputPtr) {
+		final Expression mutexArray = constructMutexArrayIdentifierExpression(loc);
+		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
+
+		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+				ExpressionFactory.constructNestedArrayAccessExpression(loc,
+						ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, mutexArray),
+						new Expression[] { inputPtr }),
+				bLFalse);
 	}
 
 	/**

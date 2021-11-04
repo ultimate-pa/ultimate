@@ -265,6 +265,7 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_join", this::handlePthread_join);
 		fill(map, "pthread_mutex_init", this::handlePthread_mutex_init);
 		fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
+		fill(map, "pthread_mutex_trylock", this::handlePthread_mutex_trylock);
 		fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
 		fill(map, "pthread_exit", this::handlePthread_exit);
 		fill(map, "pthread_cond_init", this::handlePthread_success);
@@ -284,7 +285,6 @@ public class StandardFunctionHandler {
 		// further unsupported pthread functions
 		fill(map, "pthread_rwlock_wrlock", die);
 		fill(map, "pthread_rwlock_rdlock", die);
-		fill(map, "pthread_mutex_trylock", die);
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 		fill(map, "scanf", die);
@@ -1227,6 +1227,27 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 1, name, arguments);
 
 		return createPthread_mutex_lock(main, loc, arguments[0]);
+	}
+
+	private Result handlePthread_mutex_trylock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final IASTInitializerClause mutex = arguments[0];
+
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
+		final Expression index = arg.getLrValue().getValue();
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+
+		// auxvar for joined procedure's return value
+		final CType cType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		erb.addDeclaration(auxvarinfo.getVarDec());
+		erb.addAuxVar(auxvarinfo);
+
+		erb.addStatement(mMemoryHandler.constructPthreadMutexTryLockCall(loc, index, auxvarinfo.getLhs()));
+		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
+		return erb.build();
 	}
 
 	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc,
