@@ -26,6 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -81,5 +86,15 @@ public class ArrayStore {
 		assert (appTerm.getParameters().length == 3);
 		return new ArrayStore(appTerm.getParameters()[0], appTerm.getParameters()[1], appTerm.getParameters()[2],
 				appTerm);
+	}
+
+	/**
+	 *
+	 * @param onlyOutermost if set to true we do not descend to subterms of a term
+	 *                      that has been found
+	 */
+	public static Collection<ArrayStore> extractStores(final Term term, final boolean onlyOutermost) {
+		final Set<Term> storeTerms = SmtUtils.extractApplicationTerms("store", term, onlyOutermost);
+		return storeTerms.stream().map(ArrayStore::convert).collect(Collectors.toList());
 	}
 }
