@@ -227,6 +227,7 @@ public class ThreadIdManager {
 		// but this incorrectness will currently not have a negative effect
 		final ExpressionResult argThreadIdPointer = mExpressionResultTransformer.performImplicitConversion(tmp,
 				new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+		erb.addAllExceptLrValue(argThreadIdPointer);
 
 		final HeapLValue heapLValue;
 		if (argThreadIdPointer.getLrValue() instanceof HeapLValue) {
