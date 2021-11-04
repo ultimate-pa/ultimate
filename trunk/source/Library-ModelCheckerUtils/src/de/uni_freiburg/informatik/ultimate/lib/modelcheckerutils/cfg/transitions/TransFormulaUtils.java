@@ -192,11 +192,10 @@ public final class TransFormulaUtils {
 					}
 				}
 			}
-			for (final TermVariable oldAuxVar : transFormula.get(i).getAuxVars()) {
-				final TermVariable newAuxVar = mgdScript.constructFreshCopy(oldAuxVar);
-				substitutionMapping.put(oldAuxVar, newAuxVar);
-				auxVars.add(newAuxVar);
-			}
+			final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript
+					.constructFreshCopies(transFormula.get(i).getAuxVars());
+			substitutionMapping.putAll(oldAuxVar2newAuxVar);
+			auxVars.addAll(oldAuxVar2newAuxVar.values());
 			tfb.addBranchEncoders(transFormula.get(i).getBranchEncoders());
 
 			for (final IProgramVar var : transFormula.get(i).getInVars().keySet()) {
