@@ -1887,10 +1887,15 @@ public class CHandler {
 		}
 	}
 
+	/**
+	 * Add Boogie code for allocation and writing of string literals. TODO 20211105
+	 * Matthias: Optimization: String literals are stored in a separate read-only
+	 * area of the memory. String literals can neither be modified nor deallocated.
+	 */
 	private Result handleStringLiteralExpression(final ILocation loc, final IDispatcher main,
 			final IASTLiteralExpression node) {
-		// Note: We can either use loc here or create a new ignore-loc s.t. the string literal assignment will not be
-		// shown in the backtranslation
+		// Note: We can either use loc here or create a new ignore-loc s.t. the string
+		// literal assignment will not be shown in the backtranslation
 		final ILocation actualLoc = LocationFactory.createIgnoreCLocation(node);
 
 		final CStringLiteral stringLiteral = new CStringLiteral(node.getValue(), mTypeSizes.getSignednessOfChar());
@@ -1898,29 +1903,31 @@ public class CHandler {
 		final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(actualLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
 
-		final RValue auxVarRValue;
+		final RValue addressRValue;
 		final AuxVarInfo auxvar;
 
 		final RValue dimension = new RValue(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents());
 		final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
 		final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 		auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
-		auxVarRValue = new RValueForArrays(auxvar.getExp(), arrayType);
-		// the declaration of the variable that corresponds to a string literal has to be made globally
+		addressRValue = new RValueForArrays(auxvar.getExp(), arrayType);
+		// the declaration of the variable that corresponds to a string literal has to
+		// be made global
 		mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
 
-		// overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-		final boolean writeValues =
-				stringLiteral.getByteValues().size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 
 		final List<Statement> statements = new ArrayList<>();
-		final CallStatement ultimateAllocCall =
-				mMemoryHandler.getUltimateMemAllocCall(sizeInBytesExpr, auxvar.getLhs(), actualLoc, MemoryArea.STACK);
+		final CallStatement ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(sizeInBytesExpr, auxvar.getLhs(),
+				actualLoc, MemoryArea.STACK);
 		statements.add(ultimateAllocCall);
 
+		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
+		// or longer
+		final boolean writeValues = stringLiteral.getByteValues()
+				.size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 		if (writeValues) {
-			final ExpressionResult exprRes =
-					mInitHandler.writeStringLiteral(actualLoc, auxVarRValue, stringLiteral, node);
+			final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral,
+					node);
 			assert !exprRes.hasLRValue();
 			assert exprRes.getDeclarations().isEmpty();
 			assert exprRes.getOverapprs().isEmpty();
@@ -1938,7 +1945,7 @@ public class CHandler {
 			overapproxList = new ArrayList<>();
 			overapproxList.add(overapprox);
 		}
-		return new StringLiteralResult(auxVarRValue, overapproxList, auxvar, stringLiteral, !writeValues);
+		return new StringLiteralResult(addressRValue, overapproxList, auxvar, stringLiteral, !writeValues);
 	}
 
 	public Result visit(final IDispatcher main, final IASTNode node) {
