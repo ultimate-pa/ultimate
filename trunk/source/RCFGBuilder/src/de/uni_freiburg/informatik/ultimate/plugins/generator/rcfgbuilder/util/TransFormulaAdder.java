@@ -114,8 +114,9 @@ public class TransFormulaAdder {
 
 		TranslationResult tlres = null;
 		try {
-			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks,
-					simplificationTechnique, procId, statements);
+			final SimplificationTechnique simplTech =
+					mSimplifyCodeBlocks ? simplificationTechnique : SimplificationTechnique.NONE;
+			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(simplTech, procId, statements);
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(cb, e.getMessage());

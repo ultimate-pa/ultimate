@@ -118,7 +118,27 @@ public final class SmtUtils {
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE, POLY_PAC
+		SIMPLIFY_BDD_PROP(false),
+
+		SIMPLIFY_BDD_FIRST_ORDER(false),
+
+		SIMPLIFY_QUICK(true),
+
+		SIMPLIFY_DDA(true),
+
+		POLY_PAC(false),
+
+		NONE(false);
+
+		private final boolean mDecidesFeasibility;
+
+		SimplificationTechnique(final boolean decidesFeasibility) {
+			mDecidesFeasibility = decidesFeasibility;
+		}
+
+		public boolean decidesFeasibility() {
+			return mDecidesFeasibility;
+		}
 	}
 
 	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
@@ -2532,8 +2552,8 @@ public final class SmtUtils {
 
 	/**
 	 *
-	 * @param onlyOutermost if set to true we do not descend to subterms of a term
-	 *                      that has been found
+	 * @param onlyOutermost
+	 *            if set to true we do not descend to subterms of a term that has been found
 	 */
 	public static Set<Term> extractApplicationTerms(final String fun, final Term term, final boolean onlyOutermost) {
 		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
