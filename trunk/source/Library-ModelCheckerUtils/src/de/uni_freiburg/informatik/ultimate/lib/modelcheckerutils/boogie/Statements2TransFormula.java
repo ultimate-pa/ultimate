@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -165,11 +166,11 @@ public class Statements2TransFormula {
 		}
 	}
 
-	private TranslationResult getTransFormula(final boolean simplify, final boolean feasibilityKnown,
+	private TranslationResult getTransFormula(final boolean feasibilityKnown,
 			final SimplificationTechnique simplicationTechnique) {
 		UnmodifiableTransFormula tf = null;
 		try {
-			tf = constructTransFormula(simplify, feasibilityKnown, simplicationTechnique);
+			tf = constructTransFormula(feasibilityKnown, simplicationTechnique);
 			mCurrentProcedure = null;
 			mTransFormulaBuilder = null;
 			mAuxVars = null;
@@ -183,7 +184,7 @@ public class Statements2TransFormula {
 		return new TranslationResult(tf, mOverapproximations);
 	}
 
-	private UnmodifiableTransFormula constructTransFormula(final boolean simplify, final boolean feasibilityKnown,
+	private UnmodifiableTransFormula constructTransFormula(final boolean feasibilityKnown,
 			final SimplificationTechnique simplicationTechnique) {
 		Term formula;
 		if (mSimplePartialSkolemization) {
@@ -194,7 +195,7 @@ public class Statements2TransFormula {
 		formula = mBoogie2SMT.getSmtFunctionsAndAxioms().inline(formula);
 
 		Infeasibility infeasibility = null;
-		if (simplify) {
+		if (simplicationTechnique != SimplificationTechnique.NONE) {
 			formula = SmtUtils.simplify(mMgdScript, formula, mServices, simplicationTechnique);
 		}
 
@@ -203,12 +204,19 @@ public class Statements2TransFormula {
 		}
 
 		if (infeasibility == null) {
-			if (formula == mScript.term("false")) {
+			final Term falseTerm = mScript.term("false");
+			if (formula == falseTerm) {
 				infeasibility = Infeasibility.INFEASIBLE;
-			} else if (simplify) {
+			} else if (simplicationTechnique.decidesFeasibility()) {
 				infeasibility = Infeasibility.UNPROVEABLE;
 			} else {
-				infeasibility = Infeasibility.NOT_DETERMINED;
+				final LBool isSat = Util.checkSat(mScript, formula);
+				if (isSat == LBool.UNSAT) {
+					formula = falseTerm;
+					infeasibility = Infeasibility.INFEASIBLE;
+				} else {
+					infeasibility = Infeasibility.UNPROVEABLE;
+				}
 			}
 		}
 
@@ -684,8 +692,7 @@ public class Statements2TransFormula {
 		return result;
 	}
 
-	public TranslationResult statementSequence(final boolean simplify,
-			final SimplificationTechnique simplicationTechnique, final String procId,
+	public TranslationResult statementSequence(final SimplificationTechnique simplicationTechnique, final String procId,
 			final List<Statement> statements) {
 		initialize(procId);
 		for (int i = statements.size() - 1; i >= 0; i--) {
@@ -708,7 +715,7 @@ public class Statements2TransFormula {
 			}
 
 		}
-		return getTransFormula(simplify, false, simplicationTechnique);
+		return getTransFormula(false, simplicationTechnique);
 	}
 
 	/**
@@ -774,7 +781,7 @@ public class Statements2TransFormula {
 		assert arguments.length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
 		eliminateAuxVarsViaDer();
-		return getTransFormula(false, true, simplificationTechnique);
+		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
 	@Deprecated
@@ -805,7 +812,7 @@ public class Statements2TransFormula {
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
 		eliminateAuxVarsViaDer();
-		return getTransFormula(false, true, simplificationTechnique);
+		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
 	@Deprecated
@@ -834,7 +841,7 @@ public class Statements2TransFormula {
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
 		eliminateAuxVarsViaDer();
-		return getTransFormula(false, true, simplificationTechnique);
+		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
 	/**
@@ -871,7 +878,7 @@ public class Statements2TransFormula {
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
 		eliminateAuxVarsViaDer();
-		return getTransFormula(false, true, simplicationTechnique);
+		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
 	@Deprecated
@@ -902,7 +909,7 @@ public class Statements2TransFormula {
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
 		eliminateAuxVarsViaDer();
-		return getTransFormula(false, true, simplificationTechnique);
+		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
 	/**
