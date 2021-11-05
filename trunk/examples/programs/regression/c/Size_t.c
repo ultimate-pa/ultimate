@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 int main() {
-  size_t max = 4294967295;
+  size_t max = 18446744073709551615UL;
 
   if (max <= 0) {
     printf("ERROR\n");

@@ -352,7 +352,7 @@ public class TypeSizeAndOffsetComputer {
 	 * TODO: maybe this class is not the right place.
 	 */
 	public CPrimitive getSizeT() {
-		return new CPrimitive(CPrimitives.LONG);
+		return mTypeSizes.getSizeT();
 	}
 
 	public LinkedHashSet<ConstDeclaration> getConstants() {

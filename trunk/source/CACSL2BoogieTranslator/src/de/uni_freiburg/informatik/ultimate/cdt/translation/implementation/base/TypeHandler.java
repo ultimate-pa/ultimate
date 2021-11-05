@@ -292,13 +292,10 @@ public class TypeHandler implements ITypeHandler {
 			// maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
 			if (cId.equals("size_t")) {
 				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						mTranslationSettings.getCTypeOfPointerComponents()));
+						mTypeSizes.getSizeT()));
 			} else if (cId.equals("ssize_t")) {
-				if (mTranslationSettings.getCTypeOfPointerComponents().getType() != CPrimitives.LONG) {
-					throw new AssertionError("has to be signed: ssize_t");
-				}
 				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						mTranslationSettings.getCTypeOfPointerComponents()));
+						mTypeSizes.getSsizeT()));
 			} else if (cId.equals("__builtin_va_list")) {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.CHAR))));

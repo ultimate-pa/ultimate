@@ -322,6 +322,14 @@ public class TypeSizes {
 		return mSignednessOfChar;
 	}
 
+	public CPrimitive getSizeT() {
+		return new CPrimitive(CPrimitives.ULONG);
+	}
+
+	public CPrimitive getSsizeT() {
+		return new CPrimitive(CPrimitives.LONG);
+	}
+
 	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type,
 			final BigInteger value) {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, mSettings.isBitvectorTranslation(), this, type,
