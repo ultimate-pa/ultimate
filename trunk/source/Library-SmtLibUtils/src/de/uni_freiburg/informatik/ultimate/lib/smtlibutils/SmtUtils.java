@@ -148,7 +148,6 @@ public final class SmtUtils {
 	 * {@link ElimStorePlain}.
 	 */
 	private static final boolean FLATTEN_ARRAY_TERMS = true;
-	private static final boolean LOG_SIMPLIFICATION_CALL_ORIGIN = false;
 	private static final boolean DEBUG_ASSERT_ULTIMATE_NORMAL_FORM = false;
 
 	private SmtUtils() {
@@ -169,10 +168,6 @@ public final class SmtUtils {
 		final ILogger logger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
-		}
-		if (LOG_SIMPLIFICATION_CALL_ORIGIN) {
-			logger.info(String.format("Current caller to simplify is %s",
-					ReflectionUtil.getCallerClassName(3).getSimpleName()));
 		}
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
@@ -227,6 +222,8 @@ public final class SmtUtils {
 					sb.append(" DAG size of output: ");
 					sb.append(new DagSizePrinter(simplified));
 				}
+				sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
+						.append(")");
 				logger.warn(sb);
 			}
 			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,

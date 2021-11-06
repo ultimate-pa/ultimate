@@ -72,11 +72,11 @@ public class ReflectionUtil {
 	 *
 	 * @param callStackDepth
 	 *            The position in the current call stack for which you want to see the class. You are probably
-	 *            interested in depth 3.
+	 *            interested in depth 2.
 	 * @return The {@link Class} of the caller at the specified position.
 	 */
-	public static Class<?> getCallerClassName(final int callStackDepth) {
-		return EXPOSED_SECURITY_MANAGER.getCallerClass(callStackDepth);
+	public static Class<?> getCallerClass(final int callStackDepth) {
+		return EXPOSED_SECURITY_MANAGER.getCallerClass(callStackDepth + 1);
 	}
 
 	/**
@@ -102,8 +102,21 @@ public class ReflectionUtil {
 		} else {
 			theFrame = callStack[callStackDepth];
 		}
-		return String.format("[L%4s] %s.%s", theFrame.getLineNumber(), getCallerClassName(callStackDepth + 1).getName(),
+		return String.format("[L%4s] %s.%s", theFrame.getLineNumber(), getCallerClass(callStackDepth).getName(),
 				theFrame.getMethodName());
+	}
+
+	public static String getCallerSignatureFiltered(final Set<Class<?>> skippedClasses) {
+		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+		for (int i = 2; i < callStack.length; ++i) {
+			final StackTraceElement frame = callStack[i];
+			final Class<?> callingClass = getCallerClass(i);
+			if (skippedClasses.contains(callingClass)) {
+				continue;
+			}
+			return String.format("[L%4s] %s.%s", frame.getLineNumber(), frame.getClassName(), frame.getMethodName());
+		}
+		return null;
 	}
 
 	/**

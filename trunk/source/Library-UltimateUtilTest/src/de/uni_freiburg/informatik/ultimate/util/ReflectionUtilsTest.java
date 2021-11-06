@@ -49,6 +49,14 @@ public class ReflectionUtilsTest {
 	}
 
 	@Test
+	public void testGetCallerSignatureFiltered() {
+		final String sig = ReflectionUtil.getCallerSignatureFiltered(Set.of(ReflectionUtilsTest.class));
+		Assert.assertTrue(sig != null);
+		Assert.assertTrue(!sig.contains(ReflectionUtilsTest.class.getName()));
+		Assert.assertTrue(!sig.contains(ReflectionUtil.class.getName()));
+	}
+
+	@Test
 	public void instantiateStaticInnerClass() {
 		ITestInterface instance = null;
 		try {
@@ -107,7 +115,7 @@ public class ReflectionUtilsTest {
 	}
 
 	public interface ITestInterface {
-		public String doIt();
+		String doIt();
 	}
 
 	public class TestInterfaceImplementation implements ITestInterface {
