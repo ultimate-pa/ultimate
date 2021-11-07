@@ -42,9 +42,10 @@ function prepare_repo() {
 
   echo "Updating..."
   git fetch --all
-  git reset --hard origin/main
   if git ls-remote --exit-code upstream > /dev/null 2>&1 ; then
-    git rebase upstream/main
+    git reset --hard upstream/main
+  else
+    git reset --hard origin/main
   fi
   pop_dir
 }
@@ -86,7 +87,7 @@ function git_push_default_remote() {
   git add -A
   local title="Update Ultimate tool family (uautomizer, ukojak, utaipan, ugemcutter) to version $VERSION"
   git commit -a -m"${title}"
-  git push -o merge_request.create -o merge_request.title="${title}"
+  git push -f -o merge_request.create -o merge_request.title="${title}"
   echo "Now file a pull request and wait for its acceptance!"
   pop_dir
 }
