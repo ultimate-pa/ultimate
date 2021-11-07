@@ -287,7 +287,19 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_rwlock_rdlock", die);
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+
+		// TODO 20211105 Matthias: Unsound because our implementation of printf is
+		// unsound and because we consider wchars as chars.
+		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+
+		// TODO 20211106 Matthias: Set to "die" by Dominik because scanf caused
+		// unoundness in datarace benchmarks
 		fill(map, "scanf", die);
+
+		// TODO 20211105 Matthias: Unsound because depending on its first argument,
+		// the *scanf functions manipulate memory addressed by the other arguments.
+		fill(map, "sscanf", skip);
+		fill(map, "swscanf", skip);
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
