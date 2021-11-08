@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -115,22 +116,24 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	}
 
 	private IPredicate createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
-		if (original instanceof MLPredicateWithConjuncts) {
+		final IPredicate copy;
+		if (original instanceof PredicateWithLastThread) {
+			final PredicateWithLastThread thrPred = (PredicateWithLastThread) original;
+			copy = new PredicateWithLastThread((IMLPredicate) createFreshCopy(thrPred.getUnderlying(), sleepset),
+					thrPred.getLastThread());
+		} else if (original instanceof MLPredicateWithConjuncts) {
 			final MLPredicateWithConjuncts mlPred = (MLPredicateWithConjuncts) original;
-			final MLPredicateWithConjuncts copy = mPredicateFactory.construct(
+			copy = mPredicateFactory.construct(
 					id -> new MLPredicateWithConjuncts(id, mlPred.getProgramPoints(), mlPred.getConjuncts()));
-			mOriginalStates.put(copy, original);
-			mSleepSets.put(copy, sleepset);
-			return copy;
-		}
-		if (original instanceof IMLPredicate) {
+		} else if (original instanceof IMLPredicate) {
 			final IMLPredicate mlPred = (IMLPredicate) original;
-			final IMLPredicate copy = mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());
-			mOriginalStates.put(copy, original);
-			mSleepSets.put(copy, sleepset);
-			return copy;
+			copy = mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());
+		} else {
+			throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
 		}
-		throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
+		mOriginalStates.put(copy, original);
+		mSleepSets.put(copy, sleepset);
+		return copy;
 	}
 
 	public static class FactoryCoveringRelation<L> implements ICoveringRelation<IPredicate> {
