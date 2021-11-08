@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
@@ -276,6 +277,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final ImmutableList<IPredicate> conjuncts = ((MLPredicateWithConjuncts) state).getConjuncts();
 			return conjuncts.size() == 1 && isFalseLiteral(conjuncts.getHead());
 		}
+		if (state instanceof PredicateWithLastThread) {
+			return isProvenState(((PredicateWithLastThread) state).getUnderlying());
+		}
 		return isFalseLiteral(state);
 	}
 
@@ -298,6 +302,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		}
 		if (conjunction instanceof MLPredicateWithConjuncts) {
 			return ((MLPredicateWithConjuncts) conjunction).getConjuncts();
+		}
+		if (conjunction instanceof PredicateWithLastThread) {
+			return getConjuncts(((PredicateWithLastThread) conjunction).getUnderlying());
 		}
 		return ImmutableList.singleton(conjunction);
 	}
