@@ -87,18 +87,20 @@ public final class DataRaceChecker {
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 	private final TypeSizes mTypeSizes;
 	private final ProcedureManager mProcedureManager;
+	private final boolean mIsPreRun;
 
 	private final Map<String, BoogieType> mRaceIndicators = new HashMap<>();
 
 	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeComputer, final TypeSizes typeSizes,
-			final ProcedureManager procMan) {
+			final ProcedureManager procMan, final boolean isPreRun) {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mMemoryHandler = memoryHandler;
 		mTypeHandler = typeHandler;
 		mTypeSizeComputer = typeSizeComputer;
 		mTypeSizes = typeSizes;
 		mProcedureManager = procMan;
+		mIsPreRun = isPreRun;
 	}
 
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
@@ -110,9 +112,29 @@ public final class DataRaceChecker {
 			return;
 		}
 
+		if (!SUPPORT_ARRAY_STRUCT_LHS && isUnsupportedArrayOrStruct(lrVal)) {
+			if (mIsPreRun) {
+				// call #getMemoryRaceArray to make sure it is marked as required
+				mMemoryHandler.getMemoryRaceArray(loc);
+				return;
+			}
+			// should be moved to heap in main run
+			throw new UnsupportedOperationException(
+					"Race detection currently only supports simple variables and data on heap. "
+							+ "Structs and arrays are not yet supported (unless they are on the heap).");
+		}
+
 		final Expression raceValue = createRaceRead();
 		final Race[] races = updateRaceIndicator(erb, loc, lrVal, raceValue, false);
 		addAssert(erb, loc, lrVal, raceValue, races);
+	}
+
+	private static boolean isUnsupportedArrayOrStruct(final LRValue lrVal) {
+		if (lrVal instanceof LocalLValue) {
+			final LocalLValue locVal = (LocalLValue) lrVal;
+			return !(locVal.getLhs() instanceof VariableLHS);
+		}
+		return false;
 	}
 
 	private Expression createRaceRead() {
@@ -126,6 +148,18 @@ public final class DataRaceChecker {
 		}
 		if (isRaceImpossible(lrVal)) {
 			return;
+		}
+
+		if (!SUPPORT_ARRAY_STRUCT_LHS && isUnsupportedArrayOrStruct(lrVal)) {
+			if (mIsPreRun) {
+				// call #getMemoryRaceArray to make sure it is marked as required
+				mMemoryHandler.getMemoryRaceArray(loc);
+				return;
+			}
+			// should be moved to heap in main run
+			throw new UnsupportedOperationException(
+					"Race detection currently only supports simple variables and data on heap. "
+							+ "Structs and arrays are not yet supported (unless they are on the heap).");
 		}
 
 		// TODO For better performance, make the statements created by #createRaceWrite and #updateRaceIndicator atomic.
