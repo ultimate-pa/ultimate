@@ -92,7 +92,7 @@ public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements I
 	}
 
 	public static String prettyprintNanoseconds(final long time) {
-		return CoreUtil.toTimeString(time, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 2);
+		return CoreUtil.toTimeString(time, TimeUnit.NANOSECONDS, TimeUnit.SECONDS, 1);
 	}
 
 }
