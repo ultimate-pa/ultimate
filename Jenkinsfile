@@ -17,7 +17,6 @@ pipeline {
     }
     stage('Build and Test') {
       steps {
-        sh('bash build.sh')
         withMaven {
           sh "cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install"
         } 
