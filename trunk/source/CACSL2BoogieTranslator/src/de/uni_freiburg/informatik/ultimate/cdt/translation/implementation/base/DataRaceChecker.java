@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -79,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public final class DataRaceChecker {
-	private static final boolean SUPPORT_ARRAY_STRUCT_LHS = false;
+	private static final boolean SUPPORT_ARRAY_STRUCT_LHS = true;
 
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
@@ -87,19 +88,21 @@ public final class DataRaceChecker {
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 	private final TypeSizes mTypeSizes;
 	private final ProcedureManager mProcedureManager;
+	private final FunctionDeclarations mFunDecl;
 	private final boolean mIsPreRun;
 
 	private final Map<String, BoogieType> mRaceIndicators = new HashMap<>();
 
 	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeComputer, final TypeSizes typeSizes,
-			final ProcedureManager procMan, final boolean isPreRun) {
+			final ProcedureManager procMan, final FunctionDeclarations funDecl, final boolean isPreRun) {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mMemoryHandler = memoryHandler;
 		mTypeHandler = typeHandler;
 		mTypeSizeComputer = typeSizeComputer;
 		mTypeSizes = typeSizes;
 		mProcedureManager = procMan;
+		mFunDecl = funDecl;
 		mIsPreRun = isPreRun;
 	}
 
@@ -187,7 +190,7 @@ public final class DataRaceChecker {
 		final Race[] races = new Race[lhs.length];
 		for (int i = 0; i < lhs.length; ++i) {
 			final Statement assign = StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { lhs[i] },
-					new Expression[] { newValue });
+					new Expression[] { wrapRaceIndicatorValue(loc, newValue, lhs[i].getType()) });
 			races[i] = DataRaceAnnotation.annotateAccess(assign, getAccessedVariable(lrVal), loc, isWrite);
 			erb.addStatement(assign);
 		}
@@ -198,10 +201,12 @@ public final class DataRaceChecker {
 	private void addAssert(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal,
 			final Expression expected, final Race[] races) {
 		final Check check = new Check(Spec.DATA_RACE);
-		final Expression formula = ExpressionFactory.and(loc,
-				getRaceExpressions(loc, lrVal)
-						.map(expr -> ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, expr, expected))
-						.collect(Collectors.toList()));
+		final Expression formula =
+				ExpressionFactory.and(loc,
+						getRaceExpressions(loc, lrVal)
+								.map(expr -> ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, expr,
+										wrapRaceIndicatorValue(loc, expected, expr.getType())))
+								.collect(Collectors.toList()));
 		final Statement assertStmt = new AssertStatement(loc, formula);
 		check.annotate(assertStmt);
 		DataRaceAnnotation.annotateCheck(assertStmt, races, loc);
@@ -221,15 +226,24 @@ public final class DataRaceChecker {
 			return address instanceof IdentifierExpression
 					&& ((IdentifierExpression) address).getIdentifier().startsWith(SFO.FUNCTION_ADDRESS);
 		}
-
 		if (!(lrVal instanceof LocalLValue)) {
 			return false;
 		}
+
+		// Non-heap LHS whose root variable is not global do not admit races. Even when passed to other threads, they
+		// are either copied (primitives, structs) or passed via pointer (but then they must be on heap!).
 		final LocalLValue locLv = (LocalLValue) lrVal;
-		if (!(locLv.getLhs() instanceof VariableLHS)) {
-			return false;
+		LeftHandSide lhs = locLv.getLhs();
+		while (!(lhs instanceof VariableLHS)) {
+			if (lhs instanceof StructLHS) {
+				lhs = ((StructLHS) lhs).getStruct();
+			} else if (lhs instanceof ArrayLHS) {
+				lhs = ((ArrayLHS) lhs).getArray();
+			} else {
+				throw new IllegalArgumentException("unknown type of LHS: " + lhs);
+			}
 		}
-		final VariableLHS varLhs = (VariableLHS) locLv.getLhs();
+		final VariableLHS varLhs = (VariableLHS) lhs;
 		switch (varLhs.getDeclarationInformation().getStorageClass()) {
 		case LOCAL:
 		case IMPLEMENTATION_INPARAM:
@@ -272,17 +286,14 @@ public final class DataRaceChecker {
 	}
 
 	private LeftHandSide getRaceIndicatorLhs(final ILocation loc, final LocalLValue lval) {
-		final LeftHandSide lhs = createRaceIndicatorLhs(loc, lval.getLhs());
-		assert lhs.getType().equals(getBoolType()) : "race indicator must have type " + getBoolType() + " but found "
-				+ lhs.getType();
-		return lhs;
+		return createRaceIndicatorLhs(loc, lval.getLhs());
 	}
 
 	private LeftHandSide createRaceIndicatorLhs(final ILocation loc, final LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			final String name = "#race" + ((VariableLHS) lhs).getIdentifier();
 			final VariableLHS raceLhs = new VariableLHS(loc, getRaceIndicatorType(lhs.getType()), name,
-					((VariableLHS) lhs).getDeclarationInformation());
+					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			assert mRaceIndicators.getOrDefault(name, (BoogieType) raceLhs.getType())
 					.equals(raceLhs.getType()) : "Ambiguous types for " + name + ": " + mRaceIndicators.get(name)
 							+ " vs. " + raceLhs.getType();
@@ -327,6 +338,22 @@ public final class DataRaceChecker {
 			final BoogieType[] fieldTypes =
 					Arrays.stream(strType.getFieldTypes()).map(this::getRaceIndicatorType).toArray(BoogieType[]::new);
 			return BoogieType.createStructType(strType.getFieldIds(), fieldTypes);
+		}
+		throw new UnsupportedOperationException("Cannot detect races for values of type " + type);
+	}
+
+	private Expression wrapRaceIndicatorValue(final ILocation loc, final Expression value, final IBoogieType type) {
+		if (type instanceof BoogiePrimitiveType || type.equals(mTypeHandler.getBoogiePointerType())) {
+			return value;
+		}
+		if (type instanceof BoogieArrayType) {
+			return ConstantArrayUtil.getConstantArray(mFunDecl, loc, (BoogieArrayType) type, value);
+		}
+		if (type instanceof BoogieStructType) {
+			final BoogieStructType strType = (BoogieStructType) type;
+			final Expression[] fieldValues = Arrays.stream(strType.getFieldTypes())
+					.map(t -> wrapRaceIndicatorValue(loc, value, t)).toArray(Expression[]::new);
+			return ExpressionFactory.constructStructConstructor(loc, strType.getFieldIds(), fieldValues);
 		}
 		throw new UnsupportedOperationException("Cannot detect races for values of type " + type);
 	}
