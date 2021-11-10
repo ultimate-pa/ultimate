@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 /*
  * Author: Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Date: 18. 10. 2021
@@ -6,23 +6,26 @@
 
 typedef unsigned long pthread_t;
 
-int ARRAY[4][3];
-int ROW[3];
+struct MYSTRUCT {
+  int field;
+  int arr[2];
+};
+
+struct MYSTRUCT x;
+struct MYSTRUCT y;
 
 void* thread1() {
-  ARRAY[2][2] = 3;
+  x.arr[0] = 3; // RACE
   return 0;
 }
 
 void* thread2() {
-  ROW[2] = 4;
+  x = y; // RACE
   return 0;
 }
 
 int main() {
   pthread_t t1, t2;
-
-  ARRAY[1] = ROW;
 
   pthread_create(&t1, 0, thread1, 0);
   pthread_create(&t2, 0, thread2, 0);
