@@ -373,8 +373,9 @@ public class ExpressionResultTransformer {
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CArray) {
-				final ExpressionResult xres1 =
-						readArrayFromHeap(old, loc, structOnHeapAddress, (CArray) underlyingType, hook);
+				final Expression arrayPointer =
+						mStructHandler.computeStructFieldAddress(loc, i, structOnHeapAddress, structType, hook);
+				final ExpressionResult xres1 = readArrayFromHeap(old, loc, arrayPointer, (CArray) underlyingType, hook);
 				final ExpressionResult xres = xres1;
 
 				fieldLRVal = xres.getLrValue();
@@ -467,17 +468,8 @@ public class ExpressionResultTransformer {
 		builder.addDeclaration(newArrayAuxvar.getVarDec());
 		builder.addAuxVar(newArrayAuxvar);
 
-		final Expression newStartAddressBase;
-		final Expression newStartAddressOffset;
-		if (address instanceof StructConstructor) {
-			final StructConstructor structCtorAddress = (StructConstructor) address;
-			newStartAddressBase = structCtorAddress.getFieldValues()[0];
-			newStartAddressOffset = structCtorAddress.getFieldValues()[1];
-		} else {
-			newStartAddressBase = MemoryHandler.getPointerBaseAddress(address, loc);
-			newStartAddressOffset = MemoryHandler.getPointerOffset(address, loc);
-		}
-
+		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(address, loc);
+		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(address, loc);
 		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType, hook);
 
 		Expression arrayEntryAddressOffset = newStartAddressOffset;

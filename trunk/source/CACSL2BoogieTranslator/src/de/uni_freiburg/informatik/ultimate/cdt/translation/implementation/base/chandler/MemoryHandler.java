@@ -971,7 +971,7 @@ public class MemoryHandler {
 		if (pointer instanceof StructConstructor) {
 			return ((StructConstructor) pointer).getFieldValues()[0];
 		}
-		return ExpressionFactory.constructStructAccessExpression(loc, pointer, "base");
+		return ExpressionFactory.constructStructAccessExpression(loc, pointer, SFO.POINTER_BASE);
 	}
 
 	/**
@@ -984,12 +984,12 @@ public class MemoryHandler {
 		if (pointer instanceof StructConstructor) {
 			return ((StructConstructor) pointer).getFieldValues()[1];
 		}
-		return ExpressionFactory.constructStructAccessExpression(loc, pointer, "offset");
+		return ExpressionFactory.constructStructAccessExpression(loc, pointer, SFO.POINTER_OFFSET);
 	}
 
 	public static StructConstructor constructPointerFromBaseAndOffset(final Expression base, final Expression offset,
 			final ILocation loc) {
-		return ExpressionFactory.constructStructConstructor(loc, new String[] { "base", "offset" },
+		return ExpressionFactory.constructStructConstructor(loc, new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
 				new Expression[] { base, offset });
 	}
 
