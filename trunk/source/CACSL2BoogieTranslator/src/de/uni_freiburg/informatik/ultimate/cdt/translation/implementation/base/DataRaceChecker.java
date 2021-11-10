@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAn
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 public final class DataRaceChecker {
 	private static final boolean SUPPORT_ARRAY_STRUCT_LHS = true;
@@ -191,7 +192,7 @@ public final class DataRaceChecker {
 		for (int i = 0; i < lhs.length; ++i) {
 			final Statement assign = StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { lhs[i] },
 					new Expression[] { wrapRaceIndicatorValue(loc, newValue, lhs[i].getType()) });
-			races[i] = DataRaceAnnotation.annotateAccess(assign, getAccessedVariable(lrVal), loc, isWrite);
+			races[i] = DataRaceAnnotation.annotateAccess(assign, getAccessPath(lrVal), loc, isWrite);
 			erb.addStatement(assign);
 		}
 
@@ -213,11 +214,28 @@ public final class DataRaceChecker {
 		erb.addStatement(assertStmt);
 	}
 
-	private static String getAccessedVariable(final LRValue lrVal) {
-		if (lrVal instanceof LocalLValue && ((LocalLValue) lrVal).getLhs() instanceof VariableLHS) {
-			return ((VariableLHS) ((LocalLValue) lrVal).getLhs()).getIdentifier();
+	private static String getAccessPath(final LRValue lrVal) {
+		if (lrVal instanceof LocalLValue) {
+			final ImmutableList<String> path = getAccessPath(((LocalLValue) lrVal).getLhs());
+			if (path == null) {
+				return null;
+			}
+			return path.stream().collect(Collectors.joining("->"));
 		}
 		return null;
+	}
+
+	private static ImmutableList<String> getAccessPath(final LeftHandSide lhs) {
+		if (lhs instanceof VariableLHS) {
+			return ImmutableList.singleton(((VariableLHS) lhs).getIdentifier());
+		}
+		if (lhs instanceof StructLHS) {
+			return new ImmutableList<>(((StructLHS) lhs).getField(), getAccessPath(((StructLHS) lhs).getStruct()));
+		}
+		if (lhs instanceof ArrayLHS) {
+			return null;
+		}
+		throw new IllegalArgumentException("unknown type of LHS: " + lhs);
 	}
 
 	private static boolean isRaceImpossible(final LRValue lrVal) {
@@ -232,18 +250,7 @@ public final class DataRaceChecker {
 
 		// Non-heap LHS whose root variable is not global do not admit races. Even when passed to other threads, they
 		// are either copied (primitives, structs) or passed via pointer (but then they must be on heap!).
-		final LocalLValue locLv = (LocalLValue) lrVal;
-		LeftHandSide lhs = locLv.getLhs();
-		while (!(lhs instanceof VariableLHS)) {
-			if (lhs instanceof StructLHS) {
-				lhs = ((StructLHS) lhs).getStruct();
-			} else if (lhs instanceof ArrayLHS) {
-				lhs = ((ArrayLHS) lhs).getArray();
-			} else {
-				throw new IllegalArgumentException("unknown type of LHS: " + lhs);
-			}
-		}
-		final VariableLHS varLhs = (VariableLHS) lhs;
+		final VariableLHS varLhs = getRootLhs(((LocalLValue) lrVal).getLhs());
 		switch (varLhs.getDeclarationInformation().getStorageClass()) {
 		case LOCAL:
 		case IMPLEMENTATION_INPARAM:
@@ -253,6 +260,19 @@ public final class DataRaceChecker {
 		default:
 			return false;
 		}
+	}
+
+	private static VariableLHS getRootLhs(LeftHandSide lhs) {
+		while (!(lhs instanceof VariableLHS)) {
+			if (lhs instanceof StructLHS) {
+				lhs = ((StructLHS) lhs).getStruct();
+			} else if (lhs instanceof ArrayLHS) {
+				lhs = ((ArrayLHS) lhs).getArray();
+			} else {
+				throw new IllegalArgumentException("unknown type of LHS: " + lhs);
+			}
+		}
+		return (VariableLHS) lhs;
 	}
 
 	private LeftHandSide[] getRaceLhs(final ILocation loc, final LRValue lrVal) {

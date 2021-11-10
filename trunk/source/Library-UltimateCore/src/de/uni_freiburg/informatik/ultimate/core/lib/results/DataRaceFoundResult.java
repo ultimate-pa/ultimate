@@ -151,7 +151,7 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 
 	private static void formatDefiniteRace(final StringBuilder sb, final Race check, final Race access) {
 		sb.append("Now there is a data race ");
-		if (check.isHeapRace()) {
+		if (check.isUndeterminedRace()) {
 			sb.append("(on the heap)");
 		} else {
 			sb.append("on ");
