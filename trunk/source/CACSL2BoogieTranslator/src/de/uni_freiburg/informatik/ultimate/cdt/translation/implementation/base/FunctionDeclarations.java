@@ -93,8 +93,8 @@ public class FunctionDeclarations {
 		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
 	}
 
-	public void declareFunction(final ILocation loc, final String prefixedFunctionName, final Attribute[] attributes,
-			final ASTType resultASTType, final ASTType... paramASTTypes) {
+	public FunctionDeclaration declareFunction(final ILocation loc, final String prefixedFunctionName,
+			final Attribute[] attributes, final ASTType resultASTType, final ASTType... paramASTTypes) {
 		if (mIsFinished) {
 			throw new AssertionError();
 		}
