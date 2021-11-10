@@ -66,16 +66,16 @@ public class DataRaceAnnotation extends ModernAnnotations {
 		return super.merge(other);
 	}
 
-	public static Race annotateAccess(final IElement node, final String variable, final ILocation loc,
+	public static Race annotateAccess(final IElement node, final String accessPath, final ILocation loc,
 			final boolean isWrite) {
-		final Race race = new Race(isWrite, variable, null, loc);
+		final Race race = new Race(isWrite, accessPath, null, loc);
 		node.getPayload().getAnnotations().put(KEY, new DataRaceAnnotation(race));
 		return race;
 	}
 
 	public static void annotateCheck(final IElement node, final Race[] twinAccesses, final ILocation loc) {
 		final boolean isWrite = twinAccesses[0].isWrite();
-		final String variable = twinAccesses[0].mVariable;
+		final String variable = twinAccesses[0].mAccessPath;
 		node.getPayload().getAnnotations().put(KEY,
 				new DataRaceAnnotation(new Race(isWrite, variable, twinAccesses, loc)));
 	}
@@ -86,14 +86,14 @@ public class DataRaceAnnotation extends ModernAnnotations {
 
 	public static class Race {
 		private final boolean mIsWrite;
-		private final String mVariable;
+		private final String mAccessPath;
 		private final Set<Race> mTwinAccesses;
 		private final ILocation mOriginalLocation;
 
-		private Race(final boolean isWrite, final String variable, final Race[] twinAccesses,
+		private Race(final boolean isWrite, final String accessPath, final Race[] twinAccesses,
 				final ILocation location) {
 			mIsWrite = isWrite;
-			mVariable = variable;
+			mAccessPath = accessPath;
 			mTwinAccesses = twinAccesses == null ? null : Set.of(twinAccesses);
 			mOriginalLocation = location;
 		}
@@ -116,20 +116,20 @@ public class DataRaceAnnotation extends ModernAnnotations {
 				// accesses do not conflict because both are reads, or they are twins
 				return Optional.of(false);
 			}
-			if (other.isCheck() || (isHeapRace() != other.isHeapRace())) {
+			if (other.isCheck()) {
 				return Optional.of(false);
 			}
-			if (isHeapRace()) {
+			if (isUndeterminedRace() || other.isUndeterminedRace()) {
 				return Optional.empty();
 			}
-			return Optional.of(mVariable.equals(other.mVariable));
+			return Optional.of(mAccessPath.startsWith(other.mAccessPath) || other.mAccessPath.startsWith(mAccessPath));
 		}
 
 		public String getVariable() {
-			if (mVariable == null) {
+			if (mAccessPath == null) {
 				throw new IllegalStateException("heap race has no variable");
 			}
-			return mVariable;
+			return mAccessPath;
 		}
 
 		public boolean isWrite() {
@@ -140,8 +140,8 @@ public class DataRaceAnnotation extends ModernAnnotations {
 			return mTwinAccesses != null;
 		}
 
-		public boolean isHeapRace() {
-			return mVariable == null;
+		public boolean isUndeterminedRace() {
+			return mAccessPath == null;
 		}
 
 		public ILocation getOriginalLocation() {
