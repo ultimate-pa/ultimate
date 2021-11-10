@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -234,20 +233,7 @@ public class StructHandler {
 
 	public Result readFieldInTheStructAtAddress(final ILocation loc, final int fieldIndex,
 			final Expression structAddress, final CStructOrUnion structType, final IASTNode hook) {
-		Expression addressBaseOfFieldOwner;
-		Expression addressOffsetOfFieldOwner;
-
-		addressBaseOfFieldOwner =
-				ExpressionFactory.constructStructAccessExpression(loc, structAddress, SFO.POINTER_BASE);
-		addressOffsetOfFieldOwner =
-				ExpressionFactory.constructStructAccessExpression(loc, structAddress, SFO.POINTER_OFFSET);
-
-		final Expression newOffset =
-				computeStructFieldOffset(mMemoryHandler, loc, fieldIndex, addressOffsetOfFieldOwner, structType, hook);
-
-		final StructConstructor newPointer =
-				MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
-
+		final Expression newPointer = computeStructFieldAddress(loc, fieldIndex, structAddress, structType, hook);
 		final CType resultType = structType.getFieldTypes()[fieldIndex];
 
 		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType, hook);
@@ -257,7 +243,16 @@ public class StructHandler {
 		return resultBuilder.build();
 	}
 
-	Expression computeStructFieldOffset(final MemoryHandler memoryHandler, final ILocation loc, final int fieldIndex,
+	public Expression computeStructFieldAddress(final ILocation loc, final int fieldIndex, final Expression address,
+			final CStructOrUnion structType, final IASTNode hook) {
+		final Expression addressBaseOfFieldOwner = MemoryHandler.getPointerBaseAddress(address, loc);
+		final Expression addressOffsetOfFieldOwner = MemoryHandler.getPointerOffset(address, loc);
+		final Expression newOffset =
+				computeStructFieldOffset(loc, fieldIndex, addressOffsetOfFieldOwner, structType, hook);
+		return MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
+	}
+
+	Expression computeStructFieldOffset(final ILocation loc, final int fieldIndex,
 			final Expression addressOffsetOfFieldOwner, final CStructOrUnion structType, final IASTNode hook) {
 		if (structType == null) {
 			throw new IncorrectSyntaxException(loc, "Incorrect or unexpected field owner!");
@@ -268,10 +263,9 @@ public class StructHandler {
 			throw new UnsupportedOperationException("Bitfield read");
 		}
 
-		final Expression result = mExpressionTranslation.constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, mTypeSizeAndOffsetComputer.getSizeT(),
+		return mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
+				addressOffsetOfFieldOwner, mTypeSizeAndOffsetComputer.getSizeT(),
 				fieldOffset.getAddressOffsetAsExpression(loc), mTypeSizeAndOffsetComputer.getSizeT());
-		return result;
 	}
 
 }
