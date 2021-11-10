@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult.WitnessVerificationStatus;
@@ -118,6 +119,8 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			} else {
 				return SafetyCheckerOverallResult.UNSAFE;
 			}
+		} else if (result instanceof DataRaceFoundResult<?, ?, ?>) {
+			return SafetyCheckerOverallResult.UNSAFE;
 		} else if (result instanceof UnprovableResult) {
 			return SafetyCheckerOverallResult.UNKNOWN;
 		} else if (result instanceof TypeErrorResult) {
