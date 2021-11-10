@@ -114,6 +114,7 @@ public class FunctionDeclarations {
 		final FunctionDeclaration d =
 				new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
 		mDeclaredFunctions.put(prefixedFunctionName, d);
+		return d;
 	}
 
 	/**
