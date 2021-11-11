@@ -274,6 +274,9 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_cond_broadcast", this::handlePthread_success);
 		fill(map, "pthread_cond_destroy", this::handlePthread_success);
 		fill(map, "pthread_mutex_destroy", this::handlePthread_success);
+		fill(map, "pthread_rwlock_rdlock", this::handlePthread_rwlock_rdlock);
+		fill(map, "pthread_rwlock_wrlock", this::handlePthread_rwlock_wrlock);
+		fill(map, "pthread_rwlock_unlock", this::handlePthread_rwlock_unlock);
 		// the following three occur at SV-COMP 2019 only in one benchmark
 		fill(map, "pthread_attr_init", die);
 		fill(map, "pthread_attr_setdetachstate", die);
@@ -283,8 +286,7 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_getspecific", die);
 		fill(map, "pthread_setspecific", die);
 		// further unsupported pthread functions
-		fill(map, "pthread_rwlock_wrlock", die);
-		fill(map, "pthread_rwlock_rdlock", die);
+		fill(map, "pthread_rwlock_init", die);
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
@@ -1243,23 +1245,22 @@ public class StandardFunctionHandler {
 
 	private Result handlePthread_mutex_trylock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
-		final IASTInitializerClause mutex = arguments[0];
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexTryLockCall);
+	}
 
-		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
-		final Expression index = arg.getLrValue().getValue();
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+	private Result handlePthread_rwlock_rdlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockReadLockCall);
+	}
 
-		// auxvar for joined procedure's return value
-		final CType cType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		erb.addDeclaration(auxvarinfo.getVarDec());
-		erb.addAuxVar(auxvarinfo);
+	private Result handlePthread_rwlock_wrlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockWriteLockCall);
+	}
 
-		erb.addStatement(mMemoryHandler.constructPthreadMutexTryLockCall(loc, index, auxvarinfo.getLhs()));
-		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
-		return erb.build();
+	private Result handlePthread_rwlock_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockUnlockCall);
 	}
 
 	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc,
@@ -1291,6 +1292,32 @@ public class StandardFunctionHandler {
 		// erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
 		// new CPrimitive(CPrimitives.INT)));
 		return erb.build();
+	}
+
+	private Result handleLockCall(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final ILockCallFactory callFactory) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final IASTInitializerClause lock = arguments[0];
+
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, lock);
+		final Expression index = arg.getLrValue().getValue();
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+
+		// auxvar for procedure's return value
+		final CType cType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		erb.addDeclaration(auxvarinfo.getVarDec());
+		erb.addAuxVar(auxvarinfo);
+
+		erb.addStatement(callFactory.apply(loc, index, auxvarinfo.getLhs()));
+		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
+		return erb.build();
+
+	}
+
+	private interface ILockCallFactory {
+		CallStatement apply(ILocation loc, Expression index, VariableLHS lhs);
 	}
 
 	/**
@@ -1541,8 +1568,8 @@ public class StandardFunctionHandler {
 		} else {
 			throw new IllegalArgumentException("unknown allocation method; " + methodName);
 		}
-		erb.addStatement(
-				mMemoryHandler.getUltimateMemAllocCall(exprResConverted.getLrValue().getValue(), auxvar.getLhs(), loc, memArea));
+		erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(exprResConverted.getLrValue().getValue(),
+				auxvar.getLhs(), loc, memArea));
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the

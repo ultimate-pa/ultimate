@@ -217,6 +217,8 @@ public final class SFO {
 
 	public static final String ULTIMATE_PTHREADS_MUTEX = "#pthreadsMutex";
 
+	public static final String ULTIMATE_PTHREADS_RWLOCK = "#pthreadsRwLock";
+
 	public static final String INIT_TO_ZERO_AT_ADDRESS = "initToZeroAtPointerBaseAddress~";
 
 	public static final String STORE_SUBARRAY_AT_ADDRESS = "storeAtPointerBaseAddress~";
