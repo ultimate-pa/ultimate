@@ -492,9 +492,16 @@ public class CfgBuilder {
 		return mRcfgBacktranslator;
 	}
 
-	private boolean isAssumeTrueStatement(final Statement st) {
+	/**
+	 * Check it this statement is an <code>assume true</ code> and has an empty list
+	 * of attributes (or no attributes at all).
+	 */
+	private static boolean isAssumeTrueStatementWithoutAttributes(final Statement st) {
 		if (st instanceof AssumeStatement) {
 			final AssumeStatement as = (AssumeStatement) st;
+			if (as.getAttributes() != null && as.getAttributes().length > 0) {
+				return false;
+			}
 			if (as.getFormula() instanceof BooleanLiteral) {
 				final BooleanLiteral bl = (BooleanLiteral) as.getFormula();
 				if (bl.getValue()) {
@@ -676,7 +683,9 @@ public class CfgBuilder {
 							"constructing CFG for procedure with " + statements.length + "statements");
 				}
 
-				if (mRemoveAssumeTrueStmt && isAssumeTrueStatement(st) && !isOverapproximation(st)) {
+				// Rationale: <code>assume true</ code> statements can be omitted, unless they
+				// carry attributes or indicate an overapproximation.
+				if (mRemoveAssumeTrueStmt && isAssumeTrueStatementWithoutAttributes(st) && !isOverapproximation(st)) {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
