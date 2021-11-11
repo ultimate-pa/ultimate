@@ -493,7 +493,7 @@ public class CfgBuilder {
 	}
 
 	private boolean isAssumeTrueStatement(final Statement st) {
-		if (mRemoveAssumeTrueStmt && st instanceof AssumeStatement) {
+		if (st instanceof AssumeStatement) {
 			final AssumeStatement as = (AssumeStatement) st;
 			if (as.getFormula() instanceof BooleanLiteral) {
 				final BooleanLiteral bl = (BooleanLiteral) as.getFormula();
@@ -676,7 +676,7 @@ public class CfgBuilder {
 							"constructing CFG for procedure with " + statements.length + "statements");
 				}
 
-				if (isAssumeTrueStatement(st) && !isOverapproximation(st)) {
+				if (mRemoveAssumeTrueStmt && isAssumeTrueStatement(st) && !isOverapproximation(st)) {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
