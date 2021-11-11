@@ -96,9 +96,11 @@ public class CallReinserter {
 			ateBuilder.setRelevanceInformation(relevanceInfoForInlinedReturn);
 			ateBuilder.setStepInfo(StepInfo.PROC_RETURN);
 			ateBuilder.setProcedures(callAnnot.getCallStatement().getMethodName(), null);
+			mPrevBackTranslations.remove();
 		} else {
 			ateBuilder.setStepInfo(StepInfo.PROC_CALL);
 			ateBuilder.setProcedures(null, callAnnot.getCallStatement().getMethodName());
+			mPrevBackTranslations.add(curBackTrans);
 		}
 		return Collections.singletonList(ateBuilder.build());
 	}
