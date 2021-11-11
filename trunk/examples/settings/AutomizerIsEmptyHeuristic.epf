@@ -6,7 +6,7 @@
 file_export_version=3.0
 #Mon Feb 24 17:16:30 CET 2020
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_CONCURRENT_PROGRAMS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_SEQUENTIAL_PROGRAMS
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.1.25
 file_export_version=3.0
 #Mon Feb 24 17:16:30 CET 2020
