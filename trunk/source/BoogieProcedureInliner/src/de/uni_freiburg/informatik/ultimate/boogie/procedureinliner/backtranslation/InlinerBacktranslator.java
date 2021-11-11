@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslat
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -199,10 +200,18 @@ public class InlinerBacktranslator
 			}
 			final ProgramState<Expression> progState = exec.getProgramState(i);
 			if (progState != null) {
-				final Set<String> inlinedActiveProcs = callReinserter.unreturnedInlinedProcedures();
+				final String currentProc = computeCurrectProc(traceElemMapping);
 				final Map<Expression, Collection<Expression>> translatedVar2Values = new HashMap<>();
 				for (final Expression variable : progState.getVariables()) {
-					mExprBackTrans.setInlinedActiveProcedures(inlinedActiveProcs);
+					// 2021-11-11 Matthias: the original code passed the following argument:
+					// <pre>
+					// final Set<String> inlinedActiveProcs = callReinserter.unreturnedInlinedProcedures();
+					// </ pre>
+					// This makes no sense to me. We must not backtranslate variables
+					// of all "active" procedures because we must not print the values
+					// of shadowed variables (which e.g., would lead to invalid witnesses).
+					// My workaround is to use only the topmost procedure.
+					mExprBackTrans.setInlinedActiveProcedures(Collections.singleton(currentProc));
 					final Expression translatedVar = mExprBackTrans.processExpression(variable);
 					if (mExprBackTrans.processedExprWasActive()) {
 						translatedVar2Values.put(translatedVar, translateExpressions(progState.getValues(variable)));
@@ -215,6 +224,14 @@ public class InlinerBacktranslator
 		assert checkCallStackTarget(mLogger, translatedTrace) : "callstack broken after backtranslation by "
 				+ getClass().getSimpleName();
 		return new BoogieProgramExecution(translatedStates, translatedTrace, exec.isConcurrent());
+	}
+
+	private static String computeCurrectProc(final BackTransValue traceElemMapping) {
+		if (traceElemMapping.getOriginalCallStack().isEmpty()) {
+			return traceElemMapping.getInlineEntryProcId();
+		} else {
+			return traceElemMapping.getOriginalCallStack().peekFirst().getMethodName();
+		}
 	}
 
 	private static AtomicTraceElement<BoogieASTNode> createAtomicTraceElement(
