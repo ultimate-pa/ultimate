@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 	<option name="--force-no-wrapper" />
 
 	<!-- === No Partial Order Reduction === -->
 	<!-- ================================== -->
 
-	<rundefinition name="Automizer FA">
+	<!--rundefinition name="Automizer FA">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.None">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-None-NoLbe.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="Automizer PN">
+	<!--rundefinition name="Automizer PN">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 
 	<!-- === Cassez/Ziegler-style: single-shot up-front reduction, then normal verification === -->
@@ -129,11 +129,15 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
 	</rundefinition>
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLockstep">
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLockstep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Lockstep.epf</option>
 	</rundefinition>
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom42">
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLoopLockstep">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-LoopLockstep.epf</option>
+	</rundefinition>
+
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom42">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random42.epf</option>
 	</rundefinition>
 
@@ -155,28 +159,28 @@
 
 	<!-- =============================================================================================================== -->
 
-	<!--tasks name="SVCOMP ConcurrencySafety-Main">
+	<tasks name="SVCOMP ConcurrencySafety-Main">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-		<excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
+		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks-->
-
-	<tasks name="SVCOMP ConcurrencySafety-DataRaces">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
-		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
-		<includesfile>../../../trunk/examples/svcomp-weaver.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
 
-	<tasks name="SVCOMP Weaver">
+	<tasks name="SVCOMP NoDataRace">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
 		<includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
+
+	<!--tasks name="SVCOMP Weaver">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<includesfile>../../../trunk/examples/svcomp-weaver.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+	</tasks-->
 
 	<!--tasks name="Ultimate Repo: pthreads">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
