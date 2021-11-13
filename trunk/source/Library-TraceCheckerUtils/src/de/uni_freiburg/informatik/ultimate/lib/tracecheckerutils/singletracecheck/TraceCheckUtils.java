@@ -36,11 +36,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
@@ -260,11 +262,13 @@ public final class TraceCheckUtils {
 		final IPredicate successor = ipp.getPredicate(pos + 1);
 		final IAction cb = trace.getSymbol(pos);
 		final Validity result;
+		final Function<Validity, LogLevel> toLevel =
+				x -> x == Validity.INVALID ? LogLevel.ERROR : (x == Validity.VALID ? LogLevel.INFO : LogLevel.WARN);
 		if (trace.isCallPosition(pos)) {
 			assert cb instanceof ICallAction : "not Call at call position";
 			result = htc.checkCall(predecessor, (ICallAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos, predecessor, cb,
-					successor, result));
+			logger.log(toLevel.apply(result), new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos,
+					predecessor, cb, successor, result));
 		} else if (trace.isReturnPosition(pos)) {
 			assert cb instanceof IReturnAction : "not Call at call position";
 			IPredicate hierarchicalPredecessor;
@@ -275,13 +279,15 @@ public final class TraceCheckUtils {
 				hierarchicalPredecessor = ipp.getPredicate(callPosition);
 			}
 			result = htc.checkReturn(predecessor, hierarchicalPredecessor, (IReturnAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", pos,
-					predecessor, cb, successor, result, hierarchicalPredecessor));
+			logger.log(toLevel.apply(result),
+					new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", pos, predecessor,
+							cb, successor, result, hierarchicalPredecessor));
 		} else if (trace.isInternalPosition(pos)) {
 			assert cb instanceof IInternalAction;
 			result = htc.checkInternal(predecessor, (IInternalAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos, predecessor, cb,
-					successor, result));
+			logger.log(toLevel.apply(result), new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos,
+					predecessor, cb, successor, result));
+
 		} else {
 			throw new AssertionError("unsupported position");
 		}
