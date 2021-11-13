@@ -173,6 +173,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
@@ -251,6 +252,11 @@ public class CHandler {
 	 * casts of pointers soundly. However these soundness errors occur seldom.
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
+
+	/**
+	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 */
+	private static final boolean FIXED_ADDRESSES_FOR_INITIALIZATION = true;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -362,6 +368,8 @@ public class CHandler {
 	private final CExpressionTranslator mCExpressionTranslator;
 
 	private final DataRaceChecker mDataRaceChecker;
+
+	private int mFixedAddressCounter = 1;
 
 	/**
 	 * Constructor for CHandler in pre-run mode.
@@ -1903,22 +1911,36 @@ public class CHandler {
 		final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(actualLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
 
-		final RValue addressRValue;
-		final AuxVarInfo auxvar;
-
 		final RValue dimension = new RValue(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents());
 		final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
 		final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-		auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
-		addressRValue = new RValueForArrays(auxvar.getExp(), arrayType);
-		// the declaration of the variable that corresponds to a string literal has to
-		// be made global
-		mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
 
+		final AuxVarInfo auxvar;
+		final RValue addressRValue;
+		final CallStatement ultimateAllocCall;
+		if (FIXED_ADDRESSES_FOR_INITIALIZATION) {
+			auxvar = null;
+			final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
+			addressRValue = new RValueForArrays(
+					mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO),
+					arrayType);
+			final RValue ptrBaseRValue = new RValue(
+					mTypeSizes.constructLiteralForIntegerType(actualLoc,
+							mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase),
+					mExpressionTranslation.getCTypeOfPointerComponents());
+			ultimateAllocCall = mMemoryHandler.getUltimateMemAllocInitCall(sizeInBytesExpr, ptrBaseRValue, actualLoc);
+			mFixedAddressCounter++;
+		} else {
+			auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
+			addressRValue = new RValueForArrays(auxvar.getExp(), arrayType);
+			// the declaration of the variable that corresponds to a string literal has to
+			// be made global
+			mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
+			ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(sizeInBytesExpr, auxvar.getLhs(), actualLoc,
+					MemoryArea.STACK);
+		}
 
 		final List<Statement> statements = new ArrayList<>();
-		final CallStatement ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(sizeInBytesExpr, auxvar.getLhs(),
-				actualLoc, MemoryArea.STACK);
 		statements.add(ultimateAllocCall);
 
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
