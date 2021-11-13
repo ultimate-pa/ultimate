@@ -174,14 +174,6 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
 
-	<!--tasks name="SVCOMP Weaver">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
-		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
-		<includesfile>../../../trunk/examples/svcomp-weaver.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
-	</tasks-->
-
 	<!--tasks name="Ultimate Repo: pthreads">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
