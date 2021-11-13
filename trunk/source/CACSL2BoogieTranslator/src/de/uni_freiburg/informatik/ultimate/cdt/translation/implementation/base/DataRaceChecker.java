@@ -230,7 +230,11 @@ public final class DataRaceChecker {
 			return ImmutableList.singleton(((VariableLHS) lhs).getIdentifier());
 		}
 		if (lhs instanceof StructLHS) {
-			return new ImmutableList<>(((StructLHS) lhs).getField(), getAccessPath(((StructLHS) lhs).getStruct()));
+			final ImmutableList<String> prefix = getAccessPath(((StructLHS) lhs).getStruct());
+			if (prefix == null) {
+				return null;
+			}
+			return new ImmutableList<>(((StructLHS) lhs).getField(), prefix);
 		}
 		if (lhs instanceof ArrayLHS) {
 			return null;
