@@ -143,7 +143,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashM
 public class MemoryHandler {
 
 	public static enum MemoryModelDeclarations {
-		ULTIMATE_ALLOC_STACK("#Ultimate.allocOnStack"), ULTIMATE_ALLOC_HEAP("#Ultimate.allocOnHeap"),
+		ULTIMATE_ALLOC_STACK("#Ultimate.allocOnStack"),
+
+		/**
+		 * This method allow us to allocate memory without costly array updates. The
+		 * classical memory allocation in the Hoenicke-Lindenmann memory model returns
+		 * nodeterministically chosen fresh valid pointers but requires an update of the
+		 * #valid array and the #length array. If we have many of these array updates
+		 * (hundreds, thousands) this affects the performance of our tool. This method
+		 * allows us to assume (via ensures clauses) that and how much memory is valid.
+		 * This method requires that the fresh pointer is passed as an input. Since we
+		 * know all memory that is allocated initially we use a counter in this
+		 * translation to construct fresh pointers.
+		 */
+		ULTIMATE_ALLOC_INIT("#Ultimate.allocInit"),
+
+		ULTIMATE_ALLOC_HEAP("#Ultimate.allocOnHeap"),
 
 		ULTIMATE_DEALLOC(SFO.DEALLOC),
 
@@ -517,6 +532,11 @@ public class MemoryHandler {
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_INIT)) {
+			declareAllocInit(main, mTypeHandler, tuLoc, hook);
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP)) {
 			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook, MemoryArea.HEAP));
 		}
@@ -830,6 +850,20 @@ public class MemoryHandler {
 				new VariableLHS[] { returnedValue }, alloc.getName(), new Expression[] { size });
 
 		mProcedureManager.registerProcedure(alloc.getName());
+		return result;
+	}
+
+	/**
+	 * Call for procedure that can allocate memory during the initialization. See
+	 * {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 */
+	public CallStatement getUltimateMemAllocInitCall(final Expression size, final RValue addressRValue,
+			final ILocation loc) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_ALLOC_INIT);
+		final CallStatement result = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] {},
+				MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName(),
+				new Expression[] { size, addressRValue.getValue() });
+		mProcedureManager.registerProcedure(MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName());
 		return result;
 	}
 
@@ -2710,6 +2744,59 @@ public class MemoryHandler {
 		}
 		mProcedureManager.endCustomProcedure(main, alloc.getName());
 		return result;
+	}
+
+	/**
+	 * Generate declaration of the procedure that we use to allocate memory initially.
+	 * The signature is the following.
+	 * <code>procedure ~Ultimate.allocInit(~size:int, ~ptrBase:int) returns ();</code>
+	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 */
+	private void declareAllocInit(final CHandler main, final ITypeHandler typeHandler,
+			final ILocation tuLoc, final IASTNode hook) {
+		final String procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
+		final String pointerBaseIdentifier = "ptrBase";
+		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
+		// #valid
+		final Expression valid = getValidArray(tuLoc);
+		// #length
+		final Expression length = getLengthArray(tuLoc);
+		// ~size
+		final IdentifierExpression size = ExpressionFactory.constructIdentifierExpression(tuLoc, BoogieType.TYPE_INT,
+				SIZE, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
+		final IdentifierExpression ptrBase = ExpressionFactory.constructIdentifierExpression(tuLoc, BoogieType.TYPE_INT,
+				pointerBaseIdentifier, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
+		{
+			final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], procedureIdentifier, new String[0],
+					new VarList[] { new VarList(tuLoc, new String[] { SIZE, pointerBaseIdentifier }, intType) },
+					new VarList[0] ,
+					new Specification[0], null);
+			mProcedureManager.beginCustomProcedure(main, tuLoc, procedureIdentifier, allocDeclaration);
+		}
+
+		final List<Specification> specs = new ArrayList<>();
+		// ensures #valid[ptrBase] == true;
+		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
+		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+				ensuresArrayHasValue(tuLoc, bLTrue, ptrBase, valid),
+				Collections.emptySet()));
+		// ensures #length[ptrBase] == size;
+		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+				ensuresArrayHasValue(tuLoc, size, ptrBase, length),
+				Collections.emptySet()));
+		if (false) {
+		// Omit #StackHeapBarrier here until we know that it is needed.
+		// #StackHeapBarrier < res!base
+		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
+						IASTBinaryExpression.op_lessThan, getStackHeapBarrier(tuLoc),
+						mExpressionTranslation.getCTypeOfPointerComponents(),
+						ptrBase,
+						mExpressionTranslation.getCTypeOfPointerComponents()),
+				Collections.emptySet()));
+		}
+		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
+		mProcedureManager.endCustomProcedure(main, procedureIdentifier);
 	}
 
 	private static void checkFloatOnHeapSupport(final ILocation loc, final CPrimitive cp) {
