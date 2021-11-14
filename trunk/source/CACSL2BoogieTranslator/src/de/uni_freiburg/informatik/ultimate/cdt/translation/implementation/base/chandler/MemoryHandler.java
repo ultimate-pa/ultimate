@@ -3070,7 +3070,7 @@ public class MemoryHandler {
 					// then case: lock the mutex, return 0 (success)
 					final Expression lockUpdate = ensuresArrayUpdate(tuLoc, bLTrue, inputPtr, mutexArray);
 					final Expression successResult =
-							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, inputPtr, zero);
+							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, res, zero);
 
 					// else case: mutex unchanged, return non-zero error value
 					final Expression lockUnchanged =
@@ -3093,19 +3093,20 @@ public class MemoryHandler {
 		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
 
 		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK.getName(),
-				(inputPtr, res) -> new Specification[] {
-						// old(#pthreadsRwLock)[#ptr] >= 0
-						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-								constructOldRwLockComparisonExpression(tuLoc, inputPtr, Operator.COMPGEQ),
-								Collections.emptySet()),
-						// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := old(#pthreadsRwLock)[#ptr]+1]
-						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-								constructRwLockReadLockUpdate(tuLoc, inputPtr),
-								Collections
-										.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
-						// we assume that function is always successful and returns 0
-						ensuresSuccess(tuLoc, res) });
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK.getName(), (inputPtr,
+						res) -> new Specification[] {
+								// old(#pthreadsRwLock)[#ptr] >= 0
+								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+										constructOldRwLockComparisonExpression(tuLoc, inputPtr,
+												IASTBinaryExpression.op_equals),
+										Collections.emptySet()),
+								// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := old(#pthreadsRwLock)[#ptr]+1]
+								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+										constructRwLockReadLockUpdate(tuLoc, inputPtr),
+										Collections.singleton(
+												(VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
+								// we assume that function is always successful and returns 0
+								ensuresSuccess(tuLoc, res) });
 		return new ArrayList<>();
 	}
 
@@ -3114,19 +3115,20 @@ public class MemoryHandler {
 		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
 
 		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK.getName(),
-				(inputPtr, res) -> new Specification[] {
-						// old(#pthreadsRwLock)[#ptr] == 0
-						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-								constructOldRwLockComparisonExpression(tuLoc, inputPtr, Operator.COMPEQ),
-								Collections.emptySet()),
-						// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := -1]
-						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-								constructRwLockWriteLockUpdate(tuLoc, inputPtr),
-								Collections
-										.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
-						// we assume that function is always successful and returns 0
-						ensuresSuccess(tuLoc, res) });
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK.getName(), (inputPtr,
+						res) -> new Specification[] {
+								// old(#pthreadsRwLock)[#ptr] == 0
+								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+										constructOldRwLockComparisonExpression(tuLoc, inputPtr,
+												IASTBinaryExpression.op_equals),
+										Collections.emptySet()),
+								// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := -1]
+								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+										constructRwLockWriteLockUpdate(tuLoc, inputPtr),
+										Collections.singleton(
+												(VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
+								// we assume that function is always successful and returns 0
+								ensuresSuccess(tuLoc, res) });
 		return new ArrayList<>();
 	}
 
@@ -3134,7 +3136,7 @@ public class MemoryHandler {
 			final ILocation tuLoc) {
 		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
 		final Expression zero =
-				mTypeSizes.constructLiteralForIntegerType(tuLoc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+				mTypeSizes.constructLiteralForIntegerType(tuLoc, getRwLockCounterType(), BigInteger.ZERO);
 
 		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
 				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK.getName(), (inputPtr, res) -> {
@@ -3157,7 +3159,7 @@ public class MemoryHandler {
 									ensuresArrayUpdate(tuLoc,
 											ExpressionFactory.constructIfThenElseExpression(tuLoc,
 													constructOldRwLockComparisonExpression(tuLoc, inputPtr,
-															Operator.COMPGT),
+															IASTBinaryExpression.op_greaterThan),
 													newLockCounter, zero),
 											inputPtr, rwLockArray),
 									Collections.emptySet()),
@@ -3210,15 +3212,14 @@ public class MemoryHandler {
 
 	// old(#pthreadsRwLock)[#inputPtr] >= 0
 	private Expression constructOldRwLockComparisonExpression(final ILocation loc, final Expression inputPtr,
-			final Operator op) {
+			final int op) {
 		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(loc);
-		return ExpressionFactory
-				.newBinaryExpression(loc, op,
-						ExpressionFactory.constructNestedArrayAccessExpression(loc,
-								ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD,
-										rwLockArray),
-								new Expression[] { inputPtr }),
-						mExpressionTranslation.constructZero(loc, getRwLockCounterType()));
+		final Expression lockCounter = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, rwLockArray),
+				new Expression[] { inputPtr });
+		final Expression zero = mExpressionTranslation.constructZero(loc, getRwLockCounterType());
+		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, lockCounter, getRwLockCounterType(),
+				zero, getRwLockCounterType());
 	}
 
 	private void declareProcedureWithPointerParam(final CHandler main, final ITypeHandler typeHandler,
