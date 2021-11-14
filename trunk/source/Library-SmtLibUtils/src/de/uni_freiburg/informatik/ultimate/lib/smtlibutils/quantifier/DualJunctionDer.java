@@ -467,12 +467,12 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				if (cas.getSolvedBinaryRelation() != null) {
 					dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), otherDualJuncts,
 							cas.getSolvedBinaryRelation(), dualJunctsResult);
-					correspondingJunctsResult.add(dualJunctionResult);
 				} else {
+					dualJunctsResult.addAll(otherDualJuncts);
 					dualJunctionResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
 							et.getQuantifier(), dualJunctsResult);
-					correspondingJunctsResult.add(dualJunctionResult);
 				}
+				correspondingJunctsResult.add(dualJunctionResult);
 			}
 			final Term correspondingJunction = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(),
 					et.getQuantifier(), correspondingJunctsResult);

@@ -370,5 +370,15 @@ public class QuantifierEliminationBenchmarks {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, null, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void bug_nla_digbench_egcd2_ll_unwindbound2mmaybeTooDifficult() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "s", "q", "b", "yy", "y"),
+			};
+		final String formulaAsString = "(forall ((x Int)) (or (not (= (+ (* s y) (* q x)) b)) (forall ((xy Int)) (= (+ b (* s yy) (* q xy)) (+ (* s y) (* q x) (* b y))))))";
+		final String expectedResult = "(let ((.cse0 (+ b (* (- 1) s y))) (.cse1 (= q 0))) (and (or (not (= (mod .cse0 q) 0)) (forall ((xy Int)) (= (+ (* b y) (* s y) (* q (div (+ b (* (- 1) s y)) q))) (+ (* q xy) b (* s yy)))) .cse1) (or (forall ((x Int) (xy Int)) (= (+ (* b y) (* s y) (* q x)) (+ (* q xy) b (* s yy)))) (not (= .cse0 0)) (not .cse1))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }
