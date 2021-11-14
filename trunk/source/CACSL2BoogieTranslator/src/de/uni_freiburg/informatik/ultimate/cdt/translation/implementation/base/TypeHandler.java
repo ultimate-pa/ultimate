@@ -756,7 +756,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public BoogieType getBoogieTypeForSizeT() {
-		return BoogieType.TYPE_INT;
+		return getBoogieTypeForCType(mTypeSizes.getSizeT());
 	}
 
 	@Override

@@ -2618,7 +2618,7 @@ public class MemoryHandler {
 		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
 		// ~size
 		final IdentifierExpression size = // new IdentifierExpression(tuLoc, SIZE);
-				ExpressionFactory.constructIdentifierExpression(tuLoc, BoogieType.TYPE_INT, SIZE,
+				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(), SIZE,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, alloc.getName()));
 
 		{
@@ -2762,10 +2762,12 @@ public class MemoryHandler {
 		// #length
 		final Expression length = getLengthArray(tuLoc);
 		// ~size
-		final IdentifierExpression size = ExpressionFactory.constructIdentifierExpression(tuLoc, BoogieType.TYPE_INT,
-				SIZE, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
-		final IdentifierExpression ptrBase = ExpressionFactory.constructIdentifierExpression(tuLoc, BoogieType.TYPE_INT,
-				pointerBaseIdentifier, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
+		final IdentifierExpression size = ExpressionFactory.constructIdentifierExpression(tuLoc,
+				mTypeHandler.getBoogieTypeForSizeT(), SIZE,
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
+		final IdentifierExpression ptrBase = ExpressionFactory.constructIdentifierExpression(tuLoc,
+				mTypeHandler.getBoogieTypeForPointerComponents(), pointerBaseIdentifier,
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
 		{
 			final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], procedureIdentifier, new String[0],
 					new VarList[] { new VarList(tuLoc, new String[] { SIZE, pointerBaseIdentifier }, intType) },
@@ -2993,8 +2995,9 @@ public class MemoryHandler {
 		case ULTIMATE_DEALLOC:
 			break;
 		case ULTIMATE_LENGTH:
-			return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
-					new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() }, BoogieType.TYPE_INT));
+			return new MemoryModelDeclarationInfo(mmd,
+					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
+							mTypeHandler.getBoogieTypeForSizeT()));
 		case ULTIMATE_MEMINIT:
 			break;
 		case ULTIMATE_PTHREADS_FORK_COUNT:
