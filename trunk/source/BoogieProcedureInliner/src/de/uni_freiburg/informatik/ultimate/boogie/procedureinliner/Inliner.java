@@ -107,7 +107,8 @@ public class Inliner implements IUnmanagedObserver {
 	public boolean process(final IElement root) throws Throwable {
 		if (!mProgressMonitorService.continueProcessing()) {
 			return false;
-		} else if (root instanceof Unit) {
+		}
+		if (root instanceof Unit) {
 			mAstUnit = (Unit) root;
 			try {
 				inline();
@@ -133,6 +134,7 @@ public class Inliner implements IUnmanagedObserver {
 				mBacktranslator.addBacktranslation(transformer);
 			}
 		}
+		mLogger.info(inlinerStat.toString());
 		writeNewDeclarationsToAstUnit();
 	}
 
@@ -164,11 +166,10 @@ public class Inliner implements IUnmanagedObserver {
 		if (missingEntryProcedures.size() == entryProcedures.size()) {
 			mLogger.warn("Program contained no entry procedure!");
 		}
-		if (!missingEntryProcedures.isEmpty()) {
-			mLogger.warn("Missing entry procedures: " + missingEntryProcedures);
-		} else {
+		if (missingEntryProcedures.isEmpty()) {
 			return entryAndReEntryProcedures(entryProcedures);
 		}
+		mLogger.warn("Missing entry procedures: " + missingEntryProcedures);
 
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceItem.ENTRY_PROCEDURE_FALLBACK.getName())) {
