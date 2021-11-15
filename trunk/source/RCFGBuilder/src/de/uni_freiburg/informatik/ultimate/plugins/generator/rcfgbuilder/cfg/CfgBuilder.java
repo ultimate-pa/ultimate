@@ -233,7 +233,7 @@ public class CfgBuilder {
 	 * @return RootNode of a recursive control flow graph.
 	 */
 	public IIcfg<BoogieIcfgLocation> createIcfg(final Unit unit) {
-
+		mLogger.info("Building ICFG");
 		mTransFormulaAdder = new TransFormulaAdder(mBoogie2Smt, mServices);
 
 		// Build entry, final and exit node for all procedures that have an
@@ -259,6 +259,7 @@ public class CfgBuilder {
 		}
 
 		// Build a control flow graph for each procedure
+		mLogger.info("Building CFG for each procedure with an implementation");
 		final ProcedureCfgBuilder procCfgBuilder = new ProcedureCfgBuilder();
 		for (final String procName : mBoogieDeclarations.getProcSpecification().keySet()) {
 			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
@@ -273,6 +274,7 @@ public class CfgBuilder {
 			addCallTransitionAndReturnTransition(se, SIMPLIFICATION_TECHNIQUE);
 		}
 
+		mLogger.info("Performing block encoding");
 		switch (mCodeBlockSize) {
 		case LoopFreeBlock:
 			new LargeBlockEncoding(InternalLbeMode.ALL);
@@ -493,8 +495,8 @@ public class CfgBuilder {
 	}
 
 	/**
-	 * Check it this statement is an <code>assume true</ code> and has an empty list
-	 * of attributes (or no attributes at all).
+	 * Check it this statement is an <code>assume true</ code> and has an empty list of attributes (or no attributes at
+	 * all).
 	 */
 	private static boolean isAssumeTrueStatementWithoutAttributes(final Statement st) {
 		if (st instanceof AssumeStatement) {
