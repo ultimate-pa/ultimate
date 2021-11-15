@@ -200,7 +200,12 @@ public class InlinerBacktranslator
 			}
 			final ProgramState<Expression> progState = exec.getProgramState(i);
 			if (progState != null) {
-				final String currentProc = computeCurrectProc(traceElemMapping);
+				final String currentProc;
+				if (traceElemMapping != null) {
+					currentProc	= computeCurrectProc(traceElemMapping);
+				} else {
+					currentProc = traceElem.getSucceedingProcedure();
+				}
 				final Map<Expression, Collection<Expression>> translatedVar2Values = new HashMap<>();
 				for (final Expression variable : progState.getVariables()) {
 					// 2021-11-11 Matthias: the original code passed the following argument:
