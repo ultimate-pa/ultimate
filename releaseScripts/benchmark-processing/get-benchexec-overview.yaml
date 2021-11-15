@@ -124,6 +124,7 @@ known_safe:
 known_unsafe:
   "CounterExampleResult":
   "NonterminatingLassoResult":
+  "DataRaceFoundResult":
 
 known_unknown:
   "UnprovableResult":
