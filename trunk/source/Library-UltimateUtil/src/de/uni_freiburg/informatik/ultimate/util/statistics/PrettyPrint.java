@@ -66,7 +66,7 @@ public final class PrettyPrint {
 	public static BiFunction<String, Object, String> dataAsTime(final BiFunction<String, Object, String> pprinter) {
 		// having the unit in the field name rather than in the data makes processing easier
 		return (key, data) -> pprinter.apply(key,
-				CoreUtil.toTimeString((long) data, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 2));
+				CoreUtil.toTimeString((long) data, TimeUnit.NANOSECONDS, TimeUnit.SECONDS, 1));
 	}
 
 	public static BiFunction<String, Object, String> list(final BiFunction<String, Object, String> pprinter,
