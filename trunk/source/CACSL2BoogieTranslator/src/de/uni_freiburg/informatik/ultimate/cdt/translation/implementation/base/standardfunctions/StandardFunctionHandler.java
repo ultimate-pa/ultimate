@@ -224,13 +224,12 @@ public class StandardFunctionHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				if (mOverwrittenFunctionNames.contains(transformedName)) {
-					mLogger.warn(String.format(
-							"Function %s is already implemented but we override the implementation for the call at %s",
-							transformedName, node.getFileLocation()));
-				} else {
+				if (!mOverwrittenFunctionNames.contains(transformedName)) {
 					return null;
 				}
+				mLogger.warn(String.format(
+						"Function %s is already implemented but we override the implementation for the call at %s",
+						transformedName, node.getFileLocation()));
 			}
 			final ILocation loc = getLoc(main, node);
 			return functionModel.handleFunction(main, node, loc, name);
@@ -251,6 +250,8 @@ public class StandardFunctionHandler {
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
 		final Map<String, IFunctionModelHandler> map = new HashMap<>();
 
+		// Do not use skip for functions that have return values, use constructUnsoundOverapproximationForFunctionCall
+		// instead
 		final IFunctionModelHandler skip = (main, node, loc, name) -> handleByIgnore(main, loc, name);
 		final IFunctionModelHandler die = (main, node, loc, name) -> handleByUnsupportedSyntaxException(loc, name);
 		final IFunctionModelHandler dieFloat =
@@ -300,8 +301,11 @@ public class StandardFunctionHandler {
 
 		// TODO 20211105 Matthias: Unsound because depending on its first argument,
 		// the *scanf functions manipulate memory addressed by the other arguments.
-		fill(map, "sscanf", skip);
-		fill(map, "swscanf", skip);
+		// see https://en.cppreference.com/w/c/io/fscanf and https://en.cppreference.com/w/c/io/fwscanf
+		fill(map, "sscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
+				new CPrimitive(CPrimitive.CPrimitives.INT)));
+		fill(map, "swscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
+				new CPrimitive(CPrimitive.CPrimitives.INT)));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -515,8 +519,8 @@ public class StandardFunctionHandler {
 
 		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
-		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc, name));
-		fill(map, "reach_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc, name));
+		fill(map, "__VERIFIER_error", this::handleErrorFunction);
+		fill(map, "reach_error", this::handleErrorFunction);
 
 		fill(map, "__VERIFIER_assume", this::handleVerifierAssume);
 
@@ -1078,19 +1082,17 @@ public class StandardFunctionHandler {
 				rawProcName = castIdExpr.getName().toString();
 			} else if (argument instanceof CASTUnaryExpression) {
 				final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
-				if (castUnaryExpr.getOperator() == IASTUnaryExpression.op_amper) {
-					// function foo is probably given as a function pointer of the form & foo
-					if (castUnaryExpr.getOperand() instanceof CASTIdExpression) {
-						final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
-						rawProcName = castIdExpr.getName().toString();
-					} else {
-						throw new UnsupportedOperationException("Third argument of pthread_create is: "
-								+ castUnaryExpr.getOperand().getClass().getSimpleName());
-					}
-				} else {
+				if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
 					throw new UnsupportedOperationException(
 							"Third argument of pthread_create is: " + argument.getClass().getSimpleName());
 				}
+				// function foo is probably given as a function pointer of the form & foo
+				if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
+					throw new UnsupportedOperationException("Third argument of pthread_create is: "
+							+ castUnaryExpr.getOperand().getClass().getSimpleName());
+				}
+				final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
+				rawProcName = castIdExpr.getName().toString();
 			} else {
 				throw new UnsupportedOperationException(
 						"Third argument of pthread_create is " + argument.getClass().getSimpleName());
@@ -1913,11 +1915,8 @@ public class StandardFunctionHandler {
 		// Read https://gcc.gnu.org/onlinedocs/gcc/Object-Size-Checking.html
 		// For testing, overapproximate and do not dispatch arguments (I understand the spec as this is whats happening,
 		// but I am not sure)
-		return handleByOverapproximationWithoutDispatch(main, node, loc, name, 2, new CPrimitive(CPrimitives.INT));
-		// main.warn(loc, "used trivial implementation of __builtin_object_size");
-		// final CPrimitive cType = new CPrimitive(CPrimitives.INT);
-		// final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
-		// return new ExpressionResult(new RValue(zero, cType));
+		return handleUnsoundByOverapproximationWithoutDispatch(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.INT));
 	}
 
 	private Result handlePrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
@@ -2092,8 +2091,7 @@ public class StandardFunctionHandler {
 			results.add((ExpressionResult) main.dispatch(argument));
 		}
 
-		final ExpressionResult overapproxCall =
-				constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
+		final ExpressionResult overapproxCall = constructOverapproximationForFunctionCall(loc, methodName, resultType);
 		results.add(overapproxCall);
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).setLrValue(overapproxCall.getLrValue())
 				.build();
@@ -2116,12 +2114,12 @@ public class StandardFunctionHandler {
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
 	}
 
-	private Result handleByOverapproximationWithoutDispatch(final IDispatcher main,
+	private Result handleUnsoundByOverapproximationWithoutDispatch(final IDispatcher main,
 			final IASTFunctionCallExpression node, final ILocation loc, final String methodName, final int numberOfArgs,
 			final CType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
-		return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
+		return constructOverapproximationForFunctionCall(loc, methodName, resultType);
 	}
 
 	/**
@@ -2134,16 +2132,27 @@ public class StandardFunctionHandler {
 	 * @param resultType
 	 *            CType that determinies the type of the auxiliary variable
 	 */
-	private ExpressionResult constructOverapproximationForFunctionCall(final IDispatcher main, final ILocation loc,
-			final String functionName, final CType resultType) {
+	private ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
+			final CType resultType) {
+		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
+	}
+
+	/**
+	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will **NOT** be
+	 * marked as an overapproximation, which is always unsound.
+	 */
+	private ExpressionResult constructUnsoundOverapproximationForFunctionCall(final ILocation loc,
+			final CType resultType) {
+		return buildFunctionCall(loc, resultType).build();
+	}
+
+	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		// introduce fresh aux variable
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvar.getVarDec());
 		builder.addAuxVar(auxvar);
-		builder.addOverapprox(new Overapprox(functionName, loc));
 		builder.setLrValue(new RValue(auxvar.getExp(), resultType));
-		return builder.build();
+		return builder;
 	}
 
 	private static void checkArguments(final ILocation loc, final int expectedArgs, final String name,
