@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
  */
 public class Req2BoogieTranslator {
 
+	public static final String PROCEDURE_NAME = "myProcedure";
 	private static final String DOUBLE_ZERO = Double.toString(0.0);
 	private final Unit mUnit;
 	private final List<ReqPeas> mReqPeas;
@@ -711,6 +712,6 @@ public class Req2BoogieTranslator {
 		final String[] typeParams = new String[0];
 		final VarList[] inParams = new VarList[0];
 		final VarList[] outParams = new VarList[0];
-		return new Procedure(bl, attribute, "myProcedure", typeParams, inParams, outParams, modArray, body);
+		return new Procedure(bl, attribute, PROCEDURE_NAME, typeParams, inParams, outParams, modArray, body);
 	}
 }
