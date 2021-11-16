@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -803,7 +804,22 @@ public class PostProcessor {
 		}
 		if (mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 
-			{
+			// TODO 20211115 Matthias: added the following assume-base initialization for
+			// #valid[0] == 0. I presume that the assignment-case initialization is not
+			// needed in any approach and can be dropped.
+			if (true) {
+				// assume #valid[0] == 0 (i.e., the memory at the NULL-pointer is
+				// not allocated)
+				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
+				final Expression eq = ExpressionFactory.newBinaryExpression(translationUnitLoc, Operator.COMPEQ,
+						ExpressionFactory.constructNestedArrayAccessExpression(translationUnitLoc,
+								mMemoryHandler.getValidArray(translationUnitLoc), new Expression[] { zero }),
+						literalThatRepresentsFalse);
+				final AssumeStatement assume = new AssumeStatement(translationUnitLoc, eq);
+				initStatements.add(0, assume);
+			} else {
 				// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is
 				// not allocated)
 				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
