@@ -379,6 +379,17 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void inconsistentDimensionInNestedStoreDueToConstArray() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "~#a~0.base"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+			};
+		final String formulaAsString = "(forall ((|v_ULTIMATE.start_main_#t~pre45#1_47| Int) (|v_ULTIMATE.start_main_~#t_ids~0#1.base_20| Int) (|#memory_int| (Array Int (Array Int Int))) (|t_funThread2of2ForFork0_~p~0#1.offset| Int) (|v_ULTIMATE.start_main_~i~3#1_34| Int) (|v_ULTIMATE.start_main_~i~3#1_36| Int) (|ULTIMATE.start_main_#t~pre45#1| Int) (|ULTIMATE.start_main_~i~3#1| Int) (|v_ULTIMATE.start_main_#t~pre45#1_44| Int) (|ULTIMATE.start_main_~#t_ids~0#1.offset| Int) (|t_funThread1of2ForFork0_~p~0#1.offset| Int)) (or (not (= (select |#valid| |v_ULTIMATE.start_main_~#t_ids~0#1.base_20|) 0)) (= (select (let ((.cse1 (let ((.cse4 (store |#memory_int| |~#a~0.base| ((as const (Array Int Int)) 0)))) (store .cse4 |v_ULTIMATE.start_main_~#t_ids~0#1.base_20| (store (store (select .cse4 |v_ULTIMATE.start_main_~#t_ids~0#1.base_20|) (+ |ULTIMATE.start_main_~#t_ids~0#1.offset| (* |ULTIMATE.start_main_~i~3#1| 4)) |ULTIMATE.start_main_#t~pre45#1|) (+ |ULTIMATE.start_main_~#t_ids~0#1.offset| (* |v_ULTIMATE.start_main_~i~3#1_36| 4)) |v_ULTIMATE.start_main_#t~pre45#1_47|))))) (let ((.cse2 (select .cse1 |~#a~0.base|))) (let ((.cse3 (select .cse2 |t_funThread2of2ForFork0_~p~0#1.offset|))) (store (select (let ((.cse0 (store .cse1 |~#a~0.base| (store .cse2 |t_funThread2of2ForFork0_~p~0#1.offset| (+ .cse3 1))))) (store .cse0 |v_ULTIMATE.start_main_~#t_ids~0#1.base_20| (store (select .cse0 |v_ULTIMATE.start_main_~#t_ids~0#1.base_20|) (+ |ULTIMATE.start_main_~#t_ids~0#1.offset| (* |v_ULTIMATE.start_main_~i~3#1_34| 4)) |v_ULTIMATE.start_main_#t~pre45#1_44|))) |~#a~0.base|) |t_funThread2of2ForFork0_~p~0#1.offset| .cse3)))) |t_funThread1of2ForFork0_~p~0#1.offset|) 0)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
