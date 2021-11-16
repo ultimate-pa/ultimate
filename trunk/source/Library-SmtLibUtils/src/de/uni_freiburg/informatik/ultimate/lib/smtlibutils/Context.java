@@ -28,12 +28,16 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -44,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * While considering a subformula φ of a formula. The <i>context</i> provides
@@ -110,11 +113,16 @@ public class Context {
 
 	public Context constructChildContextForQuantifiedFormula(final Script script,
 			final List<TermVariable> quantifiedVars) {
-		final Set<TermVariable> intersection = DataStructureUtils.intersection(
-				Arrays.asList(mCriticalConstraint.getFreeVars()).stream().collect(Collectors.toSet()),
-				quantifiedVars.stream().collect(Collectors.toSet()));
-		if (!intersection.isEmpty()) {
-			throw new UnsupportedOperationException("Shadow problem: " + intersection);
+		{
+			// Throw UnsupportedOperationException if there are different variables with same name.
+			final Set<TermVariable> all = Stream
+					.concat(Arrays.asList(mCriticalConstraint.getFreeVars()).stream(), quantifiedVars.stream())
+					.collect(Collectors.toSet());
+			final String nameOfTwoDifferentVars = checkForDifferentVariablesWithSameName(all);
+			if (nameOfTwoDifferentVars != null) {
+				throw new UnsupportedOperationException(
+						"Different variables with same name: " + nameOfTwoDifferentVars);
+			}
 		}
 		final Term criticalConstraint = buildCriticalContraintForQuantifiedFormula(script, mCriticalConstraint,
 				quantifiedVars, mCcTransformation);
@@ -253,6 +261,21 @@ public class Context {
 		}
 		result = SmtUtils.and(mgdScript.getScript(), result, parentCriticalConstraint);
 		return result;
+	}
+
+	/**
+	 * Return null if all variables have different names. Otherwise, return a name
+	 * that occurs in several TermVariables.
+	 */
+	public String checkForDifferentVariablesWithSameName(final Collection<TermVariable> termVariables) {
+		final Map<String, TermVariable> map = new HashMap<>();
+		for (final TermVariable tv : termVariables) {
+			final TermVariable old = map.put(tv.getName(), tv);
+			if (old != null && !old.equals(tv)) {
+				return old.getName();
+			}
+		}
+		return null;
 	}
 
 }
