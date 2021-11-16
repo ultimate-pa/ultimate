@@ -681,6 +681,15 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
+	public void arrayCongruenceForall() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k"), };
+		final String formulaAsString = "(forall ((a (Array Int Int)))  (or (not (= 23 (select a i))) (= (select a k) 23)))";
+		final String expectedResult = "(= i k)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void applyDistributivity() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p") };
