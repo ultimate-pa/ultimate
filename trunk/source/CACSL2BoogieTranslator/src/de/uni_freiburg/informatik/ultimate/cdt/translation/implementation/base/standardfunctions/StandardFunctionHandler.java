@@ -365,24 +365,20 @@ public class StandardFunctionHandler {
 				3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_saddl_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
-
 		fill(map, "__builtin_saddll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
-
 		fill(map, "__builtin_uadd_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
 				3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_uaddl_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_uaddll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
-
 		fill(map, "__builtin_sub_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
 				3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_ssub_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
 				3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_ssubl_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
-
 		fill(map, "__builtin_ssubll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_usub_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
@@ -391,12 +387,10 @@ public class StandardFunctionHandler {
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_usubll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
-
 		fill(map, "__builtin_mul_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
 				3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_smul_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
 				3, new CPrimitive(CPrimitives.BOOL)));
-
 		fill(map, "__builtin_smull_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_smulll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
@@ -409,7 +403,6 @@ public class StandardFunctionHandler {
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_add_overflow_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
-
 		fill(map, "__builtin_sub_overflow_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 3, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__builtin_mul_overflow_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
