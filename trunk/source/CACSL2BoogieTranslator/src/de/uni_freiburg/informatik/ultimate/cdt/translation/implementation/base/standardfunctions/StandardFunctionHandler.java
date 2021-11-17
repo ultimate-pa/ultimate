@@ -354,6 +354,67 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_bswap64", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.ULONG)));
 
+
+		/*
+		 * 6.56 Built-in Functions to Perform Arithmetic with Overflow Checking
+		 * https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+		 */
+		fill(map, "__builtin_add_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_sadd_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_saddl_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+
+		fill(map, "__builtin_saddll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+
+		fill(map, "__builtin_uadd_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_uaddl_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_uaddll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+
+		fill(map, "__builtin_sub_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_ssub_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_ssubl_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+
+		fill(map, "__builtin_ssubll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_usub_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_usubl_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_usubll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+
+		fill(map, "__builtin_mul_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_smul_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+
+		fill(map, "__builtin_smull_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_smulll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_umul_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_umull_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_umulll_overflow", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_add_overflow_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+
+		fill(map, "__builtin_sub_overflow_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_mul_overflow_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.BOOL)));
+
 		/*
 		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
 		 * 5.6.2015) triggers the processor to load something into cache, does nothing else is void thus has no return
