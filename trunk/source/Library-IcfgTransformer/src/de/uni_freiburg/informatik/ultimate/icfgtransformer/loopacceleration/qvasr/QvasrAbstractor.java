@@ -301,7 +301,7 @@ public class QvasrAbstractor {
 	}
 
 	/**
-	 * Simplify differences where either the minuend or subtrahend is a division.
+	 * Simplify differences where either the minuend or subtrahend is a division, or only one of them.
 	 *
 	 * @param minuend
 	 * @param subtrahend
@@ -318,7 +318,7 @@ public class QvasrAbstractor {
 				final Term divisorSubtrahend = appTermSubrahend.getParameters()[1];
 				if (!appTermMinuend.getFunction().getName().equals("/")) {
 					final Term simplifiedMult =
-							QvasrAbstractor.simplifyRealMultiplication(script, simplifiedMinuend, divisorSubtrahend);
+							QvasrAbstractor.factorOutRealMultiplication(script, simplifiedMinuend, divisorSubtrahend);
 					simplifiedMinuend = SmtUtils.minus(script.getScript(), simplifiedMult, dividentSubtrahend);
 					result = QvasrAbstractor.simplifyRealDivisionWithMultiplication(script, simplifiedMinuend,
 							divisorSubtrahend, script.getScript().decimal("1"));
@@ -329,14 +329,14 @@ public class QvasrAbstractor {
 						final Term subMinuendSubtrahend =
 								SmtUtils.minus(script.getScript(), dividentMinuend, dividentSubtrahend);
 						result = QvasrAbstractor.simplifyRealDivisionWithMultiplication(script, subMinuendSubtrahend,
-								dividentMinuend, script.getScript().decimal("1"));
+								divisorMinuend, script.getScript().decimal("1"));
 					} else {
 						final Term commonDenominator =
-								QvasrAbstractor.simplifyRealMultiplication(script, divisorMinuend, divisorSubtrahend);
+								QvasrAbstractor.factorOutRealMultiplication(script, divisorMinuend, divisorSubtrahend);
 						final Term commonDenominatorDividentMinuend =
-								QvasrAbstractor.simplifyRealMultiplication(script, dividentMinuend, divisorSubtrahend);
+								QvasrAbstractor.factorOutRealMultiplication(script, dividentMinuend, divisorSubtrahend);
 						final Term commonDenominatorDividentSubtrahend =
-								QvasrAbstractor.simplifyRealMultiplication(script, dividentSubtrahend, divisorMinuend);
+								QvasrAbstractor.factorOutRealMultiplication(script, dividentSubtrahend, divisorMinuend);
 						final Term commonDenominatorSub = SmtUtils.minus(script.getScript(),
 								commonDenominatorDividentMinuend, commonDenominatorDividentSubtrahend);
 						result = QvasrAbstractor.simplifyRealDivisionWithMultiplication(script, commonDenominatorSub,
@@ -353,7 +353,7 @@ public class QvasrAbstractor {
 			final Term divisorSubtrahend = appTermSubrahend.getParameters()[1];
 			if (appTermSubrahend.getFunction().getName().equals("/")) {
 				final Term simplifiedMult =
-						QvasrAbstractor.simplifyRealMultiplication(script, simplifiedMinuend, divisorSubtrahend);
+						QvasrAbstractor.factorOutRealMultiplication(script, simplifiedMinuend, divisorSubtrahend);
 				simplifiedMinuend = SmtUtils.minus(script.getScript(), simplifiedMult, dividentSubtrahend);
 				result = QvasrAbstractor.simplifyRealDivisionWithMultiplication(script, simplifiedMinuend,
 						divisorSubtrahend, script.getScript().decimal("1"));
@@ -365,11 +365,13 @@ public class QvasrAbstractor {
 	/**
 	 * Simplify multiplications of two factors.
 	 *
+	 * TODO: FactorOne || FactorTwo no constantTerms
+	 *
 	 * @param factorOne
 	 * @param factorTwo
 	 * @return
 	 */
-	public static Term simplifyRealMultiplication(final ManagedScript script, final Term factorOne,
+	public static Term factorOutRealMultiplication(final ManagedScript script, final Term factorOne,
 			final Term factorTwo) {
 		Term result = script.getScript().decimal("0");
 		if (factorOne instanceof ApplicationTerm) {
@@ -415,6 +417,9 @@ public class QvasrAbstractor {
 		final Term one = script.getScript().decimal("1");
 
 		result = SmtUtils.mul(script.getScript(), "*", result, mult);
+		/*
+		 * Can be represented by AffineTerm -> less expensive
+		 */
 		if (SmtUtils.areFormulasEquivalent(divisor, zero, script.getScript())) {
 			throw new UnsupportedOperationException("cannot divide by 0!");
 		}
