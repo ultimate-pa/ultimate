@@ -189,7 +189,8 @@ public class QvasrAbstractor {
 					final Term divider = matrix[i][j];
 					for (int k = j; k < matrix[0].length; k++) {
 						final Term toBeDivided = matrix[i][k];
-						final Term division = simplifyRealDivisionWithMultiplication(toBeDivided, divider, mOne);
+						final Term division = QvasrAbstractor.simplifyRealDivisionWithMultiplication(mScript,
+								toBeDivided, divider, mOne);
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("Matrix " + i + k + " =  " + division.toStringDirect());
 						}
@@ -287,9 +288,10 @@ public class QvasrAbstractor {
 					final Term currentColumn = matrix[k][j];
 					final Term currentEntry = matrix[i][j];
 
-					final Term newMul = simplifyRealDivisionWithMultiplication(toBeEliminated, pivot, currentColumn);
+					final Term newMul = QvasrAbstractor.simplifyRealDivisionWithMultiplication(mScript, toBeEliminated,
+							pivot, currentColumn);
 					mLogger.debug(newMul.toStringDirect());
-					final Term newSub = simplifyRealSubtraction(currentEntry, newMul);
+					final Term newSub = QvasrAbstractor.simplifyRealSubtraction(mScript, currentEntry, newMul);
 					mLogger.debug(newSub.toStringDirect());
 					matrix[i][j] = newSub;
 				}
@@ -305,8 +307,8 @@ public class QvasrAbstractor {
 	 * @param subtrahend
 	 * @return
 	 */
-	private final Term simplifyRealSubtraction(final Term minuend, final Term subtrahend) {
-		Term result = SmtUtils.minus(mScript.getScript(), minuend, subtrahend);
+	public static Term simplifyRealSubtraction(final ManagedScript script, final Term minuend, final Term subtrahend) {
+		Term result = SmtUtils.minus(script.getScript(), minuend, subtrahend);
 		if (subtrahend instanceof ApplicationTerm && minuend instanceof ApplicationTerm) {
 			final ApplicationTerm appTermSubrahend = (ApplicationTerm) subtrahend;
 			final ApplicationTerm appTermMinuend = (ApplicationTerm) minuend;
@@ -315,26 +317,30 @@ public class QvasrAbstractor {
 				final Term dividentSubtrahend = appTermSubrahend.getParameters()[0];
 				final Term divisorSubtrahend = appTermSubrahend.getParameters()[1];
 				if (!appTermMinuend.getFunction().getName().equals("/")) {
-					final Term simplifiedMult = simplifyRealMultiplication(simplifiedMinuend, divisorSubtrahend);
-					simplifiedMinuend = SmtUtils.minus(mScript.getScript(), simplifiedMult, dividentSubtrahend);
-					result = simplifyRealDivisionWithMultiplication(simplifiedMinuend, divisorSubtrahend, mOne);
-					mLogger.debug("Simplified Subtraction Without Division: " + simplifiedMinuend.toStringDirect());
+					final Term simplifiedMult =
+							QvasrAbstractor.simplifyRealMultiplication(script, simplifiedMinuend, divisorSubtrahend);
+					simplifiedMinuend = SmtUtils.minus(script.getScript(), simplifiedMult, dividentSubtrahend);
+					result = QvasrAbstractor.simplifyRealDivisionWithMultiplication(script, simplifiedMinuend,
+							divisorSubtrahend, script.getScript().decimal("1"));
 				} else {
 					final Term dividentMinuend = appTermMinuend.getParameters()[0];
 					final Term divisorMinuend = appTermMinuend.getParameters()[1];
-					if (SmtUtils.areFormulasEquivalent(divisorSubtrahend, divisorMinuend, mScript.getScript())) {
+					if (SmtUtils.areFormulasEquivalent(divisorSubtrahend, divisorMinuend, script.getScript())) {
 						final Term subMinuendSubtrahend =
-								SmtUtils.minus(mScript.getScript(), dividentMinuend, dividentSubtrahend);
-						result = simplifyRealDivisionWithMultiplication(subMinuendSubtrahend, dividentMinuend, mOne);
+								SmtUtils.minus(script.getScript(), dividentMinuend, dividentSubtrahend);
+						result = QvasrAbstractor.simplifyRealDivisionWithMultiplication(script, subMinuendSubtrahend,
+								dividentMinuend, script.getScript().decimal("1"));
 					} else {
-						final Term commonDenominator = simplifyRealMultiplication(divisorMinuend, divisorSubtrahend);
+						final Term commonDenominator =
+								QvasrAbstractor.simplifyRealMultiplication(script, divisorMinuend, divisorSubtrahend);
 						final Term commonDenominatorDividentMinuend =
-								simplifyRealMultiplication(dividentMinuend, divisorSubtrahend);
+								QvasrAbstractor.simplifyRealMultiplication(script, dividentMinuend, divisorSubtrahend);
 						final Term commonDenominatorDividentSubtrahend =
-								simplifyRealMultiplication(dividentSubtrahend, divisorMinuend);
-						final Term commonDenominatorSub = SmtUtils.minus(mScript.getScript(),
+								QvasrAbstractor.simplifyRealMultiplication(script, dividentSubtrahend, divisorMinuend);
+						final Term commonDenominatorSub = SmtUtils.minus(script.getScript(),
 								commonDenominatorDividentMinuend, commonDenominatorDividentSubtrahend);
-						result = simplifyRealDivisionWithMultiplication(commonDenominatorSub, commonDenominator, mOne);
+						result = QvasrAbstractor.simplifyRealDivisionWithMultiplication(script, commonDenominatorSub,
+								commonDenominator, script.getScript().decimal("1"));
 					}
 				}
 			}
@@ -346,10 +352,11 @@ public class QvasrAbstractor {
 			final Term dividentSubtrahend = appTermSubrahend.getParameters()[0];
 			final Term divisorSubtrahend = appTermSubrahend.getParameters()[1];
 			if (appTermSubrahend.getFunction().getName().equals("/")) {
-				final Term simplifiedMult = simplifyRealMultiplication(simplifiedMinuend, divisorSubtrahend);
-				simplifiedMinuend = SmtUtils.minus(mScript.getScript(), simplifiedMult, dividentSubtrahend);
-				result = simplifyRealDivisionWithMultiplication(simplifiedMinuend, divisorSubtrahend, mOne);
-				mLogger.debug("Simplified Subtraction Without Division: " + simplifiedMinuend.toStringDirect());
+				final Term simplifiedMult =
+						QvasrAbstractor.simplifyRealMultiplication(script, simplifiedMinuend, divisorSubtrahend);
+				simplifiedMinuend = SmtUtils.minus(script.getScript(), simplifiedMult, dividentSubtrahend);
+				result = QvasrAbstractor.simplifyRealDivisionWithMultiplication(script, simplifiedMinuend,
+						divisorSubtrahend, script.getScript().decimal("1"));
 			}
 		}
 		return result;
@@ -362,29 +369,30 @@ public class QvasrAbstractor {
 	 * @param factorTwo
 	 * @return
 	 */
-	private final Term simplifyRealMultiplication(final Term factorOne, final Term factorTwo) {
-		Term result = mZero;
+	public static Term simplifyRealMultiplication(final ManagedScript script, final Term factorOne,
+			final Term factorTwo) {
+		Term result = script.getScript().decimal("0");
 		if (factorOne instanceof ApplicationTerm) {
 			final ApplicationTerm factorOneAppTerm = (ApplicationTerm) factorOne;
 			if (factorTwo instanceof ApplicationTerm) {
 				final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
 				for (final Term paramFactorOne : factorOneAppTerm.getParameters()) {
 					for (final Term paramFactorTwo : factorTwoAppTerm.getParameters()) {
-						final Term mult = SmtUtils.mul(mScript.getScript(), "*", paramFactorOne, paramFactorTwo);
-						result = SmtUtils.sum(mScript.getScript(), "+", result, mult);
+						final Term mult = SmtUtils.mul(script.getScript(), "*", paramFactorOne, paramFactorTwo);
+						result = SmtUtils.sum(script.getScript(), "+", result, mult);
 					}
 				}
 			} else {
 				for (final Term paramFactorOne : factorOneAppTerm.getParameters()) {
-					final Term mult = SmtUtils.mul(mScript.getScript(), "*", paramFactorOne, factorTwo);
-					result = SmtUtils.sum(mScript.getScript(), "+", result, mult);
+					final Term mult = SmtUtils.mul(script.getScript(), "*", paramFactorOne, factorTwo);
+					result = SmtUtils.sum(script.getScript(), "+", result, mult);
 				}
 			}
 		} else if (factorTwo instanceof ApplicationTerm) {
 			final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
 			for (final Term paramFactorTwo : factorTwoAppTerm.getParameters()) {
-				final Term mult = SmtUtils.mul(mScript.getScript(), "*", paramFactorTwo, factorOne);
-				result = SmtUtils.sum(mScript.getScript(), "+", result, mult);
+				final Term mult = SmtUtils.mul(script.getScript(), "*", paramFactorTwo, factorOne);
+				result = SmtUtils.sum(script.getScript(), "+", result, mult);
 			}
 		}
 		return result;
@@ -398,26 +406,28 @@ public class QvasrAbstractor {
 	 * @param mult
 	 * @return
 	 */
-	private final Term simplifyRealDivisionWithMultiplication(final Term dividend, final Term divisor,
-			final Term mult) {
-		Term result = SmtUtils.divReal(mScript.getScript(), dividend, divisor);
+	public static Term simplifyRealDivisionWithMultiplication(final ManagedScript script, final Term dividend,
+			final Term divisor, final Term mult) {
+		Term result = SmtUtils.divReal(script.getScript(), dividend, divisor);
 		Term simplifiedDividend = dividend;
 		Term simplifiedDivisor = divisor;
+		final Term zero = script.getScript().decimal("0");
+		final Term one = script.getScript().decimal("1");
 
-		result = SmtUtils.mul(mScript.getScript(), "*", result, mult);
-		if (SmtUtils.areFormulasEquivalent(divisor, mZero, mScript.getScript())) {
+		result = SmtUtils.mul(script.getScript(), "*", result, mult);
+		if (SmtUtils.areFormulasEquivalent(divisor, zero, script.getScript())) {
 			throw new UnsupportedOperationException("cannot divide by 0!");
 		}
-		if (SmtUtils.areFormulasEquivalent(divisor, mScript.getScript().decimal("1"), mScript.getScript())) {
-			return SmtUtils.mul(mScript.getScript(), "*", dividend, mult);
+		if (SmtUtils.areFormulasEquivalent(divisor, script.getScript().decimal("1"), script.getScript())) {
+			return SmtUtils.mul(script.getScript(), "*", dividend, mult);
 		}
-		if (SmtUtils.areFormulasEquivalent(dividend, mZero, mScript.getScript())) {
-			return mZero;
+		if (SmtUtils.areFormulasEquivalent(dividend, zero, script.getScript())) {
+			return zero;
 		}
-		if (SmtUtils.areFormulasEquivalent(dividend, divisor, mScript.getScript())) {
+		if (SmtUtils.areFormulasEquivalent(dividend, divisor, script.getScript())) {
 			return mult;
 		}
-		if (SmtUtils.areFormulasEquivalent(mult, divisor, mScript.getScript())) {
+		if (SmtUtils.areFormulasEquivalent(mult, divisor, script.getScript())) {
 			return simplifiedDividend;
 		}
 
@@ -436,9 +446,9 @@ public class QvasrAbstractor {
 				final Term divisorDividend = divisorAppTerm.getParameters()[0];
 				final Term divisorDivisor = divisorAppTerm.getParameters()[1];
 
-				simplifiedDividend = SmtUtils.mul(mScript.getScript(), "*", dividendDividend, divisorDivisor);
-				simplifiedDivisor = SmtUtils.mul(mScript.getScript(), "*", dividendDivisor, divisorDividend);
-				result = SmtUtils.divReal(mScript.getScript(), simplifiedDividend, simplifiedDivisor);
+				simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividendDividend, divisorDivisor);
+				simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", dividendDivisor, divisorDividend);
+				result = SmtUtils.divReal(script.getScript(), simplifiedDividend, simplifiedDivisor);
 			}
 			/*
 			 * Fraction where the dividend is a fraction.
@@ -451,11 +461,12 @@ public class QvasrAbstractor {
 				final Term dividendDivisor = dividendAppTerm.getParameters()[1];
 
 				simplifiedDividend = dividendDividend;
-				simplifiedDivisor = SmtUtils.mul(mScript.getScript(), "*", dividendDivisor, divisor);
-				final Pair<Term, Term> reduced = reduceRealDivision(simplifiedDividend, simplifiedDivisor);
+				simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", dividendDivisor, divisor);
+				final Pair<Term, Term> reduced =
+						QvasrAbstractor.reduceRealDivision(script, simplifiedDividend, simplifiedDivisor);
 				simplifiedDividend = reduced.getFirst();
 				simplifiedDivisor = reduced.getSecond();
-				result = SmtUtils.divReal(mScript.getScript(), simplifiedDividend, simplifiedDivisor);
+				result = SmtUtils.divReal(script.getScript(), simplifiedDividend, simplifiedDivisor);
 			}
 			/*
 			 * Fraction where the divisor is a fraction.
@@ -463,17 +474,17 @@ public class QvasrAbstractor {
 			if (simplifiedDividend instanceof ApplicationTerm && simplifiedDivisor instanceof ApplicationTerm
 					&& !((ApplicationTerm) simplifiedDividend).getFunction().getName().equals("/")
 					&& ((ApplicationTerm) simplifiedDivisor).getFunction().getName().equals("/")) {
-				final ApplicationTerm dividendAppTerm = (ApplicationTerm) simplifiedDividend;
 				final ApplicationTerm divisorAppTerm = (ApplicationTerm) simplifiedDivisor;
 				final Term divisorDividend = divisorAppTerm.getParameters()[0];
 				final Term divisorDivisor = divisorAppTerm.getParameters()[1];
 
-				simplifiedDividend = SmtUtils.mul(mScript.getScript(), "*", dividend, divisorDivisor);
+				simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividend, divisorDivisor);
 				simplifiedDivisor = divisorDividend;
-				final Pair<Term, Term> reduced = reduceRealDivision(simplifiedDividend, simplifiedDivisor);
+				final Pair<Term, Term> reduced =
+						QvasrAbstractor.reduceRealDivision(script, simplifiedDividend, simplifiedDivisor);
 				simplifiedDividend = reduced.getFirst();
 				simplifiedDivisor = reduced.getSecond();
-				result = SmtUtils.divReal(mScript.getScript(), simplifiedDividend, simplifiedDivisor);
+				result = SmtUtils.divReal(script.getScript(), simplifiedDividend, simplifiedDivisor);
 			}
 			/*
 			 * Simplify multiplications, where dividend and divisor are multiplications.
@@ -483,10 +494,11 @@ public class QvasrAbstractor {
 					&& ((ApplicationTerm) simplifiedDivisor).getFunction().getName().equals("*")) {
 				final ApplicationTerm dividendAppTerm = (ApplicationTerm) simplifiedDividend;
 				final ApplicationTerm divisorAppTerm = (ApplicationTerm) simplifiedDivisor;
-				final Pair<Term, Term> simplifiedPair = reduceRealDivision(dividendAppTerm, divisorAppTerm);
+				final Pair<Term, Term> simplifiedPair =
+						QvasrAbstractor.reduceRealDivision(script, dividendAppTerm, divisorAppTerm);
 				simplifiedDividend = simplifiedPair.getFirst();
 				simplifiedDivisor = simplifiedPair.getSecond();
-				result = SmtUtils.divReal(mScript.getScript(), simplifiedDividend, simplifiedDivisor);
+				result = SmtUtils.divReal(script.getScript(), simplifiedDividend, simplifiedDivisor);
 			}
 		}
 
@@ -500,19 +512,20 @@ public class QvasrAbstractor {
 				final Set<Term> simplifiedDivisorParamSet =
 						new HashSet<>(Arrays.asList(divisorAppTerm.getParameters()));
 				for (final Term divisorAppTermParam : divisorAppTerm.getParameters()) {
-					if (SmtUtils.areFormulasEquivalent(simplifiedDividend, divisorAppTerm, mScript.getScript())) {
-						simplifiedDividend = mOne;
+					if (SmtUtils.areFormulasEquivalent(simplifiedDividend, divisorAppTerm, script.getScript())) {
+						simplifiedDividend = one;
 						simplifiedDivisorParamSet.remove(divisorAppTermParam);
 						break;
 					}
 				}
 				final Term[] divisorArray =
 						simplifiedDivisorParamSet.toArray(new Term[simplifiedDivisorParamSet.size()]);
-				simplifiedDivisor = SmtUtils.mul(mScript.getScript(), "*", divisorArray);
-				final Pair<Term, Term> reduced = reduceRealDivision(simplifiedDividend, simplifiedDivisor);
+				simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
+				final Pair<Term, Term> reduced =
+						QvasrAbstractor.reduceRealDivision(script, simplifiedDividend, simplifiedDivisor);
 				simplifiedDividend = reduced.getFirst();
 				simplifiedDivisor = reduced.getSecond();
-				result = SmtUtils.divReal(mScript.getScript(), simplifiedDividend, simplifiedDivisor);
+				result = SmtUtils.divReal(script.getScript(), simplifiedDividend, simplifiedDivisor);
 			}
 		}
 
@@ -526,46 +539,50 @@ public class QvasrAbstractor {
 				final Set<Term> simplifiedDividendParamSet =
 						new HashSet<>(Arrays.asList(dividendAppTerm.getParameters()));
 				for (final Term divisorAppTermParam : dividendAppTerm.getParameters()) {
-					if (SmtUtils.areFormulasEquivalent(simplifiedDividend, dividendAppTerm, mScript.getScript())) {
+					if (SmtUtils.areFormulasEquivalent(simplifiedDividend, dividendAppTerm, script.getScript())) {
 						simplifiedDividendParamSet.remove(divisorAppTermParam);
 						break;
 					}
 				}
 				final Term[] divisorArray =
 						simplifiedDividendParamSet.toArray(new Term[simplifiedDividendParamSet.size()]);
-				simplifiedDivisor = SmtUtils.mul(mScript.getScript(), "*", divisorArray);
-				final Pair<Term, Term> reduced = reduceRealDivision(simplifiedDividend, simplifiedDivisor);
+				simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
+				final Pair<Term, Term> reduced =
+						QvasrAbstractor.reduceRealDivision(script, simplifiedDividend, simplifiedDivisor);
 				simplifiedDividend = reduced.getFirst();
 				simplifiedDivisor = reduced.getSecond();
-				result = SmtUtils.divReal(mScript.getScript(), simplifiedDividend, simplifiedDivisor);
+				result = SmtUtils.divReal(script.getScript(), simplifiedDividend, simplifiedDivisor);
 			}
 		}
 
 		if (mult instanceof ApplicationTerm) {
 			final ApplicationTerm multAppTerm = (ApplicationTerm) mult;
 			if (!multAppTerm.getFunction().getName().equals("/")) {
-				final Term dividendMul = SmtUtils.mul(mScript.getScript(), "*", simplifiedDividend, mult);
-				result = SmtUtils.divReal(mScript.getScript(), dividendMul, divisor);
+				final Term dividendMul = SmtUtils.mul(script.getScript(), "*", simplifiedDividend, mult);
+				result = SmtUtils.divReal(script.getScript(), dividendMul, divisor);
 			}
 			if (multAppTerm.getFunction().getName().equals("/")) {
 				final Term multDividend = multAppTerm.getParameters()[0];
 				final Term multDivisor = multAppTerm.getParameters()[1];
-				simplifiedDividend = SmtUtils.mul(mScript.getScript(), "*", simplifiedDividend, multDividend);
-				simplifiedDivisor = SmtUtils.mul(mScript.getScript(), "*", simplifiedDivisor, multDivisor);
-				final Pair<Term, Term> resultDivision = reduceRealDivision(simplifiedDividend, simplifiedDivisor);
-				result = SmtUtils.divReal(mScript.getScript(), resultDivision.getFirst(), resultDivision.getSecond());
+				simplifiedDividend = SmtUtils.mul(script.getScript(), "*", simplifiedDividend, multDividend);
+				simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", simplifiedDivisor, multDivisor);
+				final Pair<Term, Term> resultDivision =
+						QvasrAbstractor.reduceRealDivision(script, simplifiedDividend, simplifiedDivisor);
+				result = SmtUtils.divReal(script.getScript(), resultDivision.getFirst(), resultDivision.getSecond());
 			}
 
 		}
 		if (mult instanceof TermVariable || mult instanceof ConstantTerm) {
-			final Term dividendMul = SmtUtils.mul(mScript.getScript(), "*", simplifiedDividend, mult);
-			result = SmtUtils.divReal(mScript.getScript(), dividendMul, divisor);
+			final Term dividendMul = SmtUtils.mul(script.getScript(), "*", simplifiedDividend, mult);
+			result = SmtUtils.divReal(script.getScript(), dividendMul, divisor);
 		}
 		return result;
 	}
 
-	private Pair<Term, Term> reduceRealDivision(final Term dividend, final Term divisor) {
+	public static Pair<Term, Term> reduceRealDivision(final ManagedScript script, final Term dividend,
+			final Term divisor) {
 		Term simplifiedDividend = dividend;
+		final Term one = script.getScript().decimal("1");
 		Term simplifiedDivisor = divisor;
 		while (true) {
 			final Term simplifiedDividendPre = simplifiedDividend;
@@ -580,7 +597,7 @@ public class QvasrAbstractor {
 					final Set<Term> reducedParamsDivisor = new HashSet<>(paramsDivisor);
 					for (final Term dividendFactor : paramsDividend) {
 						for (final Term divisorFactor : paramsDivisor) {
-							if (SmtUtils.areFormulasEquivalent(dividendFactor, divisorFactor, mScript.getScript())) {
+							if (SmtUtils.areFormulasEquivalent(dividendFactor, divisorFactor, script.getScript())) {
 								reducedParamsDividend.remove(dividendFactor);
 								reducedParamsDivisor.remove(divisorFactor);
 							}
@@ -588,8 +605,8 @@ public class QvasrAbstractor {
 					}
 					final Term[] dividendArray = reducedParamsDividend.toArray(new Term[reducedParamsDividend.size()]);
 					final Term[] divisorArray = reducedParamsDivisor.toArray(new Term[reducedParamsDivisor.size()]);
-					simplifiedDividend = SmtUtils.mul(mScript.getScript(), "*", dividendArray);
-					simplifiedDivisor = SmtUtils.mul(mScript.getScript(), "*", divisorArray);
+					simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividendArray);
+					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
 				}
 			}
 			if (simplifiedDividend instanceof ApplicationTerm && !(simplifiedDivisor instanceof ApplicationTerm)) {
@@ -598,14 +615,14 @@ public class QvasrAbstractor {
 					final Set<Term> simplifiedDividendParamSet =
 							new HashSet<>(Arrays.asList(dividendAppTerm.getParameters()));
 					for (final Term dividendFactor : dividendAppTerm.getParameters()) {
-						if (SmtUtils.areFormulasEquivalent(dividendFactor, simplifiedDivisor, mScript.getScript())) {
+						if (SmtUtils.areFormulasEquivalent(dividendFactor, simplifiedDivisor, script.getScript())) {
 							simplifiedDividendParamSet.remove(dividendFactor);
 						}
 					}
 					final Term[] dividendArray =
 							simplifiedDividendParamSet.toArray(new Term[simplifiedDividendParamSet.size()]);
-					simplifiedDividend = SmtUtils.mul(mScript.getScript(), "*", dividendArray);
-					simplifiedDivisor = mOne;
+					simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividendArray);
+					simplifiedDivisor = one;
 				}
 			}
 			if (!(simplifiedDividend instanceof ApplicationTerm) && simplifiedDivisor instanceof ApplicationTerm) {
@@ -614,25 +631,25 @@ public class QvasrAbstractor {
 					final Set<Term> simplifiedDivisorParamSet =
 							new HashSet<>(Arrays.asList(divisorAppTerm.getParameters()));
 					for (final Term divisorFactor : divisorAppTerm.getParameters()) {
-						if (SmtUtils.areFormulasEquivalent(divisorFactor, simplifiedDivisor, mScript.getScript())) {
+						if (SmtUtils.areFormulasEquivalent(divisorFactor, simplifiedDivisor, script.getScript())) {
 							simplifiedDivisorParamSet.remove(divisorFactor);
 						}
 					}
 					final Term[] dividendArray =
 							simplifiedDivisorParamSet.toArray(new Term[simplifiedDivisorParamSet.size()]);
-					simplifiedDivisor = SmtUtils.mul(mScript.getScript(), "*", dividendArray);
-					simplifiedDividend = mOne;
+					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", dividendArray);
+					simplifiedDividend = one;
 				}
 			}
 
-			if (SmtUtils.areFormulasEquivalent(simplifiedDividendPre, simplifiedDividend, mScript.getScript())) {
+			if (SmtUtils.areFormulasEquivalent(simplifiedDividendPre, simplifiedDividend, script.getScript())) {
 				break;
 			}
 		}
 		return new Pair<>(simplifiedDividend, simplifiedDivisor);
 	}
 
-	private final Set<Term> getApplicationTermMultiplicationParams(final ApplicationTerm appTerm) {
+	public static Set<Term> getApplicationTermMultiplicationParams(final ApplicationTerm appTerm) {
 		final HashSet<Term> params = new HashSet<>();
 		for (final Term param : appTerm.getParameters()) {
 			if (param instanceof ApplicationTerm && ((ApplicationTerm) param).getFunction().getName().equals("*")) {
