@@ -307,7 +307,8 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 			throw new AssertionError("unknown case : " + status.getStatus());
 		}
 		throwIfNecessary(category, status.getException());
-		final String message = status.getException() == null ? "Unknown" : status.getException().getMessage();
+		final String message = status.getException() == null ? String.valueOf(status.getStatus())
+				: status.getException().getMessage();
 		mLogger.warn("Interpolation failed due to " + category + ": " + message);
 		return null;
 	}
