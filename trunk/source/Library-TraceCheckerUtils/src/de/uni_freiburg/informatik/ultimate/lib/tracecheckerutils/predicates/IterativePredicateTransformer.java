@@ -220,22 +220,17 @@ public class IterativePredicateTransformer<L extends IAction> {
 	public static class QuantifierEliminationPostprocessor implements IPredicatePostprocessor {
 
 		private final IUltimateServiceProvider mServices;
-		private final ILogger mLogger;
 		private final ManagedScript mMgdScript;
 		private final BasicPredicateFactory mPredicateFactory;
 		private final SimplificationTechnique mSimplificationTechnique;
-		private final XnfConversionTechnique mXnfConversionTechnique;
 
-		public QuantifierEliminationPostprocessor(final IUltimateServiceProvider services, final ILogger logger,
+		public QuantifierEliminationPostprocessor(final IUltimateServiceProvider services,
 				final ManagedScript boogie2smt, final BasicPredicateFactory predicateFactory,
-				final SimplificationTechnique simplificationTechnique,
-				final XnfConversionTechnique xnfConversionTechnique) {
+				final SimplificationTechnique simplificationTechnique) {
 			mServices = services;
-			mLogger = logger;
 			mMgdScript = boogie2smt;
 			mPredicateFactory = predicateFactory;
 			mSimplificationTechnique = simplificationTechnique;
-			mXnfConversionTechnique = xnfConversionTechnique;
 		}
 
 		@Override
