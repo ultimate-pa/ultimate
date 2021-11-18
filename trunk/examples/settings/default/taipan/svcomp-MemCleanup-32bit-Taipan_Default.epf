@@ -12,7 +12,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Call\ Summarizer=TopInputCallSummarizer
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Explicit\ Values=2
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Intervals=2
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Simplification\ Technique=SIMPLIFY_QUICK
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Simplification\ Technique=POLY_PAC
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/SizeLimitFluid\ Max.\ DAG\ Size=-1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/SizeLimitFluid\ Max.\ Disjunctions=8
 
