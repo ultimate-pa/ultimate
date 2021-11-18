@@ -2028,15 +2028,6 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula. If subformula is
-	 * quantified formula with same quantifier both are merged.
-	 */
-	public static Term quantifier(final Script script, final int quantifier, final Set<TermVariable> vars,
-			final Term body) {
-		return quantifier(script, quantifier, new ArrayList<>(vars), body);
-	}
-
-	/**
 	 * Returns a quantified formula with the following two optimizations.
 	 * <ul>
 	 * <li>Nested quantified formulas that have the same quantifier are merged.
@@ -2045,7 +2036,7 @@ public final class SmtUtils {
 	 * The order of the quantified variables is preserved. If quantified formulas are merged, the variables of the outer
 	 * formula come before the variables of the inner formula.
 	 */
-	public static Term quantifier(final Script script, final int quantifier, final List<TermVariable> vars,
+	public static Term quantifier(final Script script, final int quantifier, final Collection<TermVariable> vars,
 			final Term subformula) {
 		final LinkedHashMap<String, TermVariable> varMap = new LinkedHashMap<>();
 		Term currentSubformula = subformula;
