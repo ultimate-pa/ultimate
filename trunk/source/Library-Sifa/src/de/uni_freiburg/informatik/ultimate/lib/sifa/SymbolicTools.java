@@ -47,10 +47,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -275,8 +278,15 @@ public class SymbolicTools {
 			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			final Term quantifiedFormula =
 					SmtUtils.quantifier(mMngdScript.getScript(), quantifier, varsToQuantify, term);
-			final Term result = PartialQuantifierElimination.eliminate(mServices, mMngdScript, quantifiedFormula,
-					SimplificationTechnique.SIMPLIFY_DDA);
+			final Term lightResult = QuantifierPushTermWalker.eliminate(mServices, mMngdScript, false,
+					PqeTechniques.LIGHT, SimplificationTechnique.NONE, quantifiedFormula);
+			Term result;
+			if (new SubtermPropertyChecker(QuantifiedFormula.class::isInstance).isSatisfiedBySomeSubterm(lightResult)) {
+				result = QuantifierPushTermWalker.eliminate(mServices, mMngdScript, true, PqeTechniques.ALL,
+						SimplificationTechnique.POLY_PAC, lightResult);
+			} else {
+				result = lightResult;
+			}
 			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			mStats.stopMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			return result;
