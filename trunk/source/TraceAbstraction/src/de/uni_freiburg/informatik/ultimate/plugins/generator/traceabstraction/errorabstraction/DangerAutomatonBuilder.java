@@ -484,8 +484,8 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 						csToolkit.getModifiableGlobalsTable(), mServices, trace, null, pum.getTruePredicate(), null,
 						pum.getTruePredicate(), simplificationTechnique, xnfConversionTechnique, symbolTable);
 		final List<IPredicatePostprocessor> postprocessors = new ArrayList<>();
-		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, logger,
-				csToolkit.getManagedScript(), predicateFactory, simplificationTechnique, xnfConversionTechnique);
+		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(),
+				predicateFactory, simplificationTechnique);
 		postprocessors.add(qepp);
 		postprocessors.add(new UnifyPostprocessor(predicateUnifier));
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, null, null, Collections.emptySortedMap(),
