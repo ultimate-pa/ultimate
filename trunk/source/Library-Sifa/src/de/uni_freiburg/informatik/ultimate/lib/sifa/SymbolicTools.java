@@ -92,7 +92,7 @@ public class SymbolicTools {
 		final Script script = mMngdScript.getScript();
 		mFactory = new BasicPredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		mTransformer = new PredicateTransformer<>(mMngdScript,
-				new EliminatingTermDomainOperationProvider(services, mPQELogger, mMngdScript));
+				new EliminatingTermDomainOperationProvider(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
 		mBottom = mFactory.newPredicate(script.term("false"));
 	}
@@ -254,12 +254,9 @@ public class SymbolicTools {
 	 */
 	private final class EliminatingTermDomainOperationProvider extends TermDomainOperationProvider {
 
-		private final ILogger mPQELogger;
-
-		public EliminatingTermDomainOperationProvider(final IUltimateServiceProvider services, final ILogger logger,
+		public EliminatingTermDomainOperationProvider(final IUltimateServiceProvider services,
 				final ManagedScript mgdScript) {
 			super(services, mgdScript);
-			mPQELogger = logger;
 		}
 
 		@Override
@@ -276,8 +273,10 @@ public class SymbolicTools {
 			mStats.increment(SifaStats.Key.TOOLS_QUANTIFIERELIM_APPLICATIONS);
 			mStats.startMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
-			final Term result = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
-					mSimplification, mXnfConversion, quantifier, varsToQuantify, term);
+			final Term quantifiedFormula =
+					SmtUtils.quantifier(mMngdScript.getScript(), quantifier, varsToQuantify, term);
+			final Term result = PartialQuantifierElimination.eliminate(mServices, mMngdScript, quantifiedFormula,
+					SimplificationTechnique.SIMPLIFY_DDA);
 			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			mStats.stopMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			return result;
