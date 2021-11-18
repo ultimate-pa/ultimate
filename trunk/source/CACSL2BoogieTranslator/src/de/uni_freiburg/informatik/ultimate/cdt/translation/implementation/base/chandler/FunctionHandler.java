@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
@@ -120,7 +119,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -577,20 +575,10 @@ public class FunctionHandler {
 				// dispatched argument. On should first construct a copy of returnValueSwitched
 				returnValue = mExprResultTransformer.performImplicitConversion(returnValue, functionResultType, loc);
 
-				resultBuilder.addDeclarations(returnValue.getDeclarations());
-				resultBuilder.addStatements(returnValue.getStatements());
-				resultBuilder.addAuxVars(returnValue.getAuxVars());
-
-				final AssignmentStatement assignResultValue;
-				{
-					final RValue castExprResultRVal = (RValue) returnValue.getLrValue();
-					assignResultValue = StatementFactory.constructAssignmentStatement(loc, lhss,
-							new Expression[] { castExprResultRVal.getValue() });
-					for (final Overapprox oa : returnValue.getOverapprs()) {
-						oa.annotate(assignResultValue);
-					}
-				}
-				resultBuilder.addStatement(assignResultValue);
+				resultBuilder.addAllIncludingLrValue(returnValue);
+				final RValue castExprResultRVal = (RValue) returnValue.getLrValue();
+				resultBuilder.addStatementAndAnnotateOverapprox(StatementFactory.constructAssignmentStatement(loc, lhss,
+						new Expression[] { castExprResultRVal.getValue() }));
 			}
 		}
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
