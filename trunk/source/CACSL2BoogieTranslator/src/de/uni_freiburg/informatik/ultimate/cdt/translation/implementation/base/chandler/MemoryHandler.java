@@ -126,6 +126,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -136,6 +137,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Markus Lindenmann
@@ -357,6 +359,11 @@ public class MemoryHandler {
 	 */
 	private static final boolean ADD_IMPLEMENTATIONS = false;
 
+	/**
+	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 */
+	public static final boolean FIXED_ADDRESSES_FOR_INITIALIZATION = true;
+
 	// needed for adding modifies clauses
 	private final ITypeHandler mTypeHandler;
 
@@ -382,6 +389,12 @@ public class MemoryHandler {
 
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TranslationSettings mSettings;
+
+
+	/**
+	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}
+	 */
+	private int mFixedAddressCounter = 1;
 
 	/**
 	 * Pre-run constructor.
@@ -865,6 +878,28 @@ public class MemoryHandler {
 				new Expression[] { size, addressRValue.getValue() });
 		mProcedureManager.registerProcedure(MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName());
 		return result;
+	}
+
+	/**
+	 * Call for procedure that can allocate memory during the initialization. See
+	 * {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 * @param cType type of the object for which we allocate memory (unlike
+	 *              {@link MemoryHandler#getUltimateMemAllocCall} which takes a
+	 *              pointer to the object for which allocate.
+	 */
+	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final CType cType,
+			final IASTNode hook) {
+		final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
+		final RValue addressRValue = new RValueForArrays(
+				mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO), cType);
+		final RValue ptrBaseRValue = new RValue(
+				mTypeSizes.constructLiteralForIntegerType(actualLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase),
+				mExpressionTranslation.getCTypeOfPointerComponents());
+		final Expression size = mTypeSizeAndOffsetComputer.constructBytesizeExpression(actualLoc, cType, hook);
+		final CallStatement ultimateAllocCall = getUltimateMemAllocInitCall(size, ptrBaseRValue, actualLoc);
+		mFixedAddressCounter++;
+		return new Pair<>(addressRValue, ultimateAllocCall);
 	}
 
 	/**
