@@ -173,7 +173,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
@@ -235,6 +234,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that handles translation of C nodes to Boogie nodes.
@@ -252,11 +252,6 @@ public class CHandler {
 	 * casts of pointers soundly. However these soundness errors occur seldom.
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
-
-	/**
-	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
-	 */
-	private static final boolean FIXED_ADDRESSES_FOR_INITIALIZATION = true;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -368,8 +363,6 @@ public class CHandler {
 	private final CExpressionTranslator mCExpressionTranslator;
 
 	private final DataRaceChecker mDataRaceChecker;
-
-	private int mFixedAddressCounter = 1;
 
 	/**
 	 * Constructor for CHandler in pre-run mode.
@@ -1079,6 +1072,9 @@ public class CHandler {
 				resultBuilder.addDeclarations(res.getDeclarations());
 				resultBuilder.addStatements(res.getStatements());
 				expr = res.getLrValue();
+//				if (!((ExpressionResult) r).getOverapprs().isEmpty()) {
+//					throw new AssertionError("Forgot to pass overapproximation flags to statements: " + ((ExpressionResult) r).getOverapprs());
+//				}
 			} else if (r.getNode() != null && r.getNode() instanceof Body) {
 				assert false : "should not happen, as CompoundStatement now yields an "
 						+ "ExpressionResult or a CompoundStatementExpressionResult";
@@ -1918,18 +1914,14 @@ public class CHandler {
 		final AuxVarInfo auxvar;
 		final RValue addressRValue;
 		final CallStatement ultimateAllocCall;
-		if (FIXED_ADDRESSES_FOR_INITIALIZATION) {
+		if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
 			auxvar = null;
-			final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
-			addressRValue = new RValueForArrays(
-					mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO),
-					arrayType);
-			final RValue ptrBaseRValue = new RValue(
-					mTypeSizes.constructLiteralForIntegerType(actualLoc,
-							mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase),
-					mExpressionTranslation.getCTypeOfPointerComponents());
-			ultimateAllocCall = mMemoryHandler.getUltimateMemAllocInitCall(sizeInBytesExpr, ptrBaseRValue, actualLoc);
-			mFixedAddressCounter++;
+			final Pair<RValue, CallStatement> pair = mMemoryHandler.getUltimateMemAllocInitCall(actualLoc, arrayType,
+					node);
+
+			addressRValue = pair.getFirst();
+			ultimateAllocCall = pair.getSecond();
+
 		} else {
 			auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
 			addressRValue = new RValueForArrays(auxvar.getExp(), arrayType);
