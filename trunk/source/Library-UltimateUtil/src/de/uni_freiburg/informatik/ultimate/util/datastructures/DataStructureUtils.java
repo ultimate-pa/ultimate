@@ -40,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -412,5 +413,9 @@ public class DataStructureUtils {
 		final E elem = iterator.next();
 		assert !iterator.hasNext() : errMsg;
 		return Optional.of(elem);
+	}
+
+	public static <E> Stream<E> filteredCast(final Stream<?> s, final Class<E> c) {
+		return s.filter(a -> c.isAssignableFrom(a.getClass())).map(c::cast);
 	}
 }

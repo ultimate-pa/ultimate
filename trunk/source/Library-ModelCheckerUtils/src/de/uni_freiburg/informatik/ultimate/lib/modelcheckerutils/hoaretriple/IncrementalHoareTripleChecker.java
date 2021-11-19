@@ -282,6 +282,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public void releaseLock() {
 		clearAssertionStack();
+		assert !mManagedScript.isLocked();
 	}
 
 	private LBool assertPrecondition(final IPredicate p) {
@@ -726,8 +727,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final Set<TermVariable> inAndOutVars =
 				tf.getInVars().entrySet().stream().map(Entry::getValue).collect(Collectors.toSet());
 		inAndOutVars.addAll(tf.getOutVars().entrySet().stream().map(Entry::getValue).collect(Collectors.toSet()));
-		final Set<Term> selectTerms = SubTermFinder.find(tf.getFormula(), x -> isSuitableArrayReadTerm(x, inAndOutVars),
-				false);
+		final Set<Term> selectTerms =
+				SubTermFinder.find(tf.getFormula(), x -> isSuitableArrayReadTerm(x, inAndOutVars), false);
 		for (final Term selectTerm : selectTerms) {
 			final Term selectTermAllOut = new Substitution(mManagedScript, toXVarsMap.apply(tf)).transform(selectTerm);
 			final Term selectTermWithDefaultVars = xVarToDefaultVar.apply(selectTermAllOut);

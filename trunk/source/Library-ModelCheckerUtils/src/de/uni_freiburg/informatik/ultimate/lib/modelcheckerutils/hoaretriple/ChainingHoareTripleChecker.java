@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
@@ -50,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -85,6 +88,8 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	private ChainingHoareTripleChecker(final ILogger logger, final List<IWrappedHoareTripleChecker> list) {
 		mLogger = logger;
 		mHtcs = list;
+		DataStructureUtils.filteredCast(mHtcs.stream(), ReviewedProtectedHtc.class)
+				.forEach(a -> a.setLockRelease(this::releaseLock));
 	}
 
 	@Override
@@ -257,7 +262,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	private interface IWrappedHoareTripleChecker extends IHoareTripleChecker {
 		ProtectedHtc getUnderlying();
 
-		IWrappedHoareTripleChecker replaceUnderlying(ProtectedHtc underlying);
+		IWrappedHoareTripleChecker replaceUnderlying(final ProtectedHtc underlying);
 
 		/**
 		 * Create a copy that keeps everything except statistics.
@@ -269,10 +274,24 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 		private final IHoareTripleChecker mReviewHtc;
 		private final ProtectedHtc mHtc;
+		private ILockHolderWithVoluntaryLockRelease mFunReleaseLocks;
 
+		/**
+		 *
+		 * @param reviewHtc
+		 *            The {@link IHoareTripleChecker} used for reviewing.
+		 * @param htc
+		 *            The actual {@link IHoareTripleChecker}
+		 * @param funReleaseLocks
+		 *            A function that releases {@link ManagedScript} locks before reviewing.
+		 */
 		public ReviewedProtectedHtc(final IHoareTripleChecker reviewHtc, final ProtectedHtc htc) {
 			mReviewHtc = Objects.requireNonNull(reviewHtc);
 			mHtc = Objects.requireNonNull(htc);
+		}
+
+		private void setLockRelease(final ILockHolderWithVoluntaryLockRelease funReleaseLocks) {
+			mFunReleaseLocks = funReleaseLocks;
 		}
 
 		@Override
@@ -314,7 +333,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 		private boolean reviewInductiveInternal(final IPredicate state, final IInternalAction act,
 				final IPredicate succ, final Validity result) {
-			mHtc.releaseLock();
+			mFunReleaseLocks.releaseLock();
 			final Validity reviewResult = mReviewHtc.checkInternal(state, act, succ);
 			if (reviewResult(result, reviewResult)) {
 				mReviewHtc.releaseLock();
@@ -325,7 +344,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 		private boolean reviewInductiveCall(final IPredicate state, final ICallAction act, final IPredicate succ,
 				final Validity result) {
-			mHtc.releaseLock();
+			mFunReleaseLocks.releaseLock();
 			final Validity reviewResult = mReviewHtc.checkCall(state, act, succ);
 			if (reviewResult(result, reviewResult)) {
 				mReviewHtc.releaseLock();
@@ -337,7 +356,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 		private boolean reviewInductiveReturn(final IPredicate state, final IPredicate hier, final IReturnAction act,
 				final IPredicate succ, final Validity result) {
-			mHtc.releaseLock();
+			mFunReleaseLocks.releaseLock();
 			final Validity reviewResult = mReviewHtc.checkReturn(state, hier, act, succ);
 			if (reviewResult(result, reviewResult)) {
 				mReviewHtc.releaseLock();
@@ -607,4 +626,5 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		}
 
 	}
+
 }
