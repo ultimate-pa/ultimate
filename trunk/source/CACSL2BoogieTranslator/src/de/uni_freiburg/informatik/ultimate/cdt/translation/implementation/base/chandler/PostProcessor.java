@@ -98,10 +98,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class caring for some post processing steps, like creating an initializer procedure and the start procedure.
@@ -781,10 +783,22 @@ public class PostProcessor {
 							DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 					if (mCHandler.isHeapVar(id)) {
-						final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
-						staticObjectInitStatements.add(
-								mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, hook, MemoryArea.STACK));
-						proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+						final CallStatement ultimateAllocCall;
+						if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
+							final Pair<RValue, CallStatement> pair = mMemoryHandler
+									.getUltimateMemAllocInitCall(currentDeclsLoc, en.getValue().getType(), hook);
+							final RValue addressRValue = pair.getFirst();
+							ultimateAllocCall = pair.getSecond();
+							final AssignmentStatement pointerAssignment = new AssignmentStatement(currentDeclsLoc,
+									new LeftHandSide[] { lhs }, new Expression[] { addressRValue.getValue() });
+							staticObjectInitStatements.add(pointerAssignment);
+						} else {
+							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
+							ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, hook,
+									MemoryArea.STACK);
+							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+						}
+						staticObjectInitStatements.add(ultimateAllocCall);
 					}
 
 					final ExpressionResult initRex =
