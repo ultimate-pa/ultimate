@@ -890,8 +890,16 @@ public class MemoryHandler {
 	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final CType cType,
 			final IASTNode hook) {
 		final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
-		final RValue addressRValue = new RValueForArrays(
-				mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO), cType);
+		final RValue addressRValue;
+		{
+			final Expression addressExpression = mExpressionTranslation.constructPointerForIntegerValues(actualLoc,
+					ptrBase, BigInteger.ZERO);
+			if (cType instanceof CArray) {
+				addressRValue = new RValueForArrays(addressExpression, cType);
+			} else {
+				addressRValue = new RValue(addressExpression, cType);
+			}
+		}
 		final RValue ptrBaseRValue = new RValue(
 				mTypeSizes.constructLiteralForIntegerType(actualLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase),
