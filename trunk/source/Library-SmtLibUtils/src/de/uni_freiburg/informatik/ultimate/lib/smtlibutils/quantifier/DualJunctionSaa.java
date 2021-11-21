@@ -141,8 +141,12 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 		} catch (final SMTLIBException e) {
 			throw new AssertionError(e);
 		} catch (final ElimStorePlainException e) {
-			if (e.getMessage().equals(ElimStorePlainException.NON_TOP_LEVEL_DER)
-					|| e.getMessage().equals(ElimStorePlainException.CAPTURED_INDEX)) {
+			if (e.getMessage().equals(ElimStorePlainException.NON_TOP_LEVEL_DER)) {
+				res1 = null;
+			} else if (e.getMessage().equals(ElimStorePlainException.CAPTURED_INDEX)) {
+				if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
+					throw new AssertionError("Captured index although handling of inner quantfiers is set");
+				}
 				res1 = null;
 			} else {
 				throw new AssertionError(e);
