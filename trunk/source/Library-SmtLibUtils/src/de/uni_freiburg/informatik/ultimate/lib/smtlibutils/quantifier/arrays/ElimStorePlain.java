@@ -321,7 +321,7 @@ public class ElimStorePlain {
 		final Term polarizedContext = QuantifierUtils.negateIfUniversal(services, mgdScript,
 				eTask.getQuantifier(), eTask.getContext());
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), eTask.getTerm(), eliminatee);
-		if (!aoa.getValueOfStore().isEmpty() || aoa.getOtherFunctionApplications().isEmpty()) {
+		if (!aoa.getValueOfStore().isEmpty() || !aoa.getOtherFunctionApplications().isEmpty()) {
 			// cannot eliminated this array
 			return null;
 		}
