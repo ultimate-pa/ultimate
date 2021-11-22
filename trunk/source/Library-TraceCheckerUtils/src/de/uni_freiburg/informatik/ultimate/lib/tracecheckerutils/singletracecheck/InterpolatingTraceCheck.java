@@ -84,8 +84,9 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(precondition, postcondition, pendingContexts, trace,
-				new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
-						csToolkit.getOldVarsAssignmentCache(), false),
+				TraceCheckUtils.decoupleArrayValues(csToolkit.getManagedScript(),
+						new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
+								csToolkit.getOldVarsAssignmentCache(), false)),
 				services, csToolkit, tcSmtManager, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, false);
 		mPredicateUnifier = predicateUnifier;
