@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transition
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -71,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -85,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Static auxiliary methods for {@link TransFormula}s
@@ -1190,5 +1193,73 @@ public final class TransFormulaUtils {
 		sb.append(tf.getOutVars());
 
 		return sb.toString();
+	}
+
+
+	/**
+	 * Replace each term of the form (store a k v) by the conjunction (store a k
+	 * aux) /\ (= aux v) for a fresh auxiliary variable aux. Motivation: The term
+	 * (store a k v) carries two information: (1) This term and the array a are
+	 * nearly identical (2) this term stores v at position k. Our trace check can
+	 * only tell us if 1+2 are relevant for the infesibility of a trace. After the
+	 * transformation we can separate both information and our trace check can find
+	 * out that information 2 is irrelevant for infeasibility of a trace.
+	 */
+	public static UnmodifiableTransFormula decoupleArrayValues(final UnmodifiableTransFormula tf,
+			final ManagedScript mgdScript) {
+		final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript.constructFreshCopies(tf.getAuxVars());
+		final Term renamed = new Substitution(mgdScript, oldAuxVar2newAuxVar).transform(tf.getFormula());
+		final Triple<Term, List<TermVariable>, List<Term>> decoupled = decoupleArrayValues(renamed, mgdScript);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
+				tf.getNonTheoryConsts(), false, tf.getBranchEncoders(), false);
+		final ArrayList<Term> resultConjuncts = new ArrayList<>(decoupled.getThird());
+		resultConjuncts.add(decoupled.getFirst());
+		final Term resultTerm = SmtUtils.and(mgdScript.getScript(), resultConjuncts);
+		tfb.setFormula(resultTerm);
+		for (final TermVariable auxVar : oldAuxVar2newAuxVar.values()) {
+			tfb.addAuxVar(auxVar);
+		}
+		for (final TermVariable auxVar : decoupled.getSecond()) {
+			tfb.addAuxVar(auxVar);
+		}
+		tfb.setInfeasibility(tf.isInfeasible());
+		return tfb.finishConstruction(mgdScript);
+	}
+
+	private static Triple<Term, List<TermVariable>, List<Term>> decoupleArrayValues(final Term term,
+			final ManagedScript mgdScript) {
+		final Collection<ArrayStore> arrayStores = ArrayStore.extractStores(term, true);
+		if (arrayStores.isEmpty()) {
+			return new Triple<>(term, Collections.emptyList(), Collections.emptyList());
+		} else {
+			final List<TermVariable> resultVariables = new ArrayList<>();
+			final List<Term> resultEqualities = new ArrayList<>();
+			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			for (final ArrayStore arrayStore : arrayStores) {
+				final Triple<Term, List<TermVariable>, List<Term>> arrTriple = decoupleArrayValues(
+						arrayStore.getArray(), mgdScript);
+				final Triple<Term, List<TermVariable>, List<Term>> idxTriple = decoupleArrayValues(
+						arrayStore.getIndex(), mgdScript);
+				final Triple<Term, List<TermVariable>, List<Term>> valueTriple = decoupleArrayValues(
+						arrayStore.getValue(), mgdScript);
+				resultVariables.addAll(arrTriple.getSecond());
+				resultVariables.addAll(idxTriple.getSecond());
+				resultVariables.addAll(valueTriple.getSecond());
+				resultEqualities.addAll(arrTriple.getThird());
+				resultEqualities.addAll(idxTriple.getThird());
+				resultEqualities.addAll(valueTriple.getThird());
+				final TermVariable newAuxVar = mgdScript.constructFreshTermVariable("ArrVal",
+						valueTriple.getFirst().getSort());
+				resultVariables.add(newAuxVar);
+				final Term equalitiy = SmtUtils.binaryEquality(mgdScript.getScript(), newAuxVar,
+						valueTriple.getFirst());
+				resultEqualities.add(equalitiy);
+				final Term resultStore = mgdScript.getScript().term("store", arrTriple.getFirst(), idxTriple.getFirst(),
+						newAuxVar);
+				substitutionMapping.put(arrayStore.asTerm(), resultStore);
+			}
+			final Term resultTerm = new Substitution(mgdScript, substitutionMapping).transform(term);
+			return new Triple<Term, List<TermVariable>, List<Term>>(resultTerm, resultVariables, resultEqualities);
+		}
 	}
 }
