@@ -90,49 +90,72 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 	}
 
 	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt) {
-		final EliminationTask er = tryToEliminateOne(inputEt);
+		final EliminationResult er = tryToEliminateOne(inputEt);
 		if (er == null) {
 			return null;
 		} else {
-			return new EliminationResult(er, Collections.emptySet());
+			return er;
 		}
 	}
 
-	private EliminationTask tryToEliminateOne(final EliminationTask inputEt) {
+	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			if (!SmtSortUtils.isArraySort(eliminatee.getSort())) {
 				continue;
 			}
-			final Term term;
-			final QuantifierSequence qs;
-			if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
-				final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
-				qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
-				term = qs.getInnerTerm();
-			} else {
-				term = inputEt.getTerm();
-			}
-			final EliminationTaskPlain res = tryToEliminate(inputEt.getQuantifier(), term, inputEt.getContext(),
-					eliminatee);
-			if (res != null) {
-				final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(inputEt.getEliminatees());
-				resultEliminatees.remove(eliminatee);
-				resultEliminatees.addAll(res.getEliminatees());
-				final Term resultTerm;
-				if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
-					final QuantifierSequence qsForResult = new QuantifierSequence(mScript, res.getTerm(),
-							qs.getQuantifierBlocks());
-					resultTerm = qsForResult.toTerm();
-				} else {
-					resultTerm = res.getTerm();
-				}
-				return inputEt.update(resultEliminatees, resultTerm);
+			final EliminationTask singletonEliminationTask = new EliminationTask(inputEt.getQuantifier(),
+					Collections.singleton(eliminatee), inputEt.getTerm(), inputEt.getContext());
+			final EliminationResult er = tryToEliminateOne1(singletonEliminationTask);
+			if (er != null) {
+				return new EliminationResult(
+						er.getEliminationTask().update(inputEt.getEliminatees(), er.getEliminationTask().getTerm()),
+						er.getNewEliminatees());
 			}
 		}
 		return null;
 	}
 
-	private EliminationTaskPlain tryToEliminate(final int quantifier, final Term term, final Context context, final TermVariable eliminatee) {
+	private EliminationResult tryToEliminateOne1(final EliminationTask inputEt) {
+		EliminationResult er;
+		if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
+			er = tryToEliminateOne2(inputEt);
+		} else {
+			er = tryToEliminateOne3(inputEt);
+		}
+		return er;
+	}
+
+	private EliminationResult tryToEliminateOne2(final EliminationTask inputEt) {
+		final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+		final Term term = qs.getInnerTerm();
+		final EliminationTask et = inputEt.update(term);
+		final EliminationResult res = tryToEliminateOne3(et);
+		if (res == null) {
+			return null;
+		} else {
+			final QuantifierSequence qsForResult = new QuantifierSequence(mScript, res.getEliminationTask().getTerm(),
+					qs.getQuantifierBlocks());
+			final Term resultTerm = qsForResult.toTerm();
+			return new EliminationResult(res.getEliminationTask().update(resultTerm), res.getNewEliminatees());
+		}
+	}
+
+	private EliminationResult tryToEliminateOne3(final EliminationTask inputEt) {
+		final EliminationTaskPlain res = tryToEliminate(inputEt.getQuantifier(), inputEt.getTerm(),
+				inputEt.getContext(), inputEt.getEliminatees().iterator().next());
+		if (res == null) {
+			return null;
+		} else {
+			final Set<TermVariable> newEliminatees = new HashSet<TermVariable>(res.getEliminatees());
+			newEliminatees.removeAll(inputEt.getEliminatees());
+			return new EliminationResult(new EliminationTask(res.getQuantifier(), inputEt.getEliminatees(),
+					res.getTerm(), inputEt.getContext()), newEliminatees);
+		}
+	}
+
+	private EliminationTaskPlain tryToEliminate(final int quantifier, final Term term, final Context context,
+			final TermVariable eliminatee) {
 		final EliminationTaskPlain inputEtp = new EliminationTaskPlain(quantifier, Collections.singleton(eliminatee),
 				term, context.getCriticalConstraint());
 		EliminationTaskPlain res1;
