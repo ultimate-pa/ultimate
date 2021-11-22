@@ -199,15 +199,15 @@ public class MapEliminator {
 	private void findIndices(final ModifiableTransFormula transformula) {
 		final Term term = transformula.getFormula();
 		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term, false)) {
-			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray());
+			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray(), mScript);
 			findIndicesArrayWrite(arrayWrite, transformula);
 			addArrayAccessToRelation(arrayWrite.getOldArray(), select.getIndex(), transformula);
 		}
 		for (final ApplicationTerm t : new ApplicationTermFinder("=", false).findMatchingSubterms(term)) {
 			if (t.getParameters()[0].getSort().isArraySort()) {
-				final ArrayWrite arrayWrite = new ArrayWrite(t);
+				final ArrayWrite arrayWrite = new ArrayWrite(t, mScript);
 				// The new array can be also a store-term, so also find indices in this term
-				final ArrayWrite arrayWrite2 = new ArrayWrite(arrayWrite.getNewArray());
+				final ArrayWrite arrayWrite2 = new ArrayWrite(arrayWrite.getNewArray(), mScript);
 				findIndicesArrayWrite(arrayWrite, transformula);
 				findIndicesArrayWrite(arrayWrite2, transformula);
 				final Term array1 = arrayWrite.getOldArray();
@@ -580,7 +580,7 @@ public class MapEliminator {
 			final EqualityAnalysisResult invariants, final List<Term> auxVarEqualities) {
 		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
 		final ArrayIndex index = multiDimensionalSelect.getIndex();
-		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray());
+		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray(), mScript);
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
 		final TermVariable auxVar = getAndAddAuxVar(term, mAuxVars, mReplacementVarFactory);
 		for (final Pair<ArrayIndex, Term> pair : arrayWrite.getIndexValuePairs()) {
@@ -620,7 +620,7 @@ public class MapEliminator {
 	 */
 	private Term replaceArrayEquality(final Term term, final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants) {
-		final ArrayWrite arrayWrite = new ArrayWrite(term);
+		final ArrayWrite arrayWrite = new ArrayWrite(term, mScript);
 		final Term oldArray = arrayWrite.getOldArray();
 		final Term newArray = arrayWrite.getNewArray();
 		// If the old or new array is an aux-var, just return true

@@ -5,8 +5,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -34,7 +35,7 @@ public class ArrayWrite {
 	/**
 	 * Creates an ArrayWrite-object from a given term. The term has to be either an array-equality or a store-term.
 	 */
-	public ArrayWrite(final Term term) {
+	public ArrayWrite(final Term term, final Script script) {
 		Term arrayTerm;
 		if (SmtUtils.isFunctionApplication(term, "=")) {
 			final ApplicationTerm applicationTerm = (ApplicationTerm) term;
@@ -50,12 +51,17 @@ public class ArrayWrite {
 		} else {
 			arrayTerm = term;
 		}
-		while (SmtUtils.isFunctionApplication(arrayTerm, "store")) {
-			final MultiDimensionalStore store = MultiDimensionalStore.convert(arrayTerm);
-			mIndexValuePairs.add(new Pair<ArrayIndex, Term>(store.getIndex(), store.getValue()));
-			arrayTerm = store.getArray();
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(script, arrayTerm);
+		if (mdns == null) {
+			mOldArray = arrayTerm;
+		} else {
+			final List<ArrayIndex> indices = mdns.getIndices();
+			final List<Term> values = mdns.getValues();
+			for (int i = indices.size() - 1; i >= 0; i--) {
+				mIndexValuePairs.add(new Pair<>(indices.get(i), values.get(i)));
+			}
+			mOldArray = mdns.getArray();
 		}
-		mOldArray = arrayTerm;
 	}
 
 	/**
