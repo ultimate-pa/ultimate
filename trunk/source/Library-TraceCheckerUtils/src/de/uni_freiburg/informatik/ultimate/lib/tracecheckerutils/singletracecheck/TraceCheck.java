@@ -345,11 +345,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 * @return
 	 */
 	private IcfgProgramExecution<L> computeRcfgProgramExecutionAndDecodeBranches(final ManagedScript managedScriptTc) {
-		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
-			throw new AssertionError(
-					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
-		}
-		if (!((DefaultTransFormulas<L>) mNestedFormulas).hasBranchEncoders()) {
+		if (!(mNestedFormulas instanceof DefaultTransFormulas)
+				|| !((DefaultTransFormulas<L>) mNestedFormulas).hasBranchEncoders()) {
 			final String msg = "Trace is feasible, we will do another trace check, this time with branch encoders.";
 			managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
 			mLogger.info(msg);
