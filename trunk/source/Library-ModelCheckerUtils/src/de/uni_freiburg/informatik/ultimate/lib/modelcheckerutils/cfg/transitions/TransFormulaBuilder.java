@@ -96,6 +96,9 @@ public class TransFormulaBuilder {
 		}
 		if (emptyNonTheoryConsts) {
 			mNonTheoryConsts = Collections.emptySet();
+			if (nonTheoryConsts != null) {
+				throw new IllegalArgumentException("if emptyNonTheoryConsts=true, you cannot provide nonTheoryConsts");
+			}
 		} else {
 			if (nonTheoryConsts == null) {
 				mNonTheoryConsts = new HashSet<>();
