@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transition
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.BaseTuple;
 
 /**
@@ -83,7 +83,6 @@ public class TransFormulaBuilder {
 			final Map<IProgramVar, TermVariable> outVars, final boolean emptyNonTheoryConsts,
 			final Set<IProgramConst> nonTheoryConsts, final boolean emptyBranchEncoders,
 			final Collection<TermVariable> branchEncoders, final boolean emptyAuxVars) {
-		super();
 		if (inVars == null) {
 			mInVars = new HashMap<>();
 		} else {
@@ -95,33 +94,29 @@ public class TransFormulaBuilder {
 			mOutVars = new HashMap<>(outVars);
 		}
 		if (emptyNonTheoryConsts) {
-			mNonTheoryConsts = Collections.emptySet();
-			if (nonTheoryConsts != null) {
+			mNonTheoryConsts = ImmutableSet.empty();
+			if (nonTheoryConsts != null && !nonTheoryConsts.isEmpty()) {
 				throw new IllegalArgumentException("if emptyNonTheoryConsts=true, you cannot provide nonTheoryConsts");
 			}
+		} else if (nonTheoryConsts == null) {
+			mNonTheoryConsts = new HashSet<>();
 		} else {
-			if (nonTheoryConsts == null) {
-				mNonTheoryConsts = new HashSet<>();
-			} else {
-				mNonTheoryConsts = new HashSet<>(nonTheoryConsts);
-			}
+			mNonTheoryConsts = new HashSet<>(nonTheoryConsts);
 		}
 		if (emptyAuxVars) {
-			mAuxVars = Collections.emptySet();
+			mAuxVars = ImmutableSet.empty();
 		} else {
 			mAuxVars = new HashSet<>();
 		}
 		if (emptyBranchEncoders) {
-			mBranchEncoders = Collections.emptySet();
+			mBranchEncoders = ImmutableSet.empty();
 			if (branchEncoders != null && !branchEncoders.isEmpty()) {
 				throw new IllegalArgumentException("if emptyBranchEncoders=true, you cannot provide branchEncoders");
 			}
+		} else if (branchEncoders == null) {
+			mBranchEncoders = new HashSet<>();
 		} else {
-			if (branchEncoders == null) {
-				mBranchEncoders = new HashSet<>();
-			} else {
-				mBranchEncoders = new HashSet<>(branchEncoders);
-			}
+			mBranchEncoders = new HashSet<>(branchEncoders);
 		}
 	}
 
@@ -251,22 +246,20 @@ public class TransFormulaBuilder {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		}
-		if (mInfeasibility == null) {
-			mInfeasibility = infeasibility;
-		} else {
+		if (mInfeasibility != null) {
 			throw new IllegalStateException("Infeasibility already set.");
 		}
+		mInfeasibility = infeasibility;
 	}
 
 	public void setFormula(final Term formula) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		}
-		if (mFormula == null) {
-			mFormula = formula;
-		} else {
+		if (mFormula != null) {
 			throw new IllegalStateException("Formula already set.");
 		}
+		mFormula = formula;
 	}
 
 	public UnmodifiableTransFormula finishConstruction(final ManagedScript script) {
@@ -456,7 +449,7 @@ public class TransFormulaBuilder {
 		if (tf instanceof UnmodifiableTransFormula) {
 			branchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
 		} else {
-			branchEncoders = Collections.emptySet();
+			branchEncoders = ImmutableSet.empty();
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
@@ -517,7 +510,7 @@ public class TransFormulaBuilder {
 		if (tf instanceof UnmodifiableTransFormula) {
 			branchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
 		} else {
-			branchEncoders = Collections.emptySet();
+			branchEncoders = ImmutableSet.empty();
 		}
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -604,7 +597,7 @@ public class TransFormulaBuilder {
 			final Set<TermVariable> oldBranchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
 			branchEncoders = oldBranchEncoders.stream().map(transferTv).collect(Collectors.toSet());
 		} else {
-			branchEncoders = Collections.emptySet();
+			branchEncoders = ImmutableSet.empty();
 		}
 		final Set<TermVariable> auxVars = tf.getAuxVars().stream().map(transferTv).collect(Collectors.toSet());
 
