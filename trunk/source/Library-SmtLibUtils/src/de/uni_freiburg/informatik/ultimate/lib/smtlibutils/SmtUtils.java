@@ -878,14 +878,14 @@ public final class SmtUtils {
 	 * Returns true, iff the term contains an application of the given functionName
 	 */
 	public static boolean containsFunctionApplication(final Term term, final String functionName) {
-		return !new ApplicationTermFinder(functionName, true).findMatchingSubterms(term).isEmpty();
+		return !extractApplicationTerms(functionName, term, true).isEmpty();
 	}
 
 	/**
 	 * Returns true, iff the term contains an application of at least one of the the given functionNames
 	 */
 	public static boolean containsFunctionApplication(final Term term, final Collection<String> functionNames) {
-		return !new ApplicationTermFinder(new HashSet<>(functionNames), true).findMatchingSubterms(term).isEmpty();
+		return functionNames.stream().anyMatch(x -> containsFunctionApplication(term, x));
 	}
 
 	public static boolean containsArrayVariables(final Term... terms) {
@@ -998,14 +998,14 @@ public final class SmtUtils {
 	 */
 	public static boolean isNNF(final Term term) {
 		for (final String f : Arrays.asList("=", "=>", "xor", "distinct", "ite")) {
-			for (final ApplicationTerm a : new ApplicationTermFinder(f, true).findMatchingSubterms(term)) {
-				if (allParamsAreBool(a)) {
+			for (final Term t : extractApplicationTerms(f, term, true)) {
+				if (allParamsAreBool((ApplicationTerm) t)) {
 					return false;
 				}
 			}
 		}
-		for (final ApplicationTerm a : new ApplicationTermFinder("not", true).findMatchingSubterms(term)) {
-			if (!isAtomicFormula(a.getParameters()[0])) {
+		for (final Term t : extractApplicationTerms("not", term, true)) {
+			if (!isAtomicFormula(((ApplicationTerm) t).getParameters()[0])) {
 				return false;
 			}
 		}
