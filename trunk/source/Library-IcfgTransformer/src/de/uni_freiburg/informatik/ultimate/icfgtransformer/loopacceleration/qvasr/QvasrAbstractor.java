@@ -809,7 +809,6 @@ public class QvasrAbstractor {
 					final Term[] divisorArray = reducedParamsDivisor.toArray(new Term[reducedParamsDivisor.size()]);
 					simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividendArray);
 					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
-
 				}
 			}
 			if (simplifiedDividend instanceof ApplicationTerm && !(simplifiedDivisor instanceof ApplicationTerm)) {
