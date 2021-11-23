@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -323,6 +324,14 @@ public class ElimStorePlain {
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), eTask.getTerm(), eliminatee);
 		if (!aoa.getValueOfStore().isEmpty() || !aoa.getOtherFunctionApplications().isEmpty()) {
 			// cannot eliminated this array
+			return null;
+		}
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(eTask.getQuantifier(), eTask.getTerm());
+		final Map<Boolean, List<Term>> part = Arrays.stream(dualJuncts).collect(Collectors
+				.partitioningBy(x -> QuantifierUtils.isCorrespondingFiniteJunction(eTask.getQuantifier(), x)));
+		final Term distributers = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), eTask.getQuantifier(), part.get(true));
+		final ArrayOccurrenceAnalysis resetAoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), distributers, eliminatee);
+		if (!resetAoa.getDerRelations(eTask.getQuantifier()).isEmpty() || !resetAoa.getAntiDerRelations(eTask.getQuantifier()).isEmpty()) {
 			return null;
 		}
 
