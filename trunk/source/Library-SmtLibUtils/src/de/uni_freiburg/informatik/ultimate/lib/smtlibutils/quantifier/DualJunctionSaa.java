@@ -34,12 +34,14 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Smart array Ackermanization.
@@ -105,8 +107,9 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 			}
 			final EliminationTask singletonEliminationTask = new EliminationTask(inputEt.getQuantifier(),
 					Collections.singleton(eliminatee), inputEt.getTerm(), inputEt.getContext());
-			final EliminationResult er = tryToEliminateOne1(singletonEliminationTask);
+			final EliminationResult er = tryToEliminateOne0(singletonEliminationTask);
 			if (er != null) {
+				assert inputEt.getContext() == er.getEliminationTask().getContext() : "illegal change of context";
 				return new EliminationResult(
 						er.getEliminationTask().update(inputEt.getEliminatees(), er.getEliminationTask().getTerm()),
 						er.getNewEliminatees());
@@ -115,8 +118,26 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 		return null;
 	}
 
+	private EliminationResult tryToEliminateOne0(final EliminationTask inputEt) {
+		final Pair<Term, EliminationTask> pair = inputEt.makeTight(mServices, mMgdScript);
+		if (pair == null) {
+			return tryToEliminateOne1(inputEt);
+		} else {
+			final EliminationResult er = tryToEliminateOne1(pair.getSecond());
+			if (er == null) {
+				return null;
+			} else {
+				final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+						pair.getFirst(), er.getEliminationTask().getTerm());
+				final EliminationTask resultEliminationTask = new EliminationTask(inputEt.getQuantifier(),
+						inputEt.getEliminatees(), resultTerm, inputEt.getContext());
+				return new EliminationResult(resultEliminationTask, er.getNewEliminatees());
+			}
+		}
+	}
+
 	private EliminationResult tryToEliminateOne1(final EliminationTask inputEt) {
-		EliminationResult er;
+		final EliminationResult er;
 		if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
 			er = tryToEliminateOne2(inputEt);
 		} else {
