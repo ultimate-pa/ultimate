@@ -64,10 +64,10 @@ public class WolfRefinementStrategy<L extends IIcfgTransition<?>> extends BasicR
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
-			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBP));
+			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		}
-		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP));
-		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP));
+		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 
