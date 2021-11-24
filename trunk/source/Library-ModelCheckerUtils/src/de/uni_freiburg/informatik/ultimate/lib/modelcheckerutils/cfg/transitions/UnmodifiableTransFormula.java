@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUti
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Unmodifiable variant of {@link TransFormula}
@@ -86,10 +87,10 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Map<IProgramVar, TermVariable> outVars, final Set<IProgramConst> nonTheoryConsts,
 			final Set<TermVariable> auxVars, final Set<TermVariable> branchEncoders, final Infeasibility infeasibility,
 			final ManagedScript script) {
-		super(inVars, outVars, auxVars, nonTheoryConsts);
+		super(inVars, outVars, ImmutableSet.of(auxVars), ImmutableSet.of(nonTheoryConsts));
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(formula) : "Term not in UltimateNormalForm";
 		mFormula = formula;
-		mBranchEncoders = branchEncoders;
+		mBranchEncoders = ImmutableSet.of(branchEncoders);
 		mInfeasibility = infeasibility;
 		mClosedFormula =
 				computeClosedFormula(formula, super.getInVars(), super.getOutVars(), super.getAuxVars(), script);
@@ -209,7 +210,9 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	public static void removeSuperfluousVars(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars) {
 		final Set<TermVariable> allVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
-		auxVars.retainAll(allVars);
+		if (!auxVars.isEmpty()) {
+			auxVars.retainAll(allVars);
+		}
 		final List<IProgramVar> superfluousInVars = new ArrayList<>();
 		final List<IProgramVar> superfluousOutVars = new ArrayList<>();
 		for (final Entry<IProgramVar, TermVariable> bv : inVars.entrySet()) {
