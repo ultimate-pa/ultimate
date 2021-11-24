@@ -195,8 +195,8 @@ public final class TransFormulaUtils {
 					}
 				}
 			}
-			final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript
-					.constructFreshCopies(currentTf.getAuxVars());
+			final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar =
+					mgdScript.constructFreshCopies(currentTf.getAuxVars());
 			substitutionMapping.putAll(oldAuxVar2newAuxVar);
 			auxVars.addAll(oldAuxVar2newAuxVar.values());
 			tfb.addBranchEncoders(currentTf.getBranchEncoders());
@@ -334,14 +334,14 @@ public final class TransFormulaUtils {
 		final Term[] renamedFormulas = new Term[transFormulas.length];
 		for (int i = 0; i < transFormulas.length; i++) {
 			final UnmodifiableTransFormula currentTf = transFormulas[i];
-			tfb.addBranchEncoders(currentTf.getBranchEncoders());
 			final Term unifiedFormula = unification.getUnifiedFormula(i);
 			if (useBranchEncoders) {
+				tfb.addBranchEncoders(currentTf.getBranchEncoders());
 				renamedFormulas[i] = Util.implies(mgdScript.getScript(), branchIndicators[i], unifiedFormula);
-				} else {
+			} else {
 				renamedFormulas[i] = unifiedFormula;
-				}
 			}
+		}
 
 		Term resultFormula;
 		if (useBranchEncoders) {
@@ -1195,15 +1195,12 @@ public final class TransFormulaUtils {
 		return sb.toString();
 	}
 
-
 	/**
-	 * Replace each term of the form (store a k v) by the conjunction (store a k
-	 * aux) /\ (= aux v) for a fresh auxiliary variable aux. Motivation: The term
-	 * (store a k v) carries two information: (1) This term and the array a are
-	 * nearly identical (2) this term stores v at position k. Our trace check can
-	 * only tell us if 1+2 are relevant for the infesibility of a trace. After the
-	 * transformation we can separate both information and our trace check can find
-	 * out that information 2 is irrelevant for infeasibility of a trace.
+	 * Replace each term of the form (store a k v) by the conjunction (store a k aux) /\ (= aux v) for a fresh auxiliary
+	 * variable aux. Motivation: The term (store a k v) carries two information: (1) This term and the array a are
+	 * nearly identical (2) this term stores v at position k. Our trace check can only tell us if 1+2 are relevant for
+	 * the infesibility of a trace. After the transformation we can separate both information and our trace check can
+	 * find out that information 2 is irrelevant for infeasibility of a trace.
 	 */
 	public static UnmodifiableTransFormula decoupleArrayValues(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript) {
@@ -1231,35 +1228,33 @@ public final class TransFormulaUtils {
 		final Collection<ArrayStore> arrayStores = ArrayStore.extractStores(term, true);
 		if (arrayStores.isEmpty()) {
 			return new Triple<>(term, Collections.emptyList(), Collections.emptyList());
-		} else {
-			final List<TermVariable> resultVariables = new ArrayList<>();
-			final List<Term> resultEqualities = new ArrayList<>();
-			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (final ArrayStore arrayStore : arrayStores) {
-				final Triple<Term, List<TermVariable>, List<Term>> arrTriple = decoupleArrayValues(
-						arrayStore.getArray(), mgdScript);
-				final Triple<Term, List<TermVariable>, List<Term>> idxTriple = decoupleArrayValues(
-						arrayStore.getIndex(), mgdScript);
-				final Triple<Term, List<TermVariable>, List<Term>> valueTriple = decoupleArrayValues(
-						arrayStore.getValue(), mgdScript);
-				resultVariables.addAll(arrTriple.getSecond());
-				resultVariables.addAll(idxTriple.getSecond());
-				resultVariables.addAll(valueTriple.getSecond());
-				resultEqualities.addAll(arrTriple.getThird());
-				resultEqualities.addAll(idxTriple.getThird());
-				resultEqualities.addAll(valueTriple.getThird());
-				final TermVariable newAuxVar = mgdScript.constructFreshTermVariable("ArrVal",
-						valueTriple.getFirst().getSort());
-				resultVariables.add(newAuxVar);
-				final Term equalitiy = SmtUtils.binaryEquality(mgdScript.getScript(), newAuxVar,
-						valueTriple.getFirst());
-				resultEqualities.add(equalitiy);
-				final Term resultStore = mgdScript.getScript().term("store", arrTriple.getFirst(), idxTriple.getFirst(),
-						newAuxVar);
-				substitutionMapping.put(arrayStore.asTerm(), resultStore);
-			}
-			final Term resultTerm = new Substitution(mgdScript, substitutionMapping).transform(term);
-			return new Triple<Term, List<TermVariable>, List<Term>>(resultTerm, resultVariables, resultEqualities);
 		}
+		final List<TermVariable> resultVariables = new ArrayList<>();
+		final List<Term> resultEqualities = new ArrayList<>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final ArrayStore arrayStore : arrayStores) {
+			final Triple<Term, List<TermVariable>, List<Term>> arrTriple =
+					decoupleArrayValues(arrayStore.getArray(), mgdScript);
+			final Triple<Term, List<TermVariable>, List<Term>> idxTriple =
+					decoupleArrayValues(arrayStore.getIndex(), mgdScript);
+			final Triple<Term, List<TermVariable>, List<Term>> valueTriple =
+					decoupleArrayValues(arrayStore.getValue(), mgdScript);
+			resultVariables.addAll(arrTriple.getSecond());
+			resultVariables.addAll(idxTriple.getSecond());
+			resultVariables.addAll(valueTriple.getSecond());
+			resultEqualities.addAll(arrTriple.getThird());
+			resultEqualities.addAll(idxTriple.getThird());
+			resultEqualities.addAll(valueTriple.getThird());
+			final TermVariable newAuxVar =
+					mgdScript.constructFreshTermVariable("ArrVal", valueTriple.getFirst().getSort());
+			resultVariables.add(newAuxVar);
+			final Term equalitiy = SmtUtils.binaryEquality(mgdScript.getScript(), newAuxVar, valueTriple.getFirst());
+			resultEqualities.add(equalitiy);
+			final Term resultStore =
+					mgdScript.getScript().term("store", arrTriple.getFirst(), idxTriple.getFirst(), newAuxVar);
+			substitutionMapping.put(arrayStore.asTerm(), resultStore);
+		}
+		final Term resultTerm = new Substitution(mgdScript, substitutionMapping).transform(term);
+		return new Triple<Term, List<TermVariable>, List<Term>>(resultTerm, resultVariables, resultEqualities);
 	}
 }
