@@ -56,15 +56,21 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.BetterLockstepOrder.RoundRobinComparator;
 
-/*
- * Idea:
- *
- * - keep the order constant (preferring thread t)
- * - except: if I currently prefer thread t, and I see a transition of t that reaches a loop head, switch to t+1
- * - unclear: what if I prefer t, but I see a transition of t' reaching a loop head? keep t? or go to t'+1 ?
+/**
+ * A DFS order that aims to place context switches between threads whenever (and only when) a loop head is reached.
  *
  * For n threads of form "init; (loop)*; finish", the minimal traces under full commutativity should be
- * "init1,...,init_n,(loop1,...,loop_n)*,finish1,...,finish_n" (if all threads loop the same number of times)
+ * "init1,...,init_n,(loop1,...,loop_n)*,finish1,...,finish_n" (if all threads loop the same number of times).
+ *
+ * This order is stateful, i.e., to apply it you need to wrap the searched automaton in a sort of product, see
+ * {@link #wrapAutomaton(INwaOutgoingLetterAndTransitionProvider)}. Thus the reduced automaton can grow significantly.
+ * The hope is however that reductions using this order admit simpler proofs.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters in the reduced automaton. We need ICFG transitions to notice when we reach a loop head
+ *            in a thread.
  */
 public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrder<L, IPredicate> {
 
@@ -181,7 +187,7 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 			final PredicateWithLastThread predState = (PredicateWithLastThread) state;
 
 			// Keep the same order between threads, until we reach a loop head. Then we shift the order by one thread.
-			// This allows other threads to interrupt before we enter the loop, and after every iteration.
+			// This allows other threads to interrupt and "catch up" before we enter the loop and after every iteration.
 			final String lastThread;
 			final IcfgLocation target = letter.getTarget();
 			if (mLoopHeads.contains(target)) {
