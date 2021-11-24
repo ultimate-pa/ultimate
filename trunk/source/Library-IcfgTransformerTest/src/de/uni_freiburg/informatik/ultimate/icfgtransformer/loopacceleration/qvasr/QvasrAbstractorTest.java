@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Class of tests checking the correctness of various functions needed for computation of rational vector addition
  * systems.
  *
- * @author jonas
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
 public class QvasrAbstractorTest {
@@ -73,20 +73,21 @@ public class QvasrAbstractorTest {
 
 	@Test
 	public void testExpandRealMultiplication() {
+		final Term zero = mScript.decimal("0");
+		final Term one = mScript.decimal("1");
+		final TermVariable x = mScript.variable("x", mRealSort);
+		final TermVariable y = mScript.variable("y", mRealSort);
+		final TermVariable z = mScript.variable("z", mRealSort);
 		/*
 		 * Test (0 * x) = 0
 		 */
-		final Term zero = mScript.decimal("0");
-		final Term x = mMgdScript.constructFreshTermVariable("x", SmtSortUtils.getRealSort(mMgdScript));
 		final Term zeroTimesX = QvasrAbstractor.expandRealMultiplication(mMgdScript, zero, x);
 		MatcherAssert.assertThat(zeroTimesX, IsEqual.equalTo(zero));
 
 		/*
 		 * Test (0 * (y + 1)) = 0
 		 */
-		mScript.declareFun("y", new Sort[0], mRealSort);
-		final String yPlus1String = "(+ y 1)";
-		final Term yPlus1 = TermParseUtils.parseTerm(mScript, yPlus1String);
+		final Term yPlus1 = SmtUtils.sum(mScript, "+", y, one);
 		final Term yPlus1Times0 = QvasrAbstractor.expandRealMultiplication(mMgdScript, zero, yPlus1);
 		MatcherAssert.assertThat(yPlus1Times0, IsEqual.equalTo(zero));
 
@@ -94,21 +95,19 @@ public class QvasrAbstractorTest {
 		 * Test (y + 1) * (z + 1) = yz + y + z + 1
 		 */
 		mScript.declareFun("z", new Sort[0], mRealSort);
-		final String zPlus1String = "(+ z 1)";
-		final Term zPlus1 = TermParseUtils.parseTerm(mScript, zPlus1String);
+		final Term zPlus1 = SmtUtils.sum(mScript, "+", z, one);
 		final Term yPlus1TimesZPlus1 = QvasrAbstractor.expandRealMultiplication(mMgdScript, zPlus1, yPlus1);
-		final String yPlus1TimesZPlus1ResultString = "(+ (* z y) y 1.0 z)";
-		final Term yPlus1TimesZPlus1ResultTerm = TermParseUtils.parseTerm(mScript, yPlus1TimesZPlus1ResultString);
+		final Term yPlus1TimesZPlus1ResultTerm =
+				SmtUtils.sum(mScript, "+", SmtUtils.mul(mScript, "*", z, y), y, one, z);
 		MatcherAssert.assertThat(yPlus1TimesZPlus1, IsEqual.equalTo(yPlus1TimesZPlus1ResultTerm));
 
 		/*
 		 * Test zy * (y + 1) = zy^2 + zy
 		 */
-		final String zyString = "(* z y)";
-		final Term zy = TermParseUtils.parseTerm(mScript, zyString);
+		final Term zy = SmtUtils.mul(mScript, "*", z, y);
 		final Term zyTimesYPlus1 = QvasrAbstractor.expandRealMultiplication(mMgdScript, zy, yPlus1);
-		final String zyTimesYPlus1ResultString = "(+ (* (* y y) z) (* z y) )";
-		final Term zyTimesYPlus1ResultTerm = TermParseUtils.parseTerm(mScript, zyTimesYPlus1ResultString);
+		final Term zyTimesYPlus1ResultTerm =
+				SmtUtils.sum(mScript, "+", SmtUtils.mul(mScript, "*", SmtUtils.mul(mScript, "*", y, y), z), zy);
 		MatcherAssert.assertThat(zyTimesYPlus1, IsEqual.equalTo(zyTimesYPlus1ResultTerm));
 	}
 
@@ -116,11 +115,12 @@ public class QvasrAbstractorTest {
 	public void testSimplifyRealDivision() {
 		final Term zero = mScript.decimal("0");
 		final Term one = mScript.decimal("1");
+		final TermVariable x = mScript.variable("x", mRealSort);
+		final TermVariable y = mScript.variable("y", mRealSort);
 
 		/*
 		 * Test (x / 1) = x
 		 */
-		final Term x = mMgdScript.constructFreshTermVariable("x", SmtSortUtils.getRealSort(mMgdScript));
 		final Term xOverOneSimplified = QvasrAbstractor.simplifyRealDivision(mMgdScript, x, one);
 		MatcherAssert.assertThat(xOverOneSimplified, IsEqual.equalTo(x));
 
@@ -136,32 +136,23 @@ public class QvasrAbstractorTest {
 		final Term xOverXSimplified = QvasrAbstractor.simplifyRealDivision(mMgdScript, x, x);
 		MatcherAssert.assertThat(xOverXSimplified, IsEqual.equalTo(one));
 
-		mScript.declareFun("x", new Sort[0], mRealSort);
-		mScript.declareFun("y", new Sort[0], mRealSort);
-		mScript.declareFun("z", new Sort[0], mRealSort);
-
 		/*
 		 * Test ((y + 1) / (z + 2)) = ((y + 1) / (z + 2))
 		 */
-		final String yP1String = "(+ y 1.0)";
-		final String zP2String = "(+ z 2.0)";
-		final String yP1OverZP2String = "(/ (+ y 1.0) (+ z 2.0))";
-		final Term yP1OverZP2 = TermParseUtils.parseTerm(mScript, yP1OverZP2String);
-		final Term yP1 = TermParseUtils.parseTerm(mScript, yP1String);
-		final Term zP2 = TermParseUtils.parseTerm(mScript, zP2String);
+		final Term yP1 = SmtUtils.sum(mScript, "+", y, one);
+		final Term zP2 = SmtUtils.sum(mScript, "+", x, mScript.decimal("2"));
+		final Term yP1OverZP2 = SmtUtils.divReal(mScript, yP1, zP2);
 		final Term yP1OverZP2Simplified = QvasrAbstractor.simplifyRealDivision(mMgdScript, yP1, zP2);
 		MatcherAssert.assertThat(yP1OverZP2Simplified, IsEqual.equalTo(yP1OverZP2));
 
 		/*
 		 * Test ((x + y + 1)/(z + 2)) / ((yx) / (z + 2)) = (x + y + 1) / (yx)
 		 */
-		final String yPXP1OverZP2String = "(/ (+ y x 1.0) (+ z 2.0))";
-		final String yTXOverZP2String = "(/ (* y x) (+ z 2.0))";
-		final String yPXP1OverZP2OveryTXOverZP2StringResultString = "(/ (+ x y 1.0) (* y x))";
-		final Term yPXP1OverZP2 = TermParseUtils.parseTerm(mScript, yPXP1OverZP2String);
-		final Term yTXOverZP2 = TermParseUtils.parseTerm(mScript, yTXOverZP2String);
+		final Term xPyPOne = SmtUtils.sum(mScript, "+", y, x, one);
+		final Term yPXP1OverZP2 = SmtUtils.divReal(mScript, xPyPOne, zP2);
+		final Term yTXOverZP2 = SmtUtils.divReal(mScript, SmtUtils.mul(mScript, "*", y, x), zP2);
 		final Term yPXP1OverZP2OveryTXOverZP2StringResult =
-				TermParseUtils.parseTerm(mScript, yPXP1OverZP2OveryTXOverZP2StringResultString);
+				SmtUtils.divReal(mScript, xPyPOne, SmtUtils.mul(mScript, "*", x, y));
 		final Term yPXP1OverZP2OveryTXOverZP2StringSimplified =
 				QvasrAbstractor.simplifyRealDivision(mMgdScript, yPXP1OverZP2, yTXOverZP2);
 		MatcherAssert.assertThat(yPXP1OverZP2OveryTXOverZP2StringSimplified,
@@ -177,10 +168,8 @@ public class QvasrAbstractorTest {
 		/*
 		 * Test (x + y + 1)/((x + y + 1) / (z + 2)) = z + 2
 		 */
-		final String yPXP1String = "(+ y x 1.0)";
-		final Term yPXP1 = TermParseUtils.parseTerm(mScript, yPXP1String);
 		final Term yPXP1OveryPXP1OverZP2Simplified =
-				QvasrAbstractor.simplifyRealDivision(mMgdScript, yPXP1, yPXP1OverZP2);
+				QvasrAbstractor.simplifyRealDivision(mMgdScript, xPyPOne, yPXP1OverZP2);
 		MatcherAssert.assertThat(yPXP1OveryPXP1OverZP2Simplified, IsEqual.equalTo(zP2));
 	}
 
@@ -188,15 +177,12 @@ public class QvasrAbstractorTest {
 	public void testSimplifyRealMultiplication() {
 		final Term zero = mScript.decimal("0");
 		final Term one = mScript.decimal("1");
-		mScript.declareFun("x", new Sort[0], mRealSort);
-		mScript.declareFun("y", new Sort[0], mRealSort);
-		mScript.declareFun("z", new Sort[0], mRealSort);
+		final TermVariable x = mScript.variable("x", mRealSort);
+		final TermVariable y = mScript.variable("y", mRealSort);
 
 		/*
 		 * Test x * 0 = 0 and x * 1 = x
 		 */
-		final String xString = "x";
-		final Term x = TermParseUtils.parseTerm(mScript, xString);
 		final Term xTimes0 = QvasrAbstractor.simplifyRealMultiplication(mMgdScript, x, zero);
 		MatcherAssert.assertThat(xTimes0, IsEqual.equalTo(zero));
 		final Term xTimes1 = QvasrAbstractor.simplifyRealMultiplication(mMgdScript, x, one);
@@ -205,13 +191,11 @@ public class QvasrAbstractorTest {
 		/*
 		 * Test (2y / (x + 1)) * (3 / y) = 6/(x + 1)
 		 */
-		final String yOverXP1String = "(/ (* 2.0 y) (+ x 1.0))";
-		final String threeOverYString = "(/ 3.0 y)";
-		final Term yOverXP1 = TermParseUtils.parseTerm(mScript, yOverXP1String);
-		final Term threeOverY = TermParseUtils.parseTerm(mScript, threeOverYString);
-		final String yOverXP1OverThreeOverYResultString = "(/ 6.0 (+ x 1.0))";
+		final Term yOverXP1 = SmtUtils.divReal(mScript, SmtUtils.mul(mScript, "*", mScript.decimal("2"), y),
+				SmtUtils.sum(mScript, "+", x, one));
+		final Term threeOverY = SmtUtils.divReal(mScript, mScript.decimal("3"), y);
 		final Term yOverXP1TimesThreeOverYResult =
-				TermParseUtils.parseTerm(mScript, yOverXP1OverThreeOverYResultString);
+				SmtUtils.divReal(mScript, mScript.decimal("6"), SmtUtils.sum(mScript, "+", x, one));
 		final Term yOverXP1TimesThreeOverY =
 				QvasrAbstractor.simplifyRealMultiplication(mMgdScript, yOverXP1, threeOverY);
 		MatcherAssert.assertThat(yOverXP1TimesThreeOverY, IsEqual.equalTo(yOverXP1TimesThreeOverYResult));
@@ -219,30 +203,25 @@ public class QvasrAbstractorTest {
 		/*
 		 * Test ((x + 2.0) / y) * (y / (x + 2)) = 1
 		 */
-		final String xP2OverYString = "(/ (+ x 2.0) y)";
-		final String yOverxP2String = "(/ y (+ x 2.0))";
-		final Term yOverxP2 = TermParseUtils.parseTerm(mScript, xP2OverYString);
-		final Term xP2OverY = TermParseUtils.parseTerm(mScript, yOverxP2String);
+		final Term yOverxP2 = SmtUtils.divReal(mScript, SmtUtils.sum(mScript, "+", x, mScript.decimal("2")), y);
+		final Term xP2OverY = SmtUtils.divReal(mScript, y, SmtUtils.sum(mScript, "+", x, mScript.decimal("2")));
 		final Term yOverxP2TimesxP2OverY = QvasrAbstractor.simplifyRealMultiplication(mMgdScript, yOverxP2, xP2OverY);
 		MatcherAssert.assertThat(yOverxP2TimesxP2OverY, IsEqual.equalTo(one));
 
 		/*
 		 * Test 3 * (x / y) = 3x/y
 		 */
-		final String threeString = "3.0";
-		final String xOverYString = "(/ x y)";
-		final Term three = TermParseUtils.parseTerm(mScript, threeString);
-		final Term xOverY = TermParseUtils.parseTerm(mScript, xOverYString);
-		final String threeTimesXOverYResultString = "(/ (* x 3.0) y)";
-		final Term threeTimesXOverYResult = TermParseUtils.parseTerm(mScript, threeTimesXOverYResultString);
-		final Term threeTimesXOverY = QvasrAbstractor.simplifyRealMultiplication(mMgdScript, three, xOverY);
+
+		final Term xOverY = SmtUtils.divReal(mScript, x, y);
+		final Term threeTimesXOverYResult =
+				SmtUtils.divReal(mScript, SmtUtils.mul(mScript, "*", x, mScript.decimal("3")), y);
+		final Term threeTimesXOverY =
+				QvasrAbstractor.simplifyRealMultiplication(mMgdScript, mScript.decimal("3"), xOverY);
 		MatcherAssert.assertThat(threeTimesXOverY, IsEqual.equalTo(threeTimesXOverYResult));
 
 		/*
 		 * Test y * (x / y) = x
 		 */
-		final String yString = "y";
-		final Term y = TermParseUtils.parseTerm(mScript, yString);
 		final Term yTimesXOverY = QvasrAbstractor.simplifyRealMultiplication(mMgdScript, y, xOverY);
 		MatcherAssert.assertThat(yTimesXOverY, IsEqual.equalTo(x));
 	}
@@ -251,12 +230,9 @@ public class QvasrAbstractorTest {
 	public void testSimplifyRealSubstraction() {
 		final Term zero = mScript.decimal("0");
 		final Term one = mScript.decimal("1");
-		mScript.declareFun("x", new Sort[0], mRealSort);
-		mScript.declareFun("y", new Sort[0], mRealSort);
-		mScript.declareFun("z", new Sort[0], mRealSort);
-
-		final String xString = "x";
-		final Term x = TermParseUtils.parseTerm(mScript, xString);
+		final TermVariable x = mScript.variable("x", mRealSort);
+		final TermVariable y = mScript.variable("y", mRealSort);
+		final TermVariable z = mScript.variable("z", mRealSort);
 
 		/*
 		 * Test 1 - 1 = 0 and x - 0 = x
@@ -269,58 +245,56 @@ public class QvasrAbstractorTest {
 		/*
 		 * Test 3x - x = 2x
 		 */
-		final String threeXString = "(* 3.0 x)";
-		final Term threeX = TermParseUtils.parseTerm(mScript, threeXString);
-		final String twoXString = "(* x 2.0)";
-		final Term twoX = TermParseUtils.parseTerm(mScript, twoXString);
+		final Term threeX = SmtUtils.mul(mScript, "*", mScript.decimal("3"), x);
+		final Term twoX = SmtUtils.mul(mScript, "*", x, mScript.decimal("2"));
 		final Term threeXMinX = QvasrAbstractor.simplifyRealSubtraction(mMgdScript, threeX, x);
 		MatcherAssert.assertThat(threeXMinX, IsEqual.equalTo(twoX));
 
 		/*
 		 * Test ((x + y)/ z) - ((x + 3) / y) = (xy + y^2 - xz + 3z)/(zy)
 		 */
-		final String xPYOverZString = "(/ (+ x y) z)";
-		final Term xPYOverZ = TermParseUtils.parseTerm(mScript, xPYOverZString);
-		final String xPThreeOverYString = "(/ (+ x 3.0) y)";
-		final Term xPThreeOverY = TermParseUtils.parseTerm(mScript, xPThreeOverYString);
+		final Term xPYOverZ = SmtUtils.divReal(mScript, SmtUtils.sum(mScript, "+", x, y), z);
+		final Term xPThreeOverY = SmtUtils.divReal(mScript, SmtUtils.sum(mScript, "+", x, mScript.decimal("3")), y);
+		final Term zTimesMinThree = SmtUtils.mul(mScript, "*", z, mScript.decimal("-3"));
+		final Term negXZ = SmtUtils.mul(mScript, "*", SmtUtils.mul(mScript, "*", x, z), mScript.decimal("-1"));
+		final Term ySquare = SmtUtils.mul(mScript, "*", y, y);
+		final Term xY = SmtUtils.mul(mScript, "*", x, y);
+		final Term sumAll = SmtUtils.sum(mScript, "+", zTimesMinThree, negXZ, ySquare, xY);
+		final Term xPYOverZMinxPThreeOverYResult = SmtUtils.divReal(mScript, sumAll, SmtUtils.mul(mScript, "*", z, y));
 		final Term xPYOverZMinxPThreeOverY =
 				QvasrAbstractor.simplifyRealSubtraction(mMgdScript, xPYOverZ, xPThreeOverY);
-		MatcherAssert.assertThat(xPYOverZMinxPThreeOverY, IsEqual.equalTo(one));
-
-		/*
-		 * Test (3x / 2) - x = x/2
-		 */
-		final String threeXOverTwoString = "(/ (* 3.0 x) 2.0)";
-		final Term threeXOverTwo = TermParseUtils.parseTerm(mScript, threeXOverTwoString);
-		final String xOverTwoString = "(* x (/ 1.0 2.0))";
-		final Term xOverTwo = TermParseUtils.parseTerm(mScript, xOverTwoString);
-		final Term threeXOverTwoMinXOverTwo = QvasrAbstractor.simplifyRealSubtraction(mMgdScript, threeXOverTwo, x);
-		MatcherAssert.assertThat(threeXOverTwoMinXOverTwo, IsEqual.equalTo(xOverTwo));
+		MatcherAssert.assertThat(xPYOverZMinxPThreeOverY, IsEqual.equalTo(xPYOverZMinxPThreeOverYResult));
 
 		/*
 		 * Test (y / (x + 1)) - (y / (x + 1)) = 0
 		 */
-		final String yOverXPOneString = "(/ y (+ x 1.0))";
-		final Term yOverXPOne = TermParseUtils.parseTerm(mScript, yOverXPOneString);
+		final Term yOverXPOne = SmtUtils.divReal(mScript, y, SmtUtils.sum(mScript, "+", x, mScript.decimal("1")));
 		final Term yOverXPOneMinYOverXPOne =
 				QvasrAbstractor.simplifyRealSubtraction(mMgdScript, yOverXPOne, yOverXPOne);
 		MatcherAssert.assertThat(yOverXPOneMinYOverXPOne, IsEqual.equalTo(zero));
+
+		/*
+		 * Test (3x / 2) - x = x/2
+		 */
+		final Term threeXOverTwo =
+				SmtUtils.divReal(mScript, SmtUtils.mul(mScript, "*", mScript.decimal("3"), x), mScript.decimal("2"));
+		final Term xOverTwo =
+				SmtUtils.mul(mScript, "*", x, SmtUtils.divReal(mScript, mScript.decimal("1"), mScript.decimal("2")));
+		final Term threeXOverTwoMinXOverTwo = QvasrAbstractor.simplifyRealSubtraction(mMgdScript, threeXOverTwo, x);
+		MatcherAssert.assertThat(threeXOverTwoMinXOverTwo, IsEqual.equalTo(xOverTwo));
 	}
 
 	@Test
 	public void testReduceRealDivision() {
-		mScript.declareFun("x", new Sort[0], mRealSort);
-		mScript.declareFun("y", new Sort[0], mRealSort);
-
+		final TermVariable x = mScript.variable("x", mRealSort);
+		final TermVariable y = mScript.variable("y", mRealSort);
 		/*
-		 * Test (x * (x + y))/ x * (y + 3) = x
+		 * Test (x * (x + y))/ x * (y + 3) = (x + y)/(y + 3)
 		 */
-		final String xTimesXYString = "(* x (+ x y))";
-		final String xPyString = "(* x (+ y 3.0)))";
-		final String xTimesXYOverxPyResultString = "(/ (+ x y) (y + 3.0))";
-		final Term xTimesXY = TermParseUtils.parseTerm(mScript, xPyString);
-		final Term xy = TermParseUtils.parseTerm(mScript, xTimesXYString);
-		final Term xTimesXYOverxPyResult = TermParseUtils.parseTerm(mScript, xTimesXYOverxPyResultString);
+		final Term xTimesXY = SmtUtils.mul(mScript, "*", x, SmtUtils.sum(mScript, "+", y, mScript.decimal("3")));
+		final Term xy = SmtUtils.mul(mScript, "*", x, SmtUtils.sum(mScript, "+", x, y));
+		final Term xTimesXYOverxPyResult = SmtUtils.divReal(mScript, SmtUtils.sum(mScript, "+", x, y),
+				SmtUtils.sum(mScript, "+", y, mScript.decimal("3")));
 		final Pair<Term, Term> xyOverXReduced = QvasrAbstractor.reduceRealDivision(mMgdScript, xy, xTimesXY);
 		MatcherAssert.assertThat(SmtUtils.divReal(mScript, xyOverXReduced.getFirst(), xyOverXReduced.getSecond()),
 				IsEqual.equalTo(xTimesXYOverxPyResult));
