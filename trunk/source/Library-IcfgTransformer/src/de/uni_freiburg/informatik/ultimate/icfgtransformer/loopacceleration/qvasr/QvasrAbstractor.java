@@ -372,6 +372,8 @@ public class QvasrAbstractor {
 				final Term mult = SmtUtils.mul(script.getScript(), "*", paramFactorTwo, factorOne);
 				result = SmtUtils.sum(script.getScript(), "+", result, mult);
 			}
+		} else {
+			result = SmtUtils.mul(script.getScript(), "*", factorOne, factorTwo);
 		}
 		return result;
 	}
