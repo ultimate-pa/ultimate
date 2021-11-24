@@ -63,7 +63,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	// TODO Consider introducing a new type of predicates that store the original state and the sleep set.
 	// Then we could eliminate these maps. This would also mean that we don't keep references to outdated states.
 	private final Map<IPredicate, IPredicate> mOriginalStates = new HashMap<>();
-	private final Map<IPredicate, ImmutableSet<L>> mSleepSets;
+	private final Map<IPredicate, ImmutableSet<L>> mSleepSets = new HashMap<>();
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -75,7 +75,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		super();
 		mPredicateFactory = predicateFactory;
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
-		mSleepSets = new HashMap<>();
 	}
 
 	@Override
@@ -98,6 +97,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 * @return The argument passed to {@link #createSleepSetState(IPredicate, ImmutableSet)} that returned the given
 	 *         reduction state
 	 */
+	@Override
 	public IPredicate getOriginalState(final IPredicate sleepState) {
 		return mOriginalStates.get(sleepState);
 	}
@@ -111,6 +111,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 * @return The argument passed to {@link #createSleepSetState(IPredicate, ImmutableSet)} that returned the given
 	 *         reduction state
 	 */
+	@Override
 	public ImmutableSet<L> getSleepSet(final IPredicate sleepState) {
 		return mSleepSets.get(sleepState);
 	}

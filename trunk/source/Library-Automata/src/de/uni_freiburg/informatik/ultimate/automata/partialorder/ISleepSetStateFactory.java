@@ -60,6 +60,26 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	R createSleepSetState(S state, ImmutableSet<L> sleepset);
 
 	/**
+	 * Retrieves the original state from which a given sleep set state was constructed.
+	 *
+	 * @param sleepState
+	 *            The sleep set state
+	 * @return The first argument passed to the call of {@link #createSleepSetState(Object, ImmutableSet)} that returned
+	 *         the given sleep set state
+	 */
+	S getOriginalState(R sleepState);
+
+	/**
+	 * Retrieves the sleep set for a sleep set state.
+	 *
+	 * @param sleepState
+	 *            The sleep set state
+	 * @return The second argument passed to the call of {@link #createSleepSetState(Object, ImmutableSet)} that
+	 *         returned the given sleep set state
+	 */
+	ImmutableSet<L> getSleepSet(R sleepState);
+
+	/**
 	 * Simple implementation of the interface, which disregards the sleep set and simply returns the automaton state.
 	 *
 	 * As a result, the reduced automaton will be a sub-automaton of the input automaton, with some transitions removed.
@@ -82,6 +102,16 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 		@Override
 		public S createSleepSetState(final S state, final ImmutableSet<L> sleepset) {
 			return state;
+		}
+
+		@Override
+		public S getOriginalState(final S sleepState) {
+			return sleepState;
+		}
+
+		@Override
+		public ImmutableSet<L> getSleepSet(final S sleepState) {
+			throw new UnsupportedOperationException("state factory cannot recover sleep set");
 		}
 	}
 
@@ -109,6 +139,16 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 		@Override
 		public Pair<S, ImmutableSet<L>> createSleepSetState(final S state, final ImmutableSet<L> sleepset) {
 			return new Pair<>(state, sleepset);
+		}
+
+		@Override
+		public S getOriginalState(final Pair<S, ImmutableSet<L>> sleepState) {
+			return sleepState.getFirst();
+		}
+
+		@Override
+		public ImmutableSet<L> getSleepSet(final Pair<S, ImmutableSet<L>> sleepState) {
+			return sleepState.getSecond();
 		}
 	}
 }
