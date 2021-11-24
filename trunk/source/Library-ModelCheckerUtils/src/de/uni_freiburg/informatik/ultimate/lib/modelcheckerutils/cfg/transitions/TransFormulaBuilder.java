@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -270,9 +272,47 @@ public class TransFormulaBuilder {
 			throw new IllegalStateException("cannot finish without feasibility status");
 		}
 		mConstructionFinished = true;
-		UnmodifiableTransFormula.removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
-		return new UnmodifiableTransFormula(mFormula, mInVars, mOutVars, mNonTheoryConsts, mAuxVars, mBranchEncoders,
-				mInfeasibility, script);
+		removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
+		return new UnmodifiableTransFormula(mFormula, Collections.unmodifiableMap(mInVars),
+				Collections.unmodifiableMap(mOutVars), ImmutableSet.of(mNonTheoryConsts), ImmutableSet.of(mAuxVars),
+				ImmutableSet.of(mBranchEncoders), mInfeasibility, script);
+	}
+
+	/**
+	 * Remove inVars, outVars and auxVars that are not necessary. Remove auxVars if it does not occur in the formula.
+	 * Remove inVars if it does not occur in the formula. Remove outVar if it does not occur in the formula and is also
+	 * an inVar (case where the var is not modified). Note that we may not generally remove outVars that do not occur in
+	 * the formula (e.g., TransFormula for havoc statement).
+	 */
+	private static void removeSuperfluousVars(final Term formula, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars) {
+		final Set<TermVariable> allVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
+		if (!auxVars.isEmpty()) {
+			auxVars.retainAll(allVars);
+		}
+		final List<IProgramVar> superfluousInVars = new ArrayList<>();
+		final List<IProgramVar> superfluousOutVars = new ArrayList<>();
+		for (final Entry<IProgramVar, TermVariable> bv : inVars.entrySet()) {
+			final TermVariable inVar = bv.getValue();
+			if (!allVars.contains(inVar)) {
+				superfluousInVars.add(bv.getKey());
+			}
+		}
+		for (final Entry<IProgramVar, TermVariable> bv : outVars.entrySet()) {
+			final TermVariable outVar = bv.getValue();
+			if (!allVars.contains(outVar)) {
+				final TermVariable inVar = inVars.get(bv.getKey());
+				if (outVar == inVar) {
+					superfluousOutVars.add(bv.getKey());
+				}
+			}
+		}
+		for (final IProgramVar bv : superfluousInVars) {
+			inVars.remove(bv);
+		}
+		for (final IProgramVar bv : superfluousOutVars) {
+			outVars.remove(bv);
+		}
 	}
 
 	/**
