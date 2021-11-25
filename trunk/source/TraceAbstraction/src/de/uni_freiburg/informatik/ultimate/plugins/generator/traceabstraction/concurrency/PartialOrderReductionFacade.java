@@ -137,7 +137,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
 		case LOOP_LOCKSTEP:
 			final var order =
-					new LoopLockstepOrder<L>(icfg, mStateSplitter == null ? mStateSplitter::getOriginal : null);
+					new LoopLockstepOrder<L>(icfg, mStateSplitter == null ? null : mStateSplitter::getOriginal);
 			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((PredicateWithLastThread) x).getUnderlying(),
 					x -> ((PredicateWithLastThread) x).getLastThread());
 			return order;
