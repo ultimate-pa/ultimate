@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
@@ -277,9 +278,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final ImmutableList<IPredicate> conjuncts = ((MLPredicateWithConjuncts) state).getConjuncts();
 			return conjuncts.size() == 1 && isFalseLiteral(conjuncts.getHead());
 		}
+
+		// TODO use mPOR.mStateSplitter for this
 		if (state instanceof PredicateWithLastThread) {
 			return isProvenState(((PredicateWithLastThread) state).getUnderlying());
 		}
+		if (state instanceof SleepPredicate<?>) {
+			return isProvenState(((SleepPredicate<?>) state).getUnderlying());
+		}
+
 		return isFalseLiteral(state);
 	}
 
@@ -303,9 +310,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		if (conjunction instanceof MLPredicateWithConjuncts) {
 			return ((MLPredicateWithConjuncts) conjunction).getConjuncts();
 		}
+
+		// TODO use mPOR.mStateSplitter for this
 		if (conjunction instanceof PredicateWithLastThread) {
 			return getConjuncts(((PredicateWithLastThread) conjunction).getUnderlying());
 		}
+		if (conjunction instanceof SleepPredicate<?>) {
+			return getConjuncts(((SleepPredicate<?>) conjunction).getUnderlying());
+		}
+
 		return ImmutableList.singleton(conjunction);
 	}
 
