@@ -131,14 +131,15 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 			return Collections.emptySet();
 		}
 
-		final Comparator<L> comp = mOrder.getOrder(state);
-		final Stream<L> explored =
-				mOperand.lettersInternal(currentState).stream().filter(x -> comp.compare(x, letter) < 0);
-
 		final ImmutableSet<L> currentSleepSet = mStateFactory.getSleepSet(state);
+		final Comparator<L> comp = mOrder.getOrder(state);
+		final Stream<L> explored = mOperand.lettersInternal(currentState).stream()
+				.filter(x -> comp.compare(x, letter) < 0 && !currentSleepSet.contains(x));
+
 		// TODO factor out sleep set successor computation
-		final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored)
-				.filter(l -> mIndependence.contains(currentState, letter, l)).collect(ImmutableSet.collector());
+		final ImmutableSet<L> succSleepSet =
+				ImmutableSet.of((Set<L>) Set.of(Stream.concat(currentSleepSet.stream(), explored)
+						.filter(l -> mIndependence.contains(currentState, letter, l)).toArray()));
 
 		final R succSleepSetState =
 				mStateFactory.createSleepSetState(currentTransitionOpt.get().getSucc(), succSleepSet);
