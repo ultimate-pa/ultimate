@@ -116,6 +116,12 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		return mSleepSets.get(sleepState);
 	}
 
+	public void reset() {
+		mKnownStates.clear();
+		mOriginalStates.clear();
+		mSleepSets.clear();
+	}
+
 	private IPredicate createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
 		final IPredicate copy;
 		if (original instanceof PredicateWithLastThread) {

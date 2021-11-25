@@ -194,6 +194,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
 			input = ((LoopLockstepOrder<L>) mDfsOrder).wrapAutomaton(input);
 		}
+		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
+			((SleepSetStateFactoryForRefinement<?>) mSleepFactory).reset();
+		}
 
 		switch (mMode) {
 		case SLEEP_DELAY_SET:
