@@ -129,7 +129,7 @@ public class QvasrAbstractor {
 		final Term[][] gaussedAdditionsOnes = gaussRowEchelonForm(gaussedAdditions);
 		printMatrix(gaussedAdditionsOnes);
 		final Term[][] gaussedAdditionsOnesPruned = removeZeroRows(gaussedAdditionsOnes);
-		final Term[] solutions = backSub(gaussedAdditionsOnesPruned);
+		// final Term[] solutions = backSub(gaussedAdditionsOnesPruned);
 
 		final Term[][] gaussedResets = gaussPartialPivot(newUpdatesMatrixResets);
 		printMatrix(gaussedResets);
@@ -349,31 +349,80 @@ public class QvasrAbstractor {
 	 */
 	public static Term expandRealMultiplication(final ManagedScript script, final Term factorOne,
 			final Term factorTwo) {
-		Term result = script.getScript().decimal("0");
-		if (factorOne instanceof ApplicationTerm) {
+		final List<Term> factorOneVars = new ArrayList<>();
+		final List<Term> factorTwoVars = new ArrayList<>();
+
+		if (factorOne instanceof ApplicationTerm && factorTwo instanceof ApplicationTerm) {
 			final ApplicationTerm factorOneAppTerm = (ApplicationTerm) factorOne;
-			if (factorTwo instanceof ApplicationTerm) {
-				final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
-				for (final Term paramFactorOne : factorOneAppTerm.getParameters()) {
-					for (final Term paramFactorTwo : factorTwoAppTerm.getParameters()) {
-						final Term mult = SmtUtils.mul(script.getScript(), "*", paramFactorOne, paramFactorTwo);
-						result = SmtUtils.sum(script.getScript(), "+", result, mult);
+			final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
+			if (factorOneAppTerm.getFunction().getName().equals("+")) {
+				for (final Term param : factorOneAppTerm.getParameters()) {
+					if (param instanceof ApplicationTerm) {
+						factorOneVars.addAll(getApplicationTermSumParams((ApplicationTerm) param));
+					} else {
+						factorOneVars.add(param);
 					}
 				}
 			} else {
-				for (final Term paramFactorOne : factorOneAppTerm.getParameters()) {
-					final Term mult = SmtUtils.mul(script.getScript(), "*", paramFactorOne, factorTwo);
-					result = SmtUtils.sum(script.getScript(), "+", result, mult);
-				}
+				factorOneVars.add(factorOneAppTerm);
 			}
-		} else if (factorTwo instanceof ApplicationTerm) {
+			if (factorTwoAppTerm.getFunction().getName().equals("+")) {
+				for (final Term param : factorTwoAppTerm.getParameters()) {
+					if (param instanceof ApplicationTerm) {
+						factorTwoVars.addAll(getApplicationTermSumParams((ApplicationTerm) param));
+					} else {
+						factorTwoVars.add(param);
+					}
+				}
+			} else {
+				factorTwoVars.add(factorTwoAppTerm);
+			}
+
+		}
+
+		if (!(factorOne instanceof ApplicationTerm) && factorTwo instanceof ApplicationTerm) {
 			final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
-			for (final Term paramFactorTwo : factorTwoAppTerm.getParameters()) {
-				final Term mult = SmtUtils.mul(script.getScript(), "*", paramFactorTwo, factorOne);
+			factorOneVars.add(factorOne);
+			if (factorTwoAppTerm.getFunction().getName().equals("+")) {
+				for (final Term param : factorTwoAppTerm.getParameters()) {
+					if (param instanceof ApplicationTerm) {
+						factorTwoVars.addAll(getApplicationTermSumParams((ApplicationTerm) param));
+					} else {
+						factorTwoVars.add(param);
+					}
+				}
+			} else {
+				factorTwoVars.add(factorTwoAppTerm);
+			}
+		}
+
+		if (factorOne instanceof ApplicationTerm && !(factorTwo instanceof ApplicationTerm)) {
+			final ApplicationTerm factorOneAppTerm = (ApplicationTerm) factorOne;
+			factorTwoVars.add(factorTwo);
+			if (factorOneAppTerm.getFunction().getName().equals("+")) {
+				for (final Term param : factorOneAppTerm.getParameters()) {
+					if (param instanceof ApplicationTerm) {
+						factorOneVars.addAll(getApplicationTermSumParams((ApplicationTerm) param));
+					} else {
+						factorOneVars.add(param);
+					}
+				}
+			} else {
+				factorOneVars.add(factorOneAppTerm);
+			}
+		}
+
+		if (!(factorOne instanceof ApplicationTerm) && !(factorTwo instanceof ApplicationTerm)) {
+			factorOneVars.add(factorOne);
+			factorTwoVars.add(factorTwo);
+		}
+
+		Term result = script.getScript().decimal("0");
+		for (final Term factorOneParam : factorOneVars) {
+			for (final Term factorTwoParam : factorTwoVars) {
+				final Term mult = SmtUtils.mul(script.getScript(), "*", factorOneParam, factorTwoParam);
 				result = SmtUtils.sum(script.getScript(), "+", result, mult);
 			}
-		} else {
-			result = SmtUtils.mul(script.getScript(), "*", factorOne, factorTwo);
 		}
 		return result;
 	}
@@ -877,12 +926,16 @@ public class QvasrAbstractor {
 
 	public static List<Term> getApplicationTermSumParams(final ApplicationTerm appTerm) {
 		final List<Term> params = new ArrayList<>();
-		for (final Term param : appTerm.getParameters()) {
-			if (param instanceof ApplicationTerm && ((ApplicationTerm) param).getFunction().getName().equals("+")) {
-				params.addAll(getApplicationTermSumParams((ApplicationTerm) param));
-			} else {
-				params.add(param);
+		if (appTerm.getFunction().getName().equals("+")) {
+			for (final Term param : appTerm.getParameters()) {
+				if (param instanceof ApplicationTerm && ((ApplicationTerm) param).getFunction().getName().equals("+")) {
+					params.addAll(getApplicationTermSumParams((ApplicationTerm) param));
+				} else {
+					params.add(param);
+				}
 			}
+		} else {
+			params.add(appTerm);
 		}
 		return params;
 	}

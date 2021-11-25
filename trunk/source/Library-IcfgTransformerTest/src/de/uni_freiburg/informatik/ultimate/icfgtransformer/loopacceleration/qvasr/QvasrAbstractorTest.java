@@ -75,6 +75,7 @@ public class QvasrAbstractorTest {
 	public void testExpandRealMultiplication() {
 		final Term zero = mScript.decimal("0");
 		final Term one = mScript.decimal("1");
+		final Term three = mScript.decimal("3");
 		final TermVariable x = mScript.variable("x", mRealSort);
 		final TermVariable y = mScript.variable("y", mRealSort);
 		final TermVariable z = mScript.variable("z", mRealSort);
@@ -92,6 +93,13 @@ public class QvasrAbstractorTest {
 		MatcherAssert.assertThat(yPlus1Times0, IsEqual.equalTo(zero));
 
 		/*
+		 * Test 3*(3 + 3) = 18
+		 */
+		final Term threePThree = SmtUtils.sum(mScript, "+", three, three);
+		final Term threeTimesThreePThree = QvasrAbstractor.expandRealMultiplication(mMgdScript, three, threePThree);
+		MatcherAssert.assertThat(threeTimesThreePThree, IsEqual.equalTo(mScript.decimal("18")));
+
+		/*
 		 * Test (y + 1) * (z + 1) = yz + y + z + 1
 		 */
 		mScript.declareFun("z", new Sort[0], mRealSort);
@@ -107,8 +115,69 @@ public class QvasrAbstractorTest {
 		final Term zy = SmtUtils.mul(mScript, "*", z, y);
 		final Term zyTimesYPlus1 = QvasrAbstractor.expandRealMultiplication(mMgdScript, zy, yPlus1);
 		final Term zyTimesYPlus1ResultTerm =
-				SmtUtils.sum(mScript, "+", SmtUtils.mul(mScript, "*", SmtUtils.mul(mScript, "*", y, y), z), zy);
-		MatcherAssert.assertThat(zyTimesYPlus1, IsEqual.equalTo(zyTimesYPlus1ResultTerm));
+				SmtUtils.sum(mScript, "+", zy, SmtUtils.mul(mScript, "*", SmtUtils.mul(mScript, "*", z, y), y));
+		MatcherAssert.assertThat(zyTimesYPlus1.toStringDirect(),
+				IsEqual.equalTo(zyTimesYPlus1ResultTerm.toStringDirect()));
+
+		/*
+		 * Test zy * zy = zy^2
+		 */
+		final Term zyTimesZy = QvasrAbstractor.expandRealMultiplication(mMgdScript, zy, zy);
+		final Term zyTimesZyResultTerm = SmtUtils.mul(mScript, "*", zy, zy);
+		MatcherAssert.assertThat(zyTimesZy.toStringDirect(), IsEqual.equalTo(zyTimesZyResultTerm.toStringDirect()));
+
+		/*
+		 * Test 3(y + 1) = 3y + 3
+		 */
+		final Term threeTimesYP1 = QvasrAbstractor.expandRealMultiplication(mMgdScript, mScript.decimal("3"), yPlus1);
+		final Term threeTimesYP1ResultTerm =
+				SmtUtils.sum(mScript, "+", SmtUtils.mul(mScript, "*", mScript.decimal("3"), y), mScript.decimal("3"));
+		MatcherAssert.assertThat(threeTimesYP1.toStringDirect(),
+				IsEqual.equalTo(threeTimesYP1ResultTerm.toStringDirect()));
+
+		/*
+		 * Test 3(zy + y + 1) = 3zy + 3y + 3
+		 */
+		final Term xYPYPOne = SmtUtils.sum(mScript, "+", zy, yPlus1);
+		final Term threeTimesXYPYPOne = QvasrAbstractor.expandRealMultiplication(mMgdScript, three, xYPYPOne);
+		final Term threeTimesXYPYPOneResult = SmtUtils.sum(mScript, "+", SmtUtils.mul(mScript, "*", three, zy),
+				SmtUtils.mul(mScript, "*", y, three), three);
+		MatcherAssert.assertThat(threeTimesXYPYPOne.toStringDirect(),
+				IsEqual.equalTo(threeTimesXYPYPOneResult.toStringDirect()));
+
+		/*
+		 * Test 3(zy + xy) = 3zy + 3xy
+		 */
+		final Term xy = SmtUtils.mul(mScript, "*", x, y);
+		final Term xyPzy = SmtUtils.sum(mScript, "+", xy, zy);
+		final Term threeTimesXyPzy = QvasrAbstractor.expandRealMultiplication(mMgdScript, three, xyPzy);
+		final Term threeTimesXyPzyResult = SmtUtils.sum(mScript, "+", SmtUtils.mul(mScript, "*", three, zy),
+				SmtUtils.mul(mScript, "*", three, xy));
+		MatcherAssert.assertThat(threeTimesXyPzy.toStringDirect(),
+				IsEqual.equalTo(threeTimesXyPzyResult.toStringDirect()));
+
+		/*
+		 * Test -3(y + 1) = -3y - 3
+		 */
+		final Term negOne = mScript.decimal("-1");
+		final Term negThree = SmtUtils.mul(mScript, "*", negOne, three);
+		final Term negThreeTimesYPOne = QvasrAbstractor.expandRealMultiplication(mMgdScript, negThree, yPlus1);
+		final Term negThreeTimesYPOneResult =
+				SmtUtils.sum(mScript, "+", negThree, SmtUtils.mul(mScript, "*", y, negThree));
+		MatcherAssert.assertThat(negThreeTimesYPOne.toStringDirect(),
+				IsEqual.equalTo(negThreeTimesYPOneResult.toStringDirect()));
+
+		/*
+		 * Test 3*((x/(y + 1)) + (y / xy)) = 3x/y+1 + 3y/xy
+		 */
+		final Term divXYP1 = SmtUtils.divReal(mScript, x, yPlus1);
+		final Term divYXY = SmtUtils.divReal(mScript, y, xy);
+		final Term threeTimesDivXYP1PDivYXY = QvasrAbstractor.expandRealMultiplication(mMgdScript, three,
+				SmtUtils.sum(mScript, "+", divXYP1, divYXY));
+		final Term threeTimesDivXYP1PDivYXYResult = SmtUtils.sum(mScript, "+",
+				SmtUtils.mul(mScript, "*", three, divXYP1), SmtUtils.mul(mScript, "*", three, divYXY));
+		MatcherAssert.assertThat(threeTimesDivXYP1PDivYXY.toStringDirect(),
+				IsEqual.equalTo(threeTimesDivXYP1PDivYXYResult.toStringDirect()));
 	}
 
 	@Test
