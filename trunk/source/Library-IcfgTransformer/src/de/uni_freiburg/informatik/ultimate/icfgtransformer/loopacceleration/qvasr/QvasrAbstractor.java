@@ -808,7 +808,7 @@ public class QvasrAbstractor {
 					final Set<Term> simplifiedDivisorParamSet =
 							new HashSet<>(Arrays.asList(divisorAppTerm.getParameters()));
 					for (final Term divisorFactor : divisorAppTerm.getParameters()) {
-						if (SmtUtils.areFormulasEquivalent(divisorFactor, simplifiedDivisor, script.getScript())) {
+						if (SmtUtils.areFormulasEquivalent(divisorFactor, simplifiedDividend, script.getScript())) {
 							simplifiedDividend = one;
 							simplifiedDivisorParamSet.remove(divisorFactor);
 						}
@@ -816,6 +816,7 @@ public class QvasrAbstractor {
 					final Term[] divisorArray =
 							simplifiedDivisorParamSet.toArray(new Term[simplifiedDivisorParamSet.size()]);
 					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
+
 				}
 			}
 			if (SmtUtils.areFormulasEquivalent(simplifiedDividendPre, simplifiedDividend, script.getScript())) {
