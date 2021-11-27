@@ -449,17 +449,21 @@ public class QvasrAbstractorTest {
 
 		final Pair<Term, Term> threeOverThreeTimesXTimesXPOne =
 				QvasrAbstractor.reduceRealDivision(mMgdScript, three, SmtUtils.mul(mScript, "*", three, xTimesXPOne));
-
-		final Term threeOverThreeTimesXTimesXPOneResult =
-				SmtUtils.divReal(mScript, one, SmtUtils.mul(mScript, "*", three, xTimesXPOne));
+		final Term threeOverThreeTimesXTimesXPOneResult = SmtUtils.divReal(mScript, one, xTimesXPOne);
 		MatcherAssert.assertThat(
 				SmtUtils.divReal(mScript, threeOverThreeTimesXTimesXPOne.getFirst(),
 						threeOverThreeTimesXTimesXPOne.getSecond()),
 				IsEqual.equalTo(threeOverThreeTimesXTimesXPOneResult));
 
-		final Pair<Term, Term> negXOverThree = QvasrAbstractor.reduceRealDivision(mMgdScript, negX, three);
-		MatcherAssert.assertThat(SmtUtils.divReal(mScript, negXOverThree.getFirst(), negXOverThree.getSecond()),
-				IsEqual.equalTo(SmtUtils.divReal(mScript, negX, three)));
+		/*
+		 * Test 3x / 3x(x + 1) = 1 / (x + 1)
+		 */
+		final Pair<Term, Term> threeTimesXOverThreeTimesXTimesXPOneReduced = QvasrAbstractor
+				.reduceRealDivision(mMgdScript, threeTimesX, SmtUtils.mul(mScript, "*", threeTimesX, xPOne));
+		MatcherAssert.assertThat(
+				SmtUtils.divReal(mScript, threeTimesXOverThreeTimesXTimesXPOneReduced.getFirst(),
+						threeTimesXOverThreeTimesXTimesXPOneReduced.getSecond()),
+				IsEqual.equalTo(SmtUtils.divReal(mScript, one, xPOne)));
 	}
 
 }
