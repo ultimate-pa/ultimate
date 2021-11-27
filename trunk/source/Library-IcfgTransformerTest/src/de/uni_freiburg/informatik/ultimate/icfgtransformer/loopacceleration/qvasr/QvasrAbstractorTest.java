@@ -347,26 +347,119 @@ public class QvasrAbstractorTest {
 		 */
 		final Term threeXOverTwo =
 				SmtUtils.divReal(mScript, SmtUtils.mul(mScript, "*", mScript.decimal("3"), x), mScript.decimal("2"));
-		final Term xOverTwo =
-				SmtUtils.mul(mScript, "*", x, SmtUtils.divReal(mScript, mScript.decimal("1"), mScript.decimal("2")));
+		final Term xOverTwo = SmtUtils.divReal(mScript, x, mScript.decimal("2"));
 		final Term threeXOverTwoMinXOverTwo = QvasrAbstractor.simplifyRealSubtraction(mMgdScript, threeXOverTwo, x);
 		MatcherAssert.assertThat(threeXOverTwoMinXOverTwo, IsEqual.equalTo(xOverTwo));
+
+		/*
+		 * Test x - (3x / 2) - x = -x/2
+		 */
+		final Term negX = SmtUtils.minus(mScript, zero, x);
+		final Term negXOverTwo = SmtUtils.divReal(mScript, negX, mScript.decimal("2"));
+		final Term xMinThreeXOverTwo = QvasrAbstractor.simplifyRealSubtraction(mMgdScript, x, threeXOverTwo);
+		MatcherAssert.assertThat(xMinThreeXOverTwo, IsEqual.equalTo(negXOverTwo));
 	}
 
 	@Test
 	public void testReduceRealDivision() {
 		final TermVariable x = mScript.variable("x", mRealSort);
 		final TermVariable y = mScript.variable("y", mRealSort);
+		final Term zero = mScript.decimal("0");
+		final Term one = mScript.decimal("1");
+		final Term three = mScript.decimal("3");
+		final Term xPOne = SmtUtils.sum(mScript, "+", x, one);
+		final Term yPThree = SmtUtils.sum(mScript, "+", y, mScript.decimal("3"));
+		final Term xPY = SmtUtils.sum(mScript, "+", x, y);
+		final Term xTimesXY = SmtUtils.mul(mScript, "*", x, yPThree);
+
 		/*
 		 * Test (x * (x + y))/ x * (y + 3) = (x + y)/(y + 3)
 		 */
-		final Term xTimesXY = SmtUtils.mul(mScript, "*", x, SmtUtils.sum(mScript, "+", y, mScript.decimal("3")));
-		final Term xy = SmtUtils.mul(mScript, "*", x, SmtUtils.sum(mScript, "+", x, y));
-		final Term xTimesXYOverxPyResult = SmtUtils.divReal(mScript, SmtUtils.sum(mScript, "+", x, y),
-				SmtUtils.sum(mScript, "+", y, mScript.decimal("3")));
+		final Term xy = SmtUtils.mul(mScript, "*", x, xPY);
+		final Term xTimesXYOverxPyResult = SmtUtils.divReal(mScript, xPY, yPThree);
 		final Pair<Term, Term> xyOverXReduced = QvasrAbstractor.reduceRealDivision(mMgdScript, xy, xTimesXY);
 		MatcherAssert.assertThat(SmtUtils.divReal(mScript, xyOverXReduced.getFirst(), xyOverXReduced.getSecond()),
 				IsEqual.equalTo(xTimesXYOverxPyResult));
+
+		/*
+		 * Test ((x + 1)(x + y)) / ((y + 3)(x + 1)) = (x + y)/(y + 3)
+		 */
+		final Term xPOneTimesXPY = SmtUtils.mul(mScript, "*", xPOne, xPY);
+		final Term yPThreeTimesXPOne = SmtUtils.mul(mScript, "*", yPThree, xPOne);
+		final Pair<Term, Term> xPOneTimesXPYOveryPThreeTimesXPOneReduced =
+				QvasrAbstractor.reduceRealDivision(mMgdScript, xPOneTimesXPY, yPThreeTimesXPOne);
+		MatcherAssert.assertThat(SmtUtils.divReal(mScript, xPOneTimesXPYOveryPThreeTimesXPOneReduced.getFirst(),
+				xPOneTimesXPYOveryPThreeTimesXPOneReduced.getSecond()), IsEqual.equalTo(xTimesXYOverxPyResult));
+
+		/*
+		 * Test xy/xy(x + 1) = 1/(x + 1)
+		 */
+		final Term xTimesY = SmtUtils.mul(mScript, "*", x, y);
+		final Term xYTimesxPOne = SmtUtils.mul(mScript, "*", xTimesY, xPOne);
+		final Pair<Term, Term> xYOverxYTimesxPOneReduced =
+				QvasrAbstractor.reduceRealDivision(mMgdScript, xTimesY, xYTimesxPOne);
+		MatcherAssert.assertThat(
+				SmtUtils.divReal(mScript, xYOverxYTimesxPOneReduced.getFirst(), xYOverxYTimesxPOneReduced.getSecond()),
+				IsEqual.equalTo(SmtUtils.divReal(mScript, one, xPOne)));
+
+		/*
+		 * Test (x^2(x + 1)(x + y)) / ((x + 1) x^2 (y + 3)) = (x + y) / (y + 3)
+		 */
+		final Term xSquared = SmtUtils.mul(mScript, "*", x, x);
+		final Term xSquaredTimesXPOneTimesXPY = SmtUtils.mul(mScript, "*", xSquared, xPOne, xPY);
+		final Term xPOneTimesXSquaredTimesYPThree = SmtUtils.mul(mScript, "*", xPOne, xSquared, yPThree);
+		final Pair<Term, Term> xSquaredTimesXPOneTimesXPYOverxPOneTimesXSquaredTimesYPThreeReduced = QvasrAbstractor
+				.reduceRealDivision(mMgdScript, xSquaredTimesXPOneTimesXPY, xPOneTimesXSquaredTimesYPThree);
+		final Term xSquaredTimesXPOneTimesXPYOverxPOneTimesXSquaredTimesYPThreeResult =
+				SmtUtils.divReal(mScript, xPY, yPThree);
+		MatcherAssert.assertThat(
+				SmtUtils.divReal(mScript,
+						xSquaredTimesXPOneTimesXPYOverxPOneTimesXSquaredTimesYPThreeReduced.getFirst(),
+						xSquaredTimesXPOneTimesXPYOverxPOneTimesXSquaredTimesYPThreeReduced.getSecond()),
+				IsEqual.equalTo(xSquaredTimesXPOneTimesXPYOverxPOneTimesXSquaredTimesYPThreeResult));
+
+		/*
+		 * Test 3x/x(x + 1) = 3/(x + 1)
+		 */
+		final Term threeTimesX = SmtUtils.mul(mScript, "*", three, x);
+		final Term xTimesXPOne = SmtUtils.mul(mScript, "*", x, xPOne);
+		final Pair<Term, Term> threeTimesXOverxTimesXPOne =
+				QvasrAbstractor.reduceRealDivision(mMgdScript, threeTimesX, xTimesXPOne);
+		MatcherAssert.assertThat(
+				SmtUtils.divReal(mScript, threeTimesXOverxTimesXPOne.getFirst(),
+						threeTimesXOverxTimesXPOne.getSecond()),
+				IsEqual.equalTo(SmtUtils.divReal(mScript, three, xPOne)));
+
+		/*
+		 * Test -3x/x(x + 1) = -3/(x + 1)
+		 */
+		final Term negX = SmtUtils.minus(mScript, zero, x);
+		final Term negThree = SmtUtils.minus(mScript, zero, three);
+		final Term threeTimesNegX = SmtUtils.mul(mScript, "*", three, negX);
+		final Pair<Term, Term> threeTimesNegXOverxTimesXPOne =
+				QvasrAbstractor.reduceRealDivision(mMgdScript, threeTimesNegX, xTimesXPOne);
+		MatcherAssert.assertThat(
+				SmtUtils.divReal(mScript, threeTimesNegXOverxTimesXPOne.getFirst(),
+						threeTimesNegXOverxTimesXPOne.getSecond()),
+				IsEqual.equalTo(SmtUtils.divReal(mScript, negThree, xPOne)));
+
+		/*
+		 * Test 3 / 3x(x + 1) = 1 / x(x + 1)
+		 */
+
+		final Pair<Term, Term> threeOverThreeTimesXTimesXPOne =
+				QvasrAbstractor.reduceRealDivision(mMgdScript, three, SmtUtils.mul(mScript, "*", three, xTimesXPOne));
+
+		final Term threeOverThreeTimesXTimesXPOneResult =
+				SmtUtils.divReal(mScript, one, SmtUtils.mul(mScript, "*", three, xTimesXPOne));
+		MatcherAssert.assertThat(
+				SmtUtils.divReal(mScript, threeOverThreeTimesXTimesXPOne.getFirst(),
+						threeOverThreeTimesXTimesXPOne.getSecond()),
+				IsEqual.equalTo(threeOverThreeTimesXTimesXPOneResult));
+
+		final Pair<Term, Term> negXOverThree = QvasrAbstractor.reduceRealDivision(mMgdScript, negX, three);
+		MatcherAssert.assertThat(SmtUtils.divReal(mScript, negXOverThree.getFirst(), negXOverThree.getSecond()),
+				IsEqual.equalTo(SmtUtils.divReal(mScript, negX, three)));
 	}
 
 }
