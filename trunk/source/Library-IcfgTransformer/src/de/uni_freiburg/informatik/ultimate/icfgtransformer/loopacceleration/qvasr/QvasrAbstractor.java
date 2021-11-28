@@ -129,7 +129,7 @@ public class QvasrAbstractor {
 		final Term[][] gaussedAdditionsOnes = gaussRowEchelonForm(gaussedAdditions);
 		printMatrix(gaussedAdditionsOnes);
 		final Term[][] gaussedAdditionsOnesPruned = removeZeroRows(gaussedAdditionsOnes);
-		// final Term[] solutions = backSub(gaussedAdditionsOnesPruned);
+		final Term[] solutions = backSub(gaussedAdditionsOnesPruned);
 
 		final Term[][] gaussedResets = gaussPartialPivot(newUpdatesMatrixResets);
 		printMatrix(gaussedResets);
@@ -509,17 +509,21 @@ public class QvasrAbstractor {
 		if (dividend instanceof ApplicationTerm && divisor instanceof ApplicationTerm) {
 			final ApplicationTerm dividendAppTerm = (ApplicationTerm) dividend;
 			final ApplicationTerm divisorAppTerm = (ApplicationTerm) divisor;
-			Term dividendDividend = one;
+			Term dividendDividend;
 			Term dividendDivisor = one;
-			Term divisorDividend = one;
+			Term divisorDividend;
 			Term divisorDivisor = one;
 			if (dividendAppTerm.getFunction().getName().equals("/")) {
 				dividendDividend = dividendAppTerm.getParameters()[0];
 				dividendDivisor = dividendAppTerm.getParameters()[1];
+			} else {
+				dividendDividend = dividendAppTerm;
 			}
 			if (divisorAppTerm.getFunction().getName().equals("/")) {
 				divisorDividend = divisorAppTerm.getParameters()[0];
 				divisorDivisor = divisorAppTerm.getParameters()[1];
+			} else {
+				divisorDividend = divisorAppTerm;
 			}
 
 			if (divisorAppTerm.getFunction().getName().equals("/")
@@ -763,15 +767,62 @@ public class QvasrAbstractor {
 						&& divisorAppTerm.getFunction().getName().equals("*")) {
 					final List<Term> paramsDividend = getApplicationTermMultiplicationParams(script, dividendAppTerm);
 					final List<Term> paramsDivisor = getApplicationTermMultiplicationParams(script, divisorAppTerm);
-
-					final Set<Term> reducedParamsDividend = new HashSet<>(paramsDividend);
-					final Set<Term> reducedParamsDivisor = new HashSet<>(paramsDivisor);
+					final List<Term> reducedParamsDividend = new ArrayList<>(paramsDividend);
+					final List<Term> reducedParamsDivisor = new ArrayList<>(paramsDivisor);
 					for (final Term dividendFactor : paramsDividend) {
 						for (final Term divisorFactor : paramsDivisor) {
 							if (SmtUtils.areFormulasEquivalent(dividendFactor, divisorFactor, script.getScript())) {
 								reducedParamsDividend.remove(dividendFactor);
 								reducedParamsDivisor.remove(divisorFactor);
 							}
+						}
+					}
+					if (reducedParamsDividend.isEmpty()) {
+						reducedParamsDividend.add(one);
+					}
+					if (reducedParamsDivisor.isEmpty()) {
+						reducedParamsDivisor.add(one);
+					}
+					final Term[] dividendArray = reducedParamsDividend.toArray(new Term[reducedParamsDividend.size()]);
+					final Term[] divisorArray = reducedParamsDivisor.toArray(new Term[reducedParamsDivisor.size()]);
+					simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividendArray);
+					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
+				}
+
+				if (dividendAppTerm.getFunction().getName().equals("*")
+						&& !(divisorAppTerm.getFunction().getName().equals("*"))) {
+					final List<Term> paramsDividend = getApplicationTermMultiplicationParams(script, dividendAppTerm);
+					final List<Term> reducedParamsDividend = new ArrayList<>(paramsDividend);
+					final List<Term> reducedParamsDivisor = new ArrayList<>();
+					reducedParamsDivisor.add(divisorAppTerm);
+					for (final Term dividendFactor : paramsDividend) {
+						if (SmtUtils.areFormulasEquivalent(dividendFactor, divisorAppTerm, script.getScript())) {
+							reducedParamsDividend.remove(dividendFactor);
+							reducedParamsDivisor.remove(divisorAppTerm);
+						}
+					}
+					if (reducedParamsDividend.isEmpty()) {
+						reducedParamsDividend.add(one);
+					}
+					if (reducedParamsDivisor.isEmpty()) {
+						reducedParamsDivisor.add(one);
+					}
+					final Term[] dividendArray = reducedParamsDividend.toArray(new Term[reducedParamsDividend.size()]);
+					final Term[] divisorArray = reducedParamsDivisor.toArray(new Term[reducedParamsDivisor.size()]);
+					simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividendArray);
+					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
+				}
+
+				if (!(dividendAppTerm.getFunction().getName().equals("*"))
+						&& divisorAppTerm.getFunction().getName().equals("*")) {
+					final List<Term> paramsDivisor = getApplicationTermMultiplicationParams(script, divisorAppTerm);
+					final List<Term> reducedParamsDividend = new ArrayList<>();
+					final List<Term> reducedParamsDivisor = new ArrayList<>(paramsDivisor);
+					reducedParamsDividend.add(dividendAppTerm);
+					for (final Term divisorFactor : paramsDivisor) {
+						if (SmtUtils.areFormulasEquivalent(divisorFactor, dividendAppTerm, script.getScript())) {
+							reducedParamsDividend.remove(divisorFactor);
+							reducedParamsDivisor.remove(dividendAppTerm);
 						}
 					}
 					if (reducedParamsDividend.isEmpty()) {
