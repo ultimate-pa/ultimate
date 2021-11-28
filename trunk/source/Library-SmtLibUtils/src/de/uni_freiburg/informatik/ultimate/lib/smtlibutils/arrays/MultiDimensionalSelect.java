@@ -136,7 +136,7 @@ public class MultiDimensionalSelect {
 
 
 	private boolean classInvariant() {
-		if (mArray == null) {
+		if (mSelectTerm == null) {
 			return mIndex.size() == 0;
 		} else {
 			return MultiDimensionalSort.
