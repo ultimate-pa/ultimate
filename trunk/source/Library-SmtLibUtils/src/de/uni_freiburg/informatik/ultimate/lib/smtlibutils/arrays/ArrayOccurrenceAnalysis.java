@@ -350,16 +350,12 @@ public class ArrayOccurrenceAnalysis {
 							}
 						}
 					} else {
-						MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
-						if (as != null && as.getArray().equals(mWantedArray)) {
-							if (as.getDimension() > mDimensionUpperLimit) {
-								as = as.getInnermost(mDimensionUpperLimit);
-								assert as.getArray() == mWantedArray;
-							}
+						final MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
+						// If this select is above our dimension limit we ignore this select and descend
+						// to all children
+						if (as != null && as.getArray().equals(mWantedArray)
+								&& as.getDimension() <= mDimensionUpperLimit) {
 							mArraySelects.add(as);
-							for (final Term indexEntry : as.getIndex()) {
-								walker.enqueueWalker(new MyWalker(indexEntry));
-							}
 						} else {
 							for (final Term t : term.getParameters()) {
 								walker.enqueueWalker(new MyWalker(t));
