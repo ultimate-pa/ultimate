@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
@@ -86,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -418,48 +420,53 @@ public class VerificationResultTransformer {
 		for (final IAction action : sequentialTrace) {
 			final UnmodifiableTransFormula oldTf = action.getTransformula();
 
-			final Set<IProgramConst> nonTheoryConsts = oldTf.getNonTheoryConsts();
-			final boolean emptyNonTheoryConsts = nonTheoryConsts.isEmpty();
-			final Collection<TermVariable> branchEncoders = oldTf.getBranchEncoders();
-			final boolean emptyBranchEncoders = branchEncoders.isEmpty();
-			final boolean emptyAuxVars = oldTf.getAuxVars().isEmpty();
-			final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, emptyNonTheoryConsts, nonTheoryConsts,
-					emptyBranchEncoders, branchEncoders, emptyAuxVars);
-			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-
 			final Term oldFormula = oldTf.getFormula();
 			final Set<TermVariable> toRemove = new LinkedHashSet<>();
+			final Map<IProgramVar, TermVariable> newInVars = new LinkedHashMap<>();
+			final Map<IProgramVar, TermVariable> newOutVars = new LinkedHashMap<>();
 			for (final Entry<IProgramVar, TermVariable> entry : oldTf.getInVars().entrySet()) {
 				if (!equivClass.contains(entry.getKey().toString())) {
 					toRemove.add(entry.getValue());
 					continue;
 				}
-				tfb.addInVar(entry.getKey(), entry.getValue());
+				newInVars.put(entry.getKey(), entry.getValue());
 			}
 			for (final Entry<IProgramVar, TermVariable> entry : oldTf.getOutVars().entrySet()) {
 				if (!equivClass.contains(entry.getKey().toString())) {
 					toRemove.add(entry.getValue());
 					continue;
 				}
-				tfb.addOutVar(entry.getKey(), entry.getValue());
+				newOutVars.put(entry.getKey(), entry.getValue());
 			}
 
-			// TODO: Use values from Programexecution as patterns?
-
+			final Set<IProgramConst> nonTheoryConsts;
+			final Term newFormula;
 			if (toRemove.isEmpty()) {
-				tfb.setFormula(oldFormula);
+				newFormula = oldFormula;
+				nonTheoryConsts = oldTf.getNonTheoryConsts();
 			} else {
 				mLogger.info("Removing %s variables", toRemove.size());
 				final Term quantifiedFormula =
 						SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, toRemove, oldFormula);
-
-				final Term projected = tryToEliminate(mgdScript, quantifiedFormula);
-				tfb.setFormula(projected);
+				newFormula = tryToEliminate(mgdScript, quantifiedFormula);
+				final Set<ApplicationTerm> constantsInFormula = new ConstantFinder().findConstants(newFormula, false);
+				nonTheoryConsts = oldTf.getNonTheoryConsts().stream()
+						.filter(a -> constantsInFormula.contains(a.getDefaultConstant())).collect(Collectors.toSet());
 			}
+
+			final Collection<TermVariable> branchEncoders = oldTf.getBranchEncoders();
+			final boolean emptyBranchEncoders = branchEncoders.isEmpty();
+			final boolean emptyAuxVars = oldTf.getAuxVars().isEmpty();
+			final boolean emptyNonTheoryConsts = nonTheoryConsts.isEmpty();
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, emptyNonTheoryConsts, nonTheoryConsts,
+					emptyBranchEncoders, branchEncoders, emptyAuxVars);
+			tfb.addInVars(newInVars);
+			tfb.addOutVars(newOutVars);
+			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+			tfb.setFormula(newFormula);
 
 			final UnmodifiableTransFormula newTf = tfb.finishConstruction(mgdScript);
 			rtr.add(new BasicInternalAction(action.getPrecedingProcedure(), action.getSucceedingProcedure(), newTf));
-
 		}
 
 		return rtr;
