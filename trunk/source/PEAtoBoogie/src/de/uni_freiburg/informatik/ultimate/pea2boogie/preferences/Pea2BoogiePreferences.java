@@ -58,7 +58,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
 
-	public static final String LABEL_USE_EPSILON = "Use ε transformation during rt-inconsistency check";
+	public static final String LABEL_USE_EPSILON = "Use epsilon transformation during rt-inconsistency check";
 	private static final boolean DEF_USE_EPSILON = true;
 	private static final String DESC_USE_EPSILON = null;
 
