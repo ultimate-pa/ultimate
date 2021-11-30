@@ -344,6 +344,14 @@ public class PolynomialRelationTestModBasedSimplification {
 		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
 	}
 
+	@Test
+	public void divisorAlwaysPositive() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String input = "(= y (mod x (- 7)))";
+		final String expected = "(= (mod x 7) y)";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+	}
+
 	private void testSimplification(final String solverCommand, final String inputAsString,
 			final String expectedResultAsString, final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);

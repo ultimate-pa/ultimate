@@ -1807,7 +1807,8 @@ public final class SmtUtils {
 			return script.term("mod", divident, divisor);
 		}
 		if (affineDivisor.isConstant()) {
-			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
+			// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
+			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant()).abs();
 			if (affineDivident.isConstant()) {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
 				final BigInteger modulus = ArithmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
@@ -1819,7 +1820,8 @@ public final class SmtUtils {
 			}
 			final AffineTerm moduloApplied =
 					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
-			return script.term("mod", moduloApplied.toTerm(script), affineDivisor.toTerm(script));
+			return script.term("mod", moduloApplied.toTerm(script),
+					affineDivisor.getConstant().abs().toTerm(affineDivisor.getSort()));
 		}
 		return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
 	}
@@ -1843,7 +1845,8 @@ public final class SmtUtils {
 				final AffineTerm affineInnerDivisor =
 						(AffineTerm) new AffineTermTransformer(script).transform(innerDivident);
 				if (!affineInnerDivisor.isErrorTerm() && affineInnerDivisor.isConstant()) {
-					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant());
+					// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
+					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant()).abs();
 					if (bigIntInnerDivisor.mod(bigIntDivisor).equals(BigInteger.ZERO)
 							|| bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
 						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
