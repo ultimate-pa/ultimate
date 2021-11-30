@@ -457,6 +457,15 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void negativeModulusBugNotReproducible() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "add_history_type_~ini_bool~0", "~gate1Failed_History_0~0"), };
+		final String formulaAsString = "(forall ((~gate3Failed_History_0~0 Int)) (let ((.cse0 (mod ~gate3Failed_History_0~0 256))) (or (< 0 (mod ~gate1Failed_History_0~0 256)) (= .cse0 0) (not (= (mod add_history_type_~ini_bool~0 256) .cse0)))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
 //    // and return sort Int
