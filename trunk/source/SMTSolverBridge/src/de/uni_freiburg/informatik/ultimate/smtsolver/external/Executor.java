@@ -180,6 +180,8 @@ class Executor {
 				parenLevel++;
 			} else if (sym.sym == LexerSymbols.RPAR) {
 				parenLevel--;
+			} else if (sym.sym == LexerSymbols.EOF) {
+				break;
 			}
 			result.add(sym);
 		} while (parenLevel > 0);
