@@ -141,6 +141,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			final Sort domainSort = newArgs[0];
 			final Sort rangeSort = newArgs[1];
 			return SmtSortUtils.getArraySort(mgdScript.getScript(), domainSort, rangeSort);
+		} else if (SmtSortUtils.isBoolSort(sort)) {
+			return sort;
 		} else {
 			throw new AssertionError("Unexpected Sort: " + sort);
 		}
