@@ -166,7 +166,7 @@ public class RtInconcistencyConditionGenerator {
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
 
-		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false);
+		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, services, false);
 		mVars = mBoogie2Smt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mSeparateInvariantHandling = separateInvariantHandling;
 		mPhaseNdcCache = new ConstructionCache<>(this::constructNdcPhase);
