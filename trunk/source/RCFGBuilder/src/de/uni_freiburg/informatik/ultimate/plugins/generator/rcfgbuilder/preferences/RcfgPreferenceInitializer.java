@@ -90,7 +90,6 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_DUMP_MAIN_TRACK_BENCHMARK = "Dump main track benchmark to file";
 	public static final String LABEL_DUMP_PATH = "To the following directory";
 	public static final String DEF_DUMP_PATH = "";
-	public static final String LABEL_BITVECTOR_WORKAROUND = "Translate Boogie integers to SMT bitvectors";
 
 	/**
 	 * @see Statements2TransFormula#mSimplePartialSkolemization
@@ -118,7 +117,6 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_COMMAND, DEF_EXT_SOLVER_COMMAND, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_LOGIC, DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_BITVECTOR_WORKAROUND, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CODE_BLOCK_SIZE, DEF_CODE_BLOCK_SIZE, PreferenceType.Combo,
 						CodeBlockSize.values()),
 				new UltimatePreferenceItem<>(LABEL_REMOVE_GOTO_EDGES, false, PreferenceType.Boolean),

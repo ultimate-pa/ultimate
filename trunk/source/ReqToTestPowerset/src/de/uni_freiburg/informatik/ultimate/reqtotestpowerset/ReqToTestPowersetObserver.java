@@ -54,7 +54,7 @@ public class ReqToTestPowersetObserver extends BaseObserver {
 		final Req2TestReqSymbolTable symbolTable = new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
 		final BoogieDeclarations boogieDeclarations =
 				new BoogieDeclarations(symbolTable.constructVariableDeclarations(), mLogger);
-		final Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
+		final Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, mServices, false);
 		final PeaResultUtil resultUtil = new PeaResultUtil(mLogger, mServices);
 		final CddToSmt cddToSmt =
 				new CddToSmt(mServices, resultUtil, mScript, boogie2Smt, boogieDeclarations, symbolTable);

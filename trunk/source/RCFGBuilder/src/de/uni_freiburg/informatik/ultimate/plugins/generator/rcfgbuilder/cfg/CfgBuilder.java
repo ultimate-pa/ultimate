@@ -196,7 +196,6 @@ public class CfgBuilder {
 		final ManagedScript mgdScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
-		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
 		final ForkAndGotoInformation fgInfo = new ForkAndGotoInformation(mBoogieDeclarations);
@@ -213,8 +212,7 @@ public class CfgBuilder {
 			mCodeBlockSize = userDefineCodeBlockSize;
 		}
 
-		mBoogie2Smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
-				simplePartialSkolemization);
+		mBoogie2Smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, mServices, simplePartialSkolemization);
 		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
 		backtranslator.setTerm2Expression(mBoogie2Smt.getTerm2Expression());
 		mRcfgBacktranslator = backtranslator;

@@ -65,7 +65,7 @@ public class ReqToTestObserver extends BaseObserver {
 				new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
 		final BoogieDeclarations boogieDeclarations =
 				new BoogieDeclarations(reqSymbolTable.constructVariableDeclarations(), mLogger);
-		final Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
+		final Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, mServices, false);
 		final PeaResultUtil resultUtil = new PeaResultUtil(mLogger, mServices);
 		final CddToSmt cddToSmt =
 				new CddToSmt(mServices, resultUtil, mScript, boogie2Smt, boogieDeclarations, reqSymbolTable);
