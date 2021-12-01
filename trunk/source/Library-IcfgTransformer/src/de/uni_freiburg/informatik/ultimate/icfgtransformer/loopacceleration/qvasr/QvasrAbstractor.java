@@ -126,11 +126,11 @@ public class QvasrAbstractor {
 
 		final Term[][] gaussedAdditions = gaussPartialPivot(newUpdatesMatrixAdditions);
 		printMatrix(gaussedAdditions);
-		final Term[][] gaussedAdditionsOnes = gaussRowEchelonFormJordan(gaussedAdditions);
-		printMatrix(gaussedAdditionsOnes);
-		Term[][] gaussedAdditionsOnesPruned = removeZeroRows(gaussedAdditionsOnes);
+		Term[][] gaussedAdditionsOnesPruned = removeZeroRows(gaussedAdditions);
 		gaussedAdditionsOnesPruned = removeDuplicateRows(gaussedAdditionsOnesPruned);
 		final Term[][] solutionsAdditionsGaussJordan = gaussRowEchelonFormJordan(gaussedAdditionsOnesPruned);
+
+		// final Term[][] solutionsAdditionsGaussJordan = gaussRowEchelonFormJordan(gaussedAdditionsOnesPruned);
 		// final Term[] solutions = backSub(gaussedAdditionsOnesPruned);
 
 		final Term[][] gaussedResets = gaussPartialPivot(newUpdatesMatrixResets);
@@ -746,9 +746,7 @@ public class QvasrAbstractor {
 			if (factorTwoAppTerm.getFunction().getName().equals("/")) {
 				final Term commonDividend =
 						SmtUtils.mul(script.getScript(), "*", factorOne, factorTwoAppTerm.getParameters()[0]);
-				final Pair<Term, Term> reduced =
-						reduceRealDivision(script, commonDividend, factorTwoAppTerm.getParameters()[1]);
-				result = SmtUtils.divReal(script.getScript(), reduced.getFirst(), reduced.getSecond());
+				result = simplifyRealDivision(script, commonDividend, factorTwoAppTerm.getParameters()[1]);
 			}
 		}
 		if (factorOne instanceof ApplicationTerm && !(factorTwo instanceof ApplicationTerm)) {
@@ -756,9 +754,7 @@ public class QvasrAbstractor {
 			if (factorOneAppTerm.getFunction().getName().equals("/")) {
 				final Term commonDividend =
 						SmtUtils.mul(script.getScript(), "*", factorTwo, factorOneAppTerm.getParameters()[0]);
-				final Pair<Term, Term> reduced =
-						reduceRealDivision(script, commonDividend, factorOneAppTerm.getParameters()[1]);
-				result = SmtUtils.divReal(script.getScript(), reduced.getFirst(), reduced.getSecond());
+				result = simplifyRealDivision(script, commonDividend, factorOneAppTerm.getParameters()[1]);
 			}
 		}
 		return result;
