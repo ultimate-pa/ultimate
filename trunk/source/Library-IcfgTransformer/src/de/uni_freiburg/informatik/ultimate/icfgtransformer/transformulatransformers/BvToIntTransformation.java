@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -76,8 +77,6 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		final LinkedHashMap<Term, Term> varMap = new LinkedHashMap<Term, Term>();
 		for (final IProgramVar progVar : ModifiableTransFormula.collectAllProgramVars(tf)) {
 
-			assert tf.getAuxVars().isEmpty();
-
 			final IReplacementVarOrConst repVar = mFac.getOrConstuctReplacementVar(progVar.getTermVariable(), true,
 					bvToIntSort(mgdScript, progVar.getTerm().getSort()));
 
@@ -120,6 +119,14 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		}
 
 		final TranslationManager translationManager = new TranslationManager(mgdScript);
+
+		// construct new auxVar for each existing auxVar
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			final TermVariable newAuxVar = mgdScript.constructFreshTermVariable(auxVar.getName(),
+					bvToIntSort(mgdScript, auxVar.getSort()));
+			varMap.put(auxVar, newAuxVar);
+			newIntTF.addAuxVars(Collections.singleton(newAuxVar));
+		}
 
 		translationManager.setReplacementVarMaps(varMap);
 
