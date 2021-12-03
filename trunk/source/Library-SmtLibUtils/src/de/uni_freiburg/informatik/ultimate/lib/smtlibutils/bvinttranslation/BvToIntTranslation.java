@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -84,6 +85,123 @@ public class BvToIntTranslation extends TermTransformer {
 							mScript.term("bvsub", mScript.term("bvadd", appTerm.getParameters()),
 									mScript.term("bvand", appTerm.getParameters())),
 							mScript.term("bvand", appTerm.getParameters())));
+					return;
+				}
+				case "sign_extend": {
+					final BigInteger[] indices = new BigInteger[2];
+					indices[0] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					indices[1] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+
+					Term repeat = appTerm.getParameters()[0];
+					final int difference = Integer.valueOf(appTerm.getSort().getIndices()[0])
+							- Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]);
+					for (int i = 0; i < difference; i++) {
+						repeat = BitvectorUtils.termWithLocalSimplification(mScript, "concat", null, BitvectorUtils
+								.termWithLocalSimplification(mScript, "extract", indices, appTerm.getParameters()[0]),
+								repeat);
+					}
+
+					pushTerm(repeat);
+					return;
+
+				}
+				case "bvsrem": {
+
+					final BigInteger[] indices = new BigInteger[2];
+					indices[0] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					indices[1] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					final Term msbLhs = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[0]);
+					final Term msbRhs = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[1]);
+
+					final Term zeroVec =
+							SmtUtils.rational2Term(mScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term oneVec =
+							SmtUtils.rational2Term(mScript, Rational.ONE, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term ifterm1 = SmtUtils.and(mScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+							SmtUtils.equality(mScript, zeroVec, msbRhs));
+					final Term ifterm2 = SmtUtils.and(mScript, SmtUtils.equality(mScript, oneVec, msbLhs),
+							SmtUtils.equality(mScript, zeroVec, msbRhs));
+					final Term ifterm3 = SmtUtils.and(mScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+							SmtUtils.equality(mScript, oneVec, msbRhs));
+
+					final Term bvurem = BitvectorUtils.termWithLocalSimplification(mScript, "bvurem", null,
+							appTerm.getParameters());
+					final Term thenTerm2 =
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+									BitvectorUtils.termWithLocalSimplification(
+											mScript, "bvurem", null, BitvectorUtils.termWithLocalSimplification(mScript,
+													"bvneg", null, appTerm.getParameters()[0]),
+											appTerm.getParameters()[1]));
+					final Term thenTerm3 = BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvurem", null,
+									appTerm.getParameters()[0], BitvectorUtils.termWithLocalSimplification(mScript,
+											"bvneg", null, appTerm.getParameters()[1])));
+
+					final Term elseTerm = BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvurem", null,
+									BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+											appTerm.getParameters()[0]),
+									BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+											appTerm.getParameters()[1])));
+
+					final Term iteChain2 = mScript.term("ite", ifterm3, thenTerm3, elseTerm);
+					final Term iteChain1 = mScript.term("ite", ifterm2, thenTerm2, iteChain2);
+					final Term bvsrem = mScript.term("ite", ifterm1, bvurem, iteChain1);
+					pushTerm(bvsrem);
+					return;
+				}
+
+				case "bvsdiv": {
+					final BigInteger[] indices = new BigInteger[2];
+					indices[0] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					indices[1] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					final Term msbLhs = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[0]);
+					final Term msbRhs = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[1]);
+
+					final Term zeroVec =
+							SmtUtils.rational2Term(mScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term oneVec =
+							SmtUtils.rational2Term(mScript, Rational.ONE, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term ifterm1 = SmtUtils.and(mScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+							SmtUtils.equality(mScript, zeroVec, msbRhs));
+					final Term ifterm2 = SmtUtils.and(mScript, SmtUtils.equality(mScript, oneVec, msbLhs),
+							SmtUtils.equality(mScript, zeroVec, msbRhs));
+					final Term ifterm3 = SmtUtils.and(mScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+							SmtUtils.equality(mScript, oneVec, msbRhs));
+
+					final Term bvudiv = BitvectorUtils.termWithLocalSimplification(mScript, "bvudiv", null,
+							appTerm.getParameters());
+					final Term thenTerm2 =
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+									BitvectorUtils.termWithLocalSimplification(
+											mScript, "bvudiv", null, BitvectorUtils.termWithLocalSimplification(mScript,
+													"bvneg", null, appTerm.getParameters()[0]),
+											appTerm.getParameters()[1]));
+					final Term thenTerm3 = BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvudiv", null,
+									appTerm.getParameters()[0], BitvectorUtils.termWithLocalSimplification(mScript,
+											"bvneg", null, appTerm.getParameters()[1])));
+
+					final Term elseTerm = BitvectorUtils.termWithLocalSimplification(mScript, "bvudiv", null,
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+									appTerm.getParameters()[0]),
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+									appTerm.getParameters()[1]));
+
+					final Term iteChain2 = mScript.term("ite", ifterm3, thenTerm3, elseTerm);
+					final Term iteChain1 = mScript.term("ite", ifterm2, thenTerm2, iteChain2);
+					final Term bvsdiv = mScript.term("ite", ifterm1, bvudiv, iteChain1);
+					pushTerm(bvsdiv);
 					return;
 				}
 				}
@@ -272,15 +390,14 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 				case "zero_extend":
-				case "sign_extend": {
 					setResult(args[0]);
 					return;
-				}
+
 				case "repeat":
 				case "rotate_left":
 				case "rotate_right":
 				default:
-					throw new UnsupportedOperationException("TODOmessage " + fsym.getName());
+					throw new UnsupportedOperationException("unexpected function: " + fsym.getName());
 				}
 			}
 		} else {
@@ -460,10 +577,7 @@ public class BvToIntTranslation extends TermTransformer {
 						setResult(mScript.term("+", multiplication, translatedRHS));
 						return;
 					}
-					case "bvsdiv": {
-						// TODO //nees to be replaced by unsigned definition
-						throw new UnsupportedOperationException("TODO " + fsym.getName());
-					}
+
 					case "bvudiv": {
 						Term rhs;
 						Term lhs;
@@ -482,10 +596,7 @@ public class BvToIntTranslation extends TermTransformer {
 						setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
 						return;
 					}
-					case "bvsrem": {
-						// TODO //nees to be replaced by unsigned definition
-						throw new UnsupportedOperationException("TODO " + fsym.getName());
-					}
+
 					case "bvurem": {
 						Term rhs;
 						Term lhs;
