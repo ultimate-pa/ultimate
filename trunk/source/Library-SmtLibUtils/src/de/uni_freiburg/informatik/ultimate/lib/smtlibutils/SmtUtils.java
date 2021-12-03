@@ -118,7 +118,27 @@ public final class SmtUtils {
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE, POLY_PAC
+		SIMPLIFY_BDD_PROP(false),
+
+		SIMPLIFY_BDD_FIRST_ORDER(false),
+
+		SIMPLIFY_QUICK(true),
+
+		SIMPLIFY_DDA(true),
+
+		POLY_PAC(false),
+
+		NONE(false);
+
+		private final boolean mDecidesFeasibility;
+
+		SimplificationTechnique(final boolean decidesFeasibility) {
+			mDecidesFeasibility = decidesFeasibility;
+		}
+
+		public boolean decidesFeasibility() {
+			return mDecidesFeasibility;
+		}
 	}
 
 	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
@@ -128,7 +148,6 @@ public final class SmtUtils {
 	 * {@link ElimStorePlain}.
 	 */
 	private static final boolean FLATTEN_ARRAY_TERMS = true;
-	private static final boolean LOG_SIMPLIFICATION_CALL_ORIGIN = false;
 	private static final boolean DEBUG_ASSERT_ULTIMATE_NORMAL_FORM = false;
 
 	private SmtUtils() {
@@ -142,14 +161,13 @@ public final class SmtUtils {
 
 	public static Term simplify(final ManagedScript mgScript, final Term formula, final Term context,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		if (simplificationTechnique == SimplificationTechnique.NONE) {
+			return formula;
+		}
 		Objects.requireNonNull(context);
 		final ILogger logger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
-		}
-		if (LOG_SIMPLIFICATION_CALL_ORIGIN) {
-			logger.info(String.format("Current caller to simplify is %s",
-					ReflectionUtil.getCallerClassName(3).getSimpleName()));
 		}
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
@@ -204,6 +222,8 @@ public final class SmtUtils {
 					sb.append(" DAG size of output: ");
 					sb.append(new DagSizePrinter(simplified));
 				}
+				sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
+						.append(")");
 				logger.warn(sb);
 			}
 			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,
@@ -858,14 +878,14 @@ public final class SmtUtils {
 	 * Returns true, iff the term contains an application of the given functionName
 	 */
 	public static boolean containsFunctionApplication(final Term term, final String functionName) {
-		return !new ApplicationTermFinder(functionName, true).findMatchingSubterms(term).isEmpty();
+		return !extractApplicationTerms(functionName, term, true).isEmpty();
 	}
 
 	/**
 	 * Returns true, iff the term contains an application of at least one of the the given functionNames
 	 */
 	public static boolean containsFunctionApplication(final Term term, final Collection<String> functionNames) {
-		return !new ApplicationTermFinder(new HashSet<>(functionNames), true).findMatchingSubterms(term).isEmpty();
+		return functionNames.stream().anyMatch(x -> containsFunctionApplication(term, x));
 	}
 
 	public static boolean containsArrayVariables(final Term... terms) {
@@ -978,14 +998,14 @@ public final class SmtUtils {
 	 */
 	public static boolean isNNF(final Term term) {
 		for (final String f : Arrays.asList("=", "=>", "xor", "distinct", "ite")) {
-			for (final ApplicationTerm a : new ApplicationTermFinder(f, true).findMatchingSubterms(term)) {
-				if (allParamsAreBool(a)) {
+			for (final Term t : extractApplicationTerms(f, term, true)) {
+				if (allParamsAreBool((ApplicationTerm) t)) {
 					return false;
 				}
 			}
 		}
-		for (final ApplicationTerm a : new ApplicationTermFinder("not", true).findMatchingSubterms(term)) {
-			if (!isAtomicFormula(a.getParameters()[0])) {
+		for (final Term t : extractApplicationTerms("not", term, true)) {
+			if (!isAtomicFormula(((ApplicationTerm) t).getParameters()[0])) {
 				return false;
 			}
 		}
@@ -1437,6 +1457,7 @@ public final class SmtUtils {
 		case "bvurem":
 		case "bvsdiv":
 		case "bvsrem":
+		case "bvsmod":
 		case "bvand":
 		case "bvor":
 		case "bvxor":
@@ -1786,7 +1807,8 @@ public final class SmtUtils {
 			return script.term("mod", divident, divisor);
 		}
 		if (affineDivisor.isConstant()) {
-			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
+			// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
+			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant()).abs();
 			if (affineDivident.isConstant()) {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
 				final BigInteger modulus = ArithmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
@@ -1798,7 +1820,8 @@ public final class SmtUtils {
 			}
 			final AffineTerm moduloApplied =
 					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
-			return script.term("mod", moduloApplied.toTerm(script), affineDivisor.toTerm(script));
+			return script.term("mod", moduloApplied.toTerm(script),
+					affineDivisor.getConstant().abs().toTerm(affineDivisor.getSort()));
 		}
 		return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
 	}
@@ -1822,7 +1845,8 @@ public final class SmtUtils {
 				final AffineTerm affineInnerDivisor =
 						(AffineTerm) new AffineTermTransformer(script).transform(innerDivident);
 				if (!affineInnerDivisor.isErrorTerm() && affineInnerDivisor.isConstant()) {
-					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant());
+					// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
+					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant()).abs();
 					if (bigIntInnerDivisor.mod(bigIntDivisor).equals(BigInteger.ZERO)
 							|| bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
 						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
@@ -2007,15 +2031,6 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula. If subformula is
-	 * quantified formula with same quantifier both are merged.
-	 */
-	public static Term quantifier(final Script script, final int quantifier, final Set<TermVariable> vars,
-			final Term body) {
-		return quantifier(script, quantifier, new ArrayList<>(vars), body);
-	}
-
-	/**
 	 * Returns a quantified formula with the following two optimizations.
 	 * <ul>
 	 * <li>Nested quantified formulas that have the same quantifier are merged.
@@ -2024,7 +2039,7 @@ public final class SmtUtils {
 	 * The order of the quantified variables is preserved. If quantified formulas are merged, the variables of the outer
 	 * formula come before the variables of the inner formula.
 	 */
-	public static Term quantifier(final Script script, final int quantifier, final List<TermVariable> vars,
+	public static Term quantifier(final Script script, final int quantifier, final Collection<TermVariable> vars,
 			final Term subformula) {
 		final LinkedHashMap<String, TermVariable> varMap = new LinkedHashMap<>();
 		Term currentSubformula = subformula;
@@ -2526,8 +2541,13 @@ public final class SmtUtils {
 				.collect(Collectors.toSet());
 	}
 
-	public static Set<Term> extractApplicationTerms(final String fun, final Term term) {
-		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), false);
+	/**
+	 *
+	 * @param onlyOutermost
+	 *            if set to true we do not descend to subterms of a term that has been found
+	 */
+	public static Set<Term> extractApplicationTerms(final String fun, final Term term, final boolean onlyOutermost) {
+		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
 	}
 
 	public static Term unzipNot(final Term term) {

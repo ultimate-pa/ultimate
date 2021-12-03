@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -66,7 +65,7 @@ public class WarthogNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoFloats(tc)) {
 			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.ForwardPredicates,
-					SolverBuilder.LOGIC_CVC4_BITVECTORS, AssertCodeBlockOrder.NOT_INCREMENTALLY));
+					AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// floats, but no quantifiers and no extensions
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.ForwardPredicates,

@@ -30,14 +30,19 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.ICoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -51,18 +56,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFactory<L, IPredicate, IPredicate> {
 
-	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mEmptyStack;
 
-	// TODO Consider clearing these maps after each iteration (these states should not be re-used).
-	// Alternatively, can we get rid of this for the iterative approach entirely and just use it for one-shot reduction?
-	// For the iterative approach, we could just use pairs of predicates and sleep sets.
+	// Can we get rid of this entirely? [Requires reference equality to be replaced with #equals() everywhere.]
 	private final Map<IPredicate, Map<ImmutableSet<L>, IPredicate>> mKnownStates = new HashMap<>();
-
-	// TODO Consider introducing a new type of predicates that store the original state and the sleep set.
-	// Then we could eliminate these maps. This would also mean that we don't keep references to outdated states.
-	private final Map<IPredicate, IPredicate> mOriginalStates = new HashMap<>();
-	private final Map<IPredicate, ImmutableSet<L>> mSleepSets;
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -72,9 +69,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 */
 	public SleepSetStateFactoryForRefinement(final PredicateFactory predicateFactory) {
 		super();
-		mPredicateFactory = predicateFactory;
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
-		mSleepSets = new HashMap<>();
 	}
 
 	@Override
@@ -97,8 +92,9 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 * @return The argument passed to {@link #createSleepSetState(IPredicate, ImmutableSet)} that returned the given
 	 *         reduction state
 	 */
+	@Override
 	public IPredicate getOriginalState(final IPredicate sleepState) {
-		return mOriginalStates.get(sleepState);
+		return ((SleepPredicate<?>) sleepState).getUnderlying();
 	}
 
 	/**
@@ -110,27 +106,93 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 * @return The argument passed to {@link #createSleepSetState(IPredicate, ImmutableSet)} that returned the given
 	 *         reduction state
 	 */
+	@Override
 	public ImmutableSet<L> getSleepSet(final IPredicate sleepState) {
-		return mSleepSets.get(sleepState);
+		return ((SleepPredicate<L>) sleepState).getSleepSet();
+	}
+
+	public void reset() {
+		mKnownStates.clear();
 	}
 
 	private IPredicate createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
-		if (original instanceof MLPredicateWithConjuncts) {
-			final MLPredicateWithConjuncts mlPred = (MLPredicateWithConjuncts) original;
-			final MLPredicateWithConjuncts copy = mPredicateFactory.construct(
-					id -> new MLPredicateWithConjuncts(id, mlPred.getProgramPoints(), mlPred.getConjuncts()));
-			mOriginalStates.put(copy, original);
-			mSleepSets.put(copy, sleepset);
-			return copy;
+		if (!(original instanceof IMLPredicate)) {
+			throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
 		}
-		if (original instanceof IMLPredicate) {
-			final IMLPredicate mlPred = (IMLPredicate) original;
-			final IMLPredicate copy = mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());
-			mOriginalStates.put(copy, original);
-			mSleepSets.put(copy, sleepset);
-			return copy;
+		return new SleepPredicate<>((IMLPredicate) original, sleepset);
+	}
+
+	public static final class SleepPredicate<L> implements IMLPredicate {
+		private final IMLPredicate mUnderlying;
+		private final ImmutableSet<L> mSleepSet;
+
+		public SleepPredicate(final IMLPredicate underlying, final ImmutableSet<L> sleepSet) {
+			mUnderlying = underlying;
+			mSleepSet = sleepSet;
 		}
-		throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
+
+		@Override
+		public IcfgLocation[] getProgramPoints() {
+			return mUnderlying.getProgramPoints();
+		}
+
+		@Override
+		public Term getFormula() {
+			return mUnderlying.getFormula();
+		}
+
+		@Override
+		public Term getClosedFormula() {
+			return mUnderlying.getClosedFormula();
+		}
+
+		@Override
+		public String[] getProcedures() {
+			return mUnderlying.getProcedures();
+		}
+
+		@Override
+		public Set<IProgramVar> getVars() {
+			return mUnderlying.getVars();
+		}
+
+		@Override
+		public Set<IProgramConst> getConstants() {
+			return mUnderlying.getConstants();
+		}
+
+		@Override
+		public Set<IProgramFunction> getFunctions() {
+			return mUnderlying.getFunctions();
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(mSleepSet, mUnderlying);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final SleepPredicate<?> other = (SleepPredicate<?>) obj;
+			return Objects.equals(mSleepSet, other.mSleepSet) && Objects.equals(mUnderlying, other.mUnderlying);
+		}
+
+		public IMLPredicate getUnderlying() {
+			return mUnderlying;
+		}
+
+		public ImmutableSet<L> getSleepSet() {
+			return mSleepSet;
+		}
 	}
 
 	public static class FactoryCoveringRelation<L> implements ICoveringRelation<IPredicate> {

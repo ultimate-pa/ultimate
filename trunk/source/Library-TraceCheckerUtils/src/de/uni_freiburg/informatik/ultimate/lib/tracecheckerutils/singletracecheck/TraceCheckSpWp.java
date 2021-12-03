@@ -289,8 +289,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessorForward(liveVariables));
 				}
-				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mLogger,
-						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mCfgManagedScript,
+						mPredicateFactory, mSimplificationTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
@@ -331,8 +331,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessorBackward(liveVariables));
 				}
-				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mLogger,
-						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mCfgManagedScript,
+						mPredicateFactory, mSimplificationTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
@@ -421,7 +421,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(), localVarAssignmentAtCallInUnsatCore,
 					oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rtf = new RelevantTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
+			rtf = new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
 					mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);

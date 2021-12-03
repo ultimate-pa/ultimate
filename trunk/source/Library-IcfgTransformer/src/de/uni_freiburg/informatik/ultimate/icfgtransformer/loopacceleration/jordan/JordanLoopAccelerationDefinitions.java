@@ -47,13 +47,11 @@ public enum JordanLoopAccelerationDefinitions implements IStatisticsElement {
 
 	AlternatingAcceleration(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	QuantifierFreeResult(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-	;
+	QuantifierFreeResult(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
-
 
 	JordanLoopAccelerationDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {
@@ -71,10 +69,4 @@ public enum JordanLoopAccelerationDefinitions implements IStatisticsElement {
 	public String prettyprint(final Object o) {
 		return mPrettyprinter.apply(name()).apply(o);
 	}
-
-	@Override
-	public Class<?> getDataType() {
-		return mClazz;
-	}
-
 }

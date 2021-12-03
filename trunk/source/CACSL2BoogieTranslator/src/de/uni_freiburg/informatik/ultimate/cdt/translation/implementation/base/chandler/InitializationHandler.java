@@ -1376,6 +1376,7 @@ public class InitializationHandler {
 		return constructInitializerInfo(loc, initializerResult, cType, hook);
 	}
 
+	// TODO (Dominik 2021-11-10) Once ConstantArrayUtil is stable, use that class and remove most of the class below.
 	private class RequiredInitializationFeatures {
 
 		private boolean mIsFinished;

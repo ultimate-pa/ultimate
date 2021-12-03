@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
@@ -238,7 +239,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final ModifiableGlobalsTable newModGlobTable =
 					constructModifiableGlobalsTable(oldCfgSmtToolkit.getModifiableGlobalsTable());
 
-			if (!originalIcfg.isSequential()) {
+			if (IcfgUtils.isConcurrent(originalIcfg)) {
 				throw new UnsupportedOperationException(
 						"Construction of path programs is not yet supported for concurrent programs");
 			}

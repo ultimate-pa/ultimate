@@ -93,8 +93,8 @@ public class FunctionDeclarations {
 		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
 	}
 
-	public void declareFunction(final ILocation loc, final String prefixedFunctionName, final Attribute[] attributes,
-			final ASTType resultASTType, final ASTType... paramASTTypes) {
+	public FunctionDeclaration declareFunction(final ILocation loc, final String prefixedFunctionName,
+			final Attribute[] attributes, final ASTType resultASTType, final ASTType... paramASTTypes) {
 		if (mIsFinished) {
 			throw new AssertionError();
 		}
@@ -114,6 +114,7 @@ public class FunctionDeclarations {
 		final FunctionDeclaration d =
 				new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
 		mDeclaredFunctions.put(prefixedFunctionName, d);
+		return d;
 	}
 
 	/**
@@ -142,14 +143,6 @@ public class FunctionDeclarations {
 					+ "finished");
 		}
 		return mDeclaredFunctions;
-	}
-
-	public String computeBitvectorSuffix(final ILocation loc, final CPrimitive... paramCTypes) {
-		final CPrimitive firstParam = paramCTypes[0];
-		final Integer bytesize = mTypeSizeConstants.getSize(firstParam.getType());
-		final int bitsize = bytesize * 8;
-
-		return String.valueOf(bitsize);
 	}
 
 	/**

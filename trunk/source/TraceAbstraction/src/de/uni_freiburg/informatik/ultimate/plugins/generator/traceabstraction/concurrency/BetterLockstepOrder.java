@@ -106,7 +106,7 @@ public class BetterLockstepOrder<L extends IAction, S> implements IDfsOrder<L, S
 		return new Visitor<>(underlying);
 	}
 
-	private static final class RoundRobinComparator<L extends IAction> implements Comparator<L> {
+	public static final class RoundRobinComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final Comparator<L> mFallback;
 

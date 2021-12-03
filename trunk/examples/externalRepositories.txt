@@ -1,5 +1,5 @@
 Further examples can be found in the following repositories.
- * SVCOMP: https://github.com/dbeyer/sv-benchmarks
+ * SVCOMP: https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
  * ultimate-benchmarks: https://github.com/ultimate-pa/ultimate-benchmarks.git
 
 Notes:
@@ -25,14 +25,22 @@ Long paths with git and Windows
 	Open "Git Bash" with Admin rights 
 	Run "git config --system core.longpaths true" 
  
+
+Warnung: By 2021-12-01 the size of the SV-COMP benchmark repository is 
+approx. 11 GiB. If you do not need all files and you want to save space on 
+you hard disc you can do a "sparse checkout".
+ 
+ 
 Sparse-checkout with git 
   * We assume you want to make a fresh clone. 
   * create a directory
     mkdir svcomp
+  * move into new directory
+    cd svcomp
   * make it a fresh git repository
     git init
   * add the remote from which you want to pull later 
-    git remote add origin https://github.com/dbeyer/sv-benchmarks
+    git remote add origin https://github.com/ultimate-pa/ultimate-benchmarks
   * tell git that you want to use sparse checkouts
     git config core.sparsecheckout true
   * create a file that will describe what you want from the remote repo, e.g. by using touch 
@@ -41,8 +49,6 @@ Sparse-checkout with git
     echo c/ >> .git/info/sparse-checkout
   * get all your benchmarks without the history ("--depth=1")
     git pull origin master --depth=1
-
-The whole directory will then be approx. 5GB
 
 If you for some reason modify the sparse-checkout file, you have to run the
 following command (from your repo root) to inform git about your change: 

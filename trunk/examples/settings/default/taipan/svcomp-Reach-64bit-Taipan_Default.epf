@@ -1,5 +1,6 @@
 #Mon Nov 27 17:23:30 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ class=de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher\=ERROR;
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.core=0.1.22
 
@@ -10,7 +11,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Call\ Summarizer=TopInputCallSummarizer
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Explicit\ Values=2
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Intervals=2
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Simplification\ Technique=SIMPLIFY_QUICK
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Simplification\ Technique=POLY_PAC
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/SizeLimitFluid\ Max.\ DAG\ Size=-1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/SizeLimitFluid\ Max.\ Disjunctions=8
 
@@ -28,7 +29,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ constant\ arrays=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Adapt\ memory\ model\ on\ pointer\ casts\ if\ necessary=true
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 
 
@@ -81,5 +81,5 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.1.9
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list\ type=DISABLED
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ calls\ to\ implemented\ procedures=ONLY_FOR_CONCURRENT_PROGRAMS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_SEQUENTIAL_PROGRAMS
 

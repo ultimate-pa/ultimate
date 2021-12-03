@@ -171,7 +171,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
-	private IUltimateServiceProvider mServices;
+	protected IUltimateServiceProvider mServices;
 
 	protected final TaskIdentifier mTaskIdentifier;
 
@@ -765,7 +765,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		public CegarLoopResultBuilder addResult(final IcfgLocation loc, final Result result,
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
-			mLogger.info("Registering result %s for location %s", result, loc);
+			mLogger.info("Registering result %s for location %s (%s of %s remaining)", result, loc,
+					mErrorLocs.size() - mResults.size() - 1, mErrorLocs.size());
 			final IProgramExecution<L, Term> programExecution;
 			if (result == Result.UNSAFE || result == Result.UNKNOWN) {
 				programExecution = rcfgProgramExecution;

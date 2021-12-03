@@ -355,6 +355,29 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 
+	@Test
+	public void derDivByIntVarForall() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
+			};
+		final String formulaAsString = "(forall ((x Int)) (or (not (= (* q x) b)) (select a x)))";
+		final String expectedResult = "(let ((.cse0 (= q 0))) (and (or (select a (div b q)) (not (= (mod b q) 0)) .cse0) (or (forall ((x Int)) (select a x)) (not .cse0) (not (= b 0)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void derDivByIntVarExists() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
+			};
+		final String formulaAsString = "(exists ((x Int)) (and (= (* q x) b) (select a x)))";
+		final String expectedResult = "(let ((.cse0 (= q 0))) (or (and (= b 0) (exists ((x Int)) (select a x)) .cse0) (and (= (mod b q) 0) (select a (div b q)) (not .cse0))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 
 	@Test
 	public void critConsReform01() {
@@ -654,6 +677,15 @@ public class QuantifierEliminationRegressionTest {
 				new FunDecl(SmtSortUtils::getIntSort, "main_y", "main_x", "i", "end"), };
 		final String formulaAsString = "(exists ((v_arrayElimArr_2 (Array Int Int))) (and (or (and (= main_a v_arrayElimArr_2) (not (= main_y main_x))) (and (= main_y main_x) (= main_a v_arrayElimArr_1))) (or (= main_y main_x) (= (select v_arrayElimArr_2 main_x) 1)) (= (select v_arrayElimArr_1 main_y) 0) (or (not (= main_y main_x)) (= (+ (select v_arrayElimArr_2 main_y) 1) 0)) (< main_y main_x) (= (select v_arrayElimArr_2 main_y) 999) (or (= (select v_arrayElimArr_1 main_x) 0) (not (= main_y main_x))) (or (= (select v_arrayElimArr_2 main_y) (select v_arrayElimArr_2 main_x)) (not (= main_y main_x))) (or (= (select v_arrayElimArr_1 main_x) 1) (= main_y main_x))))";
 		final String expectedResult = "(and (= (select v_arrayElimArr_1 main_x) 1) (= (select v_arrayElimArr_1 main_y) 0) (< main_y main_x) (= (select main_a main_x) 1) (= 999 (select main_a main_y)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void arrayCongruenceForall() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k"), };
+		final String formulaAsString = "(forall ((a (Array Int Int)))  (or (not (= 23 (select a i))) (= (select a k) 23)))";
+		final String expectedResult = "(= i k)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 

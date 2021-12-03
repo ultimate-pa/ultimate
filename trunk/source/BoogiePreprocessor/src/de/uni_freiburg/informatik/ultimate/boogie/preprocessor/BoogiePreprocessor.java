@@ -112,7 +112,7 @@ public class BoogiePreprocessor implements IAnalysis {
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));
-		observers.add(new FunctionInliner());
+		observers.add(new FunctionInliner(logger));
 		if (useSimplifier) {
 			observers.add(new Simplifier(backTranslator));
 		}

@@ -47,10 +47,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -92,7 +95,7 @@ public class SymbolicTools {
 		final Script script = mMngdScript.getScript();
 		mFactory = new BasicPredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		mTransformer = new PredicateTransformer<>(mMngdScript,
-				new EliminatingTermDomainOperationProvider(services, mPQELogger, mMngdScript));
+				new EliminatingTermDomainOperationProvider(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
 		mBottom = mFactory.newPredicate(script.term("false"));
 	}
@@ -254,12 +257,9 @@ public class SymbolicTools {
 	 */
 	private final class EliminatingTermDomainOperationProvider extends TermDomainOperationProvider {
 
-		private final ILogger mPQELogger;
-
-		public EliminatingTermDomainOperationProvider(final IUltimateServiceProvider services, final ILogger logger,
+		public EliminatingTermDomainOperationProvider(final IUltimateServiceProvider services,
 				final ManagedScript mgdScript) {
 			super(services, mgdScript);
-			mPQELogger = logger;
 		}
 
 		@Override
@@ -276,8 +276,17 @@ public class SymbolicTools {
 			mStats.increment(SifaStats.Key.TOOLS_QUANTIFIERELIM_APPLICATIONS);
 			mStats.startMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
-			final Term result = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
-					mSimplification, mXnfConversion, quantifier, varsToQuantify, term);
+			final Term quantifiedFormula =
+					SmtUtils.quantifier(mMngdScript.getScript(), quantifier, varsToQuantify, term);
+			final Term lightResult = QuantifierPushTermWalker.eliminate(mServices, mMngdScript, false,
+					PqeTechniques.LIGHT, SimplificationTechnique.NONE, quantifiedFormula);
+			Term result;
+			if (new SubtermPropertyChecker(QuantifiedFormula.class::isInstance).isSatisfiedBySomeSubterm(lightResult)) {
+				result = QuantifierPushTermWalker.eliminate(mServices, mMngdScript, true, PqeTechniques.ALL,
+						SimplificationTechnique.POLY_PAC, lightResult);
+			} else {
+				result = lightResult;
+			}
 			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			mStats.stopMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			return result;

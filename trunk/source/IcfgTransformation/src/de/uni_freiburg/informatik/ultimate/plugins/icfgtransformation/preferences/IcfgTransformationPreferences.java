@@ -122,7 +122,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 		LOOP_ACCELERATION_JORDAN,
 
-		HEAP_SEPARATOR
+		HEAP_SEPARATOR,
+
+		BV_TO_INT
 
 	}
 

@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -31,12 +32,18 @@ public class BvToIntTranslation extends TermTransformer {
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
 	private final LinkedHashMap<Term, Term> mReversedVarMap;
 
-	public BvToIntTranslation(final ManagedScript mgdscript, final TranslationConstrainer tc) {
+	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
+			final TranslationConstrainer tc) {
 
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
 		mNutzTransformation = false;
-		mVariableMap = new LinkedHashMap<Term, Term>();
+		if (variableMap != null) {
+			mVariableMap = variableMap;
+		} else {
+			mVariableMap = new LinkedHashMap<Term, Term>();
+		}
+
 		mReversedVarMap = new LinkedHashMap<Term, Term>();
 		mTc = tc;
 	}
@@ -48,23 +55,159 @@ public class BvToIntTranslation extends TermTransformer {
 	@Override
 	public void convert(final Term term) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
-		if (SmtSortUtils.isBitvecSort(term.getSort())) {
-			if (term instanceof TermVariable) {
-				setResult(translateVars(term));
-				return;
-			} else if (term instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (appTerm.getParameters().length == 0) {
-					if (SmtUtils.isConstant(appTerm)) {
-						final Term intVar = translateVars(term);
 
-						mTc.varConstraint(term, intVar); // Create and Collect Constraints
-						setResult(intVar);
-						return;
+		if (term instanceof TermVariable) {
+			setResult(translateVars(term));
+			return;
+		} else if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			final FunctionSymbol fsym = appTerm.getFunction();
+			if (appTerm.getParameters().length == 0) {
+				if (SmtUtils.isConstant(appTerm)) {
+					final Term intVar = translateVars(term);
+					mTc.varConstraint(term, intVar); // Create and Collect Constraints
+					setResult(intVar);
+					return;
+				}
+			}
+
+			if (fsym.isIntern()) {
+				switch (fsym.getName()) {
+				case "bvor": {
+					// bvor = bvsub(bvadd, bvand)
+					final Term bvor = mScript.term("bvsub", mScript.term("bvadd", appTerm.getParameters()),
+							mScript.term("bvand", appTerm.getParameters()));
+					pushTerm(bvor);
+					return;
+				}
+				case "bvxor": {
+					pushTerm(mScript.term("bvsub",
+							mScript.term("bvsub", mScript.term("bvadd", appTerm.getParameters()),
+									mScript.term("bvand", appTerm.getParameters())),
+							mScript.term("bvand", appTerm.getParameters())));
+					return;
+				}
+				case "sign_extend": {
+					final BigInteger[] indices = new BigInteger[2];
+					indices[0] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					indices[1] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+
+					Term repeat = appTerm.getParameters()[0];
+					final int difference = Integer.valueOf(appTerm.getSort().getIndices()[0])
+							- Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]);
+					for (int i = 0; i < difference; i++) {
+						repeat = BitvectorUtils.termWithLocalSimplification(mScript, "concat", null, BitvectorUtils
+								.termWithLocalSimplification(mScript, "extract", indices, appTerm.getParameters()[0]),
+								repeat);
 					}
 
+					pushTerm(repeat);
+					return;
+
 				}
-			} else if (term instanceof ConstantTerm) {
+				case "bvsrem": {
+
+					final BigInteger[] indices = new BigInteger[2];
+					indices[0] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					indices[1] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					final Term msbLhs = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[0]);
+					final Term msbRhs = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[1]);
+
+					final Term zeroVec =
+							SmtUtils.rational2Term(mScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term oneVec =
+							SmtUtils.rational2Term(mScript, Rational.ONE, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term ifterm1 = SmtUtils.and(mScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+							SmtUtils.equality(mScript, zeroVec, msbRhs));
+					final Term ifterm2 = SmtUtils.and(mScript, SmtUtils.equality(mScript, oneVec, msbLhs),
+							SmtUtils.equality(mScript, zeroVec, msbRhs));
+					final Term ifterm3 = SmtUtils.and(mScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+							SmtUtils.equality(mScript, oneVec, msbRhs));
+
+					final Term bvurem = BitvectorUtils.termWithLocalSimplification(mScript, "bvurem", null,
+							appTerm.getParameters());
+					final Term thenTerm2 =
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+									BitvectorUtils.termWithLocalSimplification(
+											mScript, "bvurem", null, BitvectorUtils.termWithLocalSimplification(mScript,
+													"bvneg", null, appTerm.getParameters()[0]),
+											appTerm.getParameters()[1]));
+					final Term thenTerm3 = BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvurem", null,
+									appTerm.getParameters()[0], BitvectorUtils.termWithLocalSimplification(mScript,
+											"bvneg", null, appTerm.getParameters()[1])));
+
+					final Term elseTerm = BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvurem", null,
+									BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+											appTerm.getParameters()[0]),
+									BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+											appTerm.getParameters()[1])));
+
+					final Term iteChain2 = mScript.term("ite", ifterm3, thenTerm3, elseTerm);
+					final Term iteChain1 = mScript.term("ite", ifterm2, thenTerm2, iteChain2);
+					final Term bvsrem = mScript.term("ite", ifterm1, bvurem, iteChain1);
+					pushTerm(bvsrem);
+					return;
+				}
+
+				case "bvsdiv": {
+					final BigInteger[] indices = new BigInteger[2];
+					indices[0] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					indices[1] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					final Term msbLhs = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[0]);
+					final Term msbRhs = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[1]);
+
+					final Term zeroVec =
+							SmtUtils.rational2Term(mScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term oneVec =
+							SmtUtils.rational2Term(mScript, Rational.ONE, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term ifterm1 = SmtUtils.and(mScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+							SmtUtils.equality(mScript, zeroVec, msbRhs));
+					final Term ifterm2 = SmtUtils.and(mScript, SmtUtils.equality(mScript, oneVec, msbLhs),
+							SmtUtils.equality(mScript, zeroVec, msbRhs));
+					final Term ifterm3 = SmtUtils.and(mScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+							SmtUtils.equality(mScript, oneVec, msbRhs));
+
+					final Term bvudiv = BitvectorUtils.termWithLocalSimplification(mScript, "bvudiv", null,
+							appTerm.getParameters());
+					final Term thenTerm2 =
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+									BitvectorUtils.termWithLocalSimplification(
+											mScript, "bvudiv", null, BitvectorUtils.termWithLocalSimplification(mScript,
+													"bvneg", null, appTerm.getParameters()[0]),
+											appTerm.getParameters()[1]));
+					final Term thenTerm3 = BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvudiv", null,
+									appTerm.getParameters()[0], BitvectorUtils.termWithLocalSimplification(mScript,
+											"bvneg", null, appTerm.getParameters()[1])));
+
+					final Term elseTerm = BitvectorUtils.termWithLocalSimplification(mScript, "bvudiv", null,
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+									appTerm.getParameters()[0]),
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
+									appTerm.getParameters()[1]));
+
+					final Term iteChain2 = mScript.term("ite", ifterm3, thenTerm3, elseTerm);
+					final Term iteChain1 = mScript.term("ite", ifterm2, thenTerm2, iteChain2);
+					final Term bvsdiv = mScript.term("ite", ifterm1, bvudiv, iteChain1);
+					pushTerm(bvsdiv);
+					return;
+				}
+				}
+			}
+		} else if (term instanceof ConstantTerm) {
+			if (SmtSortUtils.isBitvecSort(term.getSort())) {
 				final ConstantTerm constTerm = (ConstantTerm) term;
 				assert isBitVecSort(constTerm.getSort());
 				BigInteger constValue;
@@ -86,21 +229,59 @@ public class BvToIntTranslation extends TermTransformer {
 
 				setResult(intConst);
 				return;
+			} else {
+				throw new UnsupportedOperationException("unexpected constant sort");
 			}
 		}
 		super.convert(term);
 
 	}
 
-	private Term translateVars(final Term term) {
-		Term intVar;
-		intVar = mMgdScript.constructFreshTermVariable("intInVar", SmtSortUtils.getIntSort(mScript));
-		if (!(term instanceof TermVariable)) {
-			intVar = SmtUtils.termVariable2constant(mScript, (TermVariable) intVar, true);
+	private Sort translateArraySort(final Sort sort) {
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			return SmtSortUtils.getIntSort(mMgdScript);
+		} else if (SmtSortUtils.isArraySort(sort)) {
+			final Sort[] newArgs = new Sort[sort.getArguments().length];
+			for (int i = 0; i < sort.getArguments().length; i++) {
+				newArgs[i] = translateArraySort(sort.getArguments()[i]);
+			}
+			assert newArgs.length == 2;
+			final Sort domainSort = newArgs[0];
+			final Sort rangeSort = newArgs[1];
+			return SmtSortUtils.getArraySort(mMgdScript.getScript(), domainSort, rangeSort);
+		} else {
+			throw new AssertionError("Unexpected Sort: " + sort);
 		}
-		mVariableMap.put(term, intVar);
-		mReversedVarMap.put(intVar, term);
-		return intVar;
+	}
+
+	private Term translateVars(final Term term) {
+		if (mVariableMap.containsKey(term)) {
+			mReversedVarMap.put(mVariableMap.get(term), term);
+			return mVariableMap.get(term);
+		} else {
+			final Sort sort = term.getSort();
+			if (SmtSortUtils.isArraySort(sort)) {
+				Term arrayVar;
+				arrayVar = mMgdScript.constructFreshTermVariable("arrayVar", translateArraySort(sort));
+				if (!(term instanceof TermVariable)) {
+					arrayVar = SmtUtils.termVariable2constant(mScript, (TermVariable) arrayVar, true);
+				}
+				mVariableMap.put(term, arrayVar);
+				mReversedVarMap.put(arrayVar, term);
+				return arrayVar;
+			} else {
+				Term intVar;
+				intVar = mMgdScript.constructFreshTermVariable("intVar", SmtSortUtils.getIntSort(mScript));
+				if (!(term instanceof TermVariable)) {
+					intVar = SmtUtils.termVariable2constant(mScript, (TermVariable) intVar, true);
+				}
+				mVariableMap.put(term, intVar);
+				mReversedVarMap.put(intVar, term);
+				return intVar;
+			}
+
+		}
+
 	}
 
 	@Override
@@ -118,7 +299,6 @@ public class BvToIntTranslation extends TermTransformer {
 					newTermVars.add(old.getVariables()[i]);
 				}
 			}
-
 			setResult(SmtUtils.quantifier(mScript, old.getQuantifier(), newTermVars,
 					QuantifierUtils.applyDualFiniteConnective(mScript, old.getQuantifier(), newBody, QuantifierUtils
 							.negateIfUniversal(mScript, old.getQuantifier(), SmtUtils.and(mScript, tvConstraints)))));
@@ -128,6 +308,12 @@ public class BvToIntTranslation extends TermTransformer {
 		}
 	}
 
+	/*
+	 * TODO binarize or deal with equalities, additions etc with more than 2 argmuents
+	 * TODO bvsdiv bvsrem // testen ob auf argumente signed to unsgined angewendet werfden muss
+	 * TODO check if we have to do sth for extend's
+	 * TODO modularer
+	 */
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] args) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
@@ -146,6 +332,7 @@ public class BvToIntTranslation extends TermTransformer {
 			}
 			}
 		}
+
 		if (appTerm.getParameters().length == 0) {
 			if (fsym.getName().matches(BITVEC_CONST_PATTERN)) {
 				final BigInteger constValue = new BigInteger(fsym.getName().substring(2));
@@ -164,7 +351,8 @@ public class BvToIntTranslation extends TermTransformer {
 				setResult(mVariableMap.get(appTerm));
 				return;
 			}
-		} else if (appTerm.getParameters().length == 1) {
+		} else if (appTerm.getParameters().length == 1
+				&& SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort())) {
 			final int width = Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]);
 			final Term maxNumber =
 					SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
@@ -202,72 +390,89 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 				case "zero_extend":
-				case "sign_extend":
+					setResult(args[0]);
+					return;
+
 				case "repeat":
 				case "rotate_left":
 				case "rotate_right":
 				default:
-					throw new UnsupportedOperationException("TODOmessage " + fsym.getName());
+					throw new UnsupportedOperationException("unexpected function: " + fsym.getName());
 				}
 			}
-		} else if (appTerm.getParameters().length == 2) {
-
-			final int width = Integer.valueOf(appTerm.getParameters()[1].getSort().getIndices()[0]);
+		} else {
+			int width = 0;
+			if (SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort())) {
+				width = Integer.valueOf(appTerm.getParameters()[1].getSort().getIndices()[0]);
+			}
 			final Term maxNumber =
 					SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
-			final Term translatedLHS = args[0];
-			final Term translatedRHS = args[1];
-			final Term tLhs;
-			final Term tRhs;
+			final Term[] translatedArgs = args;
 			if (mNutzTransformation) {
-				tLhs = mScript.term("mod", translatedLHS, maxNumber);
-				tRhs = mScript.term("mod", translatedRHS, maxNumber);
-			} else {
-				tLhs = translatedLHS;
-				tRhs = translatedRHS;
+				for (int i = 0; i < args.length; i++) {
+					translatedArgs[i] = mScript.term("mod", args[i], maxNumber);
+				}
 			}
 			if (fsym.isIntern()) {
 				switch (fsym.getName()) {
 				case "=": {
-					System.out.println(tLhs + "  adsads  " + tRhs);
-
-					setResult(mScript.term("=", tLhs, tRhs));
+					setResult(mScript.term("=", translatedArgs));
+					return;
+				}
+				case "distinct": {
+					setResult(mScript.term("distinct", translatedArgs));
 					return;
 				}
 				case "bvult": {
-					setResult(mScript.term("<", tLhs, tRhs));
+					setResult(mScript.term("<", translatedArgs));
 					return;
 				}
 				case "bvule": {
-					setResult(mScript.term("<=", tLhs, tRhs));
+					setResult(mScript.term("<=", translatedArgs));
 					return;
 				}
 				case "bvugt": {
-					setResult(mScript.term(">", tLhs, tRhs));
+					setResult(mScript.term(">", translatedArgs));
 					return;
 				}
 				case "bvuge": {
-					setResult(mScript.term(">=", tLhs, tRhs));
+					setResult(mScript.term(">=", translatedArgs));
 					return;
 				}
 				case "bvslt": {
-					setResult(mScript.term("<", uts(width, tLhs), uts(width, tRhs)));
+					final Term[] utsArgs = args;
+					for (int i = 0; i < args.length; i++) {
+						utsArgs[i] = uts(width, translatedArgs[i]);
+					}
+					setResult(mScript.term("<", utsArgs));
 					return;
 				}
 				case "bvsle": {
-					setResult(mScript.term("<=", uts(width, tLhs), uts(width, tRhs)));
+					final Term[] utsArgs = args;
+					for (int i = 0; i < args.length; i++) {
+						utsArgs[i] = uts(width, translatedArgs[i]);
+					}
+					setResult(mScript.term("<=", utsArgs));
 					return;
 				}
 				case "bvsgt": {
-					setResult(mScript.term(">", uts(width, tLhs), uts(width, tRhs)));
+					final Term[] utsArgs = args;
+					for (int i = 0; i < args.length; i++) {
+						utsArgs[i] = uts(width, translatedArgs[i]);
+					}
+					setResult(mScript.term(">", utsArgs));
 					return;
 				}
 				case "bvsge": {
-					setResult(mScript.term(">=", uts(width, tLhs), uts(width, tRhs)));
+					final Term[] utsArgs = args;
+					for (int i = 0; i < args.length; i++) {
+						utsArgs[i] = uts(width, translatedArgs[i]);
+					}
+					setResult(mScript.term(">=", utsArgs));
 					return;
 				}
 				case "bvadd": {
-					final Term addition = mScript.term("+", translatedLHS, translatedRHS);
+					final Term addition = mScript.term("+", translatedArgs);
 					if (mNutzTransformation) {
 						setResult(addition);
 						return;
@@ -276,7 +481,7 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 				case "bvsub": {
-					final Term substraction = mScript.term("-", translatedLHS, translatedRHS);
+					final Term substraction = mScript.term("-", translatedArgs);
 					if (mNutzTransformation) {
 						setResult(substraction);
 						return;
@@ -285,7 +490,7 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 				case "bvmul": {
-					final Term multiplication = mScript.term("*", translatedLHS, translatedRHS);
+					final Term multiplication = mScript.term("*", translatedArgs);
 					if (mNutzTransformation) {
 						setResult(multiplication);
 						return;
@@ -293,142 +498,130 @@ public class BvToIntTranslation extends TermTransformer {
 					setResult(mScript.term("mod", multiplication, maxNumber));
 					return;
 				}
-				case "bvshl": {
-					final boolean iteMode = true;
-					if (iteMode && !(translatedRHS instanceof ConstantTerm)) {
-						Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
-						for (int i = width - 1; i >= 0; i--) {
-							if (i == 0) {
-								final Term constInt = SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
-								iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
-										translatedLHS, iteChain);
-							} else {
-								final Rational powResult = Rational.valueOf(i, 1);
-								final Term ifTerm = mScript.term("=", translatedRHS,
-										SmtUtils.rational2Term(mScript, powResult, intSort));
-								final int pow = (int) Math.pow(2, i);
-								final Term thenTerm = mScript.term("mod",
-										mScript.term("*",
-												SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort),
-												translatedLHS),
-										maxNumber);
-								iteChain = mScript.term("ite", ifTerm, thenTerm, iteChain);
+				}
+
+				if (appTerm.getParameters().length == 2) {
+					final Term translatedLHS = translatedArgs[0];
+					final Term translatedRHS = translatedArgs[1];
+					switch (fsym.getName()) {
+					case "bvshl": {
+						final boolean iteMode = true;
+						if (iteMode && !(translatedRHS instanceof ConstantTerm)) {
+							Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
+							for (int i = width - 1; i >= 0; i--) {
+								if (i == 0) {
+									final Term constInt =
+											SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
+									iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
+											translatedLHS, iteChain);
+								} else {
+									final Rational powResult = Rational.valueOf(i, 1);
+									final Term ifTerm = mScript.term("=", translatedRHS,
+											SmtUtils.rational2Term(mScript, powResult, intSort));
+									final int pow = (int) Math.pow(2, i);
+									final Term thenTerm =
+											mScript.term("mod",
+													mScript.term("*", SmtUtils.rational2Term(mScript,
+															Rational.valueOf(pow, 1), intSort), translatedLHS),
+													maxNumber);
+									iteChain = mScript.term("ite", ifTerm, thenTerm, iteChain);
+								}
+
 							}
-
+							setResult(iteChain);
+							return;
+						} else {
+							final Term shift = mScript.term("*", translatedLHS, pow2(translatedRHS));
+							setResult(mScript.term("mod", shift, maxNumber));
+							return;
 						}
-						setResult(iteChain);
-						return;
-					} else {
-						final Term shift = mScript.term("*", translatedLHS, pow2(translatedRHS));
-						setResult(mScript.term("mod", shift, maxNumber));
-						return;
 					}
-				}
-				case "bvlshr": {
-					final boolean iteMode = true;
-					if (iteMode && !(translatedRHS instanceof ConstantTerm)) {
-						Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
-						for (int i = width - 1; i >= 0; i--) {
-							if (i == 0) {
-								final Term constInt = SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
-								iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
-										translatedLHS, iteChain);
-							} else {
-								final Rational powResult = Rational.valueOf(i, 1);
-								final Term ifTerm = mScript.term("=", translatedRHS,
-										SmtUtils.rational2Term(mScript, powResult, intSort));
-								final int pow = (int) Math.pow(2, i);
-								final Term thenTerm = mScript.term("div", translatedLHS,
-										SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort));
-								iteChain = mScript.term("ite", ifTerm, thenTerm, iteChain);
+					case "bvlshr": {
+						final boolean iteMode = true;
+						if (iteMode && !(translatedRHS instanceof ConstantTerm)) {
+							Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
+							for (int i = width - 1; i >= 0; i--) {
+								if (i == 0) {
+									final Term constInt =
+											SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
+									iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
+											translatedLHS, iteChain);
+								} else {
+									final Rational powResult = Rational.valueOf(i, 1);
+									final Term ifTerm = mScript.term("=", translatedRHS,
+											SmtUtils.rational2Term(mScript, powResult, intSort));
+									final int pow = (int) Math.pow(2, i);
+									final Term thenTerm = mScript.term("div", translatedLHS,
+											SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort));
+									iteChain = mScript.term("ite", ifTerm, thenTerm, iteChain);
+								}
+
 							}
-
+							setResult(iteChain);
+							return;
+						} else {
+							final Term shift = mScript.term("div", translatedLHS, pow2(translatedRHS));
+							setResult(shift);
+							return;
 						}
-						setResult(iteChain);
+					}
+
+					case "bvashr": {
+						throw new UnsupportedOperationException("TODO " + fsym.getName());
+					}
+					case "concat": {
+						final Term multiplication = mScript.term("*", translatedLHS, maxNumber);
+						if (mNutzTransformation) {
+							throw new UnsupportedOperationException("TODO Nutz" + fsym.getName());
+						}
+						setResult(mScript.term("+", multiplication, translatedRHS));
 						return;
-					} else {
-						final Term shift = mScript.term("div", translatedLHS, pow2(translatedRHS));
-						setResult(shift);
+					}
+
+					case "bvudiv": {
+						Term rhs;
+						Term lhs;
+						if (mNutzTransformation) {
+							rhs = mScript.term("mod", translatedRHS, maxNumber);
+							lhs = mScript.term("mod", translatedLHS, maxNumber);
+						} else {
+							rhs = translatedRHS;
+							lhs = translatedLHS;
+						}
+						final Term ifTerm =
+								mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
+						final Term thenTerm =
+								mScript.term("-", maxNumber, SmtUtils.rational2Term(mScript, Rational.ONE, intSort));
+						final Term elseTerm = mScript.term("div", lhs, rhs);
+						setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
 						return;
 					}
-				}
 
-				case "bvashr": {
-					throw new UnsupportedOperationException("TODO " + fsym.getName());
-				}
-				case "concat": {
-					final Term multiplication = mScript.term("*", translatedLHS, maxNumber);
-					if (mNutzTransformation) {
-						throw new UnsupportedOperationException("TODO Nutz" + fsym.getName());
+					case "bvurem": {
+						Term rhs;
+						Term lhs;
+						if (mNutzTransformation) {
+							rhs = mScript.term("mod", translatedRHS, maxNumber);
+							lhs = mScript.term("mod", translatedLHS, maxNumber);
+						} else {
+							rhs = translatedRHS;
+							lhs = translatedLHS;
+						}
+						final Term ifTerm =
+								mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
+						final Term thenTerm = lhs;
+						final Term elseTerm = mScript.term("mod", lhs, rhs);
+						setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
+						return;
 					}
-					setResult(mScript.term("+", multiplication, translatedRHS));
-					return;
-				}
-				case "bvudiv": {
-					Term rhs;
-					Term lhs;
-					if (mNutzTransformation) {
-						rhs = mScript.term("mod", translatedRHS, maxNumber);
-						lhs = mScript.term("mod", translatedLHS, maxNumber);
-					} else {
-						rhs = translatedRHS;
-						lhs = translatedLHS;
+					case "bvand": {
+						final Term intAnd =
+								mScript.term(mTc.getIntAndFunctionSymbol().getName(), translatedLHS, translatedRHS);
+						mTc.bvandConstraint(intAnd, width);
+						setResult(intAnd);
+						return;
 					}
-					final Term ifTerm = mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
-					final Term thenTerm =
-							mScript.term("-", maxNumber, SmtUtils.rational2Term(mScript, Rational.ONE, intSort));
-					final Term elseTerm = mScript.term("div", lhs, rhs);
-					setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
-					return;
-				}
-				case "bvurem": {
-					Term rhs;
-					Term lhs;
-					if (mNutzTransformation) {
-						rhs = mScript.term("mod", translatedRHS, maxNumber);
-						lhs = mScript.term("mod", translatedLHS, maxNumber);
-					} else {
-						rhs = translatedRHS;
-						lhs = translatedLHS;
 					}
-					final Term ifTerm = mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
-					final Term thenTerm = lhs;
-					final Term elseTerm = mScript.term("mod", lhs, rhs);
-					setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
-					return;
-				}
-				case "bvand": {
-					final Term intAnd =
-							mScript.term(mTc.getIntAndFunctionSymbol().getName(), translatedLHS, translatedRHS);
-					mTc.bvandConstraint(intAnd, width);
-					setResult(intAnd);
-					return;
-				}
-				case "bvor": {
-					// bvor = bvsub(bvadd, bvand)
-					final Term intAnd =
-							mScript.term(mTc.getIntAndFunctionSymbol().getName(), translatedLHS, translatedRHS);
-					mTc.bvandConstraint(intAnd, width);
-					final Term addition = mScript.term("+", translatedLHS, translatedRHS);
-					final Term intAdd = mScript.term("mod", addition, maxNumber);
-
-					final Term substraction = mScript.term("-", intAdd, intAnd);
-					final Term bvsub = mScript.term("mod", substraction, maxNumber);
-
-					setResult(bvsub);
-					return;
-
-				}
-
-				case "bvxor": {
-					setResult(mScript.term("bvsub",
-							mScript.term("bvsub", mScript.term("bvadd", appTerm.getParameters()),
-									mScript.term("bvand", appTerm.getParameters())),
-							mScript.term("bvand", appTerm.getParameters())));
-					return;
-				}
-				default:
-					throw new UnsupportedOperationException("TODOmessage " + fsym.getName());
 				}
 			}
 		}

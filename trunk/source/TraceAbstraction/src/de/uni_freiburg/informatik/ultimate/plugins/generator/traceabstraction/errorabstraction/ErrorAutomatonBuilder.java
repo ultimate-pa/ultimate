@@ -213,8 +213,8 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		final List<IPredicatePostprocessor> postprocessors;
 		if (APPLY_FORMULA_POSTPROCESSOR) {
-			final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(services, logger,
-					csToolkit.getManagedScript(), predicateFactory, simplificationTechnique, xnfConversionTechnique);
+			final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(services, csToolkit.getManagedScript(),
+					predicateFactory, simplificationTechnique);
 			postprocessors = Collections.singletonList(qepp);
 		} else {
 			postprocessors = Collections.emptyList();

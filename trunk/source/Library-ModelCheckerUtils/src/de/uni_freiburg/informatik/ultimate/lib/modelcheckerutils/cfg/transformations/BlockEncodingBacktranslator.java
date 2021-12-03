@@ -108,7 +108,8 @@ public class BlockEncodingBacktranslator extends
 		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> oldIcfgPe =
 				((IcfgProgramExecution<IIcfgTransition<IcfgLocation>>) oldPe);
 		final Map<TermVariable, Boolean>[] oldBranchEncoders = oldIcfgPe.getBranchEncoders();
-		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "wrong branchencoders";
+		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "incorrect number of branch encoders: expected "
+				+ oldIcfgPe.getLength() + ", actual " + oldBranchEncoders.length;
 		assert checkCallStackSourceProgramExecution(mLogger,
 				oldIcfgPe) : "callstack of initial program execution already broken";
 
@@ -213,6 +214,8 @@ public class BlockEncodingBacktranslator extends
 					}
 				}
 				assert choiceFound : "Could not determine correct choice for choice composition";
+				// Note: We do not check that ONLY one choice is possible. For instance,
+				// TraceCheckUtils#computeSomeIcfgProgramExecutionWithoutValues sets all branch encoders to true.
 			} else {
 				// Transition is assumed to be original.
 				// As the last transition of a sequence is handled first (top of stack, see

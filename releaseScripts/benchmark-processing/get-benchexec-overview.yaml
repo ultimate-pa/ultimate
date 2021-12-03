@@ -50,6 +50,7 @@ known_exceptions:
   "overapproximation of shiftLeft":
   "overapproximation of memtrack":
   "There is insufficient memory for the Java Runtime Environment to continue":
+  "UnsupportedOperationException: Shadow problem":
   "UnsupportedSyntaxResult":
     show_line: False
   "TypeErrorResult":
@@ -123,6 +124,7 @@ known_safe:
 known_unsafe:
   "CounterExampleResult":
   "NonterminatingLassoResult":
+  "DataRaceFoundResult":
 
 known_unknown:
   "UnprovableResult":
@@ -130,5 +132,4 @@ known_unknown:
 known_wrapper_errors:
   "Ultimate.py: error: argument --validate: File":
   "Checking for LTL property":
-  "WARNING: YOUR LOGFILE WAS TOO LONG, SOME LINES IN THE MIDDLE WERE REMOVED.":
   "Skipped default analysis because property is memsafety":

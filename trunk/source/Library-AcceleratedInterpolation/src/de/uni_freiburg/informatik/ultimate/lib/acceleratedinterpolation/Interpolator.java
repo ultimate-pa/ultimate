@@ -88,7 +88,6 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		mLogger = logger;
 		mServices = services;
 		mPrefs = prefs;
-
 	}
 
 	/**

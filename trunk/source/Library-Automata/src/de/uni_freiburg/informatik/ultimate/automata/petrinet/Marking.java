@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -161,16 +160,24 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 */
 	public Marking<LETTER, PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
 			final IPetriNet<LETTER, PLACE> net) throws PetriNetNot1SafeException {
-		final HashSet<PLACE> resultSet = new HashSet<>(mPlaces);
 		final Set<PLACE> predecessors = net.getPredecessors(transition);
-		resultSet.removeAll(predecessors);
 		final Set<PLACE> successors = net.getSuccessors(transition);
-		resultSet.addAll(successors);
-		if (mPlaces.size() - predecessors.size() + successors.size() != resultSet.size()) {
+		final Object[] places =
+				Stream.concat(mPlaces.stream().filter(x -> !predecessors.contains(x)), successors.stream()).distinct()
+						.toArray();
+
+		final Set<PLACE> resultSet;
+		try {
+			// Using Set#of should be more memory-efficient than HashSet, and avoiding HashSet copies should be faster.
+			resultSet = (Set<PLACE>) Set.of(places);
+		} catch (final IllegalArgumentException e) {
+			// thrown if the "places" array contains duplicate elements
+			// see https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Set.html#unmodifiable
 			final List<PLACE> unsafePlaces = mPlaces.stream().filter(x -> !predecessors.contains(x))
 					.filter(successors::contains).collect(Collectors.toList());
 			throw new PetriNetNot1SafeException(getClass(), unsafePlaces);
 		}
+
 		return new Marking<>(ImmutableSet.of(resultSet));
 	}
 

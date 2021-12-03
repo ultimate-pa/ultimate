@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -277,6 +278,9 @@ public class QuantifierEliminationTest {
 		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,
 				SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
+		if (!Arrays.asList(result.getFreeVars()).isEmpty()) {
+			throw new AssertionError("Result contains free vars: " + Arrays.toString(result.getFreeVars()));
+		}
 		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
 			final ExtendedSimplificationResult esr =
 					SmtUtils.simplifyWithStatistics(mgdScript, result, services, SimplificationTechnique.SIMPLIFY_DDA);

@@ -45,7 +45,7 @@ public class AcceleratorWernerOverapprox implements IAccelerator {
 		backbones.add(backbone);
 		loop.setBackbones(backbones);
 		loop.addExitCondition(loopTf);
-		final UnmodifiableTransFormula guard = TransFormulaUtils.computeGuard(loopTf, mScript, mServices, mLogger);
+		final UnmodifiableTransFormula guard = TransFormulaUtils.computeGuard(loopTf, mScript, mServices);
 		loop.setCondition(guard.getFormula());
 
 		final LoopAcceleratorLite lite = new LoopAcceleratorLite(mScript, mServices, mLogger, mSymbolTable);

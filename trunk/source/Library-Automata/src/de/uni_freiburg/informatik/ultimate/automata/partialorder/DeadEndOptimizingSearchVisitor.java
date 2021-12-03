@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -47,8 +46,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <R>
  *            The type of states in the traversed automaton
  * @param <S>
- *            In case of sleep set reduction, the type of states in the unreduced automaton. Otherwise, should be the
- *            same as R.
+ *            States of type R can (optionally) be split into a state of type S and extra information (type Object).
+ *            This is useful if automata transformation (like e.g. sleep set reduction, or combination with a stateful
+ *            order) are used, but dead end information is to be transferred based on the underlying state of type S.
  * @param <V>
  *            The type of the underlying visitor
  */
@@ -56,10 +56,10 @@ public class DeadEndOptimizingSearchVisitor<L, R, S, V extends IDfsVisitor<L, R>
 	private V mUnderlying;
 	private final Supplier<V> mCreateUnderlying;
 	private final Function<R, S> mState2Original;
-	private final Function<R, ImmutableSet<L>> mState2SleepSet;
+	private final Function<R, Object> mState2ExtraInfo;
 
 	private final Set<R> mDeadEndSet;
-	private final HashRelation<S, ImmutableSet<L>> mDeadEndRelation;
+	private final HashRelation<S, Object> mDeadEndRelation;
 
 	private int mPruneCounter;
 
@@ -75,17 +75,17 @@ public class DeadEndOptimizingSearchVisitor<L, R, S, V extends IDfsVisitor<L, R>
 	}
 
 	public DeadEndOptimizingSearchVisitor(final Supplier<V> createUnderlying, final Function<R, S> state2Original,
-			final Function<R, ImmutableSet<L>> state2SleepSet) {
+			final Function<R, Object> state2ExtraInfo) {
 		mCreateUnderlying = createUnderlying;
 		mState2Original = state2Original;
-		mState2SleepSet = state2SleepSet;
+		mState2ExtraInfo = state2ExtraInfo;
 
 		if (mState2Original == null) {
-			assert mState2SleepSet == null : "sleep set support requires both state and set";
+			assert mState2ExtraInfo == null : "support for extra info (sleep sets etc.) requires both functions";
 			mDeadEndSet = new HashSet<>();
 			mDeadEndRelation = null;
 		} else {
-			assert mState2SleepSet != null : "sleep set support requires both state and set";
+			assert mState2ExtraInfo != null : "support for extra info (sleep sets etc.) requires both functions";
 			mDeadEndSet = null;
 			mDeadEndRelation = new HashRelation<>();
 		}
@@ -155,7 +155,7 @@ public class DeadEndOptimizingSearchVisitor<L, R, S, V extends IDfsVisitor<L, R>
 	public boolean isDeadEndState(final R state) {
 		final boolean result;
 		if (mDeadEndSet == null) {
-			result = mDeadEndRelation.containsPair(mState2Original.apply(state), mState2SleepSet.apply(state));
+			result = mDeadEndRelation.containsPair(mState2Original.apply(state), mState2ExtraInfo.apply(state));
 		} else {
 			result = mDeadEndSet.contains(state);
 		}
@@ -167,7 +167,7 @@ public class DeadEndOptimizingSearchVisitor<L, R, S, V extends IDfsVisitor<L, R>
 
 	private void addDeadEndState(final R state) {
 		if (mDeadEndSet == null) {
-			mDeadEndRelation.addPair(mState2Original.apply(state), mState2SleepSet.apply(state));
+			mDeadEndRelation.addPair(mState2Original.apply(state), mState2ExtraInfo.apply(state));
 		} else {
 			mDeadEndSet.add(state);
 		}
@@ -176,11 +176,12 @@ public class DeadEndOptimizingSearchVisitor<L, R, S, V extends IDfsVisitor<L, R>
 	/**
 	 * Copies dead end information from a given state to another.
 	 *
-	 * If sleep sets are not used, this simply means that if the first state is known to be a dead end, we also mark the
-	 * new state as dead end.
+	 * If extra information is not used, this simply means that if the first state is known to be a dead end, we also
+	 * mark the new state as dead end.
 	 *
-	 * If sleep sets are used, this means that for any combination of the first state with a sleep set S that is known
-	 * to be a dead end, we also mark the combination of the new state and the same sleep sets s as dead end.
+	 * If extra information is used, this means that for any combination of the first state with extra information X
+	 * that is known to be a dead end, we also mark the combination of the new state and the same extra information X as
+	 * dead end.
 	 *
 	 * @param originalState
 	 *            The state whose dead end information should be copied.

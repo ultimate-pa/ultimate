@@ -116,7 +116,7 @@ public final class PredicateUnifierStatisticsGenerator implements IStatisticsDat
 		return PredicateUnifierStatisticsType.getInstance();
 	}
 
-	public static enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
+	public enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
 
 		DeclaredPredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
@@ -156,11 +156,6 @@ public final class PredicateUnifierStatisticsGenerator implements IStatisticsDat
 		@Override
 		public String prettyprint(final Object o) {
 			return mPrettyprinter.apply(name()).apply(o);
-		}
-
-		@Override
-		public Class<?> getDataType() {
-			return mClazz;
 		}
 	}
 

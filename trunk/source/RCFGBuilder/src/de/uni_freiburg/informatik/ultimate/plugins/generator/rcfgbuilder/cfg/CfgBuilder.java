@@ -175,8 +175,8 @@ public class CfgBuilder {
 
 	private int mRemovedAssumeTrueStatements = 0;
 
-	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique =
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final Set<String> mAllGotoTargets;
@@ -196,7 +196,6 @@ public class CfgBuilder {
 		final ManagedScript mgdScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
-		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
 		final ForkAndGotoInformation fgInfo = new ForkAndGotoInformation(mBoogieDeclarations);
@@ -213,8 +212,7 @@ public class CfgBuilder {
 			mCodeBlockSize = userDefineCodeBlockSize;
 		}
 
-		mBoogie2Smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
-				simplePartialSkolemization);
+		mBoogie2Smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, mServices, simplePartialSkolemization);
 		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
 		backtranslator.setTerm2Expression(mBoogie2Smt.getTerm2Expression());
 		mRcfgBacktranslator = backtranslator;
@@ -233,7 +231,7 @@ public class CfgBuilder {
 	 * @return RootNode of a recursive control flow graph.
 	 */
 	public IIcfg<BoogieIcfgLocation> createIcfg(final Unit unit) {
-
+		mLogger.info("Building ICFG");
 		mTransFormulaAdder = new TransFormulaAdder(mBoogie2Smt, mServices);
 
 		// Build entry, final and exit node for all procedures that have an
@@ -259,6 +257,7 @@ public class CfgBuilder {
 		}
 
 		// Build a control flow graph for each procedure
+		mLogger.info("Building CFG for each procedure with an implementation");
 		final ProcedureCfgBuilder procCfgBuilder = new ProcedureCfgBuilder();
 		for (final String procName : mBoogieDeclarations.getProcSpecification().keySet()) {
 			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
@@ -270,9 +269,10 @@ public class CfgBuilder {
 
 		// Transform CFGs to a recursive CFG
 		for (final Summary se : mImplementationSummarys) {
-			addCallTransitionAndReturnTransition(se, mSimplificationTechnique);
+			addCallTransitionAndReturnTransition(se, SIMPLIFICATION_TECHNIQUE);
 		}
 
+		mLogger.info("Performing block encoding");
 		switch (mCodeBlockSize) {
 		case LoopFreeBlock:
 			new LargeBlockEncoding(InternalLbeMode.ALL);
@@ -492,9 +492,16 @@ public class CfgBuilder {
 		return mRcfgBacktranslator;
 	}
 
-	private boolean isAssumeTrueStatement(final Statement st) {
-		if (mRemoveAssumeTrueStmt && st instanceof AssumeStatement) {
+	/**
+	 * Check it this statement is an <code>assume true</ code> and has an empty list of attributes (or no attributes at
+	 * all).
+	 */
+	private static boolean isAssumeTrueStatementWithoutAttributes(final Statement st) {
+		if (st instanceof AssumeStatement) {
 			final AssumeStatement as = (AssumeStatement) st;
+			if (as.getAttributes() != null && as.getAttributes().length > 0) {
+				return false;
+			}
 			if (as.getFormula() instanceof BooleanLiteral) {
 				final BooleanLiteral bl = (BooleanLiteral) as.getFormula();
 				if (bl.getValue()) {
@@ -676,7 +683,9 @@ public class CfgBuilder {
 							"constructing CFG for procedure with " + statements.length + "statements");
 				}
 
-				if (isAssumeTrueStatement(st) && !isOverapproximation(st)) {
+				// Rationale: <code>assume true</ code> statements can be omitted, unless they
+				// carry attributes or indicate an overapproximation.
+				if (mRemoveAssumeTrueStmt && isAssumeTrueStatementWithoutAttributes(st) && !isOverapproximation(st)) {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
@@ -721,8 +730,7 @@ public class CfgBuilder {
 			}
 
 			for (final CodeBlock transEdge : mEdges) {
-				mTransFormulaAdder.addTransitionFormulas(transEdge, procName, mXnfConversionTechnique,
-						mSimplificationTechnique);
+				mTransFormulaAdder.addTransitionFormulas(transEdge, procName, SIMPLIFICATION_TECHNIQUE);
 			}
 
 			// Remove unreachable nodes and unreachable edges
@@ -1217,24 +1225,25 @@ public class CfgBuilder {
 			}
 			if (st instanceof AssignmentStatement) {
 				return true;
-			} else if (st instanceof HavocStatement) {
+			}
+			if (st instanceof HavocStatement) {
 				return true;
-			} else if (st instanceof CallStatement) {
-				final CallStatement call = (CallStatement) st;
-				if (mBoogieDeclarations.getProcImplementation().containsKey(call.getMethodName())) {
-					// procedure has implementation
-					return false;
-				}
-				if (mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()) == null
-						|| mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()).isEmpty()) {
-					// procedure does not have non-free requires
-					// and hence does not require an additional branch into an error location
-					return true;
-				}
-				return false;
-			} else {
+			}
+			if (!(st instanceof CallStatement)) {
 				return false;
 			}
+			final CallStatement call = (CallStatement) st;
+			if (mBoogieDeclarations.getProcImplementation().containsKey(call.getMethodName())) {
+				// procedure has implementation
+				return false;
+			}
+			if (mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()) == null
+					|| mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()).isEmpty()) {
+				// procedure does not have non-free requires
+				// and hence does not require an additional branch into an error location
+				return true;
+			}
+			return false;
 		}
 
 		private void processAssertStatement(final AssertStatement st) {
@@ -1740,7 +1749,7 @@ public class CfgBuilder {
 					final List<CodeBlock> sequence = Arrays.asList((CodeBlock) incoming, (CodeBlock) outgoing);
 
 					final SequentialComposition comp = mCbf.constructSequentialComposition(predecessor, successor,
-							mSimplifyCodeBlocks, false, sequence, mXnfConversionTechnique, mSimplificationTechnique);
+							mSimplifyCodeBlocks, false, sequence, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE);
 					ModelUtils.copyAnnotations(incoming, comp);
 					ModelUtils.copyAnnotations(outgoing, comp);
 					newEdges.add(comp);
@@ -1779,7 +1788,7 @@ public class CfgBuilder {
 		private void composeParallel(final BoogieIcfgLocation pp, final List<CodeBlock> outgoing) {
 			final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.get(0).getTarget();
 			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
-					mXnfConversionTechnique, mSimplificationTechnique);
+					XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE);
 			considerCompositionCandidate(pp, false);
 			considerCompositionCandidate(successor, false);
 		}

@@ -42,10 +42,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
- * IHoareTripleChecker that caches already computed results. Also tries to use these results for more intelligent
- * checks.
+ * {@link IHoareTripleChecker} that caches already computed results. Also tries to use these results for more
+ * intelligent checks.
  *
  * @author Matthias Heizmann
  *
@@ -54,7 +55,6 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 
 	protected static final boolean UNKNOWN_IF_SOME_EXTENDED_CHECK_IS_UNKNOWN = true;
 
-	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	protected final IHoareTripleChecker mComputingHoareTripleChecker;
 	protected final IPredicateUnifier mPredicateUnifer;
@@ -78,9 +78,7 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialInternalCache,
 			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialCallCache,
 			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> initialReturnCache) {
-		super();
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mComputingHoareTripleChecker = Objects.requireNonNull(protectedHoareTripleChecker);
 		mPredicateUnifer = Objects.requireNonNull(predicateUnifer);
 		mInternalCache = Objects.requireNonNull(initialInternalCache);
@@ -188,8 +186,8 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 			NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache);
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return mComputingHoareTripleChecker.getEdgeCheckerBenchmark();
+	public IStatisticsDataProvider getStatistics() {
+		return mComputingHoareTripleChecker.getStatistics();
 	}
 
 	public IHoareTripleChecker getProtectedHoareTripleChecker() {
@@ -199,6 +197,11 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public void releaseLock() {
 		mComputingHoareTripleChecker.releaseLock();
+	}
+
+	@Override
+	public String toString() {
+		return mComputingHoareTripleChecker.toString();
 	}
 
 }

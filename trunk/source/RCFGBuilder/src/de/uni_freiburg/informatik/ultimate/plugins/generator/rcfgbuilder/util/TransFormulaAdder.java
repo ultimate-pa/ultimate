@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -90,7 +89,6 @@ public class TransFormulaAdder {
 	 *            An IEdge that has to be a CallEdge, InternalEdge, ReturnEdge, GotoEdge or SummaryEdge.
 	 */
 	public void addTransitionFormulas(final CodeBlock cb, final String procId,
-			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 		List<Statement> statements;
 		if (cb instanceof StatementSequence) {
@@ -116,8 +114,9 @@ public class TransFormulaAdder {
 
 		TranslationResult tlres = null;
 		try {
-			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks,
-					simplificationTechnique, procId, statements);
+			final SimplificationTechnique simplTech =
+					mSimplifyCodeBlocks ? simplificationTechnique : SimplificationTechnique.NONE;
+			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(simplTech, procId, statements);
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(cb, e.getMessage());

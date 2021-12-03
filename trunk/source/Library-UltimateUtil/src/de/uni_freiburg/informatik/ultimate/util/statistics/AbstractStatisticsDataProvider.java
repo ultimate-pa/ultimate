@@ -107,6 +107,11 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 		return mBenchmarkType;
 	}
 
+	@Override
+	public String toString() {
+		return mBenchmarkType.prettyprintBenchmarkData(this);
+	}
+
 	private class BenchmarkType implements IStatisticsType {
 
 		@Override

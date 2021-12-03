@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -99,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -755,6 +757,10 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	@Override
 	protected void finish() {
 		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
+		final List<Integer> sortedHistogram = mStrategyFactory.getPathProgramCache().computeSortedHistrogram();
+		mLogger.info("Path program histogram: " + sortedHistogram);
+		final int max = HistogramOfIterable.getMaxOfVisualizationArray(sortedHistogram);
+		mCegarLoopBenchmark.reportPathProgramHistogramMaximum(max);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 	}
@@ -765,7 +771,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			return refinementHtc;
 		}
 
-		return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier());
 	}
 
@@ -806,8 +812,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		// at the end of the htc lifecycle instead of there
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
 				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
-
-		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 
 		minimizeAbstractionIfEnabled();
 
@@ -954,7 +958,10 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			}
 
 		} finally {
-			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+			mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
+			mLogger.info(htc.getStatistics());
+			mLogger.info(htc);
+			mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		}
@@ -1352,7 +1359,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	private final boolean isSequential() {
-		return super.mIcfg.isSequential();
+		return !IcfgUtils.isConcurrent(super.mIcfg);
 	}
 
 	private class TimeoutRefinementEngineResult

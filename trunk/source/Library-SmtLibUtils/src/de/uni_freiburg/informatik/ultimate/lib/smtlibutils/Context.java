@@ -28,12 +28,16 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -109,6 +113,17 @@ public class Context {
 
 	public Context constructChildContextForQuantifiedFormula(final Script script,
 			final List<TermVariable> quantifiedVars) {
+		{
+			// Throw UnsupportedOperationException if there are different variables with same name.
+			final Set<TermVariable> all = Stream
+					.concat(Arrays.asList(mCriticalConstraint.getFreeVars()).stream(), quantifiedVars.stream())
+					.collect(Collectors.toSet());
+			final String nameOfTwoDifferentVars = checkForDifferentVariablesWithSameName(all);
+			if (nameOfTwoDifferentVars != null) {
+				throw new UnsupportedOperationException(
+						"Different variables with same name: " + nameOfTwoDifferentVars);
+			}
+		}
 		final Term criticalConstraint = buildCriticalContraintForQuantifiedFormula(script, mCriticalConstraint,
 				quantifiedVars, mCcTransformation);
 		final Set<TermVariable> boundByAncestors = new HashSet<>(mBoundByAncestors);
@@ -246,6 +261,21 @@ public class Context {
 		}
 		result = SmtUtils.and(mgdScript.getScript(), result, parentCriticalConstraint);
 		return result;
+	}
+
+	/**
+	 * Return null if all variables have different names. Otherwise, return a name
+	 * that occurs in several TermVariables.
+	 */
+	public String checkForDifferentVariablesWithSameName(final Collection<TermVariable> termVariables) {
+		final Map<String, TermVariable> map = new HashMap<>();
+		for (final TermVariable tv : termVariables) {
+			final TermVariable old = map.put(tv.getName(), tv);
+			if (old != null && !old.equals(tv)) {
+				return old.getName();
+			}
+		}
+		return null;
 	}
 
 }

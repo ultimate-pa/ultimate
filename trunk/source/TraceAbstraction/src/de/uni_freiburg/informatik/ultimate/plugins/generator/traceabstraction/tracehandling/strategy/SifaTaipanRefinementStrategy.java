@@ -61,7 +61,8 @@ public class SifaTaipanRefinementStrategy<L extends IIcfgTransition<?>> extends 
 
 		final IIpTcStrategyModule<?, L> smtinterpol =
 				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation, order);
-		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP, order);
+		final IIpTcStrategyModule<?, L> z3 =
+				factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect, order);
 		final IIpTcStrategyModule<?, L> sifa = factory.createIpTcStrategyModuleSifa();
 
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { smtinterpol, z3 };

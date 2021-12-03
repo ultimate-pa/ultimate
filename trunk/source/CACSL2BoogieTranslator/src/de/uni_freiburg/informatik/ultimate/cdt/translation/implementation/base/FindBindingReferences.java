@@ -35,10 +35,21 @@ import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 
+/**
+ * Searches for references to a given {@link IBinding} in an AST.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public class FindBindingReferences extends ASTVisitor {
 	private final IBinding mBinding;
 	private final Set<IASTName> mReferences = new LinkedHashSet<>();
 
+	/**
+	 * Creates a new visitor.
+	 *
+	 * @param binding
+	 *            The binding for which references shall be collected.
+	 */
 	public FindBindingReferences(final IBinding binding) {
 		mBinding = Objects.requireNonNull(binding);
 		shouldVisitNames = true;

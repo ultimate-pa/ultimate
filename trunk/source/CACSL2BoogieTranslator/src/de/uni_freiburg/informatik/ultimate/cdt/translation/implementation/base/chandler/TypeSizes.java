@@ -322,6 +322,14 @@ public class TypeSizes {
 		return mSignednessOfChar;
 	}
 
+	public CPrimitive getSizeT() {
+		return new CPrimitive(CPrimitives.ULONG);
+	}
+
+	public CPrimitive getSsizeT() {
+		return new CPrimitive(CPrimitives.LONG);
+	}
+
 	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type,
 			final BigInteger value) {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, mSettings.isBitvectorTranslation(), this, type,
@@ -414,7 +422,7 @@ public class TypeSizes {
 	 */
 	private Boolean extractBooleanValue(final Expression expr, final CType cType, final IASTNode hook) {
 		if (expr instanceof BooleanLiteral) {
-			return new Boolean(((BooleanLiteral) expr).getValue());
+			return Boolean.valueOf((((BooleanLiteral) expr).getValue()));
 		}
 
 		if (expr instanceof BinaryExpression) {
@@ -473,7 +481,7 @@ public class TypeSizes {
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
 				final String cId = mSymboltable.getCIdForBoogieId(bId);
 				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
-				if (stv.hasConstantValue()) {
+				if (stv != null && stv.hasConstantValue()) {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
 			} else if (expr instanceof FunctionApplication) {

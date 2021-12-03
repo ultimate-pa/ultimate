@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionSaa;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -64,12 +65,14 @@ public class ArrayOccurrenceAnalysis {
 	private final Term mWantedArray;
 	private final int mDimensionUpperLimit;
 
+
 	private final List<MultiDimensionalSelectOverNestedStore> mArraySelectOverStores = new ArrayList<>();
 	private final List<MultiDimensionalNestedStore> mNestedArrayStores = new ArrayList<>();
 	private final List<MultiDimensionalSelect> mArraySelects = new ArrayList<>();
 	private final List<BinaryEqualityRelation> mArrayEqualities = new ArrayList<>();
 	private final List<BinaryEqualityRelation> mArrayDisequalities = new ArrayList<>();
 	private final List<Term> mOtherFunctionApplications = new ArrayList<>();
+	private final List<Term> mIsValueOfStore = new ArrayList<>();
 
 	public ArrayOccurrenceAnalysis(final Script script, final Term analyzedTerm, final Term wantedArray) {
 		super();
@@ -133,6 +136,10 @@ public class ArrayOccurrenceAnalysis {
 	 */
 	public List<Term> getOtherFunctionApplications() {
 		return mOtherFunctionApplications;
+	}
+
+	public List<Term> getValueOfStore() {
+		return mIsValueOfStore;
 	}
 
 	/**
@@ -275,6 +282,10 @@ public class ArrayOccurrenceAnalysis {
 					}
 				} else if (fun.equals("store")) {
 					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mScript, term);
+					if (nas != null) {
+						final Set<Term> swwaiv = SubTermFinder.find(term, x -> isStoreWhereWantedArrayIsValue(x, mWantedArray), false);
+						mIsValueOfStore.addAll(swwaiv);
+					}
 					if (nas != null && nas.getArray().equals(mWantedArray)) {
 						if (THROW_ERROR_BEFORE_DOWNGRADE && nas
 								.getDimension() != new MultiDimensionalSort(mWantedArray.getSort()).getDimension()) {
@@ -339,16 +350,12 @@ public class ArrayOccurrenceAnalysis {
 							}
 						}
 					} else {
-						MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
-						if (as != null && as.getArray().equals(mWantedArray)) {
-							if (as.getDimension() > mDimensionUpperLimit) {
-								as = as.getInnermost(mDimensionUpperLimit);
-								assert as.getArray() == mWantedArray;
-							}
+						final MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
+						// If this select is above our dimension limit we ignore this select and descend
+						// to all children
+						if (as != null && as.getArray().equals(mWantedArray)
+								&& as.getDimension() <= mDimensionUpperLimit) {
 							mArraySelects.add(as);
-							for (final Term indexEntry : as.getIndex()) {
-								walker.enqueueWalker(new MyWalker(indexEntry));
-							}
 						} else {
 							for (final Term t : term.getParameters()) {
 								walker.enqueueWalker(new MyWalker(t));
@@ -415,6 +422,15 @@ public class ArrayOccurrenceAnalysis {
 
 	public static Set<ArrayIndex> extractNestedStoreIndices(final List<MultiDimensionalNestedStore> arraySelects) {
 		return arraySelects.stream().map(x -> x.getIndices()).flatMap(List::stream).collect(Collectors.toSet());
+	}
+
+	public static boolean isStoreWhereWantedArrayIsValue(final Term term, final Term wantedArray) {
+		final ArrayStore as = ArrayStore.convert(term);
+		if (as == null) {
+			return false;
+		} else {
+			return as.getValue().equals(wantedArray);
+		}
 	}
 
 }

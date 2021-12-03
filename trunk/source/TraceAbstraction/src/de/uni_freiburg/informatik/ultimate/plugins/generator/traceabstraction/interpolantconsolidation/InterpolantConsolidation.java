@@ -58,9 +58,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
@@ -71,9 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -144,11 +143,9 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
 				constructInterpolantAutomaton(mTrace, mCsToolkit, mPredicateFactory, false, mServices, mIpTc);
 		// 3. Determinize the finite automaton from step 2.
-		final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
-				TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, mCsToolkit,
-				mIpTc.getPredicateUnifier());
-		final IHoareTripleChecker cachingHtc =
-				new CachingHoareTripleCheckerMap(mServices, ehtc, mIpTc.getPredicateUnifier());
+		final IHoareTripleChecker cachingHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
+				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit, mIpTc.getPredicateUnifier());
+
 		final DeterministicInterpolantAutomaton<LETTER> interpolantAutomatonDeterminized =
 				new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, cachingHtc, interpolantAutomaton,
 						mIpTc.getPredicateUnifier(), false, false);
@@ -442,7 +439,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 				interpolantsBeforeConsolidation.size() - interpolantsAfterConsolidation.size();
 		mInterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(disjunctionsGreaterOneCounter,
 				newlyCreatedInterpolants, interpolantsDropped, differenceOfInterpolantsBeforeAfter,
-				htc.getEdgeCheckerBenchmark());
+				htc.getStatistics());
 		// Stop the time for interpolant consolidation
 		mInterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 		return consolidatedInterpolants;
@@ -546,15 +543,17 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 			final IPredicate postcondition, final List<IPredicate> interpolants) {
 		if (i < 0) {
 			throw new AssertionError("index beyond precondition");
-		} else if (i == 0) {
-			return precondition;
-		} else if (i <= interpolants.size()) {
-			return interpolants.get(i - 1);
-		} else if (i == interpolants.size() + 1) {
-			return postcondition;
-		} else {
-			throw new AssertionError("index beyond postcondition");
 		}
+		if (i == 0) {
+			return precondition;
+		}
+		if (i <= interpolants.size()) {
+			return interpolants.get(i - 1);
+		}
+		if (i == interpolants.size() + 1) {
+			return postcondition;
+		}
+		throw new AssertionError("index beyond postcondition");
 	}
 
 	private void addStatesAndCorrespondingTransitionsFromGivenInterpolants(
@@ -710,19 +709,23 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 		private int mDifferenceBeforeAfter = 0;
 		private int mNewlyCreatedInterpolants = 0;
 		private int mInterpolantsDropped = 0;
+
 		// Contains the number of hoare triple checks (i.e. num of sats + num of unsats + num of unknowns)
 		// that are made by the interpolant consolidation
-		private InCaReCounter mNumOfHoareTripleChecks = new InCaReCounter();
+		private final InCaReCounter mNumOfHoareTripleChecks = new InCaReCounter();
 		private int mDiffAutomatonEmpty_Counter = 0;
 
 		public void setInterpolantConsolidationData(final int disjunctionsGreaterOneCounter,
 				final int newlyCreatedInterpolants, final int interpolantsDropped,
-				final int differenceOfNumOfInterpolantsBeforeAfter, final HoareTripleCheckerStatisticsGenerator htcbg) {
+				final int differenceOfNumOfInterpolantsBeforeAfter, final IStatisticsDataProvider htcStats) {
 			mDisjunctionsGreaterOneCounter = disjunctionsGreaterOneCounter;
 			mDifferenceBeforeAfter = differenceOfNumOfInterpolantsBeforeAfter;
-			mNumOfHoareTripleChecks = htcbg.getSolverCounterSat();
-			mNumOfHoareTripleChecks.add(htcbg.getSolverCounterUnsat());
-			mNumOfHoareTripleChecks.add(htcbg.getSolverCounterUnknown());
+			mNumOfHoareTripleChecks
+					.add((InCaReCounter) htcStats.getValue(HoareTripleCheckerStatisticsDefinitions.SolverSat.name()));
+			mNumOfHoareTripleChecks
+					.add((InCaReCounter) htcStats.getValue(HoareTripleCheckerStatisticsDefinitions.SolverUnsat.name()));
+			mNumOfHoareTripleChecks.add(
+					(InCaReCounter) htcStats.getValue(HoareTripleCheckerStatisticsDefinitions.SolverUnknown.name()));
 			mNewlyCreatedInterpolants = newlyCreatedInterpolants;
 			mInterpolantsDropped = interpolantsDropped;
 		}

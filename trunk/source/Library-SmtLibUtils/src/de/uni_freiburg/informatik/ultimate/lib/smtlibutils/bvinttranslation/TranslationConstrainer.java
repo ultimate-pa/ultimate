@@ -6,6 +6,7 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -41,8 +42,11 @@ public class TranslationConstrainer {
 		final Sort[] functionsort = new Sort[2];
 		functionsort[0] = intSort;
 		functionsort[1] = intSort;
+
 		if (mIntand == null) {
-			mScript.declareFun("intand", functionsort, intSort);
+			if (mScript.getFunctionSymbol("intand") == null) {
+				mScript.declareFun("intand", functionsort, intSort);
+			}
 			mIntand = mScript.getFunctionSymbol("intand");
 		}
 	}
@@ -136,7 +140,11 @@ public class TranslationConstrainer {
 			mConstraintSet.add(lowerBound);
 			mConstraintSet.add(upperBound);
 			mConstraintSet.add(lazy);
-			mConstraintSet.add(modeConstraint);
+
+			// Important, to match with the backtranslation we also need to bring it in the same form here
+			final UnfTransformer unfT = new UnfTransformer(mScript);
+			final Term unfModeConstraint = unfT.transform(modeConstraint);
+			mConstraintSet.add(unfModeConstraint);
 		}
 	}
 
