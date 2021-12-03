@@ -357,7 +357,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
-		if (isSequential()) {
+		if (!IcfgUtils.isConcurrent(mIcfg)) {
 			mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(getServices(), super.mIcfg,
 					mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 		} else {
@@ -1263,7 +1263,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	@Override
 	protected void computeOwickiGriesAnnotation() {
-		assert !isSequential() : "Cannot compute Owicki-Gries for sequential program.";
+		assert IcfgUtils.isConcurrent(mIcfg) : "Cannot compute Owicki-Gries for sequential program.";
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}
@@ -1356,10 +1356,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	public IPostconditionProvider getPostconditionProvider() {
 		return IPostconditionProvider.constructDefaultPostconditionProvider();
-	}
-
-	private final boolean isSequential() {
-		return !IcfgUtils.isConcurrent(super.mIcfg);
 	}
 
 	private class TimeoutRefinementEngineResult

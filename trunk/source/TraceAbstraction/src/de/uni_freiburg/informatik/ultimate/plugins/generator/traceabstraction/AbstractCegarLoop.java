@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -833,11 +834,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			}
 
 			if (mComputeHoareAnnotation && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
-				if (mIcfg.isSequential()) {
+				if (IcfgUtils.isConcurrent(mIcfg)) {
+					computeOwickiGriesAnnotation();
+				} else {
 					computeIcfgHoareAnnotation();
 					writeHoareAnnotationToLogger();
-				} else {
-					computeOwickiGriesAnnotation();
 				}
 			} else {
 				mLogger.debug("Omitting computation of Hoare annotation");
