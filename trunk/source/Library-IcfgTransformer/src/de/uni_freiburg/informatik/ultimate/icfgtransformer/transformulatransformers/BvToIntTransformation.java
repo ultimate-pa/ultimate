@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
@@ -46,18 +47,23 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 	private final IUltimateServiceProvider mServices;
 	private final ReplacementVarFactory mFac;
+	final TranslationManager mTranslationManager;
+	final LinkedHashMap<Term, Term> mBacktranslationMap = new LinkedHashMap<>();
 
 	/**
 	 * @param fac
+	 * @param mgdScript
 	 * @param useNeighbors
 	 *            If set to false we obtain the underapproximation where we
 	 *            assume that the modulo operator is the identity for the
 	 *            first argument.
 	 */
-	public BvToIntTransformation(final IUltimateServiceProvider services, final ReplacementVarFactory fac) {
+	public BvToIntTransformation(final IUltimateServiceProvider services, final ReplacementVarFactory fac,
+			final ManagedScript mgdScript) {
 		super();
 		mFac = fac;
 		mServices = services;
+		mTranslationManager = new TranslationManager(mgdScript);
 	}
 
 	@Override
@@ -79,6 +85,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 			final IReplacementVarOrConst repVar = mFac.getOrConstuctReplacementVar(progVar.getTermVariable(), true,
 					bvToIntSort(mgdScript, progVar.getTerm().getSort()));
+			mBacktranslationMap.put(((IProgramVar) repVar).getTermVariable(), progVar.getTermVariable());
 
 			final TermVariable intInVar;
 			final TermVariable intOutVar;
@@ -118,7 +125,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			}
 		}
 
-		final TranslationManager translationManager = new TranslationManager(mgdScript);
+
 
 		// construct new auxVar for each existing auxVar
 		for (final TermVariable auxVar : tf.getAuxVars()) {
@@ -128,9 +135,9 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			newIntTF.addAuxVars(Collections.singleton(newAuxVar));
 		}
 
-		translationManager.setReplacementVarMaps(varMap);
+		mTranslationManager.setReplacementVarMaps(varMap);
 
-		final Term newFormula = translationManager.translateBvtoInt(tf.getFormula());
+		final Term newFormula = mTranslationManager.translateBvtoInt(tf.getFormula());
 
 		newIntTF.setFormula(newFormula);
 		return newIntTF;
@@ -156,10 +163,18 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 	}
 
+	public Function<Term, Term> getTermBacktranslation() {
+		return x -> mTranslationManager.translateIntBacktoBv(x);
+	}
+
 	@Override
 	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
 			final ModifiableTransFormula newTF) {
 		return true; // TODO
+	}
+
+	public LinkedHashMap<Term, Term> getBacktranslationOfVariables() {
+		return mBacktranslationMap;
 	}
 
 }

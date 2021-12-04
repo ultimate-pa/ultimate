@@ -15,7 +15,7 @@ public class TranslationManager {
 	private final Script mScript;
 	private final FunctionSymbol mIntand;
 	private LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
-	private LinkedHashMap<Term, Term> mReversedVarMap;
+	private final LinkedHashMap<Term, Term> mReversedVarMap;
 	private final TranslationConstrainer mTc;
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
@@ -48,7 +48,7 @@ public class TranslationManager {
 
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
 		mVariableMap = bvToInt.getVarMap();
-		mReversedVarMap = bvToInt.getReversedVarMap();
+		mReversedVarMap.putAll(bvToInt.getReversedVarMap());
 
 
 		mConstraintSet.addAll(mTc.getConstraints());

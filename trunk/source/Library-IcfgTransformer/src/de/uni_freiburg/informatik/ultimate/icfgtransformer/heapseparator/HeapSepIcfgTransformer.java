@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.AxiomsAdderIcfgTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.AddInitializingEdgesIcfgTransformer;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transfo
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.PartitionProjectionTransitionTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.CongruenceClosureSmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -117,7 +119,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 */
 	public HeapSepIcfgTransformer(final ILogger logger, final IUltimateServiceProvider services,
 			final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final ReplacementVarFactory replacementVarFactory, final IBacktranslationTracker backtranslationTracker,
+			final ReplacementVarFactory replacementVarFactory,
+			final IcfgTransformationBacktranslator backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final IProgramNonOldVar validArray) {
@@ -166,7 +169,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 */
 	private void computeResult(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final ReplacementVarFactory replacementVarFactory,
-			final IBacktranslationTracker heapSepBacktranslationTracker,
+			final IcfgTransformationBacktranslator heapSepBacktranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final IProgramNonOldVar validArray) {
@@ -205,8 +208,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 							locArrayManager,
 							mHeapArrays, csiiaag.getEdgeToPositionToLocUpdateInfo());
 
-			final IBacktranslationTracker preprocBtt =
-					(e1, e2) -> originalEdgeToTransformedEdgeMapping.put((IcfgEdge) e1, (IcfgEdge) e2);
+			final IcfgTransformationBacktranslator preprocBtt = new IcfgTransformationBacktranslator(IcfgEdge.class,
+					Term.class, mLogger);
 
 			final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 					preprocBtt, outLocationClass, "icfg_with_locarrays", mauit);
@@ -214,6 +217,11 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 //			originalEdgeToTransformedEdgeMapping =
 //					icgtf.getOriginalEdgeToTransformedEdgeMapping();
 			icfgWithMemlocUpdates = icgtf.getResult();
+
+			for (final Entry<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> entry : preprocBtt
+					.getEdgeMapping().entrySet()) {
+				originalEdgeToTransformedEdgeMapping.put((IcfgEdge) entry.getValue(), (IcfgEdge) entry.getKey());
+			}
 
 			locArrayManager.freeze();
 			mLogger.info("finished MemlocArrayUpdater");
@@ -240,7 +248,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					new AddInitializingEdgesIcfgTransformer<>(mLogger,
 							icfgWithMemlocUpdates.getCfgSmtToolkit(),
 							outToOutLocFac,
-							(e1, e2) -> {},
+							heapSepBacktranslationTracker,
 							outLocationClass,
 							icfgWithMemlocUpdates,
 							mlit.getResult(),

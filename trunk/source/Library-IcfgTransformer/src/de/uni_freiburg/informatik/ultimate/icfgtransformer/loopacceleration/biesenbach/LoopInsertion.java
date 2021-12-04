@@ -14,8 +14,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -29,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -44,14 +43,14 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 	private final Class<OUTLOC> mOutLocationClass;
 	private final ILocationFactory<INLOC, OUTLOC> mFunLocFac;
 	private final String mNewIcfgIdentifier;
-	private final IBacktranslationTracker mBacktranslationTracker;
+	private final IcfgTransformationBacktranslator mBacktranslationTracker;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgScript;
 	private final Script mScript;
 
 	public LoopInsertion(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final String newIcfgIdentifier,
-			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services) {
+			final IcfgTransformationBacktranslator backtranslationTracker, final IUltimateServiceProvider services) {
 
 		// Setup
 		mLogger = logger;

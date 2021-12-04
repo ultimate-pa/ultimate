@@ -40,9 +40,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -72,7 +72,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
 	private final ManagedScript mManagedScript;
-	private final IBacktranslationTracker mBacktranslationTracker;
+	private final IcfgTransformationBacktranslator mBacktranslationTracker;
 	private final ILocationFactory<INLOC, OUTLOC> mLocationFactory;
 	private final IUltimateServiceProvider mServices;
 	private final FastUPRReplacementMethod mReplacementMethod;
@@ -105,7 +105,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 	 */
 	public FastUPRTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> locationFactory,
-			final String newIcfgIdentifier, final IBacktranslationTracker backtranslationTracker,
+			final String newIcfgIdentifier, final IcfgTransformationBacktranslator backtranslationTracker,
 			final IUltimateServiceProvider services, final FastUPRReplacementMethod replaceMethod) {
 		mBenchmark = new FastUPRBenchmark();
 		mLoopFailures = 0;
@@ -403,14 +403,14 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 					final INLOC oldTarget = (INLOC) element.getExitEdge().getTarget();
 					final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 					final IcfgEdge exitEdge = lst.createNewTransition(newSource, newTarget, element.getExitEdge());
-					mBacktranslationTracker.rememberRelation(element.getExitEdge(), exitEdge);
+					mBacktranslationTracker.mapEdges(exitEdge, element.getExitEdge());
 					open.add(oldTarget);
 					continue;
 
 				}
 				final IcfgEdge newTrans = lst.createNewInternalTransition(newSource, newSource,
 						loopMapping.get(oldEdge).getFormula(), false);
-				mBacktranslationTracker.rememberRelation(oldEdge, newTrans);
+				mBacktranslationTracker.mapEdges(newTrans, oldEdge);
 				continue;
 			}
 
@@ -436,7 +436,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 				final IcfgEdge newEdge =
 						lst.createNewInternalTransition(newSource, newTarget, loopMapping.get(e).getFormula(), false);
-				mBacktranslationTracker.rememberRelation(e, newEdge);
+				mBacktranslationTracker.mapEdges(e, newEdge);
 				continue;
 			}
 		}
