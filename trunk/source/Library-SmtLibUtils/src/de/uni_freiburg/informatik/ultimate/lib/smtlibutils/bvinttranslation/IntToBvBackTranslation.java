@@ -675,16 +675,16 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 				}
 			}
+			case "ite": {
+				setResult(mScript.term("ite", args[0], args[1], args[2]));
+				return;
+			}
 			case "abs": {
 				throw new UnsupportedOperationException("Unexpected function in back-translation " + fsym.getName());
 			}
 
 			default:
-				final Term[] translatedSubterms = new Term[appTerm.getParameters().length];
-				for (int i = 0; i < appTerm.getParameters().length; i++) {
-					translatedSubterms[i] = args[i];
-				}
-				setResult(SmtUtils.termWithLocalSimplification(mScript, fsym, translatedSubterms));
+				setResult(SmtUtils.termWithLocalSimplification(mScript, fsym, args));
 				return;
 
 			}
