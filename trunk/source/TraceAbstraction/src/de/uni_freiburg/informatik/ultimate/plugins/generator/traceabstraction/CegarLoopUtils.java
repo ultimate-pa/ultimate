@@ -109,9 +109,7 @@ public class CegarLoopUtils {
 					throw new AssertionError("Unknown Setting: " + automataType);
 				}
 			}
-		} else
-
-		{
+		} else {
 			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 					taPrefs.interpolation(), computeHoareAnnotation, services, languageOperation, compositionFactory,
 					transitionClazz);
