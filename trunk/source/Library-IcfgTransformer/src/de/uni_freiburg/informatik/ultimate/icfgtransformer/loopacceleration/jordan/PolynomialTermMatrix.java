@@ -306,13 +306,17 @@ public class PolynomialTermMatrix {
 					for (final Rational coeff : closedFormMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
 						if (coeff.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
 							restrictedVersionPossible = false;
-							final Pair<PolynomialTermMatrix, Boolean> result = new Pair<>(null, false);
-							return result;
+//							final Pair<PolynomialTermMatrix, Boolean> result = new Pair<>(null, false);
+//							return result;
+							// TODO Matthias: Check if this is really dead code.
+							throw new AssertionError("Case should never occur");
 						}
 						if (constant.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
 							restrictedVersionPossible = false;
-							final Pair<PolynomialTermMatrix, Boolean> result = new Pair<>(null, false);
-							return result;
+//							final Pair<PolynomialTermMatrix, Boolean> result = new Pair<>(null, false);
+//							return result;
+							// TODO Matthias: Check if this is really dead code.
+							throw new AssertionError("Case should never occur");
 						}
 					}
 					closedFormMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
