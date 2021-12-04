@@ -498,6 +498,10 @@ public class BvToIntTranslation extends TermTransformer {
 					setResult(mScript.term("mod", multiplication, maxNumber));
 					return;
 				}
+				case "ite": {
+					setResult(mScript.term("ite", args[0], args[1], args[2]));
+					return;
+				}
 				}
 
 				if (appTerm.getParameters().length == 2) {
@@ -621,6 +625,7 @@ public class BvToIntTranslation extends TermTransformer {
 						setResult(intAnd);
 						return;
 					}
+
 					}
 				}
 			}
