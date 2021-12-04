@@ -174,8 +174,7 @@ public final class DangerInvariantGuesser {
 				final UnmodifiableTransFormula tf = edge.getTransformula();
 				UnmodifiableTransFormula tfnew = null;
 				try {
-					tfnew = TransFormulaUtils.computeGuardedHavoc(tf, csToolkit.getManagedScript(), services, mLogger,
-							true);
+					tfnew = TransFormulaUtils.computeGuardedHavoc(tf, csToolkit.getManagedScript(), services, true);
 				} catch (final ToolchainCanceledException tce) {
 					final String taskDescription = "computing guarded havoc for TransFormula of DAG size "
 							+ new DagSizePrinter(tf.getFormula());

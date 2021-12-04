@@ -75,7 +75,7 @@ public class DfsBookkeeping<V> {
 
 	/**
 	 * Returns the index of the given node in the stack (the bottom element has index 0, the top element's index is the
-	 * biggest). Returns -1 if then ode is not on the stack.
+	 * biggest). Returns -1 if the node is not on the stack.
 	 */
 	public int stackIndexOf(final V node) {
 		return mStack.indexOf(node);

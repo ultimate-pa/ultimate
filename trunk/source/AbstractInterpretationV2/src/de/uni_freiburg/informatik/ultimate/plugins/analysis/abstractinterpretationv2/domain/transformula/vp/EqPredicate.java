@@ -116,7 +116,7 @@ public class EqPredicate implements IPredicate {
 	private Set<Term> collectLiteralsInFormula(final Term formula) {
 		final Predicate<Term> pred = term -> term instanceof ConstantTerm
 				|| mEqNodeAndFunctionFactory.getNonTheoryLiterals().contains(term);
-		return new SubTermFinder(pred).findMatchingSubterms(formula);
+		return SubTermFinder.find(formula, pred, false);
 	}
 
 //	@Deprecated

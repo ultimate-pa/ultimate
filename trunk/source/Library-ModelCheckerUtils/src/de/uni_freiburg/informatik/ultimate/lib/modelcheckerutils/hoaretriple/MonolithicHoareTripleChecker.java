@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -76,10 +76,9 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	 * compatible result. Set this only to true if you can guarantee that only an IPredicate whose formula is true is
 	 * equivalent to true.
 	 */
-	private final static boolean DEBUG_TEST_DATAFLOW = false;
+	private static final boolean DEBUG_TEST_DATAFLOW = false;
 
 	public MonolithicHoareTripleChecker(final CfgSmtToolkit csToolkit) {
-		super();
 		mCsToolkit = csToolkit;
 		mManagedScript = csToolkit.getManagedScript();
 		mModifiableGlobals = csToolkit.getModifiableGlobalsTable();
@@ -152,7 +151,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getStatistics() {
 		return mHoareTripleCheckerStatistics;
 	}
 
@@ -211,11 +210,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				modifiableGlobalsPred, modifiableGlobalsSucc);
 
 		if (expectUnsat) {
-			assert (result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN) : "From "
+			assert result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN : "From "
 					+ ps1.getFormula().toStringDirect() + "Statements " + ta.toString() + "To "
 					+ ps2.getFormula().toStringDirect() + "Not inductive!";
 		}
-		mSatCheckTime += (System.nanoTime() - startTime);
+		mSatCheckTime += System.nanoTime() - startTime;
 		if (DEBUG_TEST_DATAFLOW) {
 			testMyInternalDataflowCheck(ps1, ta, ps2, result);
 		}
@@ -276,9 +275,9 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mIndexedConstants = null;
 		mManagedScript.getScript().pop(1);
 		if (expectUnsat) {
-			assert (result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN) : "call statement not inductive";
+			assert result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN : "call statement not inductive";
 		}
-		mSatCheckTime += (System.nanoTime() - startTime);
+		mSatCheckTime += System.nanoTime() - startTime;
 		if (DEBUG_TEST_DATAFLOW) {
 			testMyCallDataflowCheck(ps1, ta, ps2, result);
 		}
@@ -368,13 +367,12 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mManagedScript.getScript().pop(1);
 		mIndexedConstants = null;
 		if (expectUnsat) {
-			assert (result == Script.LBool.UNSAT
-					|| result == Script.LBool.UNKNOWN) : ("From " + ps1.getFormula().toStringDirect())
-							+ ("Caller " + psk.getFormula().toStringDirect()) + ("Statements " + ta)
-							+ ("To " + ps2.getFormula().toStringDirect()) + ("Not inductive!");
+			assert result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN : "From "
+					+ ps1.getFormula().toStringDirect() + "Caller " + psk.getFormula().toStringDirect() + "Statements "
+					+ ta + "To " + ps2.getFormula().toStringDirect() + "Not inductive!";
 
 		}
-		mSatCheckTime += (System.nanoTime() - startTime);
+		mSatCheckTime += System.nanoTime() - startTime;
 		if (DEBUG_TEST_DATAFLOW) {
 			testMyReturnDataflowCheck(ps1, psk, ta, ps2, result);
 		}
@@ -386,7 +384,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final long startTime = System.nanoTime();
 		LBool result = null;
 		result = mManagedScript.getScript().assertTerm(term);
-		mSatCheckSolverTime += (System.nanoTime() - startTime);
+		mSatCheckSolverTime += System.nanoTime() - startTime;
 		return result;
 	}
 
@@ -402,7 +400,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			throw e;
 		}
 		result = mManagedScript.getScript().checkSat();
-		mSatCheckSolverTime += (System.nanoTime() - startTime);
+		mSatCheckSolverTime += System.nanoTime() - startTime;
 		mNontrivialSatQueries++;
 		if (result == LBool.UNKNOWN) {
 			final Object info = mManagedScript.getScript().getInfo(":reason-unknown");
@@ -453,7 +451,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result) : "my call dataflow check failed";
+			assert testRes == IncrementalPlicationChecker
+					.convertLBool2Validity(result) : "my call dataflow check failed";
 			// if (testRes != result) {
 			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }
@@ -493,7 +492,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecInternal(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result) : "my internal dataflow check failed";
+			assert testRes == IncrementalPlicationChecker
+					.convertLBool2Validity(result) : "my internal dataflow check failed";
 			// if (testRes != result) {
 			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }

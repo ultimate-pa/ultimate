@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -88,6 +89,24 @@ public final class BitvectorUtils {
 					}
 				}
 			}
+		} else if (term instanceof ConstantTerm) {
+			if (SmtSortUtils.isBitvecSort(term.getSort())) {
+				final ConstantTerm constTerm = (ConstantTerm) term;
+				if (constTerm.getValue() instanceof String) {
+					final String bitString = (String) constTerm.getValue();
+					final BigInteger value;
+					if (bitString.startsWith("#b")) {
+						value = new BigInteger(bitString.substring(2), 2);
+					} else if (bitString.startsWith("#x")) {
+						value = new BigInteger(bitString.substring(2), 16);
+					} else {
+						throw new AssertionError("Unexpected constant value");
+					}
+					return constructBitvectorConstant(value, term.getSort());
+				} else {
+					throw new UnsupportedOperationException("Unexpected value of bitvector constant");
+				}
+			}
 		}
 		return null;
 	}
@@ -135,8 +154,14 @@ public final class BitvectorUtils {
 		case zero_extend:
 			result = new Zero_extend().simplifiedResult(script, funcname, indices, params);
 			break;
+		case sign_extend:
+			result = new Sign_extend().simplifiedResult(script, funcname, indices, params);
+			break;
 		case extract:
 			result = new Extract().simplifiedResult(script, funcname, indices, params);
+			break;
+		case concat:
+			result = new Concat().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvadd:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvadd(x, y))
@@ -160,6 +185,10 @@ public final class BitvectorUtils {
 			break;
 		case bvsrem:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsrem(x, y))
+					.simplifiedResult(script, funcname, indices, params);
+			break;
+		case bvsmod:
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsmod(x, y))
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvmul:
@@ -276,6 +305,32 @@ public final class BitvectorUtils {
 		public abstract Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs);
 	}
 
+	private static class Concat extends BitvectorOperation {
+
+		@Override
+		public String getFunctionName() {
+			return "concat";
+		}
+
+		@Override
+		public int getNumberOfIndices() {
+			return 0;
+		}
+
+		@Override
+		public int getNumberOfParams() {
+			return 2;
+		}
+
+		@Override
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
+			final BitvectorConstant bv = BitvectorConstant.concat(bvs[0], bvs[1]);
+			return constructTerm(script, bv);
+		}
+
+	}
+
 	private static class Extract extends BitvectorOperation {
 
 		@Override
@@ -298,6 +353,32 @@ public final class BitvectorUtils {
 				final BitvectorConstant[] bvs) {
 			final BitvectorConstant bv =
 					BitvectorConstant.extract(bvs[0], indices[0].intValueExact(), indices[1].intValueExact());
+			return constructTerm(script, bv);
+		}
+
+	}
+
+	private static class Sign_extend extends BitvectorOperation {
+
+		@Override
+		public String getFunctionName() {
+			return "sign_extend";
+		}
+
+		@Override
+		public int getNumberOfIndices() {
+			return 1;
+		}
+
+		@Override
+		public int getNumberOfParams() {
+			return 1;
+		}
+
+		@Override
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
+			final BitvectorConstant bv = BitvectorConstant.sign_extend(bvs[0], indices[0]);
 			return constructTerm(script, bv);
 		}
 

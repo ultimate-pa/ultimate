@@ -62,6 +62,30 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  * A choice of persistent sets for pthread-like concurrent programs. By analysing the CFG, we compute persistent sets
  * for the concurrent product in polynomial time (in the size of the CFG).
  *
+ * We always include all or none of the enabled actions of a thread. The algorithm thus has to select a set of threads
+ * to include in the persistent set. This is based on the notion of "conflict" between the ICFG locations. If the
+ * current location of thread t1 has a conflict with the current location of thread t2, and t1 is included in the
+ * persistent set, then t2 must also be included.
+ *
+ * We have the following types of conflicts:
+ *
+ * 1) Commutativity conflicts: The original idea of conflicts, based on independence. Currently only unconditional
+ * independence is supported.
+ *
+ * 2) Compatibility conflicts: Optional. Needed to ensure the choice of persistent sets is compatible with the IDfsOrder
+ * used by sleep-set reduction.
+ *
+ * 3) Error conflicts: Needed to ensure the computed set is a membrane (no error can be reached without executing some
+ * action in the set).
+ *
+ * 4) Join conflicts: Needed if joins cannot be resolved uniquely (there are multiple *JoinThreadOther transitions for a
+ * single *JoinThreadCurrent). The possibly joined threads have to be included in the persistent set if the future
+ * joining thread is, to ensure that all *JoinThreadOther transitions are enabled when the time comes.
+ *
+ * 5) Fork conflicts: Needed to propagate conflicts with not-yet-started threads. The forking thread (or ancestor in the
+ * fork-hierarchy between threads) represents the forked thread, i.e., is included in every persistent set that would
+ * include the forked thread if it already existed.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <LOC>
@@ -347,11 +371,11 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 * Determines if the given locations have a "join conflict".
 	 *
 	 * Locations (l1, l2) have a join conflict if from l1, it is possible to reach (within the thread) a JoinCurrent
-	 * transition that may correspond to a JoinOther transition belonging to the thread of l2.
+	 * transition that may (but need not) correspond to a JoinOther transition belonging to the thread of l2.
 	 */
 	private boolean hasJoinConflict(final IcfgLocation persistentLoc, final IcfgLocation otherLoc) {
 		final String joinedThread = otherLoc.getProcedure();
-		if (persistentLoc.getProcedure() == joinedThread) {
+		if (joinedThread.equals(persistentLoc.getProcedure())) {
 			return false;
 		}
 		return IcfgUtils.canReachCached(persistentLoc,
@@ -362,7 +386,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 	private boolean hasErrorConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc) {
 		final String persistentThread = persistentLoc.getProcedure();
-		if (sourceLoc.getProcedure() == persistentThread) {
+		if (persistentThread.equals(sourceLoc.getProcedure())) {
 			return false;
 		}
 		return canReachConflict(persistentThread, sourceLoc, e -> mErrorLocs.contains(e.getTarget()),

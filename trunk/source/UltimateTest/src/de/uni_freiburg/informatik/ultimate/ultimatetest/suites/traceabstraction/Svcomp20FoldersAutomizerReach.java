@@ -2,22 +2,22 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestSuite {
 
@@ -73,26 +73,26 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new DirectoryFileEndingsPair("examples/svcomp/array-cav19/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/array-lopstr16/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/array-fpi/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
+
 		/*** Subcategory   ReachSafety-BitVectors ***/
 		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ MIXED }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/bitvector-loops/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-			
+
 		/*** Subcategory   ReachSafety-ControlFlow ***/
 		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
+
 		/*** Subcategory   ReachSafety-ReachSafety-ECA ***/
 		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/psyco/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		// new in 2020
 		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2018/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/eca-programs/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
+
 		/*** Subcategory    ReachSafety-Floats ***/
 		new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/floats-cbmc-regression/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -101,7 +101,7 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		// new in 2020
 		new DirectoryFileEndingsPair("examples/svcomp/float-newlib/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/loop-floats-scientific-comp/", new String[]{ MIXED }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
+
 		/*** Subcategory   ReachSafety-Heap ***/
 		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -115,7 +115,7 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new DirectoryFileEndingsPair("examples/svcomp/list-simple/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/heap-data/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/list-ext3-properties/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
+
 		/*** Subcategory   ReachSafety-Loops ***/
 		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -129,7 +129,7 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new DirectoryFileEndingsPair("examples/svcomp/loop-simple/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/verifythis/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/nla-digbench/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
+
 		/*** Subcategory   ReachSafety-ProductLines ***/
 		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
@@ -137,18 +137,18 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/recursive-with-pointer/", new String[]{ MIXED }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
+
 		/*** Subcategory   ReachSafety-Sequentialized ***/
 		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
+
 		// new in 2020
 		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded-reduced/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 	};
-	
-	
-	
+
+
+
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_64BIT = {
 		/***** Category 6. SoftwareSystems *****/
 		/*** Subcategory  Systems_DeviceDriversLinux64_ReachSafety ***/
@@ -167,9 +167,9 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 //		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.14/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT),
 //		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-4.0-rc1-mav/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT),
 	};
-	
-	
-	
+
+
+
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new SvcompReachTestResultDecider(urd, false);
@@ -192,6 +192,8 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 //		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default-PENGUIN.epf",
 		"default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 //		"automizer/DumpDifficultPathProgramsFromBoogie_svcomp-Reach-64bit-Automizer.epf"
+//		"automizer/LoopAccelerationJordan.epf",
+//		"automizer/svcomp-Reach-64bit-Automizer_Default_BvToInt.epf",
 	};
 
 	private static final String[] SETTINGS_64BIT = {
@@ -209,6 +211,7 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 //		"AutomizerCInlineTransformed.xml",
+//		"AutomizerCInlineBlockencodedTransformed.xml"
 	};
 	// @formatter:on
 

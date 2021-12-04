@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 	<option name="--force-no-wrapper" />
 
 	<!-- === No Partial Order Reduction === -->
@@ -9,9 +9,9 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.None">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.None">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-None-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer PN">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
@@ -69,7 +69,7 @@
 	<!-- === Sleep Set Reduction (with unrolling, minimal) integrated in TAR === -->
 	<!-- ======================================================================= -->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
 	</rundefinition>
 
@@ -95,15 +95,15 @@
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepUncond">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepUncond-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 
 	<!-- === Persistent Set Reduction integrated in TAR === -->
 	<!-- ================================================== -->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.Persistent">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.Persistent">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-Persistent-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 
 	<!-- === Sleep Set Reduction (prune only, non-minimal) and Persistent Set Reduction integrated in TAR === -->
@@ -129,6 +129,10 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-Lockstep.epf</option>
 	</rundefinition>
 
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistent.OrderLoopLockstep">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-LoopLockstep.epf</option>
+	</rundefinition>
+
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
 	</rundefinition>
@@ -137,7 +141,11 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Lockstep.epf</option>
 	</rundefinition>
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom42">
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLoopLockstep">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-LoopLockstep.epf</option>
+	</rundefinition>
+
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom42">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random42.epf</option>
 	</rundefinition>
 
@@ -147,7 +155,7 @@
 
 	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom7777">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random7777.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 
 	<!-- === Sleep Set Reduction (prune only, non-minimal) integrated in TAR, with one-shot upfront Lipton Reduction === -->
@@ -182,8 +190,16 @@
 	<tasks name="SVCOMP ConcurrencySafety-Main">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-		<excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
+		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+	</tasks>
+
+	<tasks name="SVCOMP NoDataRace">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
 
 	<!--tasks name="Ultimate Repo: pthreads">
@@ -206,15 +222,15 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
 	</tasks-->
 
-	<tasks name="Weaver Benchmarks">
+	<!--tasks name="Weaver Benchmarks">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
-    <includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
-    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
+		<includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+	</tasks-->
 
-	<tasks name="POPL2022 Benchmarks">
+	<!--tasks name="POPL2022 Benchmarks">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
 		<includesfile>../../../trunk/examples/bench-popl2022.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
+	</tasks-->
 </benchmark>

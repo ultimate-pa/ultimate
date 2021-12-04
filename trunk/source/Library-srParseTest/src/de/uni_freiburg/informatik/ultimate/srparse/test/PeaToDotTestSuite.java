@@ -85,11 +85,12 @@ public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
 	private static final boolean CREATE_NEW_FILES = false;
 
-	private static final File ROOT_DIR = new File("/mnt/Data/Projects/hanfor/documentation/docs");
-	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
-	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
-	private static final File POS_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/positive");
-	private static final File NEG_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/negative");
+	private static final File ROOT_DIR = new File("/mnt/Data/Developement/hanfor/documentation");
+	private static final File DOCS_DIR = new File(ROOT_DIR + "/docs");
+	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/includes/patterns");
+	private static final File PEA_IMAGE_DIR = new File(DOCS_DIR + "/img/patterns");
+	private static final File POS_FAILURE_IMAGE_DIR = new File(DOCS_DIR + "/img/failure_paths/positive");
+	private static final File NEG_FAILURE_IMAGE_DIR = new File(DOCS_DIR + "/img/failure_paths/negative");
 	private static final File ULTIMATE_REVISION_FILE = new File(MARKDOWN_DIR + "/ultimate_revision.txt");
 
 	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
@@ -190,26 +191,26 @@ public class PeaToDotTestSuite {
 		fmt.format("#### Phase Event Automata%s", LINE_SEP);
 		assert (numPea == cts.size());
 		for (int i = numPea; i > 0; i--) {
-			fmt.format("![](%s/%s/%s_%s_%d.svg)%s", "..", ROOT_DIR.toPath().relativize(PEA_IMAGE_DIR.toPath()),
-					mPatternName, mScopeName, (numPea - i), LINE_SEP);
+			fmt.format("![](../%s/%s_%s_%d.svg)%s", DOCS_DIR.toPath().relativize(PEA_IMAGE_DIR.toPath()), mPatternName,
+					mScopeName, (numPea - i), LINE_SEP);
 		}
 		fmt.format(LINE_SEP);
 
 		fmt.format("#### Examples%s%s", LINE_SEP, LINE_SEP);
 		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
-			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
-			fmt.format("| Positive Example | Negative Example |%s", LINE_SEP);
+			fmt.format("| Positive Example { .negative-example } | Negative Example { .positive-example } |%s",
+					LINE_SEP);
 			fmt.format("| --- | --- |%s", LINE_SEP);
 
 			for (int i = 0; i < Math.max(posFailureImages.length, negFailureImages.length); i++) {
 				String lhs = "", rhs = "";
 
 				if (i < posFailureImages.length) {
-					lhs = "![](../" + ROOT_DIR.toPath().relativize(POS_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+					lhs = "![](../" + DOCS_DIR.toPath().relativize(POS_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
 							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
 				}
 				if (i < negFailureImages.length) {
-					rhs = "![](../" + ROOT_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+					rhs = "![](../" + DOCS_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
 							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
 				}
 				fmt.format("| %s | %s |%s", lhs, rhs, LINE_SEP);
@@ -263,7 +264,7 @@ public class PeaToDotTestSuite {
 
 		final String markdownDir = ROOT_DIR.toPath().relativize(MARKDOWN_DIR.toPath()).toString();
 		Arrays.stream(MARKDOWN_DIR.list()).filter(e -> e.endsWith(".md"))
-				.forEach(e -> fmt.format("{!%s/%s!}%s", markdownDir, e, LINE_SEP));
+				.forEach(e -> fmt.format("--8<-- \"%s/%s\"%s", markdownDir, e, LINE_SEP));
 
 		final File file = new File(MARKDOWN_DIR + "/includeAllPatterns.md");
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));

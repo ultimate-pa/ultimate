@@ -117,11 +117,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			mIcfgs.add((IIcfg<?>) root);
 		}
 		if (root instanceof WitnessNode && mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
-			if (mWitnessNode == null) {
-				mWitnessNode = (WitnessNode) root;
-			} else {
+			if (mWitnessNode != null) {
 				throw new UnsupportedOperationException("two witness models");
 			}
+			mWitnessNode = (WitnessNode) root;
 		}
 		if (root instanceof AutomataTestFileAST) {
 			mAutomataTestFileAsts.add((AutomataTestFileAST) root);
@@ -172,9 +171,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta,
 			final NestedLassoWord<IcfgEdge> nestedLassoWord) {
 		final IcfgProgramExecution<IcfgEdge> stemExecution =
-				IcfgProgramExecution.create(nestedLassoWord.getStem().asList(), Collections.emptyMap());
+				IcfgProgramExecution.create(nestedLassoWord.getStem().asList(), Collections.emptyMap(), IcfgEdge.class);
 		final IcfgProgramExecution<IcfgEdge> loopExecution =
-				IcfgProgramExecution.create(nestedLassoWord.getLoop().asList(), Collections.emptyMap());
+				IcfgProgramExecution.create(nestedLassoWord.getLoop().asList(), Collections.emptyMap(), IcfgEdge.class);
 		final NonTerminationArgumentResult<IcfgEdge, Term> result;
 		final IcfgEdge honda1 = nestedLassoWord.getLoop().getSymbol(0);
 		if (nta instanceof GeometricNonTerminationArgument) {
@@ -285,11 +284,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution<IcfgEdge> stemPE =
 					IcfgProgramExecution.create(counterexample.getStem().getWord().asList(), partialProgramStateMapping,
-							new Map[counterexample.getStem().getLength()]);
+							new Map[counterexample.getStem().getLength()], IcfgEdge.class);
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution<IcfgEdge> loopPE =
 					IcfgProgramExecution.create(counterexample.getLoop().getWord().asList(), partialProgramStateMapping,
-							new Map[counterexample.getLoop().getLength()]);
+							new Map[counterexample.getLoop().getLength()], IcfgEdge.class);
 			final IResult ntreportRes = new NonterminatingLassoResult<>(honda, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(honda));
 			reportResult(ntreportRes);

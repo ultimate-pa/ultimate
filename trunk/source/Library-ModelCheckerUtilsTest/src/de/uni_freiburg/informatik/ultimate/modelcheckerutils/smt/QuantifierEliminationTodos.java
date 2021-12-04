@@ -346,5 +346,154 @@ public class QuantifierEliminationTodos {
 	}
 
 
+	@Test
+	public void alegedAlternation() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "min"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "A"),
+			};
+		final String formulaAsString = "(exists ((v_l_26 Int) (v_A_17 (Array Int Int))) (and (= A (store v_A_17 v_l_26 (+ (- 1) (select v_A_17 v_l_26)))) (or (exists ((v_i_24 Int)) (and (<= (select v_A_17 v_i_24) (+ (select v_A_17 0) 1)) (<= min (select v_A_17 v_i_24)))) (and (exists ((v_i_24 Int)) (< min (select v_A_17 v_i_24))) (<= min (+ (select v_A_17 0) 1)))) (<= 1 v_l_26)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void saaPrenexPreprocessingBug() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_aws_array_list_is_valid_~list.base", "ULTIMATE.start_aws_array_list_is_valid_~list.offset", "ULTIMATE.start_aws_array_list_init_static_harness_~#list~0.base"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			};
+		final String formulaAsString = "(and (exists ((ULTIMATE.start_aws_mul_u64_checked_~r.base Int) (ULTIMATE.start_aws_mul_u64_checked_~b Int) (ULTIMATE.start_aws_mul_u64_checked_~a Int) (ULTIMATE.start_aws_mul_u64_checked_~r.offset Int) (|v_#memory_int_81| (Array Int (Array Int Int)))) (let ((.cse0 (select |v_#memory_int_81| ULTIMATE.start_aws_array_list_is_valid_~list.base))) (and (<= ULTIMATE.start_aws_mul_u64_checked_~r.offset 0) (or (= (select .cse0 8) 0) (exists ((v_ULTIMATE.start_aws_mul_u64_checked_~a_33 Int)) (let ((.cse1 (select |v_#memory_int_81| ULTIMATE.start_aws_array_list_is_valid_~list.base))) (let ((.cse2 (select .cse1 8))) (and (< 0 v_ULTIMATE.start_aws_mul_u64_checked_~a_33) (<= (select .cse1 24) (div .cse2 v_ULTIMATE.start_aws_mul_u64_checked_~a_33)) (= (mod .cse2 v_ULTIMATE.start_aws_mul_u64_checked_~a_33) 0)))))) (= (select .cse0 16) 0) (= |#memory_int| (store |v_#memory_int_81| ULTIMATE.start_aws_mul_u64_checked_~r.base (store (select |v_#memory_int_81| ULTIMATE.start_aws_mul_u64_checked_~r.base) ULTIMATE.start_aws_mul_u64_checked_~r.offset (* ULTIMATE.start_aws_mul_u64_checked_~b ULTIMATE.start_aws_mul_u64_checked_~a)))) (< 0 (select .cse0 24))))) (= ULTIMATE.start_aws_array_list_is_valid_~list.offset 0) (= ULTIMATE.start_aws_array_list_is_valid_~list.base |ULTIMATE.start_aws_array_list_init_static_harness_~#list~0.base|))";
+		final String expectedResult = "(let ((.cse0 (select |#memory_int| ULTIMATE.start_aws_array_list_is_valid_~list.base))) (and (< 0 (select .cse0 24)) (or (exists ((v_ULTIMATE.start_aws_mul_u64_checked_~a_33 Int)) (let ((.cse1 (select |#memory_int| ULTIMATE.start_aws_array_list_is_valid_~list.base))) (let ((.cse2 (select .cse1 8))) (and (<= (select .cse1 24) (div .cse2 v_ULTIMATE.start_aws_mul_u64_checked_~a_33)) (< 0 v_ULTIMATE.start_aws_mul_u64_checked_~a_33) (= (mod .cse2 v_ULTIMATE.start_aws_mul_u64_checked_~a_33) 0))))) (= (select .cse0 8) 0)) (= ULTIMATE.start_aws_array_list_is_valid_~list.base |ULTIMATE.start_aws_array_list_init_static_harness_~#list~0.base|) (exists ((ULTIMATE.start_aws_mul_u64_checked_~r.base Int) (ULTIMATE.start_aws_mul_u64_checked_~b Int) (ULTIMATE.start_aws_mul_u64_checked_~a Int) (ULTIMATE.start_aws_mul_u64_checked_~r.offset Int)) (and (<= ULTIMATE.start_aws_mul_u64_checked_~r.offset 0) (= (select (select |#memory_int| ULTIMATE.start_aws_mul_u64_checked_~r.base) ULTIMATE.start_aws_mul_u64_checked_~r.offset) (* ULTIMATE.start_aws_mul_u64_checked_~b ULTIMATE.start_aws_mul_u64_checked_~a)))) (= (select .cse0 16) 0) (= ULTIMATE.start_aws_array_list_is_valid_~list.offset 0)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void maybeTooDifficult() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_save_byte_from_array_~storage.base", "ULTIMATE.start_save_byte_from_array_~storage.offset", "ULTIMATE.start_save_byte_from_array_~array.base", "ULTIMATE.start_save_byte_from_array_~array.offset", "ULTIMATE.start_aws_array_eq_harness_~rhs~0.base", "ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.base", "ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.offset", "ULTIMATE.start_aws_array_eq_harness_~lhs~0.offset", "ULTIMATE.start_aws_array_eq_harness_~lhs~0.base", "#StackHeapBarrier"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+			};
+		final String formulaAsString = "(forall ((|#memory_int| (Array Int (Array Int Int))) (v_ULTIMATE.start_save_byte_from_array_~array.offset_44 Int) (v_ULTIMATE.start_save_byte_from_array_~storage.offset_46 Int) (|v_ULTIMATE.start_nondet_size_t_#res_14| Int) (|ULTIMATE.start_nondet_size_t_#res| Int) (|v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24| Int)) (or (let ((.cse1 (let ((.cse2 (store |#memory_int| ULTIMATE.start_save_byte_from_array_~storage.base (let ((.cse4 (store (select |#memory_int| ULTIMATE.start_save_byte_from_array_~storage.base) ULTIMATE.start_save_byte_from_array_~storage.offset |ULTIMATE.start_nondet_size_t_#res|))) (store .cse4 (+ 8 ULTIMATE.start_save_byte_from_array_~storage.offset) (select (select (store |#memory_int| ULTIMATE.start_save_byte_from_array_~storage.base .cse4) ULTIMATE.start_save_byte_from_array_~array.base) (+ ULTIMATE.start_save_byte_from_array_~array.offset |ULTIMATE.start_nondet_size_t_#res|))))))) (store .cse2 |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24| (let ((.cse3 (store (select .cse2 |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24|) v_ULTIMATE.start_save_byte_from_array_~storage.offset_46 |v_ULTIMATE.start_nondet_size_t_#res_14|))) (store .cse3 (+ 8 v_ULTIMATE.start_save_byte_from_array_~storage.offset_46) (select (select (store .cse2 |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24| .cse3) ULTIMATE.start_aws_array_eq_harness_~rhs~0.base) (+ v_ULTIMATE.start_save_byte_from_array_~array.offset_44 |v_ULTIMATE.start_nondet_size_t_#res_14|)))))))) (let ((.cse0 (select .cse1 |ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.base|))) (= (mod (select .cse0 (+ 8 |ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.offset|)) 256) (mod (select (select .cse1 ULTIMATE.start_aws_array_eq_harness_~lhs~0.base) (+ ULTIMATE.start_aws_array_eq_harness_~lhs~0.offset (select .cse0 |ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.offset|))) 256)))) (not (= (select |#valid| |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24|) 0)) (<= |v_ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_rhs~0.base_24| |#StackHeapBarrier|)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void hiddenArrayEquality_tilia() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "valid", "oldValid"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= oldValid (store a 1000 1001)) (= (store (store a 1000 1001) 23 42) valid) (= (select a 23) 42)))";
+		final String expectedResultAsString = "(and (= oldValid valid) (= (select valid 1000) 1001) (= (select valid 23) 42))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void endless() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_memset_impl_~sp~0#1.base", "ULTIMATE.start_memset_impl_~sp~0#1.offset", "v_prenex_72"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_arrayElimArr_13", "v_arrayElimArr_12"),
+			};
+		final String formulaAsString = "(exists ((x Int) (y Int)) (let ((.cse5 (mod x 18446744073709551616))) (let ((.cse3 (select v_arrayElimArr_13 |ULTIMATE.start_memset_impl_~sp~0#1.base|)) (.cse4 (+ |ULTIMATE.start_memset_impl_~sp~0#1.offset| .cse5 (- 18446744073709551616)))) (let ((.cse0 (select .cse3 .cse4))) (let ((.cse2 (mod .cse0 256)) (.cse1 (+ .cse5 (* 18446744073709551616 y)))) (and (< 9223372036854775807 x) (< .cse0 0) (< 9223372036854775807 .cse1) (<= 0 (+ 256 .cse0)) (< 127 .cse2) (= .cse2 (+ (select .cse3 (+ |ULTIMATE.start_memset_impl_~sp~0#1.offset| (mod v_prenex_72 18446744073709551616))) 256)) (= .cse2 (select (select v_arrayElimArr_12 |ULTIMATE.start_memset_impl_~sp~0#1.base|) .cse4)) (< x 18446744073709551616) (< .cse1 18446744073709551616)))))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void endless2() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_aws_byte_buf_secure_zero_~buf#1.base", "ULTIMATE.start_aws_byte_buf_secure_zero_~buf#1.offset"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_arrayElimArr_13", "v_arrayElimArr_12", "#memory_int"),
+			};
+		final String formulaAsString = "(and (= |ULTIMATE.start_aws_byte_buf_secure_zero_~buf#1.offset| 0) (exists ((|ULTIMATE.start_memset_impl_~sp~0#1.base| Int) (|v_#memory_int_42| (Array Int (Array Int Int))) (|ULTIMATE.start_memset_impl_~c#1| Int) (|ULTIMATE.start_memset_impl_~i~6#1| Int) (|ULTIMATE.start_memset_impl_~sp~0#1.offset| Int)) (let ((.cse6 (mod |ULTIMATE.start_memset_impl_~c#1| 256))) (let ((.cse7 (< 127 .cse6)) (.cse8 (<= .cse6 127))) (and (not (= |ULTIMATE.start_aws_byte_buf_secure_zero_~buf#1.base| |ULTIMATE.start_memset_impl_~sp~0#1.base|)) (let ((.cse9 (mod |ULTIMATE.start_memset_impl_~i~6#1| 18446744073709551616))) (let ((.cse5 (+ |ULTIMATE.start_memset_impl_~sp~0#1.offset| (- 18446744073709551616) .cse9)) (.cse4 (< 9223372036854775807 .cse9)) (.cse0 (select |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base|)) (.cse1 (+ |ULTIMATE.start_memset_impl_~sp~0#1.offset| .cse9)) (.cse3 (<= .cse9 9223372036854775807))) (or (and (let ((.cse2 (+ (- 256) .cse6))) (or (and (= |#memory_int| (store |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base| (store .cse0 .cse1 .cse2))) .cse3) (and .cse4 (= |#memory_int| (store |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base| (store .cse0 .cse5 .cse2)))))) .cse7) (and (or (and (= |#memory_int| (store |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base| (store .cse0 .cse5 .cse6))) .cse4) (and (= |#memory_int| (store |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base| (store .cse0 .cse1 .cse6))) .cse3)) .cse8)))) (let ((.cse12 (select (select |v_#memory_int_42| |ULTIMATE.start_aws_byte_buf_secure_zero_~buf#1.base|) 16))) (or (and (let ((.cse10 (let ((.cse11 (* .cse12 (- 1)))) (< (div (+ 18446744073709551615 .cse11) (- 18446744073709551616)) (div .cse11 (- 18446744073709551616)))))) (or (and (exists ((|aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| Int)) (and (< 9223372036854775807 |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62|) (= (+ 256 (select (select |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base|) (+ |ULTIMATE.start_memset_impl_~sp~0#1.offset| (mod |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| 18446744073709551616) (- 18446744073709551616)))) (mod |ULTIMATE.start_memset_impl_~c#1| 256)) (< |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| 18446744073709551616))) .cse10) (and (exists ((v_prenex_72 Int)) (and (= (mod |ULTIMATE.start_memset_impl_~c#1| 256) (+ 256 (select (select |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base|) (+ |ULTIMATE.start_memset_impl_~sp~0#1.offset| (mod v_prenex_72 18446744073709551616))))) (<= 0 v_prenex_72) (<= v_prenex_72 9223372036854775807))) .cse10))) .cse7) (and .cse8 (let ((.cse13 (not (= (mod .cse12 18446744073709551616) 0)))) (or (and .cse13 (exists ((|aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| Int)) (and (<= |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| 9223372036854775807) (<= 0 |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62|) (= (mod |ULTIMATE.start_memset_impl_~c#1| 256) (select (select |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base|) (+ |ULTIMATE.start_memset_impl_~sp~0#1.offset| (mod |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| 18446744073709551616))))))) (and .cse13 (exists ((|aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| Int)) (and (< 9223372036854775807 |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62|) (= (mod |ULTIMATE.start_memset_impl_~c#1| 256) (select (select |v_#memory_int_42| |ULTIMATE.start_memset_impl_~sp~0#1.base|) (+ |ULTIMATE.start_memset_impl_~sp~0#1.offset| (mod |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| 18446744073709551616) (- 18446744073709551616)))) (< |aux_mod_ULTIMATE.start_memset_impl_~i~6#1_62| 18446744073709551616))))))))))))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void substitutionProblem() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "vfio_ioctl_check_extension_#t~mem369#1.offset", "vfio_ioctl_check_extension_#t~mem369#1.base", "#funAddr~vfio_devnode.base", "#funAddr~vfio_devnode.offset"),
+//				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_arrayElimArr_13", "v_arrayElimArr_12", "#memory_int"),
+			};
+		final String formulaAsString = "(exists ((|~#vfio~0.base| Int) (|#memory_$Pointer$.base| (Array Int (Array Int Int))) (|vfio_ioctl_check_extension_~driver~2#1.offset| Int) (|#memory_$Pointer$.offset| (Array Int (Array Int Int))) (INIT_LIST_HEAD_~list.offset Int)) (let ((.cse2 (select |#memory_$Pointer$.offset| |~#vfio~0.base|)) (.cse5 (select |#memory_$Pointer$.base| |~#vfio~0.base|))) (let ((.cse0 (select .cse5 0)) (.cse1 (+ (select .cse2 0) 48)) (.cse3 ((as const (Array Int Int)) 0)) (.cse4 (+ 8 INIT_LIST_HEAD_~list.offset))) (and (= (select (select |#memory_$Pointer$.offset| .cse0) .cse1) |#funAddr~vfio_devnode.offset|) (= |#funAddr~vfio_devnode.base| (select (select |#memory_$Pointer$.base| .cse0) .cse1)) (<= (+ 192 |vfio_ioctl_check_extension_~driver~2#1.offset|) (select .cse2 8)) (= (store (store (store (store .cse3 INIT_LIST_HEAD_~list.offset INIT_LIST_HEAD_~list.offset) .cse4 INIT_LIST_HEAD_~list.offset) 8 8) 16 8) .cse2) (<= 172 INIT_LIST_HEAD_~list.offset) (= (store (store (store (store .cse3 INIT_LIST_HEAD_~list.offset |~#vfio~0.base|) .cse4 |~#vfio~0.base|) 8 |~#vfio~0.base|) 16 |~#vfio~0.base|) .cse5) (= (let ((.cse6 (select .cse5 8))) (select (select |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| .cse6) |vfio_ioctl_check_extension_~driver~2#1.offset|)) (+ 48 (select (select |#memory_$Pointer$.offset| .cse6) |vfio_ioctl_check_extension_~driver~2#1.offset|)))) |vfio_ioctl_check_extension_#t~mem369#1.offset|)))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void shouldHaveBeenRemovedByDer() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort,  "ULTIMATE.start_main_~#ldvarg23~0#1.base", "~#vfio~0.base", "~#vfio~0.offset", "ULTIMATE.start_main_~#ldvarg23~0#1.offset"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.offset", "#memory_$Pointer$.base"),
+			};
+		final String formulaAsString = "(and (= |~#vfio~0.offset| 0) (exists ((|v_#memory_$Pointer$.offset_BEFORE_CALL_68| (Array Int (Array Int Int))) (|ULTIMATE.start_main_~#ldvarg14~0#1.base| Int) (|v_old(#memory_$Pointer$.base)_AFTER_CALL_110| (Array Int (Array Int Int))) (|ldv_memset_#Ultimate.C_memset_#value#1| Int) (|ULTIMATE.start_main_~#ldvarg3~0#1.base| Int) (|ULTIMATE.start_main_~#ldvarg1~0#1.base| Int) (|ULTIMATE.start_main_~#ldvarg25~0#1.base| Int)) (let ((.cse2 (= |~#vfio~0.base| |ULTIMATE.start_main_~#ldvarg14~0#1.base|)) (.cse0 ((as const (Array Int Int)) 0))) (and (= (select (select |v_old(#memory_$Pointer$.base)_AFTER_CALL_110| |ULTIMATE.start_main_~#ldvarg3~0#1.base|) 0) 0) (= |#memory_$Pointer$.offset| (store |v_#memory_$Pointer$.offset_BEFORE_CALL_68| |ULTIMATE.start_main_~#ldvarg25~0#1.base| (store (select |v_#memory_$Pointer$.offset_BEFORE_CALL_68| |ULTIMATE.start_main_~#ldvarg25~0#1.base|) 0 (mod |ldv_memset_#Ultimate.C_memset_#value#1| 256)))) (= (select (select |v_old(#memory_$Pointer$.base)_AFTER_CALL_110| |ULTIMATE.start_main_~#ldvarg14~0#1.base|) 0) 0) (not (= |ULTIMATE.start_main_~#ldvarg25~0#1.base| |ULTIMATE.start_main_~#ldvarg23~0#1.base|)) (not (= |ULTIMATE.start_main_~#ldvarg14~0#1.base| |ULTIMATE.start_main_~#ldvarg1~0#1.base|)) (= .cse0 (select |v_old(#memory_$Pointer$.base)_AFTER_CALL_110| |~#vfio~0.base|)) (= (select (select |v_#memory_$Pointer$.offset_BEFORE_CALL_68| |ULTIMATE.start_main_~#ldvarg1~0#1.base|) 0) 0) (= (select (select |v_old(#memory_$Pointer$.base)_AFTER_CALL_110| |ULTIMATE.start_main_~#ldvarg1~0#1.base|) 0) 0) (= (store |v_old(#memory_$Pointer$.base)_AFTER_CALL_110| |ULTIMATE.start_main_~#ldvarg25~0#1.base| (store (select |v_old(#memory_$Pointer$.base)_AFTER_CALL_110| |ULTIMATE.start_main_~#ldvarg25~0#1.base|) 0 0)) |#memory_$Pointer$.base|) (not (= |ULTIMATE.start_main_~#ldvarg3~0#1.base| |ULTIMATE.start_main_~#ldvarg1~0#1.base|)) (or (exists ((|ldv_memset_#Ultimate.C_memset_#value#1| Int)) (= (select |v_#memory_$Pointer$.offset_BEFORE_CALL_68| |ULTIMATE.start_main_~#ldvarg14~0#1.base|) (store ((as const (Array Int Int)) 0) 0 (mod |ldv_memset_#Ultimate.C_memset_#value#1| 256)))) (let ((.cse1 (select (select |v_#memory_$Pointer$.offset_BEFORE_CALL_68| |ULTIMATE.start_main_~#ldvarg14~0#1.base|) 0))) (and (< .cse1 256) (not .cse2) (<= 0 .cse1)))) (or .cse2 (= .cse0 (select |v_#memory_$Pointer$.offset_BEFORE_CALL_68| |~#vfio~0.base|))) (not (= |ULTIMATE.start_main_~#ldvarg3~0#1.base| |ULTIMATE.start_main_~#ldvarg23~0#1.base|)) (not (= |ULTIMATE.start_main_~#ldvarg14~0#1.base| |ULTIMATE.start_main_~#ldvarg23~0#1.base|)) (= (select (select |v_#memory_$Pointer$.offset_BEFORE_CALL_68| |ULTIMATE.start_main_~#ldvarg3~0#1.base|) 0) 0) (not (= |ULTIMATE.start_main_~#ldvarg1~0#1.base| |ULTIMATE.start_main_~#ldvarg23~0#1.base|)) (not (= |ULTIMATE.start_main_~#ldvarg14~0#1.base| |ULTIMATE.start_main_~#ldvarg3~0#1.base|))))) (= |ULTIMATE.start_main_~#ldvarg23~0#1.offset| 0) (not (= |~#vfio~0.base| 0)))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void someNonSelfUpdateCasesButNoTopLevelDerRelation() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort,  "ULTIMATE.start_aws_byte_buf_advance_~output#1.base", "ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base", "ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.offset", "#memory_$Pointer$.base"),
+			};
+		final String formulaAsString = "(forall ((|v_#memory_$Pointer$.base_106| (Array Int (Array Int Int))) (v_memset_impl_~i~6_14 Int) (v_memset_impl_~sp~0.offset_8 Int) (|v_#memory_$Pointer$.offset_88| (Array Int (Array Int Int)))) (let ((.cse9 (mod v_memset_impl_~i~6_14 18446744073709551616))) (let ((.cse0 (<= .cse9 9223372036854775807)) (.cse2 (+ .cse9 v_memset_impl_~sp~0.offset_8 (- 18446744073709551616))) (.cse4 (< 9223372036854775807 .cse9)) (.cse5 (+ .cse9 v_memset_impl_~sp~0.offset_8))) (or (let ((.cse1 (select |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|)) (.cse3 (select |v_#memory_$Pointer$.base_106| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|))) (and (or .cse0 (not (= |v_#memory_$Pointer$.base_106| (store |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse1 .cse2 (select .cse3 .cse2)))))) (or .cse4 (not (= (store |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse1 .cse5 (select .cse3 .cse5))) |v_#memory_$Pointer$.base_106|))))) (let ((.cse6 (+ 8 |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset|))) (and (= (select (select |v_#memory_$Pointer$.offset_88| |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) .cse6) 0) (= (select (select |v_#memory_$Pointer$.base_106| |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) .cse6) 0))) (let ((.cse7 (select |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|)) (.cse8 (select |v_#memory_$Pointer$.offset_88| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|))) (and (or .cse0 (not (= (store |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse7 .cse2 (select .cse8 .cse2))) |v_#memory_$Pointer$.offset_88|))) (or .cse4 (not (= (store |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse7 .cse5 (select .cse8 .cse5))) |v_#memory_$Pointer$.offset_88|)))))))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void eliminateeIsStoredValue() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k", "i1", "i2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			};
+		final String formulaAsString = "(forall ((a (Array Int Int))) (= (select (select (store |#memory_int| k a) i1) i2) 0))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void negativeModulusBugNotReproducible() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "add_history_type_~ini_bool~0", "~gate1Failed_History_0~0"), };
+		final String formulaAsString = "(forall ((~gate3Failed_History_0~0 Int)) (let ((.cse0 (mod ~gate3Failed_History_0~0 256))) (or (< 0 (mod ~gate1Failed_History_0~0 256)) (= .cse0 0) (not (= (mod add_history_type_~ini_bool~0 256) .cse0)))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+//	// read_type_#64._token is function symbol with
+//	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
+//    // and return sort Int
+//	@Test
+//	public void daxus01() {
+//		final FunDecl[] funDecls = new FunDecl[] {
+//				new FunDecl(SmtSortUtils::getIntSort, "routine_#33910_luaX_next_local_#4227_ls_IN.base", "routine_#33910_luaX_next_local_#4227_ls_IN.offset"),
+//				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "_memory", "old(_memory)", "read_type_#64._token"),
+//			};
+//		final String formulaAsString = "(exists ((v__memory_1153 (Array Int (Array Int Int))) (v__memory_ptr.base_1009 (Array Int (Array Int Int))) (v__memory_ptr.offset_1009 (Array Int (Array Int Int))) (|routine_#33910_luaX_next_local_#4227_ls.offset| Int)) (and (<= |routine_#33910_luaX_next_local_#4227_ls.offset| |routine_#33910_luaX_next_local_#4227_ls_IN.offset|) (= (store v__memory_1153 |routine_#33910_luaX_next_local_#4227_ls_IN.base| (let ((.cse0 (+ 32 |routine_#33910_luaX_next_local_#4227_ls.offset|))) (store (store (store (select v__memory_1153 |routine_#33910_luaX_next_local_#4227_ls_IN.base|) (+ 16 |routine_#33910_luaX_next_local_#4227_ls.offset|) (|read_type_#64._token| v__memory_1153 v__memory_ptr.base_1009 v__memory_ptr.offset_1009 |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse0)) (+ |routine_#33910_luaX_next_local_#4227_ls.offset| 24) (|read_type_#64._seminfo._i| v__memory_1153 v__memory_ptr.base_1009 v__memory_ptr.offset_1009 |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse0)) .cse0 289))) _memory) (<= |routine_#33910_luaX_next_local_#4227_ls_IN.offset| |routine_#33910_luaX_next_local_#4227_ls.offset|)))";
+//		final String expectedResult = null;
+//		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+//	}
+//
+//
+//	// read_type_#64._token is function symbol with
+//	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
+//    // and return sort Int
+//	@Test
+//	public void daxus02() {
+//		final FunDecl[] funDecls = new FunDecl[] {
+//				new FunDecl(SmtSortUtils::getIntSort, "routine_#33910_luaX_next_local_#4227_ls_IN.base", "routine_#33910_luaX_next_local_#4227_ls_IN.offset"),
+//				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "_memory", "old(_memory)", "read_type_#64._token"),
+//			};
+//		final String formulaAsString = "(exists ((v__memory_ptr.offset_1308 (Array Int (Array Int Int))) (v__memory_ptr.base_1308 (Array Int (Array Int Int)))) (= _memory (store |old(_memory)| |routine_#33910_luaX_next_local_#4227_ls_IN.base| (let ((.cse2 (+ 32 |routine_#33910_luaX_next_local_#4227_ls_IN.offset|))) (store (let ((.cse0 (let ((.cse3 (select |old(_memory)| |routine_#33910_luaX_next_local_#4227_ls_IN.base|))) (store .cse3 (+ |routine_#33910_luaX_next_local_#4227_ls_IN.offset| 8) (select .cse3 (+ |routine_#33910_luaX_next_local_#4227_ls_IN.offset| 4)))))) (let ((.cse1 (store |old(_memory)| |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse0))) (store (store .cse0 (+ 16 |routine_#33910_luaX_next_local_#4227_ls_IN.offset|) (|read_type_#64._token| .cse1 v__memory_ptr.base_1308 v__memory_ptr.offset_1308 |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse2)) (+ |routine_#33910_luaX_next_local_#4227_ls_IN.offset| 24) (|read_type_#64._seminfo._i| .cse1 v__memory_ptr.base_1308 v__memory_ptr.offset_1308 |routine_#33910_luaX_next_local_#4227_ls_IN.base| .cse2)))) .cse2 289)))))";
+//		final String expectedResult = null;
+//		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+//	}
+
 	//@formatter:on
 }

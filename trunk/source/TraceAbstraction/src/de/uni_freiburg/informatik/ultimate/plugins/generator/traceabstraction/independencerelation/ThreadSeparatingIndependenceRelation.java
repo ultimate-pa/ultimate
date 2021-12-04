@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -75,7 +77,7 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 	}
 
 	private boolean fromSameThread(final L a, final L b) {
-		return a.getPrecedingProcedure() == b.getPrecedingProcedure();
+		return Objects.equals(a.getPrecedingProcedure(), b.getPrecedingProcedure());
 	}
 
 	@Override

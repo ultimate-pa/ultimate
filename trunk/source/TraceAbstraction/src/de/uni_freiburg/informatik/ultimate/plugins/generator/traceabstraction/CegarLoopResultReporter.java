@@ -34,8 +34,10 @@ import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
@@ -156,8 +158,13 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			mLogger.info("Ignoring angelically safe counterexample for %s", errorLoc);
 			return;
 		}
-		final CounterExampleResult<IcfgLocation, L, Term> cexResult =
-				new CounterExampleResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);
+		final Check check = Check.getAnnotation(errorLoc);
+		IResult cexResult;
+		if (check != null && check.getSpec().contains(Spec.DATA_RACE)) {
+			cexResult = new DataRaceFoundResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);
+		} else {
+			cexResult = new CounterExampleResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);
+		}
 		mReportFunction.accept(errorLoc, cexResult);
 	}
 

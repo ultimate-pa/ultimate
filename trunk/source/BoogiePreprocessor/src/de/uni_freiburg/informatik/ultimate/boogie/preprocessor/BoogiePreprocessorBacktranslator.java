@@ -31,6 +31,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
@@ -295,7 +296,7 @@ public class BoogiePreprocessorBacktranslator
 		} else if (elem instanceof JoinStatement) {
 			// we cannot say anything about proceeding and succeeding procedures
 			return true;
-		} else if (ate.getPrecedingProcedure() != ate.getSucceedingProcedure()) {
+		} else if (!Objects.equals(ate.getPrecedingProcedure(), ate.getSucceedingProcedure())) {
 			mLogger.fatal("Call stack broken at " + ate);
 			return false;
 		}
@@ -312,7 +313,7 @@ public class BoogiePreprocessorBacktranslator
 		} else if (ate.hasStepInfo(StepInfo.PROC_RETURN)) {
 			return elem.getMethodName().equals(ate.getPrecedingProcedure());
 		} else if (ate.hasStepInfo(StepInfo.NONE)) {
-			return ate.getPrecedingProcedure() == ate.getSucceedingProcedure() && ate.getPrecedingProcedure() == null;
+			return ate.getPrecedingProcedure() == null && ate.getSucceedingProcedure() == null;
 		} else {
 			return false;
 		}

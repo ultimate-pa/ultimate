@@ -505,8 +505,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		final List<IPredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
 			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, mLogger, csToolkit.getManagedScript(),
-							mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
+					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
+							mSimplificationTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -827,8 +827,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		final List<IPredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
 			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, mLogger, csToolkit.getManagedScript(),
-							mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
+					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
+							mSimplificationTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();

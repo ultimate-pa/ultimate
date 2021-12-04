@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wern
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer.DealingWithArraysTypes;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing.LoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux.MonniauxMapEliminator;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.BvToIntTransformation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.ModuloNeighborTransformation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
@@ -186,6 +187,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyRemoveDivMod(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
 			return applyModuloNeighbor(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
+		case BV_TO_INT:
+			return applyBvToIntTranslation(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
 		case MAP_ELIMINATION_MONNIAUX:
 			return (IIcfg<OUTLOC>) applyMapEliminationMonniaux((IIcfg<IcfgLocation>) icfg, backtranslationTracker);
 		default:
@@ -315,6 +318,25 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		transitionPreprocessors.add(new RewriteIte());
 		transitionPreprocessors.add(new SimplifyPreprocessor(services, SimplificationTechnique.SIMPLIFY_QUICK));
 		transitionPreprocessors.add(new ModuloNeighborTransformation(services, true));
+		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+
+		final ITransformulaTransformer transformer =
+				new LocalTransformer(transitionPreprocessors, icfg.getCfgSmtToolkit().getManagedScript(), fac);
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
+				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
+		result = icfgTransformer.getResult();
+		return result;
+	}
+
+	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyBvToIntTranslation(
+			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
+			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
+			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
+		IIcfg<OUTLOC> result;
+		final List<TransitionPreprocessor> transitionPreprocessors = new ArrayList<>();
+		transitionPreprocessors.add(new RewriteIte());
+		transitionPreprocessors.add(new SimplifyPreprocessor(services, SimplificationTechnique.SIMPLIFY_QUICK));
+		transitionPreprocessors.add(new BvToIntTransformation(services, fac));
 		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 
 		final ITransformulaTransformer transformer =

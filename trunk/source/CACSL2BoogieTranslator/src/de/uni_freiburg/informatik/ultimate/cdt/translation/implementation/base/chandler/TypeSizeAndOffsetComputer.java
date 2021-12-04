@@ -344,12 +344,15 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 	/**
-	 * Get the CType that represents <em> size_t </em>. TODO: Currently hard-coded to int. Should probably be a setting.
-	 * This is unsound, but in the integer translation more efficient than uint (no wraparound). TODO: maybe this class
-	 * is not the right place.
+	 * Get the CType that represents <em> size_t </em>.
+	 *
+	 * TODO: Currently hard-coded to int. Should probably be a setting. This is unsound, but in the integer translation
+	 * more efficient than uint (no wraparound).
+	 *
+	 * TODO: maybe this class is not the right place.
 	 */
 	public CPrimitive getSizeT() {
-		return new CPrimitive(CPrimitives.INT);
+		return mTypeSizes.getSizeT();
 	}
 
 	public LinkedHashSet<ConstDeclaration> getConstants() {

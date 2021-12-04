@@ -240,18 +240,15 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		return null;
 	}
 
-	private static Term doSubstitutions(final ManagedScript mgdScript, final int quantifier, final Term[] dualJuncts,
-			final Pair<Integer, SolvedBinaryRelation> pair, final List<Term> dualJunctsResult) {
-		for (int i = 0; i < dualJuncts.length; i++) {
-			if (i != pair.getFirst()) {
-				final Map<Term, Term> substitutionMapping = Collections.singletonMap(pair.getSecond().getLeftHandSide(),
-						pair.getSecond().getRightHandSide());
-				final Substitution substitution = new SubstitutionWithLocalSimplification(mgdScript,
-						substitutionMapping);
-				final Term replaced = substitution.transform(dualJuncts[i]);
-				assert UltimateNormalFormUtils.respectsUltimateNormalForm(replaced) : "Term not in UltimateNormalForm";
-				dualJunctsResult.add(replaced);
-			}
+	private static Term doSubstitutions(final ManagedScript mgdScript, final int quantifier,
+			final List<Term> otherDualJuncts, final SolvedBinaryRelation sbr, final List<Term> dualJunctsResult) {
+		final Map<Term, Term> substitutionMapping = Collections.singletonMap(sbr.getLeftHandSide(),
+				sbr.getRightHandSide());
+		final Substitution substitution = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping);
+		for (final Term otherDualJunct : otherDualJuncts) {
+			final Term replaced = substitution.transform(otherDualJunct);
+			assert UltimateNormalFormUtils.respectsUltimateNormalForm(replaced) : "Term not in UltimateNormalForm";
+			dualJunctsResult.add(replaced);
 		}
 		final Term dualJunctionResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier,
 				dualJunctsResult);
@@ -334,11 +331,26 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			if (pair == null) {
 				return null;
 			}
-			return applyReplacement(mgdScript, et, dualJuncts, pair);
+			final List<Term> otherDualJuncts = toListAllButOne(dualJuncts, pair.getFirst());
+			return applyReplacement(mgdScript, et, otherDualJuncts, pair.getSecond());
 		}
 
 		protected abstract EliminationResult applyReplacement(ManagedScript mgdScript, EliminationTask et,
-				Term[] dualJuncts, Pair<Integer, SR> pair);
+				List<Term> otherDualJuncts, SR sbr);
+	}
+
+	/**
+	 * Transforms array to list but omits index idxOmit.
+	 */
+	private static <E> List<E> toListAllButOne(final E[] array, final int idxOmit) {
+		assert 0 <= idxOmit && idxOmit < array.length;
+		final List<E> result = new ArrayList<E>(array.length-1);
+		for (int i = 0; i<array.length; i++) {
+			if (i != idxOmit) {
+				result.add(array[i]);
+			}
+		}
+		return result;
 	}
 
 	private static class DerHelperSbr extends IDerHelper<SolvedBinaryRelation> {
@@ -384,12 +396,11 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 		@Override
 		protected EliminationResult applyReplacement(final ManagedScript mgdScript, final EliminationTask et,
-				final Term[] dualJuncts, final Pair<Integer, SolvedBinaryRelation> pair) {
+				final List<Term> otherDualJuncts, final SolvedBinaryRelation sbr) {
 			final List<Term> dualJunctsResult = new ArrayList<>();
-			final SolvedBinaryRelation sbr = pair.getSecond();
-			final Term dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), dualJuncts, pair,
+			final Term dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), otherDualJuncts, sbr,
 					dualJunctsResult);
-			return new EliminationResult(et.update(dualJunctionResult),	Collections.emptySet());
+			return new EliminationResult(et.update(dualJunctionResult), Collections.emptySet());
 		}
 	}
 
@@ -445,9 +456,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 		@Override
 		protected EliminationResult applyReplacement(final ManagedScript mgdScript, final EliminationTask et,
-				final Term[] dualJuncts, final Pair<Integer, MultiCaseSolvedBinaryRelation> pair) {
+				final List<Term> otherDualJuncts, final MultiCaseSolvedBinaryRelation mcsbr) {
 			final List<Term> correspondingJunctsResult = new ArrayList<>();
-			final MultiCaseSolvedBinaryRelation mcsbr = pair.getSecond();
 			for (final Case cas : mcsbr.getCases()) {
 				final List<Term> dualJunctsResult = new ArrayList<>();
 				for (final SupportingTerm st : cas.getSupportingTerms()) {
@@ -455,15 +465,14 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				}
 				final Term dualJunctionResult;
 				if (cas.getSolvedBinaryRelation() != null) {
-					dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), dualJuncts,
-							new Pair<Integer, SolvedBinaryRelation>(pair.getFirst(), cas.getSolvedBinaryRelation()),
-							dualJunctsResult);
-					correspondingJunctsResult.add(dualJunctionResult);
+					dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), otherDualJuncts,
+							cas.getSolvedBinaryRelation(), dualJunctsResult);
 				} else {
+					dualJunctsResult.addAll(otherDualJuncts);
 					dualJunctionResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
 							et.getQuantifier(), dualJunctsResult);
-					correspondingJunctsResult.add(dualJunctionResult);
 				}
+				correspondingJunctsResult.add(dualJunctionResult);
 			}
 			final Term correspondingJunction = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(),
 					et.getQuantifier(), correspondingJunctsResult);

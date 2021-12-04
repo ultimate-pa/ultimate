@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -52,15 +54,17 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayRe
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -71,9 +75,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  * @param <L>
  *            The type of letters occurring in the automata that will be reduced.
  */
-public class PartialOrderReductionFacade<L extends IAction> {
+public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	public enum OrderType {
-		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM
+		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
 	}
 
 	private final IUltimateServiceProvider mServices;
@@ -84,6 +88,7 @@ public class PartialOrderReductionFacade<L extends IAction> {
 	private final IIndependenceRelation<IPredicate, L> mIndependence;
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
 	private final IPersistentSetChoice<L, IPredicate> mPersistent;
+	private StateSplitter<IPredicate> mStateSplitter;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -92,9 +97,9 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 		mMode = mode;
-		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, errorLocs);
-		mIndependence = independence;
 		mSleepFactory = createSleepFactory(predicateFactory);
+		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
+		mIndependence = independence;
 		mPersistent = createPersistentSets(icfg, errorLocs);
 	}
 
@@ -104,7 +109,9 @@ public class PartialOrderReductionFacade<L extends IAction> {
 			return null;
 		}
 		if (mMode.doesUnrolling()) {
-			return new SleepSetStateFactoryForRefinement<>(predicateFactory);
+			final var factory = new SleepSetStateFactoryForRefinement<L>(predicateFactory);
+			mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, factory::getSleepSet);
+			return factory;
 		}
 		return new ISleepSetStateFactory.NoUnrolling<>();
 	}
@@ -113,8 +120,8 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		return mSleepFactory;
 	}
 
-	private static <L extends IAction> IDfsOrder<L, IPredicate> getDfsOrder(final OrderType orderType,
-			final long randomOrderSeed, final Collection<? extends IcfgLocation> errorLocs) {
+	private IDfsOrder<L, IPredicate> getDfsOrder(final OrderType orderType, final long randomOrderSeed,
+			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs) {
 		switch (orderType) {
 		case BY_SERIAL_NUMBER:
 			final Set<String> errorThreads =
@@ -123,11 +130,17 @@ public class PartialOrderReductionFacade<L extends IAction> {
 					Comparator.<L, Boolean> comparing(x -> !errorThreads.contains(x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparingInt(Object::hashCode)));
 		case PSEUDO_LOCKSTEP:
-			return new BetterLockstepOrder<>(PartialOrderReductionFacade::normalizePredicate);
+			return new BetterLockstepOrder<>(this::normalizePredicate);
 		case RANDOM:
 			return new RandomDfsOrder<>(randomOrderSeed, false);
 		case POSITIONAL_RANDOM:
-			return new RandomDfsOrder<>(randomOrderSeed, true, PartialOrderReductionFacade::normalizePredicate);
+			return new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
+		case LOOP_LOCKSTEP:
+			final var order =
+					new LoopLockstepOrder<L>(icfg, mStateSplitter == null ? null : mStateSplitter::getOriginal);
+			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((PredicateWithLastThread) x).getUnderlying(),
+					x -> ((PredicateWithLastThread) x).getLastThread());
+			return order;
 		default:
 			throw new UnsupportedOperationException("Unknown order type: " + orderType);
 		}
@@ -147,10 +160,15 @@ public class PartialOrderReductionFacade<L extends IAction> {
 		return (IPersistentSetChoice<L, IPredicate>) new CachedPersistentSetChoice<>(
 				new ThreadBasedPersistentSets<>(mServices, icfg,
 						(IIndependenceRelation<IPredicate, IcfgEdge>) independence, relevantOrder, errorLocs),
-				PartialOrderReductionFacade::normalizePredicate);
+				this::normalizePredicate);
 	}
 
-	private static Object normalizePredicate(final IPredicate state) {
+	private Object normalizePredicate(final IPredicate state) {
+		if (mMode.hasFixedOrder() && mDfsOrder instanceof LoopLockstepOrder<?>) {
+			// For stateful orders, we need to include the chosen order in the normalization if we want to guarantee
+			// compatibility of persistent sets.
+			return new Pair<>(((IMLPredicate) state).getProgramPoints(), mDfsOrder.getOrder(state));
+		}
 		return ((IMLPredicate) state).getProgramPoints();
 	}
 
@@ -171,8 +189,15 @@ public class PartialOrderReductionFacade<L extends IAction> {
 	 *            A visitor that traverses the reduced automaton
 	 * @throws AutomataOperationCanceledException
 	 */
-	public void apply(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
+	public void apply(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
 			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
+		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
+			input = ((LoopLockstepOrder<L>) mDfsOrder).wrapAutomaton(input);
+		}
+		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
+			((SleepSetStateFactoryForRefinement<?>) mSleepFactory).reset();
+		}
+
 		switch (mMode) {
 		case SLEEP_DELAY_SET:
 			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, mIndependence, mDfsOrder, visitor);
@@ -214,13 +239,11 @@ public class PartialOrderReductionFacade<L extends IAction> {
 	 */
 	public <V extends IDfsVisitor<L, IPredicate>> DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, V>
 			createDeadEndVisitor(final Supplier<V> createUnderlying) {
-		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
-			final SleepSetStateFactoryForRefinement<L> revFactory =
-					(SleepSetStateFactoryForRefinement<L>) mSleepFactory;
-			return new DeadEndOptimizingSearchVisitor<>(createUnderlying, revFactory::getOriginalState,
-					revFactory::getSleepSet);
+		if (mStateSplitter == null) {
+			return new DeadEndOptimizingSearchVisitor<>(createUnderlying);
 		}
-		return new DeadEndOptimizingSearchVisitor<>(createUnderlying);
+		return new DeadEndOptimizingSearchVisitor<>(createUnderlying, mStateSplitter::getOriginal,
+				mStateSplitter::getExtraInfo);
 	}
 
 	/**
@@ -238,10 +261,9 @@ public class PartialOrderReductionFacade<L extends IAction> {
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) throws AutomataOperationCanceledException {
 		final AutomatonConstructingVisitor<L, IPredicate> visitor;
-		if (mMode.hasSleepSets() && mMode.doesUnrolling()) {
-			final SleepSetStateFactoryForRefinement<L> factory = (SleepSetStateFactoryForRefinement<L>) mSleepFactory;
-			visitor = new AutomatonConstructingVisitor<>(x -> input.isInitial(factory.getOriginalState(x)),
-					x -> input.isFinal(factory.getOriginalState(x)), input.getVpAlphabet(), mAutomataServices,
+		if (mStateSplitter != null) {
+			visitor = new AutomatonConstructingVisitor<>(x -> input.isInitial(mStateSplitter.getOriginal(x)),
+					x -> input.isFinal(mStateSplitter.getOriginal(x)), input.getVpAlphabet(), mAutomataServices,
 					emptyStackFactory);
 		} else {
 			visitor = new AutomatonConstructingVisitor<>(input, mAutomataServices, emptyStackFactory);
@@ -261,6 +283,48 @@ public class PartialOrderReductionFacade<L extends IAction> {
 			persistentData.aggregateBenchmarkData(mPersistent.getStatistics());
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 					new StatisticsResult<>(Activator.PLUGIN_NAME, "Persistent set benchmarks", persistentData));
+		}
+	}
+
+	/**
+	 * Helper class to split states of reduction automata into the original state (i.e., the state of the input
+	 * automaton) and extra information added by reduction algorithms.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <S>
+	 */
+	private static class StateSplitter<S> {
+		private final Function<S, S> mGetOriginal;
+		private final Function<S, Object> mGetExtraInfo;
+
+		public StateSplitter(final Function<S, S> getOriginal, final Function<S, Object> getExtraInfo) {
+			mGetOriginal = Objects.requireNonNull(getOriginal);
+			mGetExtraInfo = Objects.requireNonNull(getExtraInfo);
+		}
+
+		public S getOriginal(final S t) {
+			return mGetOriginal.apply(t);
+		}
+
+		Object getExtraInfo(final S t) {
+			return mGetExtraInfo.apply(t);
+		}
+
+		static <T> StateSplitter<T> extend(final StateSplitter<T> first, final Function<T, T> newGetOriginal,
+				final Function<T, Object> newGetExtraInfo) {
+			assert newGetOriginal != null;
+			assert newGetExtraInfo != null;
+			if (first == null) {
+				return new StateSplitter<>(newGetOriginal, newGetExtraInfo);
+			}
+			return new StateSplitter<>(first.mGetOriginal.andThen(newGetOriginal),
+					addExtraInfo(first.mGetOriginal, first.mGetExtraInfo, newGetExtraInfo));
+		}
+
+		private static <T> Function<T, Object> addExtraInfo(final Function<T, T> oldGetOriginal,
+				final Function<T, Object> oldGetInfo, final Function<T, Object> newGetInfo) {
+			return x -> new Pair<>(oldGetInfo.apply(x), newGetInfo.apply(oldGetOriginal.apply(x)));
 		}
 	}
 }

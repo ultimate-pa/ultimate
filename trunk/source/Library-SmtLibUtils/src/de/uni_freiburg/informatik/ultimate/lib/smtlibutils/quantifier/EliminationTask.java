@@ -26,14 +26,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 
 /**
@@ -83,6 +91,34 @@ public class EliminationTask extends EliminationTaskSimple {
 	@Override
 	public EliminationTask update(final Term term) {
 		return new EliminationTask(getQuantifier(), getEliminatees(), term, mContext);
+	}
+
+	public Pair<Term, EliminationTask> makeTight(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript) {
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(getQuantifier(), getTerm());
+		final List<Term> dualJunctsWithEliminatee = new ArrayList<>();
+		final List<Term> dualJunctsWithoutEliminatee = new ArrayList<>();
+		for (final Term dualJunct : dualJuncts) {
+			if (DataStructureUtils.haveEmptyIntersection(getEliminatees(),
+					new HashSet<>(Arrays.asList(dualJunct.getFreeVars())))) {
+				dualJunctsWithoutEliminatee.add(dualJunct);
+			} else {
+				dualJunctsWithEliminatee.add(dualJunct);
+			}
+		}
+		if (dualJunctsWithoutEliminatee.isEmpty()) {
+			return null;
+		} else {
+			final Term dualJunctionWithoutEliminatee = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
+					getQuantifier(), dualJunctsWithoutEliminatee);
+			final Term dualJunctionWithEliminatee = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
+					getQuantifier(), dualJunctsWithEliminatee);
+
+			final Context newContext = getContext().constructChildContextForConDis(services, mgdScript,
+					((ApplicationTerm) getTerm()).getFunction(), dualJunctsWithoutEliminatee);
+			return new Pair<>(dualJunctionWithoutEliminatee,
+					new EliminationTask(getQuantifier(), getEliminatees(), dualJunctionWithEliminatee, newContext));
+		}
 	}
 
 }

@@ -554,7 +554,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			ModelUtils.mergeAnnotations(replacement, gotoEdge, secondGotoEdge);
 		}
 		final String procId = gotoEdge.getPrecedingProcedure();
-		mTransFormBuilder.addTransitionFormulas(replacement, procId, mXnfConversionTechnique, mSimplificationTechnique);
+		mTransFormBuilder.addTransitionFormulas(replacement, procId, mSimplificationTechnique);
 		return replacement;
 	}
 

@@ -234,6 +234,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that handles translation of C nodes to Boogie nodes.
@@ -361,6 +362,8 @@ public class CHandler {
 
 	private final CExpressionTranslator mCExpressionTranslator;
 
+	private final DataRaceChecker mDataRaceChecker;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -416,8 +419,14 @@ public class CHandler {
 
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
-		mExprResultTransformer = new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler,
-				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer);
+		mDataRaceChecker =
+				mSettings.checkDataRaces()
+						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
+								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), true)
+						: null;
+		mExprResultTransformer =
+				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
+						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, mProcedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap);
@@ -501,8 +510,14 @@ public class CHandler {
 				expressionTranslation, procedureManager, typeSizeAndOffsetComputer, mAuxVarInfoBuilder, mSettings);
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
-		mExprResultTransformer = new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler,
-				mExpressionTranslation, mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer);
+		mDataRaceChecker =
+				mSettings.checkDataRaces()
+						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
+								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), false)
+						: null;
+		mExprResultTransformer =
+				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
+						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, procedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap);
@@ -618,6 +633,9 @@ public class CHandler {
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
 		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, globalHook));
 		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
+		if (mDataRaceChecker != null) {
+			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
+		}
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
 		mDeclarations.addAll(
@@ -666,7 +684,6 @@ public class CHandler {
 				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		mExpressionTranslation.getFunctionDeclarations().finish();
 		mDeclarations.addAll(declaredFunctions);
-
 
 		// the overall translation result:
 		final Unit boogieUnit = new Unit(
@@ -1055,6 +1072,9 @@ public class CHandler {
 				resultBuilder.addDeclarations(res.getDeclarations());
 				resultBuilder.addStatements(res.getStatements());
 				expr = res.getLrValue();
+//				if (!((ExpressionResult) r).getOverapprs().isEmpty()) {
+//					throw new AssertionError("Forgot to pass overapproximation flags to statements: " + ((ExpressionResult) r).getOverapprs());
+//				}
 			} else if (r.getNode() != null && r.getNode() instanceof Body) {
 				assert false : "should not happen, as CompoundStatement now yields an "
 						+ "ExpressionResult or a CompoundStatementExpressionResult";
@@ -1170,10 +1190,16 @@ public class CHandler {
 						// this may happen in a function parameter..
 						intSizeFactor = CArray.INCOMPLETE_ARRY_MAGIC_NUMBER;
 					}
-					final CPrimitive ctype = mExpressionTranslation.getCTypeOfPointerComponents();
-					final Expression sizeExpression =
-							mTypeSizes.constructLiteralForIntegerType(loc, ctype, BigInteger.valueOf(intSizeFactor));
-					sizeFactor = new RValue(sizeExpression, ctype, false, false);
+					// Index type of the array. All C expressions that access the array are
+					// converted to this type.
+					// In the past we wanted a type that is large enough for the
+					// CArray.INCOMPLETE_ARRY_MAGIC_NUMBER.
+					// If we work with an unsigned type for pointer components we have to rethink
+					// the use of the magic number.
+					final CPrimitive arrayIndexCtype = mExpressionTranslation.getCTypeOfPointerComponents();
+					final Expression sizeExpression = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
+							BigInteger.valueOf(intSizeFactor));
+					sizeFactor = new RValue(sizeExpression, arrayIndexCtype, false, false);
 
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
@@ -1865,10 +1891,15 @@ public class CHandler {
 		}
 	}
 
+	/**
+	 * Add Boogie code for allocation and writing of string literals. TODO 20211105
+	 * Matthias: Optimization: String literals are stored in a separate read-only
+	 * area of the memory. String literals can neither be modified nor deallocated.
+	 */
 	private Result handleStringLiteralExpression(final ILocation loc, final IDispatcher main,
 			final IASTLiteralExpression node) {
-		// Note: We can either use loc here or create a new ignore-loc s.t. the string literal assignment will not be
-		// shown in the backtranslation
+		// Note: We can either use loc here or create a new ignore-loc s.t. the string
+		// literal assignment will not be shown in the backtranslation
 		final ILocation actualLoc = LocationFactory.createIgnoreCLocation(node);
 
 		final CStringLiteral stringLiteral = new CStringLiteral(node.getValue(), mTypeSizes.getSignednessOfChar());
@@ -1876,29 +1907,41 @@ public class CHandler {
 		final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(actualLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
 
-		final RValue auxVarRValue;
-		final AuxVarInfo auxvar;
-
 		final RValue dimension = new RValue(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents());
 		final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
 		final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-		auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
-		auxVarRValue = new RValueForArrays(auxvar.getExp(), arrayType);
-		// the declaration of the variable that corresponds to a string literal has to be made globally
-		mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
 
-		// overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-		final boolean writeValues =
-				stringLiteral.getByteValues().size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
+		final AuxVarInfo auxvar;
+		final RValue addressRValue;
+		final CallStatement ultimateAllocCall;
+		if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
+			auxvar = null;
+			final Pair<RValue, CallStatement> pair = mMemoryHandler.getUltimateMemAllocInitCall(actualLoc, arrayType,
+					node);
+
+			addressRValue = pair.getFirst();
+			ultimateAllocCall = pair.getSecond();
+
+		} else {
+			auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
+			addressRValue = new RValueForArrays(auxvar.getExp(), arrayType);
+			// the declaration of the variable that corresponds to a string literal has to
+			// be made global
+			mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
+			ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(sizeInBytesExpr, auxvar.getLhs(), actualLoc,
+					MemoryArea.STACK);
+		}
 
 		final List<Statement> statements = new ArrayList<>();
-		final CallStatement ultimateAllocCall =
-				mMemoryHandler.getUltimateMemAllocCall(sizeInBytesExpr, auxvar.getLhs(), actualLoc, MemoryArea.STACK);
 		statements.add(ultimateAllocCall);
 
+		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
+		// or longer
+		final boolean writeValues = stringLiteral.getByteValues()
+				.size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 		if (writeValues) {
-			final ExpressionResult exprRes =
-					mInitHandler.writeStringLiteral(actualLoc, auxVarRValue, stringLiteral, node);
+			final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral,
+					node);
 			assert !exprRes.hasLRValue();
 			assert exprRes.getDeclarations().isEmpty();
 			assert exprRes.getOverapprs().isEmpty();
@@ -1916,7 +1959,7 @@ public class CHandler {
 			overapproxList = new ArrayList<>();
 			overapproxList.add(overapprox);
 		}
-		return new StringLiteralResult(auxVarRValue, overapproxList, auxvar, stringLiteral, !writeValues);
+		return new StringLiteralResult(addressRValue, overapproxList, auxvar, stringLiteral, !writeValues);
 	}
 
 	public Result visit(final IDispatcher main, final IASTNode node) {
@@ -2597,6 +2640,9 @@ public class CHandler {
 			// the value of an assignment statement expression is the right hand side of the assignment
 			builder.setLrValue(rightHandSideValueWithConversionsApplied);
 
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
+			}
 			return builder.build();
 		} else if (leftHandSide instanceof LocalLValue) {
 			// left hand side of assignment is off heap
@@ -2641,6 +2687,10 @@ public class CHandler {
 			// (RValue) rhsConverted.getLrValue(), rhsConverted.getNeighbourUnionFields(),
 			// rightHandSideValueWithConversionsApplied, builder, hook);
 			// return builderWithUnionFieldAndNeighboursUpdated.build();
+
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
+			}
 			return builder.build();
 		} else {
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
@@ -2761,11 +2811,11 @@ public class CHandler {
 			addBoogieIdsOfHeapVars(bId);
 		}
 
-		final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
-				new SymbolTableValue(bId, null, cDec, dummyDeclInfo, hook, false));
+				new SymbolTableValue(bId, null, cDec, declarationInformation, hook, false));
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
@@ -2776,7 +2826,6 @@ public class CHandler {
 			translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
 		}
 
-		final DeclarationInformation declarationInformation;
 		final Declaration boogieDec;
 		final Result result;
 		if (storageClass == CStorageClass.TYPEDEF) {
@@ -2799,7 +2848,6 @@ public class CHandler {
 				mTypeHandler.registerNamedIncompleteType(identifier, cDec.getName());
 			}
 			// TODO: add a sizeof-constant for the type??
-			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
 			result = new SkipResult();
 		} else if (storageClass == CStorageClass.STATIC && !mProcedureManager.isGlobalScope()) {
@@ -2807,16 +2855,9 @@ public class CHandler {
 			// global static variables are treated like normal global variables..
 			boogieDec = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
 			result = new SkipResult();
 		} else {
-			if (mProcedureManager.isGlobalScope()) {
-				declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-			} else {
-				declarationInformation =
-						new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
-			}
 			final BoogieType boogieType =
 					mTypeHandler.getBoogieTypeForBoogieASTType(mTypeHandler.cType2AstType(loc, cDec.getType()));
 
@@ -2893,6 +2934,14 @@ public class CHandler {
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
 				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, hook, false));
 		return result;
+	}
+
+	private DeclarationInformation getDeclarationInfo(final CStorageClass storageClass) {
+		if (storageClass == CStorageClass.TYPEDEF || storageClass == CStorageClass.STATIC
+				|| mProcedureManager.isGlobalScope()) {
+			return DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		}
+		return new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID());
 	}
 
 	/**

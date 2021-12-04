@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,7 +55,7 @@ public class HistogramOfIterable<E> {
 		mVisualizationArray = generateVisualizationArray(mHistogramMap);
 	}
 
-	private Integer[] generateVisualizationArray(final Map<E, Integer> histogramMap) {
+	public static <E> Integer[] generateVisualizationArray(final Map<E, Integer> histogramMap) {
 		final Integer[] result = histogramMap.values().toArray(new Integer[histogramMap.size()]);
 		Arrays.sort(result, Collections.reverseOrder());
 		return result;
@@ -73,10 +74,15 @@ public class HistogramOfIterable<E> {
 	 * @return return the highest occurrence, return 0 if there are no elements
 	 */
 	public int getMax() {
-		if (getVisualizationArray().length == 0) {
+		final Integer[] visualizationArray = getVisualizationArray();
+		return getMaxOfVisualizationArray(Arrays.asList(visualizationArray));
+	}
+
+	public static int getMaxOfVisualizationArray(final List<Integer> visualizationArray) {
+		if (visualizationArray.isEmpty()) {
 			return 0;
 		}
-		return getVisualizationArray()[0];
+		return visualizationArray.get(0);
 	}
 
 	public static <E> Map<E, Integer> generateHistogramMap(final Iterable<E> iterable) {

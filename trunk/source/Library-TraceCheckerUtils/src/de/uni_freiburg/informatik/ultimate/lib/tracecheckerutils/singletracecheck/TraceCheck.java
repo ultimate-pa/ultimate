@@ -248,6 +248,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			mFeasibilityResult = feasibilityResult;
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
 			mRcfgProgramExecution = icfgProgramExecution;
+			mTraceCheckFinished = true;
 		}
 	}
 
@@ -344,11 +345,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 * @return
 	 */
 	private IcfgProgramExecution<L> computeRcfgProgramExecutionAndDecodeBranches(final ManagedScript managedScriptTc) {
-		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
-			throw new AssertionError(
-					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
-		}
-		if (!((DefaultTransFormulas<L>) mNestedFormulas).hasBranchEncoders()) {
+		if (!(mNestedFormulas instanceof DefaultTransFormulas)
+				|| !((DefaultTransFormulas<L>) mNestedFormulas).hasBranchEncoders()) {
 			final String msg = "Trace is feasible, we will do another trace check, this time with branch encoders.";
 			managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
 			mLogger.info(msg);
@@ -486,8 +484,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	public TraceCheckStatisticsGenerator getStatistics() {
 		if (mTraceCheckFinished) {
 			return mTraceCheckBenchmarkGenerator;
+		} else {
+			throw new IllegalStateException("Cannot obtain statistics from unfinished TraceCheck");
 		}
-		return null;
 	}
 
 	private void lockAndPrepareSolverForTraceCheck() {

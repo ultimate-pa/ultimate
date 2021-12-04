@@ -222,6 +222,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 		final ExplicitLhsPolynomialRelations bestElprs =
 				bestDivision(script, eliminatee, bannedForDivCapture, quantifier, elprs);
+		if (bestElprs == null) {
+			return null;
+		}
 		final Term constraint = bestElprs.buildBoundConstraint(services, script, quantifier);
 		if (constraint == null) {
 			return null;
@@ -281,6 +284,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		final ExplicitLhsPolynomialRelation solved = elpr.divInvertible(elpr.getLhsCoefficient());
 		if (solved != null) {
 			return solved;
+		}
+		if (SmtSortUtils.isBitvecSort(elpr.getLhsMonomial().getSort())) {
+			// For bitvectors it is not sufficient to add additional constraints.
+			// We would also have to do case distinctions to take the modulo arithmetic
+			// of bitvectors into account.
+			return null;
 		}
 		final Pair<ExplicitLhsPolynomialRelation, Term> pair =
 				elpr.divideByIntegerCoefficient(script, bannedForDivCapture);

@@ -50,12 +50,14 @@ public class UndoableWrapperScript extends WrapperScript {
 
 	@Override
 	public void push(final int levels) throws SMTLIBException {
+		assert levels > 0;
 		super.push(levels);
 		mDirtyStackLevels += levels;
 	}
 
 	@Override
 	public void pop(final int levels) throws SMTLIBException {
+		assert levels > 0;
 		super.pop(levels);
 		mDirtyStackLevels -= levels;
 		if (mDirtyStackLevels < 0) {
@@ -81,7 +83,7 @@ public class UndoableWrapperScript extends WrapperScript {
 	 * @return The number of dirty stack levels
 	 */
 	public int restore() {
-		final int rtr = mDirtyStackLevels - 1;
+		final int rtr = mDirtyStackLevels;
 		pop(mDirtyStackLevels);
 		return rtr;
 	}

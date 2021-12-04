@@ -115,25 +115,23 @@ public class ExpressionResult extends Result {
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Set<AuxVarInfo> auxVars) {
-		this(stmt, lrVal, decl, auxVars, new ArrayList<Overapprox>(), Collections.emptyList());
+		this(stmt, lrVal, decl, auxVars, new ArrayList<>(), Collections.emptyList());
 	}
 
 	public ExpressionResult(final LRValue lrVal, final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList) {
-		this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(), auxVars, overapproxList,
-				Collections.emptyList());
+		this(new ArrayList<>(), lrVal, new ArrayList<>(), auxVars, overapproxList, Collections.emptyList());
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal) {
-		this(stmt, lrVal, new ArrayList<Declaration>(), new LinkedHashSet<AuxVarInfo>(), new ArrayList<Overapprox>(),
-				Collections.emptyList());
+		this(stmt, lrVal, new ArrayList<>(), new LinkedHashSet<>(), new ArrayList<>(), Collections.emptyList());
 	}
 
 	public ExpressionResult(final LRValue lrVal, final Set<AuxVarInfo> auxVars) {
-		this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(), auxVars);
+		this(new ArrayList<>(), lrVal, new ArrayList<>(), auxVars);
 	}
 
 	public ExpressionResult(final LRValue lrVal) {
-		this(lrVal, new LinkedHashSet<AuxVarInfo>());
+		this(lrVal, new LinkedHashSet<>());
 	}
 
 	public LRValue getLrValue() {

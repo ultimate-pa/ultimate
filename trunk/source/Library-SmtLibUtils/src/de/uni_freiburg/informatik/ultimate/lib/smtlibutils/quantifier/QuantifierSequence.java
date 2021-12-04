@@ -28,13 +28,16 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
@@ -58,12 +61,23 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class QuantifierSequence {
 	private final Script mScript;
-	private final List<QuantifiedVariables> mQuantifierBlocks = new ArrayList<>();
+	private final List<QuantifiedVariables> mQuantifierBlocks;
 	private Term mInnerTerm;
+
+
+
+	public QuantifierSequence(final Script script, final Term innerTerm, final List<QuantifiedVariables> quantifierBlocks) {
+		super();
+		mScript = script;
+		mInnerTerm = innerTerm;
+		mQuantifierBlocks = quantifierBlocks;
+	}
+
 
 	public QuantifierSequence(final Script script,
 			final Term input) {
 		mScript = script;
+		mQuantifierBlocks = new ArrayList<>();
 		Term innerTerm = input;
 		while(innerTerm instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula) innerTerm;
@@ -115,19 +129,26 @@ public class QuantifierSequence {
 		return prependQuantifierSequence(mScript, mQuantifierBlocks, mInnerTerm);
 	}
 
-	public void replace(final Set<TermVariable> forbiddenVariables,
-			final ManagedScript freshVarConstructor,
-			final String replacementName) {
+	/**
+	 * Modifies this {@link QuantifierSequence} such that each quantified variables
+	 * whose name is identical to one of the forbidden variables' names is replaced
+	 * by a fresh variable.
+	 */
+	public void replace(final Set<TermVariable> forbiddenVariables, final ManagedScript freshVarConstructor,
+			final String replacementPrefix) {
+		final Set<String> forbiddenNames = forbiddenVariables.stream().map(TermVariable::getName)
+				.collect(Collectors.toSet());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final QuantifiedVariables qv : mQuantifierBlocks) {
-			for (final TermVariable tv : forbiddenVariables) {
-				if (qv.mVariables.contains(tv)) {
-					final TermVariable fresh = freshVarConstructor.constructFreshTermVariable(
-							replacementName, tv.getSort());
+			for (final TermVariable tv : new ArrayList<TermVariable>(qv.getVariables())) {
+				if (forbiddenNames.contains(tv.getName())) {
+					final TermVariable fresh = freshVarConstructor.constructFreshTermVariable(replacementPrefix,
+							tv.getSort());
 					substitutionMapping.put(tv, fresh);
 					qv.mVariables.remove(tv);
 					qv.mVariables.add(fresh);
 				}
+
 			}
 		}
 		mInnerTerm = (new Substitution(mScript, substitutionMapping)).transform(mInnerTerm);
@@ -208,13 +229,15 @@ public class QuantifierSequence {
 		for (int i=0; i<quantifierBlocks.size(); i++) {
 			assert resultQuantifierBlocks.get(i+offset).getQuantifier() ==
 					quantifierBlocks.get(i).getQuantifier() : "wrong offset";
-			resultQuantifierBlocks.get(i+offset).getVariables().addAll(quantifierBlocks.get(i).getVariables());
+			final QuantifiedVariables oldQuantifierBlock = resultQuantifierBlocks.get(i + offset);
+			resultQuantifierBlocks.set(i + offset,
+					oldQuantifierBlock.addVariables(quantifierBlocks.get(i).getVariables()));
 		}
 	}
 
 
 	public List<QuantifiedVariables> getQuantifierBlocks() {
-		return mQuantifierBlocks;
+		return Collections.unmodifiableList(mQuantifierBlocks);
 	}
 
 	public int getNumberOfQuantifierBlocks() {
@@ -247,11 +270,18 @@ public class QuantifierSequence {
 			return mQuantifier;
 		}
 		public Set<TermVariable> getVariables() {
-			return mVariables;
+			return Collections.unmodifiableSet(mVariables);
 		}
 		@Override
 		public String toString() {
 			return ((mQuantifier == 0) ? "exists" : "forall") + mVariables + ". ";
+		}
+
+
+		public QuantifiedVariables addVariables(final Collection<TermVariable> newVariables) {
+			final Set<TermVariable> resVariables = new LinkedHashSet<>(mVariables);
+			resVariables.addAll(newVariables);
+			return new QuantifiedVariables(mQuantifier, resVariables);
 		}
 
 

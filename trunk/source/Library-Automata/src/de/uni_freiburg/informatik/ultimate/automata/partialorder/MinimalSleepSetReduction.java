@@ -26,9 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -63,9 +62,6 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	private final R mInitial;
 
-	private final Map<R, S> mState2Original = new HashMap<>();
-	private final Map<R, ImmutableSet<L>> mState2SleepSet = new HashMap<>();
-
 	public MinimalSleepSetReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final ISleepSetStateFactory<L, S, R> stateFactory, final IIndependenceRelation<S, L> independenceRelation,
 			final IDfsOrder<L, R> order) {
@@ -77,7 +73,7 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 		mIndependence = independenceRelation;
 
 		final S oldInitial = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
-		mInitial = getSleepSetState(oldInitial, ImmutableSet.empty());
+		mInitial = mStateFactory.createSleepSetState(oldInitial, ImmutableSet.empty());
 	}
 
 	@Override
@@ -107,12 +103,12 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	@Override
 	public boolean isFinal(final R state) {
-		return mOperand.isFinal(mState2Original.get(state));
+		return mOperand.isFinal(mStateFactory.getOriginalState(state));
 	}
 
 	@Override
 	public int size() {
-		return mState2Original.size();
+		return -1;
 	}
 
 	@Override
@@ -122,46 +118,41 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	@Override
 	public Set<L> lettersInternal(final R state) {
-		return DataStructureUtils.difference(mOperand.lettersInternal(mState2Original.get(state)),
-				mState2SleepSet.get(state));
+		return DataStructureUtils.difference(mOperand.lettersInternal(mStateFactory.getOriginalState(state)),
+				mStateFactory.getSleepSet(state));
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, R>> internalSuccessors(final R state, final L letter) {
-		final S currentState = mState2Original.get(state);
+		final S currentState = mStateFactory.getOriginalState(state);
 		final var currentTransitionOpt = DataStructureUtils.getOnly(mOperand.internalSuccessors(currentState, letter),
 				"Automaton must be deterministic");
 		if (currentTransitionOpt.isEmpty()) {
-			return Set.of();
+			return Collections.emptySet();
 		}
 
+		final ImmutableSet<L> currentSleepSet = mStateFactory.getSleepSet(state);
 		final Comparator<L> comp = mOrder.getOrder(state);
-		final Stream<L> explored =
-				mOperand.lettersInternal(currentState).stream().filter(x -> comp.compare(x, letter) < 0);
+		final Stream<L> explored = mOperand.lettersInternal(currentState).stream()
+				.filter(x -> comp.compare(x, letter) < 0 && !currentSleepSet.contains(x));
 
-		final ImmutableSet<L> currentSleepSet = mState2SleepSet.get(state);
 		// TODO factor out sleep set successor computation
-		final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored)
-				.filter(l -> mIndependence.contains(currentState, letter, l)).collect(ImmutableSet.collector());
+		final ImmutableSet<L> succSleepSet =
+				ImmutableSet.of((Set<L>) Set.of(Stream.concat(currentSleepSet.stream(), explored)
+						.filter(l -> mIndependence.contains(currentState, letter, l)).toArray()));
 
-		final R succSleepSetState = getSleepSetState(currentTransitionOpt.get().getSucc(), succSleepSet);
+		final R succSleepSetState =
+				mStateFactory.createSleepSetState(currentTransitionOpt.get().getSucc(), succSleepSet);
 		return Set.of(new OutgoingInternalTransition<>(letter, succSleepSetState));
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<L, R>> callSuccessors(final R state, final L letter) {
-		return Set.of();
+		return Collections.emptySet();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<L, R>> returnSuccessors(final R state, final R hier, final L letter) {
-		return Set.of();
-	}
-
-	private R getSleepSetState(final S state, final ImmutableSet<L> sleepset) {
-		final R newState = mStateFactory.createSleepSetState(state, sleepset);
-		mState2Original.put(newState, state);
-		mState2SleepSet.put(newState, sleepset);
-		return newState;
+		return Collections.emptySet();
 	}
 }

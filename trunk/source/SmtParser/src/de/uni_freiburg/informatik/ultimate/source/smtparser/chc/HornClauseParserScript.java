@@ -329,9 +329,8 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 			snfBody = snfTerm;
 			snfVars = null;
 		}
-		final Set<Term> constraints =
-				new SubTermFinder(term -> term.getSort().getName().equals("Bool") && hasNoUninterpretedPredicates(term),
-						true).findMatchingSubterms(snfBody);
+		final Set<Term> constraints = SubTermFinder.find(snfBody,
+				term -> term.getSort().getName().equals("Bool") && hasNoUninterpretedPredicates(term), true);
 		final Map<Term, Term> subs = new HashMap<>();
 		final Map<Term, Term> subsInverse = new HashMap<>();
 		// replace constraints with a boolean constant

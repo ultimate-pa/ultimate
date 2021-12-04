@@ -224,13 +224,12 @@ public class StandardFunctionHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				if (mOverwrittenFunctionNames.contains(transformedName)) {
-					mLogger.warn(String.format(
-							"Function %s is already implemented but we override the implementation for the call at %s",
-							transformedName, node.getFileLocation()));
-				} else {
+				if (!mOverwrittenFunctionNames.contains(transformedName)) {
 					return null;
 				}
+				mLogger.warn(String.format(
+						"Function %s is already implemented but we override the implementation for the call at %s",
+						transformedName, node.getFileLocation()));
 			}
 			final ILocation loc = getLoc(main, node);
 			return functionModel.handleFunction(main, node, loc, name);
@@ -251,6 +250,8 @@ public class StandardFunctionHandler {
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
 		final Map<String, IFunctionModelHandler> map = new HashMap<>();
 
+		// Do not use skip for functions that have return values, use constructUnsoundOverapproximationForFunctionCall
+		// instead
 		final IFunctionModelHandler skip = (main, node, loc, name) -> handleByIgnore(main, loc, name);
 		final IFunctionModelHandler die = (main, node, loc, name) -> handleByUnsupportedSyntaxException(loc, name);
 		final IFunctionModelHandler dieFloat =
@@ -265,6 +266,7 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_join", this::handlePthread_join);
 		fill(map, "pthread_mutex_init", this::handlePthread_mutex_init);
 		fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
+		fill(map, "pthread_mutex_trylock", this::handlePthread_mutex_trylock);
 		fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
 		fill(map, "pthread_exit", this::handlePthread_exit);
 		fill(map, "pthread_cond_init", this::handlePthread_success);
@@ -273,6 +275,9 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_cond_broadcast", this::handlePthread_success);
 		fill(map, "pthread_cond_destroy", this::handlePthread_success);
 		fill(map, "pthread_mutex_destroy", this::handlePthread_success);
+		fill(map, "pthread_rwlock_rdlock", this::handlePthread_rwlock_rdlock);
+		fill(map, "pthread_rwlock_wrlock", this::handlePthread_rwlock_wrlock);
+		fill(map, "pthread_rwlock_unlock", this::handlePthread_rwlock_unlock);
 		// the following three occur at SV-COMP 2019 only in one benchmark
 		fill(map, "pthread_attr_init", die);
 		fill(map, "pthread_attr_setdetachstate", die);
@@ -281,8 +286,26 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_key_create", die);
 		fill(map, "pthread_getspecific", die);
 		fill(map, "pthread_setspecific", die);
+		// further unsupported pthread functions
+		fill(map, "pthread_rwlock_init", die);
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+
+		// TODO 20211105 Matthias: Unsound because our implementation of printf is
+		// unsound and because we consider wchars as chars.
+		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+
+		// TODO 20211106 Matthias: Set to "die" by Dominik because scanf caused
+		// unoundness in datarace benchmarks
+		fill(map, "scanf", die);
+
+		// TODO 20211105 Matthias: Unsound because depending on its first argument,
+		// the *scanf functions manipulate memory addressed by the other arguments.
+		// see https://en.cppreference.com/w/c/io/fscanf and https://en.cppreference.com/w/c/io/fwscanf
+		fill(map, "sscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
+				new CPrimitive(CPrimitive.CPrimitives.INT)));
+		fill(map, "swscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
+				new CPrimitive(CPrimitive.CPrimitives.INT)));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -330,6 +353,37 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__builtin_bswap64", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.ULONG)));
+
+		/*
+		 * 6.56 Built-in Functions to Perform Arithmetic with Overflow Checking
+		 * https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+		 */
+		final IFunctionModelHandler overapproximateGccOverflowCheck = (main, node, loc,
+				name) -> handleByOverapproximation(main, node, loc, name, 3, new CPrimitive(CPrimitives.BOOL));
+		fill(map, "__builtin_add_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_sadd_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_saddl_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_saddll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_uadd_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_uaddl_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_uaddll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_sub_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_ssub_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_ssubl_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_ssubll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_usub_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_usubl_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_usubll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_mul_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_smul_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_smull_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_smulll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_umul_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_umull_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_umulll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_add_overflow_p", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_sub_overflow_p", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_mul_overflow_p", overapproximateGccOverflowCheck);
 
 		/*
 		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
@@ -496,8 +550,8 @@ public class StandardFunctionHandler {
 
 		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
-		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc, name));
-		fill(map, "reach_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc, name));
+		fill(map, "__VERIFIER_error", this::handleErrorFunction);
+		fill(map, "reach_error", this::handleErrorFunction);
 
 		fill(map, "__VERIFIER_assume", this::handleVerifierAssume);
 
@@ -1059,19 +1113,17 @@ public class StandardFunctionHandler {
 				rawProcName = castIdExpr.getName().toString();
 			} else if (argument instanceof CASTUnaryExpression) {
 				final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
-				if (castUnaryExpr.getOperator() == IASTUnaryExpression.op_amper) {
-					// function foo is probably given as a function pointer of the form & foo
-					if (castUnaryExpr.getOperand() instanceof CASTIdExpression) {
-						final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
-						rawProcName = castIdExpr.getName().toString();
-					} else {
-						throw new UnsupportedOperationException("Third argument of pthread_create is: "
-								+ castUnaryExpr.getOperand().getClass().getSimpleName());
-					}
-				} else {
+				if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
 					throw new UnsupportedOperationException(
 							"Third argument of pthread_create is: " + argument.getClass().getSimpleName());
 				}
+				// function foo is probably given as a function pointer of the form & foo
+				if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
+					throw new UnsupportedOperationException("Third argument of pthread_create is: "
+							+ castUnaryExpr.getOperand().getClass().getSimpleName());
+				}
+				final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
+				rawProcName = castIdExpr.getName().toString();
 			} else {
 				throw new UnsupportedOperationException(
 						"Third argument of pthread_create is " + argument.getClass().getSimpleName());
@@ -1086,7 +1138,7 @@ public class StandardFunctionHandler {
 
 			final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
 			final String prefix = idExpr.getIdentifier().substring(0, 9);
-			if (!prefix.equals("#funAddr~")) {
+			if (!prefix.equals(SFO.FUNCTION_ADDRESS)) {
 				throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
 			}
 			methodName = idExpr.getIdentifier().substring(9);
@@ -1224,6 +1276,26 @@ public class StandardFunctionHandler {
 		return createPthread_mutex_lock(main, loc, arguments[0]);
 	}
 
+	private Result handlePthread_mutex_trylock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexTryLockCall);
+	}
+
+	private Result handlePthread_rwlock_rdlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockReadLockCall);
+	}
+
+	private Result handlePthread_rwlock_wrlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockWriteLockCall);
+	}
+
+	private Result handlePthread_rwlock_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockUnlockCall);
+	}
+
 	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause mutex) {
 		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
@@ -1253,6 +1325,32 @@ public class StandardFunctionHandler {
 		// erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
 		// new CPrimitive(CPrimitives.INT)));
 		return erb.build();
+	}
+
+	private Result handleLockCall(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final ILockCallFactory callFactory) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final IASTInitializerClause lock = arguments[0];
+
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, lock);
+		final Expression index = arg.getLrValue().getValue();
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+
+		// auxvar for procedure's return value
+		final CType cType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		erb.addDeclaration(auxvarinfo.getVarDec());
+		erb.addAuxVar(auxvarinfo);
+
+		erb.addStatement(callFactory.apply(loc, index, auxvarinfo.getLhs()));
+		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
+		return erb.build();
+
+	}
+
+	private interface ILockCallFactory {
+		CallStatement apply(ILocation loc, Expression index, VariableLHS lhs);
 	}
 
 	/**
@@ -1503,8 +1601,8 @@ public class StandardFunctionHandler {
 		} else {
 			throw new IllegalArgumentException("unknown allocation method; " + methodName);
 		}
-		erb.addStatement(
-				mMemoryHandler.getUltimateMemAllocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc, memArea));
+		erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(exprResConverted.getLrValue().getValue(),
+				auxvar.getLhs(), loc, memArea));
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the
@@ -1848,11 +1946,8 @@ public class StandardFunctionHandler {
 		// Read https://gcc.gnu.org/onlinedocs/gcc/Object-Size-Checking.html
 		// For testing, overapproximate and do not dispatch arguments (I understand the spec as this is whats happening,
 		// but I am not sure)
-		return handleByOverapproximationWithoutDispatch(main, node, loc, name, 2, new CPrimitive(CPrimitives.INT));
-		// main.warn(loc, "used trivial implementation of __builtin_object_size");
-		// final CPrimitive cType = new CPrimitive(CPrimitives.INT);
-		// final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
-		// return new ExpressionResult(new RValue(zero, cType));
+		return handleUnsoundByOverapproximationWithoutDispatch(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.INT));
 	}
 
 	private Result handlePrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
@@ -2027,8 +2122,7 @@ public class StandardFunctionHandler {
 			results.add((ExpressionResult) main.dispatch(argument));
 		}
 
-		final ExpressionResult overapproxCall =
-				constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
+		final ExpressionResult overapproxCall = constructOverapproximationForFunctionCall(loc, methodName, resultType);
 		results.add(overapproxCall);
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).setLrValue(overapproxCall.getLrValue())
 				.build();
@@ -2051,12 +2145,12 @@ public class StandardFunctionHandler {
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
 	}
 
-	private Result handleByOverapproximationWithoutDispatch(final IDispatcher main,
+	private Result handleUnsoundByOverapproximationWithoutDispatch(final IDispatcher main,
 			final IASTFunctionCallExpression node, final ILocation loc, final String methodName, final int numberOfArgs,
 			final CType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
-		return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
+		return constructOverapproximationForFunctionCall(loc, methodName, resultType);
 	}
 
 	/**
@@ -2069,16 +2163,27 @@ public class StandardFunctionHandler {
 	 * @param resultType
 	 *            CType that determinies the type of the auxiliary variable
 	 */
-	private ExpressionResult constructOverapproximationForFunctionCall(final IDispatcher main, final ILocation loc,
-			final String functionName, final CType resultType) {
+	private ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
+			final CType resultType) {
+		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
+	}
+
+	/**
+	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will **NOT** be
+	 * marked as an overapproximation, which is always unsound.
+	 */
+	private ExpressionResult constructUnsoundOverapproximationForFunctionCall(final ILocation loc,
+			final CType resultType) {
+		return buildFunctionCall(loc, resultType).build();
+	}
+
+	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		// introduce fresh aux variable
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvar.getVarDec());
 		builder.addAuxVar(auxvar);
-		builder.addOverapprox(new Overapprox(functionName, loc));
 		builder.setLrValue(new RValue(auxvar.getExp(), resultType));
-		return builder.build();
+		return builder;
 	}
 
 	private static void checkArguments(final ILocation loc, final int expectedArgs, final String name,

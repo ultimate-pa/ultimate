@@ -106,18 +106,18 @@ public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, 
 
 	}
 
-	public RelevantTransFormulas(final NestedWord<L> nestedTrace, final IPredicate precondition,
+	public RelevantTransFormulas(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedFormulas, final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final Set<Term> unsatCore, final OldVarsAssignmentCache modGlobalVarManager, final ManagedScript script,
 			final AnnotateAndAsserter<L> aaa, final AnnotateAndAssertConjunctsOfCodeBlocks<L> aac) {
-		super(nestedTrace, pendingContexts);
+		super(nestedFormulas.getTrace(), pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
-		mTransFormulas = new UnmodifiableTransFormula[nestedTrace.length()];
+		mTransFormulas = new UnmodifiableTransFormula[nestedFormulas.getTrace().length()];
 		mGlobalAssignmentTransFormulaAtCall = new HashMap<>();
 		mOldVarsAssignmentTransFormulasAtCall = new HashMap<>();
 		mScript = script;
-		generateRelevantTransFormulas(unsatCore, modGlobalVarManager, aaa, aac);
+		generateRelevantTransFormulas(unsatCore, modGlobalVarManager, aaa, aac, nestedFormulas);
 	}
 
 	private void generateRelevantTransFormulas(final Set<L> unsatCore,
@@ -170,7 +170,8 @@ public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, 
 
 	private void generateRelevantTransFormulas(final Set<Term> unsatCore,
 			final OldVarsAssignmentCache modGlobalVarManager, final AnnotateAndAsserter<L> aaa,
-			final AnnotateAndAssertConjunctsOfCodeBlocks<L> aac) {
+			final AnnotateAndAssertConjunctsOfCodeBlocks<L> aac,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> inputNestedFormulas) {
 		final Map<Term, Term> annot2Original = aac.getAnnotated2Original();
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (super.getTrace().getSymbol(i) instanceof ICallAction) {
@@ -179,7 +180,7 @@ public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, 
 				Set<Term> conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(unsatCore, annot2Original,
 						conjunctsAnnot, aac.getSplitEqualityMapping());
 				mTransFormulas[i] = buildTransFormulaWithRelevantConjuncts(
-						((IAction) super.getTrace().getSymbol(i)).getTransformula(),
+						inputNestedFormulas.getLocalVarAssignment(i),
 						conjunctsInUnsatCore.toArray(new Term[conjunctsInUnsatCore.size()]));
 				// 2. Global Var assignment
 				conjunctsAnnot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getGlobalVarAssignment(i));
@@ -204,7 +205,7 @@ public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, 
 				final Set<Term> conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(unsatCore,
 						annot2Original, conjunctsAnnot, aac.getSplitEqualityMapping());
 				mTransFormulas[i] =
-						buildTransFormulaWithRelevantConjuncts(super.getTrace().getSymbol(i).getTransformula(),
+						buildTransFormulaWithRelevantConjuncts(inputNestedFormulas.getFormulaFromNonCallPos(i),
 								conjunctsInUnsatCore.toArray(new Term[conjunctsInUnsatCore.size()]));
 			}
 		}

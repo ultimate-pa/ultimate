@@ -252,7 +252,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			if (!havocVars.isEmpty()) {
 				mOverApproximation.put(loop.getHead(), true);
 			}
-			pathGuards.add(TransFormulaUtils.computeGuard((UnmodifiableTransFormula) path, mManagedScript, mServices, mLogger));
+			pathGuards.add(TransFormulaUtils.computeGuard((UnmodifiableTransFormula) path, mManagedScript, mServices));
 
 			// calculate symbolic memory of the path
 			for (final Map.Entry<IProgramVar, Term> newValue : varUpdates.entrySet()) {

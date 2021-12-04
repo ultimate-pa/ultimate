@@ -113,8 +113,8 @@ public class AtomicTraceElement<TE> {
 		assert !info.contains(StepInfo.FORK)
 				|| forkedThreadId != null : "If this step is a fork, you must have a forked thread id: " + element;
 		assert hasAnyStepInfo(info, StepInfo.PROC_CALL, StepInfo.PROC_RETURN) || threadId != null
-				|| precedingProcedure == succeedingProcedure : "You must have same procedures except when you have threads or when this is a call or a return: "
-						+ element;
+				|| Objects.equals(precedingProcedure, succeedingProcedure) : "You must have same procedures"
+						+ " except when you have threads or when this is a call or a return: " + element;
 		mElement = element;
 		mStep = step;
 		mStepInfo = info;

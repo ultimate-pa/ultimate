@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2021 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2019-2021 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -28,6 +29,10 @@ package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 /**
  * Represents the type (data type + aggregation function + pretty printer) of an {@link IStatisticsElement}.
@@ -50,26 +55,32 @@ import java.util.function.BinaryOperator;
  * {@link #prettyPrint(String, Object)}
  *
  * @author schaetzc@tf.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public enum KeyType {
-	COUNTER(Integer.class, Aggregate::intAdd, PrettyPrint::keyColonData),
-	RATIO(Double.class, Aggregate::doubleAdd, PrettyPrint::keyColonData),
-	TIMER(Long.class, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),
-	MAX_TIMER(Long.class, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),;
+	COUNTER(() -> 0, Aggregate::intAdd, PrettyPrint::keyColonData, Converter::identity),
+	RATIO(() -> 0.0, Aggregate::doubleAdd, PrettyPrint::keyColonData, Converter::identity),
+	TIMER(() -> 0L, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::keyColonData), Converter::identity),
+	MAX_TIMER(() -> 0L, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData), Converter::identity),
+	TT_TIMER(() -> 0L, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::dataSpaceKey), Converter::nanos),
+	TT_MAX_TIMER(() -> 0L, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::dataSpaceKey), Converter::nanos),
+	IN_CA_RE_COUNTER(InCaReCounter::new, Aggregate::inCaReAdd, PrettyPrint::dataSpaceKey, Converter::identity);
 
-	private final Class<?> mDataType;
+	private final Supplier<Object> mCreate;
 	private final BinaryOperator<Object> mAggregate;
 	private final BiFunction<String, Object, String> mPrettyPrinter;
+	private Function<Object, Object> mConverter;
 
-	KeyType(final Class<?> dataType, final BinaryOperator<Object> aggregate,
-			final BiFunction<String, Object, String> prettyprinter) {
-		mDataType = dataType;
+	KeyType(final Supplier<Object> create, final BinaryOperator<Object> aggregate,
+			final BiFunction<String, Object, String> prettyprinter, final Function<Object, Object> converter) {
+		mCreate = create;
 		mAggregate = aggregate;
 		mPrettyPrinter = prettyprinter;
+		mConverter = converter;
 	}
 
-	public Class<?> getDataType() {
-		return mDataType;
+	public Object createEmpty() {
+		return mCreate.get();
 	}
 
 	public Object aggregate(final Object lhs, final Object rhs) {
@@ -82,5 +93,9 @@ public enum KeyType {
 	 */
 	public String prettyPrint(final String keyName, final Object data) {
 		return mPrettyPrinter.apply(keyName, data);
+	}
+
+	public Object convert(final Object o) {
+		return mConverter.apply(o);
 	}
 }

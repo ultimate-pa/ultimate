@@ -1011,12 +1011,15 @@ public class BoogieOutput {
 	 *            the axiom to print.
 	 */
 	public void printAxiom(final Axiom decl) {
-		final StringBuilder sb = new StringBuilder();
+		mWriter.println(appendAxiom(new StringBuilder(), decl).toString());
+	}
+
+	public StringBuilder appendAxiom(final StringBuilder sb, final Axiom decl) {
 		sb.append("axiom ");
 		appendAttributes(sb, decl.getAttributes());
 		appendExpression(sb, decl.getFormula(), 0);
 		sb.append(";");
-		mWriter.println(sb.toString());
+		return sb;
 	}
 
 	/**

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -50,17 +51,27 @@ public class UtilsTest {
 
 	@Test
 	public void humanReadableBytesTest() {
-		Assert.assertEquals("1 B", CoreUtil.humanReadableByteCount(1, false));
-		Assert.assertEquals("1000 B", CoreUtil.humanReadableByteCount(1000, false));
-		Assert.assertEquals("1.0 KiB", CoreUtil.humanReadableByteCount(1024, false));
-		Assert.assertEquals("1.0 kB", CoreUtil.humanReadableByteCount(1000, true));
-		Assert.assertEquals("9.2 EB", CoreUtil.humanReadableByteCount(Long.MAX_VALUE, true));
-		Assert.assertEquals(Long.MIN_VALUE + " B", CoreUtil.humanReadableByteCount(Long.MIN_VALUE, true));
-		Assert.assertEquals("8.0 EiB", CoreUtil.humanReadableByteCount(Long.MAX_VALUE, false));
-		Assert.assertEquals(Long.MIN_VALUE + " B", CoreUtil.humanReadableByteCount(Long.MIN_VALUE, false));
-		Assert.assertEquals("0 B", CoreUtil.humanReadableByteCount(0, true));
-		Assert.assertEquals("0 B", CoreUtil.humanReadableByteCount(0, false));
-		Assert.assertEquals("1.0 MiB", CoreUtil.humanReadableByteCount(1048576, false));
+		Assert.assertEquals("1B", CoreUtil.humanReadableByteCount(1, false));
+		Assert.assertEquals("1000B", CoreUtil.humanReadableByteCount(1000, false));
+		Assert.assertEquals("1.0KiB", CoreUtil.humanReadableByteCount(1024, false));
+		Assert.assertEquals("1.0kB", CoreUtil.humanReadableByteCount(1000, true));
+		Assert.assertEquals("9.2EB", CoreUtil.humanReadableByteCount(Long.MAX_VALUE, true));
+		Assert.assertEquals(Long.MIN_VALUE + "B", CoreUtil.humanReadableByteCount(Long.MIN_VALUE, true));
+		Assert.assertEquals("8.0EiB", CoreUtil.humanReadableByteCount(Long.MAX_VALUE, false));
+		Assert.assertEquals(Long.MIN_VALUE + "B", CoreUtil.humanReadableByteCount(Long.MIN_VALUE, false));
+		Assert.assertEquals("0B", CoreUtil.humanReadableByteCount(0, true));
+		Assert.assertEquals("0B", CoreUtil.humanReadableByteCount(0, false));
+		Assert.assertEquals("1.0MiB", CoreUtil.humanReadableByteCount(1048576, false));
+	}
+
+	@Test
+	public void humanReadableTimesTest() {
+		Assert.assertEquals("2s", CoreUtil.humanReadableTime(2000, TimeUnit.MILLISECONDS, 0));
+		Assert.assertEquals("2s", CoreUtil.humanReadableTime(2400, TimeUnit.MILLISECONDS, 0));
+		Assert.assertEquals("2.4s", CoreUtil.humanReadableTime(2400, TimeUnit.MILLISECONDS, 1));
+		Assert.assertEquals("1.0h", CoreUtil.humanReadableTime(3600, TimeUnit.SECONDS, 1));
+		Assert.assertEquals("1.0d", CoreUtil.humanReadableTime(24, TimeUnit.HOURS, 1));
+		Assert.assertEquals("2d", CoreUtil.humanReadableTime(2, TimeUnit.DAYS, 0));
 	}
 
 	@Test(expected = Test.None.class)

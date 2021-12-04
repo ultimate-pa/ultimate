@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -225,6 +226,14 @@ public class ManagedScript {
 	 */
 	public TermVariable constructFreshCopy(final TermVariable tv) {
 		return mVariableManager.constructFreshCopy(tv);
+	}
+
+	public Map<TermVariable, TermVariable> constructFreshCopies(final Set<TermVariable> tvs) {
+		final Map<TermVariable, TermVariable> result = new LinkedHashMap<>();
+		for (final TermVariable tv : tvs) {
+			result.put(tv, constructFreshCopy(tv));
+		}
+		return result;
 	}
 
 	/**

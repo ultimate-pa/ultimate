@@ -68,9 +68,4 @@ public enum ErrorAutomatonStatisticsDefinitions implements IStatisticsElement {
 	public String prettyprint(final Object o) {
 		return mPrettyprinter.apply(name()).apply(o);
 	}
-
-	@Override
-	public Class<?> getDataType() {
-		return mClazz;
-	}
 }

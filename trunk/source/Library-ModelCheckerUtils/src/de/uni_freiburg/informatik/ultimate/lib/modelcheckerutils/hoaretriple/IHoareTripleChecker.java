@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.ILockHolderWithVoluntaryLockRelease;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
@@ -66,51 +67,52 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 	 */
 	Validity checkReturn(IPredicate preLin, IPredicate preHier, IReturnAction act, IPredicate succ);
 
-	HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark();
+	IStatisticsDataProvider getStatistics();
 
 	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
+
+		ProPred(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+		ProAct(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		/**
 		 * Simple Dataflow analysis To False Satisfiable. See
 		 * {@link SdHoareTripleCheckerHelper#sdecInternalToFalse}.
 		 */
-		SDtfs(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+		SDtfs(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		/**
 		 * Simple Dataflow analysis Self Loop Unsatisfiable. See
 		 * {@link SdHoareTripleCheckerHelper#sdecInternalSelfloop}.
 		 */
-		SDslu(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+		SDslu(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		/**
 		 * Simple Dataflow Satisfiable. See
 		 * {@link SdHoareTripleCheckerHelper#sdecInteral}.
 		 */
-		SDs(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+		SDs(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		/**
 		 * See {@link SdHoareTripleCheckerHelper#sdLazyEcInternal}.
 		 */
-		SdLazy(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+		SdLazy(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SolverSat(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+		SolverSat(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SolverUnsat(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+		SolverUnsat(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SolverUnknown(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+		SolverUnknown(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SolverNotchecked(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+		SolverNotchecked(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		Time(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),;
+		Time(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),;
 
-		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
 
-		HoareTripleCheckerStatisticsDefinitions(final Class<?> clazz,
-				final Function<Object, Function<Object, Object>> aggr,
+		HoareTripleCheckerStatisticsDefinitions(final Function<Object, Function<Object, Object>> aggr,
 				final Function<String, Function<Object, String>> prettyprinter) {
-			mClazz = clazz;
 			mAggr = aggr;
 			mPrettyprinter = prettyprinter;
 		}
@@ -125,10 +127,6 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 			return mPrettyprinter.apply(name()).apply(o);
 		}
 
-		@Override
-		public Class<?> getDataType() {
-			return mClazz;
-		}
 	}
 
 }

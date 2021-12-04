@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -108,7 +109,7 @@ public final class ExtendedConcurrencyInformation<LOC extends IcfgLocation> {
 	public boolean mayBeForkOf(final String forkedThread, final IcfgEdge edge) {
 		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
 			return mForks.getImage((IIcfgForkTransitionThreadCurrent<LOC>) edge).stream()
-					.anyMatch(e -> e.getSucceedingProcedure() == forkedThread);
+					.anyMatch(e -> Objects.equals(e.getSucceedingProcedure(), forkedThread));
 		}
 		return false;
 	}
@@ -116,7 +117,7 @@ public final class ExtendedConcurrencyInformation<LOC extends IcfgLocation> {
 	public boolean mayBeJoinOf(final String joinedThread, final IcfgEdge edge) {
 		if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
 			return mJoins.getImage((IIcfgJoinTransitionThreadCurrent<LOC>) edge).stream()
-					.anyMatch(e -> e.getPrecedingProcedure() == joinedThread);
+					.anyMatch(e -> Objects.equals(e.getPrecedingProcedure(), joinedThread));
 		}
 		return false;
 	}
@@ -124,7 +125,7 @@ public final class ExtendedConcurrencyInformation<LOC extends IcfgLocation> {
 	public boolean mustBeJoinOf(final String joinedThread, final IcfgEdge edge) {
 		if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
 			return mJoins.getImage((IIcfgJoinTransitionThreadCurrent<LOC>) edge).stream()
-					.allMatch(e -> e.getPrecedingProcedure() == joinedThread);
+					.allMatch(e -> Objects.equals(e.getPrecedingProcedure(), joinedThread));
 		}
 		return false;
 	}

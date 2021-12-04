@@ -148,7 +148,9 @@ public class Check extends ModernAnnotations {
 		/**
 		 * Check if a petrified ICFG does provide enough thread instances.
 		 */
-		SUFFICIENT_THREAD_INSTANCES
+		SUFFICIENT_THREAD_INSTANCES,
+
+		DATA_RACE,
 
 	}
 
@@ -256,6 +258,8 @@ public class Check extends ModernAnnotations {
 			return "complete";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
+		case DATA_RACE:
+			return "there are no data races";
 		default:
 			return "a specification is correct but has no positive message: " + spec;
 		}
@@ -307,6 +311,8 @@ public class Check extends ModernAnnotations {
 			return "incomplete";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
+		case DATA_RACE:
+			return "the program contains a data race";
 		default:
 			return "a specification may be violated but has no negative message: " + spec;
 		}

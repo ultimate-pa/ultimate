@@ -32,82 +32,71 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
-	OverallTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	OverallTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	OverallIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	OverallIterations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-	TraceHistogramMax(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
+	TraceHistogramMax(StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 
-	EmptinessCheckTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	PathProgramHistogramMax(StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 
-	AutomataDifference(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	EmptinessCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	DeadEndRemovalTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	AutomataDifference(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	HoareAnnotationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	DeadEndRemovalTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	InitialAbstractionConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	HoareAnnotationTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	PartialOrderReductionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	InitialAbstractionConstructionTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+	PartialOrderReductionTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+
+	HoareTripleCheckerStatistics(StatisticsType.STATISTICS_AGGREGATOR_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+
+	PredicateUnifierStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+
+	BasicInterpolantAutomatonTime(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+
+	BiggestAbstraction(CegarStatisticsType.SIZE_ITERATION_PAIR_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+
+	InterpolantAutomatonStates(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+	traceCheckStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+
+	InterpolantConsolidationStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION,
+
+			StatisticsType.KEY_BEFORE_DATA),
+	PathInvariantsStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION,
+
 			StatisticsType.KEY_BEFORE_DATA),
 
-	PredicateUnifierStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
+	InterpolantCoveringCapability(CoverageAnalysis.DEFAULT_AGGREGATION, StatisticsType.DATA_BEFORE_KEY),
 
-	BasicInterpolantAutomatonTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+	TotalInterpolationStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
-	BiggestAbstraction(Integer.class, CegarStatisticsType.SIZE_ITERATION_PAIR_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
+	DumpTime(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 
-	InterpolantAutomatonStates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	AutomataMinimizationStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
-	traceCheckStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
+	HoareAnnotationStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
-	InterpolantConsolidationStatistics(StatisticsData.class,
+	RefinementEngineStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
-			StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
-	PathInvariantsStatistics(StatisticsData.class,
+	ReuseStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
 
-			StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
-
-	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.DEFAULT_AGGREGATION,
-			StatisticsType.DATA_BEFORE_KEY),
-
-	TotalInterpolationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
-
-	DumpTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-
-	AutomataMinimizationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
-
-	HoareAnnotationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
-
-	RefinementEngineStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
-
-	ReuseStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
-
-	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
 
-	CegarLoopStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
+	CegarLoopStatisticsDefinitions(final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {
-		mClazz = Objects.requireNonNull(clazz);
 		mAggr = Objects.requireNonNull(aggr);
 		mPrettyprinter = Objects.requireNonNull(prettyprinter);
 	}
@@ -120,11 +109,6 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	@Override
 	public String prettyprint(final Object o) {
 		return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
-	}
-
-	@Override
-	public Class<?> getDataType() {
-		return mClazz;
 	}
 
 	public static AbstractCegarLoop.Result aggregateResult(final Object value1, final Object value2) {
@@ -140,11 +124,14 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 		}
 		if (results.contains(AbstractCegarLoop.Result.UNKNOWN)) {
 			return AbstractCegarLoop.Result.UNKNOWN;
-		} else if (results.contains(AbstractCegarLoop.Result.TIMEOUT)) {
+		}
+		if (results.contains(AbstractCegarLoop.Result.TIMEOUT)) {
 			return AbstractCegarLoop.Result.TIMEOUT;
-		} else if (DataStructureUtils.haveNonEmptyIntersection(AbstractCegarLoop.Result.USER_LIMIT_RESULTS, results)) {
+		}
+		if (DataStructureUtils.haveNonEmptyIntersection(AbstractCegarLoop.Result.USER_LIMIT_RESULTS, results)) {
 			return DataStructureUtils.getSomeCommonElement(AbstractCegarLoop.Result.USER_LIMIT_RESULTS, results).get();
-		} else if (results.contains(AbstractCegarLoop.Result.SAFE)) {
+		}
+		if (results.contains(AbstractCegarLoop.Result.SAFE)) {
 			return AbstractCegarLoop.Result.SAFE;
 		} else {
 			throw new AssertionError();

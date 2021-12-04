@@ -61,8 +61,7 @@ public class NestedMap2<K1, K2, V> {
 	}
 
 	/**
-	 * Returns a stream to all values of the nested map. The values are backed by
-	 * the map.
+	 * Returns a stream to all values of the nested map. The values are backed by the map.
 	 *
 	 * @return A backed stream to all values of the nested map
 	 */
@@ -161,10 +160,10 @@ public class NestedMap2<K1, K2, V> {
 
 	public Iterable<Triple<K1, K2, V>> entrySet() {
 		final Iterator<Entry<K1, Map<K2, V>>> innerIterator = mK1ToK2ToV.entrySet().iterator();
-		final Function<Entry<K1, Map<K2, V>>, Iterator<Entry<K2, V>>> nextOuterIteratorProvider = (x -> x.getValue()
-				.entrySet().iterator());
-		final Function<Entry<K1, Map<K2, V>>, Function<Entry<K2, V>, Triple<K1, K2, V>>> resultProvider = (x -> (y -> new Triple<K1, K2, V>(
-				x.getKey(), y.getKey(), y.getValue())));
+		final Function<Entry<K1, Map<K2, V>>, Iterator<Entry<K2, V>>> nextOuterIteratorProvider =
+				x -> x.getValue().entrySet().iterator();
+		final Function<Entry<K1, Map<K2, V>>, Function<Entry<K2, V>, Triple<K1, K2, V>>> resultProvider =
+				x -> y -> new Triple<K1, K2, V>(x.getKey(), y.getKey(), y.getValue());
 		return () -> new NestedIterator<Entry<K1, Map<K2, V>>, Entry<K2, V>, Triple<K1, K2, V>>(innerIterator,
 				nextOuterIteratorProvider, resultProvider);
 	}
@@ -176,12 +175,10 @@ public class NestedMap2<K1, K2, V> {
 		final Map<K2, V> k2ToV = mK1ToK2ToV.get(k1);
 		if (k2ToV == null) {
 			return Collections.emptySet();
-		} else {
-			final Function<Entry<K2, V>, Triple<K1, K2, V>> transformer = (x -> new Triple<K1, K2, V>(k1, x.getKey(),
-					x.getValue()));
-			return () -> new TransformIterator<Entry<K2, V>, Triple<K1, K2, V>>(k2ToV.entrySet().iterator(),
-					transformer);
 		}
+		final Function<Entry<K2, V>, Triple<K1, K2, V>> transformer =
+				x -> new Triple<K1, K2, V>(k1, x.getKey(), x.getValue());
+		return () -> new TransformIterator<Entry<K2, V>, Triple<K1, K2, V>>(k2ToV.entrySet().iterator(), transformer);
 	}
 
 	public void addAll(final NestedMap2<K1, K2, V> nestedMap) {
@@ -203,8 +200,7 @@ public class NestedMap2<K1, K2, V> {
 	}
 
 	/**
-	 * Removes all triples from the given map whose second entry equals the given
-	 * argument.
+	 * Removes all triples from the given map whose second entry equals the given argument.
 	 *
 	 * @param k2
 	 */

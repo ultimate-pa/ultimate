@@ -725,8 +725,7 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private static boolean allStillQuantified(final Set<TermVariable> eliminatees, final Term pushed) {
-		final Set<Term> quantifiedFormulas =
-				new SubTermFinder(x -> (x instanceof QuantifiedFormula)).findMatchingSubterms(pushed);
+		final Set<Term> quantifiedFormulas = SubTermFinder.find(pushed, x -> (x instanceof QuantifiedFormula), false);
 		final Set<TermVariable> allQuantifiedVars = quantifiedFormulas.stream()
 				.map(x -> ((QuantifiedFormula) x).getVariables()).flatMap(Stream::of).collect(Collectors.toSet());
 		return allQuantifiedVars.containsAll(eliminatees);

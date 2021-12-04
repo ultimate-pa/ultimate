@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -71,11 +72,11 @@ public class ReflectionUtil {
 	 *
 	 * @param callStackDepth
 	 *            The position in the current call stack for which you want to see the class. You are probably
-	 *            interested in depth 3.
+	 *            interested in depth 2.
 	 * @return The {@link Class} of the caller at the specified position.
 	 */
-	public static Class<?> getCallerClassName(final int callStackDepth) {
-		return EXPOSED_SECURITY_MANAGER.getCallerClass(callStackDepth);
+	public static Class<?> getCallerClass(final int callStackDepth) {
+		return EXPOSED_SECURITY_MANAGER.getCallerClass(callStackDepth + 1);
 	}
 
 	/**
@@ -101,8 +102,21 @@ public class ReflectionUtil {
 		} else {
 			theFrame = callStack[callStackDepth];
 		}
-		return String.format("[L%4s] %s.%s", theFrame.getLineNumber(), getCallerClassName(callStackDepth + 1).getName(),
+		return String.format("[L%4s] %s.%s", theFrame.getLineNumber(), getCallerClass(callStackDepth).getName(),
 				theFrame.getMethodName());
+	}
+
+	public static String getCallerSignatureFiltered(final Set<Class<?>> skippedClasses) {
+		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+		for (int i = 2; i < callStack.length; ++i) {
+			final StackTraceElement frame = callStack[i];
+			final Class<?> callingClass = getCallerClass(i);
+			if (skippedClasses.contains(callingClass)) {
+				continue;
+			}
+			return String.format("[L%4s] %s.%s", frame.getLineNumber(), frame.getClassName(), frame.getMethodName());
+		}
+		return null;
 	}
 
 	/**
@@ -239,33 +253,65 @@ public class ReflectionUtil {
 		return tryConvertUrlToFile(loader, url, resourceConverter);
 	}
 
-	public static List<Field> instanceFields(final Object obj) {
-		if (obj == null) {
-			return Collections.emptyList();
-		}
-		Class<? extends Object> clazz = obj.getClass();
+	public static List<Field> instanceFields(Class<? extends Object> clazz) {
 		final List<Field> fields = new ArrayList<>();
 		while (clazz.getSuperclass() != null) {
 			// we don't want to process Object
-			fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+			Arrays.stream(clazz.getDeclaredFields()).filter(ReflectionUtil::isIncluded).forEach(fields::add);
 			clazz = clazz.getSuperclass();
 		}
 		return fields;
 	}
 
+	public static List<Field> instanceFields(final Object obj) {
+		if (obj == null) {
+			return Collections.emptyList();
+		}
+		final Class<? extends Object> clazz = obj.getClass();
+		return instanceFields(clazz);
+	}
+
+	public static Map<String, Field> instanceName2Fields(final Class<? extends Object> clazz) {
+		return instanceFields(clazz).stream().collect(Collectors.toMap(Field::getName, f -> f));
+	}
+
+	public static Map<String, Field> instanceName2Fields(final Object obj) {
+		if (obj == null) {
+			return Collections.emptyMap();
+		}
+		final Class<? extends Object> clazz = obj.getClass();
+		return instanceName2Fields(clazz);
+	}
+
 	/**
 	 * Return a string of the form "name=value, " for all variables and their values from the instance represented by
 	 * obj, excluding fields of the {@link Object} type itself, fields whose name starts with $, and fields that are
-	 * marked with a {@link ExcludeFromToString} annotation.
+	 * marked with a {@link Reflected#excluded()} annotation.
 	 */
 	public static String instanceFieldsToString(final Object obj) {
 		if (obj == null) {
 			return "NULL";
 		}
 		final List<Field> fields = instanceFields(obj);
-		return fields.stream().filter(a -> !a.getName().startsWith("$"))
-				.filter(a -> a.getAnnotation(ExcludeFromToString.class) == null).map(a -> fieldToString(obj, a))
-				.collect(Collectors.joining(", "));
+		return fields.stream().filter(a -> !a.getName().startsWith("$")).filter(a -> !isExcluded(a))
+				.map(a -> fieldToString(obj, a)).collect(Collectors.joining(", "));
+	}
+
+	private static boolean isExcluded(final Field f) {
+		final Reflected annot = f.getAnnotation(Reflected.class);
+		return annot != null && annot.excluded();
+	}
+
+	private static boolean isIncluded(final Field f) {
+		return !isExcluded(f);
+	}
+
+	public static String fieldPrettyName(final Field f) {
+		final Reflected annot = f.getAnnotation(Reflected.class);
+		if (annot != null && !"".equals(annot.prettyName())) {
+			return annot.prettyName();
+		}
+		return f.getName();
 	}
 
 	public static String fieldToString(final Object obj, final Field f) {
@@ -278,7 +324,18 @@ public class ReflectionUtil {
 		} catch (final IllegalAccessException e) {
 			val = "IAcE";
 		}
-		return String.format("%s=%s", f.getName(), val);
+		return String.format("%s=%s", fieldPrettyName(f), val);
+	}
+
+	public static Object access(final Object obj, final Field f) {
+		try {
+			f.setAccessible(true);
+			return f.get(obj);
+		} catch (final IllegalArgumentException e) {
+			throw new UnsupportedOperationException(e);
+		} catch (final IllegalAccessException e) {
+			throw new UnsupportedOperationException(e);
+		}
 	}
 
 	public static String printableStackTrace() {
@@ -667,15 +724,18 @@ public class ReflectionUtil {
 	}
 
 	/**
-	 * Annotation that marks a field as excluded by the {@link ReflectionUtil#instanceFieldsToString(Object)} method.
+	 * Annotation that prevents a field from being listed in {@link ReflectionUtil#instanceFields(Object)},
+	 * {@link ReflectionUtil#instanceName2Fields(Object)}, and {@link ReflectionUtil#instanceFieldsToString(Object)}.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.FIELD)
-	public @interface ExcludeFromToString {
+	public @interface Reflected {
+		boolean excluded() default false;
 
+		String prettyName() default "";
 	}
 
 }
