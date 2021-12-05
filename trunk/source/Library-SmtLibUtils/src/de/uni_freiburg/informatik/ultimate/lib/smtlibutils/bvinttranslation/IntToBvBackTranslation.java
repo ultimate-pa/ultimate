@@ -266,6 +266,8 @@ public class IntToBvBackTranslation extends TermTransformer {
 			} else if (appTerm.getParameters().length == 1) {
 				if (appTerm.getFunction().getName().equals("-")) {
 					width = getWidth(appTerm.getParameters()[0]);
+				} else if (appTerm.getFunction().getName().equals("select")) {
+					width = Integer.valueOf(mVariableMap.get(term).getSort().getIndices()[0]);
 				} else {
 					throw new UnsupportedOperationException("TODO handle here");
 				}
