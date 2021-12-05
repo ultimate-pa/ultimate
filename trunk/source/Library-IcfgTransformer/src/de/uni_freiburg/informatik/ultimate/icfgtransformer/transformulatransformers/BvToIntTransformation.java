@@ -27,7 +27,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
@@ -47,7 +46,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 	private final IUltimateServiceProvider mServices;
 	private final ReplacementVarFactory mFac;
-	final TranslationManager mTranslationManager;
+
 	final LinkedHashMap<Term, Term> mBacktranslationMap = new LinkedHashMap<>();
 
 	/**
@@ -63,7 +62,6 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		super();
 		mFac = fac;
 		mServices = services;
-		mTranslationManager = new TranslationManager(mgdScript);
 	}
 
 	@Override
@@ -135,6 +133,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			newIntTF.addAuxVars(Collections.singleton(newAuxVar));
 		}
 
+		final TranslationManager mTranslationManager;
+		mTranslationManager = new TranslationManager(mgdScript);
 		mTranslationManager.setReplacementVarMaps(varMap);
 
 		final Term newFormula = mTranslationManager.translateBvtoInt(tf.getFormula());
@@ -161,10 +161,6 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
 		}
 
-	}
-
-	public Function<Term, Term> getTermBacktranslation() {
-		return x -> mTranslationManager.translateIntBacktoBv(x);
 	}
 
 	@Override
