@@ -73,6 +73,10 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 	public ModifiableTransFormula process(final ManagedScript mgdScript, final ModifiableTransFormula tf)
 			throws TermException {
 
+		if (!tf.getNonTheoryConsts().isEmpty()) {
+			throw new UnsupportedOperationException("Non-theory constants: " + tf.getNonTheoryConsts());
+		}
+
 		// final TransFormulaBuilder newIntTF = new TransFormulaBuilder(null,
 		// null, false, null, false, null, false);
 		final ModifiableTransFormula newIntTF = new ModifiableTransFormula(tf);
