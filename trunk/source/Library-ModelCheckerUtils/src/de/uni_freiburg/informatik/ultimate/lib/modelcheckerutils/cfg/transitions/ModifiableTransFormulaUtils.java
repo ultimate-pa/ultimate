@@ -332,14 +332,26 @@ public class ModifiableTransFormulaUtils {
 		return SmtUtils.and(script, conjuncts);
 	}
 
+
 	/**
-	 * Construct a TransFormulaLR from a TransFormula, adding and translating all existing in- and outVars in the
-	 * process.
-	 *
-	 * @param inputTf
-	 *            the TransFormula
+	 * Construct a modifiable copy of the input.
 	 */
 	public static ModifiableTransFormula buildTransFormula(final TransFormula inputTf,
+			final ManagedScript mgdScript) {
+		return buildTransFormulaHelper(inputTf, null, mgdScript);
+	}
+
+	/**
+	 * Construct a modifiable copy of the input. Additionally add a {@link ReplacementVar}
+	 * for all non-theory constants.
+	 *
+	 */
+	public static ModifiableTransFormula buildTransFormula(final TransFormula inputTf,
+			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
+		return buildTransFormulaHelper(inputTf, replacementVarFactory, mgdScript);
+	}
+
+	private static ModifiableTransFormula buildTransFormulaHelper(final TransFormula inputTf,
 			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
@@ -351,13 +363,18 @@ public class ModifiableTransFormulaUtils {
 			substitutionMapping.put(auxVar, newAuxVar);
 		}
 		final ModifiableTransFormula newTf = new ModifiableTransFormula((Term) null);
-		// Add constant variables as in- and outVars
-		for (final IProgramConst progConst : inputTf.getNonTheoryConsts()) {
-			final ApplicationTerm constVar = progConst.getDefaultConstant();
-			final IReplacementVar repVar = (IReplacementVar) replacementVarFactory.getOrConstuctReplacementVar(constVar, true);
-			newTf.addInVar(repVar, repVar.getTermVariable());
-			newTf.addOutVar(repVar, repVar.getTermVariable());
-			substitutionMapping.put(constVar, repVar.getTermVariable());
+		if (replacementVarFactory != null) {
+			// Add constant variables as in- and outVars
+			for (final IProgramConst progConst : inputTf.getNonTheoryConsts()) {
+				final ApplicationTerm constVar = progConst.getDefaultConstant();
+				final IReplacementVar repVar = (IReplacementVar) replacementVarFactory
+						.getOrConstuctReplacementVar(constVar, true);
+				newTf.addInVar(repVar, repVar.getTermVariable());
+				newTf.addOutVar(repVar, repVar.getTermVariable());
+				substitutionMapping.put(constVar, repVar.getTermVariable());
+			}
+		} else {
+			newTf.addNonTheoryConsts(inputTf.getNonTheoryConsts());
 		}
 
 		final Term formula = (new Substitution(mgdScript, substitutionMapping).transform(inputTf.getFormula()));
