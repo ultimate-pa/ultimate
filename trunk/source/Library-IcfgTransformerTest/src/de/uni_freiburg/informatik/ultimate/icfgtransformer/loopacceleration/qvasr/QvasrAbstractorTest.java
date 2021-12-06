@@ -63,7 +63,6 @@ public class QvasrAbstractorTest {
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
-		mLogger = mServices.getLoggingService().getLogger("lol");
 		mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
