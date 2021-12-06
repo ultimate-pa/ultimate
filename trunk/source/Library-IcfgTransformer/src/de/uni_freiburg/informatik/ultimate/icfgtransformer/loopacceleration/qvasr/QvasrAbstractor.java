@@ -124,13 +124,19 @@ public class QvasrAbstractor {
 			printMatrix(newUpdatesMatrixAdditions);
 		}
 
-		final Term[][] gaussedResets = gaussPartialPivot(newUpdatesMatrixResets);
-		Term[][] gaussedResetsOnesPruned = removeZeroRows(gaussedResets);
-		gaussedResetsOnesPruned = removeDuplicateRows(gaussedResetsOnesPruned);
-		final Term[][] solutionsResetGaussJordan = gaussRowEchelonFormJordan(gaussedResetsOnesPruned);
+		final Term[][] solutionsAdditionsGaussJordan = gaussRowEchelonFormJordan(newUpdatesMatrixAdditions);
+		final Term[][] solutionsResetGaussJordan = gaussRowEchelonFormJordan(newUpdatesMatrixResets);
+
 		final Rational[][] out = new Rational[2][2];
 		final Qvasr qvasr = null;
 		return new QvasrAbstraction(out, qvasr);
+	}
+
+	public Term[][] gaussianSolve(final Term[][] matrix) {
+		final Term[][] gaussPartialPivot = gaussPartialPivot(matrix);
+		Term[][] gaussedAdditionsPruned = removeZeroRows(gaussPartialPivot);
+		gaussedAdditionsPruned = removeDuplicateRows(gaussedAdditionsPruned);
+		return gaussRowEchelonFormJordan(gaussedAdditionsPruned);
 	}
 
 	/**
@@ -273,7 +279,7 @@ public class QvasrAbstractor {
 
 	public static Term getDivisionInverse(final ManagedScript script, final Term term) {
 		Term result;
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("/")) {
+		if (isApplicationTerm(term) && ((ApplicationTerm) term).getFunction().getName().equals("/")) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final Term dividend = appTerm.getParameters()[0];
 			final Term divisor = appTerm.getParameters()[1];
@@ -390,13 +396,13 @@ public class QvasrAbstractor {
 	 * @return
 	 */
 	private static Term factorOutRealSum(final ManagedScript script, final Term sum) {
-		if (sum instanceof ApplicationTerm) {
+		if (isApplicationTerm(sum)) {
 			final ApplicationTerm sumAppTerm = (ApplicationTerm) sum;
 			final List<Term> summands = getApplicationTermSumParams(sumAppTerm);
 			final List<Term> simplifiedSummands = new ArrayList<>();
 
 			for (final Term summandOne : summands) {
-				if (summandOne instanceof ApplicationTerm
+				if (isApplicationTerm(summandOne)
 						&& ((ApplicationTerm) summandOne).getFunction().getName().equals("*")) {
 					final List<Term> factors = getApplicationTermMultiplicationParams(script, summandOne);
 					final Term occurencesMult = script.getScript()
@@ -447,12 +453,12 @@ public class QvasrAbstractor {
 			final Term factorTwo) {
 		final List<Term> factorOneVars = new ArrayList<>();
 		final List<Term> factorTwoVars = new ArrayList<>();
-		if (factorOne instanceof ApplicationTerm && factorTwo instanceof ApplicationTerm) {
+		if (isApplicationTerm(factorOne) && isApplicationTerm(factorTwo)) {
 			final ApplicationTerm factorOneAppTerm = (ApplicationTerm) factorOne;
 			final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
 			if (factorOneAppTerm.getFunction().getName().equals("+")) {
 				for (final Term param : factorOneAppTerm.getParameters()) {
-					if (param instanceof ApplicationTerm) {
+					if (isApplicationTerm(param)) {
 						factorOneVars.addAll(getApplicationTermSumParams((ApplicationTerm) param));
 					} else {
 						factorOneVars.add(param);
@@ -463,7 +469,7 @@ public class QvasrAbstractor {
 			}
 			if (factorTwoAppTerm.getFunction().getName().equals("+")) {
 				for (final Term param : factorTwoAppTerm.getParameters()) {
-					if (param instanceof ApplicationTerm) {
+					if (isApplicationTerm(param)) {
 						factorTwoVars.addAll(getApplicationTermSumParams((ApplicationTerm) param));
 					} else {
 						factorTwoVars.add(param);
@@ -475,12 +481,12 @@ public class QvasrAbstractor {
 
 		}
 
-		if (!(factorOne instanceof ApplicationTerm) && factorTwo instanceof ApplicationTerm) {
+		if (!(isApplicationTerm(factorOne)) && isApplicationTerm(factorTwo)) {
 			final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
 			factorOneVars.add(factorOne);
 			if (factorTwoAppTerm.getFunction().getName().equals("+")) {
 				for (final Term param : factorTwoAppTerm.getParameters()) {
-					if (param instanceof ApplicationTerm) {
+					if (isApplicationTerm(param)) {
 						factorTwoVars.addAll(getApplicationTermSumParams((ApplicationTerm) param));
 					} else {
 						factorTwoVars.add(param);
@@ -491,12 +497,12 @@ public class QvasrAbstractor {
 			}
 		}
 
-		if (factorOne instanceof ApplicationTerm && !(factorTwo instanceof ApplicationTerm)) {
+		if (isApplicationTerm(factorOne) && !(isApplicationTerm(factorTwo))) {
 			final ApplicationTerm factorOneAppTerm = (ApplicationTerm) factorOne;
 			factorTwoVars.add(factorTwo);
 			if (factorOneAppTerm.getFunction().getName().equals("+")) {
 				for (final Term param : factorOneAppTerm.getParameters()) {
-					if (param instanceof ApplicationTerm) {
+					if (isApplicationTerm(param)) {
 						factorOneVars.addAll(getApplicationTermSumParams((ApplicationTerm) param));
 					} else {
 						factorOneVars.add(param);
@@ -507,7 +513,7 @@ public class QvasrAbstractor {
 			}
 		}
 
-		if (!(factorOne instanceof ApplicationTerm) && !(factorTwo instanceof ApplicationTerm)) {
+		if (!(isApplicationTerm(factorOne)) && !(isApplicationTerm(factorTwo))) {
 			factorOneVars.add(factorOne);
 			factorTwoVars.add(factorTwo);
 		}
@@ -538,9 +544,9 @@ public class QvasrAbstractor {
 		while (!factorStack.isEmpty()) {
 			final Term factorOne = factorStack.pop();
 			for (final Term factorTwo : factorStack) {
-				if (factorOne instanceof ApplicationTerm) {
+				if (isApplicationTerm(factorOne)) {
 					final ApplicationTerm factorOneAppTerm = (ApplicationTerm) factorOne;
-					if (factorTwo instanceof ApplicationTerm) {
+					if (isApplicationTerm(factorTwo)) {
 						final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
 						for (final Term paramFactorOne : factorOneAppTerm.getParameters()) {
 							for (final Term paramFactorTwo : factorTwoAppTerm.getParameters()) {
@@ -554,7 +560,7 @@ public class QvasrAbstractor {
 							result = SmtUtils.sum(script.getScript(), "+", result, mult);
 						}
 					}
-				} else if (factorTwo instanceof ApplicationTerm) {
+				} else if (isApplicationTerm(factorTwo)) {
 					final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
 					for (final Term paramFactorTwo : factorTwoAppTerm.getParameters()) {
 						final Term mult = SmtUtils.mul(script.getScript(), "*", paramFactorTwo, factorOne);
@@ -599,7 +605,7 @@ public class QvasrAbstractor {
 			return one;
 		}
 
-		if (dividend instanceof ApplicationTerm && divisor instanceof ApplicationTerm) {
+		if (isApplicationTerm(dividend) && isApplicationTerm(divisor)) {
 			final ApplicationTerm dividendAppTerm = (ApplicationTerm) dividend;
 			final ApplicationTerm divisorAppTerm = (ApplicationTerm) divisor;
 			Term dividendDividend;
@@ -635,7 +641,7 @@ public class QvasrAbstractor {
 			}
 		}
 
-		if (dividend instanceof ApplicationTerm && !(divisor instanceof ApplicationTerm)) {
+		if (isApplicationTerm(dividend) && !(isApplicationTerm(divisor))) {
 			final ApplicationTerm dividendAppTerm = (ApplicationTerm) dividend;
 			Pair<Term, Term> resultReduced;
 			if (dividendAppTerm.getFunction().getName().equals("/")) {
@@ -650,7 +656,7 @@ public class QvasrAbstractor {
 			}
 		}
 
-		if (!(dividend instanceof ApplicationTerm) && divisor instanceof ApplicationTerm) {
+		if (!(isApplicationTerm(dividend)) && isApplicationTerm(divisor)) {
 			final ApplicationTerm divisorAppTerm = (ApplicationTerm) divisor;
 			Pair<Term, Term> resultReduced;
 			if (divisorAppTerm.getFunction().getName().equals("/")) {
@@ -665,7 +671,7 @@ public class QvasrAbstractor {
 			}
 		}
 
-		if (!(dividend instanceof ApplicationTerm) && !(divisor instanceof ApplicationTerm)) {
+		if (!(isApplicationTerm(dividend)) && !(isApplicationTerm(divisor))) {
 			final Pair<Term, Term> resultReduced = QvasrAbstractor.reduceRealDivision(script, dividend, divisor);
 			result = SmtUtils.divReal(script.getScript(), resultReduced.getFirst(), resultReduced.getSecond());
 		}
@@ -698,7 +704,7 @@ public class QvasrAbstractor {
 			return factorOne;
 		}
 
-		if (factorOne instanceof ApplicationTerm && factorTwo instanceof ApplicationTerm) {
+		if (isApplicationTerm(factorOne) && isApplicationTerm(factorTwo)) {
 			final ApplicationTerm factorOneAppTerm = (ApplicationTerm) factorOne;
 			final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
 			if (factorOneAppTerm.getFunction().getName().equals("/")
@@ -725,7 +731,7 @@ public class QvasrAbstractor {
 			}
 		}
 
-		if (!(factorOne instanceof ApplicationTerm) && factorTwo instanceof ApplicationTerm) {
+		if (!(isApplicationTerm(factorOne)) && isApplicationTerm(factorTwo)) {
 			final ApplicationTerm factorTwoAppTerm = (ApplicationTerm) factorTwo;
 			if (factorTwoAppTerm.getFunction().getName().equals("/")) {
 				final Term commonDividend =
@@ -733,7 +739,7 @@ public class QvasrAbstractor {
 				result = simplifyRealDivision(script, commonDividend, factorTwoAppTerm.getParameters()[1]);
 			}
 		}
-		if (factorOne instanceof ApplicationTerm && !(factorTwo instanceof ApplicationTerm)) {
+		if (isApplicationTerm(factorOne) && !(isApplicationTerm(factorTwo))) {
 			final ApplicationTerm factorOneAppTerm = (ApplicationTerm) factorOne;
 			if (factorOneAppTerm.getFunction().getName().equals("/")) {
 				final Term commonDividend =
@@ -753,7 +759,7 @@ public class QvasrAbstractor {
 	 */
 	public static Term simplifyRealSubtraction(final ManagedScript script, final Term minuend, final Term subtrahend) {
 		Term result = SmtUtils.minus(script.getScript(), minuend, subtrahend);
-		if (subtrahend instanceof ApplicationTerm && minuend instanceof ApplicationTerm) {
+		if (isApplicationTerm(subtrahend) && isApplicationTerm(minuend)) {
 			final ApplicationTerm appTermSubrahend = (ApplicationTerm) subtrahend;
 			final ApplicationTerm appTermMinuend = (ApplicationTerm) minuend;
 			if (appTermSubrahend.getFunction().getName().equals("/")) {
@@ -792,7 +798,7 @@ public class QvasrAbstractor {
 			}
 		}
 
-		if (!(subtrahend instanceof ApplicationTerm) && minuend instanceof ApplicationTerm) {
+		if (!(isApplicationTerm(subtrahend)) && isApplicationTerm(minuend)) {
 			final ApplicationTerm appTermMinuend = (ApplicationTerm) minuend;
 			if (appTermMinuend.getFunction().getName().equals("/")) {
 				final Term simplifiedMinuend;
@@ -809,7 +815,7 @@ public class QvasrAbstractor {
 
 			}
 		}
-		if (subtrahend instanceof ApplicationTerm && !(minuend instanceof ApplicationTerm)) {
+		if (isApplicationTerm(subtrahend) && !(isApplicationTerm(minuend))) {
 			final ApplicationTerm appTermSubrahend = (ApplicationTerm) subtrahend;
 			if (appTermSubrahend.getFunction().getName().equals("/")) {
 				final Term simplifiedMinuend;
@@ -837,7 +843,7 @@ public class QvasrAbstractor {
 	 */
 	public static Term reduceNegativeRealSubtraction(final ManagedScript script, final Term minuend,
 			final Term subtrahend) {
-		if (minuend instanceof ApplicationTerm && subtrahend instanceof ApplicationTerm) {
+		if (isApplicationTerm(minuend) && isApplicationTerm(subtrahend)) {
 			final ApplicationTerm minuendAppTerm = (ApplicationTerm) minuend;
 			final ApplicationTerm subtrahendAppTerm = (ApplicationTerm) subtrahend;
 			List<Term> minuendParams = Arrays.asList(minuendAppTerm.getParameters());
@@ -939,7 +945,7 @@ public class QvasrAbstractor {
 		Term simplifiedDivisor = divisor;
 		while (true) {
 			final Term simplifiedDividendPre = simplifiedDividend;
-			if (simplifiedDividend instanceof ApplicationTerm && simplifiedDivisor instanceof ApplicationTerm) {
+			if (isApplicationTerm(simplifiedDividend) && isApplicationTerm(simplifiedDivisor)) {
 				final ApplicationTerm dividendAppTerm = (ApplicationTerm) simplifiedDividend;
 				final ApplicationTerm divisorAppTerm = (ApplicationTerm) simplifiedDivisor;
 				if (dividendAppTerm.getFunction().getName().equals("*")
@@ -1015,7 +1021,7 @@ public class QvasrAbstractor {
 					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
 				}
 			}
-			if (simplifiedDividend instanceof ApplicationTerm && !(simplifiedDivisor instanceof ApplicationTerm)) {
+			if (isApplicationTerm(simplifiedDividend) && !(isApplicationTerm(simplifiedDivisor))) {
 				final ApplicationTerm dividendAppTerm = (ApplicationTerm) simplifiedDividend;
 				if (dividendAppTerm.getFunction().getName().equals("*")) {
 					final Set<Term> simplifiedDividendParamSet =
@@ -1031,7 +1037,7 @@ public class QvasrAbstractor {
 					simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividendArray);
 				}
 			}
-			if (!(simplifiedDividend instanceof ApplicationTerm) && simplifiedDivisor instanceof ApplicationTerm) {
+			if (!(isApplicationTerm(simplifiedDividend)) && isApplicationTerm(simplifiedDivisor)) {
 				final ApplicationTerm divisorAppTerm = (ApplicationTerm) simplifiedDivisor;
 				if (divisorAppTerm.getFunction().getName().equals("*")) {
 					final Set<Term> simplifiedDivisorParamSet =
@@ -1064,11 +1070,10 @@ public class QvasrAbstractor {
 	 */
 	public static List<Term> getApplicationTermMultiplicationParams(final ManagedScript script, final Term appTerm) {
 		final List<Term> params = new ArrayList<>();
-		if (appTerm instanceof ApplicationTerm) {
+		if (isApplicationTerm(appTerm)) {
 			if (((ApplicationTerm) appTerm).getFunction().getName().equals("*")) {
 				for (final Term param : ((ApplicationTerm) appTerm).getParameters()) {
-					if (param instanceof ApplicationTerm
-							&& ((ApplicationTerm) param).getFunction().getName().equals("*")) {
+					if (isApplicationTerm(param) && ((ApplicationTerm) param).getFunction().getName().equals("*")) {
 						params.addAll(getApplicationTermMultiplicationParams(script, param));
 					} else {
 						params.add(param);
@@ -1093,7 +1098,7 @@ public class QvasrAbstractor {
 		final List<Term> params = new ArrayList<>();
 		if (appTerm.getFunction().getName().equals("+")) {
 			for (final Term param : appTerm.getParameters()) {
-				if (param instanceof ApplicationTerm && ((ApplicationTerm) param).getFunction().getName().equals("+")) {
+				if (isApplicationTerm(param) && ((ApplicationTerm) param).getFunction().getName().equals("+")) {
 					params.addAll(getApplicationTermSumParams((ApplicationTerm) param));
 				} else {
 					params.add(param);
@@ -1181,7 +1186,7 @@ public class QvasrAbstractor {
 			final Term varUpdateTerm = varUpdate.getValue();
 			final HashMap<Term, Term> subMappingTerm = new HashMap<>();
 			Term realTerm;
-			if (varUpdateTerm instanceof ApplicationTerm) {
+			if (isApplicationTerm(varUpdateTerm)) {
 				final ApplicationTerm varUpdateAppterm = (ApplicationTerm) varUpdateTerm;
 				subMappingTerm.putAll(appTermToReal(varUpdateAppterm));
 				final SubstitutionWithLocalSimplification subTerm =
@@ -1318,6 +1323,10 @@ public class QvasrAbstractor {
 		addition = SmtUtils.equality(mScript.getScript(), addition,
 				mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript)));
 		return addition;
+	}
+
+	public static boolean isApplicationTerm(final Term term) {
+		return term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0;
 	}
 
 	/**
