@@ -48,7 +48,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 
 	/** Limit the number of files per directory. */
 	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-//	private static final int FILES_PER_DIR_LIMIT = 2;
+//	private static final int FILES_PER_DIR_LIMIT = 10;
 	private static final int FILE_OFFSET = 0;
 
 	private static final String STANDARD_DOT_C_PATTERN = ".*\\.c";
@@ -84,6 +84,13 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 			new DirectoryFileEndingsPair("examples/svcomp/nla-digbench-scaling/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 	};
 
+	private static final String[] mUltimateRepository = {
+			"examples/programs/regression",
+			"examples/programs/quantifier/regression",
+			"examples/programs/recursive/regression",
+//			"examples/programs/toy",
+		};
+
 
 	private static final String[] mSettingsNoTransformation = {
 			"default/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
@@ -110,16 +117,24 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettingsNoTransformation, "AutomizerCInline.xml",
-						getTimeout(), dfep.getOffset(), dfep.getLimit()));
+			addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
+					new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettingsNoTransformation,
+					"AutomizerCInline.xml", getTimeout(), dfep.getOffset(), dfep.getLimit()));
 		}
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
 			addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-					new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettingsTransformation, "AutomizerCInlineTransformed.xml",
-					getTimeout(), dfep.getOffset(), dfep.getLimit()));
-	}
+					new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettingsTransformation,
+					"AutomizerCInlineTransformed.xml", getTimeout(), dfep.getOffset(), dfep.getLimit()));
+		}
+		for (final String setting : mSettingsNoTransformation) {
+			addTestCase("AutomizerCInline.xml", setting, mUltimateRepository,
+					new String[] {".c", ".i"});
+		}
 
+		for (final String setting : mSettingsTransformation) {
+			addTestCase("AutomizerCInlineTransformed.xml", setting, mUltimateRepository,
+					new String[] {".c", ".i"});
+		}
 		return super.createTestCases();
 	}
 
