@@ -100,8 +100,7 @@ public final class LocalTransformer implements ITransformulaTransformer {
 	@Override
 	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
-		final ModifiableTransFormula mod =
-				ModifiableTransFormulaUtils.buildTransFormula(tf, mReplacementVarFactory, mManagedScript);
+		final ModifiableTransFormula mod = ModifiableTransFormulaUtils.buildTransFormula(tf, mManagedScript);
 		try {
 			ModifiableTransFormula resultMod = mod;
 			for (final TransitionPreprocessor transformer : mTransitionPreprocessors) {
