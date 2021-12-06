@@ -11,7 +11,7 @@ procedure main() {
 	
 	while (x <= 20) {
 		if (x <= 10) {
-			z := x;
+			z := 3;
 			x := x + y;
 			y := y + 1;
 		} else {

@@ -240,6 +240,7 @@ public class QvasrAbstractorTest {
 		final Term yPXP1OveryPXP1OverZP2Simplified =
 				QvasrAbstractor.simplifyRealDivision(mMgdScript, xPyPOne, yPXP1OverZP2);
 		MatcherAssert.assertThat(yPXP1OveryPXP1OverZP2Simplified, IsEqual.equalTo(zP2));
+
 	}
 
 	@Test
