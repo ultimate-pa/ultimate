@@ -9,12 +9,16 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -266,99 +270,120 @@ public class IntToBvBackTranslation extends TermTransformer {
 			} else if (appTerm.getParameters().length == 1) {
 				if (appTerm.getFunction().getName().equals("-")) {
 					width = getWidth(appTerm.getParameters()[0]);
-				} else if (appTerm.getFunction().getName().equals("select")) {
-					width = Integer.valueOf(mVariableMap.get(term).getSort().getIndices()[0]);
 				} else {
 					throw new UnsupportedOperationException("TODO handle here");
 				}
 				// return here
 			}
-			int maxWidth = getWidth(appTerm.getParameters()[0]);
-			for (int i = 1; i < appTerm.getParameters().length; i++) {
-				final Term argument = appTerm.getParameters()[i];
-				final int argWidth = getWidth(argument);
-				if (argWidth > maxWidth) {
-					maxWidth = argWidth;
+			if (appTerm.getFunction().getName().equals("select")) {
+				final Term array;
+				{
+					final MultiDimensionalSelect mds = MultiDimensionalSelect.convert(appTerm);
+					if (mds != null) {
+						array = mds.getArray();
+					} else {
+						final MultiDimensionalSelectOverNestedStore mdsons = MultiDimensionalSelectOverNestedStore
+								.convert(mScript, appTerm);
+						if (mdsons != null) {
+							array = mdsons.getNestedStore().getArray();
+						} else {
+							throw new UnsupportedOperationException("unable to compute width: " + appTerm);
+						}
+					}
 				}
-			}
-			width = maxWidth;
-			final FunctionSymbol fsym = appTerm.getFunction();
+				final Term bvArray = mVariableMap.get(array);
+				final MultiDimensionalSort mdSort = new MultiDimensionalSort(bvArray.getSort());
+				final Sort valueSort = mdSort.getArrayValueSort();
+				width = Integer.valueOf(valueSort.getIndices()[0]);
+			} else {
 
-			if (fsym.isIntern()) {
-				switch (fsym.getName()) {
-				case "*": {
-					if (appTerm.getParameters().length == 2) {
+				int maxWidth = getWidth(appTerm.getParameters()[0]);
+				for (int i = 1; i < appTerm.getParameters().length; i++) {
+					final Term argument = appTerm.getParameters()[i];
+					final int argWidth = getWidth(argument);
+					if (argWidth > maxWidth) {
+						maxWidth = argWidth;
+					}
+				}
+				width = maxWidth;
+				final FunctionSymbol fsym = appTerm.getFunction();
+
+				if (fsym.isIntern()) {
+					switch (fsym.getName()) {
+					case "*": {
+						if (appTerm.getParameters().length == 2) {
+							if (appTerm.getParameters()[0] instanceof ConstantTerm) {
+								// case t * 2^i
+								final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[0];
+								final Rational value = (Rational) constTerm.getValue();
+								if (isPowerOfTwo(value)) {
+									width = getWidth(appTerm.getParameters()[1]) + getTwoExponent(value);
+									break;
+								}
+							} else if (appTerm.getParameters()[1] instanceof ConstantTerm) {
+								// case t * 2^i
+								final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[1];
+								final Rational value = (Rational) constTerm.getValue();
+								if (isPowerOfTwo(value)) {
+									width = getWidth(appTerm.getParameters()[0]) + getTwoExponent(value);
+									break;
+								}
+							}
+						}
+						width = maxWidth * 2;
+						break;
+
+					}
+					case "+": {
+						// TODO case t1 * 2^k + t2
+						// TODO nested +
+						width = maxWidth + 1;
+						break;
+					}
+					case "-": {
 						if (appTerm.getParameters()[0] instanceof ConstantTerm) {
-							// case t * 2^i
-							final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[0];
-							final Rational value = (Rational) constTerm.getValue();
-							if (isPowerOfTwo(value)) {
-								width = getWidth(appTerm.getParameters()[1]) + getTwoExponent(value);
+							// 2^k-t //TODO k = getwidth(t), was aber wenn k anderervalue?
+							if (isPowerOfTwo((Rational) ((ConstantTerm) appTerm.getParameters()[0]).getValue())) {
+								width = getWidth(appTerm.getParameters()[1]);
 								break;
 							}
-						} else if (appTerm.getParameters()[1] instanceof ConstantTerm) {
-							// case t * 2^i
+						}
+						width = maxWidth + 1;
+
+						break;
+					}
+					case "mod": {
+						if (appTerm.getParameters()[1] instanceof ConstantTerm) {
+							// case t mod 2^i
 							final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[1];
 							final Rational value = (Rational) constTerm.getValue();
 							if (isPowerOfTwo(value)) {
-								width = getWidth(appTerm.getParameters()[0]) + getTwoExponent(value);
+								width = getTwoExponent(value);
 								break;
 							}
 						}
-					}
-					width = maxWidth * 2;
-					break;
+						width = maxWidth; // TODO next 2er potenz von RHS
 
-				}
-				case "+": {
-					// TODO case t1 * 2^k + t2
-					// TODO nested +
-					width = maxWidth + 1;
-					break;
-				}
-				case "-": {
-					if (appTerm.getParameters()[0] instanceof ConstantTerm) {
-						// 2^k-t //TODO k = getwidth(t), was aber wenn k anderervalue?
-						if (isPowerOfTwo((Rational) ((ConstantTerm) appTerm.getParameters()[0]).getValue())) {
-							width = getWidth(appTerm.getParameters()[1]);
-							break;
-						}
+						break;
 					}
-					width = maxWidth + 1;
-
-					break;
-				}
-				case "mod": {
-					if (appTerm.getParameters()[1] instanceof ConstantTerm) {
-						// case t mod 2^i
-						final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[1];
-						final Rational value = (Rational) constTerm.getValue();
-						if (isPowerOfTwo(value)) {
-							width = getTwoExponent(value);
-							break;
+					case "div": {
+						if (appTerm.getParameters()[1] instanceof ConstantTerm) {
+							// case t mod 2^i
+							final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[1];
+							final Rational value = (Rational) constTerm.getValue();
+							if (isPowerOfTwo(value)) {
+								width = getWidth(appTerm.getParameters()[0]) - getTwoExponent(value);
+								break;
+							}
 						}
+						width = maxWidth;
+						break;
 					}
-					width = maxWidth; // TODO next 2er potenz von RHS
-
-					break;
-				}
-				case "div": {
-					if (appTerm.getParameters()[1] instanceof ConstantTerm) {
-						// case t mod 2^i
-						final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[1];
-						final Rational value = (Rational) constTerm.getValue();
-						if (isPowerOfTwo(value)) {
-							width = getWidth(appTerm.getParameters()[0]) - getTwoExponent(value);
-							break;
-						}
+					default: {
+						width = maxWidth;
+						break;
 					}
-					width = maxWidth;
-					break;
-				}
-				default: {
-					width = maxWidth;
-					break;
-				}
+					}
 				}
 			}
 			if (isSigned(term)) {
