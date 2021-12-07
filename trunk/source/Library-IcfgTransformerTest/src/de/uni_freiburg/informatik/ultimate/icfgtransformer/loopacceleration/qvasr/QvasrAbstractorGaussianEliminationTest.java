@@ -41,6 +41,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		mRealSort = SmtSortUtils.getRealSort(mMgdScript);
+		mLogger = mServices.getLoggingService().getLogger("log");
 		mLogger.info("Before");
 		mScript.declareFun("x", new Sort[0], mRealSort);
 		mScript.declareFun("y", new Sort[0], mRealSort);
