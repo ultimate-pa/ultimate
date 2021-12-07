@@ -15,7 +15,7 @@ public class TranslationManager {
 	private final Script mScript;
 	private final FunctionSymbol mIntand;
 	private LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
-	private final LinkedHashMap<Term, Term> mReversedVarMap;
+	private LinkedHashMap<Term, Term> mReversedVarMap;
 	private final TranslationConstrainer mTc;
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
@@ -42,13 +42,12 @@ public class TranslationManager {
 	}
 
 	public Term translateBvtoInt(final Term bitvecFromula) {
-
-		final BvToIntTranslation bvToInt = new BvToIntTranslation(mMgdScript, mVariableMap, mTc);
+		final BvToIntTranslation bvToInt =
+				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars());
 		bvToInt.setNutzTransformation(false);
-
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
 		mVariableMap = bvToInt.getVarMap();
-		mReversedVarMap.putAll(bvToInt.getReversedVarMap());
+		mReversedVarMap = bvToInt.getReversedVarMap();
 
 
 		mConstraintSet.addAll(mTc.getConstraints());
@@ -61,16 +60,17 @@ public class TranslationManager {
 
 
 	public Term translateIntBacktoBv(final Term integerFormula) {
-
+		// The preprocessing steps need also to be applied on the constraint, to ensure the map matches them.
 		final UnfTransformer unfT = new UnfTransformer(mScript);
 		final Term simplifiedInput = unfT.transform(integerFormula); // very helpfull
 
 		final HashSet<Term> constraints = mConstraintSet;
 		constraints.addAll(mTc.getTvConstraints());
-		System.out.println(constraints);
+
 		final IntToBvBackTranslation intToBv =
 				new IntToBvBackTranslation(mMgdScript, mReversedVarMap, constraints, mIntand);
 		// TODO postpreocessing select propagation
+
 		return intToBv.transform(simplifiedInput);
 	}
 

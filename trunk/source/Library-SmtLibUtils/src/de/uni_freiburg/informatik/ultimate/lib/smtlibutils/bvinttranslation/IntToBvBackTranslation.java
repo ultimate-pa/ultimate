@@ -770,7 +770,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 	}
 
 	private Term translateConst(final ConstantTerm value) {
-		System.out.println("Const: " + value);
 		assert value.getValue() instanceof Rational;
 
 		if (((Rational) value.getValue()).isNegative()) {

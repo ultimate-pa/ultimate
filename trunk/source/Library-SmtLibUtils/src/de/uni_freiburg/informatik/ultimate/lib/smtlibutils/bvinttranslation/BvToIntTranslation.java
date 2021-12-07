@@ -26,18 +26,19 @@ public class BvToIntTranslation extends TermTransformer {
 	private final static String BITVEC_CONST_PATTERN = "bv\\d+";
 	private boolean mNutzTransformation;
 	private final ManagedScript mMgdScript;
-
+	private final TermVariable[] mFreeVars;
 	private final TranslationConstrainer mTc;
 
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
 	private final LinkedHashMap<Term, Term> mReversedVarMap;
 
 	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
-			final TranslationConstrainer tc) {
+			final TranslationConstrainer tc, final TermVariable[] freeVars) {
 
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
 		mNutzTransformation = false;
+		mFreeVars = freeVars;
 		if (variableMap != null) {
 			mVariableMap = variableMap;
 		} else {
@@ -55,8 +56,15 @@ public class BvToIntTranslation extends TermTransformer {
 	@Override
 	public void convert(final Term term) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
-
 		if (term instanceof TermVariable) {
+			for (final TermVariable variable : mFreeVars) {
+				if (term == variable) {
+					final Term intVar = translateVars(term);
+					mTc.varConstraint(term, intVar); // Create and Collect Constraints
+					setResult(intVar);
+					return;
+				}
+			}
 			setResult(translateVars(term));
 			return;
 		} else if (term instanceof ApplicationTerm) {
