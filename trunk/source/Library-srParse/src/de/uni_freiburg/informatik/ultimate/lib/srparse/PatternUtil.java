@@ -72,13 +72,14 @@ public final class PatternUtil {
 		// first, create some observables and durartions
 		final int count = 10;
 		int duration = 5;
+		int maxPatternObs = 2;
 		final CDD[] patternObs = new CDD[count];
 		final Rational[] durations = new Rational[count];
 
 		final Durations duration2bounds = new Durations(PatternUtil::dummyConsumer);
 
 		for (int i = 0; i < count; ++i) {
-			patternObs[i] = BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16));
+			patternObs[i] = BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 15));
 			durations[i] = Rational.valueOf(duration, 1);
 			duration += 5;
 		}
@@ -120,7 +121,7 @@ public final class PatternUtil {
 
 			for (final SrParseScope<?> scope : scopes) {
 				final List<CDD> currentCdds =
-						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
+						Arrays.stream(patternObs).skip(maxPatternObs).limit(cddCount).collect(Collectors.toList());
 				final List<Rational> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
 				final PatternType<?> pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
