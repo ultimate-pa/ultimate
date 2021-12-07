@@ -31,6 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
@@ -39,50 +40,61 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
-/*
- * {scope}, it is always the case that if "R" holds, then "S" holds as well
+/**
+ * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at least
+ * "c2" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public class InvariantPattern extends PatternType<InvariantPattern> {
-	public InvariantPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+public class ResponseBoundL12Pattern extends PatternType<ResponseBoundL12Pattern> {
+
+	public ResponseBoundL12Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 2 && durations.length == 0;
+		assert cdds.length == 2 && durations.length == 2;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope<?> scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
+		final int c1 = durations[0];
+		final int c2 = durations[1];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(R.and(S.negate())), phaseT());
+			ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1), phaseE(S, BoundTypes.LESS, c2),
+					phase(S.negate()), phaseT());
+
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R).and(S.negate())), phaseT());
-		} else if (scope instanceof SrParseScopeAfterUntil) {
-			final CDD P = scope.getCdd1();
-			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R).and(S.negate())),
-					phaseT());
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1),
+					phaseE(P.negate().and(S), BoundTypes.LESS, c2), phase(P.negate().and(S.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.and(S.negate())), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(R, BoundTypes.GREATEREQUAL, c1), phaseE(S, BoundTypes.LESS, c2),
+					phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(Q.negate().and(R).and(S.negate())), phase(Q.negate()), phase(Q), phaseT());
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1),
+					phaseE(Q.negate().and(S), BoundTypes.LESS, c2), phase(Q.negate().and(S.negate())), phaseT(),
+					phase(Q), phaseT());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			final CDD P = scope.getCdd1();
+			final CDD Q = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()),
+					phase(Q.negate().and(R), BoundTypes.GREATEREQUAL, c1),
+					phaseE(Q.negate().and(S), BoundTypes.LESS, c2), phase(Q.negate().and(S.negate())), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-
 		return Collections.singletonList(ct);
 	}
 
@@ -98,9 +110,13 @@ public class InvariantPattern extends PatternType<InvariantPattern> {
 		}
 		sb.append("it is always the case that if \"");
 		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" holds, then \"");
+		sb.append("\" holds for at least \"");
+		sb.append(getDurations().get(0));
+		sb.append("\" time units, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds as well");
+		sb.append("\" holds afterwards for at least \"");
+		sb.append(getDurations().get(1));
+		sb.append("\" time units");
 		return sb.toString();
 	}
 
@@ -111,6 +127,6 @@ public class InvariantPattern extends PatternType<InvariantPattern> {
 
 	@Override
 	public int getExpectedDurationSize() {
-		return 0;
+		return 2;
 	}
 }

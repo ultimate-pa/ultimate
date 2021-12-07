@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2018 University of Freiburg
+ * Copyright (C) 2021 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-srParse plug-in.
  *
@@ -41,16 +41,17 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units
+ * {scope}, it is always the case that once "R" becomes satisfied and holds for at most "c1" time units, then "S" holds
+ * afterwards
  *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  *
  */
-public class BndInvariancePattern extends PatternType<BndInvariancePattern> {
+public class EdgeResponseBoundU1Pattern extends PatternType<EdgeResponseBoundU1Pattern> {
 
-	public BndInvariancePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+	public EdgeResponseBoundU1Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
@@ -66,30 +67,32 @@ public class BndInvariancePattern extends PatternType<BndInvariancePattern> {
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESS, c1), phase(S.negate()), phaseT());
+			ct = counterTrace(phaseT(), phase(R.negate()), phase(R, BoundTypes.LESSEQUAL, c1),
+					phase(S.negate().and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(R.and(P.negate())), phase(P.negate(), BoundTypes.LESS, c1),
-					phase(S.negate().and(P.negate())), phaseT());
+			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R.negate())),
+					phase(P.negate().and(R), BoundTypes.GREATEREQUAL, c1),
+					phase(P.negate().and(S.negate().and(R.negate()))), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.and(Q.negate())),
-					phase(Q.negate(), BoundTypes.LESS, c1), phase(S.negate().and(Q.negate())), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R.negate())),
+					phase(Q.negate().and(R), BoundTypes.LESSEQUAL, c1),
+					phase(Q.negate().and(S.negate()).and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESS, c1),
-					phase(S.negate()), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.negate()), phase(R, BoundTypes.LESSEQUAL, c1),
+					phase(S.negate().and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(R.and(Q.negate())),
-					phase(Q.negate(), BoundTypes.LESS, c1), phase(S.negate().and(Q.negate())), phase(Q.negate()),
-					phase(Q), phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R.negate())),
+					phase(Q.negate().and(R), BoundTypes.LESSEQUAL, c1),
+					phase(Q.negate().and(S.negate().and(R.negate()))), phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-
 		return Collections.singletonList(ct);
 	}
 
@@ -103,13 +106,13 @@ public class BndInvariancePattern extends PatternType<BndInvariancePattern> {
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("it is always the case that if \"");
+		sb.append("it is always the case that once \"");
 		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" holds, then \"");
-		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds for at least \"");
+		sb.append("\" becomes satisfied and holds for at most \"");
 		sb.append(getDurations().get(0));
-		sb.append("\" time units");
+		sb.append("\" time units, then \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds afterwards");
 		return sb.toString();
 	}
 

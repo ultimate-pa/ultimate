@@ -214,7 +214,7 @@ public abstract class PatternType<T extends PatternType<?>> {
 
 	@Override
 	public String toString() {
-		assert getScope() != null || this instanceof InitializationPattern;
+		assert getScope() != null || this instanceof DeclarationPattern;
 		if (getScope() == null) {
 			return getClass().toString();
 		}

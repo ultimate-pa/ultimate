@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  *
  */
-public class UniversalityPatternDelayed extends PatternType<UniversalityPatternDelayed> {
+public class UniversalityDelayPattern extends PatternType<UniversalityDelayPattern> {
 
-	public UniversalityPatternDelayed(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
+	public UniversalityDelayPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
