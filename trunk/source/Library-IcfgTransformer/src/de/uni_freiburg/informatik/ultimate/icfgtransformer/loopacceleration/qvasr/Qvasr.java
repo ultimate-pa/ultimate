@@ -27,35 +27,49 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents a rational vector addition system
- *         with resets that model the relations of input and output variables of transition formulas. They consist of a
- *         set of tuples of vectors called transformer. The first vector is a binary reset vector indicating a reset to
- *         a variable, while the second vector represents an addition to a variable.
+ * This class represents a rational vector addition system with resets that model the relations of input and output
+ * variables of transition formulas. They consist of a set of tuples of vectors called transformer. The first vector is
+ * a binary reset vector indicating a reset to a variable, while the second vector represents an addition to a variable.
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
 public class Qvasr {
-	private final Set<Pair<Rational[], Rational[]>> mTransformer;
+	private final Set<Pair<Term[], Term[]>> mTransformer;
 
 	/**
 	 * Construct a new Q-Vasr using a single transformer
 	 *
 	 * @param initialTransformer
 	 */
-	public Qvasr(final Set<Pair<Rational[], Rational[]>> initialTransformer) {
+	public Qvasr(final Term[] resetVector, final Term[] additionVector) {
+		final Pair<Term[], Term[]> initialTransformer = new Pair<>(resetVector, additionVector);
+		final Set<Pair<Term[], Term[]>> initialTransformerSet = new HashSet<>();
+		initialTransformerSet.add(initialTransformer);
+		mTransformer = initialTransformerSet;
+	}
+
+	/**
+	 * Construct a new Q-Vasr using a single transformer
+	 *
+	 * @param initialTransformer
+	 */
+	public Qvasr(final Set<Pair<Term[], Term[]>> initialTransformer) {
 		mTransformer = initialTransformer;
 	}
 
-	public Set<Pair<Rational[], Rational[]>> getQvasrTransformer() {
+	public Set<Pair<Term[], Term[]>> getQvasrTransformer() {
 		return mTransformer;
 	}
 
-	public void addTransformer(final Pair<Rational[], Rational[]> transformer) {
+	public void addTransformer(final Pair<Term[], Term[]> transformer) {
 		mTransformer.add(transformer);
 	}
 

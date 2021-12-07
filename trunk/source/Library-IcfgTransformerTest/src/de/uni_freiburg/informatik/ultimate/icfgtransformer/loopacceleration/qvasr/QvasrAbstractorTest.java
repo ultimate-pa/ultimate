@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Class of tests checking the correctness of various functions needed for computation of rational vector addition
- * systems.
+ * Class of tests checking the functionality of various operations needed for the computation of rational vector
+ * addition systems with resets (Qvasr).
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *

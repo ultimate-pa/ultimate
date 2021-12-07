@@ -40,8 +40,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) A summarizer for an ({@link UnmodifiableTransFormula}).
+ * A summarizer for an ({@link UnmodifiableTransFormula}).
  *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
 public class QvasrSummarizer {

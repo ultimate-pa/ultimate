@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) A loop summarization class based on rational vector
- *         addition systems with resets (Q-VASR).
+ * A loop summarization class based on rational vector addition systems with resets (Q-VASR).
  *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
 
 public class QvasrLoopSummarization {

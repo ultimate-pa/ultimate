@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  *
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class QvasrAbstraction {
 
-	private final Rational[][] mSimulationMatrix;
+	private final Term[][] mSimulationMatrix;
 	private final Qvasr mQvasr;
 
 	/**
@@ -52,9 +52,9 @@ public class QvasrAbstraction {
 	 * @param initialSimulationMatrix
 	 * @param initialQvasr
 	 */
-	public QvasrAbstraction(final Rational[][] initialSimulationMatrix, final Qvasr initialQvasr) {
-		mSimulationMatrix = initialSimulationMatrix;
-		mQvasr = initialQvasr;
+	public QvasrAbstraction(final Term[][] simulationMatrix, final Qvasr qvasr) {
+		mSimulationMatrix = simulationMatrix;
+		mQvasr = qvasr;
 	}
 
 	/**
@@ -62,7 +62,7 @@ public class QvasrAbstraction {
 	 *
 	 * @return
 	 */
-	public Rational[][] getSimulationMatrix() {
+	public Term[][] getSimulationMatrix() {
 		return mSimulationMatrix;
 	}
 

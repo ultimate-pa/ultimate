@@ -11,9 +11,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) A collection of useful functions needed in
- *         Q-Vasr-abstraction, and matrix operations.
+ * A collection of useful functions needed in Q-Vasr-abstraction, and matrix operations.
  *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
 public class QvasrUtils {
 	private QvasrUtils() {

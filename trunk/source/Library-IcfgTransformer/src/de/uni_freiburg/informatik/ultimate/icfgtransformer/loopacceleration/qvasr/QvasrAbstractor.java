@@ -78,10 +78,10 @@ public class QvasrAbstractor {
 
 	/**
 	 *
-	 * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) Define which kind of base matrix. Resets: Where the
-	 *         outvars only depend on the invars and addition vector a. Additions: Where outvars depend on invars and
-	 *         addition vector a.
+	 * Define which kind of base matrix. Resets: Where the outvars only depend on the invars and addition vector a.
+	 * Additions: Where outvars depend on invars and addition vector a.
 	 *
+	 * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
 	 */
 	private enum BaseType {
 		RESETS, ADDITIONS
@@ -127,16 +127,16 @@ public class QvasrAbstractor {
 		final Term[][] solutionsAdditionsGaussJordan = gaussRowEchelonFormJordan(newUpdatesMatrixAdditions);
 		final Term[][] solutionsResetGaussJordan = gaussRowEchelonFormJordan(newUpdatesMatrixResets);
 
-		final Rational[][] out = new Rational[2][2];
-		final Qvasr qvasr = null;
-		return new QvasrAbstraction(out, qvasr);
+		return null;
 	}
 
 	public Term[][] gaussianSolve(final Term[][] matrix) {
 		final Term[][] gaussPartialPivot = gaussPartialPivot(matrix);
 		Term[][] gaussedAdditionsPruned = removeZeroRows(gaussPartialPivot);
 		gaussedAdditionsPruned = removeDuplicateRows(gaussedAdditionsPruned);
-		return gaussRowEchelonFormJordan(gaussedAdditionsPruned);
+		gaussedAdditionsPruned = gaussRowEchelonFormJordan(gaussedAdditionsPruned);
+		gaussedAdditionsPruned = removeZeroRows(gaussedAdditionsPruned);
+		return gaussedAdditionsPruned;
 	}
 
 	/**
