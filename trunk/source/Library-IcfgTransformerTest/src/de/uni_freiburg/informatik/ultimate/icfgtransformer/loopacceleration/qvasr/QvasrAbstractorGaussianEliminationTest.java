@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2021 Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
 import org.hamcrest.MatcherAssert;
@@ -16,13 +43,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
+/**
+ * A test suite for checking the functionality of the Gaussian elimination algorithm employed in the Qvasr-abstraction
+ * scheme.
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ *
+ */
 public class QvasrAbstractorGaussianEliminationTest {
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
-	private Sort mRealSort;
 
 	private QvasrAbstractor mQAbstractor;
 
@@ -40,12 +73,12 @@ public class QvasrAbstractorGaussianEliminationTest {
 		mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
-		mRealSort = SmtSortUtils.getRealSort(mMgdScript);
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mLogger = mServices.getLoggingService().getLogger("log");
 		mLogger.info("Before");
-		mScript.declareFun("x", new Sort[0], mRealSort);
-		mScript.declareFun("y", new Sort[0], mRealSort);
-		mScript.declareFun("a", new Sort[0], mRealSort);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		mScript.declareFun("a", new Sort[0], realSort);
 
 		mX = TermParseUtils.parseTerm(mScript, "x");
 		mY = TermParseUtils.parseTerm(mScript, "y");
@@ -57,6 +90,17 @@ public class QvasrAbstractorGaussianEliminationTest {
 
 		mQAbstractor = new QvasrAbstractor(mMgdScript, mLogger, mServices);
 
+	}
+
+	/**
+	 * Test solving of {{1, 0, 0}, {0, 1, 0}} = {{1, 0, 0}, {0, 1, 0}}
+	 */
+	@Test
+	public void testGaussianElimination0() {
+		Term[][] matrix = { { mOne, mZero, mZero }, { mZero, mOne, mZero } };
+		matrix = mQAbstractor.gaussianSolve(matrix);
+		final Term[][] result = { { mOne, mZero, mZero }, { mZero, mOne, mZero } };
+		testMatrixEquality(matrix, result);
 	}
 
 	/**
@@ -135,6 +179,45 @@ public class QvasrAbstractorGaussianEliminationTest {
 		matrix = mQAbstractor.gaussianSolve(matrix);
 		final Term[][] result =
 				{ { mOne, mZero, mZero }, { mZero, mOne, TermParseUtils.parseTerm(mScript, "(/ a 2.0)") } };
+		testMatrixEquality(matrix, result);
+	}
+
+	/**
+	 * Test solving of {{x + y, x + y, a}, {y, y, a}, {x, x, a}, {0, 0, a}} = {{1, 1, 0}, {0, 0, 1}}
+	 */
+	@Test
+	public void testGaussianElimination7() {
+		final Term xPY = TermParseUtils.parseTerm(mScript, "(+ x y)");
+
+		Term[][] matrix = { { xPY, xPY, mA }, { mY, mY, mA }, { mX, mX, mA }, { mZero, mZero, mA } };
+		matrix = mQAbstractor.gaussianSolve(matrix);
+		final Term[][] result = { { mOne, mOne, mZero }, { mZero, mZero, mOne } };
+		testMatrixEquality(matrix, result);
+	}
+
+	/**
+	 * Test solving of {{x + y, x + y + y, a}, {y, y + y, a}, {x, x, a}, {0, 0, a}} = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}
+	 */
+	@Test
+	public void testGaussianElimination8() {
+		final Term xPY = TermParseUtils.parseTerm(mScript, "(+ x y)");
+		final Term xPYPY = TermParseUtils.parseTerm(mScript, "(+ x y y)");
+		final Term yPY = TermParseUtils.parseTerm(mScript, "(+ y y)");
+
+		Term[][] matrix = { { xPY, xPYPY, mA }, { mY, yPY, mA }, { mX, mX, mA }, { mZero, mZero, mA } };
+		matrix = mQAbstractor.gaussianSolve(matrix);
+		final Term[][] result = { { mOne, mZero, mZero }, { mZero, mOne, mZero }, { mZero, mZero, mOne } };
+		testMatrixEquality(matrix, result);
+	}
+
+	/**
+	 * Test solving of {{1, 1, 1}, {1, 1, 0}} = {{1, 1, 0}, {0, 0, 1}}
+	 */
+	@Test
+	public void testGaussianElimination9() {
+		Term[][] matrix = { { mOne, mOne, mOne }, { mOne, mOne, mZero } };
+		matrix = mQAbstractor.gaussianSolve(matrix);
+		final Term[][] result = { { mOne, mOne, mZero }, { mZero, mZero, mOne } };
 		testMatrixEquality(matrix, result);
 	}
 
