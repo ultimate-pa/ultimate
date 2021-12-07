@@ -122,6 +122,7 @@ public final class PatternUtil {
 			for (final SrParseScope<?> scope : scopes) {
 				final List<CDD> currentCdds =
 						Arrays.stream(patternObs).skip(maxPatternObs).limit(cddCount).collect(Collectors.toList());
+				Collections.reverse(currentCdds);
 				final List<Rational> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
 				final PatternType<?> pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
