@@ -400,7 +400,10 @@ public class BvToIntTranslation extends TermTransformer {
 				case "zero_extend":
 					setResult(args[0]);
 					return;
-
+				case "const":
+					final Term result = mScript.term("const", null, translateArraySort(appTerm.getSort()), args);
+					setResult(result);
+					return;
 				case "repeat":
 				case "rotate_left":
 				case "rotate_right":
