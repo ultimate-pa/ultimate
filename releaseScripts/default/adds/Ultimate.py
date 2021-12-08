@@ -15,8 +15,8 @@ import xml.etree.ElementTree as elementtree
 from stat import ST_MODE
 from functools import lru_cache
 
-version = "906a4fb5"
-toolname = "Automizer"
+version = '839c364b'
+toolname = 'Automizer'
 write_ultimate_output_to_file = True
 output_file_name = "Ultimate.log"
 error_path_file_name = "UltimateCounterExample.errorpath"
@@ -246,9 +246,13 @@ def get_java():
             line = process.stdout.readline().decode("utf-8", "ignore")
             if not line:
                 break
-            java_version = re.search(pattern, line).groups()[0]
-            if java_version and "11." in java_version:
-                return candidate
+            match = re.search(pattern, line)
+            if match:
+                java_version = match.groups()[0]
+                java_version = java_version.split('.')[0]
+                java_version = int(java_version)
+                if java_version == 11:
+                    return candidate
     print_err("Did not find Java 11 in known paths")
     sys.exit(ExitCode.FAIL_NO_JAVA)
 
