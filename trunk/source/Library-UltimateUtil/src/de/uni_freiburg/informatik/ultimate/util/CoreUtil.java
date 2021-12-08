@@ -126,28 +126,37 @@ public class CoreUtil {
 	 */
 	public static String readGitVersion(final ClassLoader cl) {
 		final Properties properties = new Properties();
+		final String unknown = "?";
+		final String dirtyFormat = "%s-%s-m";
 		try {
 			final InputStream prop = cl.getResourceAsStream("version.properties");
 			if (prop == null) {
-				return "?-?-m";
+				return String.format(dirtyFormat, unknown, unknown);
 			}
 			properties.load(prop);
 		} catch (final IOException e) {
 			return null;
 		}
 
-		final String unknown = "?";
 		final String branch = properties.getProperty("git.branch", unknown).replace('/', '.');
+		final String fullHash = properties.getProperty("git.commit.id", unknown).replace('/', '.');
 		final String hash = properties.getProperty("git.commit.id.abbrev", unknown);
 		final String dirty = properties.getProperty("git.dirty", unknown);
 
-		final String format;
-		if (!"true".equals(dirty)) {
-			format = "%s-%s";
+		final String actualBranch;
+		if (fullHash.equals(branch)) {
+			actualBranch = unknown;
 		} else {
-			format = "%s-%s-m";
+			actualBranch = branch;
 		}
-		return String.format(format, branch, hash);
+
+		final String format;
+		if ("true".equals(dirty)) {
+			format = dirtyFormat;
+		} else {
+			format = "%s-%s";
+		}
+		return String.format(format, actualBranch, hash);
 	}
 
 	/**
