@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
@@ -65,7 +66,16 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	private static final boolean DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = false;
 
-	public QuantifierPushTermWalker(final IUltimateServiceProvider services, final boolean applyDistributivity,
+	/**
+	 * This class provides the new (2020) quantifier elimination and replaces the
+	 * now deprecated {@link QuantifierPusher}. The purpose of this class is to
+	 * traverse the formula and to call {@link DualJunctionQuantifierElimination}s
+	 * which to the explicit eliminations and to call simplifications. This class
+	 * does a stack-based traversal that uses {@link TermContextTransformationEngine}
+	 * instead of an explicit recursion based on java methods.
+	 *
+	 */
+	private QuantifierPushTermWalker(final IUltimateServiceProvider services, final boolean applyDistributivity,
 			final PqeTechniques pqeTechniques, final SimplificationTechnique simplificationTechnique,
 			final ManagedScript mgdScript) {
 		mServices = services;
@@ -227,6 +237,10 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		return false;
 	}
 
+	/**
+	 *
+	 * @param inputTerm Term from which quantifiers are eliminated. Has to be in NNF.
+	 */
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final SimplificationTechnique simplificationTechnique, final Term inputTerm) {
@@ -234,6 +248,10 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 				simplificationTechnique, new Context(script.getScript()), inputTerm);
 	}
 
+	/**
+	 *
+	 * @param inputTerm Term from which quantifiers are eliminated. Has to be in NNF.
+	 */
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm) {
