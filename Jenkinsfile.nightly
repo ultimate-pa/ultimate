@@ -41,6 +41,8 @@ ${changeMessage}
 //   publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '')], globalThresholds: [[thresholdTarget: 'Aggregated Report']], sourceFileResolver: sourceFiles('NEVER_STORE')
 //   https://www.jenkins.io/blog/2019/07/21/Jenkins-code-coverage-diff-for-pull-request/
 // * TODO: It might be necessary to change the maven build to use cobertura instead of jacoco to support delta for test cases 
+// * Exclude certain classes from coverage (i.e., UltimateTest, java.bdd, ...)
+// * Access test results for dependent nightly release and mattermost messages https://stackoverflow.com/questions/39920437/how-to-access-junit-test-counts-in-jenkins-pipeline-project
 
 pipeline {
   agent { label 'linux' && 'java' }
@@ -130,7 +132,7 @@ pipeline {
       when {
         anyOf {
           allOf {
-            branch 'dev'
+            // branch 'dev'
             expression { return !currentBuild.changeSets.isEmpty() }
             expression { return currentBuild.result == "SUCCESS" || currentBuild.result == "UNSTABLE" }
           }
