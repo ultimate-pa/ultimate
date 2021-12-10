@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
@@ -297,7 +298,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * Sub-class needed for the fluent API. Callers typically do not refer to this type explicitly, but may call its
 	 * methods.
 	 */
-	public static abstract class ActionIndependenceBuilder<L extends IAction, S, B extends ActionIndependenceBuilder<L, S, B>>
+	public abstract static class ActionIndependenceBuilder<L extends IAction, S, B extends ActionIndependenceBuilder<L, S, B>>
 			extends IndependenceBuilder<L, S, B> {
 		protected ActionIndependenceBuilder(final IIndependenceRelation<S, L> relation,
 				final Function<IIndependenceRelation<S, L>, B> creator) {
@@ -310,7 +311,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 * independence.
 		 */
 		public B withSyntacticCheck() {
-			return unionLeft(new SyntacticIndependenceRelation<S, L>());
+			return unionLeft(new SyntacticIndependenceRelation<>());
 		}
 
 		/**
@@ -427,7 +428,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 * @see IndependenceBuilder.ActionIndependenceBuilder.Impl#withTransformedConditions(Function)
 			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedConditions(Function)
 			 */
-			public Impl<L> withTransformedPredicates(final Function<IPredicate, IPredicate> transformer) {
+			public Impl<L> withTransformedPredicates(final UnaryOperator<IPredicate> transformer) {
 				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 				return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
 			}
@@ -438,7 +439,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 */
 			public Impl<L> ignoreDebugPredicates() {
 				if (mRelation.isConditional()) {
-					return withFilteredConditions(p -> p instanceof DebugPredicate);
+					return withFilteredConditions(DebugPredicate.class::isInstance);
 				}
 				return this;
 			}

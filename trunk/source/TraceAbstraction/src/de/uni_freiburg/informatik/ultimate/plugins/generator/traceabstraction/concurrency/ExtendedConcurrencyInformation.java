@@ -90,8 +90,8 @@ public final class ExtendedConcurrencyInformation<LOC extends IcfgLocation> {
 	 */
 	public Set<IIcfgForkTransitionThreadOther<LOC>> getForksOf(final String forkedThread) {
 		return mIcfg.getProcedureEntryNodes().get(forkedThread).getIncomingEdges().stream()
-				.filter(e -> e instanceof IIcfgForkTransitionThreadOther<?>)
-				.map(e -> (IIcfgForkTransitionThreadOther<LOC>) e).collect(Collectors.toSet());
+				.filter(IIcfgForkTransitionThreadOther.class::isInstance)
+				.map(IIcfgForkTransitionThreadOther.class::cast).collect(Collectors.toSet());
 	}
 
 	/**
@@ -103,7 +103,7 @@ public final class ExtendedConcurrencyInformation<LOC extends IcfgLocation> {
 	 */
 	public Set<IIcfgJoinTransitionThreadOther<LOC>> getJoinsOf(final String joinedThread) {
 		return mIcfg.getProcedureExitNodes().get(joinedThread).getOutgoingEdges().stream()
-				.map(e -> (IIcfgJoinTransitionThreadOther<LOC>) e).collect(Collectors.toSet());
+				.map(IIcfgJoinTransitionThreadOther.class::cast).collect(Collectors.toSet());
 	}
 
 	public boolean mayBeForkOf(final String forkedThread, final IcfgEdge edge) {

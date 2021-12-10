@@ -1815,23 +1815,9 @@ public class MemoryHandler {
 	 * Returns an CPrimitive which is unsigned, integer and not bool that has the smallest bytesize.
 	 */
 	private CPrimitives getCprimitiveThatFitsBest(final List<ReadWriteDefinition> test) {
-		int smallestBytesize = Integer.MAX_VALUE;
-		for (final ReadWriteDefinition rwd : test) {
-			if (rwd.getBytesize() < smallestBytesize) {
-				smallestBytesize = rwd.getBytesize();
-			}
-		}
-		if (smallestBytesize == 0) {
-			// we only have unbounded data types
-			return CPrimitives.UCHAR;
-		}
-		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.UCHAR, CPrimitives.USHORT, CPrimitives.UINT,
-				CPrimitives.ULONG, CPrimitives.ULONGLONG }) {
-			if (mTypeSizes.getSize(primitive) == smallestBytesize) {
-				return primitive;
-			}
-		}
-		throw new AssertionError("don't know how to store value on heap");
+		final int smallestBytesize =
+				test.stream().mapToInt(ReadWriteDefinition::getBytesize).min().orElse(Integer.MAX_VALUE);
+		return getCprimitiveThatFitsBest(smallestBytesize);
 	}
 
 	/**

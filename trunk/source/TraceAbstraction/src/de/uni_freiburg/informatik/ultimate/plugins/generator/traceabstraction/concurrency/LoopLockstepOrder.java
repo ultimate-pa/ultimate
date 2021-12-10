@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -77,9 +77,9 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 	private final IIcfg<?> mIcfg;
-	private final Function<IPredicate, IPredicate> mNormalize;
+	private final UnaryOperator<IPredicate> mNormalize;
 
-	public LoopLockstepOrder(final IIcfg<?> icfg, final Function<IPredicate, IPredicate> normalize) {
+	public LoopLockstepOrder(final IIcfg<?> icfg, final UnaryOperator<IPredicate> normalize) {
 		mIcfg = icfg;
 		mNormalize = normalize;
 	}

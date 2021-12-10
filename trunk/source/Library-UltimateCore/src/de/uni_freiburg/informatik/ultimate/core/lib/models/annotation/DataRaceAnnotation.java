@@ -81,7 +81,7 @@ public class DataRaceAnnotation extends ModernAnnotations {
 	}
 
 	public static DataRaceAnnotation getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, KEY, a -> (DataRaceAnnotation) a);
+		return ModelUtils.getAnnotation(node, KEY, DataRaceAnnotation.class::cast);
 	}
 
 	public static class Race {
