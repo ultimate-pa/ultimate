@@ -61,12 +61,16 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -196,7 +200,7 @@ public class RtInconcistencyConditionGenerator {
 		mConstInliner = new Substitution(mScript, constToValue);
 
 		if (mSeparateInvariantHandling) {
-			mPrimedInvariant = constructPrimedStateInvariant(reqPeas);
+			mPrimedInvariant = toNormalform(constructPrimedStateInvariant(reqPeas));
 			mLogger.info("Finished generating primed state invariant of size " + new DAGSize().size(mPrimedInvariant));
 		} else {
 			mPrimedInvariant = mTrue;
@@ -439,7 +443,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term transformAndLog(final CDD org, final UnaryOperator<Term> funTrans, final String msg) {
-		final Term orgTerm = mCddToSmt.toSmt(org);
+		final Term orgTerm = toNormalform(mCddToSmt.toSmt(org));
 		final Term transTerm = funTrans.apply(orgTerm);
 		if (orgTerm != transTerm) {
 			mLogger.info("Epsilon-transformed %s %s to %s", msg, orgTerm, transTerm);
@@ -448,7 +452,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term constructNdcStateInvariant(final Phase phase) {
-		return mCddToSmt.toSmt(phase.getStateInvariant().prime(mReqSymboltable.getConstVars()));
+		return toNormalform(mCddToSmt.toSmt(phase.getStateInvariant().prime(mReqSymboltable.getConstVars())));
 	}
 
 	private Term simplifyAndLog(final Term term) {
@@ -467,7 +471,6 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term constructPrimedStateInvariant(final List<ReqPeas> reqPeas) throws InvariantInfeasibleException {
-
 		final Map<PatternType<?>, CDD> primedStateInvariants = new HashMap<>();
 		for (final ReqPeas reqpea : reqPeas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
@@ -495,6 +498,12 @@ public class RtInconcistencyConditionGenerator {
 			result = SmtUtils.and(mScript, terms.values());
 		}
 		return handleInconsistentStateInvariant(terms, simplify(handleInconsistentStateInvariant(terms, result)));
+	}
+
+	private Term toNormalform(final Term t) {
+		final Term withoutIte = new IteRemover(mManagedScript).transform(t);
+		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP).transform(withoutIte);
+		return new CommuhashNormalForm(mServices, mManagedScript.getScript()).transform(nnf);
 	}
 
 	private Term handleInconsistentStateInvariant(final Map<PatternType<?>, Term> terms, final Term invariant)
