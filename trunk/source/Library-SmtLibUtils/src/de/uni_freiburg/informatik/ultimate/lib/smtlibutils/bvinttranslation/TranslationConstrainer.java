@@ -67,7 +67,14 @@ public class TranslationConstrainer {
 		return mIntand;
 	}
 
-	public void varConstraint(final Term bvterm, final Term intTerm) {
+	private Term getLowerVarBounds(final Term bvterm, final Term intTerm) {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		final Term translatedVar = intTerm;
+		final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), translatedVar);
+		return lowerBound;
+	}
+
+	private Term getUpperVarBounds(final Term bvterm, final Term intTerm) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 		final int width = Integer.valueOf(bvterm.getSort().getIndices()[0]);
 
@@ -75,27 +82,28 @@ public class TranslationConstrainer {
 		final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
 		final Rational twoPowWidthSubOne = twoPowWidth.sub(Rational.ONE);
 
-		final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), translatedVar);
 		final Term upperBoundPaper =
 				mScript.term("<", translatedVar, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
 		final Term upperBound =
 				mScript.term("<=", translatedVar, SmtUtils.rational2Term(mScript, twoPowWidthSubOne, intSort));
-		mConstraintSet.add(lowerBound);
-		mConstraintSet.add(upperBoundPaper);
+		return upperBoundPaper;
+	}
+	public void varConstraint(final Term bvterm, final Term intTerm) {
+		mConstraintSet.add(getLowerVarBounds(bvterm, intTerm));
+		mConstraintSet.add(getUpperVarBounds(bvterm, intTerm));
 	}
 
 	public Term getTvConstraint(final TermVariable bvterm, final Term intTerm) {
-		final Sort intSort = SmtSortUtils.getIntSort(mScript);
-		final int width = Integer.valueOf(bvterm.getSort().getIndices()[0]);
-		final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
-		final Rational twoPowWidthSubOne = twoPowWidth.sub(Rational.ONE);
-
-		final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), intTerm);
-		final Term upperBoundPaper = mScript.term("<", intTerm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
-		final Term upperBound =
-				mScript.term("<=", intTerm, SmtUtils.rational2Term(mScript, twoPowWidthSubOne, intSort));
+		final Term lowerBound = getLowerVarBounds(bvterm, intTerm);
+		final Term upperBoundPaper = getUpperVarBounds(bvterm, intTerm);
 		mTvConstraintSet.add(lowerBound);
 		mTvConstraintSet.add(upperBoundPaper);
+		return mScript.term("and", lowerBound, upperBoundPaper);
+	}
+
+	public Term getSelectConstraint(final Term bvterm, final Term intTerm) {
+		final Term lowerBound = getLowerVarBounds(bvterm, intTerm);
+		final Term upperBoundPaper = getUpperVarBounds(bvterm, intTerm);
 		return mScript.term("and", lowerBound, upperBoundPaper);
 	}
 

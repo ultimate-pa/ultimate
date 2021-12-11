@@ -31,6 +31,7 @@ public class BvToIntTranslation extends TermTransformer {
 
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
 	private final LinkedHashMap<Term, Term> mReversedVarMap;
+	public final LinkedHashMap<Term, Term> mArraySelectConstraintMap;
 
 	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
 			final TranslationConstrainer tc, final TermVariable[] freeVars) {
@@ -46,6 +47,7 @@ public class BvToIntTranslation extends TermTransformer {
 		}
 
 		mReversedVarMap = new LinkedHashMap<Term, Term>();
+		mArraySelectConstraintMap = new LinkedHashMap<Term, Term>();
 		mTc = tc;
 	}
 
@@ -303,6 +305,11 @@ public class BvToIntTranslation extends TermTransformer {
 					tvConstraints
 							.add(mTc.getTvConstraint(old.getVariables()[i], mVariableMap.get(old.getVariables()[i])));
 
+				} else if (SmtSortUtils.isArraySort(old.getVariables()[i].getSort())) {
+					final Term newQuantifiedVar = mVariableMap.get(old.getVariables()[i]);
+					newTermVars.add((TermVariable) newQuantifiedVar);
+					tvConstraints.add(mArraySelectConstraintMap.get(newQuantifiedVar));
+					mArraySelectConstraintMap.remove(newQuantifiedVar);
 				} else {
 					newTermVars.add(old.getVariables()[i]);
 				}
@@ -317,9 +324,6 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	/*
-	 * TODO binarize or deal with equalities, additions etc with more than 2 argmuents
-	 * TODO bvsdiv bvsrem // testen ob auf argumente signed to unsgined angewendet werfden muss
-	 * TODO check if we have to do sth for extend's
 	 * TODO modularer
 	 */
 	@Override
@@ -334,7 +338,13 @@ public class BvToIntTranslation extends TermTransformer {
 			case "not":
 			case "=>":
 			case "store":
+				setResult(mScript.term(fsym.getName(), args));
+				return;
 			case "select": {
+				if (SmtSortUtils.isBitvecSort(appTerm.getSort())) {
+					mArraySelectConstraintMap.put(args[0],
+							mTc.getSelectConstraint(appTerm, mScript.term(fsym.getName(), args)));
+				}
 				setResult(mScript.term(fsym.getName(), args));
 				return;
 			}

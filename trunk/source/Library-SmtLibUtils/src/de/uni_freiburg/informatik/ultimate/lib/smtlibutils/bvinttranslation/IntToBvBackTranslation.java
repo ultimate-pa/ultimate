@@ -386,14 +386,14 @@ public class IntToBvBackTranslation extends TermTransformer {
 					}
 				}
 			}
-			if (isSigned(term)) {
-				for (final Term argument : appTerm.getParameters()) {
-					if (!isSigned(argument)) {
-						// nur wenn auch width argument = width term??
-						return width + 1;
-					}
-				}
-			}
+			// if (isSigned(term)) { // TODO necessary?
+			// for (final Term argument : appTerm.getParameters()) {
+			// if (!isSigned(argument)) {
+			// // nur wenn auch width argument = width term??
+			// return width + 1;
+			// }
+			// }
+			// }
 			return width;
 		}
 		throw new UnsupportedOperationException("Unexpected Term " + term);
