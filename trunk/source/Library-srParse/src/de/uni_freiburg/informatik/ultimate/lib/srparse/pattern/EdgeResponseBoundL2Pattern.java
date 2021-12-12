@@ -72,13 +72,13 @@ public class EdgeResponseBoundL2Pattern extends PatternType<EdgeResponseBoundL2P
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
 			ct.add(counterTrace(phase(P.negate()), phase(R.negate().and(P.negate())), phase(R.and(P.negate())),
-					phase(S.and(P).negate(), BoundTypes.LESS, c1), phase(S.negate().and(P.negate())), phaseT()));
+					phase(S.and(P.negate()), BoundTypes.LESS, c1), phase(S.negate().and(P.negate())), phaseT()));
 			ct.add(counterTrace(phase(P.negate()), phase(R.negate().and(P.negate())),
 					phase(R.and(S.negate().and(P.negate()))), phaseT()));
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.negate().and(Q).negate()),
+			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.negate().and(Q.negate())),
 					phase(R.and(Q.negate())), phase(S.and(Q.negate()), BoundTypes.LESS, c1),
 					phase(S.negate().and(Q.negate())), phaseT()));
 			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.negate().and(Q.negate())),
@@ -92,7 +92,7 @@ public class EdgeResponseBoundL2Pattern extends PatternType<EdgeResponseBoundL2P
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
 			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(R.negate().and(Q).negate()), phase(R.and(Q.negate())),
+					phase(R.negate().and(Q.negate())), phase(R.and(Q.negate())),
 					phase(S.and(Q.negate()), BoundTypes.LESS, c1), phase(S.negate().and(Q.negate())), phase(Q.negate()),
 					phase(Q), phaseT()));
 			ct.add(counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
