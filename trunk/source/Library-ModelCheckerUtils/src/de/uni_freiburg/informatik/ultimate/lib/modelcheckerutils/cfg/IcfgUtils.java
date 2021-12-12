@@ -262,14 +262,10 @@ public class IcfgUtils {
 	public static boolean canReachCached(final IcfgLocation sourceLoc, final Predicate<IcfgEdge> isTarget,
 			final Predicate<IcfgEdge> prune, final Function<IcfgLocation, LBool> getCachedResult,
 			final BiConsumer<IcfgLocation, Boolean> setCachedResult) {
-		final LBool REACHABLE = LBool.SAT;
-		final LBool UNREACHABLE = LBool.UNSAT;
-		final LBool UNKNOWN = LBool.UNKNOWN;
-
 		// First check if result is cached.
 		final LBool cachedCanReach = getCachedResult.apply(sourceLoc);
-		if (cachedCanReach != UNKNOWN) {
-			return cachedCanReach == REACHABLE;
+		if (cachedCanReach != LBool.UNKNOWN) {
+			return cachedCanReach == LBool.SAT;
 		}
 
 		// Do a DFS search of the CFG.
@@ -277,16 +273,16 @@ public class IcfgUtils {
 		final LinkedList<IcfgLocation> worklist = new LinkedList<>();
 
 		worklist.add(sourceLoc);
-		LBool canReach = UNREACHABLE;
+		LBool canReach = LBool.UNSAT;
 
-		while (!worklist.isEmpty() && canReach != REACHABLE) {
+		while (!worklist.isEmpty() && canReach != LBool.SAT) {
 			final IcfgLocation currentLoc = worklist.getLast();
 
 			// If the result is cached, retrieve it, mark the location as visited, and backtrack.
 			final LBool knownCanReach = getCachedResult.apply(currentLoc);
-			if (knownCanReach != UNKNOWN) {
-				// Do not replace UNKNOWN by UNREACHABLE, as we must not propagate this unreachability to predecessors.
-				canReach = knownCanReach == REACHABLE || canReach != UNKNOWN ? knownCanReach : canReach;
+			if (knownCanReach != LBool.UNKNOWN) {
+				// Do not replace UNKNOWN by UNSAT, as we must not propagate this unreachability to predecessors.
+				canReach = knownCanReach == LBool.SAT || canReach != LBool.UNKNOWN ? knownCanReach : canReach;
 
 				worklist.removeLast();
 				dfs.push(currentLoc);
@@ -296,7 +292,7 @@ public class IcfgUtils {
 
 			// When backtracking, remember the computed result for future queries.
 			if (dfs.isVisited(currentLoc)) {
-				assert canReach != REACHABLE : "After reachability confirmed, should be fast-backtracking";
+				assert canReach != LBool.SAT : "After reachability confirmed, should be fast-backtracking";
 				worklist.removeLast();
 
 				if (dfs.peek() != currentLoc) {
@@ -306,13 +302,13 @@ public class IcfgUtils {
 				}
 
 				final boolean completeBacktrack = dfs.backtrack();
-				// Inside a loop, reachability cannot be UNREACHABLE. Yet, a successor outside the loop might have
-				// UNREACHABLE status. Once back inside the loop, we here set canReach to UNKNOWN.
-				// Conversely, if we just backtracked the outermost loop head, reset canReach to UNREACHABLE.
-				canReach = completeBacktrack ? UNREACHABLE : UNKNOWN;
+				// Inside a loop, reachability cannot be UNSAT. Yet, a successor outside the loop might have
+				// UNSAT status. Once back inside the loop, we here set canReach to UNKNOWN.
+				// Conversely, if we just backtracked the outermost loop head, reset canReach to UNSAT.
+				canReach = completeBacktrack ? LBool.UNSAT : LBool.UNKNOWN;
 
-				if (canReach != UNKNOWN) {
-					assert canReach == UNREACHABLE;
+				if (canReach != LBool.UNKNOWN) {
+					assert canReach == LBool.UNSAT;
 					setCachedResult.accept(currentLoc, false);
 				}
 				continue;
@@ -333,7 +329,7 @@ public class IcfgUtils {
 
 				// Abort when reachability is confirmed.
 				if (isTarget.test(edge)) {
-					canReach = REACHABLE;
+					canReach = LBool.SAT;
 					break;
 				}
 
@@ -344,24 +340,25 @@ public class IcfgUtils {
 				} else if ((stackIndex = dfs.stackIndexOf(succ)) != -1) {
 					// If the edge leads back to the stack, reachability is unknown until succ (or an even earlier loop
 					// head) is backtracked. To avoid infinite looping, we do not explore succ.
-					assert getCachedResult.apply(succ) == UNKNOWN : "Loop heads on stack must have UNKNOWN status";
-					canReach = UNKNOWN;
+					assert getCachedResult
+							.apply(succ) == LBool.UNKNOWN : "Loop heads on stack must have UNKNOWN status";
+					canReach = LBool.UNKNOWN;
 					dfs.updateLoopHead(currentLoc, new Pair<>(stackIndex, succ));
 				} else {
 					// If the successor has been visited before, but is not on the stack, then we know its reachability
-					// is either UNREACHABLE or UNKNOWN.
+					// is either UNSAT or UNKNOWN.
 					final LBool succCanReach = getCachedResult.apply(succ);
-					assert succCanReach != REACHABLE : "Backtracked node must not have REACHABLE status";
+					assert succCanReach != LBool.SAT : "Backtracked node must not have SAT status";
 
 					// In either case, we do not need to explore it again. Instead, we simply propagate reachability and
 					// loop head information back to currentLoc.
-					canReach = succCanReach == UNKNOWN ? UNKNOWN : canReach;
+					canReach = succCanReach == LBool.UNKNOWN ? LBool.UNKNOWN : canReach;
 					dfs.backPropagateLoopHead(currentLoc, succ);
 				}
 			}
 
 			// When reachability was confirmed, do not search any further.
-			if (canReach != REACHABLE) {
+			if (canReach != LBool.SAT) {
 				successors.stream().forEach(worklist::add);
 			}
 		}
@@ -369,16 +366,16 @@ public class IcfgUtils {
 		// Fast-backtrack: If we exited the previous loop because reachability was confirmed,
 		// we only backtrack, and no longer explore states on the work list.
 		while (!dfs.isStackEmpty()) {
-			assert canReach == REACHABLE : "Fast-backtracking must only happen in case of reachability";
+			assert canReach == LBool.SAT : "Fast-backtracking must only happen in case of reachability";
 			final IcfgLocation currentLoc = dfs.peek();
 			dfs.backtrack();
 			setCachedResult.accept(currentLoc, true);
 		}
 
 		final LBool cachedReachability = getCachedResult.apply(sourceLoc);
-		assert cachedReachability != UNKNOWN : "reachability should be clearly determined";
+		assert cachedReachability != LBool.UNKNOWN : "reachability should be clearly determined";
 		assert cachedReachability == canReach : "contradictory reachability: " + cachedReachability + " != " + canReach;
-		return canReach == REACHABLE;
+		return canReach == LBool.SAT;
 	}
 
 	public static <LOC extends IcfgLocation> Set<String> getAllThreadInstances(final IIcfg<LOC> icfg) {

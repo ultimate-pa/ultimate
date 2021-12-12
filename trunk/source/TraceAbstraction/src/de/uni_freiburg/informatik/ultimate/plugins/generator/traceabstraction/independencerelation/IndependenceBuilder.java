@@ -67,10 +67,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
  *            (Implementation detail used to provide fluent API, not relevant to callers)
  */
 public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
+	private static final String UNCONDITIONAL_ERROR = "Condition transformation for unconditional relation is useless";
+
 	protected final IIndependenceRelation<S, L> mRelation;
 	protected final Function<IIndependenceRelation<S, L>, B> mCreator;
-
-	private static final String UNCONDITIONAL_ERROR = "Condition transformation for unconditional relation is useless";
 
 	private IndependenceBuilder(final IIndependenceRelation<S, L> relation,
 			final Function<IIndependenceRelation<S, L>, B> creator) {

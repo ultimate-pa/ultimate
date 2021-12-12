@@ -58,15 +58,15 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class SemanticIndependenceConditionGenerator {
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final BasicPredicateFactory mFactory;
 	private final boolean mSymmetric;
-
-	private static final XnfConversionTechnique mXnfConversionTechnique =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 
 	/**
 	 * Create a new instance.
@@ -162,7 +162,7 @@ public class SemanticIndependenceConditionGenerator {
 		final boolean tryAuxVarElimination = true;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, simplify, tryAuxVarElimination,
-				false, mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(first, second));
+				false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, Arrays.asList(first, second));
 	}
 
 	private final UnmodifiableTransFormula withGuard(final IPredicate guard, final UnmodifiableTransFormula tf) {
@@ -173,7 +173,7 @@ public class SemanticIndependenceConditionGenerator {
 	}
 
 	private final Term quantify(final Set<TermVariable> vars, final Term formula) {
-		return PartialQuantifierElimination.quantifier(mServices, mLogger, mMgdScript, mSimplificationTechnique,
-				mXnfConversionTechnique, QuantifiedFormula.EXISTS, vars, formula);
+		return PartialQuantifierElimination.quantifier(mServices, mLogger, mMgdScript, SIMPLIFICATION_TECHNIQUE,
+				XNF_CONVERSION_TECHNIQUE, QuantifiedFormula.EXISTS, vars, formula);
 	}
 }

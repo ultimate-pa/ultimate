@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class DataRaceAnnotation extends ModernAnnotations {
+public final class DataRaceAnnotation extends ModernAnnotations {
 	private static final long serialVersionUID = 1L;
 
 	private static final String KEY = DataRaceAnnotation.class.getName();
@@ -84,7 +84,7 @@ public class DataRaceAnnotation extends ModernAnnotations {
 		return ModelUtils.getAnnotation(node, KEY, DataRaceAnnotation.class::cast);
 	}
 
-	public static class Race {
+	public static final class Race {
 		private final boolean mIsWrite;
 		private final String mAccessPath;
 		private final Set<Race> mTwinAccesses;

@@ -65,13 +65,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 
 public class SemanticIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
 
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final ILogger mLogger;
-
-	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique mXnfConversionTechnique =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final boolean mConditional;
 	private final boolean mSymmetric;
@@ -192,7 +192,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final boolean tryAuxVarElimination = false;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
-				tryAuxVarElimination, false, false, mXnfConversionTechnique, mSimplificationTechnique,
+				tryAuxVarElimination, false, false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
 				Arrays.asList(first, second));
 	}
 
