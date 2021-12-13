@@ -132,7 +132,7 @@ pipeline {
       when {
         anyOf {
           allOf {
-            // branch 'dev'
+            branch 'dev'
             expression { return !currentBuild.changeSets.isEmpty() }
             expression { return currentBuild.result == "SUCCESS" || currentBuild.result == "UNSTABLE" }
           }
