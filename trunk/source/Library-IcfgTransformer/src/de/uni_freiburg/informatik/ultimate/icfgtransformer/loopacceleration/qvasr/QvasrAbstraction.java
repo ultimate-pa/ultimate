@@ -30,19 +30,19 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents a rational vaector addition system
- *         with resets abstraction (Q-Vasr-abstraction). It is used to overapproximate changes to variables by a
- *         transition formula by linear simulating the formula onto a {@link Qvasr}.
+ * This class represents a rational vaector addition system with resets abstraction (Q-Vasr-abstraction). It is used to
+ * overapproximate changes to variables by a transition formula by linear simulating the formula onto a {@link Qvasr}.
  *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
 
 public class QvasrAbstraction {
 
-	private final Term[][] mSimulationMatrix;
+	private final Rational[][] mSimulationMatrix;
 	private final Qvasr mQvasr;
 
 	/**
@@ -52,7 +52,7 @@ public class QvasrAbstraction {
 	 * @param initialSimulationMatrix
 	 * @param initialQvasr
 	 */
-	public QvasrAbstraction(final Term[][] simulationMatrix, final Qvasr qvasr) {
+	public QvasrAbstraction(final Rational[][] simulationMatrix, final Qvasr qvasr) {
 		mSimulationMatrix = simulationMatrix;
 		mQvasr = qvasr;
 	}
@@ -62,7 +62,7 @@ public class QvasrAbstraction {
 	 *
 	 * @return
 	 */
-	public Term[][] getSimulationMatrix() {
+	public Rational[][] getSimulationMatrix() {
 		return mSimulationMatrix;
 	}
 

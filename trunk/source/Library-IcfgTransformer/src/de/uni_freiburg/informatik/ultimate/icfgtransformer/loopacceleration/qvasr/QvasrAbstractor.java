@@ -124,8 +124,8 @@ public class QvasrAbstractor {
 			printMatrix(newUpdatesMatrixAdditions);
 		}
 
-		final Term[][] solutionsAdditionsGaussJordan = gaussRowEchelonFormJordan(newUpdatesMatrixAdditions);
-		final Term[][] solutionsResetGaussJordan = gaussRowEchelonFormJordan(newUpdatesMatrixResets);
+		final Term[][] solutionsAdditionsGaussJordan = gaussianSolve(newUpdatesMatrixAdditions);
+		final Term[][] solutionsResetGaussJordan = gaussianSolve(newUpdatesMatrixResets);
 
 		return null;
 	}
@@ -1265,10 +1265,16 @@ public class QvasrAbstractor {
 		final Deque<Set<Term>> zeroStack = new HashDeque<>();
 		zeroStack.addAll(powerset);
 		int j = 0;
-		final TermVariable a = mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript));
+		/*
+		 * a is not needed anymore as it is treated as a individual variable
+		 */
+		// final TermVariable a = mScript.constructFreshTermVariable("a", SmtSortUtils.getRealSort(mScript));
 		while (!zeroStack.isEmpty()) {
 			int i = 0;
-			baseMatrix[j][columnDimension] = a;
+			/*
+			 * Set the a column to one, not a.
+			 */
+			baseMatrix[j][columnDimension] = mOne;
 			final Map<Term, Term> subMapping = new HashMap<>();
 			if (j > 0) {
 				final Set<Term> toBeSetZero = zeroStack.pop();

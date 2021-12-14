@@ -34,47 +34,45 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * This class represents a rational vector addition system with resets that model the relations of input and output
- * variables of transition formulas. They consist of a set of tuples of vectors called transformer. The first vector is
- * a binary reset vector indicating a reset to a variable, while the second vector represents an addition to a variable.
+ * Class for computing the join of two Qvasr abstractions to form a least upper bound.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
-public class Qvasr {
-	private final Set<Pair<Rational[], Rational[]>> mTransformer;
+public class QvasrAbstractionJoin {
+	private QvasrAbstractionJoin() {
+		// Prevent instantiation of this utility class
+	}
 
-	/**
-	 * Construct a new Q-Vasr using a single transformer
-	 *
-	 * @param initialTransformer
-	 */
-	public Qvasr(final Rational[] resetVector, final Rational[] additionVector) {
-		final Pair<Rational[], Rational[]> initialTransformer = new Pair<>(resetVector, additionVector);
-		final Set<Pair<Rational[], Rational[]>> initialTransformerSet = new HashSet<>();
-		initialTransformerSet.add(initialTransformer);
-		mTransformer = initialTransformerSet;
+	public static void qvasrAbstractionJoin(final QvasrAbstraction abstractionOne,
+			final QvasrAbstraction abstractionTwo) {
+
 	}
 
 	/**
-	 * Construct a new Q-Vasr using a single transformer
+	 * Get coherence classes of a given Qvasr abstraction. A coherence class is a set of rows i,j, where r_i = r_j in
+	 * the reset vector of the abstraction's qvasr.
 	 *
-	 * @param initialTransformer
+	 * @param qvasrAbstraction
+	 * @return
 	 */
-	public Qvasr(final Set<Pair<Rational[], Rational[]>> initialTransformer) {
-		mTransformer = initialTransformer;
+	private static Set<Set<Integer>> getCoherenceClasses(final QvasrAbstraction qvasrAbstraction) {
+		final Qvasr qvasr = qvasrAbstraction.getQvasr();
+		final Set<Set<Integer>> coherenceClasses = new HashSet<>();
+		for (final Pair<Rational[], Rational[]> transformer : qvasr.getQvasrTransformer()) {
+			final Rational[] resetVector = transformer.getFirst();
+			for (int i = 0; i < resetVector.length; i++) {
+				final Set<Integer> coherenceClass = new HashSet<>();
+				coherenceClass.add(i);
+				for (int j = 0; j < resetVector.length; j++) {
+					if (i != j && resetVector[i] == resetVector[j]) {
+						coherenceClass.add(j);
+					}
+				}
+				coherenceClasses.add(coherenceClass);
+			}
+		}
+		return coherenceClasses;
 	}
 
-	public Set<Pair<Rational[], Rational[]>> getQvasrTransformer() {
-		return mTransformer;
-	}
-
-	public void addTransformer(final Pair<Rational[], Rational[]> transformer) {
-		mTransformer.add(transformer);
-	}
-
-	@Override
-	public String toString() {
-		return mTransformer.toString();
-	}
 }

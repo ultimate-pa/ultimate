@@ -30,8 +30,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import java.util.Arrays;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -45,8 +44,8 @@ public class QvasrAbstractionBuilder {
 		// Prevent instantiation of this utility class
 	}
 
-	public static QvasrAbstraction constructQvasrAbstraction(final ManagedScript script,
-			final List<Pair<Term[], Term>> resetsBasis, final List<Pair<Term[], Term>> additionsBasis) {
+	public static QvasrAbstraction constructQvasrAbstraction(final List<Pair<Rational[], Rational>> resetsBasis,
+			final List<Pair<Rational[], Rational>> additionsBasis) {
 
 		final int resetBasisSize = resetsBasis.size();
 		final int additionBasisSize = additionsBasis.size();
@@ -60,19 +59,19 @@ public class QvasrAbstractionBuilder {
 		 */
 		final int n = resetsBasis.get(0).getFirst().length - 1;
 
-		final Term[][] simulationMatrix = new Term[d][n];
-		final Term[] abstractionResetVector = new Term[d];
-		final Term[] abstractionAdditionVector = new Term[d];
+		final Rational[][] simulationMatrix = new Rational[d][n];
+		final Rational[] abstractionResetVector = new Rational[d];
+		final Rational[] abstractionAdditionVector = new Rational[d];
 		for (int i = 0; i < resetBasisSize; i++) {
-			final Pair<Term[], Term> resetBasisVector = resetsBasis.get(i);
+			final Pair<Rational[], Rational> resetBasisVector = resetsBasis.get(i);
 			simulationMatrix[i] = Arrays.copyOf(resetBasisVector.getFirst(), n);
-			abstractionResetVector[i] = script.getScript().decimal("0");
+			abstractionResetVector[i] = Rational.ZERO;
 			abstractionAdditionVector[i] = resetBasisVector.getSecond();
 		}
 		for (int i = resetBasisSize; i < d; i++) {
-			final Pair<Term[], Term> additionsBasisVector = resetsBasis.get(i);
+			final Pair<Rational[], Rational> additionsBasisVector = resetsBasis.get(i);
 			simulationMatrix[i] = Arrays.copyOf(additionsBasisVector.getFirst(), n);
-			abstractionResetVector[i] = script.getScript().decimal("1");
+			abstractionResetVector[i] = Rational.ONE;
 			abstractionAdditionVector[i] = additionsBasisVector.getSecond();
 		}
 
