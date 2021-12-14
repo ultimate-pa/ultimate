@@ -27,7 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -80,7 +82,8 @@ public class QvasrVectorSpaceBasisConstructor {
 			if (!QvasrAbstractor.checkTermEquiv(script, lastRow[i], script.getScript().decimal("0"))) {
 				final Term a = script.constructFreshTermVariable("a", SmtSortUtils.getRealSort(script));
 				final List<Term> defaultInit = new ArrayList<>();
-				if (i != lastRow.length - 1) {
+				if (i != lastRow.length - 1 && !QvasrAbstractor.checkTermEquiv(script, lastRow[lastRow.length - 1],
+						script.getScript().decimal("0"))) {
 					defaultInit.add(a);
 					freeVars.add(a);
 
@@ -130,13 +133,22 @@ public class QvasrVectorSpaceBasisConstructor {
 		/*
 		 * Construct a proto-basisvector for each free variable.
 		 */
+
+		final Deque<Term> freeVarStack = new ArrayDeque<>();
+		freeVarStack.addAll(freeVars);
 		final List<Term[]> vectors = new ArrayList<>();
-		for (final Term var : freeVars) {
+		while (!freeVarStack.isEmpty()) {
+			final Term current = freeVarStack.pop();
 			final Map<Term, Term> subMap = new HashMap<>();
-			subMap.put(var, script.getScript().decimal("0"));
+			for (final Term var : freeVars) {
+				if (var != current) {
+					subMap.put(var, script.getScript().decimal("0"));
+				} else {
+					subMap.put(var, var);
+				}
+			}
 			final Substitution sub = new Substitution(script, subMap);
 			final Term[] vector = new Term[basisVectors[0].length];
-
 			for (final Entry<Term, List<Term>> solution : equations.entrySet()) {
 				final Term tv = solution.getKey();
 				final int position = columnsForTvs.get(tv);
