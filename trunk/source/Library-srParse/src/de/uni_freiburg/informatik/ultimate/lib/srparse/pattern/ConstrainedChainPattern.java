@@ -79,17 +79,6 @@ public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern
 					phase(P.negate().and(S)), phase(P.negate().and(T.negate())),
 					phase(P.negate().and(T.negate().and(U))), phase(P.negate()), phase(P.negate().and(T)),
 					phase(P.negate()), phase(P), phaseT()));
-		} else if (scope instanceof SrParseScopeAfterUntil) {
-			final CDD P = scope.getCdd1();
-			final CDD Q = scope.getCdd2();
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)),
-					phase(Q.negate().and(S.negate())), phase(Q), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)), phase(Q.negate()),
-					phase(Q.negate().and(S)), phase(Q.negate().and(T.negate())), phase(Q), phaseT()));
-			ct.add(counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R)), phase(Q.negate()),
-					phase(Q.negate().and(S)), phase(Q.negate().and(T.negate())),
-					phase(Q.negate().and(T.negate().and(U))), phase(Q.negate()), phase(Q.negate().and(T)),
-					phase(Q.negate()), phase(Q), phaseT()));
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
