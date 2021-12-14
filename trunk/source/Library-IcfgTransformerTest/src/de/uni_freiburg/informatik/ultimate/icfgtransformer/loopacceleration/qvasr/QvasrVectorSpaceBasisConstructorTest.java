@@ -154,6 +154,18 @@ public class QvasrVectorSpaceBasisConstructorTest {
 	}
 
 	/**
+	 * Test Vector basis for {{1, 0, 0, 4}, {0, 1, 1, 2}} = {{4, 2, -1, 1}}
+	 */
+	@Test
+	public void testSolutionBuilding6() {
+		final Term[][] matrix = { { mOne, mZero, mZero, mFour }, { mZero, mOne, mOne, mTwo } };
+		final Rational[][] vectorSpaceBasis =
+				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mMgdScript, matrix);
+		final Integer[][] vectorSpaceBasisResult = { { 4, 2, 0, 1 }, { 0, -1, 1, 0 } };
+		testBasisVectorEquality(vectorSpaceBasis, integerMatrixToRationalMatrix(vectorSpaceBasisResult));
+	}
+
+	/**
 	 * Convert an integer matrix to a rational matrix. Needed for easier parsing of matrices.
 	 *
 	 * @param matrix
