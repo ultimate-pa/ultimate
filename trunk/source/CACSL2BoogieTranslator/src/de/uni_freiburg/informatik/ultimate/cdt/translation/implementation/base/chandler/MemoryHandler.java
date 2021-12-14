@@ -3130,7 +3130,7 @@ public class MemoryHandler {
 								// old(#pthreadsRwLock)[#ptr] >= 0
 								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
 										constructOldRwLockComparisonExpression(tuLoc, inputPtr,
-												IASTBinaryExpression.op_equals),
+												IASTBinaryExpression.op_greaterEqual),
 										Collections.emptySet()),
 								// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := old(#pthreadsRwLock)[#ptr]+1]
 								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
