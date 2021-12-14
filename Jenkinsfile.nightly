@@ -69,7 +69,10 @@ pipeline {
     stage('Check environment') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          allOf {
+            triggeredBy 'TimerTrigger'
+            expression { return !currentBuild.changeSets.isEmpty() }
+          }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -94,7 +97,10 @@ pipeline {
     stage('Collect reference build') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          allOf {
+            triggeredBy 'TimerTrigger'
+            expression { return !currentBuild.changeSets.isEmpty() }
+          }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -107,7 +113,10 @@ pipeline {
     stage('Build and run nightly tests') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          allOf {
+            triggeredBy 'TimerTrigger'
+            expression { return !currentBuild.changeSets.isEmpty() }
+          }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -133,6 +142,7 @@ pipeline {
         anyOf {
           allOf {
             branch 'dev'
+            triggeredBy 'TimerTrigger'
             expression { return !currentBuild.changeSets.isEmpty() }
             expression { return currentBuild.result == "SUCCESS" || currentBuild.result == "UNSTABLE" }
           }
@@ -150,6 +160,7 @@ pipeline {
     stage('Deploy nightly build') {
       when {
         allOf {
+          triggeredBy 'TimerTrigger'
           branch 'dev'
           expression { return !currentBuild.changeSets.isEmpty() }
           expression { return currentBuild.result == "SUCCESS" || currentBuild.result == "UNSTABLE" }
