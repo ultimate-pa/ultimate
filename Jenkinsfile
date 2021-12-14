@@ -73,12 +73,12 @@ pipeline {
     unsuccessful {
       script { prepare_post(scmVars) }
       emailext(body: '$DEFAULT_CONTENT', mimeType: 'text/plain', recipientProviders: [culprits(), developers(), requestor()], replyTo: 'dietsch@informatik.uni-freiburg.de', subject: '$DEFAULT_SUBJECT')
-      mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#botpool', icon: "https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg")
+      mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#ultimate', icon: "https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg")
     }
     fixed {
       script { prepare_post(scmVars) }
       emailext(body: '$DEFAULT_CONTENT', mimeType: 'text/plain', recipientProviders: [culprits(), developers(), requestor()], replyTo: 'dietsch@informatik.uni-freiburg.de', subject: '$DEFAULT_SUBJECT')
-      mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#botpool', icon: "https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg")
+      mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#ultimate', icon: "https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg")
     }
   }
 }
