@@ -167,7 +167,8 @@ public class PeaToDotTestSuite {
 	}
 
 	private void writeMarkdownFile(final List<String> cts) throws IOException {
-		final File markdownFile = new File(MARKDOWN_DIR + "/" + mPatternName + ".md");
+		String patternNameShort = mPatternName.replaceAll("Pattern", "");
+		final File markdownFile = new File(MARKDOWN_DIR + "/" + patternNameShort + ".md");
 		final int numPea =
 				PEA_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName + "_")).length;
 		final Formatter fmt = new Formatter();
@@ -179,11 +180,12 @@ public class PeaToDotTestSuite {
 
 		if (!markdownFile.exists()) {
 			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
-			fmt.format("## %s%s", mPatternName, LINE_SEP);
+			
+			fmt.format("## %s%s", patternNameShort, LINE_SEP);
 		}
 		fmt.format(LINE_SEP);
 
-		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
+		fmt.format("### %s %s%s", patternNameShort, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
 		fmt.format(LINE_SEP);
 
