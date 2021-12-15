@@ -292,7 +292,7 @@ public class FunctionHandler {
 			assert type != null;
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, node, contract, definedProcInfo);
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, definedProcInfo);
 
 		if (!definedProcInfo.hasDeclaration()) {
 			// we have not seen this procedure yet, make a new declaration, register the procedure
@@ -757,23 +757,22 @@ public class FunctionHandler {
 	 * be called after the procedure parameters have been added to the symboltable)
 	 *
 	 * @param main
-	 * @param node
 	 * @param contract
 	 * @param methodName
 	 * @return
 	 */
-	private Specification[] makeBoogieSpecFromACSLContract(final IDispatcher main, final IASTNode node,
-			final List<ACSLNode> contracts, final BoogieProcedureInfo procInfo) {
+	private Specification[] makeBoogieSpecFromACSLContract(final IDispatcher main, final List<ACSLNode> contract,
+			final BoogieProcedureInfo procInfo) {
 		Specification[] spec;
-		if (contracts == null) {
+		if (contract == null) {
 			spec = new Specification[0];
 		} else {
 			final List<Specification> specList = new ArrayList<>();
-			for (final ACSLNode contract : contracts) {
+			for (int i = 0; i < contract.size(); i++) {
 				// retranslate ACSL specification needed e.g., in cases
 				// where ids of function parameters differ from is in ACSL
 				// expression
-				final Result retranslateRes = main.dispatch(contract, node);
+				final Result retranslateRes = main.dispatch(contract.get(i));
 				assert retranslateRes instanceof ContractResult;
 				final ContractResult resContr = (ContractResult) retranslateRes;
 				specList.addAll(Arrays.asList(resContr.getSpecs()));
@@ -979,14 +978,14 @@ public class FunctionHandler {
 		// begin new scope for retranslation of ACSL specification
 		mCHandler.beginScope();
 
-		final VarList[] in = processInParams(loc, funcType, procInfo, node, true);
+		final VarList[] in = processInParams(loc, funcType, procInfo, node, false);
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
 
 		final Attribute[] attr = new Attribute[0];
 		final String[] typeParams = new String[0];
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, node, contract, procInfo);
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, procInfo);
 
 		if (funcType.getResultType() instanceof CPrimitive
 				&& ((CPrimitive) funcType.getResultType()).getType() == CPrimitives.VOID

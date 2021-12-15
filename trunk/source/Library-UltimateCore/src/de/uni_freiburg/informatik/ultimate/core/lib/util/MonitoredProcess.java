@@ -527,7 +527,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		if (mIsKillProcessCalled.getAndSet(true)) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("%s Called by %s, but is already killed", getLogStringPrefix(),
-						ReflectionUtil.getCallerSignature(3, false));
+						ReflectionUtil.getCallerSignature(3));
 			}
 			return;
 		}
