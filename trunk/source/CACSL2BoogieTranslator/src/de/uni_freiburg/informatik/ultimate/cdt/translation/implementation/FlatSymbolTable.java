@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
  */
 public class FlatSymbolTable {
 
-	private static final boolean DEBUG_ENABLE_STORE_LOGGING = false;
+	private static final boolean DEBUG_ENABLE_STORE_LOGGING = true;
 
 	/**
 	 * The global scope, spanning all translation units. Every translation unit points to this scope.
@@ -281,13 +281,16 @@ public class FlatSymbolTable {
 	 * @see FlatSymbolTable#tableFind(IASTNode, String, boolean)
 	 */
 	private void tableStore(final IASTNode hook, final String id, final SymbolTableValue val) {
+		if (id.isEmpty()) {
+			return;
+		}
 		IASTNode cursor = mCHookSkip.apply(hook);
 		while (cursor != null) {
 			if (cursor instanceof IASTTranslationUnit) {
 				mGlobalScope.put(id, val);
 				if (DEBUG_ENABLE_STORE_LOGGING) {
-					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s",
-							ReflectionUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, val));
+					mLogger.info("%-50.50s stores at global cursor [%-25.25s]: %s to %s",
+							ReflectionUtil.getCallerSignature(4, true), cursor.getClass().getSimpleName(), id, val);
 				}
 				break;
 			}
@@ -309,8 +312,8 @@ public class FlatSymbolTable {
 					mCTable.put(cursor, scopeTable);
 				}
 				if (DEBUG_ENABLE_STORE_LOGGING) {
-					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s",
-							ReflectionUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, val));
+					mLogger.info("%-50.50s stores at local cursor [%-25.25s]: %s to %s",
+							ReflectionUtil.getCallerSignature(4, true), cursor.getClass().getSimpleName(), id, val);
 				}
 				scopeTable.put(id, val);
 				break;
@@ -357,9 +360,9 @@ public class FlatSymbolTable {
 			}
 			if (scope != null) {
 				if (DEBUG_ENABLE_STORE_LOGGING) {
-					mLogger.info(String.format("%-50.50s[%-25.25s]: Updating %s from %s to %s",
-							ReflectionUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, oldVal,
-							newVal));
+					mLogger.info("%-50.50s[%-25.25s]: Updating %s from %s to %s",
+							ReflectionUtil.getCallerSignature(4, true), cursor.getClass().getSimpleName(), id, oldVal,
+							newVal);
 				}
 				scope.put(id, newVal);
 				mBoogieIdToCId.remove(oldVal.getBoogieName());

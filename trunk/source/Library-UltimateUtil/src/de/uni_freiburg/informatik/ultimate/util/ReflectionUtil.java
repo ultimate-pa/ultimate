@@ -94,7 +94,7 @@ public class ReflectionUtil {
 	 * Return a {@link String} specifying the line number, class name and method name of the caller at the given stack
 	 * depth.
 	 */
-	public static String getCallerSignature(final int callStackDepth) {
+	public static String getCallerSignature(final int callStackDepth, final boolean useSimpleName) {
 		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
 		final StackTraceElement theFrame;
 		if (callStack.length < callStackDepth) {
@@ -102,8 +102,9 @@ public class ReflectionUtil {
 		} else {
 			theFrame = callStack[callStackDepth];
 		}
-		return String.format("[L%4s] %s.%s", theFrame.getLineNumber(), getCallerClass(callStackDepth).getName(),
-				theFrame.getMethodName());
+		final Class<?> callerClazz = getCallerClass(callStackDepth);
+		return String.format("[L%4s] %s.%s", theFrame.getLineNumber(),
+				useSimpleName ? callerClazz.getSimpleName() : callerClazz.getName(), theFrame.getMethodName());
 	}
 
 	public static String getCallerSignatureFiltered(final Set<Class<?>> skippedClasses) {

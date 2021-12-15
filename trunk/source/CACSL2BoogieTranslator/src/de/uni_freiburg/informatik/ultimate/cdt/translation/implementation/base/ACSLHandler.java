@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -172,8 +173,7 @@ public class ACSLHandler implements IACSLHandler {
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
-			final ProcedureManager procedureManager, final LocationFactory locationFactory,
-			final CHandler chandler) {
+			final ProcedureManager procedureManager, final LocationFactory locationFactory, final CHandler chandler) {
 		mWitnessInvariantMode = witnessInvariantMode;
 		mSymboltable = symboltable;
 		mExpressionTranslation = expressionTranslation;
@@ -537,45 +537,28 @@ public class ACSLHandler implements IACSLHandler {
 		final String id = lookupId(main, node, loc);
 
 		final String cId = mSymboltable.getCIdForBoogieId(id);
-		final CType cType;
-		SymbolTableValue stv;
-		if (mSpecType != ACSLHandler.SPEC_TYPE.REQUIRES && mSpecType != ACSLHandler.SPEC_TYPE.ENSURES) {
-			// TODO : the translation is sometimes wrong, for requires and
-			// ensures! i.e. when referring to inparams in ensures clauses!
-			// The ensures clause will refer to the in-parameter listed in the
-			// in parameter declaration. However, these variables will not be
-			// changed, but only assigned to #in~NAME!
-			// This cannot be solved by just appending "#in~" to all
-			// identifiers, since the identifier could also refer to a global
-			// variable! However, we don't know that at this moment!
 
-			stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
-			if (stv != null) {
-				cType = stv.getCType();
-			} else {
-				throw new UnsupportedOperationException(
-						"not yet implemented: " + "unable to determine CType for variable " + id);
-			}
-		} else {
+		final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
+		if (stv == null) {
 			throw new UnsupportedOperationException(
-					"not yet implemented: " + "unable to determine CType for variable " + id);
+					"not yet implemented: unable to determine CType for variable " + id);
 		}
-
-		// FIXME: dereferencing does not work for ACSL yet, because we cannot pass
-		// the necessary auxiliary statements on.
-		// EDIT: (alex feb 18:) does this fixme still apply?
 
 		// TODO seems quite hacky, how we obtain storage class and procedure id ..
 		final ASTType astType;
-		if (stv.getBoogieDecl() instanceof VariableDeclaration) {
-			astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
-		} else if (stv.getBoogieDecl() instanceof ConstDeclaration) {
-			astType = ((ConstDeclaration) stv.getBoogieDecl()).getVarList().getType();
+		final Declaration boogieDecl = stv.getBoogieDecl();
+		assert boogieDecl != null : "no Boogie declaration for " + cId;
+		if (boogieDecl instanceof VariableDeclaration) {
+			astType = ((VariableDeclaration) boogieDecl).getVariables()[0].getType();
+		} else if (boogieDecl instanceof ConstDeclaration) {
+			astType = ((ConstDeclaration) boogieDecl).getVarList().getType();
 		} else {
-			throw new UnsupportedOperationException("todo: handle this case");
+
+			throw new UnsupportedOperationException("Not yet implemented: " + boogieDecl.getClass().getSimpleName());
 		}
 		final StorageClass sc = stv.isBoogieGlobalVar() ? StorageClass.GLOBAL : StorageClass.LOCAL;
 		final String procId = sc == StorageClass.GLOBAL ? null : mProcedureManager.getCurrentProcedureID();
+		final CType cType = stv.getCType();
 		LRValue lrVal;
 		if (mCHandler.isHeapVar(id)) {
 			final IdentifierExpression idExp = ExpressionFactory.constructIdentifierExpression(loc,
@@ -681,14 +664,13 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final List<IdentifierExpression> identifiers = new ArrayList<>();
 		for (final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression e : node.getLocations()) {
-			if (e instanceof de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression) {
-				final IdentifierExpression dispatched =
-						(IdentifierExpression) main.dispatch(e, main.getAcslHook()).getNode();
-				identifiers.add(dispatched);
-			} else {
+			if (!(e instanceof de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression)) {
 				final String msg = "Unexpected Expression: " + e.getClass();
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
+			final IdentifierExpression dispatched =
+					(IdentifierExpression) main.dispatch(e, main.getAcslHook()).getNode();
+			identifiers.add(dispatched);
 		}
 		final VariableLHS[] identifiersVarLHS = new VariableLHS[identifiers.size()];
 		for (int i = 0; i < identifiers.size(); i++) {

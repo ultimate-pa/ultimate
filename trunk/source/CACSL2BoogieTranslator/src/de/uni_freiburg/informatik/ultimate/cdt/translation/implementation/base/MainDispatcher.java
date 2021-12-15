@@ -385,7 +385,7 @@ public class MainDispatcher implements IDispatcher {
 			} else if (n instanceof IASTUnaryExpression) {
 				result = mCHandler.visit(this, (IASTUnaryExpression) n);
 			} else if (n instanceof IGNUASTCompoundStatementExpression) {
-					return mCHandler.visit(this, (IGNUASTCompoundStatementExpression) n);
+				return mCHandler.visit(this, (IGNUASTCompoundStatementExpression) n);
 			} else if (n instanceof IASTProblemExpression) {
 				result = mCHandler.visit(this, (IASTProblemExpression) n);
 			} else {
@@ -435,6 +435,7 @@ public class MainDispatcher implements IDispatcher {
 
 	@Override
 	public Result dispatch(final ACSLNode n, final IASTNode cHook) {
+		assert mAcslHook == null || cHook != null;
 		mAcslHook = cHook;
 		if (n instanceof CodeAnnot) {
 			return mAcslHandler.visit(this, (CodeAnnot) n);
@@ -803,7 +804,8 @@ public class MainDispatcher implements IDispatcher {
 			final ExtractedWitnessInvariant invariants = mWitnessInvariants.get(node);
 			try {
 				final ILocation loc = mLocationFactory.createCLocation(node);
-				final List<AssertStatement> list = translateWitnessInvariant(loc, invariants, x -> x.isAt(), node);
+				final List<AssertStatement> list =
+						translateWitnessInvariant(loc, invariants, ExtractedWitnessInvariant::isAt, node);
 				if (list.isEmpty()) {
 					result = null;
 				} else {
@@ -832,7 +834,7 @@ public class MainDispatcher implements IDispatcher {
 		final ExtractedWitnessInvariant rawWitnessInvariant = mWitnessInvariants.get(n);
 		final ILocation loc = mLocationFactory.createCLocation(n);
 		final List<AssertStatement> translatedWitnessInvariant =
-				translateWitnessInvariant(loc, rawWitnessInvariant, a -> a.isBefore(), n);
+				translateWitnessInvariant(loc, rawWitnessInvariant, ExtractedWitnessInvariant::isBefore, n);
 		mCurrentWitnessInvariants.push(new WitnessInvariant(translatedWitnessInvariant, rawWitnessInvariant));
 	}
 
@@ -848,8 +850,9 @@ public class MainDispatcher implements IDispatcher {
 
 		// TODO: Use the new information as you see fit
 		final ExtractedWitnessInvariant afterWitnessInvariantRaw = mWitnessInvariants.get(node);
-		final List<AssertStatement> afterTranslatedWitnessInvariants = translateWitnessInvariant(
-				mLocationFactory.createCLocation(node), afterWitnessInvariantRaw, a -> a.isAfter(), node);
+		final List<AssertStatement> afterTranslatedWitnessInvariants =
+				translateWitnessInvariant(mLocationFactory.createCLocation(node), afterWitnessInvariantRaw,
+						ExtractedWitnessInvariant::isAfter, node);
 
 		if (translatedWitnessInvariant.isEmpty() && afterTranslatedWitnessInvariants.isEmpty()) {
 			return;
@@ -946,11 +949,10 @@ public class MainDispatcher implements IDispatcher {
 							+ exprResult.getStatements().toString());
 				}
 				final Statement stmt = exprResult.getStatements().get(0);
-				if (stmt instanceof AssertStatement) {
-					invariants.add((AssertStatement) stmt);
-				} else {
+				if (!(stmt instanceof AssertStatement)) {
 					throw new AssertionError("must return one AssertStatement");
 				}
+				invariants.add((AssertStatement) stmt);
 			}
 			return invariants;
 		}
