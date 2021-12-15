@@ -119,7 +119,12 @@ public class PeaToDotTestSuite {
 	@Test
 	public void testDot() throws IOException, InterruptedException {
 
-		if (!CREATE_NEW_FILES) {
+		if (!CREATE_NEW_FILES || mPatternName.equals("BndEntryConditionPattern")) {
+			return;
+		}
+		
+		// Do not add deprecated patterns to documentation.
+		if (mPatternName.equals("BndEntryConditionPattern")) {
 			return;
 		}
 
