@@ -11,7 +11,6 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bvToIntSMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
@@ -19,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.intToBvBackTranslator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.LoggingScriptForMainTrackBenchmarks;
@@ -84,23 +82,6 @@ public class BvToIntTest {
 	private Term parse(final String formulaAsString) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		return formulaAsTerm;
-	}
-
-	private Term translateQelimBacktranslateO(final Term input) {
-		final bvToIntSMT bvtoint = new bvToIntSMT(mMgdScript, null, null, null);
-		final Term translated = bvtoint.intBlasting(input);
-
-		System.out.println("translatedResult: " + translated.toStringDirect());
-		final Term qelimResult = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, translated,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		System.out.println("qelimResult: " + qelimResult.toStringDirect());
-
-		final intToBvBackTranslator back =
-				new intToBvBackTranslator(mScript, bvtoint.getVarMap(), bvtoint.reversedTranslationMap());
-
-		final Term backTranslated = back.backTranslate(qelimResult);
-		System.out.println("backtransresult: " + backTranslated.toStringDirect());
-		return backTranslated;
 	}
 
 	private Term translateQelimBacktranslate(final Term input) {
