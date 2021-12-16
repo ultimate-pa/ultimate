@@ -48,9 +48,10 @@ public class TranslationManager {
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
-
+		if (!bvToInt.getNutzFlag()) {
 		mConstraintSet.addAll(mTc.getConstraints());
 		mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
+	}
 		final Term integerFormula =
 				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
 		return integerFormula;

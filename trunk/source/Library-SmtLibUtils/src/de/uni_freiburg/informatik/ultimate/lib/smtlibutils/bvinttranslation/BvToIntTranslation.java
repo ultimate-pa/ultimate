@@ -75,7 +75,9 @@ public class BvToIntTranslation extends TermTransformer {
 			if (appTerm.getParameters().length == 0) {
 				if (SmtUtils.isConstant(appTerm)) {
 					final Term intVar = translateVars(term);
-					mTc.varConstraint(term, intVar); // Create and Collect Constraints
+					if (SmtSortUtils.isBitvecSort(term.getSort())) {
+						mTc.varConstraint(term, intVar); // Create and Collect Constraints
+					}
 					setResult(intVar);
 					return;
 				}
@@ -302,13 +304,16 @@ public class BvToIntTranslation extends TermTransformer {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
 					newTermVars.add((TermVariable) mVariableMap.get(old.getVariables()[i]));
+
 					tvConstraints
 							.add(mTc.getTvConstraint(old.getVariables()[i], mVariableMap.get(old.getVariables()[i])));
 
 				} else if (SmtSortUtils.isArraySort(old.getVariables()[i].getSort())) {
 					final Term newQuantifiedVar = mVariableMap.get(old.getVariables()[i]);
 					newTermVars.add((TermVariable) newQuantifiedVar);
+
 					tvConstraints.add(mArraySelectConstraintMap.get(newQuantifiedVar));
+
 					mArraySelectConstraintMap.remove(newQuantifiedVar);
 				} else {
 					newTermVars.add(old.getVariables()[i]);
@@ -395,7 +400,7 @@ public class BvToIntTranslation extends TermTransformer {
 				}
 				case "extract": {
 					if (mNutzTransformation) {
-						throw new UnsupportedOperationException("TODO Nutz" + fsym.getName());
+						throw new UnsupportedOperationException("not implemented Nutz" + fsym.getName());
 					}
 					final int lowerIndex = Integer.parseInt(appTerm.getFunction().getIndices()[1]);
 					final int upperIndex = Integer.parseInt(appTerm.getFunction().getIndices()[0]);
@@ -428,67 +433,19 @@ public class BvToIntTranslation extends TermTransformer {
 			final Term maxNumber =
 					SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
 			final Term[] translatedArgs = args;
-			if (mNutzTransformation) {
-				for (int i = 0; i < args.length; i++) {
-					translatedArgs[i] = mScript.term("mod", args[i], maxNumber);
-				}
-			}
 			if (fsym.isIntern()) {
 				switch (fsym.getName()) {
-				case "=": {
-					setResult(mScript.term("=", translatedArgs));
-					return;
-				}
-				case "distinct": {
-					setResult(mScript.term("distinct", translatedArgs));
-					return;
-				}
-				case "bvult": {
-					setResult(mScript.term("<", translatedArgs));
-					return;
-				}
-				case "bvule": {
-					setResult(mScript.term("<=", translatedArgs));
-					return;
-				}
-				case "bvugt": {
-					setResult(mScript.term(">", translatedArgs));
-					return;
-				}
-				case "bvuge": {
-					setResult(mScript.term(">=", translatedArgs));
-					return;
-				}
-				case "bvslt": {
-					final Term[] utsArgs = args;
-					for (int i = 0; i < args.length; i++) {
-						utsArgs[i] = uts(width, translatedArgs[i]);
-					}
-					setResult(mScript.term("<", utsArgs));
-					return;
-				}
-				case "bvsle": {
-					final Term[] utsArgs = args;
-					for (int i = 0; i < args.length; i++) {
-						utsArgs[i] = uts(width, translatedArgs[i]);
-					}
-					setResult(mScript.term("<=", utsArgs));
-					return;
-				}
-				case "bvsgt": {
-					final Term[] utsArgs = args;
-					for (int i = 0; i < args.length; i++) {
-						utsArgs[i] = uts(width, translatedArgs[i]);
-					}
-					setResult(mScript.term(">", utsArgs));
-					return;
-				}
+				case "=":
+				case "distinct":
+				case "bvult":
+				case "bvule":
+				case "bvugt":
+				case "bvuge":
+				case "bvslt":
+				case "bvsle":
+				case "bvsgt":
 				case "bvsge": {
-					final Term[] utsArgs = args;
-					for (int i = 0; i < args.length; i++) {
-						utsArgs[i] = uts(width, translatedArgs[i]);
-					}
-					setResult(mScript.term(">=", utsArgs));
+					setResult(translateRelations(fsym, args, maxNumber, width));
 					return;
 				}
 				case "bvadd": {
@@ -649,8 +606,81 @@ public class BvToIntTranslation extends TermTransformer {
 					}
 				}
 			}
+
 		}
 		super.convertApplicationTerm(appTerm, args);
+	}
+
+	private Term translateRelations(final FunctionSymbol fsym, final Term[] args, final Term maxNumber,
+			final int width) {
+		Term[] translatedArgs = new Term[args.length];
+		if (mNutzTransformation) {
+			for (int i = 0; i < args.length; i++) {
+				translatedArgs[i] = mScript.term("mod", args[i], maxNumber);
+			}
+		} else {
+			translatedArgs = args;
+		}
+		if (fsym.isIntern()) {
+			switch (fsym.getName()) {
+			case "=": {
+				return mScript.term("=", translatedArgs);
+			}
+			case "distinct": {
+				return mScript.term("distinct", translatedArgs);
+
+			}
+			case "bvult": {
+				return (mScript.term("<", translatedArgs));
+
+			}
+			case "bvule": {
+				return (mScript.term("<=", translatedArgs));
+
+			}
+			case "bvugt": {
+				return (mScript.term(">", translatedArgs));
+
+			}
+			case "bvuge": {
+				return (mScript.term(">=", translatedArgs));
+
+			}
+			case "bvslt": {
+				final Term[] utsArgs = args;
+				for (int i = 0; i < args.length; i++) {
+					utsArgs[i] = uts(width, args[i]);
+				}
+				return (mScript.term("<", utsArgs));
+
+			}
+			case "bvsle": {
+				final Term[] utsArgs = args;
+				for (int i = 0; i < args.length; i++) {
+					utsArgs[i] = uts(width, args[i]);
+				}
+				return (mScript.term("<=", utsArgs));
+
+			}
+			case "bvsgt": {
+				final Term[] utsArgs = args;
+				for (int i = 0; i < args.length; i++) {
+					utsArgs[i] = uts(width, args[i]);
+				}
+				return (mScript.term(">", utsArgs));
+
+			}
+			case "bvsge": {
+				final Term[] utsArgs = args;
+				for (int i = 0; i < args.length; i++) {
+					utsArgs[i] = uts(width, args[i]);
+				}
+				return (mScript.term(">=", utsArgs));
+
+			}
+			}
+		}
+		throw new UnsupportedOperationException("unexpected relation");
 	}
 
 	private final Term uts(final int width, final Term term) {
@@ -698,5 +728,9 @@ public class BvToIntTranslation extends TermTransformer {
 
 	public LinkedHashMap<Term, Term> getReversedVarMap() {
 		return mReversedVarMap;
+	}
+
+	public boolean getNutzFlag() {
+		return mNutzTransformation;
 	}
 }
