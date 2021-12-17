@@ -275,6 +275,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 				}
 				// return here
 			}
+
 			if (appTerm.getFunction().getName().equals("select")) {
 				final Term array;
 				{
@@ -292,11 +293,13 @@ public class IntToBvBackTranslation extends TermTransformer {
 					}
 				}
 				final Term bvArray = mVariableMap.get(array);
+				if (bvArray == null) {
+					throw new UnsupportedOperationException("Unknown Array: " + array);
+				}
 				final MultiDimensionalSort mdSort = new MultiDimensionalSort(bvArray.getSort());
 				final Sort valueSort = mdSort.getArrayValueSort();
 				width = Integer.valueOf(valueSort.getIndices()[0]);
 			} else {
-
 				int maxWidth = getWidth(appTerm.getParameters()[0]);
 				for (int i = 1; i < appTerm.getParameters().length; i++) {
 					final Term argument = appTerm.getParameters()[i];
@@ -704,6 +707,29 @@ public class IntToBvBackTranslation extends TermTransformer {
 			}
 			case "ite": {
 				setResult(mScript.term("ite", args[0], args[1], args[2]));
+				return;
+			}
+			case "select": {
+				if (Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) < Integer
+						.parseInt(args[1].getSort().getIndices()[0])) {
+					throw new AssertionError("Array indices do not match");
+				}
+				setResult(mScript.term("select", args[0],
+						bringTermToWidth(args[1], Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
+								false)));
+				return;
+			}
+			case "store": {
+				if ((Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) < Integer
+						.parseInt(args[1].getSort().getIndices()[0]))
+						|| (Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) < Integer
+								.parseInt(args[2].getSort().getIndices()[0]))) {
+					throw new AssertionError("Array indices do not match");
+				}
+				setResult(mScript.term("store", args[0], bringTermToWidth(args[1],
+						Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]), false),
+						bringTermToWidth(args[2], Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
+								false)));
 				return;
 			}
 			case "abs": {

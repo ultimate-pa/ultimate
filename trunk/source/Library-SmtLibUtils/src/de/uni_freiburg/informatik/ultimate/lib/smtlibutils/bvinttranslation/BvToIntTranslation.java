@@ -253,13 +253,13 @@ public class BvToIntTranslation extends TermTransformer {
 		if (SmtSortUtils.isBitvecSort(sort)) {
 			return SmtSortUtils.getIntSort(mMgdScript);
 		} else if (SmtSortUtils.isArraySort(sort)) {
-			final Sort[] newArgs = new Sort[sort.getArguments().length];
+			final Sort[] newArgsSort = new Sort[sort.getArguments().length];
 			for (int i = 0; i < sort.getArguments().length; i++) {
-				newArgs[i] = translateArraySort(sort.getArguments()[i]);
+				newArgsSort[i] = translateArraySort(sort.getArguments()[i]);
 			}
-			assert newArgs.length == 2;
-			final Sort domainSort = newArgs[0];
-			final Sort rangeSort = newArgs[1];
+			assert newArgsSort.length == 2;
+			final Sort domainSort = newArgsSort[0];
+			final Sort rangeSort = newArgsSort[1];
 			return SmtSortUtils.getArraySort(mMgdScript.getScript(), domainSort, rangeSort);
 		} else {
 			throw new AssertionError("Unexpected Sort: " + sort);
@@ -281,7 +281,7 @@ public class BvToIntTranslation extends TermTransformer {
 				mVariableMap.put(term, arrayVar);
 				mReversedVarMap.put(arrayVar, term);
 				return arrayVar;
-			} else {
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				Term intVar;
 				intVar = mMgdScript.constructFreshTermVariable("intVar", SmtSortUtils.getIntSort(mScript));
 				if (!(term instanceof TermVariable)) {
@@ -290,6 +290,8 @@ public class BvToIntTranslation extends TermTransformer {
 				mVariableMap.put(term, intVar);
 				mReversedVarMap.put(intVar, term);
 				return intVar;
+			} else {
+				return term;
 			}
 
 		}
@@ -304,21 +306,25 @@ public class BvToIntTranslation extends TermTransformer {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
 					newTermVars.add((TermVariable) mVariableMap.get(old.getVariables()[i]));
-
-					tvConstraints
-							.add(mTc.getTvConstraint(old.getVariables()[i], mVariableMap.get(old.getVariables()[i])));
-
+					if (!getNutzFlag()) {
+						tvConstraints.add(
+								mTc.getTvConstraint(old.getVariables()[i], mVariableMap.get(old.getVariables()[i])));
+					}
 				} else if (SmtSortUtils.isArraySort(old.getVariables()[i].getSort())) {
 					final Term newQuantifiedVar = mVariableMap.get(old.getVariables()[i]);
 					newTermVars.add((TermVariable) newQuantifiedVar);
 
-					tvConstraints.add(mArraySelectConstraintMap.get(newQuantifiedVar));
+					final Term arrayConstraint = mArraySelectConstraintMap.get(newQuantifiedVar);
+					if (arrayConstraint != null) {
+						tvConstraints.add(arrayConstraint);
+					}
 
 					mArraySelectConstraintMap.remove(newQuantifiedVar);
 				} else {
 					newTermVars.add(old.getVariables()[i]);
 				}
 			}
+
 			setResult(SmtUtils.quantifier(mScript, old.getQuantifier(), newTermVars,
 					QuantifierUtils.applyDualFiniteConnective(mScript, old.getQuantifier(), newBody, QuantifierUtils
 							.negateIfUniversal(mScript, old.getQuantifier(), SmtUtils.and(mScript, tvConstraints)))));
