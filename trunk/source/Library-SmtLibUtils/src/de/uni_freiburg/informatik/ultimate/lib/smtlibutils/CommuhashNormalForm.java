@@ -61,6 +61,15 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 public class CommuhashNormalForm {
 
 	private static final boolean DEBUG_LOG_SIZES = false;
+	/**
+	 * Use an SMT solver to check equivalence of input and output. Note that this
+	 * check can be questionable. We typically transform to
+	 * {@link CommuhashNormalForm} after receiving a formula from an external
+	 * source, e.g., Craig interpolants of an SMT solver. At this time there might
+	 * temporarily other formulas on the solver's assertion stack and hamper the
+	 * meaningfulness of this check test.
+	 */
+	private static final boolean DEBUG_CHECK_CORRECTNESS = false;
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 
@@ -82,7 +91,7 @@ public class CommuhashNormalForm {
 					new DebugMessage("DAG size before CommuhashNormalForm {0}, DAG size after CommuhashNormalForm {1}",
 							new DagSizePrinter(term), new DagSizePrinter(result)));
 		}
-		assert (Util.checkSat(mScript,
+		assert (!DEBUG_CHECK_CORRECTNESS || Util.checkSat(mScript,
 				mScript.term("distinct", term, result)) != LBool.SAT) : "CommuhashNormalForm transformation unsound";
 		return result;
 	}
