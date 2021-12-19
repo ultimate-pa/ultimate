@@ -69,8 +69,7 @@ public class EqPredicate implements IPredicate {
 		mProcedures = procedures;
 
 		final Term constraintFormula = constraint.getTerm(mgdScript.getScript());
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(constraintFormula, mgdScript.getScript(),
-				symbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(constraintFormula, mgdScript,	symbolTable);
 
 //		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
 //		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
@@ -95,7 +94,7 @@ public class EqPredicate implements IPredicate {
 
 
 		final Term acc = formula;
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mgdScript.getScript(), symbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mgdScript, symbolTable);
 
 //		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
 

@@ -340,7 +340,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getSucceedingProcedure();
 			final TermVarsProc oldVarsEquality = TraceCheckUtils.getOldVarsEquality(calledMethod,
-					mCsToolkit.getModifiableGlobalsTable(), mCfgManagedScript.getScript());
+					mCsToolkit.getModifiableGlobalsTable(), mCfgManagedScript);
 
 			final IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 

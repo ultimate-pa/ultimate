@@ -50,21 +50,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 
 public class TestPredicateFactory {
 
-	private ManagedScript mMgdScript;
-	private Script mScript;
-	
+	private final ManagedScript mMgdScript;
+	private final Script mScript;
+
 	public TestPredicateFactory(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
 		mScript = mMgdScript.getScript();
 	}
-	
+
 	public TestPredicate pred(final String op, final IProgramVar var, final int value) {
 		return new TestPredicate(mScript.term(op, var.getTermVariable(), mScript.numeral(String.valueOf(value))),
-				Collections.singleton(var), mScript);
+				Collections.singleton(var), mMgdScript);
 	}
 
 	public TestPredicate neg(final TestPredicate pred) {
-		return new TestPredicate(mScript.term("not", pred.getFormula()), pred.getVars(), mScript);
+		return new TestPredicate(mScript.term("not", pred.getFormula()), pred.getVars(), mMgdScript);
 	}
 
 	public TestPredicate and(final TestPredicate... preds) {
@@ -74,9 +74,9 @@ public class TestPredicateFactory {
 		final List<Term> operands = Arrays.stream(preds).map(a -> a.getFormula()).collect(Collectors.toList());
 		final Set<IProgramVar> vars = Arrays.stream(preds).map(a -> a.getVars()).reduce(new HashSet<>(),
 				(a, b) -> DataStructureUtils.union(a, b));
-		return new TestPredicate(SmtUtils.and(mScript, operands), vars, mScript);
+		return new TestPredicate(SmtUtils.and(mScript, operands), vars, mMgdScript);
 	}
-	
+
 	public TestPredicate or(final TestPredicate... preds) {
 		if (preds == null || preds.length < 2) {
 			throw new IllegalArgumentException();
@@ -84,7 +84,7 @@ public class TestPredicateFactory {
 		final List<Term> operands = Arrays.stream(preds).map(a -> a.getFormula()).collect(Collectors.toList());
 		final Set<IProgramVar> vars = Arrays.stream(preds).map(a -> a.getVars()).reduce(new HashSet<>(),
 				(a, b) -> DataStructureUtils.union(a, b));
-		return new TestPredicate(SmtUtils.or(mScript, operands), vars, mScript);
+		return new TestPredicate(SmtUtils.or(mScript, operands), vars, mMgdScript);
 	}
 
 	public IProgramNonOldVar constructProgramVar(final String identifier) {

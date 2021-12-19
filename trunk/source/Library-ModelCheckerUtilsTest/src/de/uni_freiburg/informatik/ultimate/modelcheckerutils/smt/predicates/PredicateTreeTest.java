@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -92,19 +91,19 @@ public class PredicateTreeTest {
 		vars.add(a);
 		vars.add(b);
 		final TestPredicate pred1 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
+				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
 		final TestPredicate pred2 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
+				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
 		final TestPredicate pred3 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")), vars, mScript);
+				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")), vars, mMgdScript);
 		final TestPredicate pred4 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")), vars, mScript);
+				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")), vars, mMgdScript);
 		final TestPredicate pred5 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
+				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
 		final TestPredicate pred6 =
-				new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")), vars, mScript);
+				new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")), vars, mMgdScript);
 		final TestPredicate pred7 =
-				new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()), vars, mScript);
+				new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()), vars, mMgdScript);
 		mMgdScript.unlock(this);
 
 		Assert.assertTrue(pred1 != pred2);
@@ -197,10 +196,10 @@ public class PredicateTreeTest {
 		private final Term mClosedFormula;
 		private final Term mFormula;
 
-		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Script script) {
+		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final ManagedScript mgdScript) {
 			mVars = vars;
 			mFormula = formula;
-			mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, script);
+			mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, mgdScript);
 		}
 
 		@Override

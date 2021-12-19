@@ -291,7 +291,7 @@ public class PredicateTrie<T extends IPredicate> {
 	// -- functions for restructure --
 
 	protected Map<Term, Term> getWitness(final Term term) {
-		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript.getScript(), mSymbolTable);
+		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
 		if (mMgdScript.isLocked()) {
 			mMgdScript.requestLockRelease();
 		}

@@ -42,8 +42,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -90,6 +92,17 @@ public class PredicateUtils {
 			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
 		}
 		final Term closedTerm = (new PureSubstitution(script, substitutionMapping)).transform(formula);
+		assert closedTerm.getFreeVars().length == 0;
+		return closedTerm;
+	}
+
+	public static Term computeClosedFormula(final Term formula, final Set<IProgramVar> boogieVars,
+			final ManagedScript mgdScript) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final IProgramVar bv : boogieVars) {
+			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
+		}
+		final Term closedTerm = Substitution.apply(mgdScript, substitutionMapping, formula);
 		assert closedTerm.getFreeVars().length == 0;
 		return closedTerm;
 	}

@@ -32,7 +32,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -70,16 +70,16 @@ public class TermVarsProc {
 	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
 	 * variables and the procedures of these BoogieVariables.
 	 */
-	public static TermVarsProc computeTermVarsProc(final Term term, final Script script,
+	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable) {
-		return computeTermVarsProc(term, script, symbolTable::getProgramVar);
+		return computeTermVarsProc(term, mgdScript, symbolTable::getProgramVar);
 	}
 
 	/**
 	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
 	 * variables and the procedures of these BoogieVariables.
 	 */
-	public static TermVarsProc computeTermVarsProc(final Term term, final Script script,
+	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
 			final Function<TermVariable, IProgramVar> funTermVar2ProgVar) {
 		final HashSet<IProgramVar> vars = new HashSet<>();
 		final Set<String> procs = new HashSet<>();
@@ -93,7 +93,7 @@ public class TermVarsProc {
 				procs.add(bv.getProcedure());
 			}
 		}
-		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, script);
+		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, mgdScript);
 		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
 	}
 }
