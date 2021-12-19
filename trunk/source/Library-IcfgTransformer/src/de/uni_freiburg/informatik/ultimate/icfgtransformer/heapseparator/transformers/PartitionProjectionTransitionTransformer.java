@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -246,8 +246,8 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 				substitutionMapping.put(eq2, mMgdScript.getScript().term("true"));
 
 			}
-			final SubstitutionWithLocalSimplification subs =
-					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
+			final Substitution subs =
+					new Substitution(mMgdScript, substitutionMapping);
 			transformedFormula = subs.transform(transformedFormulaRaw);
 
 			inVars = new HashMap<>(ppttf.getNewInVars());

@@ -838,7 +838,7 @@ public final class SmtUtils {
 		return SmtUtils.binaryEquality(script, select, value);
 	}
 
-	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
+	public static List<Term> substitutionElementwise(final List<Term> subtituents, final PureSubstitution subst) {
 		final List<Term> result = new ArrayList<>();
 		for (int i = 0; i < subtituents.size(); i++) {
 			result.add(subst.transform(subtituents.get(i)));
@@ -1331,7 +1331,7 @@ public final class SmtUtils {
 	 * constructs new terms that may violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}. Classes in
 	 * Ultimate that inherit {@link TermTransformer} should overwrite {@link TermTransformer#convertApplicationTerm} by
 	 * a method that uses this method for the construction of new terms. See e.g.,
-	 * {@link SubstitutionWithLocalSimplification}.
+	 * {@link Substitution}.
 	 *
 	 * @param appTerm
 	 *            original ApplicationTerm
@@ -1948,7 +1948,7 @@ public final class SmtUtils {
 			final Map<Term, Term> ucMapping = new HashMap<>();
 			final Term[] conjuncts = getConjuncts(term);
 			for (int i = 0; i < conjuncts.length; i++) {
-				final Term conjunct = new Substitution(script, substitutionMapping).transform(conjuncts[i]);
+				final Term conjunct = new PureSubstitution(script, substitutionMapping).transform(conjuncts[i]);
 				final String name = "conjunct" + i;
 				final Annotation annot = new Annotation(":named", name);
 				final Term annotTerm = script.annotate(conjunct, annot);
@@ -2112,7 +2112,7 @@ public final class SmtUtils {
 			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = new Substitution(mgdScript, substitutionMapping).transform(qFormula.getSubformula());
+		final Term newBody = new PureSubstitution(mgdScript, substitutionMapping).transform(qFormula.getSubformula());
 
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
 		for (int i = 0; i < vars.length; i++) {

@@ -32,14 +32,14 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Subclass of {@link Substitution} were we apply a local simplification
- * when constructing new terms.
+ * Subclass of {@link PureSubstitution} were we apply a local simplification when constructing new terms.
+ *
  * @author Matthias Heizmann
  *
  */
-public class SubstitutionWithLocalSimplification extends Substitution {
+public class Substitution extends PureSubstitution {
 
-	public SubstitutionWithLocalSimplification(final ManagedScript mgdScript,
+	public Substitution(final ManagedScript mgdScript,
 			final Map<Term, Term> substitutionMapping) {
 		super(mgdScript, substitutionMapping);
 	}
@@ -48,7 +48,5 @@ public class SubstitutionWithLocalSimplification extends Substitution {
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mMgdScript.getScript()));
 	}
-
-
 
 }

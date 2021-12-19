@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -98,8 +98,8 @@ public class SmtUtilsTest {
 		final Term input = TermParseUtils.parseTerm(mScript,
 				"(and (<= A E) (or (and (= C 2) (<= D E) (<= B D) (not (= A D))) (= C 1) (and (<= C 1) (not (= C 2)) (not (= C 1)) (= C 3))))");
 
-		final SubstitutionWithLocalSimplification swls =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
+		final Substitution swls =
+				new Substitution(mMgdScript, substitutionMapping);
 		final Term result = swls.transform(input);
 		final LBool isDistinct = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", mTrue, result));
 		final boolean isEqualToTrue = result.equals(mTrue);
@@ -130,8 +130,8 @@ public class SmtUtilsTest {
 
 		final Term input = TermParseUtils.parseTerm(mScript, "(= A B)");
 
-		final SubstitutionWithLocalSimplification swls =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
+		final Substitution swls =
+				new Substitution(mMgdScript, substitutionMapping);
 		final Term result = swls.transform(input);
 		final LBool isDistinct = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", mFalse, result));
 		final boolean isEqualToFalse = result.equals(mFalse);

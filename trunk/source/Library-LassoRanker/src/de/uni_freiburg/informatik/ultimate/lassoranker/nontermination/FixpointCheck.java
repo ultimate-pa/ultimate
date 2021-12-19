@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -92,9 +92,9 @@ public class FixpointCheck {
 		final Map<Term, Term> substitutionMappingLoop =
 				constructSubtitutionMapping(mLoop, this::getConstantAtHonda, this::getConstantAtHonda);
 		final Term renamedStem =
-				new Substitution(mManagedScript, substitutionMappingStem).transform(mStem.getFormula());
+				new PureSubstitution(mManagedScript, substitutionMappingStem).transform(mStem.getFormula());
 		final Term renamedLoop =
-				new Substitution(mManagedScript, substitutionMappingLoop).transform(mLoop.getFormula());
+				new PureSubstitution(mManagedScript, substitutionMappingLoop).transform(mLoop.getFormula());
 		mManagedScript.echo(this, new QuotedObject("Start fixpoint check"));
 		mManagedScript.push(this, 1);
 		mManagedScript.assertTerm(this, renamedStem);

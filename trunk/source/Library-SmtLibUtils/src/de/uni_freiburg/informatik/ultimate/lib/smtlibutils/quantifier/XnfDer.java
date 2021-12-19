@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
@@ -226,7 +226,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				continue;
 			}
 			if (Arrays.asList(entry.getKey().getFreeVars()).contains(sbr.getLeftHandSide())) {
-				final Substitution substitution = new SubstitutionWithLocalSimplification(mMgdScript,
+				final PureSubstitution substitution = new Substitution(mMgdScript,
 						substitutionMapping);
 				final Term replaced = substituteAndNormalize(substitution, entry.getKey());
 				assert UltimateNormalFormUtils.respectsUltimateNormalForm(replaced) : "Term not in UltimateNormalForm";
@@ -314,7 +314,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			resultAtoms = new Term[inputAtoms.length - 1];
 			final Map<Term, Term> substitutionMapping =
 					Collections.singletonMap(eqInfo.getGivenTerm(), eqInfo.getRelatedTerm());
-			final Substitution substitution = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
+			final PureSubstitution substitution = new Substitution(mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 				assert UltimateNormalFormUtils
@@ -332,7 +332,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	/**
 	 * Apply substitution to term and normalize afterwards if the substitution modified the term.
 	 */
-	private Term substituteAndNormalize(final Substitution substitution, final Term term) {
+	private Term substituteAndNormalize(final PureSubstitution substitution, final Term term) {
 		Term result = substitution.transform(term);
 		if (term != result) {
 			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, result);

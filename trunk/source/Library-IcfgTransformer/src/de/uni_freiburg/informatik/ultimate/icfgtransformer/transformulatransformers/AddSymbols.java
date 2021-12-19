@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -83,7 +83,7 @@ public class AddSymbols extends TransitionPreprocessor {
 			substitutionMapping.put(constVar, repVar.getTermVariable());
 		}
 		final Term axioms =
-				new Substitution(script, substitutionMapping).transform(SmtUtils.and(script.getScript(), mAxioms));
+				new PureSubstitution(script, substitutionMapping).transform(SmtUtils.and(script.getScript(), mAxioms));
 		Term formula = tf.getFormula();
 		formula = SmtUtils.and(script.getScript(), formula, axioms);
 		tf.setFormula(formula);

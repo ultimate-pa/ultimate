@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -80,7 +80,7 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	@Override
 	public Term renameVariables(final Map<Term, Term> substitutionForTransFormula, final Term constraint) {
 		final Term renamedTransFormula =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(constraint);
+				new Substitution(mMgdScript, substitutionForTransFormula).transform(constraint);
 		return renamedTransFormula;
 	}
 

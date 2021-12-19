@@ -39,8 +39,8 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -147,7 +147,7 @@ public class QvasrVectorSpaceBasisConstructor {
 					subMap.put(var, var);
 				}
 			}
-			final Substitution sub = new Substitution(script, subMap);
+			final PureSubstitution sub = new PureSubstitution(script, subMap);
 			final Term[] vector = new Term[basisVectors[0].length];
 			for (final Entry<Term, List<Term>> solution : equations.entrySet()) {
 				final Term tv = solution.getKey();
@@ -178,8 +178,8 @@ public class QvasrVectorSpaceBasisConstructor {
 		}
 
 		final List<Term[]> assignedBasisVectors = new ArrayList<>();
-		final SubstitutionWithLocalSimplification subAssignments =
-				new SubstitutionWithLocalSimplification(script, assignments);
+		final Substitution subAssignments =
+				new Substitution(script, assignments);
 		for (final Term[] vector : vectors) {
 			final Term[] vectorAssigned = new Term[vector.length];
 			for (int i = 0; i < vector.length; i++) {

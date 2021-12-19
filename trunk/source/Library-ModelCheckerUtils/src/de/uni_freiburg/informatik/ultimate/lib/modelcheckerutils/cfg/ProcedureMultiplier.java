@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -157,7 +157,7 @@ public class ProcedureMultiplier {
 			}
 		}
 		backtranslator.setTermTranslator(
-				x -> new Substitution(icfg.getCfgSmtToolkit().getManagedScript(), variableBacktranslationMapping)
+				x -> new PureSubstitution(icfg.getCfgSmtToolkit().getManagedScript(), variableBacktranslationMapping)
 						.transform(x));
 		icfg.getCfgSmtToolkit().getManagedScript().unlock(this);
 
@@ -294,7 +294,7 @@ public class ProcedureMultiplier {
 
 	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,
 			final Map<Term, Term> defaultVariableMadefaultVariableMappingpping2, final ManagedScript managedScript) {
-		final Term[] terms = new Substitution(managedScript, defaultVariableMadefaultVariableMappingpping2)
+		final Term[] terms = new PureSubstitution(managedScript, defaultVariableMadefaultVariableMappingpping2)
 				.transform(Arrays.asList(oldProcedureArguments.getTerms()))
 				.toArray(new Term[oldProcedureArguments.getTerms().length]);
 		final Collection<TermVariable> auxiliaryVars = oldProcedureArguments.getAuxiliaryVars();

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
@@ -1175,7 +1175,7 @@ public class QvasrAbstractor {
 		/*
 		 * Transform the updates to variables to real sort.
 		 */
-		final SubstitutionWithLocalSimplification subTv = new SubstitutionWithLocalSimplification(mScript, realTvs);
+		final Substitution subTv = new Substitution(mScript, realTvs);
 		for (final Entry<IProgramVar, Term> update : updates.entrySet()) {
 			final Term intUpdate = update.getValue();
 			final Term realUpdate = subTv.transform(intUpdate);
@@ -1189,8 +1189,8 @@ public class QvasrAbstractor {
 			if (isApplicationTerm(varUpdateTerm)) {
 				final ApplicationTerm varUpdateAppterm = (ApplicationTerm) varUpdateTerm;
 				subMappingTerm.putAll(appTermToReal(varUpdateAppterm));
-				final SubstitutionWithLocalSimplification subTerm =
-						new SubstitutionWithLocalSimplification(mScript, subMappingTerm);
+				final Substitution subTerm =
+						new Substitution(mScript, subMappingTerm);
 				realTerm = subTerm.transform(varUpdateAppterm);
 			} else if (varUpdateTerm instanceof ConstantTerm) {
 				final Rational value = SmtUtils.toRational((ConstantTerm) varUpdateTerm);
@@ -1285,11 +1285,11 @@ public class QvasrAbstractor {
 			for (final Entry<Term, Term> update : updates.entrySet()) {
 				final Term updateTerm = update.getValue();
 				Term toBeUpdated;
-				final SubstitutionWithLocalSimplification sub =
-						new SubstitutionWithLocalSimplification(mScript, subMapping);
+				final Substitution sub =
+						new Substitution(mScript, subMapping);
 				toBeUpdated = sub.transform(updateTerm);
-				final SubstitutionWithLocalSimplification subReal =
-						new SubstitutionWithLocalSimplification(mScript, intToReal);
+				final Substitution subReal =
+						new Substitution(mScript, intToReal);
 				final Term toBeUpdatedReal = subReal.transform(toBeUpdated);
 
 				baseMatrix[j][i] = toBeUpdatedReal;

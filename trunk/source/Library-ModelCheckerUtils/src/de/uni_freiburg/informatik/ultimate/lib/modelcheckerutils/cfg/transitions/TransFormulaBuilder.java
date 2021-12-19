@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -148,7 +148,7 @@ public class TransFormulaBuilder {
 			addAuxVar(newAuxVar);
 			substitutionMapping.put(auxVar, newAuxVar);
 		}
-		mFormula = new Substitution(script, substitutionMapping).transform(mFormula);
+		mFormula = new PureSubstitution(script, substitutionMapping).transform(mFormula);
 	}
 
 	public boolean removeAuxVar(final TermVariable arg0) {
@@ -353,7 +353,7 @@ public class TransFormulaBuilder {
 			tfb.addInVar(bv, freshTv);
 			tfb.addOutVar(bv, freshTv);
 		}
-		tfb.setFormula(new Substitution(script.getScript(), substitutionMapping).transform(term));
+		tfb.setFormula(new PureSubstitution(script.getScript(), substitutionMapping).transform(term));
 		tfb.setInfeasibility(SmtUtils.isFalseLiteral(term) ? Infeasibility.INFEASIBLE : Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(script);
 	}
@@ -405,7 +405,7 @@ public class TransFormulaBuilder {
 		}
 
 		final List<Term> conjuncts = new ArrayList<>();
-		final Substitution subst = new Substitution(mgdScript.getScript(), substitutionMapping);
+		final PureSubstitution subst = new PureSubstitution(mgdScript.getScript(), substitutionMapping);
 		for (int i = 0; i < lhs.size(); i++) {
 			final IProgramVar pv = lhs.get(i);
 			final TermVariable freshTv =
@@ -589,7 +589,7 @@ public class TransFormulaBuilder {
 		} else {
 			infeasibility = Infeasibility.NOT_DETERMINED;
 		}
-		final Term newFormula = new Substitution(script, substitutionMapping).transform(tf.getFormula());
+		final Term newFormula = new PureSubstitution(script, substitutionMapping).transform(tf.getFormula());
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, newOutVars,
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
 				branchEncoders.isEmpty(), branchEncoders.isEmpty() ? null : branchEncoders, false);

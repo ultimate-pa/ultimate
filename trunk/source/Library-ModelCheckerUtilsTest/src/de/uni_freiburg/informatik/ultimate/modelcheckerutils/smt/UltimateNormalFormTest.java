@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -82,7 +82,7 @@ public class UltimateNormalFormTest {
 		final Map<Term, Term> substitutionMapping = Collections.singletonMap(var, value);
 		final Term input = TermParseUtils.parseTerm(mScript, "(- X)");
 
-		final Term result = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(input);
+		final Term result = new Substitution(mMgdScript, substitutionMapping).transform(input);
 
 		final Term expectedResult = Rational.valueOf(-23, 1).toTerm(intSort);
 		Assert.isTrue(result.equals(expectedResult));
@@ -98,7 +98,7 @@ public class UltimateNormalFormTest {
 		final Map<Term, Term> substitutionMapping = Collections.singletonMap(var, value);
 		final Term input = TermParseUtils.parseTerm(mScript, "(- X)");
 
-		final Term result = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(input);
+		final Term result = new Substitution(mMgdScript, substitutionMapping).transform(input);
 
 		final Term expectedResult = Rational.valueOf(-23, 1).toTerm(realSort);
 		Assert.isTrue(result.equals(expectedResult));
@@ -115,7 +115,7 @@ public class UltimateNormalFormTest {
 		final Map<Term, Term> substitutionMapping = Collections.singletonMap(var, value);
 		final Term input = TermParseUtils.parseTerm(mScript, "(- X)");
 
-		final Term result = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(input);
+		final Term result = new Substitution(mMgdScript, substitutionMapping).transform(input);
 
 		final Term expectedResult = TermParseUtils.parseTerm(mScript, "(+ (- a) 3.0)");
 		mLogger.info("expected result: " + expectedResult);
@@ -136,7 +136,7 @@ public class UltimateNormalFormTest {
 		final Map<Term, Term> substitutionMapping = Collections.singletonMap(var, value);
 		final Term input = TermParseUtils.parseTerm(mScript, "(bvneg X)");
 
-		final Term result = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(input);
+		final Term result = new Substitution(mMgdScript, substitutionMapping).transform(input);
 
 		final Term expectedResult = TermParseUtils.parseTerm(mScript, "(_ bv1 32)");
 		Assert.isTrue(result.equals(expectedResult));

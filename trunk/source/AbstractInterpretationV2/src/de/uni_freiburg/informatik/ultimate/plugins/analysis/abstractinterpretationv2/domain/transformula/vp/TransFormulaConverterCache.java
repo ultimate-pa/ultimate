@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -131,7 +131,7 @@ public class TransFormulaConverterCache {
 			substitutionMapping.put(auxVar, auxVarConst);
 		}
 
-		final Substitution subs = new Substitution(mgdScript, substitutionMapping);
+		final PureSubstitution subs = new PureSubstitution(mgdScript, substitutionMapping);
 		final Term rcClosed= subs.transform(resultConstraint.getTerm(mgdScript.getScript()));
 
 		assert rcClosed.getFreeVars().length == 0;

@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality;
@@ -120,8 +120,8 @@ public class TransFormulaLRWithArrayInformation {
 	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars = 
 			new NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation>();
 	
-	private Substitution mInVars2OutVars;
-	private Substitution mOutVars2InVars;
+	private PureSubstitution mInVars2OutVars;
+	private PureSubstitution mOutVars2InVars;
 	
 	
 	
@@ -241,7 +241,7 @@ public class TransFormulaLRWithArrayInformation {
 			final TermVariable ourInVar = (TermVariable) mTransFormulaLR.getInVars().get(foreigntv2rv.getValue());
 			substitutionMapping.put(foreigntv2rv.getKey(), ourInVar);
 		}
-		final List<Term> translatedIndex = (new Substitution(mScript.getScript(), substitutionMapping)).transform(index);
+		final List<Term> translatedIndex = (new PureSubstitution(mScript.getScript(), substitutionMapping)).transform(index);
 		final ArrayIndex foreignIndex = new ArrayIndex(translatedIndex);
 		return foreignIndex;
 	}
@@ -534,8 +534,8 @@ public class TransFormulaLRWithArrayInformation {
 			in2outMapping.put(inVar, outVar);
 			out2inMapping.put(outVar, inVar);
 		}
-		mInVars2OutVars = new Substitution(mScript.getScript(), in2outMapping);
-		mOutVars2InVars = new Substitution(mScript.getScript(), out2inMapping);
+		mInVars2OutVars = new PureSubstitution(mScript.getScript(), in2outMapping);
+		mOutVars2InVars = new PureSubstitution(mScript.getScript(), out2inMapping);
 	}
 
 	private class IndexCollector {

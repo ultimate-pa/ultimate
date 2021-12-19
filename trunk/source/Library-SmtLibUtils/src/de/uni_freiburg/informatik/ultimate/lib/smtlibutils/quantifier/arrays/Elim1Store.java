@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
@@ -329,7 +329,7 @@ public class Elim1Store {
 
 		final Term singleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, singleCaseJuncts);
 
-		final Term transformedTerm = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping)
+		final Term transformedTerm = new Substitution(mMgdScript, substitutionMapping)
 				.transform(intermediateTerm);
 //		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
 //				indexMapping, substitutionMapping, indexEqualityInformation);
@@ -643,7 +643,7 @@ public class Elim1Store {
 			final ArrayIndex replacementIndex = indexMapping.get(indexRepresentative);
 			storedValueInformation.add(QuantifierUtils.applyDerOperator(mMgdScript.getScript(), quantifier,
 					new MultiDimensionalSelect(entry.getValue(), replacementIndex, mScript).toTerm(mScript),
-					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping)
+					new Substitution(mMgdScript, substitutionMapping)
 							.transform(entry.getKey().getValue())));
 		}
 		return QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, storedValueInformation);
@@ -820,7 +820,7 @@ public class Elim1Store {
 
 				final MultiDimensionalSelect newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex,
 						mgdScript.getScript());
-				final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript,
+				final Term storeValueReplacement = new Substitution(mgdScript,
 						substitutionMapping).transform(storeValue);
 				final Term newValueInCell = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier,
 						newSelect.toTerm(mgdScript.getScript()), storeValueReplacement);
@@ -896,7 +896,7 @@ public class Elim1Store {
 				assert !occursIn(eliminatee, replacementStoreIndex) : "var is still there";
 
 				final Term storeValue = entry.getKey().getValues().get(i);
-				final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript,
+				final Term storeValueReplacement = new Substitution(mgdScript,
 						substitutionMapping).transform(storeValue);
 				storeIndexReplacements.add(replacementStoreIndex);
 				storeValueReplacements.add(storeValueReplacement);

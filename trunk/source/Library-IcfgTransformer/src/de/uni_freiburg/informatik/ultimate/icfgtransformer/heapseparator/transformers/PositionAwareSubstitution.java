@@ -10,7 +10,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SubtreePosition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
- * Variant of {@link Substitution}. Also substitutes {@link Term}s by other Terms. However, the substituted Terms are
+ * Variant of {@link PureSubstitution}. Also substitutes {@link Term}s by other Terms. However, the substituted Terms are
  * identified by their position in the formula. Thus the same Term may be substituted by different Terms when it occurs
  * more than once in the original formula (which is also a {@link Term}).
  *

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
@@ -106,7 +106,7 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 	}
 
 	private Term solveTerm(final Term term, final IProgramVar pVar) {
-		final Substitution sub = new Substitution(mMgScript, mAlphaDefaultConstant);
+		final PureSubstitution sub = new PureSubstitution(mMgScript, mAlphaDefaultConstant);
 		final Term transformedTerm = sub.transform(term);
 		mScript.push(1);
 		final LBool result = checkSat(mScript, transformedTerm);

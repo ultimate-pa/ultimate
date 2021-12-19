@@ -41,7 +41,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -891,7 +891,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			subsMap.put(fv, cons);
 		}
 
-		final Substitution substitution = new Substitution(mMgdScript, subsMap);
+		final PureSubstitution substitution = new PureSubstitution(mMgdScript, subsMap);
 
 		/*
 		 * check the implication

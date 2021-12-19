@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -112,7 +112,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		final Script script = mMgScript.getScript();
 		
 		Map<Term, Term> vector = new HashMap<>(mMatrix.getMatrix().get(index));
-		final Substitution sub = new Substitution(mMgScript,vector);
+		final PureSubstitution sub = new PureSubstitution(mMgScript,vector);
 		Term transformedTerm = sub.transform(mOriginalTransFormula.getFormula());
 		Term closedFormula = UnmodifiableTransFormula.computeClosedFormula(transformedTerm,
 				mOriginalTransFormula.getInVars(), mOriginalTransFormula.getOutVars(), new HashSet<>(), mMgScript);
@@ -154,7 +154,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		mOriginalTransFormula.getInVars().entrySet().forEach(invar 
 				-> vector.put(invar.getValue(), mOriginalTransFormula.getOutVars().get(invar.getKey())));
 		
-		final Substitution sub = new Substitution(mMgScript,vector);
+		final PureSubstitution sub = new PureSubstitution(mMgScript,vector);
 		Term newTerm = sub.transform(mOriginalTransFormula.getFormula());
 		
 		Term fullTerm = script.term("and", ogTerm, newTerm);
@@ -176,7 +176,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		}
 		
 		//find2nSolution
-		final Substitution subVar = new Substitution(mMgScript,mMatrix.getMatrix().get(mMatrixSize + 1));
+		final PureSubstitution subVar = new PureSubstitution(mMgScript,mMatrix.getMatrix().get(mMatrixSize + 1));
 		Term transformedFullTerm = subVar.transform(fullTerm);
 		Term closedFullTerm = UnmodifiableTransFormula.computeClosedFormula(transformedFullTerm,
 				mOriginalTransFormula.getInVars(), newOutVars, new HashSet<>(), mMgScript);
@@ -207,7 +207,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 				collect(Collectors.toList()).get(vectorNumber);
 
 		vector.put(openVar.getValue(), openVar.getKey().getDefaultConstant());
-		final Substitution sub = new Substitution(mMgScript,vector);
+		final PureSubstitution sub = new PureSubstitution(mMgScript,vector);
 		Term transformedTerm = sub.transform(mOriginalTransFormula.getFormula());
 		transformedTerm = script.term("and", transformedTerm, 
 				script.term("distinct", openVar.getKey().getDefaultConstant(), closedVector.get(openVar.getValue())));

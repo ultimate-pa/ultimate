@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -164,7 +164,7 @@ public class ProgramVarUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Term result = (new PureSubstitution(mgdScript, substitutionMapping)).transform(term);
 		return result;
 	}
 
@@ -178,7 +178,7 @@ public class ProgramVarUtils {
 				substitutionMapping.put(pv.getTermVariable(), nonoldVar.getTermVariable());
 			}
 		}
-		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Term result = (new PureSubstitution(mgdScript, substitutionMapping)).transform(term);
 		return result;
 	}
 

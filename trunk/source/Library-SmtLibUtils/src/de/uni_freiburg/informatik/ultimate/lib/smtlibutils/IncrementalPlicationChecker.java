@@ -85,7 +85,7 @@ public class IncrementalPlicationChecker {
 	private final ManagedScript mMgdScript;
 	private final Term mLhs;
 	private boolean mLhsIsAsserted;
-	private Substitution mVar2ConstSubstitution;
+	private PureSubstitution mVar2ConstSubstitution;
 	private final Plication mPlication;
 
 
@@ -122,10 +122,10 @@ public class IncrementalPlicationChecker {
 	 * Construct a substitution that replaces all free TermVariables of lhs
 	 * by constants and declares these constants.
 	 */
-	private Substitution constructVar2ConstSubstitution(final Term term) {
+	private PureSubstitution constructVar2ConstSubstitution(final Term term) {
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(term.getFreeVars()));
 		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
-		final Substitution subst = new Substitution(mMgdScript, substitutionMapping);
+		final PureSubstitution subst = new PureSubstitution(mMgdScript, substitutionMapping);
 		return subst;
 	}
 

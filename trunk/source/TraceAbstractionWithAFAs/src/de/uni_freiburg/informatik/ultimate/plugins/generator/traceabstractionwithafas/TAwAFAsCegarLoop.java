@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.PredicateConstructionVisitor;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -318,7 +318,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			}
 		}
 
-		final Term substitutedTerm = new Substitution(mCsToolkit.getManagedScript().getScript(), substitutionMapping)
+		final Term substitutedTerm = new PureSubstitution(mCsToolkit.getManagedScript().getScript(), substitutionMapping)
 				.transform(nodeLabel.getBlock().getTransformula().getFormula());
 		return substitutedTerm;
 	}
@@ -375,14 +375,14 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		final IPredicate[] result = new IPredicate[interpolants.length];
 		final PredicateConstructionVisitor msfmv = new PredicateConstructionVisitor(constants2BoogieVar);
 
-		Substitution const2RepTvSubst;
+		PureSubstitution const2RepTvSubst;
 
 		final HashMap<Term, Term> const2RepTv = new HashMap<>();
 		for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 
-		const2RepTvSubst = new Substitution(mCsToolkit.getManagedScript().getScript(), const2RepTv);
+		const2RepTvSubst = new PureSubstitution(mCsToolkit.getManagedScript().getScript(), const2RepTv);
 		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<>();
 
 		int craigInterpolPos = 0;

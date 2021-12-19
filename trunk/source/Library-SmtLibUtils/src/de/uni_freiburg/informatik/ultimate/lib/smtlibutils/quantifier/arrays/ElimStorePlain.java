@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEqualityExplicator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexBasedCostEstimation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
@@ -491,7 +491,7 @@ public class ElimStorePlain {
 								} else {
 									effectiveIndex2 = index2;
 								}
-								final Term replaced = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(eTask.getTerm());
+								final Term replaced = new Substitution(mMgdScript, substitutionMapping).transform(eTask.getTerm());
 								effectiveTerm = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
 										eTask.getQuantifier(), replaced, QuantifierUtils.applyDualFiniteConnective(
 												mMgdScript.getScript(), eTask.getQuantifier(), definitions));

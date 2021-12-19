@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -221,7 +221,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		generateRepAndAuxVars(tf);
 		final ModifiableTransFormula newTf = new ModifiableTransFormula(tf);
 		final Term newFormula =
-				new SubstitutionWithLocalSimplification(script, mSubstitutionMapping).transform(tf.getFormula());
+				new Substitution(script, mSubstitutionMapping).transform(tf.getFormula());
 		newTf.setFormula(newFormula);
 		return newTf;
 	}

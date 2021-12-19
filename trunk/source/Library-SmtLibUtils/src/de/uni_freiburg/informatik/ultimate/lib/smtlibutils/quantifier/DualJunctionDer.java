@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
@@ -244,7 +244,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			final List<Term> otherDualJuncts, final SolvedBinaryRelation sbr, final List<Term> dualJunctsResult) {
 		final Map<Term, Term> substitutionMapping = Collections.singletonMap(sbr.getLeftHandSide(),
 				sbr.getRightHandSide());
-		final Substitution substitution = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping);
+		final PureSubstitution substitution = new Substitution(mgdScript, substitutionMapping);
 		for (final Term otherDualJunct : otherDualJuncts) {
 			final Term replaced = substitution.transform(otherDualJunct);
 			assert UltimateNormalFormUtils.respectsUltimateNormalForm(replaced) : "Term not in UltimateNormalForm";

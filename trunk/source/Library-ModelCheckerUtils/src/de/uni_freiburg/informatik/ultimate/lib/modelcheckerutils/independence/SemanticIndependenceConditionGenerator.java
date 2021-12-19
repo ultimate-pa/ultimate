@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.abduction.Abducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -147,7 +147,7 @@ public class SemanticIndependenceConditionGenerator {
 			substitution.put(entry.getValue(), entry.getKey().getTermVariable());
 		}
 		final Term restoredCondition =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(condition);
+				new Substitution(mMgdScript, substitution).transform(condition);
 
 		// Create a predicate
 		return mFactory.newPredicate(restoredCondition);

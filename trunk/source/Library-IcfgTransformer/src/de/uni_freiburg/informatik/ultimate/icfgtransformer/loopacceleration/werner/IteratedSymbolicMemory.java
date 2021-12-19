@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -266,7 +266,7 @@ public class IteratedSymbolicMemory {
 							Rational.ONE.toTerm(SmtSortUtils.getIntSort(mScript)));
 					mapping.put(backbone.getPathCounter(), newMapping);
 
-					final Substitution sub = new Substitution(mScript, mapping);
+					final PureSubstitution sub = new PureSubstitution(mScript, mapping);
 					update = sub.transform(memory);
 				}
 			}
@@ -322,13 +322,13 @@ public class IteratedSymbolicMemory {
 				mapping.putAll(termUnravel(term));
 			}
 
-			Substitution sub = new Substitution(mScript, mapping);
+			PureSubstitution sub = new PureSubstitution(mScript, mapping);
 			Term newCondition = sub.transform(appTerm);
 			mapping.clear();
 
 			mapping.put(backbone.getPathCounter(), mNewPathCounters.get(backbone.getPathCounter()));
 
-			sub = new Substitution(mScript, mapping);
+			sub = new PureSubstitution(mScript, mapping);
 			newCondition = sub.transform(newCondition);
 
 			final List<TermVariable> tempPathCounters = new ArrayList<>(mPathCounters);
@@ -430,7 +430,7 @@ public class IteratedSymbolicMemory {
 	public Term updateBackboneTerm(final Backbone backbone) {
 		final Term condition = backbone.getFormula().getFormula();
 		final Map<Term, Term> subMapping = termUnravel(condition);
-		final Substitution sub = new Substitution(mScript, subMapping);
+		final PureSubstitution sub = new PureSubstitution(mScript, subMapping);
 		return sub.transform(condition);
 	}
 
@@ -546,7 +546,7 @@ public class IteratedSymbolicMemory {
 	public Term updateBackboneTerm(final TransFormula tf) {
 		final Term condition = tf.getFormula();
 		final Map<Term, Term> subMapping = termUnravel(condition);
-		final Substitution sub = new Substitution(mScript, subMapping);
+		final PureSubstitution sub = new PureSubstitution(mScript, subMapping);
 		return sub.transform(condition);
 	}
 

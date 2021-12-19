@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -160,7 +160,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			mConst2RepTvSubst =
 					new TermTransferrer(mMgdScriptTc.getScript(), mMgdScriptCfg.getScript(), const2RepTv, true);
 		} else {
-			mConst2RepTvSubst = new SubstitutionWithLocalSimplification(mMgdScriptCfg, const2RepTv);
+			mConst2RepTvSubst = new Substitution(mMgdScriptCfg, const2RepTv);
 		}
 
 		computeCraigInterpolants();
@@ -639,7 +639,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			substitutionMapping.put(aet.getArrayExtTerm(), aet.getReplacementTermVariable());
 			offset++;
 		}
-		Term result = new Substitution(mMgdScriptCfg.getScript(), substitutionMapping).transform(matrix);
+		Term result = new PureSubstitution(mMgdScriptCfg.getScript(), substitutionMapping).transform(matrix);
 		result = SmtUtils.and(mMgdScriptCfg.getScript(), result, SmtUtils.and(mMgdScriptCfg.getScript(), implications));
 		result = mMgdScriptCfg.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
 		result = QuantifierSequence.prependQuantifierSequence(mMgdScriptCfg.getScript(), qs.getQuantifierBlocks(),

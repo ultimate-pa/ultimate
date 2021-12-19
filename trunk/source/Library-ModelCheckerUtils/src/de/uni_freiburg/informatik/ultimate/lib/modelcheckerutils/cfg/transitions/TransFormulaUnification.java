@@ -37,7 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -217,7 +217,7 @@ public class TransFormulaUnification {
 	 */
 	private Term computeUnifiedFormula(final UnmodifiableTransFormula tf, final Map<Term, Term> substitution) {
 		final Term renamedFormula =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(tf.getFormula());
+				new Substitution(mMgdScript, substitution).transform(tf.getFormula());
 		final Term equalities = generateExplicitEqualities(tf);
 		return SmtUtils.and(mMgdScript.getScript(), renamedFormula, equalities);
 	}

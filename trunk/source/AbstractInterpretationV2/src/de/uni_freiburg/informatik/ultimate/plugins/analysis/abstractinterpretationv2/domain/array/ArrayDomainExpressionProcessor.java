@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -79,7 +79,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		}
 		final STATE newSubState = mToolkit.handleAssumptionBySubdomain(tmpState.getSubState().addVariables(auxVars),
 				SmtUtils.and(script, constraints));
-		final Term newTerm = new Substitution(mToolkit.getManagedScript(), substitution).transform(term);
+		final Term newTerm = new PureSubstitution(mToolkit.getManagedScript(), substitution).transform(term);
 		return new Pair<>(tmpState.updateState(newSubState), newTerm);
 	}
 
@@ -205,7 +205,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		if (substitution.isEmpty()) {
 			constraints.add(assumption);
 		} else {
-			constraints.add(new Substitution(mToolkit.getManagedScript(), substitution).transform(assumption));
+			constraints.add(new PureSubstitution(mToolkit.getManagedScript(), substitution).transform(assumption));
 		}
 		final STATE newSubState =
 				mToolkit.handleAssumptionBySubdomain(newState.getSubState(), SmtUtils.and(script, constraints));

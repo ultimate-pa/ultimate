@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -161,7 +161,7 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 			final ApplicationTerm defaultConstantForFv = mSymbolTable.getProgramVar(fv).getDefaultConstant();
 			substitutionMapping.put(fv, defaultConstantForFv);
 		}
-		return new Substitution(mMgdScript, substitutionMapping).transform(formula);
+		return new PureSubstitution(mMgdScript, substitutionMapping).transform(formula);
 	}
 
 	/**

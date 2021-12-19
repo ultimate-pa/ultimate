@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -158,7 +158,7 @@ public class ModifiableTransFormulaUtils {
 			}
 			substitutionMapping.put(tv, bv.getDefaultConstant());
 		}
-		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
+		final Term result = (new PureSubstitution(script, substitutionMapping)).transform(term);
 		return result;
 	}
 
@@ -172,7 +172,7 @@ public class ModifiableTransFormulaUtils {
 			}
 			substitutionMapping.put(tv, bv.getPrimedConstant());
 		}
-		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
+		final Term result = (new PureSubstitution(script, substitutionMapping)).transform(term);
 		return result;
 	}
 
@@ -251,7 +251,7 @@ public class ModifiableTransFormulaUtils {
 				substitutionMapping.put(entry.getValue(), bv.getPrimedConstant());
 			}
 		}
-		Term result = (new Substitution(script, substitutionMapping)).transform(tf.getFormula());
+		Term result = (new PureSubstitution(script, substitutionMapping)).transform(tf.getFormula());
 		result = SmtUtils.and(script, result, constructEqualitiesForCoinciding(script, tf));
 		if (!tf.getAuxVars().isEmpty()) {
 			logger.warn(tf.getAuxVars().size() + " quantified variables");
@@ -291,7 +291,7 @@ public class ModifiableTransFormulaUtils {
 			}
 			substitutionMapping.put(tv, definition);
 		}
-		return (new Substitution(script, substitutionMapping)).transform(term);
+		return (new PureSubstitution(script, substitutionMapping)).transform(term);
 	}
 
 	public static List<Term> translateTermVariablesToDefinitions(final Script script, final ModifiableTransFormula tf,
@@ -312,7 +312,7 @@ public class ModifiableTransFormulaUtils {
 			assert inVar != null : "no inVar for " + bv;
 			substitutionMapping.put(tv, inVar);
 		}
-		return (new Substitution(script, substitutionMapping)).transform(term);
+		return (new PureSubstitution(script, substitutionMapping)).transform(term);
 	}
 
 	public static boolean inVarAndOutVarCoincide(final IProgramVar rv, final ModifiableTransFormula rf) {
@@ -377,7 +377,7 @@ public class ModifiableTransFormulaUtils {
 			newTf.addNonTheoryConsts(inputTf.getNonTheoryConsts());
 		}
 
-		final Term formula = (new Substitution(mgdScript, substitutionMapping).transform(inputTf.getFormula()));
+		final Term formula = (new PureSubstitution(mgdScript, substitutionMapping).transform(inputTf.getFormula()));
 		newTf.setFormula(formula);
 
 		// Add existing in- and outVars

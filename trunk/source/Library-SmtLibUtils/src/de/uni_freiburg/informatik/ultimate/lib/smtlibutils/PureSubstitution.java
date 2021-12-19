@@ -55,22 +55,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  *
  * @author Matthias Heizmann
  */
-public class Substitution extends TermTransformer {
+public class PureSubstitution extends TermTransformer {
 
 	private final Script mScript;
 	protected final ManagedScript mMgdScript;
 	private final ScopedHashMap<Term, Term> mScopedSubstitutionMapping;
 
-	public Substitution(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping) {
-		super();
+	public PureSubstitution(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping) {
 		mMgdScript = null;
 		mScript = script;
 		mScopedSubstitutionMapping = new ScopedHashMap<>();
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 
-	public Substitution(final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping) {
-		super();
+	public PureSubstitution(final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping) {
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();
 		mScopedSubstitutionMapping = new ScopedHashMap<>();
@@ -112,8 +110,7 @@ public class Substitution extends TermTransformer {
 					+ "containes quantified variable. This (rare) case is "
 					+ "only supported if you call substitution with fresh " + "variable construction.");
 		}
-		final Term result = SmtUtils.renameQuantifiedVariables(mMgdScript, qFormula, toRename, "subst");
-		return result;
+		return SmtUtils.renameQuantifiedVariables(mMgdScript, qFormula, toRename, "subst");
 
 	}
 

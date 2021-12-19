@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.NestedArrayStore;
@@ -203,7 +203,7 @@ public class ArrayQuantifierEliminationMain {
 							nas.getValues().get(1));
 
 					// Substitude newStore
-					final Substitution sub = new Substitution(mMgdScript,
+					final PureSubstitution sub = new PureSubstitution(mMgdScript,
 							Collections.singletonMap(storeOuter.getStoreTerm(), newStore));
 					final Term noSOSterm = sub.transform(term);
 
@@ -215,7 +215,7 @@ public class ArrayQuantifierEliminationMain {
 						storeOuter.getArray().getSort());
 				final Term innerStore = SmtUtils.store(mScript, nas.getArray(), nas.getIndices().get(0),
 						nas.getValues().get(0));
-				final Substitution sub = new Substitution(mMgdScript,
+				final PureSubstitution sub = new PureSubstitution(mMgdScript,
 						Collections.singletonMap(innerStore, newarrayvar));
 
 				final Term noSOSterm = sub.transform(term);
@@ -271,7 +271,7 @@ public class ArrayQuantifierEliminationMain {
 
 						final Term indexnoteq = SmtUtils.not(mScript, indexeq);
 
-						final Substitution sub = new Substitution(mMgdScript, Collections.singletonMap(
+						final PureSubstitution sub = new PureSubstitution(mMgdScript, Collections.singletonMap(
 								select.getSelectTerm(), nas.getValues().get(nas.getIndices().indexOf(index))));
 						final Term subtermlhs = sub.transform(term);
 						final Term lhs = SmtUtils.and(mScript, indexeq, subtermlhs, allindexnoteq);
@@ -279,7 +279,7 @@ public class ArrayQuantifierEliminationMain {
 						allindexnoteq = SmtUtils.and(mScript, indexnoteq, allindexnoteq);
 					}
 
-					final Substitution sub = new Substitution(mMgdScript,
+					final PureSubstitution sub = new PureSubstitution(mMgdScript,
 							Collections.singletonMap(select.getSelectTerm(),
 									SmtUtils.select(mScript, nas.getArray(), select.getIndex().get(0))));
 					final Term subtermrhs = sub.transform(term);
@@ -419,7 +419,7 @@ public class ArrayQuantifierEliminationMain {
 
 			}
 
-			final Substitution sub = new Substitution(mMgdScript, submap);
+			final PureSubstitution sub = new PureSubstitution(mMgdScript, submap);
 			final Term newTerm2 = sub.transform(eTerm);
 
 			newTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, newTerm2, newTerm);
@@ -451,7 +451,7 @@ public class ArrayQuantifierEliminationMain {
 		// Term 3: Term 1 AND Term 2
 		final Term elimterm = SmtUtils.and(mScript, elimtermlhs, elimtermrhs);
 		// Substitute store term equality with the new term "elimForall"
-		final Substitution sub = new Substitution(mMgdScript, Collections.singletonMap(storeEQ, elimterm));
+		final PureSubstitution sub = new PureSubstitution(mMgdScript, Collections.singletonMap(storeEQ, elimterm));
 		newterm = sub.transform(newterm);
 		return newterm;
 	}
@@ -498,7 +498,7 @@ public class ArrayQuantifierEliminationMain {
 				final TermVariable newarrayvar = mMgdScript.constructFreshTermVariable("a_new",
 						term.getParameters()[0].getSort());
 				// Substitute ttore term with new exist quantified array variable a_new
-				final Substitution sub = new Substitution(mMgdScript, Collections.singletonMap(term, newarrayvar));
+				final PureSubstitution sub = new PureSubstitution(mMgdScript, Collections.singletonMap(term, newarrayvar));
 				newterm = sub.transform(newterm);
 				// Add conjunct a1 = (eliminated store term)
 				final Term eqterm = SmtUtils.binaryEquality(mScript, newarrayvar, term);

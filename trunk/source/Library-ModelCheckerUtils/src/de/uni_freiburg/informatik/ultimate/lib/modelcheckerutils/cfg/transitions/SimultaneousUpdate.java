@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionDer;
@@ -198,7 +198,7 @@ public class SimultaneousUpdate {
 		final Term rhs = ei.getRelatedTerm();
 		final Map<Term, Term> substitutionMapping = computeSubstitutionMapping(rhs, conjuncts, outVar,
 				inVarsReverseMapping, outVarsReverseMapping, mgdScript);
-		final Term renamed = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(rhs);
+		final Term renamed = new Substitution(mgdScript, substitutionMapping).transform(rhs);
 		return renamed;
 	}
 

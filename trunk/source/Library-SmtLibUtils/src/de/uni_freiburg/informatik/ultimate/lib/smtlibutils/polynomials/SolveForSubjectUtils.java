@@ -41,7 +41,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
@@ -241,7 +241,7 @@ public class SolveForSubjectUtils {
 			if (c.getSolvedBinaryRelation() != null) {
 				substitutionMapping.put(subject, c.getSolvedBinaryRelation().getRightHandSide());
 			}
-			final Term auxModEqualsTerm = new Substitution(script, substitutionMapping).transform(pnf);
+			final Term auxModEqualsTerm = new PureSubstitution(script, substitutionMapping).transform(pnf);
 			if (c.getSolvedBinaryRelation() == null) {
 				final boolean containsSubject = SmtUtils.isSubterm(auxModEqualsTerm, subject);
 				if (containsSubject) {

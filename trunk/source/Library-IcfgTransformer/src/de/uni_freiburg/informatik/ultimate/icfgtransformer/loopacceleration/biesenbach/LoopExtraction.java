@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -112,7 +112,7 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 				substitute.put(mainFormula.getInVars().get(var), value);
 			}
 		}
-		final Substitution sub = new Substitution(mMgScript, substitute);
+		final PureSubstitution sub = new PureSubstitution(mMgScript, substitute);
 		final Term transformedExitFormula = sub.transform(mainFormula.getFormula());
 
 		final TransFormulaBuilder tfb =
@@ -224,7 +224,7 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 		final Set<IProgramConst> nonTheoryConsts = new HashSet<>();
 		nonTheoryConsts.addAll(first.getNonTheoryConsts());
 		nonTheoryConsts.addAll(second.getNonTheoryConsts());
-		final Substitution sub = new Substitution(mMgScript, substitute);
+		final PureSubstitution sub = new PureSubstitution(mMgScript, substitute);
 		final Term transformedSecond = sub.transform(second.getFormula());
 		final Term jointFormula = mMgScript.getScript().term("and", first.getFormula(), transformedSecond);
 

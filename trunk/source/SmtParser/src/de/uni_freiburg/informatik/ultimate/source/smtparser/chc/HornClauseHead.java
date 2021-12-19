@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -147,7 +147,7 @@ public class HornClauseHead {
 			}
 
 			// note: it does not seem to matter much, which script we pass here
-			mHead = (ApplicationTerm) new Substitution(solverScript, subs).transform(mHead);
+			mHead = (ApplicationTerm) new PureSubstitution(solverScript, subs).transform(mHead);
 
 		}
 		// normalize (co)body variables

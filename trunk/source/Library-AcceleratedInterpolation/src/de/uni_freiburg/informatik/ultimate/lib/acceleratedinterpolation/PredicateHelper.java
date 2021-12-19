@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -111,7 +111,7 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 			subMap.put(inVar.getValue(), inVar.getKey().getTermVariable());
 			inVars.put(inVar.getKey(), inVar.getKey().getTermVariable());
 		}
-		final Substitution sub = new Substitution(mScript, subMap);
+		final PureSubstitution sub = new PureSubstitution(mScript, subMap);
 		final Term newTerm = sub.transform(tTerm);
 		return newTerm;
 	}
@@ -146,7 +146,7 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 				subMap.put(inVar.getValue(), newTV);
 				inVars.put(inVar.getKey(), newTV);
 			}
-			final Substitution sub = new Substitution(mScript, subMap);
+			final PureSubstitution sub = new PureSubstitution(mScript, subMap);
 			newTerm = sub.transform(tTerm);
 		} else {
 			inVars = new HashMap<>(tf.getInVars());

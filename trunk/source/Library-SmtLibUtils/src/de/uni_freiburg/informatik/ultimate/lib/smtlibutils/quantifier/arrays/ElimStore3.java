@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate.ArrayUpdateException;
@@ -216,7 +216,7 @@ public class ElimStore3 {
 					store = update.getMultiDimensionalStore();
 				}
 				final Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
-				final Substitution subst = new SubstitutionWithLocalSimplification(mMgdScript, auxMap);
+				final PureSubstitution subst = new Substitution(mMgdScript, auxMap);
 				Term auxTerm = subst.transform(term);
 				final Term auxVarDef = mScript.term("=", auxArray, store.getStoreTerm());
 				if (quantifier == QuantifiedFormula.EXISTS) {
@@ -246,13 +246,13 @@ public class ElimStore3 {
 			// we replace all occurrences of (store oldArr idx val) by newArr.
 			final Map<Term, Term> mapping = Collections.singletonMap(
 					(Term) writeInto.getMultiDimensionalStore().getStoreTerm(), (Term) writeInto.getNewArray());
-			final Substitution substStoreTerm = new SubstitutionWithLocalSimplification(mMgdScript, mapping);
+			final PureSubstitution substStoreTerm = new Substitution(mMgdScript, mapping);
 			intermediateResult = substStoreTerm.transform(intermediateResult);
 		}
 
 		// Indices and corresponding values of a_elim
 		final IndicesAndValues iav = new IndicesAndValues(mMgdScript, quantifier, eliminatee, conjuncts);
-		final Substitution subst = new SubstitutionWithLocalSimplification(mMgdScript, iav.getMapping());
+		final PureSubstitution subst = new Substitution(mMgdScript, iav.getMapping());
 
 		final ArrayList<Term> additionalConjuncs = new ArrayList<>();
 		intermediateResult = subst.transform(intermediateResult);
@@ -296,11 +296,11 @@ public class ElimStore3 {
 			 * Special treatment for the case that the eliminatee to which we write occurs also in a term somewhere else
 			 * (which is not a select term). Maybe we can avoid this if we eliminate variables in a certain order.
 			 */
-			final Substitution writtenFromSubst;
+			final PureSubstitution writtenFromSubst;
 			if (writtenFrom != null) {
 				final Term storeRenamed = SmtUtils.multiDimensionalStore(script, a_heir, idx_writeRenamed, dataRenamed);
 				final Map<Term, Term> mapping = Collections.singletonMap((Term) eliminatee, storeRenamed);
-				writtenFromSubst = new SubstitutionWithLocalSimplification(mMgdScript, mapping);
+				writtenFromSubst = new Substitution(mMgdScript, mapping);
 			} else {
 				writtenFromSubst = null;
 			}
@@ -371,7 +371,7 @@ public class ElimStore3 {
 			final IndicesAndValues iav) {
 		final List<ArrayIndex> indices1 = new ArrayList<>();
 		final List<Term> values1 = new ArrayList<>();
-		final Substitution subs = new SubstitutionWithLocalSimplification(mgdScript, iav.getMapping());
+		final PureSubstitution subs = new Substitution(mgdScript, iav.getMapping());
 		for (int i = 0; i < iav.getIndices().length; i++) {
 			final ArrayIndex translatedIndex =
 					new ArrayIndex(SmtUtils.substitutionElementwise(iav.getIndices()[i], subs));
@@ -413,7 +413,7 @@ public class ElimStore3 {
 	 * @param eliminatee
 	 */
 	private ArrayList<Term> disjointIndexImpliesValueEquality(final int quantifier, final Term a_heir,
-			final ArrayIndex idx_write, final IndicesAndValues iav, final Substitution subst,
+			final ArrayIndex idx_write, final IndicesAndValues iav, final PureSubstitution subst,
 			final TermVariable eliminatee) {
 		final ArrayList<Term> result = new ArrayList<>();
 		for (int i = 0; i < iav.getIndices().length; i++) {

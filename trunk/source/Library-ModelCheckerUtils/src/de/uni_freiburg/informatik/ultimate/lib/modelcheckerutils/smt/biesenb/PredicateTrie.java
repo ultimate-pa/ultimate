@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -226,7 +226,7 @@ public class PredicateTrie<T extends IPredicate> {
 	 * check if model fulfills predicate
 	 */
 	protected boolean fulfillsPredicate(final T predicate, final Map<Term, Term> witness) {
-		final SubstitutionWithLocalSimplification subst = new SubstitutionWithLocalSimplification(mMgdScript, witness);
+		final Substitution subst = new Substitution(mMgdScript, witness);
 		final Term result = subst.transform(predicate.getClosedFormula());
 
 		if (mTruePredicate.getFormula().equals(result)) {

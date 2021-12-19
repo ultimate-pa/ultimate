@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
@@ -687,7 +687,7 @@ public class Statements2TransFormula {
 				substitutionMapping.put(tv, newTv);
 				auxVars.add(newTv);
 			}
-			result = new Substitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
+			result = new PureSubstitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
 		}
 		return result;
 	}

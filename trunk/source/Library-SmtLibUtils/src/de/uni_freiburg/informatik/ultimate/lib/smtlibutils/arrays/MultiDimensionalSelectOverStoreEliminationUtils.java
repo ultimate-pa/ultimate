@@ -31,7 +31,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ArrayQuantifierEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
@@ -53,17 +53,17 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 		switch (indexEquality) {
 		case EQUAL:
 			substitutionMapping = Collections.singletonMap(mdsos.toTerm(), mdsos.constructEqualsReplacement());
-			result = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term);
+			result = new Substitution(mgdScript, substitutionMapping).transform(term);
 			break;
 		case NOT_EQUAL:
 			substitutionMapping = Collections.singletonMap(mdsos.toTerm(),
 					mdsos.constructNotEqualsReplacement(mgdScript.getScript()));
-			result = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term);
+			result = new Substitution(mgdScript, substitutionMapping).transform(term);
 			break;
 		case UNKNOWN:
 			substitutionMapping = Collections.singletonMap(mdsos.toTerm(), ArrayQuantifierEliminationUtils
 					.transformMultiDimensionalSelectOverStoreToIte(mdsos, mgdScript, aiem));
-			final Term resultWithIte = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)
+			final Term resultWithIte = new Substitution(mgdScript, substitutionMapping)
 					.transform(term);
 			result = new IteRemover(mgdScript).transform(resultWithIte);
 			break;
@@ -80,7 +80,7 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 		final Map<Term, Term> substitutionMapping = Collections.singletonMap(mdsos.toTerm(),
 				ArrayQuantifierEliminationUtils.transformMultiDimensionalSelectOverNestedStoreToIte(mdsos, mgdScript,
 						aiem));
-		final Term resultWithIte = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)
+		final Term resultWithIte = new Substitution(mgdScript, substitutionMapping)
 				.transform(term);
 		final Term result = new IteRemover(mgdScript).transform(resultWithIte);
 		return result;

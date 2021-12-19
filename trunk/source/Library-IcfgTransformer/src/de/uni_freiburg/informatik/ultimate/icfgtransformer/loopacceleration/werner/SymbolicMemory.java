@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -136,7 +136,7 @@ public class SymbolicMemory {
 				substitution.putAll(termUnravel(appTerm));
 			}
 
-			final Substitution sub = new Substitution(mScript, substitution);
+			final PureSubstitution sub = new PureSubstitution(mScript, substitution);
 			final Term t2 = sub.transform(t);
 			mMemoryMapping.replace(entry.getKey(), t2);
 		}
@@ -162,7 +162,7 @@ public class SymbolicMemory {
 
 		substitution.putAll(termUnravel(appTerm, tf.getInVars()));
 
-		final Substitution sub = new Substitution(mScript, substitution);
+		final PureSubstitution sub = new PureSubstitution(mScript, substitution);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(mInVars, mOutVars, true, null, true, null, true);
 		final Term term = sub.transform(tf.getFormula());
 

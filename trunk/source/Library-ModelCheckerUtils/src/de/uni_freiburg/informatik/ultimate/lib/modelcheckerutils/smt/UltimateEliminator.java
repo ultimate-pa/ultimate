@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
@@ -194,7 +194,7 @@ public class UltimateEliminator extends WrapperScript {
 			final Term constant = mMgdScript.getScript().term(identifier);
 			substitutionMapping.put(tv, constant);
 		}
-		final Term result = new Substitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
+		final Term result = new PureSubstitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
 		return result;
 	}
 

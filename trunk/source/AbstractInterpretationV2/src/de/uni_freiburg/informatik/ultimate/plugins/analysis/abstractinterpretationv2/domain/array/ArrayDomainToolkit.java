@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -233,7 +233,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		final Term newTerm = NonrelationalTermUtils.getTermVar(newVariable);
 		final TermVariable oldTerm = oldVariable.getTermVariable();
 		final Term constraint = SmtUtils.filterFormula(baseTerm, Collections.singleton(oldTerm), getScript());
-		return new Substitution(getScript(), Collections.singletonMap(oldTerm, newTerm)).transform(constraint);
+		return new PureSubstitution(getScript(), Collections.singletonMap(oldTerm, newTerm)).transform(constraint);
 	}
 
 	public ArrayDomainState<STATE> createBottomState() {

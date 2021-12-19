@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -151,7 +151,7 @@ public class QuantifierSequence {
 
 			}
 		}
-		mInnerTerm = (new Substitution(mScript, substitutionMapping)).transform(mInnerTerm);
+		mInnerTerm = (new PureSubstitution(mScript, substitutionMapping)).transform(mInnerTerm);
 	}
 
 	public static Term mergeQuantifierSequences(final ManagedScript mgdScript,

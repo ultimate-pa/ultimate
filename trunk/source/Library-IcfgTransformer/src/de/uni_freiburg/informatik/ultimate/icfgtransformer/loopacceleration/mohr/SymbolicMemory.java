@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -140,7 +140,7 @@ public class SymbolicMemory {
 			}
 		}
 		updateInOutVars(variable, st, value.getFreeVars());
-		final Substitution varRepl = new Substitution(mManagedScript, mReplaceInV);
+		final PureSubstitution varRepl = new PureSubstitution(mManagedScript, mReplaceInV);
 		final Term repValue = varRepl.transform(value);
 		mAssignedVars.get(mCurrentPath).add(variable);
 		final UpdateType ut = mUpdateTypeMap.get(variable);
@@ -176,7 +176,7 @@ public class SymbolicMemory {
 	 */
 	public void updateConst(final IProgramVar variable, final Term value, final IIcfgSymbolTable st) {
 		updateInOutVars(variable, st, value.getFreeVars());
-		final Substitution varRepl = new Substitution(mManagedScript, mReplaceInV);
+		final PureSubstitution varRepl = new PureSubstitution(mManagedScript, mReplaceInV);
 		final Term repValue = varRepl.transform(value);
 		mAssignedVars.get(mCurrentPath).add(variable);
 		final UpdateType ut = mUpdateTypeMap.get(variable);
@@ -262,7 +262,7 @@ public class SymbolicMemory {
 				mOutVars.put(pv, mInVars.get(pv));
 			}
 		}
-		final Substitution varSub = new Substitution(mManagedScript, symValueSubMap);
+		final PureSubstitution varSub = new PureSubstitution(mManagedScript, symValueSubMap);
 		final Term varReplacedGuard =
 				symValueSubMap.size() > 0 ? varSub.transform(guard.getFormula()) : guard.getFormula();
 
@@ -270,7 +270,7 @@ public class SymbolicMemory {
 		for (final Map.Entry<TermVariable, IProgramVar> revInEntry : revInVars.entrySet()) {
 			cleanSubMap.put(revInEntry.getKey(), mReplaceInV.get(revInEntry.getValue().getTermVariable()));
 		}
-		final Substitution cleanSub = new Substitution(mManagedScript, cleanSubMap);
+		final PureSubstitution cleanSub = new PureSubstitution(mManagedScript, cleanSubMap);
 		final Term cleanReplacedGuard = cleanSub.transform(varReplacedGuard);
 
 		final List<Term> conjTerms = new ArrayList<>();
@@ -311,7 +311,7 @@ public class SymbolicMemory {
 		mKappa2Tau.forEach((k,v) -> tau2Kappa.put(v, k));
 
 		final Term result = SmtUtils.and(mManagedScript.getScript(), terms.toArray(new Term[terms.size()]));
-		return new Substitution(mManagedScript, tau2Kappa).transform(result);
+		return new PureSubstitution(mManagedScript, tau2Kappa).transform(result);
 	}
 
 	public Boolean containsUndefined() {
