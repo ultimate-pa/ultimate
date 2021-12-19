@@ -289,7 +289,7 @@ public class Statements2TransFormula {
 			mAuxVars.addAll(tlres.getAuxiliaryVars());
 			mOverapproximations.putAll(tlres.getOverappoximations());
 			final Term rhsTerm = tlres.getTerm();
-			final Term eq = mScript.term("=", tv, rhsTerm);
+			final Term eq = SmtUtils.binaryEquality(mScript, tv, rhsTerm);
 
 			mAssumes = SmtUtils.and(mScript, eq, mAssumes);
 			if (COMPUTE_ASSERTS) {
@@ -774,7 +774,7 @@ public class Statements2TransFormula {
 				final String suffix = "InParam";
 				final TermVariable tv = constructTermVariableWithSuffix(boogieVar, suffix);
 				mTransFormulaBuilder.addOutVar(boogieVar, tv);
-				assignments[offset] = mScript.term("=", tv, argTerms[offset]);
+				assignments[offset] = SmtUtils.binaryEquality(mScript, tv, argTerms[offset]);
 				offset++;
 			}
 		}
@@ -807,7 +807,7 @@ public class Statements2TransFormula {
 		for (final Term argTerm : argTerms) {
 			final TermVariable tv = constructTermVariableWithSuffix(threadTemplateIdVar[offset], suffix);
 			mTransFormulaBuilder.addOutVar(threadTemplateIdVar[offset], tv);
-			assignments[offset] = mScript.term("=", tv, argTerm);
+			assignments[offset] = SmtUtils.binaryEquality(mScript, tv, argTerm);
 			offset++;
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
@@ -836,7 +836,7 @@ public class Statements2TransFormula {
 		for (final Term argTerm : argTerms) {
 			final TermVariable tv = createInVar(forkIdAuxVar[offset]);
 			mTransFormulaBuilder.addOutVar(forkIdAuxVar[offset], tv);
-			assignments[offset] = mScript.term("=", tv, argTerm);
+			assignments[offset] = SmtUtils.binaryEquality(mScript, tv, argTerm);
 			offset++;
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
@@ -871,7 +871,7 @@ public class Statements2TransFormula {
 				final TermVariable callLhsTv = mBoogie2SMT.getManagedScript().constructFreshTermVariable(
 						callLhsBv.getGloballyUniqueId(), callLhsBv.getTermVariable().getSort());
 				mTransFormulaBuilder.addOutVar(callLhsBv, callLhsTv);
-				assignments[offset] = mScript.term("=", callLhsTv, outParamTv);
+				assignments[offset] = SmtUtils.binaryEquality(mScript, callLhsTv, outParamTv);
 				offset++;
 			}
 		}
@@ -902,7 +902,7 @@ public class Statements2TransFormula {
 				final TermVariable callLhsTv = mBoogie2SMT.getManagedScript().constructFreshTermVariable(
 						callLhsBv.getGloballyUniqueId(), callLhsBv.getTermVariable().getSort());
 				mTransFormulaBuilder.addOutVar(callLhsBv, callLhsTv);
-				assignments[offset] = mScript.term("=", callLhsTv, outParamTv);
+				assignments[offset] = SmtUtils.binaryEquality(mScript, callLhsTv, outParamTv);
 				offset++;
 			}
 		}

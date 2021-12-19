@@ -170,7 +170,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		Term result;
 		switch (relationSymbol) {
 		case DISTINCT:
-			final Term eq = script.term("=", lhsTerm, rhsTerm);
+			final Term eq = SmtUtils.binaryEquality(script, lhsTerm, rhsTerm);
 			result = script.term("not", eq);
 			break;
 		case EQ:

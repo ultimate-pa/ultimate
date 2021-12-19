@@ -216,7 +216,7 @@ public class ElimStore3 {
 				}
 				final Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
 				Term auxTerm = Substitution.apply(mMgdScript, auxMap, term);
-				final Term auxVarDef = mScript.term("=", auxArray, store.getStoreTerm());
+				final Term auxVarDef = SmtUtils.binaryEquality(mScript, auxArray, store.getStoreTerm());
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					auxTerm = SmtUtils.and(mScript, auxTerm, auxVarDef);
 				} else {
@@ -281,7 +281,7 @@ public class ElimStore3 {
 				// a_heir == store(a_elim, idx_write, data)
 				// construct term a_heir[idx_write] == data
 				Term writtenCellHasNewValue;
-				writtenCellHasNewValue = mScript.term("=",
+				writtenCellHasNewValue = SmtUtils.binaryEquality(mScript,
 						SmtUtils.multiDimensionalSelect(mScript, a_heir, idx_writeRenamed), dataRenamed);
 				assert !Arrays.asList(writtenCellHasNewValue.getFreeVars()).contains(
 						eliminatee) : "var is still there - maybe you have to switch off the flattening of multi-dimensional arrays";

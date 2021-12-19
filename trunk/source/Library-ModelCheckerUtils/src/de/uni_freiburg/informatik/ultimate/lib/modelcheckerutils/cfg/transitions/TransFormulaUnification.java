@@ -243,7 +243,7 @@ public class TransFormulaUnification {
 				final TermVariable termOutVar = mOutVars.get(pv);
 				assert termOutVar != null;
 
-				equalities.add(mMgdScript.getScript().term("=", termInVar, termOutVar));
+				equalities.add(SmtUtils.binaryEquality(mMgdScript.getScript(), termInVar, termOutVar));
 			}
 		}
 		return SmtUtils.and(mMgdScript.getScript(), equalities);

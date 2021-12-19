@@ -415,7 +415,7 @@ public class TransFormulaBuilder {
 				tfb.addInVar(pv, freshTv);
 			}
 			final Term renamedRightHandSide = Substitution.apply(mgdScript, substitutionMapping, rhs.get(i));
-			conjuncts.add(mgdScript.getScript().term("=", freshTv, renamedRightHandSide));
+			conjuncts.add(SmtUtils.binaryEquality(mgdScript.getScript(), freshTv, renamedRightHandSide));
 		}
 
 		final Term conjunction = SmtUtils.and(mgdScript.getScript(), conjuncts);
@@ -450,7 +450,7 @@ public class TransFormulaBuilder {
 				tfb.addOutVar(r, rFreshTv);
 			}
 			tfb.addOutVar(l, lFreshTv);
-			conjuncts.add(mgdScript.getScript().term("=", lFreshTv, rFreshTv));
+			conjuncts.add(SmtUtils.binaryEquality(mgdScript.getScript(), lFreshTv, rFreshTv));
 		}
 
 		final Term conjunction = SmtUtils.and(mgdScript.getScript(), conjuncts);
