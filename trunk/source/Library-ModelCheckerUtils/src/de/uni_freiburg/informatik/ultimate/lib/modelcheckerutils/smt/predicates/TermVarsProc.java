@@ -26,20 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -104,53 +96,4 @@ public class TermVarsProc {
 		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, script);
 		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
 	}
-
-	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
-	 * variables and the procedures of these BoogieVariables. If replaceNonModifiableOldVars is true, modifiableGlobals
-	 * must be non-null and we check we replace the oldVars of all non-modifiable Globals by their corresponding
-	 * non-oldVars.
-	 *
-	 * 2015-05-27 Matthias: At the moment, I don't know if we need this method. Don't use it unless you know what you
-	 * do.
-	 */
-	@Deprecated
-	private static TermVarsProc computeTermVarsProc(Term term, final Boogie2SMT boogie2smt,
-			final boolean replaceNonModifiableOldVars, final Set<IProgramVar> modifiableGlobals) {
-		final HashSet<IProgramVar> vars = new HashSet<>();
-		final List<IProgramOldVar> oldVarsThatHaveToBeReplaced = new ArrayList<>();
-		final Set<String> procs = new HashSet<>();
-		for (final TermVariable tv : term.getFreeVars()) {
-			IProgramVar bv = boogie2smt.getBoogie2SmtSymbolTable().getProgramVar(tv);
-			if (bv == null) {
-				throw new AssertionError("No corresponding IProgramVar for " + tv);
-			}
-			if (replaceNonModifiableOldVars) {
-				if (bv instanceof IProgramOldVar) {
-					final IProgramNonOldVar nonOld = ((IProgramOldVar) bv).getNonOldVar();
-					if (modifiableGlobals.contains(nonOld)) {
-						// do nothing - is modifiable
-					} else {
-						oldVarsThatHaveToBeReplaced.add((IProgramOldVar) bv);
-						bv = nonOld;
-					}
-				}
-			}
-			vars.add(bv);
-			if (bv.getProcedure() != null) {
-				procs.add(bv.getProcedure());
-			}
-		}
-		if (!oldVarsThatHaveToBeReplaced.isEmpty()) {
-			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (final IProgramOldVar oldVar : oldVarsThatHaveToBeReplaced) {
-				final IProgramNonOldVar nonOld = oldVar.getNonOldVar();
-				substitutionMapping.put(oldVar.getTermVariable(), nonOld.getTermVariable());
-			}
-			term = new Substitution(boogie2smt.getScript(), substitutionMapping).transform(term);
-		}
-		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
-		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
-	}
-
 }
