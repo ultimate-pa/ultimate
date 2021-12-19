@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -49,7 +49,7 @@ public class SkolemNormalForm  {
 
 		mMgdScript.lock(this);
 
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), inputFormula);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, inputFormula);
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
@@ -85,7 +85,7 @@ public class SkolemNormalForm  {
 			}
 		}
 
-		final Term newInnerTerm = new PureSubstitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
+		final Term newInnerTerm = Substitution.apply(mMgdScript, substitutionMapping, qs.getInnerTerm());
 
 		if (universalQuantifiersInScope.getVariables().isEmpty()) {
 			mResult = newInnerTerm;

@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -73,7 +73,7 @@ public class HornClauseHead {
 
 	/***
 	 * Add literal to the cobody.
-	 * 
+	 *
 	 * @param literal
 	 */
 	public void addPredicateToBody(final ApplicationTerm literal) {
@@ -82,7 +82,7 @@ public class HornClauseHead {
 
 	/***
 	 * Convert the body to a HornClause.
-	 * 
+	 *
 	 * @param solverScript
 	 * @param symbolTable
 	 * @return
@@ -147,7 +147,7 @@ public class HornClauseHead {
 			}
 
 			// note: it does not seem to matter much, which script we pass here
-			mHead = (ApplicationTerm) new PureSubstitution(solverScript, subs).transform(mHead);
+			mHead = (ApplicationTerm) Substitution.apply(solverScript, subs, mHead);
 
 		}
 		// normalize (co)body variables
@@ -170,7 +170,7 @@ public class HornClauseHead {
 
 	/***
 	 * Set the head literal of the body.
-	 * 
+	 *
 	 * @param literal
 	 * @return
 	 */
@@ -188,7 +188,7 @@ public class HornClauseHead {
 
 	/***
 	 * Add the transition formula to the cobody (can be called several times).
-	 * 
+	 *
 	 * @param formula
 	 */
 	public void addTransitionFormula(final Term formula) {
@@ -202,7 +202,7 @@ public class HornClauseHead {
 
 	/***
 	 * Get the transition formula.
-	 * 
+	 *
 	 * @param script
 	 * @return
 	 */

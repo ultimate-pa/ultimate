@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbolFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
@@ -515,7 +515,7 @@ public class MapEliminator {
 						getReplacementVar(functionCall, transformula, mScript, mReplacementVarFactory, mAuxVars));
 			}
 		}
-		return new PureSubstitution(mManagedScript, substitution).transform(term);
+		return Substitution.apply(mManagedScript, substitution, term);
 	}
 
 	/**
@@ -551,8 +551,7 @@ public class MapEliminator {
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(newTerm)));
 		conjuncts.addAll(auxVarEqualities);
-		final PureSubstitution substitution = new PureSubstitution(mManagedScript, substitutionMap);
-		return substitution.transform(substitution.transform(SmtUtils.and(mScript, conjuncts)));
+		return Substitution.apply(mManagedScript, substitutionMap, SmtUtils.and(mScript, conjuncts));
 	}
 
 	/**
@@ -570,7 +569,7 @@ public class MapEliminator {
 				}
 			}
 		}
-		return new PureSubstitution(mManagedScript, substitutionMap).transform(term);
+		return Substitution.apply(mManagedScript, substitutionMap, term);
 	}
 
 	/**

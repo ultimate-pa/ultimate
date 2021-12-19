@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -125,7 +124,7 @@ public final class TraceAbstractionUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = new PureSubstitution(mgdScript, substitutionMapping).transform(ps.getFormula());
+		Term renamedFormula = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
 		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
 		return result;
@@ -145,8 +144,7 @@ public final class TraceAbstractionUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		final Term result =
-				new Substitution(mgdScript, substitutionMapping).transform(ps.getFormula());
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		return result;
 	}
 

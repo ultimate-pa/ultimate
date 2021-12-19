@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -458,7 +458,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			Term term = tf.getFormula();
 			term = iteratedSymbolicMemory.getSymbolicMemory(i).replaceTermVars(term, null);
 			term = iteratedSymbolicMemory.replaceTermVars(term, tf.getInVars());
-			term = new PureSubstitution(mScript, substitutionMapping).transform(term);
+			term = Substitution.apply(mScript, substitutionMapping, term);
 
 			final List<TermVariable> quantifiers = new ArrayList<>();
 			for (int j = 0; j < numLoops; j++) {

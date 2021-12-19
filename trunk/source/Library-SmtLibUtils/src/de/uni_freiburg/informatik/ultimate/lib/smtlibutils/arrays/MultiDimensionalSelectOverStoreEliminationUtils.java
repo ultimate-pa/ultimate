@@ -53,18 +53,17 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 		switch (indexEquality) {
 		case EQUAL:
 			substitutionMapping = Collections.singletonMap(mdsos.toTerm(), mdsos.constructEqualsReplacement());
-			result = new Substitution(mgdScript, substitutionMapping).transform(term);
+			result = Substitution.apply(mgdScript, substitutionMapping, term);
 			break;
 		case NOT_EQUAL:
 			substitutionMapping = Collections.singletonMap(mdsos.toTerm(),
 					mdsos.constructNotEqualsReplacement(mgdScript.getScript()));
-			result = new Substitution(mgdScript, substitutionMapping).transform(term);
+			result = Substitution.apply(mgdScript, substitutionMapping, term);
 			break;
 		case UNKNOWN:
 			substitutionMapping = Collections.singletonMap(mdsos.toTerm(), ArrayQuantifierEliminationUtils
 					.transformMultiDimensionalSelectOverStoreToIte(mdsos, mgdScript, aiem));
-			final Term resultWithIte = new Substitution(mgdScript, substitutionMapping)
-					.transform(term);
+			final Term resultWithIte = Substitution.apply(mgdScript, substitutionMapping, term);
 			result = new IteRemover(mgdScript).transform(resultWithIte);
 			break;
 		default:
@@ -80,8 +79,7 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 		final Map<Term, Term> substitutionMapping = Collections.singletonMap(mdsos.toTerm(),
 				ArrayQuantifierEliminationUtils.transformMultiDimensionalSelectOverNestedStoreToIte(mdsos, mgdScript,
 						aiem));
-		final Term resultWithIte = new Substitution(mgdScript, substitutionMapping)
-				.transform(term);
+		final Term resultWithIte = Substitution.apply(mgdScript, substitutionMapping, term);
 		final Term result = new IteRemover(mgdScript).transform(resultWithIte);
 		return result;
 	}

@@ -838,14 +838,6 @@ public final class SmtUtils {
 		return SmtUtils.binaryEquality(script, select, value);
 	}
 
-	public static List<Term> substitutionElementwise(final List<Term> subtituents, final PureSubstitution subst) {
-		final List<Term> result = new ArrayList<>();
-		for (int i = 0; i < subtituents.size(); i++) {
-			result.add(subst.transform(subtituents.get(i)));
-		}
-		return result;
-	}
-
 	/**
 	 * Removes vertical bars from a String. In SMT-LIB identifiers can be quoted using | (vertical bar) and vertical
 	 * bars must not be nested.
@@ -2112,7 +2104,7 @@ public final class SmtUtils {
 			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = new PureSubstitution(mgdScript, substitutionMapping).transform(qFormula.getSubformula());
+		final Term newBody = Substitution.apply(mgdScript, substitutionMapping, qFormula.getSubformula());
 
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
 		for (int i = 0; i < vars.length; i++) {

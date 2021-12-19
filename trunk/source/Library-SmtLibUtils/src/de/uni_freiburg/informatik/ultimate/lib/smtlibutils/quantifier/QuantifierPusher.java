@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimp
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DerScout.DerApplicability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionQuantifierElimination.EliminationResult;
@@ -572,8 +572,8 @@ public class QuantifierPusher extends TermTransformer {
 					if (substitutionMapping.isEmpty()) {
 						resultSubformula = innerQuantifiedFormula.getSubformula();
 					} else {
-						resultSubformula = new PureSubstitution(mgdScript, substitutionMapping)
-								.transform(innerQuantifiedFormula.getSubformula());
+						resultSubformula = Substitution.apply(mgdScript, substitutionMapping,
+								innerQuantifiedFormula.getSubformula());
 					}
 					resultDualJuncts.add(resultSubformula);
 				}

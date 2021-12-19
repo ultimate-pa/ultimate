@@ -79,8 +79,7 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 	@Override
 	public Term renameVariables(final Map<Term, Term> substitutionForTransFormula, final Term constraint) {
-		final Term renamedTransFormula =
-				new Substitution(mMgdScript, substitutionForTransFormula).transform(constraint);
+		final Term renamedTransFormula = Substitution.apply(mMgdScript, substitutionForTransFormula, constraint);
 		return renamedTransFormula;
 	}
 

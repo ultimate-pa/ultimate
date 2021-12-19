@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -148,7 +148,7 @@ public class TransFormulaBuilder {
 			addAuxVar(newAuxVar);
 			substitutionMapping.put(auxVar, newAuxVar);
 		}
-		mFormula = new PureSubstitution(script, substitutionMapping).transform(mFormula);
+		mFormula = Substitution.apply(script, substitutionMapping, mFormula);
 	}
 
 	public boolean removeAuxVar(final TermVariable arg0) {
@@ -353,7 +353,7 @@ public class TransFormulaBuilder {
 			tfb.addInVar(bv, freshTv);
 			tfb.addOutVar(bv, freshTv);
 		}
-		tfb.setFormula(new PureSubstitution(script.getScript(), substitutionMapping).transform(term));
+		tfb.setFormula(Substitution.apply(script, substitutionMapping, term));
 		tfb.setInfeasibility(SmtUtils.isFalseLiteral(term) ? Infeasibility.INFEASIBLE : Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(script);
 	}
@@ -389,7 +389,7 @@ public class TransFormulaBuilder {
 				throw new UnsupportedOperationException("constants not yet supported");
 			}
 
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rhs.get(i), mgdScript.getScript(), symbolTable);
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rhs.get(i), mgdScript, symbolTable);
 			rhsPvs.addAll(tvp.getVars());
 		}
 
@@ -405,7 +405,6 @@ public class TransFormulaBuilder {
 		}
 
 		final List<Term> conjuncts = new ArrayList<>();
-		final PureSubstitution subst = new PureSubstitution(mgdScript.getScript(), substitutionMapping);
 		for (int i = 0; i < lhs.size(); i++) {
 			final IProgramVar pv = lhs.get(i);
 			final TermVariable freshTv =
@@ -415,7 +414,7 @@ public class TransFormulaBuilder {
 			if (lhsAreAlsoInVars) {
 				tfb.addInVar(pv, freshTv);
 			}
-			final Term renamedRightHandSide = subst.transform(rhs.get(i));
+			final Term renamedRightHandSide = Substitution.apply(mgdScript, substitutionMapping, rhs.get(i));
 			conjuncts.add(mgdScript.getScript().term("=", freshTv, renamedRightHandSide));
 		}
 
@@ -589,7 +588,7 @@ public class TransFormulaBuilder {
 		} else {
 			infeasibility = Infeasibility.NOT_DETERMINED;
 		}
-		final Term newFormula = new PureSubstitution(script, substitutionMapping).transform(tf.getFormula());
+		final Term newFormula = Substitution.apply(script, substitutionMapping, tf.getFormula());
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, newOutVars,
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
 				branchEncoders.isEmpty(), branchEncoders.isEmpty() ? null : branchEncoders, false);

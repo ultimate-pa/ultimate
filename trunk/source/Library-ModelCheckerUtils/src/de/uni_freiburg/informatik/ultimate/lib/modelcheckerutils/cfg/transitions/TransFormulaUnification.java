@@ -216,8 +216,7 @@ public class TransFormulaUnification {
 	 * @return A term for the unified transition formula.
 	 */
 	private Term computeUnifiedFormula(final UnmodifiableTransFormula tf, final Map<Term, Term> substitution) {
-		final Term renamedFormula =
-				new Substitution(mMgdScript, substitution).transform(tf.getFormula());
+		final Term renamedFormula = Substitution.apply(mMgdScript, substitution, tf.getFormula());
 		final Term equalities = generateExplicitEqualities(tf);
 		return SmtUtils.and(mMgdScript.getScript(), renamedFormula, equalities);
 	}

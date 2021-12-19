@@ -575,13 +575,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				}
 
 
-				final Term tempTfTerm = new Substitution(mMgdScript, newSubst)
-						.transform(atMostOneStore);
+				final Term tempTfTerm = Substitution.apply(mMgdScript, newSubst, atMostOneStore);
 
 				addendum.add(tempTfTerm);
 
-				final Term newTfTerm = new Substitution(mMgdScript, subst)
-						.transform(SmtUtils.and(script, addendum));
+				final Term newTfTerm = Substitution.apply(mMgdScript, subst, SmtUtils.and(script, addendum));
 
 				Term finalTfTerm = newTfTerm;
 
@@ -700,13 +698,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					}
 
 
-					final Term tempTfTerm2 = new Substitution(mMgdScript, newSubst2)
-							.transform(iterDnf);
+					final Term tempTfTerm2 = Substitution.apply(mMgdScript, newSubst2, iterDnf);
 
 					iterAdd.add(tempTfTerm2);
 
-					finalTfTerm = new Substitution(mMgdScript, iterSubst)
-							.transform(SmtUtils.and(script, iterAdd));
+					finalTfTerm = Substitution.apply(mMgdScript, iterSubst, SmtUtils.and(script, iterAdd));
 
 
 

@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -74,8 +74,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 	@Override
 	public final EqNode renameVariables(final Map<Term, Term> substitutionMapping) {
-		final Term substitutedTerm =
-				new PureSubstitution(mEqNodeFactory.getScript(), substitutionMapping).transform(getTerm());
+		final Term substitutedTerm = Substitution.apply(mEqNodeFactory.getScript(), substitutionMapping, getTerm());
 		return mEqNodeFactory.getOrConstructNode(substitutedTerm);
 	}
 

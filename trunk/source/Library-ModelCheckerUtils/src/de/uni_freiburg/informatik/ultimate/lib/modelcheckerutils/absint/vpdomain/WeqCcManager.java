@@ -41,7 +41,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -891,14 +891,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			subsMap.put(fv, cons);
 		}
 
-		final PureSubstitution substitution = new PureSubstitution(mMgdScript, subsMap);
-
 		/*
 		 * check the implication
 		 */
-		mMgdScript.assertTerm(this, substitution.transform(ante));
+		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, subsMap,ante));
 
-		mMgdScript.assertTerm(this, SmtUtils.not(script, substitution.transform(succ)));
+		mMgdScript.assertTerm(this, SmtUtils.not(script, Substitution.apply(mMgdScript, subsMap, succ)));
 
 		final LBool satResult = mMgdScript.checkSat(this);
 

@@ -86,17 +86,6 @@ public class PredicateUtils {
 	}
 
 	public static Term computeClosedFormula(final Term formula, final Set<IProgramVar> boogieVars,
-			final Script script) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar bv : boogieVars) {
-			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
-		}
-		final Term closedTerm = (new PureSubstitution(script, substitutionMapping)).transform(formula);
-		assert closedTerm.getFreeVars().length == 0;
-		return closedTerm;
-	}
-
-	public static Term computeClosedFormula(final Term formula, final Set<IProgramVar> boogieVars,
 			final ManagedScript mgdScript) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : boogieVars) {

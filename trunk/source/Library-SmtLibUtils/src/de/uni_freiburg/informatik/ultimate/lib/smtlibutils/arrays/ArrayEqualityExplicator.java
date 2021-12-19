@@ -72,7 +72,7 @@ public class ArrayEqualityExplicator {
 					ber.getRhs(), newAuxVars);
 			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), elementwiseComparison);
 		}
-		mResultTerm = new Substitution(mgdScript, substitutionMapping).transform(inputTerm);
+		mResultTerm = Substitution.apply(mgdScript, substitutionMapping, inputTerm);
 		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm, "and", "or",
 				"=") : "input not in commuhash normal form";
 		if (mResultTerm.equals(inputTerm)) {

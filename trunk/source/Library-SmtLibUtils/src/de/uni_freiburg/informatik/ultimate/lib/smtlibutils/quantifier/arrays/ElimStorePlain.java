@@ -491,7 +491,7 @@ public class ElimStorePlain {
 								} else {
 									effectiveIndex2 = index2;
 								}
-								final Term replaced = new Substitution(mMgdScript, substitutionMapping).transform(eTask.getTerm());
+								final Term replaced = Substitution.apply(mMgdScript, substitutionMapping, eTask.getTerm());
 								effectiveTerm = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
 										eTask.getQuantifier(), replaced, QuantifierUtils.applyDualFiniteConnective(
 												mMgdScript.getScript(), eTask.getQuantifier(), definitions));
@@ -728,7 +728,7 @@ public class ElimStorePlain {
 				SimplificationTechnique.SIMPLIFY_DDA, quantified);
 
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
-		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
+		final QuantifierSequence qs = new QuantifierSequence(mgdScript, pnf);
 		final Term matrix = qs.getInnerTerm();
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 

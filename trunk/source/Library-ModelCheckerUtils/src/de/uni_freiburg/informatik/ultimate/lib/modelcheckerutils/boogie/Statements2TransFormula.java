@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
@@ -671,7 +671,7 @@ public class Statements2TransFormula {
 	private Term skolemize(final Term input, final Set<TermVariable> auxVars) {
 		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(input);
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(nnf);
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 		Term result;
 		if (qvs.isEmpty() || qvs.get(0).getQuantifier() == QuantifiedFormula.FORALL) {
@@ -687,7 +687,7 @@ public class Statements2TransFormula {
 				substitutionMapping.put(tv, newTv);
 				auxVars.add(newTv);
 			}
-			result = new PureSubstitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
+			result = Substitution.apply(mMgdScript, substitutionMapping, qs.getInnerTerm());
 		}
 		return result;
 	}

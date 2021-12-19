@@ -1175,10 +1175,10 @@ public class QvasrAbstractor {
 		/*
 		 * Transform the updates to variables to real sort.
 		 */
-		final Substitution subTv = new Substitution(mScript, realTvs);
+
 		for (final Entry<IProgramVar, Term> update : updates.entrySet()) {
 			final Term intUpdate = update.getValue();
-			final Term realUpdate = subTv.transform(intUpdate);
+			final Term realUpdate = Substitution.apply(mScript, realTvs, intUpdate);
 			realUpdates.put(update.getKey(), realUpdate);
 		}
 		for (final Entry<IProgramVar, Term> varUpdate : realUpdates.entrySet()) {
@@ -1189,9 +1189,7 @@ public class QvasrAbstractor {
 			if (isApplicationTerm(varUpdateTerm)) {
 				final ApplicationTerm varUpdateAppterm = (ApplicationTerm) varUpdateTerm;
 				subMappingTerm.putAll(appTermToReal(varUpdateAppterm));
-				final Substitution subTerm =
-						new Substitution(mScript, subMappingTerm);
-				realTerm = subTerm.transform(varUpdateAppterm);
+				realTerm = Substitution.apply(mScript, subMappingTerm, varUpdateAppterm);
 			} else if (varUpdateTerm instanceof ConstantTerm) {
 				final Rational value = SmtUtils.toRational((ConstantTerm) varUpdateTerm);
 				realTerm = value.toTerm(SmtSortUtils.getRealSort(mScript));
@@ -1285,12 +1283,8 @@ public class QvasrAbstractor {
 			for (final Entry<Term, Term> update : updates.entrySet()) {
 				final Term updateTerm = update.getValue();
 				Term toBeUpdated;
-				final Substitution sub =
-						new Substitution(mScript, subMapping);
-				toBeUpdated = sub.transform(updateTerm);
-				final Substitution subReal =
-						new Substitution(mScript, intToReal);
-				final Term toBeUpdatedReal = subReal.transform(toBeUpdated);
+				toBeUpdated = Substitution.apply(mScript, subMapping, updateTerm);
+				final Term toBeUpdatedReal = Substitution.apply(mScript, intToReal, toBeUpdated);
 
 				baseMatrix[j][i] = toBeUpdatedReal;
 

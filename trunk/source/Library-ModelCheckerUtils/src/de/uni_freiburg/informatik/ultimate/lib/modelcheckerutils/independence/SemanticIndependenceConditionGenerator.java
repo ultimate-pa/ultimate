@@ -146,8 +146,7 @@ public class SemanticIndependenceConditionGenerator {
 			assert !substitution.containsKey(entry.getValue());
 			substitution.put(entry.getValue(), entry.getKey().getTermVariable());
 		}
-		final Term restoredCondition =
-				new Substitution(mMgdScript, substitution).transform(condition);
+		final Term restoredCondition = Substitution.apply(mMgdScript, substitution, condition);
 
 		// Create a predicate
 		return mFactory.newPredicate(restoredCondition);

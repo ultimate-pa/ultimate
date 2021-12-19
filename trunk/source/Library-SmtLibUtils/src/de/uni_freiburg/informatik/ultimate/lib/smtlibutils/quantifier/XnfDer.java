@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
@@ -226,9 +225,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				continue;
 			}
 			if (Arrays.asList(entry.getKey().getFreeVars()).contains(sbr.getLeftHandSide())) {
-				final PureSubstitution substitution = new Substitution(mMgdScript,
-						substitutionMapping);
-				final Term replaced = substituteAndNormalize(substitution, entry.getKey());
+				final Term replaced = substituteAndNormalize(substitutionMapping, entry.getKey());
 				assert UltimateNormalFormUtils.respectsUltimateNormalForm(replaced) : "Term not in UltimateNormalForm";
 				result.put(replaced, null);
 			} else {
@@ -314,14 +311,13 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			resultAtoms = new Term[inputAtoms.length - 1];
 			final Map<Term, Term> substitutionMapping =
 					Collections.singletonMap(eqInfo.getGivenTerm(), eqInfo.getRelatedTerm());
-			final PureSubstitution substitution = new Substitution(mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
-				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
+				resultAtoms[i] = substituteAndNormalize(substitutionMapping, inputAtoms[i]);
 				assert UltimateNormalFormUtils
 						.respectsUltimateNormalForm(resultAtoms[i]) : "Term not in UltimateNormalForm";
 			}
 			for (int i = eqInfo.getIndex() + 1; i < inputAtoms.length; i++) {
-				resultAtoms[i - 1] = substituteAndNormalize(substitution, inputAtoms[i]);
+				resultAtoms[i - 1] = substituteAndNormalize(substitutionMapping, inputAtoms[i]);
 				assert UltimateNormalFormUtils
 						.respectsUltimateNormalForm(resultAtoms[i - 1]) : "Term not in UltimateNormalForm";
 			}
@@ -332,8 +328,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	/**
 	 * Apply substitution to term and normalize afterwards if the substitution modified the term.
 	 */
-	private Term substituteAndNormalize(final PureSubstitution substitution, final Term term) {
-		Term result = substitution.transform(term);
+	private Term substituteAndNormalize(final Map<Term, Term> substitutionMapping, final Term term) {
+		Term result = Substitution.apply(mMgdScript, substitutionMapping, term);
 		if (term != result) {
 			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, result);
 			if (polyRel != null) {

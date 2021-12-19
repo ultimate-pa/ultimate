@@ -271,8 +271,8 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	public static boolean checkStemImplication(final IUltimateServiceProvider services, final ILogger logger,
 			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso,
 			final IIcfgSymbolTable boogie2smt, final ManagedScript script) {
-		final LBool implies = ModifiableTransFormulaUtils.implies(services, logger, oldLasso.getStem(), newLasso.getStem(),
-				script.getScript(), boogie2smt);
+		final LBool implies = ModifiableTransFormulaUtils.implies(services, logger, oldLasso.getStem(),
+				newLasso.getStem(), script, boogie2smt);
 		if (implies != LBool.SAT && implies != LBool.UNSAT) {
 			logger.warn("result of RewriteArrays check is " + implies);
 		}

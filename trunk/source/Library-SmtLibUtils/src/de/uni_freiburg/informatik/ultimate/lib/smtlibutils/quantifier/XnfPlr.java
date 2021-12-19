@@ -121,11 +121,9 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 		// TODO: why does removing variables in DER work, but not here?
 		// eliminatees.removeAll(substitutionMapping.keySet());
 
-		final Substitution subst =
-				new Substitution(mMgdScript, substitutionMapping);
 		final Term[] rtr = dualJuncts.clone();
 		for (int i = 0; i < dualJuncts.length; ++i) {
-			rtr[i] = subst.transform(dualJuncts[i]);
+			rtr[i] = Substitution.apply(mMgdScript, substitutionMapping, dualJuncts[i]);
 		}
 		return rtr;
 	}

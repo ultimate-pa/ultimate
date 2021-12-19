@@ -98,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -685,7 +685,7 @@ public class PathProgramDumper {
 		}
 		final Map<TermVariable, TermVariable> substitutionMapping = TransFormulaUtils
 				.constructInvarsToDefaultvarsMap(guardTf);
-		return new PureSubstitution(mgdScript, substitutionMapping).transform(guardTf.getFormula());
+		return Substitution.apply(mgdScript, substitutionMapping, guardTf.getFormula());
 	}
 
 

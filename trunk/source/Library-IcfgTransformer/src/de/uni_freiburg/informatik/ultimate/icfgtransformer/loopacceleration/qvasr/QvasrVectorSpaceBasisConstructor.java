@@ -39,7 +39,6 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -147,14 +146,13 @@ public class QvasrVectorSpaceBasisConstructor {
 					subMap.put(var, var);
 				}
 			}
-			final PureSubstitution sub = new PureSubstitution(script, subMap);
 			final Term[] vector = new Term[basisVectors[0].length];
 			for (final Entry<Term, List<Term>> solution : equations.entrySet()) {
 				final Term tv = solution.getKey();
 				final int position = columnsForTvs.get(tv);
 				final List<Term> summands = new ArrayList<>();
 				for (final Term equation : solution.getValue()) {
-					final Term equationUpdated = sub.transform(equation);
+					final Term equationUpdated = Substitution.apply(script, subMap, equation);
 					summands.add(equationUpdated);
 				}
 				Term sum;
@@ -178,13 +176,11 @@ public class QvasrVectorSpaceBasisConstructor {
 		}
 
 		final List<Term[]> assignedBasisVectors = new ArrayList<>();
-		final Substitution subAssignments =
-				new Substitution(script, assignments);
 		for (final Term[] vector : vectors) {
 			final Term[] vectorAssigned = new Term[vector.length];
 			for (int i = 0; i < vector.length; i++) {
 				final Term entry = vector[i];
-				final Term assigned = subAssignments.transform(entry);
+				final Term assigned = Substitution.apply(script, assignments, entry);
 				vectorAssigned[i] = assigned;
 			}
 			assignedBasisVectors.add(vectorAssigned);

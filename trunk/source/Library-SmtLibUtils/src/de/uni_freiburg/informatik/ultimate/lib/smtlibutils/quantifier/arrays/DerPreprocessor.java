@@ -149,8 +149,7 @@ public class DerPreprocessor extends TermTransformer {
 					eliminatee, quantifier, airc, aiem);
 			mIntroducedDerPossibility = false;
 		}
-		final Term inputReplacement = new Substitution(mgdScript, substitutionMapping)
-				.transform(input);
+		final Term inputReplacement = Substitution.apply(mgdScript, substitutionMapping, input);
 		final Term allAuxVarDefs = airc.constructDefinitions(mgdScript.getScript(), quantifier);
 		mNewAuxVars = new ArrayList<>(airc.getConstructedAuxVars());
 		mResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, inputReplacement,

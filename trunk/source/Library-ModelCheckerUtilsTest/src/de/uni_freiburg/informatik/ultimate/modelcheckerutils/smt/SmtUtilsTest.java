@@ -98,9 +98,7 @@ public class SmtUtilsTest {
 		final Term input = TermParseUtils.parseTerm(mScript,
 				"(and (<= A E) (or (and (= C 2) (<= D E) (<= B D) (not (= A D))) (= C 1) (and (<= C 1) (not (= C 2)) (not (= C 1)) (= C 3))))");
 
-		final Substitution swls =
-				new Substitution(mMgdScript, substitutionMapping);
-		final Term result = swls.transform(input);
+		final Term result = Substitution.apply(mMgdScript, substitutionMapping, input);
 		final LBool isDistinct = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", mTrue, result));
 		final boolean isEqualToTrue = result.equals(mTrue);
 
@@ -130,9 +128,7 @@ public class SmtUtilsTest {
 
 		final Term input = TermParseUtils.parseTerm(mScript, "(= A B)");
 
-		final Substitution swls =
-				new Substitution(mMgdScript, substitutionMapping);
-		final Term result = swls.transform(input);
+		final Term result = Substitution.apply(mMgdScript, substitutionMapping, input);
 		final LBool isDistinct = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", mFalse, result));
 		final boolean isEqualToFalse = result.equals(mFalse);
 

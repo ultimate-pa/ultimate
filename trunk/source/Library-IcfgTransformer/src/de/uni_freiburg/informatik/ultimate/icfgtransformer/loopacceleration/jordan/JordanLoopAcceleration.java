@@ -48,12 +48,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -415,7 +415,7 @@ public class JordanLoopAcceleration {
 			} else {
 				sum = mgdScript.getScript().term("+", Arrays.copyOfRange(summands, 0, current));
 			}
-			sum = new Substitution(mgdScript, substitutionMapping).transform(sum);
+			sum = Substitution.apply(mgdScript, substitutionMapping, sum);
 			closedForm.put(iVar, sum);
 		}
 		return closedForm;
@@ -1026,8 +1026,7 @@ public class JordanLoopAcceleration {
 		} else {
 			substitutionMapping1.put(it, (ConstantTerm) script.numeral(BigInteger.ZERO));
 		}
-		final PureSubstitution subst1 = new PureSubstitution(script, substitutionMapping1);
-		final Term guardOfClosedForm1 = subst1.transform(guardOfClosedFormOdd);
+		final Term guardOfClosedForm1 = Substitution.apply(mgdScript, substitutionMapping1, guardOfClosedFormOdd);
 		final Term notGuardOfClosedForm1 = Util.not(script, guardOfClosedForm1);
 
 		if (Util.checkSat(script, Util.and(script, loopTransFormula.getFormula(), notGuardOfClosedForm1,
@@ -1057,8 +1056,8 @@ public class JordanLoopAcceleration {
 			substitutionMappingSc.put(sequentialComposition.getOutVars().get(iVar),
 					loopTransFormula.getOutVars().get(iVar));
 		}
-		final PureSubstitution substSc = new PureSubstitution(script, substitutionMappingSc);
-		final Term sequentialCompositionSubst = substSc.transform(sequentialComposition.getFormula());
+		final Term sequentialCompositionSubst = Substitution.apply(mgdScript, substitutionMappingSc,
+				sequentialComposition.getFormula());
 		final Map<TermVariable, ConstantTerm> substitutionMapping2 = new HashMap<>();
 		if (restrictedVersion) {
 			substitutionMapping2.put(it, (ConstantTerm) script.numeral(BigInteger.TWO));

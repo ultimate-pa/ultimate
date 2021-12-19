@@ -81,10 +81,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -462,15 +463,13 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						normalizedTf = normalizeTerm(predTF);
 						final Map<Term, Term> subMap = convertEqualToMap(normalizedAssOfCall.getFormula(), true);
 
-						final PureSubstitution subCall = new PureSubstitution(mScript, subMap);
-						Term normalizedtfTerm = subCall.transform(normalizedTf.getFormula());
+						Term normalizedtfTerm = Substitution.apply(mScript, subMap, normalizedTf.getFormula());
 
 						subMap.putAll(convertEqualToMap(normalizedAssOfRet.getFormula(), false));
-						final PureSubstitution subRet = new PureSubstitution(mScript, subMap);
 						final TransFormulaBuilder builder = new TransFormulaBuilder(normalizedAssOfCall.getInVars(),
 								normalizedAssOfRet.getOutVars(), true, Collections.emptySet(), true,
 								Collections.emptyList(), true);
-						normalizedtfTerm = subRet.transform(normalizedtfTerm);
+						normalizedtfTerm = Substitution.apply(mScript, subMap, normalizedtfTerm);
 						builder.setFormula(normalizedtfTerm);
 						builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 						normalizedTf = builder.finishConstruction(mScript);
@@ -604,8 +603,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 							substitutionMappingPrePred.put(outVars.getValue(), outVars.getKey().getTermVariable());
 						}
 
-						final PureSubstitution sub = new PureSubstitution(mScript, substitutionMappingPrePred);
-						final Term newOldies = sub.transform(oldies.getFormula());
+						final Term newOldies = Substitution.apply(mScript, substitutionMappingPrePred, oldies.getFormula());
 						final IPredicate oldiePred = mLocalPredicateUnifier.getOrConstructPredicate(newOldies);
 					}
 
@@ -811,10 +809,10 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			}
 		}
 
-		final Term transformedPrePred =
-				new PureSubstitution(mScript, substitutionMappingPrePred).transform(prePred.getClosedFormula());
+		final Term transformedPrePred = Substitution.apply(mScript, substitutionMappingPrePred,
+				prePred.getClosedFormula());
 
-		Term transformedTrans = new PureSubstitution(mScript, substitutionMappingTrans).transform(frameAndTrans);
+		Term transformedTrans = Substitution.apply(mScript, substitutionMappingTrans, frameAndTrans);
 		transformedTrans = SmtUtils.and(mScript.getScript(), transformedTrans, equalities);
 
 		final Pair<LBool, Term> interpolPair =
@@ -831,8 +829,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		}
 
 		// unprime
-		final Term transformedInterpolant =
-				new PureSubstitution(mScript, reverseMappingPrePred).transform(interpolPair.getSecond());
+		final Term transformedInterpolant = Substitution.apply(mScript, reverseMappingPrePred,
+				interpolPair.getSecond());
 
 		final IPredicate interpolatedPreCondition =
 				mLocalPredicateUnifier.getOrConstructPredicate(transformedInterpolant);
@@ -1080,8 +1078,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			subMap.put(inVar.getValue(), inVar.getKey().getTermVariable());
 			inVars.put(inVar.getKey(), inVar.getKey().getTermVariable());
 		}
-		final PureSubstitution sub = new PureSubstitution(mScript, subMap);
-		final Term newTerm = sub.transform(tTerm);
+		final Term newTerm = Substitution.apply(mScript, subMap, tTerm);
 		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, Collections.emptySet(), true,
 				Collections.emptySet(), true);
 		builder.setFormula(newTerm);

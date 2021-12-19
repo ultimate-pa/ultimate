@@ -193,8 +193,7 @@ public class PredicateTree<T extends IPredicate> {
 	}
 
 	private boolean goLeft(final Map<Term, Term> witness, final T predicate) {
-		final Substitution subst = new Substitution(mScript, witness);
-		final Term result = subst.transform(predicate.getClosedFormula());
+		final Term result = Substitution.apply(mScript, witness, predicate.getClosedFormula());
 		return mTrue.equals(result);
 	}
 

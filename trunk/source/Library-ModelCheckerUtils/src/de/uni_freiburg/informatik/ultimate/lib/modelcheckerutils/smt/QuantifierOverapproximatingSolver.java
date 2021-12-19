@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
@@ -120,7 +120,7 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 
 	private Term skolemizeOA(final QuantifiedFormula inputFormula) {
 
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), inputFormula);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, inputFormula);
 
 		final QuantifiedVariables qb = qs.getQuantifierBlocks().get(0);
 		Term newInnerTerm = qs.getInnerTerm();
@@ -134,7 +134,7 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 					final Term newConst = SmtUtils.termVariable2constant(mMgdScript.getScript(), ctv, true);
 					subMap.put(qtv, newConst);
 				}
-				newInnerTerm = new PureSubstitution(mMgdScript, subMap).transform(newInnerTerm);
+				newInnerTerm = Substitution.apply(mMgdScript, subMap, newInnerTerm);
 			}
 		}
 		final Term reAddQuantifiers = QuantifierSequence.prependQuantifierSequence(mMgdScript.getScript(),

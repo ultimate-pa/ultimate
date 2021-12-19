@@ -231,7 +231,7 @@ public class SmtFunctionsAndAxioms {
 				}
 				substitutionMapping.put(paramVar, newArgs[i]);
 			}
-			setResult(new Substitution(mMgdScript, substitutionMapping).transform(body));
+			setResult(Substitution.apply(mMgdScript, substitutionMapping, body));
 		}
 	}
 

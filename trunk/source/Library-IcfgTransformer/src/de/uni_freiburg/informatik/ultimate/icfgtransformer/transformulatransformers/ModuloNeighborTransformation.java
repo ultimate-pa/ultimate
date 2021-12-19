@@ -215,28 +215,28 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 				final Map<Term, Term> substitutionMapping =
 						Collections.singletonMap(someModuloTermWithConstantDivisor, constructInRangeResult(dividend));
 				final Term case1 = SmtUtils.and(script, constructInRangeBounds(script, dividend, divisor),
-						new Substitution(mgdScript, substitutionMapping).transform(term));
+						Substitution.apply(mgdScript, substitutionMapping, term));
 				cases.add(case1);
 			}
 			{
 				final Map<Term, Term> substitutionMapping = Collections.singletonMap(someModuloTermWithConstantDivisor,
 						constructLeftIntervalResult(script, dividend, divisor));
 				final Term case2 = SmtUtils.and(script, constructLeftIntervalBounds(script, dividend, divisor),
-						new Substitution(mgdScript, substitutionMapping).transform(term));
+						Substitution.apply(mgdScript, substitutionMapping, term));
 				cases.add(case2);
 			}
 			{
 				final Map<Term, Term> substitutionMapping = Collections.singletonMap(someModuloTermWithConstantDivisor,
 						constructRightIntervalResult(script, dividend, divisor));
 				final Term case3 = SmtUtils.and(script, constructRightIntervalBounds(script, dividend, divisor),
-						new Substitution(mgdScript, substitutionMapping).transform(term));
+						Substitution.apply(mgdScript, substitutionMapping, term));
 				cases.add(case3);
 			}
 			{
 				final Map<Term, Term> substitutionMapping = Collections.singletonMap(someModuloTermWithConstantDivisor,
 						constructNoNeighborIntervalResult(script, dividend, divisor));
 				final Term case4 = SmtUtils.and(script, constructNoNeighborIntervalBounds(script, dividend, divisor),
-						new Substitution(mgdScript, substitutionMapping).transform(term));
+						Substitution.apply(mgdScript, substitutionMapping, term));
 				cases.add(case4);
 			}
 			term = SmtUtils.or(script, cases);
@@ -258,7 +258,7 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 			final Term divisor = auxModTerm.getParameters()[1];
 			final Term modTerm = mgdScript.getScript().term("mod", dividend, divisor);
 			final Map<Term, Term> substitutionMapping = Collections.singletonMap(auxModTerm, modTerm);
-			term = new Substitution(mgdScript, substitutionMapping).transform(term);
+			term = Substitution.apply(mgdScript, substitutionMapping, term);
 		}
 		mgdScript.pop(this, 1);
 		mgdScript.unlock(this);

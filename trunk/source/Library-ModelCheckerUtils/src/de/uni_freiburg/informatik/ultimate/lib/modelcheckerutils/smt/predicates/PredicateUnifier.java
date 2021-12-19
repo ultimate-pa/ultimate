@@ -997,7 +997,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			final String result;
 			final Term pnf = new PrenexNormalForm(mMgdScript).transform(closedTerm);
 			if (pnf instanceof QuantifiedFormula) {
-				final QuantifierSequence qs = new QuantifierSequence(mScript, pnf);
+				final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
 				result = "quantified with " + (qs.getNumberOfQuantifierBlocks() - 1) + "quantifier alternations";
 			} else {
 				result = "quantifier-free";

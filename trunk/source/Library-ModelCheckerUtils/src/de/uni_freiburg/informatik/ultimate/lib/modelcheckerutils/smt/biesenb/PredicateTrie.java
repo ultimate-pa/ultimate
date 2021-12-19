@@ -226,8 +226,7 @@ public class PredicateTrie<T extends IPredicate> {
 	 * check if model fulfills predicate
 	 */
 	protected boolean fulfillsPredicate(final T predicate, final Map<Term, Term> witness) {
-		final Substitution subst = new Substitution(mMgdScript, witness);
-		final Term result = subst.transform(predicate.getClosedFormula());
+		final Term result = Substitution.apply(mMgdScript, witness, predicate.getClosedFormula());
 
 		if (mTruePredicate.getFormula().equals(result)) {
 			return true;

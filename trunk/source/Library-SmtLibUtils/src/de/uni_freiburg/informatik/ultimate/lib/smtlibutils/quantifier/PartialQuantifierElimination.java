@@ -161,7 +161,7 @@ public class PartialQuantifierElimination {
 		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
 				simplificationTechnique, term);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
-		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
+		final QuantifierSequence qs = new QuantifierSequence(mgdScript, pnf);
 		final Term matrix = qs.getInnerTerm();
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 		Term result = matrix;

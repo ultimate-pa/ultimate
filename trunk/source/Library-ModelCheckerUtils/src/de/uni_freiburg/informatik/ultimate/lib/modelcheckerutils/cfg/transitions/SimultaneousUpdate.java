@@ -198,7 +198,7 @@ public class SimultaneousUpdate {
 		final Term rhs = ei.getRelatedTerm();
 		final Map<Term, Term> substitutionMapping = computeSubstitutionMapping(rhs, conjuncts, outVar,
 				inVarsReverseMapping, outVarsReverseMapping, mgdScript);
-		final Term renamed = new Substitution(mgdScript, substitutionMapping).transform(rhs);
+		final Term renamed = Substitution.apply(mgdScript, substitutionMapping, rhs);
 		return renamed;
 	}
 

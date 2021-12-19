@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -280,7 +280,7 @@ public class NnfTransformer {
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}
-					final Term newBody = new PureSubstitution(mScript, substitutionMapping).transform(qf.getSubformula());
+					final Term newBody = Substitution.apply(mMgdScript, substitutionMapping, qf.getSubformula());
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"

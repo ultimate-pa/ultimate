@@ -111,8 +111,7 @@ public class EdgeList {
 			m.put(f.getOutVars().get(out), var);
 			// System.out.println(f.getInVars().get(out) + " " + m);
 		}
-		final Substitution subs = new Substitution(s, m);
-		term = subs.transform(term);
+		term = Substitution.apply(s, m, term);
 		System.out.println("term new: " + term + "\n");
 		mList.add(new EdgeListEntry(source, target, term));
 	}

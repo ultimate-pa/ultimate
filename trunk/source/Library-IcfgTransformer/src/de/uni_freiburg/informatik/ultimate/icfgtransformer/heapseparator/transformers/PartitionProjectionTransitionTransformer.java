@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.SubArra
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayCellAccess;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -59,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -246,9 +246,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 				substitutionMapping.put(eq2, mMgdScript.getScript().term("true"));
 
 			}
-			final Substitution subs =
-					new Substitution(mMgdScript, substitutionMapping);
-			transformedFormula = subs.transform(transformedFormulaRaw);
+			transformedFormula = Substitution.apply(mMgdScript, substitutionMapping, transformedFormulaRaw);
 
 			inVars = new HashMap<>(ppttf.getNewInVars());
 			// filter invars and out vars such that only those which have a TermVariable in the formula are left

@@ -32,9 +32,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -274,6 +278,16 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
+	 * Construct new array index in which the substitution defined by the given
+	 * mapping was applied to all indices.
+	 */
+	public ArrayIndex applySubstitution(final ManagedScript mgdScript, final Map<Term, Term> substitutionMapping) {
+		final ArrayIndex translatedIndex = new ArrayIndex(this.stream()
+				.map(x -> Substitution.apply(mgdScript, substitutionMapping, x)).collect(Collectors.toList()));
+		return translatedIndex;
+	}
+
+	/**
 	 * Appends to each {@link ArrayIndex} in list indices the newIndexEntries. Does
 	 * not modify existing objects but return new objects.
 	 */
@@ -285,5 +299,6 @@ public class ArrayIndex implements List<Term> {
 		}
 		return result;
 	}
+
 
 }

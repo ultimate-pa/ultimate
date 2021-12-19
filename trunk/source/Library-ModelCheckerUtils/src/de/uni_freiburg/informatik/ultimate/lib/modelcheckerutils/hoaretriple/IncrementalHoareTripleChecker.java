@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -730,7 +730,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final Set<Term> selectTerms =
 				SubTermFinder.find(tf.getFormula(), x -> isSuitableArrayReadTerm(x, inAndOutVars), false);
 		for (final Term selectTerm : selectTerms) {
-			final Term selectTermAllOut = new PureSubstitution(mManagedScript, toXVarsMap.apply(tf)).transform(selectTerm);
+			final Term selectTermAllOut = Substitution.apply(mManagedScript, toXVarsMap.apply(tf), selectTerm);
 			final Term selectTermWithDefaultVars = xVarToDefaultVar.apply(selectTermAllOut);
 			// version of the select term as is was asserted
 			final Term selectTermClosed = UnmodifiableTransFormula.computeClosedFormula(selectTermAllOut,

@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
@@ -220,8 +219,7 @@ public final class TransFormulaUtils {
 				}
 			}
 			final Term originalFormula = currentTf.getFormula();
-			final Term updatedFormula =
-					new Substitution(mgdScript, substitutionMapping).transform(originalFormula);
+			final Term updatedFormula = Substitution.apply(mgdScript, substitutionMapping, originalFormula);
 			nonTheoryConsts.addAll(currentTf.getNonTheoryConsts());
 			formula = SmtUtils.and(script, formula, updatedFormula);
 		}
@@ -851,7 +849,7 @@ public final class TransFormulaUtils {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		final Term term = new PureSubstitution(mgdScript, substitutionMapping).transform(tf.getFormula());
+		final Term term = Substitution.apply(mgdScript, substitutionMapping, tf.getFormula());
 		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, mgdScript, term, auxVars);
 
 		final TransFormulaBuilder tfb =
@@ -966,13 +964,13 @@ public final class TransFormulaUtils {
 	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript,
 			final Term term) {
 		final Map<TermVariable, TermVariable> map = constructInvarsToDefaultvarsMap(tf);
-		return new PureSubstitution(mgdScript, map).transform(term);
+		return Substitution.apply(mgdScript, map, term);
 	}
 
 	public static Term renameOutvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript,
 			final Term term) {
 		final Map<TermVariable, TermVariable> map = constructOutvarsToDefaultvarsMap(tf);
-		return new PureSubstitution(mgdScript, map).transform(term);
+		return Substitution.apply(mgdScript, map, term);
 	}
 
 	public static Term renameInvars(final TransFormula tf, final ManagedScript mgdScript,
@@ -984,7 +982,7 @@ public final class TransFormulaUtils {
 			}
 			substitutionMapping.put(entry.getValue(), map.get(entry.getKey()));
 		}
-		return new Substitution(mgdScript, substitutionMapping).transform(tf.getFormula());
+		return Substitution.apply(mgdScript, substitutionMapping, tf.getFormula());
 	}
 
 	public static UnmodifiableTransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
@@ -1058,7 +1056,7 @@ public final class TransFormulaUtils {
 		}
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>(mapping);
-		final Term term = new PureSubstitution(mgdScript, substitutionMapping).transform(tf.getFormula());
+		final Term term = Substitution.apply(mgdScript, substitutionMapping, tf.getFormula());
 		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
 		builder.setFormula(term);
 		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
@@ -1205,7 +1203,7 @@ public final class TransFormulaUtils {
 	public static UnmodifiableTransFormula decoupleArrayValues(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript) {
 		final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript.constructFreshCopies(tf.getAuxVars());
-		final Term renamed = new PureSubstitution(mgdScript, oldAuxVar2newAuxVar).transform(tf.getFormula());
+		final Term renamed = Substitution.apply(mgdScript, oldAuxVar2newAuxVar, tf.getFormula());
 		final Triple<Term, List<TermVariable>, List<Term>> decoupled = decoupleArrayValues(renamed, mgdScript);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
 				tf.getNonTheoryConsts(), false, tf.getBranchEncoders(), false);
@@ -1254,7 +1252,7 @@ public final class TransFormulaUtils {
 					mgdScript.getScript().term("store", arrTriple.getFirst(), idxTriple.getFirst(), newAuxVar);
 			substitutionMapping.put(arrayStore.asTerm(), resultStore);
 		}
-		final Term resultTerm = new PureSubstitution(mgdScript, substitutionMapping).transform(term);
+		final Term resultTerm = Substitution.apply(mgdScript, substitutionMapping, term);
 		return new Triple<Term, List<TermVariable>, List<Term>>(resultTerm, resultVariables, resultEqualities);
 	}
 }
