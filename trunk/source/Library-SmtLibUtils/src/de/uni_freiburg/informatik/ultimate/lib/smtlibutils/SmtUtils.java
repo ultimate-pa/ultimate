@@ -1207,6 +1207,27 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * Copy of {@link Util#ite} that uses our library methods for the construction
+	 * of terms.
+	 */
+	public static Term ite(final Script script, final Term cond, final Term thenPart, final Term elsePart) {
+		if (isTrueLiteral(cond)|| thenPart == elsePart) {
+			return thenPart;
+		} else if (isFalseLiteral(cond)) {
+			return elsePart;
+		} else if (isTrueLiteral(thenPart)) {
+			return or(script, cond, elsePart);
+		} else if (isFalseLiteral(elsePart)) {
+			return and(script, cond, thenPart);
+		} else if (isFalseLiteral(thenPart)) {
+			return and(script, not(script, cond), elsePart);
+		} else if (isTrueLiteral(elsePart)) {
+			return or(script, not(script, cond), thenPart);
+		}
+		return script.term("ite", cond, thenPart, elsePart);
+	}
+
+	/**
 	 * @return term that is equivalent to lhs <= rhs
 	 */
 	public static Term leq(final Script script, final Term lhs, final Term rhs) {
@@ -1396,7 +1417,7 @@ public final class SmtUtils {
 			if (params.length != 3) {
 				throw new IllegalArgumentException("no ite");
 			}
-			result = Util.ite(script, params[0], params[1], params[2]);
+			result = SmtUtils.ite(script, params[0], params[1], params[2]);
 			break;
 		case "+":
 		case "bvadd":
