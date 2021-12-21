@@ -690,6 +690,16 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
+	public void selectInSelect() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "v", "k", "i"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= 5 (select a k)) (= v (select a (select a i)))))";
+		final String expectedResultAsString = "(or (= v 5) (not (= i k)) (not (= 5 k)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void applyDistributivity() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p") };
