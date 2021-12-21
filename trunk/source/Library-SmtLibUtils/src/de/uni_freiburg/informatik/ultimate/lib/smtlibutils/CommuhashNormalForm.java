@@ -32,7 +32,6 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -112,25 +111,6 @@ public class CommuhashNormalForm {
 			}
 		}
 
-		@Override
-		protected void convert(final Term term) {
-			final Term result = tryToTransformToPositiveNormalForm(term);
-			if (result == null) {
-				// descent, input is no AffineRelation
-				super.convert(term);
-			} else {
-				setResult(result);
-			}
-		}
-
-		private Term tryToTransformToPositiveNormalForm(final Term simplified) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, simplified);
-			if (polyRel == null) {
-				return null;
-			}
-			final Term pnf = polyRel.positiveNormalForm(mScript);
-			return pnf;
-		}
 
 		/**
 		 * @param resultSort
