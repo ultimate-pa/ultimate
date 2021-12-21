@@ -492,7 +492,7 @@ public final class SmtUtils {
 			return summands[0];
 		}
 		if (SmtSortUtils.isNumericSort(sort)) {
-			return script.term("+", CommuhashUtils.sortByHashCode(summands.clone()));
+			return script.term("+", CommuhashUtils.sortByHashCode(summands));
 		}
 		if (!SmtSortUtils.isBitvecSort(sort)) {
 			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
@@ -500,7 +500,7 @@ public final class SmtUtils {
 		if (BINARY_BITVECTOR_SUM_WORKAROUND) {
 			return binaryBitvectorSum(script, sort, summands);
 		}
-		return script.term("bvadd", CommuhashUtils.sortByHashCode(summands.clone()));
+		return script.term("bvadd", CommuhashUtils.sortByHashCode(summands));
 	}
 
 	/**
