@@ -305,10 +305,10 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	private static abstract class IDerHelper<SR> {
 
-		public Pair<Integer, SR> findBestReplacementSbr(final Script script, final int quantifier,
+		public Pair<Integer, SR> findBestReplacementSbr(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term[] dualJuncts, final Set<TermVariable> bannedForDivCapture) {
 			for (int i = 0; i < dualJuncts.length; i++) {
-				final SR sbr = solveForSubject(script, quantifier, eliminatee, dualJuncts[i], bannedForDivCapture);
+				final SR sbr = solveForSubject(mgdScript, quantifier, eliminatee, dualJuncts[i], bannedForDivCapture);
 				if (sbr != null) {
 					return new Pair<Integer, SR>(i, sbr);
 				}
@@ -316,7 +316,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			return null;
 		}
 
-		protected abstract SR solveForSubject(final Script script, final int quantifier, final TermVariable eliminatee,
+		protected abstract SR solveForSubject(final ManagedScript mgdScript, final int quantifier, final TermVariable eliminatee,
 				final Term term, Set<TermVariable> bannedForDivCapture);
 
 		private EliminationResult tryToEliminateSbr(final ManagedScript mgdScript, final TermVariable eliminatee,
@@ -324,7 +324,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 			final Set<TermVariable> bannedForDivCapture = new HashSet<>(et.getEliminatees());
 			bannedForDivCapture.addAll(et.getContext().getBoundByAncestors());
-			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript.getScript(), et.getQuantifier(), eliminatee,
+			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript, et.getQuantifier(), eliminatee,
 					dualJuncts, bannedForDivCapture);
 			if (pair == null) {
 				return null;
@@ -359,26 +359,27 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		}
 
 		@Override
-		public SolvedBinaryRelation solveForSubject(final Script script, final int quantifier,
+		public SolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term term, final Set<TermVariable> bannedForDivCapture) {
 			if (SmtSortUtils.isBoolSort(eliminatee.getSort()) && SmtSortUtils.isBoolSort(term.getSort())) {
-				final SolvedBinaryRelation sbr = DualJunctionDer.tryPlr(script, quantifier, eliminatee, term);
+				final SolvedBinaryRelation sbr = DualJunctionDer.tryPlr(mgdScript.getScript(), quantifier, eliminatee,
+						term);
 				if (sbr != null) {
 					return sbr;
 				}
 			}
 			final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(term);
 			if (ber != null && QuantifierUtils.isDerRelationSymbol(quantifier, ber.getRelationSymbol())) {
-				final SolvedBinaryRelation sfs = ber.solveForSubject(script, eliminatee);
+				final SolvedBinaryRelation sfs = ber.solveForSubject(mgdScript.getScript(), eliminatee);
 				if (sfs != null) {
 					return sfs;
 				}
 			}
-			final PolynomialRelation pr = PolynomialRelation.convert(script, term);
+			final PolynomialRelation pr = PolynomialRelation.convert(mgdScript.getScript(), term);
 			if (pr == null) {
 				return null;
 			}
-			final SolvedBinaryRelation sfs = pr.solveForSubject(script, eliminatee);
+			final SolvedBinaryRelation sfs = pr.solveForSubject(mgdScript.getScript(), eliminatee);
 			if (sfs == null) {
 				return null;
 			}
@@ -412,13 +413,13 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		}
 
 		@Override
-		public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final int quantifier,
+		public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term term, final Set<TermVariable> bannedForDivCapture) {
-			final PolynomialRelation pr = PolynomialRelation.convert(script, term);
+			final PolynomialRelation pr = PolynomialRelation.convert(mgdScript.getScript(), term);
 			if (pr == null) {
 				return null;
 			}
-			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(script, eliminatee,
+			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(mgdScript, eliminatee,
 					Xnf.fromQuantifier(quantifier), bannedForDivCapture);
 			if (mcsbr == null) {
 				return null;
