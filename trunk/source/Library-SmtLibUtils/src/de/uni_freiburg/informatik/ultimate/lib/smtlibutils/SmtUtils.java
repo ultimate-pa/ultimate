@@ -550,10 +550,10 @@ public final class SmtUtils {
 			return factors[0];
 		}
 		if (SmtSortUtils.isNumericSort(sort)) {
-			return script.term("*", factors);
+			return script.term("*", CommuhashUtils.sortByHashCode(factors));
 		}
 		if (SmtSortUtils.isBitvecSort(sort)) {
-			return script.term("bvmul", factors);
+			return script.term("bvmul", CommuhashUtils.sortByHashCode(factors));
 		}
 		throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 	}
@@ -589,7 +589,7 @@ public final class SmtUtils {
 		if (factors.length == 1) {
 			product = factors[0];
 		} else {
-			product = script.term(funcname, factors);
+			product = script.term(funcname, CommuhashUtils.sortByHashCode(factors));
 		}
 		final AffineTerm affine = (AffineTerm) new AffineTermTransformer(script).transform(product);
 		if (affine.isErrorTerm()) {
