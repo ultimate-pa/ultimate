@@ -32,7 +32,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 	private final Set<Term> mConstraintSet; // Set of all constraints
 	private final FunctionSymbol mIntand;
 	// private final LinkedHashMap<Term, Integer> mWidthMap; // maps integer term to der corresponding Bv width
-	// TODO flag for optimizations / delta
 
 	public IntToBvBackTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
 			final Set<Term> constraintSet, final FunctionSymbol intand) {
@@ -46,7 +45,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 	@Override
 	public void convert(final Term term) {
 		if (mConstraintSet.contains(term)) {
-
 			setResult(mScript.term("true"));
 			return;
 		}
@@ -54,7 +52,9 @@ public class IntToBvBackTranslation extends TermTransformer {
 			// mGetWidth.put(mVariableMap.get(term), Integer.valueOf(mVariableMap.get(term).getSort().getIndices()[0]));
 			setResult(mVariableMap.get(term));
 			return;
-		} else if (term instanceof ConstantTerm) {
+		} else
+
+			if (term instanceof ConstantTerm) {
 			// TODO 2^k and other special cases
 			setResult(translateConst((ConstantTerm) term));
 			return;
@@ -144,11 +144,16 @@ public class IntToBvBackTranslation extends TermTransformer {
 			return term;
 		}
 		if (oldwidth > targetwidth) {
+			// TODO sometimes necessary if targetwidth is given by select term
+			// TODO Test if sound
+				final BigInteger[] indices = new BigInteger[2];
+				indices[0] = BigInteger.valueOf(targetwidth - 1);
+				indices[1] = BigInteger.valueOf(0);
 
-			System.out.println(term + "  " + oldwidth + " " + targetwidth);
 
-			throw new UnsupportedOperationException("TODO MOd optimization");
-			// throw new UnsupportedOperationException("target width needs to be greater or equal to old width");
+				return BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, term);
+
+
 		} else {
 			final int extendby = targetwidth - oldwidth;
 			final BigInteger[] indices = new BigInteger[1];
@@ -233,6 +238,36 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 	}
 
+	private Term getInnerMostArray(final Term appTerm) {
+		Term array;
+		if (appTerm instanceof TermVariable) {
+			return appTerm;
+		}
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.convert(appTerm);
+		if (mds != null) {
+			array = mds.getArray();
+		} else {
+			final MultiDimensionalSelectOverNestedStore mdsons =
+					MultiDimensionalSelectOverNestedStore.convert(mScript, appTerm);
+			if (mdsons != null) {
+				// array = mdsons.getNestedStore().getArray();
+				array = mdsons.getSelect().getArray();
+			} else {
+				throw new UnsupportedOperationException("unable to compute width: " + appTerm);
+			}
+		}
+		if (array instanceof ApplicationTerm) {
+			final ApplicationTerm appArray = (ApplicationTerm) array;
+			if (appArray.getFunction().getName().equals("select")) {
+				array = getInnerMostArray(appArray.getParameters()[0]);
+			}
+			else if (appArray.getFunction().getName().equals("store")) {
+				array = getInnerMostArray(appArray.getParameters()[0]);
+			}
+		}
+		return array;
+	}
+
 	/*
 	 * TODO non-recursive
 	 * TODO optimize, sollte aber korrekt sein geht nur kleinere width
@@ -277,22 +312,9 @@ public class IntToBvBackTranslation extends TermTransformer {
 			}
 
 			if (appTerm.getFunction().getName().equals("select")) {
-				final Term array;
-				{
-					final MultiDimensionalSelect mds = MultiDimensionalSelect.convert(appTerm);
-					if (mds != null) {
-						array = mds.getArray();
-					} else {
-						final MultiDimensionalSelectOverNestedStore mdsons = MultiDimensionalSelectOverNestedStore
-								.convert(mScript, appTerm);
-						if (mdsons != null) {
-							array = mdsons.getNestedStore().getArray();
-						} else {
-							throw new UnsupportedOperationException("unable to compute width: " + appTerm);
-						}
-					}
-				}
+				final Term array = getInnerMostArray(appTerm);
 				final Term bvArray = mVariableMap.get(array);
+
 				if (bvArray == null) {
 					throw new UnsupportedOperationException("Unknown Array: " + array);
 				}
@@ -300,6 +322,9 @@ public class IntToBvBackTranslation extends TermTransformer {
 				final Sort valueSort = mdSort.getArrayValueSort();
 				width = Integer.valueOf(valueSort.getIndices()[0]);
 			} else {
+				if (!SmtSortUtils.isIntSort(appTerm.getParameters()[0].getSort())) {
+					throw new UnsupportedOperationException("Cannot calculate width " + term);
+				}
 				int maxWidth = getWidth(appTerm.getParameters()[0]);
 				for (int i = 1; i < appTerm.getParameters().length; i++) {
 					final Term argument = appTerm.getParameters()[i];
@@ -424,7 +449,12 @@ public class IntToBvBackTranslation extends TermTransformer {
 			switch (fsym.getName()) {
 			case "=": {
 				for (int i = 0; i < args.length; i++) {
-					newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
+					if (SmtSortUtils.isIntSort(appTerm.getParameters()[0].getSort())) {
+						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
+					} else {
+						newargs[i] = args[i];
+					}
+
 				}
 				setResult(SmtUtils.equality(mScript, newargs));
 				return;
@@ -643,12 +673,20 @@ public class IntToBvBackTranslation extends TermTransformer {
 					if (isPowerOfTwo(value)) {
 						final BigInteger[] indices = new BigInteger[2];
 						final int oldwidth = Integer.valueOf(args[0].getSort().getIndices()[0]);
+						final int twoExpo = getTwoExponent(value);
+
+						if(twoExpo > oldwidth - 1) {
+							setResult(args[0]);
+							return;
+						} else {
+
 						indices[0] = BigInteger.valueOf(oldwidth - 1);
-						indices[1] = BigInteger.valueOf(getTwoExponent(value));
-						// übersetzen zu (mod s t)-> (extract s)
-						// TODO argument smaller than expoenent
+						indices[1] = BigInteger.valueOf(twoExpo);
+
+
 						setResult(BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, args[0]));
 						return;
+					}
 					}
 				}
 				if (isSigned(appTerm)) {
@@ -720,15 +758,14 @@ public class IntToBvBackTranslation extends TermTransformer {
 				return;
 			}
 			case "store": {
-				if ((Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) < Integer
-						.parseInt(args[1].getSort().getIndices()[0]))
-						|| (Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) < Integer
-								.parseInt(args[2].getSort().getIndices()[0]))) {
-					throw new AssertionError("Array indices do not match");
-				}
+
+				final Sort bitVecArraySort = getArrayValueSort(args[0].getSort());
+				System.out.println(args[2]);
+
+
 				setResult(mScript.term("store", args[0], bringTermToWidth(args[1],
 						Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]), false),
-						bringTermToWidth(args[2], Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
+						bringTermToWidth(args[2], Integer.parseInt(bitVecArraySort.getIndices()[0]),
 								false)));
 				return;
 			}
@@ -744,6 +781,18 @@ public class IntToBvBackTranslation extends TermTransformer {
 		}
 
 		super.convertApplicationTerm(appTerm, newargs);
+	}
+
+	private Sort getArrayValueSort(final Sort array) {
+		assert SmtSortUtils.isArraySort(array);
+		final Sort argSort = array.getArguments()[1];
+		if (SmtSortUtils.isBitvecSort(argSort)) {
+			return argSort;
+		} else if (SmtSortUtils.isArraySort(argSort)) {
+			return getArrayValueSort(argSort);
+		}else {
+			throw new UnsupportedOperationException("Unexpected Array Value Sort");
+		}
 	}
 
 	private boolean isZero(final Term term) {

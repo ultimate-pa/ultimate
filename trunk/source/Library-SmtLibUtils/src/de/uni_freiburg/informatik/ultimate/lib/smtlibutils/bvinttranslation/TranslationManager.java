@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.Mode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -42,6 +43,7 @@ public class TranslationManager {
 	}
 
 	public Term translateBvtoInt(final Term bitvecFromula) {
+		mTc.setBvandMode(Mode.SUM);
 		final BvToIntTranslation bvToInt =
 				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars());
 		bvToInt.setNutzTransformation(false);
@@ -49,9 +51,9 @@ public class TranslationManager {
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
 		if (!bvToInt.getNutzFlag()) {
-		mConstraintSet.addAll(mTc.getConstraints());
-		mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
-	}
+			mConstraintSet.addAll(mTc.getConstraints());
+			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
+		}
 		final Term integerFormula =
 				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
 		return integerFormula;
