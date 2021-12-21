@@ -294,9 +294,9 @@ public final class BitvectorUtils {
 		private final Term notSimplified(final Script script, final BigInteger[] indices, final Term[] params) {
 			final Term[] newParams;
 			if (isCommutative()) {
-				newParams = params;
-			} else {
 				newParams = CommuhashUtils.sortByHashCode(params);
+			} else {
+				newParams = params;
 			}
 			return SmtUtils.oldAPITerm(script, getFunctionName(), indices, null, newParams);
 		}
