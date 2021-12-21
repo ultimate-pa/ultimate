@@ -481,6 +481,7 @@ public final class BitvectorUtils {
 			case bvashr:
 			case bvlshr:
 			case bvsdiv:
+			case bvshl:
 			case bvsmod:
 			case bvsrem:
 			case bvurem:
@@ -491,7 +492,6 @@ public final class BitvectorUtils {
 			case bvnot:
 			case bvsge:
 			case bvsgt:
-			case bvshl:
 			case bvsle:
 			case bvslt:
 			case bvuge:
