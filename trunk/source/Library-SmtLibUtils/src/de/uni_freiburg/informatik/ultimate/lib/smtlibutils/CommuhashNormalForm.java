@@ -104,7 +104,7 @@ public class CommuhashNormalForm {
 				final Sort resultSort =
 						appTerm.getFunction().isReturnOverload() ? appTerm.getFunction().getReturnSort() : null;
 				final Term simplified = constructlocallySimplifiedTermWithSortedParams(funcname,
-						SmtUtils.toBigIntegerArray(appTerm.getSort().getIndices()), resultSort, newArgs);
+						null, resultSort, newArgs);
 				setResult(simplified);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
