@@ -38,14 +38,14 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTh
  * The actual instantiation lemma is of the form {@code (not quantclause \/ instance}. When converting the
  * QuantAnnotation to a proof term, the resolution between the instantiation lemma and the quantified clause, seen as a
  * unit literal, is built.
- * 
+ *
  * The instantiation lemma is annotated with the ground substitution for the variables that produced the instance
  * (ordered according to the order of the quantified variables in the clause), the origin of the instance (checkpoint or
  * finalcheck), and, if full proofs are produced, a proof for the equality between the substituted clause term and the
  * resulting simplified instance clause.
- * 
+ *
  * The proof for the unit (quantified) clause is its clause proof as usual.
- * 
+ *
  * @author Tanja Schindler
  *
  */
@@ -62,7 +62,7 @@ public class QuantAnnotation implements IAnnotation {
 
 	/**
 	 * Annotation for instances of quantified clauses.
-	 * 
+	 *
 	 * @param qClause
 	 *            the quantified clause
 	 * @param subs
@@ -84,7 +84,7 @@ public class QuantAnnotation implements IAnnotation {
 	}
 
 	@Override
-	public Term toTerm(Clause cls, Theory theory) {
+	public Term toTerm(final Clause cls, final Theory theory) {
 		final Term quantClauseLitProof =
 				mProofTracker.allIntro(mQuantClauseTerm, mVars);
 		final Term quantClauseLit = mProofTracker.getProvedTerm(quantClauseLitProof);
@@ -93,10 +93,12 @@ public class QuantAnnotation implements IAnnotation {
 		final Term subproof =
 				mProofTracker instanceof ProofTracker ? ((ProofTracker) mProofTracker).getProof(quantClauseLitProof)
 						: theory.term(ProofConstants.FN_ASSERTED, quantClauseLit);
-		final Term quantUnitClauseProof = theory.term(ProofConstants.FN_CLAUSE, subproof,
-				theory.annotatedTerm(new Annotation[] {
-						new Annotation(":input", mSource.getAnnotation().isEmpty() ? null : mSource.getAnnotation()) },
-						quantClauseLit));
+		final Annotation[] clauseAnnots = new Annotation[] {
+				new Annotation(ProofConstants.ANNOTKEY_PROVES, new Term[] { quantClauseLit }),
+				new Annotation(ProofConstants.ANNOTKEY_INPUT,
+						mSource.getAnnotation().isEmpty() ? null : mSource.getAnnotation()) };
+		final Term quantUnitClauseProof = theory.term(ProofConstants.FN_CLAUSE,
+				theory.annotatedTerm(clauseAnnots, subproof));
 
 		final Term base = theory.or(theory.not(quantClauseLit), cls.toTerm(theory));
 

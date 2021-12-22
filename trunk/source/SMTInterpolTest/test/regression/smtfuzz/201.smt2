@@ -1,4 +1,4 @@
-(set-info :expect-errors 8)
+(set-info :expect-errors 7)
 (set-logic NRA)
 (declare-fun v0 () Bool)
 (declare-fun v1 () Bool)

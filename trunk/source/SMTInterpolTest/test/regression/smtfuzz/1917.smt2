@@ -1,5 +1,5 @@
 (set-option :produce-unsat-cores true)
-(set-info :expect-errors 64)
+(set-info :expect-errors 55)
 (set-logic NRA)
 (declare-fun v0 () Bool)
 (declare-fun v1 () Bool)

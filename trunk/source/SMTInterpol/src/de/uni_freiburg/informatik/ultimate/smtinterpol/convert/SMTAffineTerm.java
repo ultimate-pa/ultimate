@@ -49,7 +49,7 @@ public final class SMTAffineTerm {
 	private Rational mConstant;
 
 	public SMTAffineTerm() {
-		mSummands = new LinkedHashMap<Term, Rational>();
+		mSummands = new LinkedHashMap<>();
 		mConstant = Rational.ZERO;
 	}
 
@@ -277,9 +277,7 @@ public final class SMTAffineTerm {
 			if (!convTerm.getSort().equals(sort)) {
 				convTerm = t.term("to_real", convTerm);
 			}
-			if (factor.getValue().equals(Rational.MONE)) {
-				convTerm = t.term("-", convTerm);
-			} else if (!factor.getValue().equals(Rational.ONE)) {
+			if (!factor.getValue().equals(Rational.ONE)) {
 				final Term convfac = factor.getValue().toTerm(sort);
 				convTerm = t.term("*", convfac, convTerm);
 			}

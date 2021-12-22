@@ -72,11 +72,12 @@ public class SourceAnnotation implements IAnnotation {
 
 	@Override
 	public Term toTerm(final Clause cls, final Theory theory) {
-		final Term res = cls.toTerm(theory);
 		// For partial proofs, make an asserted sub proof.
-		final Term subproof = mSource != null ? mSource : theory.term(ProofConstants.FN_ASSERTED, res);
-		return theory.term(ProofConstants.FN_CLAUSE, subproof, theory
-				.annotatedTerm(
-					new Annotation[] { new Annotation(":input", mAnnot.isEmpty() ? null : mAnnot) }, res));
+		final Term subproof = mSource != null ? mSource : theory.term(ProofConstants.FN_ASSERTED, cls.toTerm(theory));
+		final Annotation[] annots = new Annotation[] {
+				new Annotation(ProofConstants.ANNOTKEY_PROVES, cls.toTermArray(theory)),
+				new Annotation(ProofConstants.ANNOTKEY_INPUT, mAnnot.isEmpty() ? null : mAnnot)
+		};
+		return theory.term(ProofConstants.FN_CLAUSE, theory.annotatedTerm(annots, subproof));
 	}
 }

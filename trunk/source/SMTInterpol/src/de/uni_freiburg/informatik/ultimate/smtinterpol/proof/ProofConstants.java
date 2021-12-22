@@ -32,12 +32,10 @@ public interface ProofConstants {
 	public static final String FN_TAUTOLOGY = "@tautology";
 	public static final String FN_REWRITE = "@rewrite";
 	public static final String FN_MP = "@mp";
-	public static final String FN_SPLIT = "@split";
-	public static final String FN_EXISTS = "@exists";
+	public static final String FN_QUANT = "@quant";
 	public static final String FN_MATCH = "@match";
 	public static final String FN_ALLINTRO = "@allIntro";
 	public static final String FN_CONG = "@cong";
-	public static final String FN_ORMONOTONY = "@orMonotony";
 	public static final String FN_TRANS = "@trans";
 	public static final String FN_REFL = "@refl";
 	public static final String FN_ASSERTED = "@asserted";
@@ -45,6 +43,10 @@ public interface ProofConstants {
 	public static final String FN_CLAUSE = "@clause";
 	public static final String FN_LEMMA = "@lemma";
 	public static final String FN_RES = "@res";
+
+	//// Annotation keys for @clause
+	public static final String ANNOTKEY_PROVES = ":proves";
+	public static final String ANNOTKEY_INPUT = ":input";
 
 	//// ==== Rewrite ids and names ====
 	public final static Annotation RW_EXPAND            = new Annotation(":expand", null);
@@ -73,12 +75,10 @@ public interface ProofConstants {
 	public final static Annotation RW_ITE_BOOL_4        = new Annotation(":iteBool4", null);
 	public final static Annotation RW_ITE_BOOL_5        = new Annotation(":iteBool5", null);
 	public final static Annotation RW_ITE_BOOL_6        = new Annotation(":iteBool6", null);
-	public final static Annotation RW_AND_TO_OR         = new Annotation(":andToOr", null);
 	public final static Annotation RW_XOR_TRUE          = new Annotation(":xorTrue", null);
 	public final static Annotation RW_XOR_FALSE         = new Annotation(":xorFalse", null);
 	public final static Annotation RW_XOR_NOT           = new Annotation(":xorNot", null);
 	public final static Annotation RW_XOR_SAME          = new Annotation(":xorSame", null);
-	public final static Annotation RW_IMP_TO_OR         = new Annotation(":impToOr", null);
 	public final static Annotation RW_STRIP             = new Annotation(":strip", null);
 	public final static Annotation RW_CANONICAL_SUM     = new Annotation(":canonicalSum", null);
 	public final static Annotation RW_LEQ_TO_LEQ0       = new Annotation(":leqToLeq0", null);
@@ -98,21 +98,30 @@ public interface ProofConstants {
 	public final static Annotation RW_TO_INT            = new Annotation(":toInt", null);
 	public final static Annotation RW_STORE_OVER_STORE  = new Annotation(":storeOverStore", null);
 	public final static Annotation RW_SELECT_OVER_STORE = new Annotation(":selectOverStore", null);
-	public final static Annotation RW_FLATTEN           = new Annotation(":flatten", null);
 	public final static Annotation RW_STORE_REWRITE     = new Annotation(":storeRewrite", null);
-	public final static Annotation RW_FORALL_EXISTS     = new Annotation(":forallExists", null);
 	public final static Annotation RW_INTERN            = new Annotation(":intern", null);
 
 	//// ==== Tautologies ====
 	public final static Annotation AUX_TRUE_NOT_FALSE    = new Annotation(":trueNotFalse", null);
+	public final static Annotation AUX_TRUE_POS          = new Annotation(":true+", null);
+	public final static Annotation AUX_FALSE_NEG         = new Annotation(":false-", null);
+	public final static Annotation AUX_NOT_POS           = new Annotation(":not+", null);
 	public final static Annotation AUX_OR_POS            = new Annotation(":or+", null);
 	public final static Annotation AUX_OR_NEG            = new Annotation(":or-", null);
+	public final static Annotation AUX_AND_POS           = new Annotation(":and+", null);
+	public final static Annotation AUX_AND_NEG           = new Annotation(":and-", null);
+	public final static Annotation AUX_IMP_POS           = new Annotation(":=>+", null);
+	public final static Annotation AUX_IMP_NEG           = new Annotation(":=>-", null);
 	public final static Annotation AUX_ITE_POS_1         = new Annotation(":ite+1", null);
 	public final static Annotation AUX_ITE_POS_2         = new Annotation(":ite+2", null);
 	public final static Annotation AUX_ITE_POS_RED       = new Annotation(":ite+red", null);
 	public final static Annotation AUX_ITE_NEG_1         = new Annotation(":ite-1", null);
 	public final static Annotation AUX_ITE_NEG_2         = new Annotation(":ite-2", null);
 	public final static Annotation AUX_ITE_NEG_RED       = new Annotation(":ite-red", null);
+	public final static Annotation AUX_IFF_POS_1         = new Annotation(":=+1", null);
+	public final static Annotation AUX_IFF_POS_2         = new Annotation(":=+2", null);
+	public final static Annotation AUX_IFF_NEG_1         = new Annotation(":=-1", null);
+	public final static Annotation AUX_IFF_NEG_2         = new Annotation(":=-2", null);
 	public final static Annotation AUX_XOR_POS_1         = new Annotation(":xor+1", null);
 	public final static Annotation AUX_XOR_POS_2         = new Annotation(":xor+2", null);
 	public final static Annotation AUX_XOR_NEG_1         = new Annotation(":xor-1", null);
@@ -130,27 +139,20 @@ public interface ProofConstants {
 	public final static Annotation AUX_MATCH_CASE        = new Annotation(":matchCase", null);
 	public final static Annotation AUX_MATCH_DEFAULT     = new Annotation(":matchDefault", null);
 
-	//// ==== Structural splitting constants ====
-	public final static Annotation SPLIT_NEG_OR    = new Annotation(":notOr", null);
-	public final static Annotation SPLIT_POS_XOR_1 = new Annotation(":xor+1", null);
-	public final static Annotation SPLIT_POS_XOR_2 = new Annotation(":xor+2", null);
-	public final static Annotation SPLIT_NEG_XOR_1 = new Annotation(":xor-1", null);
-	public final static Annotation SPLIT_NEG_XOR_2 = new Annotation(":xor-2", null);
-	public final static Annotation SPLIT_POS_ITE_1 = new Annotation(":ite+1", null);
-	public final static Annotation SPLIT_POS_ITE_2 = new Annotation(":ite+2", null);
-	public final static Annotation SPLIT_NEG_ITE_1 = new Annotation(":ite-1", null);
-	public final static Annotation SPLIT_NEG_ITE_2 = new Annotation(":ite-2", null);
-
-	//// ==== Annotations with non-null value ==== //// TODO This is probably not the best place
-	public static Annotation getSplitSubstAnnot(final Term[] subst) {
-		return new Annotation(":subst", subst);
+	//// ==== Annotations with non-null value ====
+	public static Annotation getTautForallPos(final Term[] skolemFuns) {
+		return new Annotation(":forall+", skolemFuns);
 	}
 
-	public static Annotation getRewriteSkolemAnnot(final Term[] skolemFuns) {
-		return new Annotation(":skolem", skolemFuns);
+	public static Annotation getTautForallNeg(final Term[] subst) {
+		return new Annotation(":forall-", subst);
 	}
 
-	public static Annotation getRewriteRemoveForallAnnot(final Term[] newVars) {
-		return new Annotation(":removeForall", newVars); // Implication rewrite
+	public static Annotation getTautExistsNeg(final Term[] skolemFuns) {
+		return new Annotation(":exists-", skolemFuns);
+	}
+
+	public static Annotation getTautExistsPos(final Term[] newVars) {
+		return new Annotation(":exists+", newVars);
 	}
 }
