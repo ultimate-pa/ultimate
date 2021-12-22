@@ -30,7 +30,10 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -44,9 +47,70 @@ public class QvasrAbstractionJoin {
 		// Prevent instantiation of this utility class
 	}
 
-	public static void qvasrAbstractionJoin(final QvasrAbstraction abstractionOne,
+	/**
+	 * Join two given Qvasr abstractions such that they form a best overapproximation.
+	 *
+	 * @param script
+	 * @param abstractionOne
+	 * @param abstractionTwo
+	 * @return
+	 */
+	public static QvasrAbstraction join(final ManagedScript script, final QvasrAbstraction abstractionOne,
 			final QvasrAbstraction abstractionTwo) {
 
+		final Integer concreteDimensionOne = abstractionOne.getQvasr().getConcreteDimension();
+		final Integer concreteDimensionTwo = abstractionTwo.getQvasr().getConcreteDimension();
+
+		if (!concreteDimensionOne.equals(concreteDimensionTwo)) {
+			throw new UnsupportedOperationException();
+		}
+
+		/*
+		 * Get coherence classes.
+		 */
+		final Set<Set<Integer>> abstractionOneCoherenceClasses = getCoherenceClasses(abstractionOne);
+		final Set<Set<Integer>> abstractionTwoCoherenceClasses = getCoherenceClasses(abstractionTwo);
+
+		for (final Set<Integer> coherenceClassOne : abstractionOneCoherenceClasses) {
+			final Rational[][] coherenceIdentityMatrixOne =
+					QvasrUtils.getCoherenceIdentityMatrix(coherenceClassOne, concreteDimensionOne);
+			final Rational[][] coherenceIdentitySimulationMatrixOne = QvasrUtils
+					.rationalMatrixMultiplication(coherenceIdentityMatrixOne, abstractionOne.getSimulationMatrix());
+			for (final Set<Integer> coherenceClassTwo : abstractionTwoCoherenceClasses) {
+
+				final Rational[][] coherenceIdentityMatrixTwo =
+						QvasrUtils.getCoherenceIdentityMatrix(coherenceClassTwo, concreteDimensionTwo);
+
+				final Rational[][] coherenceIdentitySimulationMatrixTwo = QvasrUtils
+						.rationalMatrixMultiplication(coherenceIdentityMatrixTwo, abstractionTwo.getSimulationMatrix());
+				final Pair<Rational[][], Rational[][]> pushedOut =
+						pushout(script, coherenceIdentitySimulationMatrixOne, coherenceIdentitySimulationMatrixTwo);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Compute two vectors t_1 and t_2 for two qvasr abstractions (S_1, V_1), (S_2, V_2) such that t_1*S_1 = t_2*S_2
+	 *
+	 * @param script
+	 * @param abstractionOne
+	 * @param abstractionTwo
+	 * @return
+	 */
+	private static Pair<Rational[][], Rational[][]> pushout(final ManagedScript script,
+			final Rational[][] abstractionOne, final Rational[][] abstractionTwo) {
+		final Term[] newVarsOne = new Term[abstractionOne[0].length];
+		final Term[] newVarsTwo = new Term[abstractionTwo[0].length];
+		for (int i = 0; i < abstractionOne[0].length; i++) {
+			newVarsOne[i] = script.constructFreshTermVariable("t", SmtSortUtils.getRealSort(script.getScript()));
+		}
+		for (int i = 0; i < abstractionTwo[0].length; i++) {
+			newVarsTwo[i] = script.constructFreshTermVariable("t", SmtSortUtils.getRealSort(script.getScript()));
+		}
+		final Term[][] lhs = QvasrUtils.vectorMatrixMultiplicationWithVariables(script, newVarsOne, abstractionOne);
+		final Term[][] rhs = QvasrUtils.vectorMatrixMultiplicationWithVariables(script, newVarsTwo, abstractionTwo);
+		return null;
 	}
 
 	/**

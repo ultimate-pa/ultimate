@@ -166,12 +166,37 @@ public class QvasrVectorSpaceBasisConstructorTest {
 	}
 
 	/**
+	 * Test Vector basis for {{1, 0, 2, 3}, {0, 1, -3, 4}} = {{3, 4, 0, 1}, {-2, 3, 1, 0}}
+	 */
+	@Test
+	public void testSolutionBuilding7() {
+		final Term negThree = mMgdScript.getScript().decimal("-3");
+		final Term[][] matrix = { { mOne, mZero, mTwo, mThree }, { mZero, mOne, negThree, mFour } };
+		final Rational[][] vectorSpaceBasis =
+				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mMgdScript, matrix);
+		final Integer[][] vectorSpaceBasisResult = { { 3, 4, 0, 1 }, { -2, 3, 1, 0 } };
+		testBasisVectorEquality(vectorSpaceBasis, integerMatrixToRationalMatrix(vectorSpaceBasisResult));
+	}
+
+	/**
+	 * Test Vector basis for {{1, 0, 1}, {0, 1, 0}} = {{1, 0, 1}}
+	 */
+	@Test
+	public void testSolutionBuilding8() {
+		final Term[][] matrix = { { mOne, mZero, mOne }, { mZero, mOne, mZero } };
+		final Rational[][] vectorSpaceBasis =
+				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mMgdScript, matrix);
+		final Integer[][] vectorSpaceBasisResult = { { 1, 0, 1 } };
+		testBasisVectorEquality(vectorSpaceBasis, integerMatrixToRationalMatrix(vectorSpaceBasisResult));
+	}
+
+	/**
 	 * Convert an integer matrix to a rational matrix. Needed for easier parsing of matrices.
 	 *
 	 * @param matrix
 	 * @return
 	 */
-	static Rational[][] integerMatrixToRationalMatrix(final Integer[][] matrix) {
+	public static Rational[][] integerMatrixToRationalMatrix(final Integer[][] matrix) {
 		final Rational[][] matrixRational = new Rational[matrix.length][matrix[0].length];
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[0].length; j++) {

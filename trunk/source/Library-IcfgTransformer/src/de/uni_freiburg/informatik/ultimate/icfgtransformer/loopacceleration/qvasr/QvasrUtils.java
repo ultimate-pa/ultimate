@@ -33,6 +33,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -65,19 +68,85 @@ public class QvasrUtils {
 		return result;
 	}
 
+	/**
+	 * Get a matrix k*d, with entries corresponding to coherence classes.
+	 *
+	 * @param coherenceClass
+	 * @param d
+	 * @return
+	 */
+	public static Rational[][] getCoherenceIdentityMatrix(final Set<Integer> coherenceClass, final int d) {
+		final Rational[][] coherenceIdentityMatrix = new Rational[coherenceClass.size()][d];
+		for (int i = 0; i < coherenceClass.size(); i++) {
+			for (int j = 0; j < d; j++) {
+				coherenceIdentityMatrix[i][j] = Rational.ZERO;
+			}
+		}
+		int k = 0;
+		for (final Integer classLine : coherenceClass) {
+			coherenceIdentityMatrix[k][classLine] = Rational.ONE;
+			k++;
+		}
+		return coherenceIdentityMatrix;
+	}
+
+	/**
+	 * Standard matrix multiplication of two rational matrices.
+	 *
+	 * @param matrixOne
+	 * @param matrixTwo
+	 * @return
+	 */
+	public static Term[][] vectorMatrixMultiplicationWithVariables(final ManagedScript script, final Term[] vector,
+			final Rational[][] matrixTwo) {
+		final int vectorLength = vector.length;
+		final int rowMatrixTwo = matrixTwo.length;
+		final int colMatrixTwo = matrixTwo[0].length;
+		if (vectorLength != rowMatrixTwo) {
+			throw new UnsupportedOperationException();
+		}
+		final Term[][] resultMatrix = new Term[1][vectorLength];
+		for (int i = 0; i < vectorLength; i++) {
+			resultMatrix[0][i] = script.getScript().decimal("0");
+
+		}
+		for (int j = 0; j < colMatrixTwo; j++) {
+			Term sum = script.getScript().decimal("0");
+			for (int k = 0; k < rowMatrixTwo; k++) {
+				final Term mult = SmtUtils.mul(script.getScript(), "*", vector[k],
+						matrixTwo[k][j].toTerm(SmtSortUtils.getRealSort(script)));
+				sum = SmtUtils.sum(script.getScript(), "+", sum, mult);
+				resultMatrix[0][j] = sum;
+			}
+		}
+		return resultMatrix;
+	}
+
+	/**
+	 * Standard matrix multiplication of two rational matrices.
+	 *
+	 * @param matrixOne
+	 * @param matrixTwo
+	 * @return
+	 */
 	public static Rational[][] rationalMatrixMultiplication(final Rational[][] matrixOne,
 			final Rational[][] matrixTwo) {
-		final int rowMatrixOne = matrixOne[0].length;
-		final int rowMatrixTwo = matrixTwo[0].length;
-		final int colMatrixOne = matrixOne.length;
-		final int colMatrixTwo = matrixTwo.length;
-		if (rowMatrixTwo != colMatrixOne) {
+		final int rowMatrixOne = matrixOne.length;
+		final int rowMatrixTwo = matrixTwo.length;
+		final int colMatrixOne = matrixOne[0].length;
+		final int colMatrixTwo = matrixTwo[0].length;
+		if (colMatrixOne != rowMatrixTwo) {
 			return new Rational[0][0];
 		}
 		final Rational[][] resultMatrix = new Rational[rowMatrixOne][colMatrixTwo];
 		for (int i = 0; i < rowMatrixOne; i++) {
 			for (int j = 0; j < colMatrixTwo; j++) {
-				for (int k = 0; k < rowMatrixTwo; k++) {
+				resultMatrix[i][j] = Rational.ZERO;
+			}
+		}
+		for (int i = 0; i < rowMatrixOne; i++) {
+			for (int j = 0; j < colMatrixTwo; j++) {
+				for (int k = 0; k < colMatrixOne; k++) {
 					final Rational mul = matrixOne[i][k].mul(matrixTwo[k][j]);
 					final Rational sum = resultMatrix[i][j].add(mul);
 					resultMatrix[i][j] = sum;

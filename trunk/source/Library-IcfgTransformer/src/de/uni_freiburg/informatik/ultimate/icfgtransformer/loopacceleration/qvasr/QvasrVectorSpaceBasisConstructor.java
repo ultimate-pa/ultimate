@@ -77,24 +77,29 @@ public class QvasrVectorSpaceBasisConstructor {
 		 * Resubstitute columns to actual variables.
 		 */
 		final Term[] lastRow = basisVectors[basisVectors.length - 1];
-		for (int i = 0; i < lastRow.length; i++) {
-			if (!QvasrAbstractor.checkTermEquiv(script, lastRow[i], script.getScript().decimal("0"))) {
-				final Term a = script.constructFreshTermVariable("a", SmtSortUtils.getRealSort(script));
-				final List<Term> defaultInit = new ArrayList<>();
-				if (i != lastRow.length - 1 && !QvasrAbstractor.checkTermEquiv(script, lastRow[lastRow.length - 1],
-						script.getScript().decimal("0"))) {
-					defaultInit.add(a);
-					freeVars.add(a);
-
-				} else {
-					defaultInit.add(script.getScript().decimal("0"));
+		boolean aIsZero = true;
+		for (int i = 0; i < basisVectors.length; i++) {
+			if (!QvasrAbstractor.checkTermEquiv(script, basisVectors[i][basisVectors[0].length - 1],
+					script.getScript().decimal("0"))) {
+				for (int j = 0; j < basisVectors[i].length - 1; j++) {
+					if (!QvasrAbstractor.checkTermEquiv(script, basisVectors[i][j], script.getScript().decimal("0"))) {
+						aIsZero = false;
+						break;
+					}
 				}
-				tvsForColumns.put(lastRow.length - 1, a);
-				columnsForTvs.put(a, lastRow.length - 1);
-				equations.put(a, defaultInit);
-				break;
 			}
 		}
+		final Term a = script.constructFreshTermVariable("a", SmtSortUtils.getRealSort(script));
+		final List<Term> defaultInit = new ArrayList<>();
+		if (!aIsZero) {
+			defaultInit.add(a);
+			freeVars.add(a);
+		} else {
+			defaultInit.add(script.getScript().decimal("0"));
+		}
+		tvsForColumns.put(lastRow.length - 1, a);
+		columnsForTvs.put(a, lastRow.length - 1);
+		equations.put(a, defaultInit);
 
 		/*
 		 * Construct equations for each column.
@@ -122,9 +127,9 @@ public class QvasrVectorSpaceBasisConstructor {
 		 */
 		for (final Term var : tvsForColumns.values()) {
 			if (!equations.containsKey(var)) {
-				final List<Term> defaultInit = new ArrayList<>();
-				defaultInit.add(var);
-				equations.put(var, defaultInit);
+				final List<Term> defaultInitVars = new ArrayList<>();
+				defaultInitVars.add(var);
+				equations.put(var, defaultInitVars);
 				freeVars.add(var);
 			}
 		}
@@ -132,7 +137,6 @@ public class QvasrVectorSpaceBasisConstructor {
 		/*
 		 * Construct a proto-basisvector for each free variable.
 		 */
-
 		final Deque<Term> freeVarStack = new ArrayDeque<>();
 		freeVarStack.addAll(freeVars);
 		final List<Term[]> vectors = new ArrayList<>();

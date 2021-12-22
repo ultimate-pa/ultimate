@@ -127,7 +127,12 @@ public class QvasrAbstractor {
 		final Term[][] solutionsAdditionsGaussJordan = gaussianSolve(newUpdatesMatrixAdditions);
 		final Term[][] solutionsResetGaussJordan = gaussianSolve(newUpdatesMatrixResets);
 
-		return null;
+		final Rational[][] resetVectorSpaceBasis =
+				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mScript, solutionsResetGaussJordan);
+		final Rational[][] additionVectorSpaceBasis =
+				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mScript, solutionsAdditionsGaussJordan);
+
+		return QvasrAbstractionBuilder.constructQvasrAbstraction(resetVectorSpaceBasis, additionVectorSpaceBasis);
 	}
 
 	public Term[][] gaussianSolve(final Term[][] matrix) {
