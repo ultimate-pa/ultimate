@@ -130,13 +130,13 @@ pipeline {
     // }
     stage('Run Sonar') {
       when {
-        anyOf {
-          allOf {
-            branch 'dev'
+        allOf {
+          expression { return currentBuild.result == "SUCCESS" || currentBuild.result == "UNSTABLE" }
+          branch 'dev'
+          anyOf {
             expression { return !currentBuild.changeSets.isEmpty() }
-            expression { return currentBuild.result == "SUCCESS" || currentBuild.result == "UNSTABLE" }
+            triggeredBy cause: 'UserIdCause'
           }
-          triggeredBy cause: 'UserIdCause'
         }
       }
       steps {
