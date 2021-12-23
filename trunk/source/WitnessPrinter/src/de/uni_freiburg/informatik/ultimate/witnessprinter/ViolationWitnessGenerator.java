@@ -105,6 +105,8 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 
 		addEdgeData(graphWriter, "sourcecode", null, edge -> StringEscapeUtils.escapeXml10(edge.getSourceCode()));
 		addEdgeData(graphWriter, "assumption", null, edge -> StringEscapeUtils.escapeXml10(edge.getAssumption()));
+		addEdgeData(graphWriter, "assumption.resultfunction", null,
+				GeneratedWitnessEdge<TE, E>::getAssumptionResultFunction);
 		addEdgeData(graphWriter, "tokens", null, edge -> null);
 		addEdgeData(graphWriter, "control", null, GeneratedWitnessEdge<TE, E>::getControl);
 		addEdgeData(graphWriter, "startline", null, GeneratedWitnessEdge<TE, E>::getStartLineNumber);

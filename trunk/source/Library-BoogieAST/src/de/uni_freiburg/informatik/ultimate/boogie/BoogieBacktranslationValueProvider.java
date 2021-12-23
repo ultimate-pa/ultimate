@@ -68,4 +68,8 @@ public class BoogieBacktranslationValueProvider implements IBacktranslationValue
 		return step.getLocation().getFileName();
 	}
 
+	@Override
+	public boolean isFunctionCall(final Expression expression) {
+		return false;
+	}
 }

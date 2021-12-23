@@ -30,4 +30,6 @@ public interface IBacktranslationValueProvider<TTE, TE> {
 
 	String getStringFromExpression(TE expression);
 
+	boolean isFunctionCall(TE expression);
+
 }

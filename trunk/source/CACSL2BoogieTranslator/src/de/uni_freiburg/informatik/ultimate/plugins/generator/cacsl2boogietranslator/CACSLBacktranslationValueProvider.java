@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IPointerType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
@@ -104,4 +105,8 @@ public class CACSLBacktranslationValueProvider implements IBacktranslationValueP
 		return step.getFileName();
 	}
 
+	@Override
+	public boolean isFunctionCall(final IASTExpression expression) {
+		return expression instanceof IASTFunctionCallExpression;
+	}
 }
