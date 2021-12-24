@@ -592,6 +592,17 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
+	public void innerQuantifierBecomesRootAfterSimplification() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~head~0#1.base", "ULTIMATE.start_main_~head~0#1.offset"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
+			};
+		final String formulaAsString = "(and (exists ((|v_#memory_$Pointer$.base_87| (Array Int (Array Int Int))) (|ULTIMATE.start_main_~item~0#1.base| Int) (v_ArrVal_1003 (Array Int Int))) (let ((.cse0 (select (select |v_#memory_$Pointer$.base_87| |ULTIMATE.start_main_~head~0#1.base|) |ULTIMATE.start_main_~head~0#1.offset|))) (and (or (= |ULTIMATE.start_main_~item~0#1.base| .cse0) (exists ((|ULTIMATE.start_main_~item~0#1.offset| Int)) (let ((.cse1 (select (select |v_#memory_$Pointer$.base_87| (select (select |v_#memory_$Pointer$.base_87| |ULTIMATE.start_main_~head~0#1.base|) |ULTIMATE.start_main_~head~0#1.offset|)) |ULTIMATE.start_main_~item~0#1.offset|))) (and (= |ULTIMATE.start_main_~item~0#1.base| .cse1) (not (= .cse1 |ULTIMATE.start_main_~head~0#1.base|)))))) (not (= .cse0 0)) (not (= |ULTIMATE.start_main_~head~0#1.base| .cse0)) (= |#memory_$Pointer$.base| (store |v_#memory_$Pointer$.base_87| |ULTIMATE.start_main_~item~0#1.base| v_ArrVal_1003))))) (= |ULTIMATE.start_main_~head~0#1.offset| 0))";
+		final String expectedResultAsString = "(let ((.cse0 (select (select |#memory_$Pointer$.base| |ULTIMATE.start_main_~head~0#1.base|) |ULTIMATE.start_main_~head~0#1.offset|))) (and (= |ULTIMATE.start_main_~head~0#1.offset| 0) (not (= .cse0 0)) (not (= .cse0 |ULTIMATE.start_main_~head~0#1.base|))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void arrayTirCaretakersOfHonor() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "end", "i"), };
 		final String formulaAsString = "(and (exists ((a (Array Int Int)) (v_i_9 Int)) (and (<= i (+ v_i_9 1)) (= 42 (select a end)) (<= v_i_9 0) (not (= 42 (select a v_i_9))))) (<= 0 end))";
