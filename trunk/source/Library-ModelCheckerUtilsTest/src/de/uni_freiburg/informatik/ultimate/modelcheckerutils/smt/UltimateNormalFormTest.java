@@ -36,9 +36,12 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -140,6 +143,24 @@ public class UltimateNormalFormTest {
 
 		final Term expectedResult = TermParseUtils.parseTerm(mScript, "(_ bv1 32)");
 		Assert.isTrue(result.equals(expectedResult));
+	}
+
+	@Test
+	public void unf05() {
+		mScript.reset();
+		mScript.setLogic(Logics.ALL);
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "nhb", "nho", "ho", "hb", "lb", "lo"),
+				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#length"),
+				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Bv32Sort, "#memory_$Pointer$.offset"),
+			};
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(mMgdScript.getScript());
+		}
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mMgdScript.getScript(), "(bvule (select |#length| (ite (and (= nhb lb) (= nho lo)) nhb hb)) (bvadd (select (select (let ((.cse0 (store |#memory_$Pointer$.offset| nhb (store (select |#memory_$Pointer$.offset| nhb) nho ho)))) (store .cse0 lb (store (select .cse0 lb) lo nho))) nhb) nho) (_ bv8 32)))");
+		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+		final Term result = new IteRemover(mMgdScript).transform(letFree);
+		Assert.isTrue(UltimateNormalFormUtils.respectsUltimateNormalForm(result));
 	}
 
 }
