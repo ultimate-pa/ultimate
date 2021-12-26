@@ -149,6 +149,7 @@ public final class SmtUtils {
 	 */
 	private static final boolean FLATTEN_ARRAY_TERMS = true;
 	private static final boolean DEBUG_ASSERT_ULTIMATE_NORMAL_FORM = false;
+	private static final boolean DEBUG_CHECK_EVERY_SIMPLIFICATION = false;
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -1495,6 +1496,9 @@ public final class SmtUtils {
 		}
 		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
 				|| UltimateNormalFormUtils.respectsUltimateNormalForm(result) : "Term not in UltimateNormalForm";
+
+		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION
+				|| Util.checkSat(script, script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
 		return result;
 	}
 
