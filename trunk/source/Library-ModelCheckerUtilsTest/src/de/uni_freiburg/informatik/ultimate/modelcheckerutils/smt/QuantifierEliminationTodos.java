@@ -116,10 +116,19 @@ public class QuantifierEliminationTodos {
 	@Test
 	public void understandingModulo() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "y"), };
-		final String formulaAsString = "(and (exists ((x Int))	(and (< x 256) (<= 0 x) (= y (mod (* 2 x) 256)))) (< y 256) (<= 0 y))";
-		final String expectedResult = "(and (< y 256) (= (mod y 2) 0) (<= 0 y))";
+		final String formulaAsString = "(and (exists ((x Int))	(and (< x 256) (<= 0 x) (= y (mod (* 3 x) 256)))) (< y 256) (<= 0 y))";
+		final String expectedResult = "(and (< y 256) (= (mod y 3) 0) (<= 0 y))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+	@Test
+	public void understandingModulo2() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "y"), };
+		final String formulaAsString = "(and (exists ((x Int))	(and (< x 256) (<= 0 x) (= y (mod (* 3 x) 256)))) (< y 256) (<= 0 y))";
+		final String expectedResult = "(and (< y 256) (= (mod y 3) 0) (<= 0 y))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	@Test
 	public void plrTest3() {
@@ -345,7 +354,6 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
 	@Test
 	public void alegedAlternation() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -416,10 +424,9 @@ public class QuantifierEliminationTodos {
 	@Test
 	public void substitutionProblem() {
 		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "vfio_ioctl_check_extension_#t~mem369#1.offset", "vfio_ioctl_check_extension_#t~mem369#1.base", "#funAddr~vfio_devnode.base", "#funAddr~vfio_devnode.offset"),
-//				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_arrayElimArr_13", "v_arrayElimArr_12", "#memory_int"),
+				new FunDecl(SmtSortUtils::getIntSort, "offset", "base", "#funAddr~vfio_devnode.base", "#funAddr~vfio_devnode.offset"),
 			};
-		final String formulaAsString = "(exists ((|~#vfio~0.base| Int) (|#memory_$Pointer$.base| (Array Int (Array Int Int))) (|vfio_ioctl_check_extension_~driver~2#1.offset| Int) (|#memory_$Pointer$.offset| (Array Int (Array Int Int))) (INIT_LIST_HEAD_~list.offset Int)) (let ((.cse2 (select |#memory_$Pointer$.offset| |~#vfio~0.base|)) (.cse5 (select |#memory_$Pointer$.base| |~#vfio~0.base|))) (let ((.cse0 (select .cse5 0)) (.cse1 (+ (select .cse2 0) 48)) (.cse3 ((as const (Array Int Int)) 0)) (.cse4 (+ 8 INIT_LIST_HEAD_~list.offset))) (and (= (select (select |#memory_$Pointer$.offset| .cse0) .cse1) |#funAddr~vfio_devnode.offset|) (= |#funAddr~vfio_devnode.base| (select (select |#memory_$Pointer$.base| .cse0) .cse1)) (<= (+ 192 |vfio_ioctl_check_extension_~driver~2#1.offset|) (select .cse2 8)) (= (store (store (store (store .cse3 INIT_LIST_HEAD_~list.offset INIT_LIST_HEAD_~list.offset) .cse4 INIT_LIST_HEAD_~list.offset) 8 8) 16 8) .cse2) (<= 172 INIT_LIST_HEAD_~list.offset) (= (store (store (store (store .cse3 INIT_LIST_HEAD_~list.offset |~#vfio~0.base|) .cse4 |~#vfio~0.base|) 8 |~#vfio~0.base|) 16 |~#vfio~0.base|) .cse5) (= (let ((.cse6 (select .cse5 8))) (select (select |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| .cse6) |vfio_ioctl_check_extension_~driver~2#1.offset|)) (+ 48 (select (select |#memory_$Pointer$.offset| .cse6) |vfio_ioctl_check_extension_~driver~2#1.offset|)))) |vfio_ioctl_check_extension_#t~mem369#1.offset|)))))";
+		final String formulaAsString = "(exists ((i Int) (a (Array Int (Array Int Int))) (j Int) (b (Array Int (Array Int Int))) (k Int)) (let ((.cse2 (select b i)) (.cse5 (select a i))) (let ((.cse0 (select .cse5 0)) (.cse1 (+ (select .cse2 0) 48)) (.cse3 ((as const (Array Int Int)) 0)) (.cse4 (+ 8 k))) (and (= (select (select b .cse0) .cse1) |#funAddr~vfio_devnode.offset|) (= |#funAddr~vfio_devnode.base| (select (select a .cse0) .cse1)) (<= (+ 192 j) (select .cse2 8)) (= (store (store (store (store .cse3 k k) .cse4 k) 8 8) 16 8) .cse2) (<= 172 k) (= (store (store (store (store .cse3 k i) .cse4 i) 8 i) 16 i) .cse5) (= (let ((.cse6 (select .cse5 8))) (select (select b (select (select a .cse6) j)) (+ 48 (select (select b .cse6) j)))) |offset|)))))";
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -465,6 +472,19 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void substitution() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "v"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
+			};
+		final String formulaAsString = "(exists ((v_a_7 (Array Int Int))) (and (= (store v_a_7 1 v) a) (= 23 (select v_a_7 (select v_a_7 0)))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+
 
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
@@ -494,6 +514,9 @@ public class QuantifierEliminationTodos {
 //		final String expectedResult = null;
 //		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 //	}
+
+
+
 
 	//@formatter:on
 }
