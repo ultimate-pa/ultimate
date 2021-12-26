@@ -106,14 +106,16 @@ public class PartialQuantifierElimination {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
-		assert (CommuhashUtils.isInCommuhashNormalForm(chnf, "and", "or", "=")) : "Input not in commuhash form";
+		final Term result;
 		if (CORONA_QUANTIFIER_ELIMINATION) {
-			return QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
+			result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
 					SimplificationTechnique.NONE, chnf);
 		} else {
-			return QuantifierPusher.eliminate(services, mgdScript, false, PqeTechniques.ONLY_DER,
+			result = QuantifierPusher.eliminate(services, mgdScript, false, PqeTechniques.ONLY_DER,
 					SimplificationTechnique.NONE, chnf);
 		}
+		assert (CommuhashUtils.isInCommuhashNormalForm(result, CommuhashUtils.COMMUTATIVE_OPERATORS)) : "Output not in commuhash form";
+		return result;
 	}
 
 	/**
