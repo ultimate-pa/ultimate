@@ -551,7 +551,11 @@ public class MapEliminator {
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(newTerm)));
 		conjuncts.addAll(auxVarEqualities);
-		return Substitution.apply(mManagedScript, substitutionMap, SmtUtils.and(mScript, conjuncts));
+		// 20211226 Matthias: I am wondering why the substitution is applied twice.
+		// Because we often have two-dimensional arrays? Shouldn't we apply the
+		// substitution until a fixpoint is reached?
+		return Substitution.apply(mManagedScript, substitutionMap,
+				Substitution.apply(mManagedScript, substitutionMap, SmtUtils.and(mScript, conjuncts)));
 	}
 
 	/**
