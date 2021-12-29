@@ -111,9 +111,6 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new UnsupportedOperationException("Branch encoders");
 		}
-		if (!tf.getNonTheoryConsts().isEmpty()) {
-			throw new UnsupportedOperationException("Non-theory constants");
-		}
 		final Map<Term, Term> translationMap = new HashMap<>(mVarTrans.getIProgramConstTermMap());
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
@@ -126,7 +123,8 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 			} else {
 				suffix = "In";
 			}
-			final TermVariable tv = mMgdScript.constructFreshTermVariable(newProgramVar.getTermVariable().getName() + suffix, newProgramVar.getSort());
+			final TermVariable tv = mMgdScript.constructFreshTermVariable(
+					newProgramVar.getTermVariable().getName() + suffix, newProgramVar.getSort());
 			inVars.put(newProgramVar, tv);
 			if (isInVarAndOutVar) {
 				outVars.put(newProgramVar, tv);
@@ -141,13 +139,23 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 			}
 			final IProgramVar newProgramVar = mVarTrans.translateProgramVar(entry.getKey());
 			final String suffix = "Out";
-			final TermVariable tv = mMgdScript.constructFreshTermVariable(newProgramVar.getTermVariable().getName() + suffix, newProgramVar.getSort());
+			final TermVariable tv = mMgdScript.constructFreshTermVariable(
+					newProgramVar.getTermVariable().getName() + suffix, newProgramVar.getSort());
 			outVars.put(newProgramVar, tv);
 			translationMap.put(tf.getOutVars().get(entry.getKey()), tv);
 		}
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, tf.getNonTheoryConsts().isEmpty(), null, true, null, tf.getAuxVars().isEmpty());
+		final Set<IProgramConst> newProgramConstants;
+		if (tf.getNonTheoryConsts().isEmpty()) {
+			newProgramConstants = null;
+		} else {
+			newProgramConstants = tf.getNonTheoryConsts().stream().map(x -> mVarTrans.translateProgramConst(x))
+					.collect(Collectors.toSet());
+		}
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, tf.getNonTheoryConsts().isEmpty(),
+				newProgramConstants, true, null, tf.getAuxVars().isEmpty());
 		for (final TermVariable auxVar : tf.getAuxVars()) {
-			final TermVariable newAuxVar = mMgdScript.constructFreshTermVariable(auxVar.getName() + "Int", mSortTranslation.apply(auxVar.getSort()));
+			final TermVariable newAuxVar = mMgdScript.constructFreshTermVariable(auxVar.getName() + "Int",
+					mSortTranslation.apply(auxVar.getSort()));
 			translationMap.put(auxVar, newAuxVar);
 			tfb.addAuxVar(newAuxVar);
 		}
