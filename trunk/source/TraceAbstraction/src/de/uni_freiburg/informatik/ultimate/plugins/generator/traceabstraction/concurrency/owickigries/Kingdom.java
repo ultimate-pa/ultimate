@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.Branc
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.owickigries.Realm;
 
-public final class Kingdom<PLACE, LETTER> {
+public final class Kingdom{
 	/**
 	 * The set of realms in Kingdom.
 	 */
@@ -47,10 +47,12 @@ public final class Kingdom<PLACE, LETTER> {
 	 * Remove the specified realm from Kingdom.
 	 * @param realm
 	 */	
-	public void removeRealm(Realm realm) {
+	public boolean removeRealm(Realm realm) {
 		if (mKingdom.contains(realm)) {
 			mKingdom.remove(realm);
+			return true;
 		}
+		return false;
 	}
 	
 	//Co-relation types

@@ -24,7 +24,7 @@ public final class Territory <PLACE, LETTER>{
 	/**
 	 * Set of regions in Territory.
 	 */
-	private Set<Region> mTerritory;
+	private final Set<Region> mTerritory;
 	
 	public Territory (Set<Region> regions) {
 		mTerritory = regions;
@@ -54,7 +54,7 @@ public final class Territory <PLACE, LETTER>{
 	}
 	
 	
-	
+	//Corelation at level of places call
 	
 	
 

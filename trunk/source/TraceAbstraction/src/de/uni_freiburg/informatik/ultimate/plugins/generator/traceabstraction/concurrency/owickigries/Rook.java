@@ -55,7 +55,8 @@ public final class Rook <PLACE, LETTER> {
 	 * @return true if condition is added, false if realm is not found in Kingdom.
 	 * TODO: Kindred cases...
 	 */
-	public boolean immigration(Condition<LETTER, PLACE> condition, Realm<PLACE, LETTER> realm) {
+	public boolean immigration(Condition<LETTER, PLACE> condition, 
+			Realm<PLACE, LETTER> realm) {
 		if (mKingdom.removeRealm(realm)) {
 			realm.addCondition(condition);
 			mKingdom.addRealm(realm);
@@ -77,7 +78,8 @@ public final class Rook <PLACE, LETTER> {
 	 */
 	
 	public Set<Collection<Condition<LETTER, PLACE>>> census() {
-		Set<Collection<Condition<LETTER, PLACE>>> coSets = new HashSet<Collection<Condition<LETTER, PLACE>>>(); 
+		Set<Collection<Condition<LETTER, PLACE>>> coSets = 
+				new HashSet<Collection<Condition<LETTER, PLACE>>>(); 
 		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
 			coSets.add(DataStructureUtils.union(realm.getConditions(), 
 					mLaw.getConditions()));			

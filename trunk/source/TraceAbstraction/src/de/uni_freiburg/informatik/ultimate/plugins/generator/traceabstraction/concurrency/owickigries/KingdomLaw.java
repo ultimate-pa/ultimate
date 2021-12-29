@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.Branc
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.owickigries.Realm;
 
-public final class KingdomLaw <PLACE, LETTER>{
+public final class KingdomLaw<PLACE, LETTER>{
 
 	private final Set<Condition<LETTER, PLACE>> mLaw;
 	
@@ -32,6 +32,9 @@ public final class KingdomLaw <PLACE, LETTER>{
 		}
 	}
 	
+	public Set<Condition<LETTER, PLACE>> getConditions(){
+		return mLaw;
+	}
 	//TODO: corelation types
 	
 	

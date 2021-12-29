@@ -8,8 +8,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.owickigries.CoRealm;
 
-public final class Realm <PLACE, LETTER>{
+
+public final class Realm<PLACE, LETTER>{
 	/**
 	 * The set of conditions in realm.
 	 */
@@ -91,6 +93,23 @@ public final class Realm <PLACE, LETTER>{
 		else {
 			return false;	
 		}
-		
 	}
+	
+	/**
+	 * @param condition
+	 * @param bp
+	 * @return CoRealm with CoRelationType, Positive and Negative corelated conditions.
+	 */
+	public CoRealm<PLACE,LETTER> getCoRealm(Condition<LETTER, PLACE> condition, BranchingProcess<LETTER, PLACE> bp) {
+		return new CoRealm<PLACE,LETTER>(this, condition, bp);
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
 }
