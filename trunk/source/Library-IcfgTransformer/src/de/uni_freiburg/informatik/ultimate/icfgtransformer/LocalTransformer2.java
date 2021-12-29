@@ -291,8 +291,7 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 							final String newIdentifier = oldPv.getIdentifier() + mVarSuffix;
 							final Sort newSort = mSortTranslation.apply(oldPv.getSort());
 							mMgdScript.declareFun(null, newIdentifier, new Sort[0], newSort);
-							final ApplicationTerm newSmtConstant = (ApplicationTerm) mMgdScript.term(null, newIdentifier,
-									null, newSort);
+							final ApplicationTerm newSmtConstant = (ApplicationTerm) mMgdScript.term(null, newIdentifier);
 							mBacktranslation.put(newSmtConstant, oldPv.getDefaultConstant());
 							return new BoogieConst(newIdentifier, null, newSmtConstant, false);
 						}
