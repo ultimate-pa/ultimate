@@ -135,7 +135,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 		Term[][] matrix = { { mX, mZero, mTwo }, { mOne, mY, mZero } };
 		matrix = mQAbstractor.gaussianSolve(matrix);
 		final Term div1 = TermParseUtils.parseTerm(mScript, "(/ 2.0 x)");
-		final Term div2 = TermParseUtils.parseTerm(mScript, "(/ (- 2.0) (* y x))");
+		final Term div2 = TermParseUtils.parseTerm(mScript, "(/ (- 2.0) (* x y))");
 		final Term[][] result = { { mOne, mZero, div1 }, { mZero, mOne, div2 } };
 		testMatrixEquality(matrix, result);
 	}
