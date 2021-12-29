@@ -46,9 +46,13 @@ public class Qvasr {
 	private final Integer mConcreteDimension;
 
 	/**
-	 * Construct a new Q-Vasr using a single transformer
+	 * Construct a new Q-Vasr using a single initial transformer consiting of a reset and addition vector.
 	 *
-	 * @param initialTransformer
+	 * @param resetVector
+	 *            The initial reset vector. A reset vector is binary, containing only 0s and 1s.
+	 *
+	 * @param additionVector
+	 *            The initial addition vector. An addition vector contains rational numbers.
 	 */
 	public Qvasr(final Rational[] resetVector, final Rational[] additionVector) {
 		final Pair<Rational[], Rational[]> initialTransformer = new Pair<>(resetVector, additionVector);
@@ -75,6 +79,7 @@ public class Qvasr {
 	 * Add a new reset, addition vector pair to the qvasr.
 	 *
 	 * @param transformer
+	 *            The reset and addition vector to be added.
 	 */
 	public void addTransformer(final Pair<Rational[], Rational[]> transformer) {
 		mTransformer.add(transformer);

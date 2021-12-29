@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
-public class QvasrUtils {
+public final class QvasrUtils {
 	private QvasrUtils() {
 		// Prevent instantiation of this utility class
 	}
@@ -54,14 +54,15 @@ public class QvasrUtils {
 	/**
 	 * Split a {@link Term} in DNF into its conjuncts.
 	 *
-	 * @param loopRelation
-	 * @return
+	 * @param term
+	 *            A term in disjunctive normal form.
+	 * @return A list of terms representing each disjunct.
 	 */
-	public static List<Term> splitDisjunction(final Term loopRelation) {
+	public static List<Term> splitDisjunction(final Term term) {
 		final List<Term> result = new ArrayList<>();
-		final ApplicationTerm dnfAppTerm = (ApplicationTerm) loopRelation;
-		if (!dnfAppTerm.getFunction().getName().equals("or")) {
-			result.add(loopRelation);
+		final ApplicationTerm dnfAppTerm = (ApplicationTerm) term;
+		if (!"or".equals(dnfAppTerm.getFunction().getName())) {
+			result.add(term);
 		} else {
 			result.addAll(Arrays.asList(dnfAppTerm.getParameters()));
 		}
@@ -72,8 +73,10 @@ public class QvasrUtils {
 	 * Get a matrix k*d, with entries corresponding to coherence classes.
 	 *
 	 * @param coherenceClass
+	 *            A coherence class.
 	 * @param d
-	 * @return
+	 *            concrete dimension of a {@link Qvasr}
+	 * @return An identitiy matrix with 1s only in coherence class corresponding columns.
 	 */
 	public static Rational[][] getCoherenceIdentityMatrix(final Set<Integer> coherenceClass, final int d) {
 		final Rational[][] coherenceIdentityMatrix = new Rational[coherenceClass.size()][d];
@@ -91,22 +94,35 @@ public class QvasrUtils {
 	}
 
 	/**
-	 * Standard matrix multiplication of two rational matrices.
+	 * Standard vector matrix multiplication of a vector containing {@link Term} and a rational matrix. They are not
+	 * associative.
 	 *
-	 * @param matrixOne
+	 * @param script
+	 *            A {@link ManagedScript}
+	 *
+	 * @param vector
+	 *            A vector with {@link Term}
+	 *
 	 * @param matrixTwo
-	 * @return
+	 *            A {@link Rational} matrix.
+	 * @return The product of both.
 	 */
 	public static Term[][] vectorMatrixMultiplicationWithVariables(final ManagedScript script, final Term[] vector,
-			final Rational[][] matrixTwo) {
+			Rational[][] matrixTwo) {
+		/*
+		 * In case the matrix is a vector.
+		 */
+		if (matrixTwo.length == 1) {
+			matrixTwo = transposeVector(matrixTwo);
+		}
 		final int vectorLength = vector.length;
 		final int rowMatrixTwo = matrixTwo.length;
-		final int colMatrixTwo = matrixTwo[0].length;
 		if (vectorLength != rowMatrixTwo) {
 			throw new UnsupportedOperationException();
 		}
-		final Term[][] resultMatrix = new Term[1][vectorLength];
-		for (int i = 0; i < vectorLength; i++) {
+		final int colMatrixTwo = matrixTwo[0].length;
+		final Term[][] resultMatrix = new Term[1][colMatrixTwo];
+		for (int i = 0; i < colMatrixTwo; i++) {
 			resultMatrix[0][i] = script.getScript().decimal("0");
 
 		}
@@ -123,21 +139,49 @@ public class QvasrUtils {
 	}
 
 	/**
+	 * Checks for equivalence of two terms.
+	 *
+	 * @param script
+	 *            A {@link ManagedScript}
+	 * @param firstEntry
+	 *            A {@link Term}
+	 * @param secondEntry
+	 *            A {@link Term}
+	 * @return true iff they are equivalent, else false.
+	 */
+	public static boolean checkTermEquiv(final ManagedScript script, final Term firstEntry, final Term secondEntry) {
+		return SmtUtils.areFormulasEquivalent(firstEntry, secondEntry, script.getScript());
+	}
+
+	/**
+	 * Check whether a given {@link Term} is an {@link ApplicationTerm}
+	 *
+	 * @param term
+	 *            A term to be checked.
+	 * @return True iff the term is an application term, else false.
+	 */
+	public static boolean isApplicationTerm(final Term term) {
+		return term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0;
+	}
+
+	/**
 	 * Standard matrix multiplication of two rational matrices.
 	 *
 	 * @param matrixOne
+	 *            The first matrix
 	 * @param matrixTwo
-	 * @return
+	 *            The second matrix
+	 * @return The product of both matrices.
 	 */
 	public static Rational[][] rationalMatrixMultiplication(final Rational[][] matrixOne,
 			final Rational[][] matrixTwo) {
-		final int rowMatrixOne = matrixOne.length;
 		final int rowMatrixTwo = matrixTwo.length;
 		final int colMatrixOne = matrixOne[0].length;
-		final int colMatrixTwo = matrixTwo[0].length;
 		if (colMatrixOne != rowMatrixTwo) {
 			return new Rational[0][0];
 		}
+		final int colMatrixTwo = matrixTwo[0].length;
+		final int rowMatrixOne = matrixOne.length;
 		final Rational[][] resultMatrix = new Rational[rowMatrixOne][colMatrixTwo];
 		for (int i = 0; i < rowMatrixOne; i++) {
 			for (int j = 0; j < colMatrixTwo; j++) {
@@ -158,11 +202,43 @@ public class QvasrUtils {
 	}
 
 	/**
+	 * Transpose a rational vector in form of a matrix.
+	 *
+	 * @param vector
+	 *            A rational vector to be transposed.
+	 * @return The transposed vector.
+	 */
+	public static Rational[][] transposeVector(final Rational[][] vector) {
+		final Rational[][] transposedVector = new Rational[vector[0].length][1];
+		for (int i = 0; i < vector[0].length; i++) {
+			transposedVector[i][0] = vector[0][i];
+		}
+		return transposedVector;
+	}
+
+	/**
+	 * Transpose a rational vector.
+	 *
+	 * @param vector
+	 *            A rational vector to be transposed.
+	 * @return The transposed vector.
+	 */
+	public static Rational[][] transposeVector(final Rational[] vector) {
+		final Rational[][] transposedVector = new Rational[vector.length][1];
+		for (int i = 0; i < vector.length; i++) {
+			transposedVector[i][0] = vector[i];
+		}
+		return transposedVector;
+	}
+
+	/**
 	 * Embed a new variable into a set of subsets, by adding it to each already existing subsets.
 	 *
 	 * @param inSet
+	 *            Already existing set of {@link Term}
 	 * @param variable
-	 * @return
+	 *            A new join.
+	 * @return A joined Set.
 	 */
 	public static Set<Set<Term>> joinSet(final Set<Set<Term>> inSet, final Set<Term> variable) {
 		final Set<Set<Term>> joinedSet = new HashSet<>(inSet);

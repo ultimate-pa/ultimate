@@ -79,10 +79,10 @@ public class QvasrVectorSpaceBasisConstructor {
 		final Term[] lastRow = basisVectors[basisVectors.length - 1];
 		boolean aIsZero = true;
 		for (int i = 0; i < basisVectors.length; i++) {
-			if (!QvasrAbstractor.checkTermEquiv(script, basisVectors[i][basisVectors[0].length - 1],
+			if (!QvasrUtils.checkTermEquiv(script, basisVectors[i][basisVectors[0].length - 1],
 					script.getScript().decimal("0"))) {
 				for (int j = 0; j < basisVectors[i].length - 1; j++) {
-					if (!QvasrAbstractor.checkTermEquiv(script, basisVectors[i][j], script.getScript().decimal("0"))) {
+					if (!QvasrUtils.checkTermEquiv(script, basisVectors[i][j], script.getScript().decimal("0"))) {
 						aIsZero = false;
 						break;
 					}
@@ -107,7 +107,7 @@ public class QvasrVectorSpaceBasisConstructor {
 		for (int j = 0; j < basisVectors.length; j++) {
 			final Term[] row = basisVectors[j];
 			for (int k = 0; k < row.length - 1; k++) {
-				if (!QvasrAbstractor.checkTermEquiv(script, row[k], script.getScript().decimal("0"))) {
+				if (!QvasrUtils.checkTermEquiv(script, row[k], script.getScript().decimal("0"))) {
 					final Term toBeSolvedFor = tvsForColumns.get(k);
 					final List<Term> factors = new ArrayList<>();
 					factors.add(SmtUtils.mul(script.getScript(), "*", row[row.length - 1],
@@ -228,12 +228,12 @@ public class QvasrVectorSpaceBasisConstructor {
 	private static boolean isConsistent(final ManagedScript script, final Term[][] basisVectors) {
 		for (int i = 0; i < basisVectors.length; i++) {
 			final Term[] row = basisVectors[i];
-			if (!QvasrAbstractor.checkTermEquiv(script, row[row.length - 1], script.getScript().decimal("0"))) {
+			if (!QvasrUtils.checkTermEquiv(script, row[row.length - 1], script.getScript().decimal("0"))) {
 				for (int j = 0; j < row.length; j++) {
 					if (j == row.length - 1 && row[j] instanceof ConstantTerm) {
 						return false;
 					}
-					if (!QvasrAbstractor.checkTermEquiv(script, row[j], script.getScript().decimal("0"))) {
+					if (!QvasrUtils.checkTermEquiv(script, row[j], script.getScript().decimal("0"))) {
 						break;
 					}
 				}

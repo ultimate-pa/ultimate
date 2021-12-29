@@ -55,8 +55,11 @@ public class QvasrSummarizer {
 	 * resets (Q-VASR)
 	 *
 	 * @param logger
+	 *            A {@link ILogger}
 	 * @param services
+	 *            {@link IUltimateServiceProvider}
 	 * @param script
+	 *            A {@link ManagedScript}
 	 */
 	public QvasrSummarizer(final ILogger logger, final IUltimateServiceProvider services, final ManagedScript script) {
 		mLogger = logger;
@@ -69,7 +72,8 @@ public class QvasrSummarizer {
 	 * Summarize a {@link UnmodifiableTransFormula} using Q-Vasr.
 	 *
 	 * @param transitionFormula
-	 * @return
+	 *            A {@link UnmodifiableTransFormula} representing changes to variables.
+	 * @return A summary of these changes in form of a {@link UnmodifiableTransFormula}
 	 */
 	public UnmodifiableTransFormula summarizeLoop(final UnmodifiableTransFormula transitionFormula) {
 		final Term transitionTerm = transitionFormula.getFormula();

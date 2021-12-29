@@ -37,11 +37,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
-public class QvasrAbstractionBuilder {
+public final class QvasrAbstractionBuilder {
 	private QvasrAbstractionBuilder() {
 		// Prevent instantiation of this utility class
 	}
 
+	/**
+	 * Construct a new {@link QvasrAbstraction} (S, V) using a vector basis for the resets and additions. By forming the
+	 * {@link Qvasr} V and computing the corresponding simulation matrix S.
+	 *
+	 * @param resetsBasis
+	 *            The vector space basis for the reset vector space.
+	 * @param additionsBasis
+	 *            The vector space basis for the addition vector space.
+	 * @return A newly constructed {@link QvasrAbstraction}
+	 */
 	public static QvasrAbstraction constructQvasrAbstraction(final Rational[][] resetsBasis,
 			final Rational[][] additionsBasis) {
 

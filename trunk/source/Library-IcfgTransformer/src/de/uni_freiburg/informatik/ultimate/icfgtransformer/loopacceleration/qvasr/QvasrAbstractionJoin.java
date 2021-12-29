@@ -27,13 +27,18 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -42,18 +47,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
-public class QvasrAbstractionJoin {
+public final class QvasrAbstractionJoin {
 	private QvasrAbstractionJoin() {
 		// Prevent instantiation of this utility class
 	}
 
 	/**
-	 * Join two given Qvasr abstractions such that they form a best overapproximation.
+	 * Join two given Qvasr abstractions (S_1, V_1) and (S_2, V_2) such that they form a best overapproximation.
 	 *
 	 * @param script
+	 *            A {@link ManagedScript}
 	 * @param abstractionOne
+	 *            {@link QvasrAbstraction} (S_1, V_1)
 	 * @param abstractionTwo
-	 * @return
+	 *            {@link QvasrAbstraction} (S_2, V_2)
+	 * @return A joined {@link QvasrAbstraction}
 	 */
 	public static QvasrAbstraction join(final ManagedScript script, final QvasrAbstraction abstractionOne,
 			final QvasrAbstraction abstractionTwo) {
@@ -72,10 +80,12 @@ public class QvasrAbstractionJoin {
 		final Set<Set<Integer>> abstractionTwoCoherenceClasses = getCoherenceClasses(abstractionTwo);
 
 		for (final Set<Integer> coherenceClassOne : abstractionOneCoherenceClasses) {
+
 			final Rational[][] coherenceIdentityMatrixOne =
 					QvasrUtils.getCoherenceIdentityMatrix(coherenceClassOne, concreteDimensionOne);
 			final Rational[][] coherenceIdentitySimulationMatrixOne = QvasrUtils
 					.rationalMatrixMultiplication(coherenceIdentityMatrixOne, abstractionOne.getSimulationMatrix());
+
 			for (final Set<Integer> coherenceClassTwo : abstractionTwoCoherenceClasses) {
 
 				final Rational[][] coherenceIdentityMatrixTwo =
@@ -100,17 +110,76 @@ public class QvasrAbstractionJoin {
 	 */
 	private static Pair<Rational[][], Rational[][]> pushout(final ManagedScript script,
 			final Rational[][] abstractionOne, final Rational[][] abstractionTwo) {
+
+		final Map<Integer, TermVariable> columnToVar = new HashMap<>();
+		final Map<TermVariable, Integer> varToColumnOne = new HashMap<>();
+		final Map<TermVariable, Integer> varToColumnTwo = new HashMap<>();
+
 		final Term[] newVarsOne = new Term[abstractionOne[0].length];
 		final Term[] newVarsTwo = new Term[abstractionTwo[0].length];
+		Integer colCnt = 0;
 		for (int i = 0; i < abstractionOne[0].length; i++) {
-			newVarsOne[i] = script.constructFreshTermVariable("t", SmtSortUtils.getRealSort(script.getScript()));
+			final TermVariable newVar =
+					script.constructFreshTermVariable("t", SmtSortUtils.getRealSort(script.getScript()));
+			newVarsOne[i] = newVar;
+			columnToVar.put(colCnt, newVar);
+			varToColumnOne.put(newVar, i);
+			colCnt++;
 		}
 		for (int i = 0; i < abstractionTwo[0].length; i++) {
-			newVarsTwo[i] = script.constructFreshTermVariable("t", SmtSortUtils.getRealSort(script.getScript()));
+			final TermVariable newVar =
+					script.constructFreshTermVariable("t", SmtSortUtils.getRealSort(script.getScript()));
+			newVarsTwo[i] = newVar;
+			columnToVar.put(colCnt, newVar);
+			varToColumnTwo.put(newVar, i);
+			colCnt++;
 		}
 		final Term[][] lhs = QvasrUtils.vectorMatrixMultiplicationWithVariables(script, newVarsOne, abstractionOne);
 		final Term[][] rhs = QvasrUtils.vectorMatrixMultiplicationWithVariables(script, newVarsTwo, abstractionTwo);
+
+		final Rational[][] rhsRational = termMatrixToRational(script, rhs, varToColumnTwo);
+
+		final Rational[][] lhsRational = termMatrixToRational(script, lhs, varToColumnOne);
+
 		return null;
+	}
+
+	/**
+	 * Converts a matrix of termvariables to a rational matrix in expanded matrix form that can be used for gaussian
+	 * elimination.
+	 *
+	 * @param script
+	 *            A {@link ManagedScript}
+	 * @param termMatrix
+	 * @param varToColumn
+	 * @return
+	 */
+	public static Rational[][] termMatrixToRational(final ManagedScript script, final Term[][] termMatrix,
+			final Map<TermVariable, Integer> varToColumn) {
+
+		final Set<TermVariable> tvs = varToColumn.keySet();
+		final int newMatrixLength = tvs.size();
+		final Rational[][] rationalMatrix = new Rational[termMatrix.length][newMatrixLength];
+		for (int i = 0; i < termMatrix.length; i++) {
+			for (int j = 0; j < termMatrix[0].length; j++) {
+				final Term equation = termMatrix[i][j];
+				if (QvasrUtils.isApplicationTerm(equation)) {
+					for (final Term var : tvs) {
+						final Set<TermVariable> zeroTvs = new HashSet<>(tvs);
+						zeroTvs.remove(var);
+						final HashMap<Term, Term> subMap = new HashMap<>();
+						subMap.put(var, script.getScript().decimal("1.0"));
+						for (final Term zeroTv : zeroTvs) {
+							subMap.put(zeroTv, script.getScript().decimal("0"));
+						}
+						final ConstantTerm constTerm = (ConstantTerm) Substitution.apply(script, subMap, equation);
+						final Rational entryAsRational = (Rational) constTerm.getValue();
+						rationalMatrix[i][varToColumn.get(var)] = entryAsRational;
+					}
+				}
+			}
+		}
+		return rationalMatrix;
 	}
 
 	/**

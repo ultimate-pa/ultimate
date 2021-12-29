@@ -49,8 +49,11 @@ public class QvasrLoopSummarization {
 	 * Construct a new Qvasr-Loopsummarizer.
 	 *
 	 * @param logger
+	 *            A {@link ILogger}
 	 * @param services
+	 *            {@link IUltimateServiceProvider}
 	 * @param script
+	 *            {@link ManagedScript}
 	 */
 	public QvasrLoopSummarization(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript script) {
@@ -63,7 +66,8 @@ public class QvasrLoopSummarization {
 	 * Compute a Q-VASR summary of a ({@link UnmodifiableTransFormula}) representing a loop in an error trace.
 	 *
 	 * @param loopTransitionFormula
-	 * @return
+	 *            A {@link UnmodifiableTransFormula} representing changes to variables in a loop.
+	 * @return A loop acceleration computed using Qvasr in form of a{@link UnmodifiableTransFormula}
 	 */
 	public UnmodifiableTransFormula getQvasrAcceleration(final UnmodifiableTransFormula loopTransitionFormula) {
 		final QvasrSummarizer qvasrSummarizer = new QvasrSummarizer(mLogger, mServices, mScript);

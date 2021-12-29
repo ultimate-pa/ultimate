@@ -49,8 +49,10 @@ public class QvasrAbstraction {
 	 * Construct a new Q-Vasr-abstraction (S, V), which overapproximates a {@link UnmodifiableTransFormula} F by using
 	 * linear matrix S to simulate F to the {@link Qvasr} V.
 	 *
-	 * @param initialSimulationMatrix
-	 * @param initialQvasr
+	 * @param simulationMatrix
+	 *            The initial simulation matrix S.
+	 * @param qvasr
+	 *            The initial {@link Qvasr} V.
 	 */
 	public QvasrAbstraction(final Rational[][] simulationMatrix, final Qvasr qvasr) {
 		mSimulationMatrix = simulationMatrix;
