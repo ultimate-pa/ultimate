@@ -499,7 +499,7 @@ public class BvToIntTranslation extends TermTransformer {
 								if (i == 0) {
 									final Term constInt =
 											SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
-									iteChain = mScript.term("ite", mScript.term("=", constInt, translatedRHS),
+									iteChain = SmtUtils.ite(mScript, SmtUtils.binaryEquality(mScript, constInt, translatedRHS),
 											translatedLHS, iteChain);
 								} else {
 									final Rational powResult = Rational.valueOf(i, 1);
