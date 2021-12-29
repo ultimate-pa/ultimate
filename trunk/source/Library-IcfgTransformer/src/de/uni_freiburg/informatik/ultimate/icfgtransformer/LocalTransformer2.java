@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * {@link ITransformulaTransformer} that can transform each {@link TransFormula}
@@ -161,11 +162,14 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 		}
 		final TranslationManager translationManager = new TranslationManager(mMgdScript);
 		translationManager.setReplacementVarMaps(new LinkedHashMap<>(translationMap));
-		final Term translated = translationManager.translateBvtoInt(tf.getFormula());
-		tfb.setFormula(translated);
+		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(tf.getFormula());
+		for (final TermVariable newAuxVar : translated.getSecond()) {
+			tfb.addAuxVar(newAuxVar);
+		}
+		tfb.setFormula(translated.getFirst());
 		tfb.setInfeasibility(tf.isInfeasible());
 		final UnmodifiableTransFormula resultTf = tfb.finishConstruction(mMgdScript);
-		return new TransformulaTransformationResult(resultTf, false);
+		return new TransformulaTransformationResult(resultTf, translated.getThird());
 	}
 
 	@Override
