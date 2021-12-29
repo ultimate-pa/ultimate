@@ -748,9 +748,11 @@ public class IntToBvBackTranslation extends TermTransformer {
 				return;
 			}
 			case "select": {
-				if (Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) < Integer
+				if (Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) != Integer
 						.parseInt(args[1].getSort().getIndices()[0])) {
-					throw new AssertionError("Array indices do not match");
+					throw new AssertionError(String.format("Cannot access array with %sbit indices via %sbit term.",
+							Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
+							Integer.parseInt(args[1].getSort().getIndices()[0])));
 				}
 				setResult(mScript.term("select", args[0],
 						bringTermToWidth(args[1], Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
@@ -771,6 +773,9 @@ public class IntToBvBackTranslation extends TermTransformer {
 			}
 			case "abs": {
 				throw new UnsupportedOperationException("Unexpected function in back-translation " + fsym.getName());
+			}
+			case "const": {
+				throw new UnsupportedOperationException("Unable to translate const array back. Don't know width of index. Look-ahead needed.");
 			}
 
 			default:
