@@ -32,6 +32,9 @@ public interface IProgramConst extends IProgramVarOrConst {
 
 	String getIdentifier();
 
+	/*
+	 * TODO 20211228 Matthias: Cannot see a "default". Rename to getSmtConstant?
+	 */
 	ApplicationTerm getDefaultConstant();
 
 }
