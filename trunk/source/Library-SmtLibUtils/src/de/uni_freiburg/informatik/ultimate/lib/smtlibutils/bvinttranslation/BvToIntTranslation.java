@@ -62,6 +62,7 @@ public class BvToIntTranslation extends TermTransformer {
 			for (final TermVariable variable : mFreeVars) {
 				if (term == variable && SmtSortUtils.isBitvecSort(term.getSort())) {
 					final Term intVar = translateVars(term);
+					assert (SmtSortUtils.isIntSort(intVar.getSort()));
 					mTc.varConstraint(term, intVar); // Create and Collect Constraints
 					setResult(intVar);
 					return;
