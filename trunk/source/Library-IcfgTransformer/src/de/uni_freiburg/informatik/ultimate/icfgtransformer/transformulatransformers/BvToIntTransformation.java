@@ -147,7 +147,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		return newIntTF;
 	}
 
-	private Sort bvToIntSort(final ManagedScript mgdScript, final Sort sort) {
+	public static Sort bvToIntSort(final ManagedScript mgdScript, final Sort sort) {
 		if (SmtSortUtils.isBitvecSort(sort)) {
 			return SmtSortUtils.getIntSort(mgdScript);
 		} else if (SmtSortUtils.isArraySort(sort)) {
