@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Function;
 
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBac
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequence;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer2;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
@@ -60,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wern
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer.DealingWithArraysTypes;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing.LoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux.MonniauxMapEliminator;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.BvToIntTransformation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.ModuloNeighborTransformation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
@@ -334,26 +335,18 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
 			final Class<OUTLOC> outlocClass, final IcfgTransformationBacktranslator backtranslationTracker,
 			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
-		IIcfg<OUTLOC> result;
-		final List<TransitionPreprocessor> transitionPreprocessors = new ArrayList<>();
-		transitionPreprocessors.add(new RewriteIte());
-		transitionPreprocessors.add(new SimplifyPreprocessor(services, SimplificationTechnique.SIMPLIFY_QUICK));
-		final BvToIntTransformation bvToInt = new BvToIntTransformation(services, fac,
-				icfg.getCfgSmtToolkit().getManagedScript());
 
+		final LocalTransformer2 transformer = new LocalTransformer2(icfg.getCfgSmtToolkit().getManagedScript());
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
+				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		final Function<Term, Term> backtranslation = (x -> new IntToBvBackTranslation(
-				icfg.getCfgSmtToolkit().getManagedScript(), bvToInt.getBacktranslationOfVariables(),
+				icfg.getCfgSmtToolkit().getManagedScript(), new LinkedHashMap<>(transformer.getBacktranslationMap()),
 				Collections.emptySet(), null).transform(x));
 
 		backtranslationTracker.addExpressionBacktranslation(backtranslation);
-		transitionPreprocessors.add(bvToInt);
-		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 
-		final ITransformulaTransformer transformer =
-				new LocalTransformer(transitionPreprocessors, icfg.getCfgSmtToolkit().getManagedScript(), fac);
-		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
-				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
-		result = icfgTransformer.getResult();
+
+		final IIcfg<OUTLOC> result = icfgTransformer.getResult();
 		return result;
 	}
 
