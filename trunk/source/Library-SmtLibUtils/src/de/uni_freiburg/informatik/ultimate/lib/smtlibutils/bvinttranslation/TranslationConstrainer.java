@@ -21,17 +21,33 @@ public class TranslationConstrainer {
 	private FunctionSymbol mIntand;
 
 	enum Mode {
-		SUM, BITWISE, LAZYSUM, LAZYBITWISE
+		/**
+		 * Default mode
+		 */
+		SUM,
+		/**
+		 * TODO
+		 */
+		BITWISE,
+		/**
+		 * TODO
+		 */
+		LAZYSUM,
+		/**
+		 * TODO
+		 */
+		LAZYBITWISE
 	}
 
-	private Mode mSetMode = Mode.SUM; // Default Mode
+	private final Mode mSetMode; // Default Mode
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
 	private final HashSet<Term> mTvConstraintSet; // Set of all constraints for quantified variables
 
-	public TranslationConstrainer(final ManagedScript mgdscript) {
+	public TranslationConstrainer(final ManagedScript mgdscript, final Mode mode) {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
+		mSetMode = mode;
 
 		mConstraintSet = new HashSet<Term>();
 		mTvConstraintSet = new HashSet<Term>();
@@ -57,10 +73,6 @@ public class TranslationConstrainer {
 
 	public HashSet<Term> getTvConstraints() {
 		return mTvConstraintSet;
-	}
-
-	public void setBvandMode(final Mode mode) {
-		mSetMode = mode;
 	}
 
 	public FunctionSymbol getIntAndFunctionSymbol() {

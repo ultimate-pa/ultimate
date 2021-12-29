@@ -37,7 +37,7 @@ public class TranslationManager {
 		mReversedVarMap = new LinkedHashMap<>();
 
 		mConstraintSet = new HashSet<Term>();
-		mTc = new TranslationConstrainer(mMgdScript);
+		mTc = new TranslationConstrainer(mMgdScript, Mode.SUM);
 		mIntand = mTc.getIntAndFunctionSymbol();
 	}
 
@@ -46,7 +46,6 @@ public class TranslationManager {
 	}
 
 	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoInt(final Term bitvecFromula) {
-		mTc.setBvandMode(Mode.SUM);
 		final BvToIntTranslation bvToInt =
 				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars());
 		bvToInt.setNutzTransformation(false);
