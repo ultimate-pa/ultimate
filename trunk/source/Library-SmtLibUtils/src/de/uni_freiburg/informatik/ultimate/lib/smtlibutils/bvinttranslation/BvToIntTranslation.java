@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -23,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class BvToIntTranslation extends TermTransformer {
 	// private final HashMap<Term, Term> mTranslatedTerms; // Maps Bv term to Int
 	private final Script mScript;
-	private final static String BITVEC_CONST_PATTERN = "bv\\d+";
+	private static final String BITVEC_CONST_PATTERN = "bv\\d+";
 	private boolean mNutzTransformation;
 	private final ManagedScript mMgdScript;
 	private final TermVariable[] mFreeVars;
@@ -32,6 +33,8 @@ public class BvToIntTranslation extends TermTransformer {
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
 	private final LinkedHashMap<Term, Term> mReversedVarMap;
 	public final LinkedHashMap<Term, Term> mArraySelectConstraintMap;
+	private final Set<TermVariable> mOverapproxVariables;
+	private final boolean mIsOverapproximation;
 
 	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
 			final TranslationConstrainer tc, final TermVariable[] freeVars) {
@@ -48,6 +51,8 @@ public class BvToIntTranslation extends TermTransformer {
 
 		mReversedVarMap = new LinkedHashMap<Term, Term>();
 		mArraySelectConstraintMap = new LinkedHashMap<Term, Term>();
+		mOverapproxVariables = new HashSet<>();
+		mIsOverapproximation = false;
 		mTc = tc;
 	}
 
@@ -739,5 +744,13 @@ public class BvToIntTranslation extends TermTransformer {
 
 	public boolean getNutzFlag() {
 		return mNutzTransformation;
+	}
+
+	public Set<TermVariable> getOverapproxVariables() {
+		return mOverapproxVariables;
+	}
+
+	public boolean wasOverapproximation() {
+		return mIsOverapproximation;
 	}
 }

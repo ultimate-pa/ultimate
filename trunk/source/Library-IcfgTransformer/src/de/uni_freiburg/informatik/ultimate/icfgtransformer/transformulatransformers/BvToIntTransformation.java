@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class BvToIntTransformation extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Translate Bitvectors to Integer Formulas";
@@ -141,9 +143,13 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		mTranslationManager = new TranslationManager(mgdScript);
 		mTranslationManager.setReplacementVarMaps(varMap);
 
-		final Term newFormula = mTranslationManager.translateBvtoInt(tf.getFormula());
+		final Triple<Term, Set<TermVariable>, Boolean> translated = mTranslationManager
+				.translateBvtoInt(tf.getFormula());
+		if (!translated.getSecond().isEmpty() || translated.getThird()) {
+			throw new UnsupportedOperationException();
+		}
 
-		newIntTF.setFormula(newFormula);
+		newIntTF.setFormula(translated.getFirst());
 		return newIntTF;
 	}
 

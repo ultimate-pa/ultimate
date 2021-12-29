@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -10,6 +11,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransf
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class TranslationManager {
 	private final ManagedScript mMgdScript;
@@ -42,7 +45,7 @@ public class TranslationManager {
 		mVariableMap = replacementVarMap;
 	}
 
-	public Term translateBvtoInt(final Term bitvecFromula) {
+	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoInt(final Term bitvecFromula) {
 		mTc.setBvandMode(Mode.SUM);
 		final BvToIntTranslation bvToInt =
 				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars());
@@ -50,13 +53,15 @@ public class TranslationManager {
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
+		final Set<TermVariable> overapproxVariables = bvToInt.getOverapproxVariables();
+		final boolean isOverapproximation = bvToInt.wasOverapproximation();
 		if (!bvToInt.getNutzFlag()) {
 			mConstraintSet.addAll(mTc.getConstraints());
 			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
 		}
 		final Term integerFormula =
 				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
-		return integerFormula;
+		return new Triple<Term, Set<TermVariable>, Boolean>(integerFormula, overapproxVariables, isOverapproximation);
 
 	}
 

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -25,9 +26,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -83,9 +86,12 @@ public class BvToIntTest {
 
 	private Term translateQelimBacktranslate(final Term input) {
 		final TranslationManager translationManager = new TranslationManager(mMgdScript);
-		final Term translated = translationManager.translateBvtoInt(input);
+		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(input);
+		if (!translated.getSecond().isEmpty() || translated.getThird()) {
+			throw new UnsupportedOperationException();
+		}
 		// System.out.println("translatedResult: " + translated.toStringDirect());
-		final Term qelimResult = PartialQuantifierElimination.eliminate(mServices, mMgdScript, translated,
+		final Term qelimResult = PartialQuantifierElimination.eliminate(mServices, mMgdScript, translated.getFirst(),
 				SimplificationTechnique.SIMPLIFY_DDA);
 		// System.out.println("qelimResult: " + qelimResult.toStringDirect());
 		final Term backTranslated = translationManager.translateIntBacktoBv(qelimResult);
