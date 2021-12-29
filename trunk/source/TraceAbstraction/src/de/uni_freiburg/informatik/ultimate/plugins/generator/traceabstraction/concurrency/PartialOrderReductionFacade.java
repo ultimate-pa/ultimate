@@ -89,6 +89,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
 	private final IPersistentSetChoice<L, IPredicate> mPersistent;
 	private StateSplitter<IPredicate> mStateSplitter;
+	private final PredicateFactory mPredicateFactory;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -101,6 +102,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 		mIndependence = independence;
 		mPersistent = createPersistentSets(icfg, errorLocs);
+		mPredicateFactory = predicateFactory;
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
@@ -218,6 +220,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case PERSISTENT_SLEEP_NEW_STATES:
 			PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, mIndependence, mDfsOrder,
 					mSleepFactory, mPersistent, visitor);
+			break;
+		case MAXIMAL_CAUSALITY_REDUCTION:
+			new DepthFirstTraversal<>(mAutomataServices,
+					new MaximalCausalityReduction<>(mAutomataServices.getLoggingService(), input,
+							new McrStateFactory<>(mPredicateFactory)),
+					mDfsOrder, visitor);
 			break;
 		case NONE:
 			new DepthFirstTraversal<>(mAutomataServices, input, mDfsOrder, visitor);
