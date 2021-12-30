@@ -95,12 +95,8 @@ public class BvToIntTranslation extends TermTransformer {
 				final TermVariable overaproxVar =
 						mMgdScript.constructFreshTermVariable("overaproxVar", appTerm.getSort());
 				final Term intVar = translateVars(overaproxVar);
+				// final Term intVar = translateVars(term);
 				// TODO term instead of overaproxVar, interesting effect on back-trans, intended?
-				// if (SmtSortUtils.isBitvecSort(term.getSort())) {
-				// mTc.varConstraint(term, intVar); // Create and Collect
-				// Constraints
-				// }
-
 				setResult(intVar);
 				return;
 			}
@@ -779,13 +775,15 @@ public class BvToIntTranslation extends TermTransformer {
 			final ConstantTerm constTerm = (ConstantTerm) term;
 			final Term twoPow;
 			if (constTerm.getValue() instanceof Rational) {
-				twoPow = SmtUtils.rational2Term(mScript, (Rational) constTerm.getValue(), intSort);
+				final Rational ratint =  (Rational) constTerm.getValue();
+				twoPow = SmtUtils.rational2Term(mScript,
+						Rational.valueOf(BigInteger.valueOf(2).pow(ratint.numerator().intValue()), BigInteger.ONE),
+						intSort);
 			} else {
 				final BigInteger bigint = (BigInteger) constTerm.getValue();
 				twoPow = SmtUtils.rational2Term(mScript,
 						Rational.valueOf(BigInteger.valueOf(2).pow(bigint.intValue()), BigInteger.ONE), intSort);
 			}
-
 			return twoPow;
 		}
 		throw new UnsupportedOperationException("function pow2 not implemented");
