@@ -387,7 +387,7 @@ public class BvToIntTranslation extends TermTransformer {
 			case "bvor":
 			case "bvxor":
 			case "bvashr":
-			case "bvlsh":
+			case "bvshl":
 			case "bvlshr": {
 				return true;
 			}
