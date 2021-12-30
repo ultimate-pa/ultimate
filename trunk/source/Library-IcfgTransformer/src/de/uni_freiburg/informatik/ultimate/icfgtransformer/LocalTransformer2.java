@@ -157,7 +157,7 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 					.collect(Collectors.toSet());
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, tf.getNonTheoryConsts().isEmpty(),
-				newProgramConstants, true, null, tf.getAuxVars().isEmpty());
+				newProgramConstants, true, null, false);
 		for (final TermVariable auxVar : tf.getAuxVars()) {
 			final TermVariable newAuxVar = mMgdScript.constructFreshTermVariable(auxVar.getName() + "Int",
 					mSortTranslation.apply(auxVar.getSort()));
