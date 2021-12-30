@@ -60,9 +60,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationManager;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -160,9 +164,8 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 			translationMap.put(auxVar, newAuxVar);
 			tfb.addAuxVar(newAuxVar);
 		}
-		final TranslationManager translationManager = new TranslationManager(mMgdScript);
-		translationManager.setReplacementVarMaps(new LinkedHashMap<>(translationMap));
-		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(tf.getFormula());
+		final Term term = tf.getFormula();
+		final Triple<Term, Set<TermVariable>, Boolean> translated = translateTerm(mMgdScript, translationMap, term);
 		for (final TermVariable newAuxVar : translated.getSecond()) {
 			tfb.addAuxVar(newAuxVar);
 		}
@@ -170,6 +173,28 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 		tfb.setInfeasibility(tf.isInfeasible());
 		final UnmodifiableTransFormula resultTf = tfb.finishConstruction(mMgdScript);
 		return new TransformulaTransformationResult(resultTf, translated.getThird());
+	}
+
+	private Triple<Term, Set<TermVariable>, Boolean> translateTerm(final ManagedScript mgdScript,
+			final Map<Term, Term> translationMap, final Term term) {
+		final TranslationManager translationManager = new TranslationManager(mgdScript);
+		translationManager.setReplacementVarMaps(new LinkedHashMap<>(translationMap));
+		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(term);
+		return translated;
+	}
+
+	@Override
+	public AxiomTransformationResult transform(final IPredicate oldAxioms) {
+
+		final Triple<Term, Set<TermVariable>, Boolean> result = translateTerm(mMgdScript,
+				new HashMap<>(mVarTrans.getIProgramConstTermMap()), oldAxioms.getFormula());
+		// Quantify auxiliary variables
+		final Term withoutAuxVars = SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.EXISTS,
+				result.getSecond(), result.getFirst());
+		final IPredicate transformedAxiom = new BasicPredicate(0, new String[0], withoutAuxVars, Collections.emptySet(),
+				withoutAuxVars);
+		final boolean isOverappoximation = result.getThird();
+		return new AxiomTransformationResult(transformedAxiom, isOverappoximation);
 	}
 
 	@Override
