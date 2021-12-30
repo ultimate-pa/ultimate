@@ -1045,8 +1045,8 @@ public class QvasrAbstractor {
 					simplifiedDividend = SmtUtils.mul(script.getScript(), "*", dividendArray);
 					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
 				}
-				if (!("*".equals(dividendAppTerm.getFunction().getName())
-						&& "*".equals(divisorAppTerm.getFunction().getName()))) {
+				if (!("*".equals(dividendAppTerm.getFunction().getName()))
+						&& "*".equals(divisorAppTerm.getFunction().getName())) {
 					final List<Term> paramsDivisor = getApplicationTermMultiplicationParams(script, divisorAppTerm);
 					final List<Term> reducedParamsDividend = new ArrayList<>();
 					final List<Term> reducedParamsDivisor = new ArrayList<>(paramsDivisor);
