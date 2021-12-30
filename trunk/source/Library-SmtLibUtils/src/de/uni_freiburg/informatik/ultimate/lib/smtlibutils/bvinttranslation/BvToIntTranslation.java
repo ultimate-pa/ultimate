@@ -77,6 +77,7 @@ public class BvToIntTranslation extends TermTransformer {
 			return;
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
+
 			final FunctionSymbol fsym = appTerm.getFunction();
 			if (appTerm.getParameters().length == 0) {
 				if (SmtUtils.isConstant(appTerm)) {
@@ -87,6 +88,21 @@ public class BvToIntTranslation extends TermTransformer {
 					setResult(intVar);
 					return;
 				}
+			}
+
+			final boolean overaproxMode = false;
+			if (overaproxMode && overaproxWithVars(appTerm)) {
+				final TermVariable overaproxVar =
+						mMgdScript.constructFreshTermVariable("overaproxVar", appTerm.getSort());
+				final Term intVar = translateVars(overaproxVar);
+				// TODO term instead of overaproxVar, interesting effect on back-trans, intended?
+				// if (SmtSortUtils.isBitvecSort(term.getSort())) {
+				// mTc.varConstraint(term, intVar); // Create and Collect
+				// Constraints
+				// }
+
+				setResult(intVar);
+				return;
 			}
 
 			if (fsym.isIntern()) {
@@ -103,6 +119,33 @@ public class BvToIntTranslation extends TermTransformer {
 							mScript.term("bvsub", mScript.term("bvadd", appTerm.getParameters()),
 									mScript.term("bvand", appTerm.getParameters())),
 							mScript.term("bvand", appTerm.getParameters())));
+					return;
+				}
+				case "bvashr": {
+					final BigInteger[] indices = new BigInteger[2];
+					indices[0] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					indices[1] = BigInteger
+							.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+					final Term zeroVec =
+							SmtUtils.rational2Term(mScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mScript, 1));
+					final Term extract = BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices,
+							appTerm.getParameters()[0]);
+
+					final Term ifTerm = SmtUtils.binaryEquality(mScript, extract, zeroVec);
+
+					final Term thenTerm = BitvectorUtils.termWithLocalSimplification(mScript, "bvlshr", null,
+							appTerm.getParameters());
+
+					final Term elseTerm =
+							BitvectorUtils.termWithLocalSimplification(mScript, "bvnot", null,
+									BitvectorUtils.termWithLocalSimplification(
+											mScript, "bvlshr", null, BitvectorUtils.termWithLocalSimplification(mScript,
+													"bvnot", null, appTerm.getParameters()[0]),
+											appTerm.getParameters()[1]));
+
+					final Term ite = mScript.term("ite", ifTerm, thenTerm, elseTerm);
+					pushTerm(ite);
 					return;
 				}
 				case "sign_extend": {
@@ -340,6 +383,26 @@ public class BvToIntTranslation extends TermTransformer {
 		}
 	}
 
+	private boolean overaproxWithVars(final ApplicationTerm appTerm) {
+		final FunctionSymbol fsym = appTerm.getFunction();
+		if (fsym.isIntern()) {
+			switch (fsym.getName()) {
+			case "bvand":
+			case "bvor":
+			case "bvxor":
+			case "bvashr":
+			case "bvlsh":
+			case "bvlshr": {
+				return true;
+			}
+			default: {
+				return false;
+			}
+			}
+		}
+		return false;
+	}
+
 	/*
 	 * TODO modularer
 	 */
@@ -505,8 +568,9 @@ public class BvToIntTranslation extends TermTransformer {
 								if (i == 0) {
 									final Term constInt =
 											SmtUtils.rational2Term(mScript, Rational.valueOf(0, 1), intSort);
-									iteChain = SmtUtils.ite(mScript, SmtUtils.binaryEquality(mScript, constInt, translatedRHS),
-											translatedLHS, iteChain);
+									iteChain = SmtUtils.ite(mScript,
+											SmtUtils.binaryEquality(mScript, constInt, translatedRHS), translatedLHS,
+											iteChain);
 								} else {
 									final Rational powResult = Rational.valueOf(i, 1);
 									final Term ifTerm = mScript.term("=", translatedRHS,
@@ -560,12 +624,13 @@ public class BvToIntTranslation extends TermTransformer {
 					}
 
 					case "bvashr": {
-						throw new UnsupportedOperationException("TODO " + fsym.getName());
+						throw new UnsupportedOperationException(fsym.getName());
 					}
 					case "concat": {
 						final Term multiplication = mScript.term("*", translatedLHS, maxNumber);
 						if (mNutzTransformation) {
-							throw new UnsupportedOperationException("TODO Nutz" + fsym.getName());
+							throw new UnsupportedOperationException(
+									"Nutz transformation not implented for " + fsym.getName());
 						}
 						setResult(mScript.term("+", multiplication, translatedRHS));
 						return;
@@ -723,7 +788,7 @@ public class BvToIntTranslation extends TermTransformer {
 
 			return twoPow;
 		}
-		throw new UnsupportedOperationException("TODO");
+		throw new UnsupportedOperationException("function pow2 not implemented");
 		// return term;
 	}
 
