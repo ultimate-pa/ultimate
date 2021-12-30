@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -134,14 +136,210 @@ public final class QvasrAbstractionJoin {
 			varToColumnTwo.put(newVar, i);
 			colCnt++;
 		}
-		final Term[][] lhs = QvasrUtils.vectorMatrixMultiplicationWithVariables(script, newVarsOne, abstractionOne);
-		final Term[][] rhs = QvasrUtils.vectorMatrixMultiplicationWithVariables(script, newVarsTwo, abstractionTwo);
+		Term[][] lhs = QvasrUtils.vectorMatrixMultiplicationWithVariables(script, newVarsOne, abstractionOne);
+		Term[][] rhs = QvasrUtils.vectorMatrixMultiplicationWithVariables(script, newVarsTwo, abstractionTwo);
 
-		final Rational[][] rhsRational = termMatrixToRational(script, rhs, varToColumnTwo);
-
-		final Rational[][] lhsRational = termMatrixToRational(script, lhs, varToColumnOne);
-
+		lhs = termMatrixRemoveVariables(script, lhs, varToColumnOne);
+		rhs = termMatrixRemoveVariables(script, rhs, varToColumnTwo);
+		rhs = addColumnTerm(rhs, script.getScript().decimal("0"));
+		final Term[][] joinedMatrix = joinTermMatricesVertically(lhs, changeTermMatrixEntrySign(script, rhs));
+		Rational[][] vectorBasis = QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(script, joinedMatrix);
+		vectorBasis = removeLastColumnRational(vectorBasis);
+		final Pair<Rational[][], Rational[][]> splitVectorBase =
+				splitRationalMatricesVertically(vectorBasis, lhs[0].length);
+		final Rational[][] lhsRational = splitVectorBase.getFirst();
+		final Rational[][] rhsRational = splitVectorBase.getSecond();
 		return null;
+	}
+
+	/**
+	 * Function to turn the sign of each entry in a given {@link Rational} matrix.
+	 *
+	 * @param matrix
+	 *            A {@link Rational} matrix.
+	 * @return A rational matrix with entries whose signs are inverted.
+	 */
+	public static Rational[][] changeRationalMatrixEntrySign(Rational[][] matrix) {
+		final Rational[][] changedSignMatrix = new Rational[matrix.length][matrix[0].length];
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[0].length; j++) {
+				changedSignMatrix[i][j] = matrix[i][j].negate();
+			}
+		}
+		return changedSignMatrix;
+	}
+
+	/**
+	 * Function to turn the sign of each entry in a given {@link Rational} matrix.
+	 *
+	 * @param script
+	 *            A {@link ManagedScript}
+	 *
+	 * @param matrix
+	 *            A {@link Rational} matrix.
+	 * @return A rational matrix with entries whose signs are inverted.
+	 */
+	public static Term[][] changeTermMatrixEntrySign(ManagedScript script, Term[][] matrix) {
+		final Term[][] changedSignMatrix = new Term[matrix.length][matrix[0].length];
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[0].length; j++) {
+				changedSignMatrix[i][j] = SmtUtils.neg(script.getScript(), matrix[i][j]);
+			}
+		}
+		return changedSignMatrix;
+	}
+
+	/**
+	 * Creates a joined Matrix by vertically connecting two matrices. The matrices are required to have the same amount
+	 * of rows.
+	 *
+	 * @param leftSide
+	 *            Left hand side of the matrix.
+	 * @param rightSide
+	 *            Right hand side of the matrix.
+	 * @return A vertically joined matrix.
+	 */
+	public static Term[][] joinTermMatricesVertically(final Term[][] leftSide, final Term[][] rightSide) {
+		if (leftSide.length != rightSide.length) {
+			return new Term[0][0];
+		}
+		final Term[][] joinedMatrix = new Term[leftSide.length][leftSide[0].length + rightSide[0].length];
+		for (int i = 0; i < leftSide.length; i++) {
+			int cnt = 0;
+			for (int j = 0; j < leftSide[0].length; j++) {
+				joinedMatrix[i][cnt] = leftSide[i][j];
+				cnt++;
+			}
+			for (int k = 0; k < rightSide[0].length; k++) {
+				joinedMatrix[i][cnt] = rightSide[i][k];
+				cnt++;
+			}
+		}
+		return joinedMatrix;
+	}
+
+	/**
+	 * Splits a given {@link Rational} matrix vertically along the splitPoint.
+	 *
+	 * @param matrix
+	 *            A still conjoined {@link Rational} matrix.
+	 * @param splitPoint
+	 *            The Point where the matrix will be split in two.
+	 * @return A pair of the left half and the right half of the original matrix.
+	 */
+	public static Pair<Rational[][], Rational[][]> splitRationalMatricesVertically(final Rational[][] matrix,
+			final int splitPoint) {
+		final Rational[][] leftSide = new Rational[matrix.length][splitPoint];
+		final Rational[][] rightSide = new Rational[matrix.length][splitPoint];
+
+		for (int i = 0; i < matrix.length; i++) {
+			leftSide[i] = Arrays.copyOfRange(matrix[i], 0, splitPoint);
+			rightSide[i] = Arrays.copyOfRange(matrix[i], splitPoint, matrix[0].length);
+		}
+		return new Pair<>(leftSide, rightSide);
+	}
+
+	/**
+	 * Creates a joined Matrix by vertically connecting two matrices. The matrices are required to have the same amount
+	 * of rows.
+	 *
+	 * @param leftSide
+	 *            Left hand side of the matrix.
+	 * @param rightSide
+	 *            Right hand side of the matrix.
+	 * @return A vertically joined matrix.
+	 */
+	public static Rational[][] joinRationalMatricesVertically(final Rational[][] leftSide,
+			final Rational[][] rightSide) {
+		if (leftSide.length != rightSide.length) {
+			return new Rational[0][0];
+		}
+		final Rational[][] joinedMatrix = new Rational[leftSide.length][leftSide[0].length + rightSide[0].length];
+		for (int i = 0; i < leftSide.length; i++) {
+			int cnt = 0;
+			for (int j = 0; j < leftSide[0].length; j++) {
+				joinedMatrix[i][cnt] = leftSide[i][j];
+				cnt++;
+			}
+			for (int k = 0; k < rightSide[0].length; k++) {
+				joinedMatrix[i][cnt] = rightSide[i][k];
+				cnt++;
+			}
+		}
+		return joinedMatrix;
+	}
+
+	/**
+	 * Add a new column of value newColumnValue to a given term matrix.
+	 *
+	 * @param matrix
+	 *            The matrix that will be expanded.
+	 * @param newColumnValue
+	 *            The appended columns new value.
+	 * @return A matrix with a new column.
+	 */
+	public static Term[][] addColumnTerm(final Term[][] matrix, Term newColumnValue) {
+		final Term[][] result = new Term[matrix.length][matrix[0].length + 1];
+		for (int i = 0; i < matrix.length; i++) {
+			result[i] = Arrays.copyOf(matrix[i], matrix[i].length + 1);
+			result[i][matrix[i].length] = newColumnValue;
+		}
+		return result;
+	}
+
+	/**
+	 * Remove the last column in a {@link Rational} matrix.
+	 *
+	 * @param matrix
+	 *            The matrix that will be expanded.
+	 * @param newColumnValue
+	 *            The appended columns new value.
+	 * @return A matrix with a new column.
+	 */
+	public static Rational[][] removeLastColumnRational(final Rational[][] matrix) {
+		final Rational[][] result = new Rational[matrix.length][matrix[0].length - 1];
+		for (int i = 0; i < matrix.length; i++) {
+			result[i] = Arrays.copyOf(matrix[i], matrix[i].length - 1);
+		}
+		return result;
+	}
+
+	/**
+	 * Removes termvariables from a matrix and only leaves their coefficient.
+	 *
+	 * @param script
+	 *            A {@link ManagedScript}
+	 * @param termMatrix
+	 *            A matrix containing termvariables.
+	 * @param varToColumn
+	 *            A Map that maps termvariables to their corresponding column in the original matrix.
+	 * @return A term matrix without termsvariables
+	 */
+	private static Term[][] termMatrixRemoveVariables(final ManagedScript script, final Term[][] termMatrix,
+			final Map<TermVariable, Integer> varToColumn) {
+
+		final Set<TermVariable> tvs = varToColumn.keySet();
+		final int newMatrixLength = tvs.size();
+		final Term[][] matrixNoVars = new Term[termMatrix.length][newMatrixLength];
+		for (int i = 0; i < termMatrix.length; i++) {
+			for (int j = 0; j < termMatrix[0].length; j++) {
+				final Term equation = termMatrix[i][j];
+				if (QvasrUtils.isApplicationTerm(equation)) {
+					for (final Term var : tvs) {
+						final Set<TermVariable> zeroTvs = new HashSet<>(tvs);
+						zeroTvs.remove(var);
+						final HashMap<Term, Term> subMap = new HashMap<>();
+						subMap.put(var, script.getScript().decimal("1.0"));
+						for (final Term zeroTv : zeroTvs) {
+							subMap.put(zeroTv, script.getScript().decimal("0"));
+						}
+						final Term constTerm = Substitution.apply(script, subMap, equation);
+						matrixNoVars[i][varToColumn.get(var)] = constTerm;
+					}
+				}
+			}
+		}
+		return matrixNoVars;
 	}
 
 	/**
@@ -151,12 +349,13 @@ public final class QvasrAbstractionJoin {
 	 * @param script
 	 *            A {@link ManagedScript}
 	 * @param termMatrix
+	 *            A matrix containing logical {@link Term}
 	 * @param varToColumn
-	 * @return
+	 *            A Map that maps termvariables to their corresponding column in the original matrix.
+	 * @return A rational matrix without terms.
 	 */
-	public static Rational[][] termMatrixToRational(final ManagedScript script, final Term[][] termMatrix,
+	private static Rational[][] termMatrixToRational(final ManagedScript script, final Term[][] termMatrix,
 			final Map<TermVariable, Integer> varToColumn) {
-
 		final Set<TermVariable> tvs = varToColumn.keySet();
 		final int newMatrixLength = tvs.size();
 		final Rational[][] rationalMatrix = new Rational[termMatrix.length][newMatrixLength];
