@@ -6,7 +6,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.Mode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -37,7 +37,7 @@ public class TranslationManager {
 		mReversedVarMap = new LinkedHashMap<>();
 
 		mConstraintSet = new HashSet<Term>();
-		mTc = new TranslationConstrainer(mMgdScript, Mode.SUM);
+		mTc = new TranslationConstrainer(mMgdScript, ConstraintsForBitwiseOperations.SUM);
 		mIntand = mTc.getIntAndFunctionSymbol();
 	}
 

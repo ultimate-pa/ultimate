@@ -20,7 +20,7 @@ public class TranslationConstrainer {
 	private final Script mScript;
 	private FunctionSymbol mIntand;
 
-	enum Mode {
+	enum ConstraintsForBitwiseOperations {
 		/**
 		 * Default mode
 		 */
@@ -32,22 +32,22 @@ public class TranslationConstrainer {
 		/**
 		 * TODO
 		 */
-		LAZYSUM,
+		LAZY,
 		/**
 		 * TODO
 		 */
-		LAZYBITWISE
+		NONE
 	}
 
-	private final Mode mSetMode; // Default Mode
+	public final ConstraintsForBitwiseOperations mMode; // Default Mode
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
 	private final HashSet<Term> mTvConstraintSet; // Set of all constraints for quantified variables
 
-	public TranslationConstrainer(final ManagedScript mgdscript, final Mode mode) {
+	public TranslationConstrainer(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations mode) {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
-		mSetMode = mode;
+		mMode = mode;
 
 		mConstraintSet = new HashSet<Term>();
 		mTvConstraintSet = new HashSet<Term>();
@@ -120,6 +120,9 @@ public class TranslationConstrainer {
 	}
 
 	public void bvandConstraint(final Term intTerm, final int width) {
+		if (mMode.equals(ConstraintsForBitwiseOperations.NONE)) {
+			return;
+		}
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 		if (!SmtSortUtils.isIntSort(intTerm.getSort())) {
 			throw new UnsupportedOperationException("Cannot create Constraints vor non-Int Sort Terms");
@@ -130,36 +133,37 @@ public class TranslationConstrainer {
 			final Term translatedRHS = apterm.getParameters()[1];
 
 			final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
-			final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), apterm);
-			final Term upperBound = mScript.term("<", apterm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+
 			final Term modeConstraint;
 			Term lazy = mScript.term("true");
-			switch (mSetMode) {
-			case LAZYSUM: {
-				lazy = bvandLAZYConstraints(width, translatedLHS, translatedRHS);
-				modeConstraint = bvandSUMConstraints(width, translatedLHS, translatedRHS);
-				break;
-			}
+			switch (mMode) {
 			case SUM: {
 				modeConstraint = bvandSUMConstraints(width, translatedLHS, translatedRHS);
-				break;
-			}
-			case LAZYBITWISE: {
-				lazy = bvandLAZYConstraints(width, translatedLHS, translatedRHS);
-				modeConstraint = bvandBITWISEConstraints(width, translatedLHS, translatedRHS);
 				break;
 			}
 			case BITWISE: {
 				modeConstraint = bvandBITWISEConstraints(width, translatedLHS, translatedRHS);
 				break;
 			}
+			case LAZY: {
+				final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), apterm);
+				final Term upperBound =
+						mScript.term("<", apterm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+				lazy = bvandLAZYConstraints(width, translatedLHS, translatedRHS);
+				mConstraintSet.add(lowerBound);
+				mConstraintSet.add(upperBound);
+				mConstraintSet.add(lazy);
+				return;
+			}
+
+			case NONE: {
+				throw new UnsupportedOperationException("Deal with this mode at the beginning of this method");
+			}
 			default: {
-				modeConstraint = bvandSUMConstraints(width, translatedLHS, translatedRHS);
+				throw new UnsupportedOperationException("Set Mode for bvand Constraints");
 			}
 			}
-			mConstraintSet.add(lowerBound);
-			mConstraintSet.add(upperBound);
-			mConstraintSet.add(lazy);
+
 
 			// Important, to match with the backtranslation we also need to bring it in the same form here
 			final UnfTransformer unfT = new UnfTransformer(mScript);
