@@ -27,7 +27,7 @@ public final class Rook <PLACE, LETTER> {
 	/**
 	 * Kingdom element (region of conditions)
 	 */
-	private final Kingdom mKingdom;
+	private final Kingdom<PLACE,LETTER> mKingdom;
 	
 	/**
 	 * Law element (set of assertion conditions)
@@ -95,6 +95,51 @@ public final class Rook <PLACE, LETTER> {
 	 */
 	public boolean isCut(Collection<Condition<LETTER, PLACE>> coSet) {
 		return true;
+	}
+	
+	public final ColonizationType getColonizationStrategy(Condition<LETTER,PLACE> condition, 
+			BranchingProcess<LETTER,PLACE> bp) {
+		CoKingdom<PLACE,LETTER> coKingdom = new CoKingdom<PLACE,LETTER>(mKingdom, condition, bp);
+		CoLaw<PLACE,LETTER> coLaw = new CoLaw<PLACE,LETTER>(mLaw, condition, bp);
+		
+		if(coKingdom.getCoRelation() == CoRelationType.POSITIVE 
+				&& coLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			return ColonizationType.EXPANSION;
+		}
+		else if(coKingdom.getCoRelation() == CoRelationType.PARTIAL
+				&& coLaw.getCoRelation() == CoRelationType.POSITIVE) {
+				if(coKingdom.getConflictFree()) {
+					return ColonizationType.IMMIGRATION;
+				}
+				else {
+					return ColonizationType.FOUNDATION;
+				}
+		}
+		else {
+			return ColonizationType.DEFEAT;
+		}	
+	}
+	
+	public final LegislationType getLegislationType(Condition<LETTER,PLACE> condition,
+			BranchingProcess<LETTER,PLACE> bp) {
+		CoKingdom<PLACE,LETTER> coKingdom = new CoKingdom<PLACE,LETTER>(mKingdom, condition, bp);
+		CoLaw<PLACE,LETTER> coLaw = new CoLaw<PLACE,LETTER>(mLaw, condition, bp);
+		
+		if(coKingdom.getCoRelation() == CoRelationType.POSITIVE 
+				&& coLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			return LegislationType.APPROVAL;
+		}
+		else if(coKingdom.getCoRelation() == CoRelationType.POSITIVE
+				&& coLaw.getCoRelation() == CoRelationType.PARTIAL) {
+			return LegislationType.ENACTMENT;
+		}
+		else if(coKingdom.getCoRelation() == CoRelationType.PARTIAL
+				&& coLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			return LegislationType.RATIFICATION;
+		}
+		else {
+			return LegislationType.REJECTION;
+		}	
 	}
 	
 	

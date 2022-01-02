@@ -10,20 +10,20 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.Branc
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.owickigries.Realm;
 
-public final class Kingdom{
+public final class Kingdom<PLACE,LETTER>{
 	/**
 	 * The set of realms in Kingdom.
 	 */
-	private final Set<Realm> mKingdom;
+	private final Set<Realm<PLACE,LETTER>> mKingdom;
 	
-	public Kingdom(Set<Realm> kingdom) {
+	public Kingdom(Set<Realm<PLACE,LETTER>> kingdom) {
 		mKingdom = kingdom;
 	}
 	
 	/**
 	 * @return Set of realms in Kingdom.
 	 */
-	public Set<Realm> getRealms(){
+	public Set<Realm<PLACE,LETTER>> getRealms(){
 		return mKingdom;
 	}
 	
@@ -31,7 +31,7 @@ public final class Kingdom{
 	 * Adds the specified realm into the set of realms in the kingdom.
 	 * @param realm
 	 */
-	public void addRealm(Realm realm) {
+	public void addRealm(Realm<PLACE,LETTER> realm) {
 		mKingdom.add(realm);
 	}
 	
@@ -39,7 +39,7 @@ public final class Kingdom{
 	 * Add the specified set of realms into the Kingdom.
 	 * @param realms
 	 */
-	public void addRealm(Set<Realm> realms) {
+	public void addRealm(Set<Realm<PLACE,LETTER>> realms) {
 		mKingdom.addAll(realms);
 	}
 	
@@ -47,7 +47,7 @@ public final class Kingdom{
 	 * Remove the specified realm from Kingdom.
 	 * @param realm
 	 */	
-	public boolean removeRealm(Realm realm) {
+	public boolean removeRealm(Realm<PLACE,LETTER> realm) {
 		if (mKingdom.contains(realm)) {
 			mKingdom.remove(realm);
 			return true;
@@ -55,7 +55,16 @@ public final class Kingdom{
 		return false;
 	}
 	
-	//Co-relation types
+	/**
+	 * @param condition
+	 * @param bp
+	 * @return CoKingdom with corelation type and Kingdom's realms subsets by
+	 * the corelation type of the realm wrt. condition.
+	 */
+	public CoKingdom<PLACE,LETTER> getCoKingdom(Condition<LETTER,PLACE> condition, 
+			BranchingProcess<LETTER,PLACE> bp){
+		return new CoKingdom<PLACE,LETTER>(this, condition, bp);
+	}
 	
 	
 }

@@ -31,6 +31,8 @@ public final class CrownConstruction <PLACE, LETTER> {
 	
 	private final Crown<PLACE, LETTER> mPreCrown;
 	
+	//TODO: add original and assertion conditions sets variables
+	
 	public CrownConstruction(BranchingProcess<LETTER, PLACE> bp) {
 		mBp = bp;
 		mCrown = new Crown<PLACE, LETTER>(mBp);
@@ -41,4 +43,7 @@ public final class CrownConstruction <PLACE, LETTER> {
 		//Kindred search and cleaning
 	}
 	
+	private void colonization() {
+		//TODO: for each original condition colonize(condition....)
+	}
 }

@@ -14,7 +14,7 @@ public final class CoKingdom<PLACE,LETTER> {
 	
 	
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
-	private final Kingdom mKingdom;
+	private final Kingdom<PLACE,LETTER> mKingdom;
 	private final Condition<LETTER,PLACE> mCondition;
 	
 	/**
@@ -40,15 +40,22 @@ public final class CoKingdom<PLACE,LETTER> {
 	 */
 	private final CoRelationType mCoRel;
 	
-	public CoKingdom(Kingdom kingdom, Condition<LETTER,PLACE> condition, 
+	private final boolean mConflictFree;
+	
+	public CoKingdom(Kingdom<PLACE,LETTER> kingdom, Condition<LETTER,PLACE> condition, 
 			BranchingProcess<LETTER,PLACE> bp) {
 		mCoRelation = bp.getCoRelation();
 		mKingdom = kingdom;
 		mCondition = condition;
 		getCoKingdoms(bp);
 		mCoRel = getCoRelType(); 
+		mConflictFree = getConflictFreedom(); //TODO: complete conflict freedom computation
 	}
-	
+		
+	/**
+	 * Divide all Realms in Kingdom according to their realm corelation type.
+	 * @param bp
+	 */
 	private final void getCoKingdoms(BranchingProcess<LETTER,PLACE> bp){
 		for(Realm<PLACE,LETTER> realm: mKingdom.getRealms()) {
 			CoRealm<PLACE,LETTER> coRealm = new CoRealm(realm,mCondition,bp);
@@ -65,20 +72,39 @@ public final class CoKingdom<PLACE,LETTER> {
 		}
 	}
 	
+	/**
+	 * @return CoRelation type pf Kingdom according
+	 * to the corelation time of the kingdom's realms.
+	 */
 	private final CoRelationType getCoRelType() {
-//		if(mKingdom.equals(mPosKingdom)) {
-//			return CoRelationType.POSITIVE;
-//		}
-//		else if(mNegKingdom.size() == 1 && 
-//				mPosKingdom.containsAll(DataStructureUtils.difference
-//						(mKingdom.getRealms(), mNegKingdom)))){
-//							
-//						}
-		return CoRelationType.POSITIVE
+		if(mKingdom.equals(mPosKingdom)) {
+			return CoRelationType.POSITIVE;
+		}	
+		else if(mNegKingdom.size() == 1 && 
+				mPosKingdom.containsAll(DataStructureUtils.difference
+						(mKingdom.getRealms(), mNegKingdom))){
+			return CoRelationType.PARTIAL;				
+		}
+		else if(mParKingdom.size() == 1 && 
+				mPosKingdom.containsAll(DataStructureUtils.difference
+						(mKingdom.getRealms(), mParKingdom))){
+			return CoRelationType.DIVERGENT;				
+		}
+		else {
+			return CoRelationType.NEGATIVE;
+		}
+	}
+	 public final CoRelationType getCoRelation() {
+		 return mCoRel;
+	 }
+	 
+	 private final boolean getConflictFreedom() {
+			return true;
 	}
 	
-	
-	
+	public boolean getConflictFree() {
+		return mConflictFree;
+	}
 	
 
 }

@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelati
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class CoRealm<PLACE,LETTER> {
+public final class CoRealm<PLACE,LETTER> {
 	
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
 	private final Realm<PLACE,LETTER> mRealm;
@@ -31,6 +31,7 @@ public class CoRealm<PLACE,LETTER> {
 	 */
 	private final CoRelationType mCoRel;
 	
+	
 	public CoRealm(Realm<PLACE,LETTER> realm, Condition<LETTER,PLACE> condition, 
 			BranchingProcess<LETTER,PLACE> bp) {
 		mCoRelation = bp.getCoRelation();
@@ -38,10 +39,8 @@ public class CoRealm<PLACE,LETTER> {
 		mCondition = condition;
 		mPosRealm = getPosRealm();
 		mNegRealm = DataStructureUtils.difference(mRealm.getConditions(), mPosRealm);
-		mCoRel = getCoRelType(); 
-		
-	}
-	
+		mCoRel = getCoRelType(); 		
+	}	
 	
 	/**
 	 * @return Subset of Realm's conditions corelated to CoRealm' condition.
@@ -67,5 +66,10 @@ public class CoRealm<PLACE,LETTER> {
 		}
 		
 	}
+	
+	public CoRelationType getCoRelation() {
+		return mCoRel;
+	}	
+
 	 
 }

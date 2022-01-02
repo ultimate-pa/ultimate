@@ -100,7 +100,8 @@ public final class Realm<PLACE, LETTER>{
 	 * @param bp
 	 * @return CoRealm with CoRelationType, Positive and Negative corelated conditions.
 	 */
-	public CoRealm<PLACE,LETTER> getCoRealm(Condition<LETTER, PLACE> condition, BranchingProcess<LETTER, PLACE> bp) {
+	public CoRealm<PLACE,LETTER> getCoRealm(Condition<LETTER, PLACE> condition, 
+			BranchingProcess<LETTER, PLACE> bp) {
 		return new CoRealm<PLACE,LETTER>(this, condition, bp);
 	}
 
