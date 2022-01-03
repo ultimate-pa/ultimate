@@ -282,7 +282,7 @@ public final class Term2Expression implements Serializable {
 		assert term.getParameters().length == 2;
 		final Expression op1 = translate(term.getParameters()[0]);
 		final Expression op2 = translate(term.getParameters()[1]);
-		return new BinaryExpression(null, Operator.BITVECCONCAT, op1, op2);
+		return new BinaryExpression(null, type, Operator.BITVECCONCAT, op1, op2);
 	}
 
 	/**
