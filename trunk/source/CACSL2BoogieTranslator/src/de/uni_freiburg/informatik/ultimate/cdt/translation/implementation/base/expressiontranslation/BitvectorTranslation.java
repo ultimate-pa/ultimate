@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 
 public class BitvectorTranslation extends ExpressionTranslation {
 
@@ -312,7 +313,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final int bitsize = computeBitsize(type1);
 		declareBitvectorFunction(loc, smtOperatorName, SFO.AUXILIARY_FUNCTION_PREFIX + smtOperatorName + bitsize, true,
 				new CPrimitive(CPrimitives.BOOL), null, type1, type2);
-		final Expression result = BitvectorFunctionFactory.constructInequalityFunction(loc, exp1, exp2, smtOperatorName, bitsize);
+		final Expression result = BitvectorFunctionFactory.constructInequalityFunction(loc, exp1, exp2, SupportedBitvectorOperations.valueOf(smtOperatorName), bitsize);
 		return result;
 	}
 
@@ -364,22 +365,23 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructUnaryIntegerExpression(final ILocation loc, final int op, final Expression expr,
 			final CPrimitive type) {
-		final String funcname;
+		final String smtOperation;
 		switch (op) {
 		case IASTUnaryExpression.op_tilde:
-			funcname = "bvnot";
+			smtOperation = "bvnot";
 			break;
 		case IASTUnaryExpression.op_minus:
-			funcname = "bvneg";
+			smtOperation = "bvneg";
 			break;
 		default:
 			final String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(type);
-		declareBitvectorFunction(loc, funcname, boogieFunctionName, false, type, null, type);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { expr }, mTypeHandler.getBoogieTypeForCType(type));
+		final String boogieFunctionName = BitvectorFunctionFactory
+				.generateBoogieFunctionName(SupportedBitvectorOperations.valueOf(smtOperation), computeBitsize(type));
+		declareBitvectorFunction(loc, smtOperation, boogieFunctionName, false, type, null, type);
+		final Expression func = BitvectorFunctionFactory.constructUnaryOperation(loc,
+				SupportedBitvectorOperations.valueOf(smtOperation), expr);
 		return func;
 	}
 
@@ -607,15 +609,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			extendOperation = ExtendOperation.sign_extend;
 		}
-		final String boogieFunctionName = ExpressionFactory.constructBoogieFunctionNameForExtend(
-				SFO.AUXILIARY_FUNCTION_PREFIX, extendOperation, operandLength, resultLength);
+		final String boogieFunctionName = ExpressionFactory.constructBoogieFunctionNameForExtend(extendOperation,
+				operandLength, resultLength);
 
 		final int[] indices = new int[] { resultLength - operandLength };
 		declareBitvectorFunction(loc, extendOperation.getSmtFunctionName(), boogieFunctionName, false, resultType,
 				indices, operandType);
 		final Expression operandExpression = operand.getLrValue().getValue();
 		final Expression func = ExpressionFactory.extend(loc, extendOperation, BigInteger.valueOf(indices[0]),
-				SFO.AUXILIARY_FUNCTION_PREFIX, operandExpression);
+				operandExpression);
 		final RValue rVal = new RValue(func, resultType);
 		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
 	}

@@ -837,7 +837,7 @@ public class ExpressionFactory {
 	 * @param extension number of bits that are added
 	 */
 	public static Expression extend(final ILocation loc, final ExtendOperation extendOperation,
-			final BigInteger extension, final String functionPrefix, final Expression operandExpression) {
+			final BigInteger extension, final Expression operandExpression) {
 		if (operandExpression instanceof BitvecLiteral) {
 			final BitvectorConstant bc = toConstant((BitvecLiteral) operandExpression);
 			final BitvectorConstant extendedBc;
@@ -859,16 +859,17 @@ public class ExpressionFactory {
 			final int inputBitsize = isBitvectorSort(operandExpression.getType());
 			final int resultBitsize = BigInteger.valueOf(inputBitsize).add(extension).intValueExact();
 			final BoogieType resultBoogieType = BoogieType.createBitvectorType(resultBitsize);
-			final String fullFunctionName = constructBoogieFunctionNameForExtend(functionPrefix, extendOperation,
+			final String fullFunctionName = constructBoogieFunctionNameForExtend(extendOperation,
 					inputBitsize, resultBitsize);
 			return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
 					new Expression[] { operandExpression }, resultBoogieType);
 		}
 	}
 
-	public static String constructBoogieFunctionNameForExtend(final String functionPrefix,
-			final ExtendOperation extendOperation, final int inputBitsize, final int outputBitsize) {
-		return functionPrefix + extendOperation.toString() + "From" + inputBitsize + "To" + outputBitsize;
+	public static String constructBoogieFunctionNameForExtend(final ExtendOperation extendOperation,
+			final int inputBitsize, final int outputBitsize) {
+		return BitvectorFunctionFactory.AUXILIARY_FUNCTION_PREFIX + extendOperation.toString() + "From" + inputBitsize
+				+ "To" + outputBitsize;
 	}
 
 	private static Expression simplifyBitvectorExpression(final FunctionApplication node,
@@ -988,7 +989,7 @@ public class ExpressionFactory {
 		return toBitvectorLiteral(node, result.getBvResult());
 	}
 
-	private static BitvectorConstant toConstant(final BitvecLiteral lit) {
+	static BitvectorConstant toConstant(final BitvecLiteral lit) {
 		return new BitvectorConstant(new BigInteger(lit.getValue()), BigInteger.valueOf(lit.getLength()));
 	}
 
@@ -1345,13 +1346,19 @@ public class ExpressionFactory {
 		}
 	}
 
-	private static BitvecLiteral toBitvectorLiteral(final FunctionApplication node,
+	static BitvecLiteral toBitvectorLiteral(final FunctionApplication node,
 			final BitvectorConstant bitvectorConstant) {
 		return new BitvecLiteral(node.getLoc(), node.getType(), bitvectorConstant.getValue().toString(),
 				bitvectorConstant.getIndex().intValueExact());
 	}
 
-	private static int isBitvectorSort(final IBoogieType type) {
+	static BitvecLiteral toBitvectorLiteral(final ILocation loc, final BitvectorConstant bitvectorConstant) {
+		final int length = bitvectorConstant.getIndex().intValueExact();
+		return new BitvecLiteral(loc, BoogieType.createBitvectorType(length), bitvectorConstant.getValue().toString(),
+				length);
+	}
+
+	static int isBitvectorSort(final IBoogieType type) {
 		final int result;
 		if (type instanceof BoogiePrimitiveType) {
 			final BoogiePrimitiveType bpType = (BoogiePrimitiveType) type;

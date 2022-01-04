@@ -26,9 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 
 /**
  * Boogie does not provide native support for most bitvector operations of
@@ -49,11 +53,82 @@ public class BitvectorFunctionFactory {
 
 	public static final String AUXILIARY_FUNCTION_PREFIX = "~";
 
+	public static String generateBoogieFunctionName(final SupportedBitvectorOperations bvop, final int bitsize) {
+		if (bitsize <= 0) {
+			throw new IllegalArgumentException();
+		}
+		switch (bvop) {
+		case bvadd:
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvneg:
+		case bvnot:
+		case bvor:
+		case bvsdiv:
+		case bvsge:
+		case bvsgt:
+		case bvshl:
+		case bvsle:
+		case bvslt:
+		case bvsmod:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvult:
+		case bvurem:
+		case bvxor:
+			return AUXILIARY_FUNCTION_PREFIX + bvop.toString() + bitsize;
+		case concat:
+		case extract:
+			throw new IllegalArgumentException("Boogie has native support for this operation.");
+		case sign_extend:
+		case zero_extend:
+			throw new IllegalArgumentException("Call method for extend.");
+		default:
+			throw new AssertionError("unknown value " + bvop);
+		}
+	}
+
 	public static Expression constructInequalityFunction(final ILocation loc, final Expression exp1,
-			final Expression exp2, final String functionName, final int bitsize) {
-		final String fullFunctionName = AUXILIARY_FUNCTION_PREFIX + functionName + bitsize;
-		final Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+			final Expression exp2, final SupportedBitvectorOperations bvop, final int bitsize) {
+		final String boogieFunctionName = generateBoogieFunctionName(bvop, bitsize);
+		final Expression result = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 				new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
+		return result;
+	}
+
+	public static Expression constructUnaryOperation(final ILocation loc, final SupportedBitvectorOperations bvop,
+			final Expression expr) {
+		if (expr instanceof BitvecLiteral) {
+			final BitvectorConstant bc = ExpressionFactory.toConstant((BitvecLiteral) expr);
+			final BitvectorConstantOperationResult resBc = BitvectorConstant.apply(bvop, bc);
+			return ExpressionFactory.toBitvectorLiteral(loc, resBc.getBvResult());
+		} else {
+			final String boogieFunctionName = generateBoogieFunctionName(bvop,
+					ExpressionFactory.isBitvectorSort(expr.getType()));
+			final Expression func = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { expr }, (BoogieType) expr.getType());
+			return func;
+		}
+	}
+
+	public static Expression constructBinaryOperation(final ILocation loc, final SupportedBitvectorOperations bvop,
+			final Expression... exprs ) {
+		if (exprs.length <= 1) {
+			throw new IllegalArgumentException("not binary");
+		}
+		final String boogieFunctionName = generateBoogieFunctionName(bvop,
+				ExpressionFactory.isBitvectorSort(exprs[0].getType()));
+		Expression result = exprs[0];
+		for (int i = 1; i < exprs.length; i++) {
+			result = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+					new Expression[] { result, exprs[i] }, (BoogieType) exprs[0].getType());
+		}
 		return result;
 	}
 
