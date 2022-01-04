@@ -97,6 +97,7 @@ public final class QvasrAbstractionJoin {
 						.rationalMatrixMultiplication(coherenceIdentityMatrixTwo, abstractionTwo.getSimulationMatrix());
 				final Pair<Rational[][], Rational[][]> pushedOut =
 						pushout(script, coherenceIdentitySimulationMatrixOne, coherenceIdentitySimulationMatrixTwo);
+
 			}
 		}
 		return null;
@@ -142,7 +143,10 @@ public final class QvasrAbstractionJoin {
 		lhs = termMatrixRemoveVariables(script, lhs, varToColumnOne);
 		rhs = termMatrixRemoveVariables(script, rhs, varToColumnTwo);
 		rhs = addColumnTerm(rhs, script.getScript().decimal("0"));
-		final Term[][] joinedMatrix = joinTermMatricesVertically(lhs, changeTermMatrixEntrySign(script, rhs));
+		Term[][] joinedMatrix = joinTermMatricesVertically(lhs, changeTermMatrixEntrySign(script, rhs));
+		if (joinedMatrix.length > 1) {
+			joinedMatrix = QvasrAbstractor.gaussianSolve(script, joinedMatrix);
+		}
 		Rational[][] vectorBasis = QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(script, joinedMatrix);
 		vectorBasis = removeLastColumnRational(vectorBasis);
 		final Pair<Rational[][], Rational[][]> splitVectorBase =
@@ -159,7 +163,7 @@ public final class QvasrAbstractionJoin {
 	 *            A {@link Rational} matrix.
 	 * @return A rational matrix with entries whose signs are inverted.
 	 */
-	public static Rational[][] changeRationalMatrixEntrySign(Rational[][] matrix) {
+	public static Rational[][] changeRationalMatrixEntrySign(final Rational[][] matrix) {
 		final Rational[][] changedSignMatrix = new Rational[matrix.length][matrix[0].length];
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[0].length; j++) {
@@ -179,7 +183,7 @@ public final class QvasrAbstractionJoin {
 	 *            A {@link Rational} matrix.
 	 * @return A rational matrix with entries whose signs are inverted.
 	 */
-	public static Term[][] changeTermMatrixEntrySign(ManagedScript script, Term[][] matrix) {
+	public static Term[][] changeTermMatrixEntrySign(final ManagedScript script, final Term[][] matrix) {
 		final Term[][] changedSignMatrix = new Term[matrix.length][matrix[0].length];
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[0].length; j++) {
@@ -278,7 +282,7 @@ public final class QvasrAbstractionJoin {
 	 *            The appended columns new value.
 	 * @return A matrix with a new column.
 	 */
-	public static Term[][] addColumnTerm(final Term[][] matrix, Term newColumnValue) {
+	public static Term[][] addColumnTerm(final Term[][] matrix, final Term newColumnValue) {
 		final Term[][] result = new Term[matrix.length][matrix[0].length + 1];
 		for (int i = 0; i < matrix.length; i++) {
 			result[i] = Arrays.copyOf(matrix[i], matrix[i].length + 1);
@@ -320,24 +324,23 @@ public final class QvasrAbstractionJoin {
 
 		final Set<TermVariable> tvs = varToColumn.keySet();
 		final int newMatrixLength = tvs.size();
-		final Term[][] matrixNoVars = new Term[termMatrix.length][newMatrixLength];
-		for (int i = 0; i < termMatrix.length; i++) {
-			for (int j = 0; j < termMatrix[0].length; j++) {
-				final Term equation = termMatrix[i][j];
-				if (QvasrUtils.isApplicationTerm(equation)) {
-					for (final Term var : tvs) {
-						final Set<TermVariable> zeroTvs = new HashSet<>(tvs);
-						zeroTvs.remove(var);
-						final HashMap<Term, Term> subMap = new HashMap<>();
-						subMap.put(var, script.getScript().decimal("1.0"));
-						for (final Term zeroTv : zeroTvs) {
-							subMap.put(zeroTv, script.getScript().decimal("0"));
-						}
-						final Term constTerm = Substitution.apply(script, subMap, equation);
-						matrixNoVars[i][varToColumn.get(var)] = constTerm;
+		final Term[][] matrixNoVars = new Term[termMatrix[0].length][newMatrixLength];
+		for (int i = 0; i < termMatrix[0].length; i++) {
+			final Term equation = termMatrix[0][i];
+			if (QvasrUtils.isApplicationTerm(equation) || equation instanceof TermVariable) {
+				for (final Term var : tvs) {
+					final Set<TermVariable> zeroTvs = new HashSet<>(tvs);
+					zeroTvs.remove(var);
+					final HashMap<Term, Term> subMap = new HashMap<>();
+					subMap.put(var, script.getScript().decimal("1.0"));
+					for (final Term zeroTv : zeroTvs) {
+						subMap.put(zeroTv, script.getScript().decimal("0"));
 					}
+					final Term constTerm = Substitution.apply(script, subMap, equation);
+					matrixNoVars[i][varToColumn.get(var)] = constTerm;
 				}
 			}
+
 		}
 		return matrixNoVars;
 	}

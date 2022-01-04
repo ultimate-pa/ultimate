@@ -129,8 +129,8 @@ public class QvasrAbstractor {
 			printMatrix(newUpdatesMatrixAdditions);
 		}
 
-		final Term[][] solutionsAdditionsGaussJordan = gaussianSolve(newUpdatesMatrixAdditions);
-		final Term[][] solutionsResetGaussJordan = gaussianSolve(newUpdatesMatrixResets);
+		final Term[][] solutionsAdditionsGaussJordan = gaussianSolve(mScript, newUpdatesMatrixAdditions);
+		final Term[][] solutionsResetGaussJordan = gaussianSolve(mScript, newUpdatesMatrixResets);
 
 		final Rational[][] resetVectorSpaceBasis =
 				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mScript, solutionsResetGaussJordan);
@@ -147,12 +147,12 @@ public class QvasrAbstractor {
 	 *            A matrix representing changes to variables. Can contain logical terms.
 	 * @return The solved matrix in reduced echelon form.
 	 */
-	public Term[][] gaussianSolve(final Term[][] matrix) {
-		final Term[][] gaussPartialPivot = gaussPartialPivot(matrix);
-		Term[][] gaussedAdditionsPruned = removeZeroRows(gaussPartialPivot);
-		gaussedAdditionsPruned = removeDuplicateRows(gaussedAdditionsPruned);
-		gaussedAdditionsPruned = gaussRowEchelonFormJordan(gaussedAdditionsPruned);
-		gaussedAdditionsPruned = removeZeroRows(gaussedAdditionsPruned);
+	public static Term[][] gaussianSolve(final ManagedScript script, final Term[][] matrix) {
+		final Term[][] gaussPartialPivot = gaussPartialPivot(script, matrix);
+		Term[][] gaussedAdditionsPruned = removeZeroRows(script, gaussPartialPivot);
+		gaussedAdditionsPruned = removeDuplicateRows(script, gaussedAdditionsPruned);
+		gaussedAdditionsPruned = gaussRowEchelonFormJordan(script, gaussedAdditionsPruned);
+		gaussedAdditionsPruned = removeZeroRows(script, gaussedAdditionsPruned);
 		return gaussedAdditionsPruned;
 	}
 
@@ -164,20 +164,17 @@ public class QvasrAbstractor {
 	 * @return A matrix in row echelon form.
 	 *
 	 */
-	private Term[][] gaussRowEchelonForm(final Term[][] matrix) {
+	private static Term[][] gaussRowEchelonForm(final ManagedScript script, final Term[][] matrix) {
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[0].length; j++) {
-				if (!QvasrUtils.checkTermEquiv(mScript, mZero, matrix[i][j])) {
+				if (!QvasrUtils.checkTermEquiv(script, script.getScript().decimal("0"), matrix[i][j])) {
 					final Term divider = matrix[i][j];
-					final Term dividerInverse = getDivisionInverse(mScript, matrix[i][j]);
+					final Term dividerInverse = getDivisionInverse(script, matrix[i][j]);
 					for (int k = j; k < matrix[0].length; k++) {
 						final Term toBeDivided = matrix[i][k];
 						final Term mult =
-								QvasrAbstractor.simplifyRealMultiplication(mScript, toBeDivided, dividerInverse);
-						final Term division = QvasrAbstractor.simplifyRealDivision(mScript, toBeDivided, divider);
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("Matrix " + i + k + " =  " + division.toStringDirect());
-						}
+								QvasrAbstractor.simplifyRealMultiplication(script, toBeDivided, dividerInverse);
+						final Term division = QvasrAbstractor.simplifyRealDivision(script, toBeDivided, divider);
 						matrix[i][k] = mult;
 					}
 					break;
@@ -194,14 +191,13 @@ public class QvasrAbstractor {
 	 *            A matrix in non-upper triangle form.
 	 * @return A matrix in upper-triangle form
 	 */
-	private Term[][] gaussPartialPivot(Term[][] matrix) {
+	private static Term[][] gaussPartialPivot(final ManagedScript script, Term[][] matrix) {
 		for (int k = 0; k < matrix.length - 1; k++) {
 			int max = -1;
 			if ((k + 1) < matrix.length && (k + 1) < matrix[0].length) {
-				max = findPivot(matrix, k);
+				max = findPivot(script, matrix, k);
 			}
 			if (max == -1) {
-				mLogger.warn("Gaussian Elimination Done.");
 				return matrix;
 			}
 			if (max != 0) {
@@ -211,15 +207,15 @@ public class QvasrAbstractor {
 			// i is the row
 			for (int i = k + 1; i < matrix.length; i++) {
 				final Term toBeEliminated = matrix[i][k];
-				matrix[i][k] = mZero;
-				final Term newDiv = QvasrAbstractor.simplifyRealDivision(mScript, toBeEliminated, pivot);
+				matrix[i][k] = script.getScript().decimal("0");
+				final Term newDiv = QvasrAbstractor.simplifyRealDivision(script, toBeEliminated, pivot);
 
 				// k is the column
 				for (int j = k + 1; j < matrix[0].length; j++) {
 					final Term currentColumn = matrix[k][j];
 					final Term currentEntry = matrix[i][j];
-					final Term newMul = QvasrAbstractor.simplifyRealMultiplication(mScript, newDiv, currentColumn);
-					final Term newSub = QvasrAbstractor.simplifyRealSubtraction(mScript, currentEntry, newMul);
+					final Term newMul = QvasrAbstractor.simplifyRealMultiplication(script, newDiv, currentColumn);
+					final Term newSub = QvasrAbstractor.simplifyRealSubtraction(script, currentEntry, newMul);
 					matrix[i][j] = newSub;
 				}
 			}
@@ -269,15 +265,15 @@ public class QvasrAbstractor {
 	 * @return A matrix in row echelon form.
 	 *
 	 */
-	private Term[][] gaussRowEchelonFormJordan(final Term[][] matrix) {
+	private static Term[][] gaussRowEchelonFormJordan(final ManagedScript script, final Term[][] matrix) {
 		for (int i = matrix.length - 1; 0 <= i; i--) {
 			for (int j = 0; j < matrix[0].length; j++) {
-				if (!QvasrUtils.checkTermEquiv(mScript, matrix[i][j], mZero)) {
-					final Term dividerInverse = getDivisionInverse(mScript, matrix[i][j]);
+				if (!QvasrUtils.checkTermEquiv(script, matrix[i][j], script.getScript().decimal("0"))) {
+					final Term dividerInverse = getDivisionInverse(script, matrix[i][j]);
 					for (int k = j; k < matrix[0].length; k++) {
 						final Term toBeDivided = matrix[i][k];
 						final Term mult =
-								QvasrAbstractor.simplifyRealMultiplication(mScript, toBeDivided, dividerInverse);
+								QvasrAbstractor.simplifyRealMultiplication(script, toBeDivided, dividerInverse);
 						matrix[i][k] = mult;
 					}
 					for (int l = i - 1; l >= 0; l--) {
@@ -286,9 +282,9 @@ public class QvasrAbstractor {
 							final Term rowEntry = matrix[i][m];
 							final Term rowEntryToBeEliminated = matrix[l][m];
 							final Term multRow =
-									QvasrAbstractor.simplifyRealMultiplication(mScript, toBeEliminatedMult, rowEntry);
+									QvasrAbstractor.simplifyRealMultiplication(script, toBeEliminatedMult, rowEntry);
 							final Term subRow =
-									QvasrAbstractor.simplifyRealSubtraction(mScript, rowEntryToBeEliminated, multRow);
+									QvasrAbstractor.simplifyRealSubtraction(script, rowEntryToBeEliminated, multRow);
 							matrix[l][m] = subRow;
 						}
 					}
@@ -354,11 +350,11 @@ public class QvasrAbstractor {
 	 *            A matrix containing rows with only 0s.
 	 * @return A matrix with only non-zero rows.
 	 */
-	private Term[][] removeZeroRows(final Term[][] matrix) {
+	private static Term[][] removeZeroRows(final ManagedScript script, final Term[][] matrix) {
 		final Set<Integer> toBeEliminated = new HashSet<>();
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[0].length; j++) {
-				if (!QvasrUtils.checkTermEquiv(mScript, matrix[i][j], mZero)) {
+				if (!QvasrUtils.checkTermEquiv(script, matrix[i][j], script.getScript().decimal("0"))) {
 					break;
 				}
 				if (j == matrix[0].length - 1) {
@@ -387,18 +383,18 @@ public class QvasrAbstractor {
 	 *            with duplicate rows.
 	 * @return A matrix with only distinct rows.
 	 */
-	private Term[][] removeDuplicateRows(final Term[][] matrix) {
+	private static Term[][] removeDuplicateRows(final ManagedScript script, final Term[][] matrix) {
 		final Set<Integer> toBeEliminated = new HashSet<>();
 		for (int i = 0; i < matrix.length; i++) {
 			final Set<Integer> possibleDuplicates = new HashSet<>();
 			for (int j = i + 1; j < matrix.length; j++) {
-				if (QvasrUtils.checkTermEquiv(mScript, matrix[i][0], matrix[j][0])) {
+				if (QvasrUtils.checkTermEquiv(script, matrix[i][0], matrix[j][0])) {
 					possibleDuplicates.add(j);
 				}
 				final Set<Integer> trueDuplicates = new HashSet<>(possibleDuplicates);
 				for (final Integer k : possibleDuplicates) {
 					for (int l = 0; l < matrix[0].length; l++) {
-						if (!QvasrUtils.checkTermEquiv(mScript, matrix[k][l], matrix[i][l])) {
+						if (!QvasrUtils.checkTermEquiv(script, matrix[k][l], matrix[i][l])) {
 							trueDuplicates.remove(k);
 						}
 					}
@@ -1174,10 +1170,10 @@ public class QvasrAbstractor {
 	 *            A column
 	 * @return An integer representing the new pivot row.
 	 */
-	private int findPivot(final Term[][] matrix, final int col) {
+	private static int findPivot(final ManagedScript script, final Term[][] matrix, final int col) {
 		int maxRow = -1;
 		for (int row = col; row < matrix.length; row++) {
-			if (!QvasrUtils.checkTermEquiv(mScript, matrix[row][col], mZero)) {
+			if (!QvasrUtils.checkTermEquiv(script, matrix[row][col], script.getScript().decimal("0"))) {
 				maxRow = row;
 				break;
 			}
