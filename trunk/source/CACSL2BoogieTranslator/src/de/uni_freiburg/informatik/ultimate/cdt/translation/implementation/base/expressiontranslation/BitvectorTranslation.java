@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 public class BitvectorTranslation extends ExpressionTranslation {
 
@@ -313,7 +313,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final int bitsize = computeBitsize(type1);
 		declareBitvectorFunction(loc, smtOperatorName, SFO.AUXILIARY_FUNCTION_PREFIX + smtOperatorName + bitsize, true,
 				new CPrimitive(CPrimitives.BOOL), null, type1, type2);
-		final Expression result = BitvectorFunctionFactory.constructInequalityFunction(loc, exp1, exp2, SupportedBitvectorOperations.valueOf(smtOperatorName), bitsize);
+		final Expression result = BitvectorFunctionFactory.constructInequalityFunction(loc, exp1, exp2, BvOp.valueOf(smtOperatorName), bitsize);
 		return result;
 	}
 
@@ -378,10 +378,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		final String boogieFunctionName = BitvectorFunctionFactory
-				.generateBoogieFunctionName(SupportedBitvectorOperations.valueOf(smtOperation), computeBitsize(type));
+				.generateBoogieFunctionName(BvOp.valueOf(smtOperation), computeBitsize(type));
 		declareBitvectorFunction(loc, smtOperation, boogieFunctionName, false, type, null, type);
 		final Expression func = BitvectorFunctionFactory.constructUnaryOperation(loc,
-				SupportedBitvectorOperations.valueOf(smtOperation), expr);
+				BvOp.valueOf(smtOperation), expr);
 		return func;
 	}
 

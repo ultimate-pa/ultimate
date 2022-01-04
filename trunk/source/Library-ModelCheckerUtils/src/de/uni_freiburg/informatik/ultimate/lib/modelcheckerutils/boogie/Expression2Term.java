@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -397,7 +397,7 @@ public class Expression2Term {
 			}
 
 			final String[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-			final SupportedBitvectorOperations sbo = ExpressionFactory.getSupportedBitvectorOperation(funcSymb);
+			final BvOp sbo = ExpressionFactory.getSupportedBitvectorOperation(funcSymb);
 			if (sbo == null) {
 				result = mScript.term(funcSymb, indices, null, parameters);
 			} else {

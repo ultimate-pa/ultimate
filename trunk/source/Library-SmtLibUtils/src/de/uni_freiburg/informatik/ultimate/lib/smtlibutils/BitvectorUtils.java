@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  * Provides auxiliary methods for SMT bitvectors.
@@ -149,7 +149,7 @@ public final class BitvectorUtils {
 	public static Term termWithLocalSimplification(final Script script, final String funcname,
 			final BigInteger[] indices, final Term... params) {
 		final Term result;
-		final SupportedBitvectorOperations bvop = SupportedBitvectorOperations.valueOf(funcname);
+		final BvOp bvop = BvOp.valueOf(funcname);
 		switch (bvop) {
 		case zero_extend:
 			result = new Zero_extend().simplifiedResult(script, funcname, indices, params);
@@ -470,7 +470,7 @@ public final class BitvectorUtils {
 
 		@Override
 		public boolean isCommutative() {
-			final SupportedBitvectorOperations bvop = SupportedBitvectorOperations.valueOf(getFunctionName());
+			final BvOp bvop = BvOp.valueOf(getFunctionName());
 			switch (bvop) {
 			case bvadd:
 			case bvand:

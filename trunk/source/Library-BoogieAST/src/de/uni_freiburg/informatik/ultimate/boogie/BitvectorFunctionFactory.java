@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  * Boogie does not provide native support for most bitvector operations of
@@ -53,7 +53,7 @@ public class BitvectorFunctionFactory {
 
 	public static final String AUXILIARY_FUNCTION_PREFIX = "~";
 
-	public static String generateBoogieFunctionName(final SupportedBitvectorOperations bvop, final int bitsize) {
+	public static String generateBoogieFunctionName(final BvOp bvop, final int bitsize) {
 		if (bitsize <= 0) {
 			throw new IllegalArgumentException();
 		}
@@ -95,14 +95,14 @@ public class BitvectorFunctionFactory {
 	}
 
 	public static Expression constructInequalityFunction(final ILocation loc, final Expression exp1,
-			final Expression exp2, final SupportedBitvectorOperations bvop, final int bitsize) {
+			final Expression exp2, final BvOp bvop, final int bitsize) {
 		final String boogieFunctionName = generateBoogieFunctionName(bvop, bitsize);
 		final Expression result = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 				new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		return result;
 	}
 
-	public static Expression constructUnaryOperation(final ILocation loc, final SupportedBitvectorOperations bvop,
+	public static Expression constructUnaryOperation(final ILocation loc, final BvOp bvop,
 			final Expression expr) {
 		if (expr instanceof BitvecLiteral) {
 			final BitvectorConstant bc = ExpressionFactory.toConstant((BitvecLiteral) expr);
@@ -117,7 +117,7 @@ public class BitvectorFunctionFactory {
 		}
 	}
 
-	public static Expression constructBinaryOperation(final ILocation loc, final SupportedBitvectorOperations bvop,
+	public static Expression constructBinaryOperation(final ILocation loc, final BvOp bvop,
 			final Expression... exprs ) {
 		if (exprs.length <= 1) {
 			throw new IllegalArgumentException("not binary");
