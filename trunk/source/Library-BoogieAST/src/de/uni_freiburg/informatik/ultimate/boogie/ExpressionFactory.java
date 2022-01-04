@@ -60,16 +60,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
@@ -630,25 +626,13 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructFunctionApplication(final ILocation loc, final String identifier,
 			final Expression[] arguments, final BoogieType resultBoogieType) {
-		final String smtIdentifier = getBitvectorSmtFunctionNameFromCFunctionName(identifier);
-		final BvOp sbo = getSupportedBitvectorOperation(smtIdentifier);
+		final String smtIdentifier = BitvectorFunctionFactory.getBitvectorSmtFunctionNameFromCFunctionName(identifier);
+		final BvOp sbo = BitvectorFunctionFactory.getSupportedBitvectorOperation(smtIdentifier);
 		final FunctionApplication funApp = new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 		if (sbo == null) {
 			return funApp;
 		}
-		return simplifyBitvectorExpression(funApp, sbo);
-	}
-
-	/**
-	 * @return the matching {@link BvOp} value if the identifier represents a supported
-	 *         bitvector operation, or null if it does not.
-	 */
-	public static BvOp getSupportedBitvectorOperation(final String identifier) {
-		try {
-			return BitvectorConstant.BvOp.valueOf(identifier);
-		} catch (final IllegalArgumentException iae) {
-			return null;
-		}
+		return BitvectorFunctionFactory.simplifyBitvectorExpression(funApp, sbo);
 	}
 
 	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,
@@ -752,254 +736,6 @@ public class ExpressionFactory {
 		return new WildcardExpression(loc, BoogieType.TYPE_BOOL);
 	}
 
-	/**
-	 * Renames a function identifier by removing the first character and removing all occurrences of digits. This
-	 * converts, e.g., ~bvadd32, to bvadd.
-	 *
-	 * @deprecated This is CTranslation-specific code that somehow survived the transport in this plugin.
-	 */
-	@Deprecated
-	private static String getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
-		return name.substring(1).replaceAll("\\d+", "");
-	}
-
-	/**
-	 *
-	 * @param extension number of bits that are added
-	 */
-	public static Expression extend(final ILocation loc, final ExtendOperation extendOperation,
-			final BigInteger extension, final Expression operandExpression) {
-		if (operandExpression instanceof BitvecLiteral) {
-			final BitvectorConstant bc = toConstant((BitvecLiteral) operandExpression);
-			final BitvectorConstant extendedBc;
-			switch (extendOperation) {
-			case sign_extend:
-				extendedBc = BitvectorConstant.sign_extend(bc, extension);
-				break;
-			case zero_extend:
-				extendedBc = BitvectorConstant.zero_extend(bc, extension);
-				break;
-			default:
-				throw new AssertionError("unknown value " + extendOperation);
-			}
-			return createBitvecLiteral(loc, extendedBc.getValue().toString(), extendedBc.getIndex().intValueExact());
-		} else {
-			if (operandExpression.getType() == null) {
-				throw new UnsupportedOperationException("Need type to determine bitsize!");
-			}
-			final int inputBitsize = isBitvectorSort(operandExpression.getType());
-			final int resultBitsize = BigInteger.valueOf(inputBitsize).add(extension).intValueExact();
-			final BoogieType resultBoogieType = BoogieType.createBitvectorType(resultBitsize);
-			final String fullFunctionName = constructBoogieFunctionNameForExtend(extendOperation,
-					inputBitsize, resultBitsize);
-			return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-					new Expression[] { operandExpression }, resultBoogieType);
-		}
-	}
-
-	public static String constructBoogieFunctionNameForExtend(final ExtendOperation extendOperation,
-			final int inputBitsize, final int outputBitsize) {
-		return BitvectorFunctionFactory.AUXILIARY_FUNCTION_PREFIX + extendOperation.toString() + "From" + inputBitsize
-				+ "To" + outputBitsize;
-	}
-
-	private static Expression simplifyBitvectorExpression(final FunctionApplication node,
-			final BvOp sbo) {
-		assert sbo != null;
-		final Expression[] args = node.getArguments();
-		switch (sbo.getArity()) {
-		case 1:
-			return simplifyUnaryBitvectorExpression(node, sbo, args);
-		case 2:
-			return simplifyBinaryBitvectorExpression(node, sbo, args);
-		default:
-			return node;
-		}
-	}
-
-	private static Expression simplifyUnaryBitvectorExpression(final FunctionApplication node,
-			final BvOp sbo, final Expression[] args) {
-		assert args.length == 1 : "Unary expression cannot have " + args.length + " arguments";
-
-		if (args[0] instanceof BitvecLiteral) {
-			final BitvectorConstantOperationResult result =
-					BitvectorConstant.apply(sbo, toConstant((BitvecLiteral) args[0]));
-			assert !result.isBoolean();
-			return toBitvectorLiteral(node, result.getBvResult());
-		}
-		return node;
-	}
-
-	private static Expression simplifyBinaryBitvectorExpression(final FunctionApplication node,
-			final BvOp sbo, final Expression[] args) {
-		assert args.length == 2 : "Binary expression cannot have " + args.length + " arguments";
-		// check if one of the arguments is a neutral or annihilating literal
-		final BitvectorConstant left;
-		if (args[0] instanceof BitvecLiteral) {
-			left = toConstant((BitvecLiteral) args[0]);
-			if (isNeutralLeft(sbo, left)) {
-				return args[1];
-			}
-			if (isAnnihilatingLeft(sbo, left)) {
-				return args[0];
-			}
-		} else {
-			left = null;
-		}
-		final BitvectorConstant right;
-		if (args[1] instanceof BitvecLiteral) {
-			right = toConstant((BitvecLiteral) args[1]);
-			if (isNeutralRight(sbo, right)) {
-				return args[0];
-			}
-			if (isAnnihilatingRight(sbo, right)) {
-				return args[1];
-			}
-		} else {
-			right = null;
-		}
-
-		// if both arguments are literals, just compute the result
-		if (left != null && right != null) {
-			return computeBinaryBitvectorExpression(node, sbo, left, right);
-		}
-
-		// we do nothing if both operands are non-constant
-		// TODO: We could still do things like (op (op c1 x) (op c2 y)) --> (op c3 op(x y)) with c3 = (op c1 c2) for
-		// certain ops
-		if (left == null && right == null) {
-			return node;
-		}
-
-		if (sbo.isCommutative()) {
-			return simplifyBinaryAssociativeExpression(node, sbo, args, left, right);
-		}
-		return node;
-	}
-
-	private static FunctionApplication simplifyBinaryAssociativeExpression(final FunctionApplication node,
-			final BvOp sbo, final Expression[] args, final BitvectorConstant left,
-			final BitvectorConstant right) {
-		// if this operator is associative, we move literals to the left and check if the right operand has the same
-		// operator s.t. we can combine the literals to one.
-		if (right == null && args[1] instanceof FunctionApplication) {
-			final FunctionApplication rightFunApp = (FunctionApplication) args[1];
-			final String rightFunId = rightFunApp.getIdentifier();
-			final BvOp rightSbo =
-					getSupportedBitvectorOperation(getBitvectorSmtFunctionNameFromCFunctionName(rightFunId));
-			if (sbo == rightSbo) {
-				final Expression innerLeft = rightFunApp.getArguments()[0];
-				if (innerLeft instanceof BitvecLiteral) {
-					final Expression newConst =
-							computeBinaryBitvectorExpression(node, sbo, left, toConstant((BitvecLiteral) innerLeft));
-					return new FunctionApplication(node.getLocation(), node.getType(), node.getIdentifier(),
-							new Expression[] { newConst, rightFunApp.getArguments()[1] });
-				}
-
-			}
-			// TODO: There are additional cases where we could compute the result
-		}
-		if (left == null) {
-			// we switch operands so that future calls on this function application can use a simple check
-			final FunctionApplication newNode = new FunctionApplication(node.getLocation(), node.getType(),
-					node.getIdentifier(), new Expression[] { args[1], args[0] });
-			return simplifyBinaryAssociativeExpression(newNode, sbo, newNode.getArguments(), right, left);
-		}
-		return node;
-	}
-
-	private static Expression computeBinaryBitvectorExpression(final FunctionApplication node,
-			final BvOp sbo, final BitvectorConstant left, final BitvectorConstant right) {
-		if (sbo.isBoolean()) {
-			final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, left, right);
-			assert result.isBoolean();
-			return toBooleanLiteral(node, result.getBooleanResult());
-		}
-		final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, left, right);
-		assert !result.isBoolean();
-		return toBitvectorLiteral(node, result.getBvResult());
-	}
-
-	static BitvectorConstant toConstant(final BitvecLiteral lit) {
-		return new BitvectorConstant(new BigInteger(lit.getValue()), BigInteger.valueOf(lit.getLength()));
-	}
-
-	/**
-	 * true iff left is annihilating (or absorbing) if it is the left operand of binOp, false otherwise
-	 *
-	 * If true, then (binOp left x) == left for any x
-	 */
-	private static boolean isAnnihilatingLeft(final Operator binOp, final Expression left) {
-		// TODO: Complete
-		switch (binOp) {
-		case ARITHMUL:
-			if (left instanceof IntegerLiteral) {
-				return new BigInteger(((IntegerLiteral) left).getValue()).signum() == 0;
-			} else if (left instanceof RealLiteral) {
-				return toRational(((RealLiteral) left).getValue()).signum() == 0;
-			}
-			return false;
-		case LOGICAND:
-			if (left instanceof BooleanLiteral) {
-				return !((BooleanLiteral) left).getValue();
-			}
-			return false;
-		case LOGICOR:
-			if (left instanceof BooleanLiteral) {
-				return ((BooleanLiteral) left).getValue();
-			}
-			return false;
-		case ARITHPLUS:
-		case ARITHDIV:
-		case ARITHMINUS:
-		case ARITHMOD:
-		case BITVECCONCAT:
-		case COMPEQ:
-		case COMPGEQ:
-		case COMPGT:
-		case COMPLEQ:
-		case COMPLT:
-		case COMPNEQ:
-		case COMPPO:
-		case LOGICIFF:
-		case LOGICIMPLIES:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
-		}
-	}
-
-	/**
-	 * true iff right is annihilating (or absorbing) if it is the right operand of binOp, false otherwise
-	 *
-	 * If true, then (binOp right x) == right for any x
-	 */
-	private static boolean isAnnihilatingRight(final Operator binOp, final Expression right) {
-		// TODO: Complete
-		switch (binOp) {
-		case ARITHMUL:
-		case ARITHPLUS:
-		case COMPEQ:
-		case COMPNEQ:
-		case LOGICAND:
-		case LOGICIFF:
-		case LOGICOR:
-			return isAnnihilatingLeft(binOp, right);
-		case ARITHDIV:
-		case ARITHMINUS:
-		case ARITHMOD:
-		case BITVECCONCAT:
-		case COMPGEQ:
-		case COMPGT:
-		case COMPLEQ:
-		case COMPLT:
-		case COMPPO:
-		case LOGICIMPLIES:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
-		}
-	}
 
 	/**
 	 * true iff left is neutral if it is the left operand of binOp, false otherwise
@@ -1115,199 +851,80 @@ public class ExpressionFactory {
 	}
 
 	/**
-	 * true iff bConst is annihilating (or absorbing) if it is the left operand of op, false otherwise
+	 * true iff left is annihilating (or absorbing) if it is the left operand of binOp, false otherwise
 	 *
-	 * If true, then (op bConst x) == bConst for any x
+	 * If true, then (binOp left x) == left for any x
 	 */
-	private static boolean isAnnihilatingLeft(final BvOp op, final BitvectorConstant bConst) {
-		switch (op) {
-		case bvsdiv:
-		case bvudiv:
-		case bvsrem:
-		case bvurem:
-		case bvmul:
-		case bvshl:
-		case bvlshr:
-			return bConst.isZero();
-		case bvor:
-		case bvand:
-		case bvashr:
-			// TODO: Add more elements
-		case bvadd:
-		case bvsub:
-		case bvxor:
-		case extract:
-		case zero_extend:
-		case bvneg:
-		case bvnot:
-		case bvsle:
-		case bvslt:
-		case bvuge:
-		case bvugt:
-		case bvule:
-		case bvsge:
-		case bvsgt:
-		case bvult:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
-	}
-
-	/**
-	 * true iff bConst is annihilating (or absorbing) if it is the right operand of op, false otherwise
-	 *
-	 * If true, then (op x bConst) == bConst for any x
-	 */
-	private static boolean isAnnihilatingRight(final BvOp op, final BitvectorConstant bConst) {
-		switch (op) {
-		case bvadd:
-		case bvor:
-		case bvmul:
-		case bvxor:
-		case bvand:
-			return isAnnihilatingLeft(op, bConst);
-		case bvudiv:
-		case bvashr:
-		case bvlshr:
-		case bvsrem:
-		case bvurem:
-		case bvsdiv:
-		case bvshl:
-		case bvsub:
-		case extract:
-		case zero_extend:
-		case bvneg:
-		case bvnot:
-		case bvsle:
-		case bvslt:
-		case bvuge:
-		case bvugt:
-		case bvule:
-		case bvsge:
-		case bvsgt:
-		case bvult:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
-	}
-
-	/**
-	 * true iff bConst is neutral if it is the left operand of op, false otherwise
-	 *
-	 * If true, then (op bConst x) == x for any x
-	 */
-	private static boolean isNeutralLeft(final BvOp op, final BitvectorConstant bConst) {
-		// TODO: Add more left neutral elements
-		switch (op) {
-		case bvadd:
-		case bvor:
-			return bConst.isZero();
-		case bvmul:
-			return bConst.isOne();
-		case bvand:
-			// TODO: Is this correct?
-			return bConst.equals(BitvectorConstant.maxValue(bConst.getIndex()));
-		case bvxor:
-		case bvudiv:
-		case bvashr:
-		case bvlshr:
-		case bvsrem:
-		case bvurem:
-		case bvsdiv:
-		case bvshl:
-		case bvsub:
-		case extract:
-		case zero_extend:
-		case bvneg:
-		case bvnot:
-		case bvsle:
-		case bvslt:
-		case bvuge:
-		case bvugt:
-		case bvule:
-		case bvsge:
-		case bvsgt:
-		case bvult:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
-	}
-
-	/**
-	 * true iff bConst is neutral if it is the right operand of op, false otherwise
-	 *
-	 * If true, then (op x bConst) == x for any x
-	 */
-	private static boolean isNeutralRight(final BvOp op, final BitvectorConstant bConst) {
-		switch (op) {
-		case bvadd:
-		case bvor:
-		case bvmul:
-		case bvxor:
-		case bvand:
-			return isNeutralLeft(op, bConst);
-		case bvsub:
-		case bvashr:
-		case bvlshr:
-		case bvshl:
-			return bConst.isZero();
-		case bvudiv:
-		case bvsdiv:
-			return bConst.isOne();
-		case bvsrem:
-		case bvurem:
-		case extract:
-		case zero_extend:
-		case bvneg:
-		case bvnot:
-		case bvsle:
-		case bvslt:
-		case bvuge:
-		case bvugt:
-		case bvule:
-		case bvsge:
-		case bvsgt:
-		case bvult:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
-	}
-
-	static BitvecLiteral toBitvectorLiteral(final FunctionApplication node,
-			final BitvectorConstant bitvectorConstant) {
-		return new BitvecLiteral(node.getLoc(), node.getType(), bitvectorConstant.getValue().toString(),
-				bitvectorConstant.getIndex().intValueExact());
-	}
-
-	static BitvecLiteral toBitvectorLiteral(final ILocation loc, final BitvectorConstant bitvectorConstant) {
-		final int length = bitvectorConstant.getIndex().intValueExact();
-		return new BitvecLiteral(loc, BoogieType.createBitvectorType(length), bitvectorConstant.getValue().toString(),
-				length);
-	}
-
-	static int isBitvectorSort(final IBoogieType type) {
-		final int result;
-		if (type instanceof BoogiePrimitiveType) {
-			final BoogiePrimitiveType bpType = (BoogiePrimitiveType) type;
-			if (bpType.getTypeCode() > 0) {
-				// is bitvector
-				result = bpType.getTypeCode();
-			} else {
-				// not a bitvector
-				result = -1;
+	private static boolean isAnnihilatingLeft(final Operator binOp, final Expression left) {
+		// TODO: Complete
+		switch (binOp) {
+		case ARITHMUL:
+			if (left instanceof IntegerLiteral) {
+				return new BigInteger(((IntegerLiteral) left).getValue()).signum() == 0;
+			} else if (left instanceof RealLiteral) {
+				return toRational(((RealLiteral) left).getValue()).signum() == 0;
 			}
-		} else {
-			result = -1;
+			return false;
+		case LOGICAND:
+			if (left instanceof BooleanLiteral) {
+				return !((BooleanLiteral) left).getValue();
+			}
+			return false;
+		case LOGICOR:
+			if (left instanceof BooleanLiteral) {
+				return ((BooleanLiteral) left).getValue();
+			}
+			return false;
+		case ARITHPLUS:
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case BITVECCONCAT:
+		case COMPEQ:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPNEQ:
+		case COMPPO:
+		case LOGICIFF:
+		case LOGICIMPLIES:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
 		}
-		return result;
 	}
 
-	private static BooleanLiteral toBooleanLiteral(final FunctionApplication node, final boolean value) {
-		return new BooleanLiteral(node.getLoc(), node.getType(), value);
+	/**
+	 * true iff right is annihilating (or absorbing) if it is the right operand of binOp, false otherwise
+	 *
+	 * If true, then (binOp right x) == right for any x
+	 */
+	private static boolean isAnnihilatingRight(final Operator binOp, final Expression right) {
+		// TODO: Complete
+		switch (binOp) {
+		case ARITHMUL:
+		case ARITHPLUS:
+		case COMPEQ:
+		case COMPNEQ:
+		case LOGICAND:
+		case LOGICIFF:
+		case LOGICOR:
+			return isAnnihilatingLeft(binOp, right);
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case BITVECCONCAT:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPPO:
+		case LOGICIMPLIES:
+			return false;
+		default:
+			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
+		}
 	}
 
 	public static Rational toRational(final String realLiteralValue) {
@@ -1337,7 +954,6 @@ public class ExpressionFactory {
 		}
 		return rat;
 	}
-
 
 
 }

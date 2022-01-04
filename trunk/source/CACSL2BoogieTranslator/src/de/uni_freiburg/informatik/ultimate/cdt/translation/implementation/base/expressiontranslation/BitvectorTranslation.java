@@ -609,14 +609,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			extendOperation = ExtendOperation.sign_extend;
 		}
-		final String boogieFunctionName = ExpressionFactory.constructBoogieFunctionNameForExtend(extendOperation,
+		final String boogieFunctionName = BitvectorFunctionFactory.constructBoogieFunctionNameForExtend(extendOperation,
 				operandLength, resultLength);
 
 		final int[] indices = new int[] { resultLength - operandLength };
 		declareBitvectorFunction(loc, extendOperation.getSmtFunctionName(), boogieFunctionName, false, resultType,
 				indices, operandType);
 		final Expression operandExpression = operand.getLrValue().getValue();
-		final Expression func = ExpressionFactory.extend(loc, extendOperation, BigInteger.valueOf(indices[0]),
+		final Expression func = BitvectorFunctionFactory.extend(loc, extendOperation, BigInteger.valueOf(indices[0]),
 				operandExpression);
 		final RValue rVal = new RValue(func, resultType);
 		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();

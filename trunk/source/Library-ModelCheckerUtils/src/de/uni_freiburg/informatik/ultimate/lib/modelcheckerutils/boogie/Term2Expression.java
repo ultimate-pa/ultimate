@@ -216,7 +216,7 @@ public final class Term2Expression implements Serializable {
 					return BitvectorFunctionFactory.constructInequalityFunction(params[0].getLocation(), params[0],
 							params[1], BvOp.valueOf(symb.getName()), bitsize);
 				} else if (Arrays.asList(new String[] { "zero_extend", "sign_extend" }).contains(symb.getName())) {
-					return ExpressionFactory.extend(null, ExtendOperation.valueOf(symb.getName()),
+					return BitvectorFunctionFactory.extend(null, ExtendOperation.valueOf(symb.getName()),
 							new BigInteger(symb.getIndices()[0]), params[0]);
 				} else if (Arrays.asList(new String[] { "bvnot", "bvneg" }).contains(symb.getName())) {
 					return BitvectorFunctionFactory.constructUnaryOperation(null,
