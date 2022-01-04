@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
@@ -397,7 +397,7 @@ public class Expression2Term {
 			}
 
 			final String[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-			final BvOp sbo = BitvectorFunctionFactory.getSupportedBitvectorOperation(funcSymb);
+			final BvOp sbo = BitvectorFactory.getSupportedBitvectorOperation(funcSymb);
 			if (sbo == null) {
 				result = mScript.term(funcSymb, indices, null, parameters);
 			} else {

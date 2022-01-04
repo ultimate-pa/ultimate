@@ -626,13 +626,13 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructFunctionApplication(final ILocation loc, final String identifier,
 			final Expression[] arguments, final BoogieType resultBoogieType) {
-		final String smtIdentifier = BitvectorFunctionFactory.getBitvectorSmtFunctionNameFromCFunctionName(identifier);
-		final BvOp sbo = BitvectorFunctionFactory.getSupportedBitvectorOperation(smtIdentifier);
+		final String smtIdentifier = BitvectorFactory.getBitvectorSmtFunctionNameFromCFunctionName(identifier);
+		final BvOp sbo = BitvectorFactory.getSupportedBitvectorOperation(smtIdentifier);
 		final FunctionApplication funApp = new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 		if (sbo == null) {
 			return funApp;
 		}
-		return BitvectorFunctionFactory.simplifyBitvectorExpression(funApp, sbo);
+		return BitvectorFactory.simplifyBitvectorExpression(funApp, sbo);
 	}
 
 	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,

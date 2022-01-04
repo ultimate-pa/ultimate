@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -213,19 +213,19 @@ public final class Term2Expression implements Serializable {
 				} else if (Arrays.asList(new String[] { "bvsle", "bvslt", "bvsge", "bvsgt", "bvule", "bvult", "bvuge", "bvugt" })
 						.contains(symb.getName())) {
 					final Integer bitsize = Integer.parseInt(symb.getParameterSorts()[0].getIndices()[0]);
-					return BitvectorFunctionFactory.constructInequalityFunction(params[0].getLocation(), params[0],
+					return BitvectorFactory.constructInequalityFunction(params[0].getLocation(), params[0],
 							params[1], BvOp.valueOf(symb.getName()), bitsize);
 				} else if (Arrays.asList(new String[] { "zero_extend", "sign_extend" }).contains(symb.getName())) {
-					return BitvectorFunctionFactory.extend(null, ExtendOperation.valueOf(symb.getName()),
+					return BitvectorFactory.extend(null, ExtendOperation.valueOf(symb.getName()),
 							new BigInteger(symb.getIndices()[0]), params[0]);
 				} else if (Arrays.asList(new String[] { "bvnot", "bvneg" }).contains(symb.getName())) {
-					return BitvectorFunctionFactory.constructUnaryOperation(null,
+					return BitvectorFactory.constructUnaryOperation(null,
 							BvOp.valueOf(symb.getName()), params[0]);
 				} else if (Arrays
 						.asList(new String[] { "bvadd", "bvsub", "bvmul", "bvudiv", "bvurem", "bvsdiv", "bvsrem",
 								"bvsmod", "bvand", "bvor", "bvxor", "bvshl", "bvlshr", "bvashr" })
 						.contains(symb.getName())) {
-					return BitvectorFunctionFactory.constructBinaryOperation(null,
+					return BitvectorFactory.constructBinaryOperation(null,
 							BvOp.valueOf(symb.getName()), params);
 				} else {
 					throw new UnsupportedOperationException(

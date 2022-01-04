@@ -38,7 +38,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -313,7 +313,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final int bitsize = computeBitsize(type1);
 		declareBitvectorFunction(loc, smtOperatorName, SFO.AUXILIARY_FUNCTION_PREFIX + smtOperatorName + bitsize, true,
 				new CPrimitive(CPrimitives.BOOL), null, type1, type2);
-		final Expression result = BitvectorFunctionFactory.constructInequalityFunction(loc, exp1, exp2, BvOp.valueOf(smtOperatorName), bitsize);
+		final Expression result = BitvectorFactory.constructInequalityFunction(loc, exp1, exp2, BvOp.valueOf(smtOperatorName), bitsize);
 		return result;
 	}
 
@@ -377,10 +377,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		final String boogieFunctionName = BitvectorFunctionFactory
+		final String boogieFunctionName = BitvectorFactory
 				.generateBoogieFunctionName(BvOp.valueOf(smtOperation), computeBitsize(type));
 		declareBitvectorFunction(loc, smtOperation, boogieFunctionName, false, type, null, type);
-		final Expression func = BitvectorFunctionFactory.constructUnaryOperation(loc,
+		final Expression func = BitvectorFactory.constructUnaryOperation(loc,
 				BvOp.valueOf(smtOperation), expr);
 		return func;
 	}
@@ -609,14 +609,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			extendOperation = ExtendOperation.sign_extend;
 		}
-		final String boogieFunctionName = BitvectorFunctionFactory.constructBoogieFunctionNameForExtend(extendOperation,
+		final String boogieFunctionName = BitvectorFactory.constructBoogieFunctionNameForExtend(extendOperation,
 				operandLength, resultLength);
 
 		final int[] indices = new int[] { resultLength - operandLength };
 		declareBitvectorFunction(loc, extendOperation.getSmtFunctionName(), boogieFunctionName, false, resultType,
 				indices, operandType);
 		final Expression operandExpression = operand.getLrValue().getValue();
-		final Expression func = BitvectorFunctionFactory.extend(loc, extendOperation, BigInteger.valueOf(indices[0]),
+		final Expression func = BitvectorFactory.extend(loc, extendOperation, BigInteger.valueOf(indices[0]),
 				operandExpression);
 		final RValue rVal = new RValue(func, resultType);
 		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
