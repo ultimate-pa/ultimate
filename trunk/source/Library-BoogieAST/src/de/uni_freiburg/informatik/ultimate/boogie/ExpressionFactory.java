@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -751,34 +750,6 @@ public class ExpressionFactory {
 
 	public static Expression constructBooleanWildCardExpression(final ILocation loc) {
 		return new WildcardExpression(loc, BoogieType.TYPE_BOOL);
-	}
-
-	private static FunctionApplication newFunctionApplication(final FunctionApplication node, final boolean isChanged,
-			final List<Expression> newArgs) {
-		if (isChanged) {
-			return new FunctionApplication(node.getLoc(), node.getType(), node.getIdentifier(),
-					newArgs.toArray(new Expression[newArgs.size()]));
-		}
-		return node;
-	}
-
-	/**
-	 * Fills newArgs with either transformed or original parameters of the FunctionApplication.
-	 *
-	 * @return true iff some of the parameters changed during the transformation, false otherwise
-	 */
-	private static boolean handleFunctionApplicationParams(final FunctionApplication node,
-			final List<Expression> newArgs, final GeneratedBoogieAstTransformer transformer) {
-		if (node.getArguments() == null || node.getArguments().length <= 0) {
-			return false;
-		}
-		boolean isChanged = false;
-		for (final Expression oldArg : node.getArguments()) {
-			final Expression newArg = oldArg.accept(transformer);
-			isChanged = isChanged || newArg != oldArg;
-			newArgs.add(newArg);
-		}
-		return isChanged;
 	}
 
 	/**
