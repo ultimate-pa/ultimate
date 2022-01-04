@@ -38,6 +38,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -265,31 +266,31 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
-		final String functionName;
+		final String smtOperatorName;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_greaterEqual:
 			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
-				functionName = "bvuge";
+				smtOperatorName = "bvuge";
 			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
-				functionName = "bvsge";
+				smtOperatorName = "bvsge";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
 			break;
 		case IASTBinaryExpression.op_greaterThan:
 			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
-				functionName = "bvugt";
+				smtOperatorName = "bvugt";
 			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
-				functionName = "bvsgt";
+				smtOperatorName = "bvsgt";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
 			break;
 		case IASTBinaryExpression.op_lessEqual:
 			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
-				functionName = "bvule";
+				smtOperatorName = "bvule";
 			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
-				functionName = "bvsle";
+				smtOperatorName = "bvsle";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
@@ -297,9 +298,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		case IASTBinaryExpression.op_lessThan:
 
 			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
-				functionName = "bvult";
+				smtOperatorName = "bvult";
 			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
-				functionName = "bvslt";
+				smtOperatorName = "bvslt";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
@@ -308,13 +309,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
 		assert type1.getType() == type2.getType() : "Probably incompatible types! Did you forget a conversion?";
-		declareBitvectorFunction(loc, functionName, functionName + computeBitsize(type1), true,
+		final int bitsize = computeBitsize(type1);
+		declareBitvectorFunction(loc, smtOperatorName, SFO.AUXILIARY_FUNCTION_PREFIX + smtOperatorName + bitsize, true,
 				new CPrimitive(CPrimitives.BOOL), null, type1, type2);
-		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + functionName + computeBitsize(type1);
-		final Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
+		final Expression result = BitvectorFunctionFactory.constructInequalityFunction(loc, exp1, exp2, smtOperatorName, bitsize);
 		return result;
 	}
+
+
 
 	@Override
 	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
@@ -352,10 +354,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareBitvectorFunction(loc, funcname, funcname + computeBitsize(typeLeft), false, typeLeft, null, typeLeft,
-				typeRight);
-		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(typeLeft);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(typeLeft);
+		declareBitvectorFunction(loc, funcname, boogieFunctionName, false, typeLeft, null, typeLeft, typeRight);
+		final Expression func = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 		return func;
 	}
@@ -375,9 +376,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareBitvectorFunction(loc, funcname, funcname + computeBitsize(type), false, type, null, type);
-		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(type);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(type);
+		declareBitvectorFunction(loc, funcname, boogieFunctionName, false, type, null, type);
+		final Expression func = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 				new Expression[] { expr }, mTypeHandler.getBoogieTypeForCType(type));
 		return func;
 	}
@@ -426,10 +427,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-
-		declareBitvectorFunction(loc, funcname, funcname + computeBitsize(type1), false, type1, null, type1, type2);
-		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(type1);
-		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] { exp1, exp2 },
+		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(type1);
+		declareBitvectorFunction(loc, funcname, boogieFunctionName, false, type1, null, type1, type2);
+		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName, new Expression[] { exp1, exp2 },
 				mTypeHandler.getBoogieTypeForCType(type1));
 	}
 
@@ -437,12 +437,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String boogieFunctionName, final boolean boogieResultTypeBool, final CPrimitive resultCType,
 			final int[] indices, final CPrimitive... paramCType) {
 		if (mFunctionDeclarations.getDeclaredFunctions()
-				.containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
+				.containsKey(boogieFunctionName)) {
 			// function already declared
 			return;
 		}
 		final Attribute[] attributes = generateAttributes(loc, false, smtFunctionName, indices);
-		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes,
+		mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes,
 				boogieResultTypeBool, resultCType, paramCType);
 	}
 
@@ -607,15 +607,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			extendOperation = ExtendOperation.sign_extend;
 		}
-		final String boogieFunctionName = extendOperation + "From" + computeBitsize(operandType) + "To"
-				+ computeBitsize(resultType);
+		final String boogieFunctionName = ExpressionFactory.constructBoogieFunctionNameForExtend(
+				SFO.AUXILIARY_FUNCTION_PREFIX, extendOperation, operandLength, resultLength);
+
 		final int[] indices = new int[] { resultLength - operandLength };
-		declareBitvectorFunction(loc, extendOperation.getSmtFunctionName(), boogieFunctionName, false, resultType, indices, operandType);
-		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName;
+		declareBitvectorFunction(loc, extendOperation.getSmtFunctionName(), boogieFunctionName, false, resultType,
+				indices, operandType);
 		final Expression operandExpression = operand.getLrValue().getValue();
-		final BoogieType resultBoogieType = mTypeHandler.getBoogieTypeForCType(resultType);
-		final Expression func = ExpressionFactory.extend(loc, extendOperation, fullFunctionName, operandExpression, resultBoogieType,
-				BigInteger.valueOf(indices[0]));
+		final Expression func = ExpressionFactory.extend(loc, extendOperation, BigInteger.valueOf(indices[0]),
+				SFO.AUXILIARY_FUNCTION_PREFIX, operandExpression);
 		final RValue rVal = new RValue(func, resultType);
 		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
 	}
@@ -1319,7 +1319,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			for (final CPrimitive.CPrimitives cPrimitive : CPrimitive.CPrimitives.values()) {
 				final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
 				if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
-					declareBitvectorFunction(loc, funcname, funcname + computeBitsize(cPrimitiveO), false, cPrimitiveO,
+					declareBitvectorFunction(loc, funcname,
+							SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(cPrimitiveO), false, cPrimitiveO,
 							null, cPrimitiveO, cPrimitiveO);
 				}
 			}

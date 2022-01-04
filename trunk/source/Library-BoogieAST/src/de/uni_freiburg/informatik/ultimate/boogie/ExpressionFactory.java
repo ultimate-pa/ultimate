@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
@@ -831,27 +832,43 @@ public class ExpressionFactory {
 		return name.substring(1).replaceAll("\\d+", "");
 	}
 
+	/**
+	 *
+	 * @param extension number of bits that are added
+	 */
 	public static Expression extend(final ILocation loc, final ExtendOperation extendOperation,
-			final String fullFunctionName, final Expression operandExpression, final BoogieType resultBoogieType,
-			final BigInteger indexExtension) {
+			final BigInteger extension, final String functionPrefix, final Expression operandExpression) {
 		if (operandExpression instanceof BitvecLiteral) {
 			final BitvectorConstant bc = toConstant((BitvecLiteral) operandExpression);
 			final BitvectorConstant extendedBc;
 			switch (extendOperation) {
 			case sign_extend:
-				extendedBc = BitvectorConstant.sign_extend(bc, indexExtension);
+				extendedBc = BitvectorConstant.sign_extend(bc, extension);
 				break;
 			case zero_extend:
-				extendedBc = BitvectorConstant.zero_extend(bc, indexExtension);
+				extendedBc = BitvectorConstant.zero_extend(bc, extension);
 				break;
 			default:
 				throw new AssertionError("unknown value " + extendOperation);
 			}
 			return createBitvecLiteral(loc, extendedBc.getValue().toString(), extendedBc.getIndex().intValueExact());
 		} else {
+			if (operandExpression.getType() == null) {
+				throw new UnsupportedOperationException("Need type to determine bitsize!");
+			}
+			final int inputBitsize = isBitvectorSort(operandExpression.getType());
+			final int resultBitsize = BigInteger.valueOf(inputBitsize).add(extension).intValueExact();
+			final BoogieType resultBoogieType = BoogieType.createBitvectorType(resultBitsize);
+			final String fullFunctionName = constructBoogieFunctionNameForExtend(functionPrefix, extendOperation,
+					inputBitsize, resultBitsize);
 			return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
 					new Expression[] { operandExpression }, resultBoogieType);
 		}
+	}
+
+	public static String constructBoogieFunctionNameForExtend(final String functionPrefix,
+			final ExtendOperation extendOperation, final int inputBitsize, final int outputBitsize) {
+		return functionPrefix + extendOperation.toString() + "From" + inputBitsize + "To" + outputBitsize;
 	}
 
 	private static Expression simplifyBitvectorExpression(final FunctionApplication node,
@@ -1332,6 +1349,23 @@ public class ExpressionFactory {
 			final BitvectorConstant bitvectorConstant) {
 		return new BitvecLiteral(node.getLoc(), node.getType(), bitvectorConstant.getValue().toString(),
 				bitvectorConstant.getIndex().intValueExact());
+	}
+
+	private static int isBitvectorSort(final IBoogieType type) {
+		final int result;
+		if (type instanceof BoogiePrimitiveType) {
+			final BoogiePrimitiveType bpType = (BoogiePrimitiveType) type;
+			if (bpType.getTypeCode() > 0) {
+				// is bitvector
+				result = bpType.getTypeCode();
+			} else {
+				// not a bitvector
+				result = -1;
+			}
+		} else {
+			result = -1;
+		}
+		return result;
 	}
 
 	private static BooleanLiteral toBooleanLiteral(final FunctionApplication node, final boolean value) {
