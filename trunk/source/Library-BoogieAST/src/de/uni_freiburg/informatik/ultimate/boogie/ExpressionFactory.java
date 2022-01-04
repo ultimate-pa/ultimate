@@ -32,10 +32,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -607,44 +605,6 @@ public class ExpressionFactory {
 		return new BinaryExpression(loc, type, operator, operand1, operand2);
 	}
 
-	/**
-	 * Construct a new {@link FunctionApplication} with the given C function identifier and the given Boogie arguments.
-	 * This method
-	 * <ul>
-	 * <li>Renames the C function identifier to a {@link SupportedBitvectorOperations} identifier if it is appropriate.
-	 * <li>Simplifies pure constant expressions (e.g., 1+2 is replaced by 3)
-	 * <li>Analyzes the whole parse tree (i.e., all arguments are reevaluated)
-	 * </ul>
-	 *
-	 * If you only want to rename _this_ function application and assume that all arguments are already correct, then
-	 * use {@link ExpressionFactory#constructFunctionApplication(ILocation, String, Expression[], BoogieType)}.
-	 *
-	 * @param loc
-	 *            A location
-	 * @param identifier
-	 *            The C function identifier
-	 * @param arguments
-	 *            The Boogie arguments
-	 * @param resultBoogieType
-	 *            the BoogieType of the result of the function application. This type must be provided because we cannot
-	 *            track all FunctionDeclarations for type checking, as they might not have been constructed yet.
-	 * @return A Boogie function application.
-	 */
-	public static Expression constructFunctionApplicationDeep(final ILocation loc, final String identifier,
-			final Expression[] arguments, final BoogieType resultBoogieType) {
-		final String smtIdentifier = getBitvectorSmtFunctionNameFromCFunctionName(identifier);
-		final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(smtIdentifier);
-		final FunctionApplication origFunApp = new FunctionApplication(loc, resultBoogieType, identifier, arguments);
-		if (sbo == null) {
-			return origFunApp;
-		}
-		final BitvectorCFunctionNames2SmtFunctionNames c2smt = new BitvectorCFunctionNames2SmtFunctionNames();
-		final Expression smtFunApp = origFunApp.accept(c2smt);
-		final Expression smtSimplifiedFunApp = smtFunApp.accept(new SimplifyBitvectorExpression());
-		return smtSimplifiedFunApp
-				.accept(new BitvectorSmtFunctionNames2CFunctionNames(c2smt.mSmtFunction2CFunctionNames));
-
-	}
 
 	/**
 	 * Construct a new {@link FunctionApplication} with the given C function identifier and the given Boogie arguments.
@@ -1407,80 +1367,6 @@ public class ExpressionFactory {
 		return rat;
 	}
 
-	private static final class BitvectorCFunctionNames2SmtFunctionNames extends GeneratedBoogieAstTransformer {
 
-		private final Map<Expression, String> mSmtFunction2CFunctionNames = new HashMap<>();
-
-		@Override
-		public Expression transform(final FunctionApplication node) {
-			final String smtIdentifier = getBitvectorSmtFunctionNameFromCFunctionName(node.getIdentifier());
-			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(smtIdentifier);
-			final List<Expression> newArgs = new ArrayList<>();
-			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
-			final Expression rtr;
-			if (sbo == null) {
-				rtr = newFunctionApplication(node, isChanged, newArgs);
-			} else if (newArgs.isEmpty()) {
-				rtr = new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier, new Expression[0]);
-				mSmtFunction2CFunctionNames.put(rtr, node.getIdentifier());
-			} else {
-				rtr = new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier,
-						newArgs.toArray(new Expression[newArgs.size()]));
-				mSmtFunction2CFunctionNames.put(rtr, node.getIdentifier());
-			}
-			return rtr;
-		}
-	}
-
-	private static final class BitvectorSmtFunctionNames2CFunctionNames extends GeneratedBoogieAstTransformer {
-
-		private final Map<Expression, String> mSmtFunction2CFunctionNames;
-
-		public BitvectorSmtFunctionNames2CFunctionNames(final Map<Expression, String> smtFunction2CFunctionNames) {
-			mSmtFunction2CFunctionNames = smtFunction2CFunctionNames;
-		}
-
-		@Override
-		public Expression transform(final FunctionApplication node) {
-
-			final List<Expression> newArgs = new ArrayList<>();
-			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(node.getIdentifier());
-			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
-			if (sbo == null) {
-				assert !mSmtFunction2CFunctionNames.containsKey(node) : "renamed a non-bv method";
-				return newFunctionApplication(node, isChanged, newArgs);
-			}
-
-			if (newArgs.isEmpty()) {
-				throw new AssertionError("Bitvector functions always have parameters");
-			}
-			final String newName = mSmtFunction2CFunctionNames.get(node);
-			if (newName == null) {
-				throw new AssertionError("No name for this function recorded: " + node.getIdentifier());
-			}
-			return new FunctionApplication(node.getLoc(), node.getType(), newName,
-					newArgs.toArray(new Expression[newArgs.size()]));
-		}
-
-	}
-
-	private static final class SimplifyBitvectorExpression extends GeneratedBoogieAstTransformer {
-
-		@Override
-		public Expression transform(final FunctionApplication node) {
-			if (node.getArguments() == null || node.getArguments().length == 0) {
-				return node;
-			}
-			final List<Expression> newArgs = new ArrayList<>();
-			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(node.getIdentifier());
-			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
-			final FunctionApplication funApp = newFunctionApplication(node, isChanged, newArgs);
-			if (sbo == null) {
-				return funApp;
-			}
-			return simplifyBitvectorExpression(funApp, sbo);
-		}
-
-	}
 
 }
