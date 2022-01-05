@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class Qvasr {
 	private final Set<Pair<Rational[], Rational[]>> mTransformer;
-	private final Integer mConcreteDimension;
+	private final Integer mDimension;
 
 	/**
 	 * Construct a new Q-Vasr using a single initial transformer consiting of a reset and addition vector.
@@ -58,12 +58,12 @@ public class Qvasr {
 		final Pair<Rational[], Rational[]> initialTransformer = new Pair<>(resetVector, additionVector);
 		final Set<Pair<Rational[], Rational[]>> initialTransformerSet = new HashSet<>();
 		initialTransformerSet.add(initialTransformer);
-		mConcreteDimension = resetVector.length;
+		mDimension = resetVector.length;
 		mTransformer = initialTransformerSet;
 	}
 
-	public int getConcreteDimension() {
-		return mConcreteDimension;
+	public int getDimension() {
+		return mDimension;
 	}
 
 	/**

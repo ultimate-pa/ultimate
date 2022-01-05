@@ -59,6 +59,10 @@ public class QvasrAbstraction {
 		mQvasr = qvasr;
 	}
 
+	public Integer getConcreteDimension() {
+		return mSimulationMatrix[0].length;
+	}
+
 	/**
 	 * Return this abstractions simulation matrix.
 	 *

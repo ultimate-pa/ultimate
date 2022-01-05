@@ -68,12 +68,15 @@ public final class QvasrAbstractionJoin {
 	public static QvasrAbstraction join(final ManagedScript script, final QvasrAbstraction abstractionOne,
 			final QvasrAbstraction abstractionTwo) {
 
-		final Integer concreteDimensionOne = abstractionOne.getQvasr().getConcreteDimension();
-		final Integer concreteDimensionTwo = abstractionTwo.getQvasr().getConcreteDimension();
-
+		final Integer concreteDimensionOne = abstractionOne.getConcreteDimension();
+		final Integer concreteDimensionTwo = abstractionTwo.getConcreteDimension();
 		if (!concreteDimensionOne.equals(concreteDimensionTwo)) {
 			throw new UnsupportedOperationException();
 		}
+
+		Rational[][] simulationMatrixJoined = new Rational[0][0];
+		Rational[][] tOne = new Rational[0][0];
+		Rational[][] tTwo = new Rational[0][0];
 
 		/*
 		 * Get coherence classes.
@@ -81,23 +84,35 @@ public final class QvasrAbstractionJoin {
 		final Set<Set<Integer>> abstractionOneCoherenceClasses = getCoherenceClasses(abstractionOne);
 		final Set<Set<Integer>> abstractionTwoCoherenceClasses = getCoherenceClasses(abstractionTwo);
 
+		final Integer qvasrDimensionOne = abstractionOne.getQvasr().getDimension();
+		final Integer qvasrDimensionTwo = abstractionTwo.getQvasr().getDimension();
 		for (final Set<Integer> coherenceClassOne : abstractionOneCoherenceClasses) {
-
 			final Rational[][] coherenceIdentityMatrixOne =
-					QvasrUtils.getCoherenceIdentityMatrix(coherenceClassOne, concreteDimensionOne);
+					QvasrUtils.getCoherenceIdentityMatrix(coherenceClassOne, qvasrDimensionOne);
+
 			final Rational[][] coherenceIdentitySimulationMatrixOne = QvasrUtils
 					.rationalMatrixMultiplication(coherenceIdentityMatrixOne, abstractionOne.getSimulationMatrix());
 
 			for (final Set<Integer> coherenceClassTwo : abstractionTwoCoherenceClasses) {
-
 				final Rational[][] coherenceIdentityMatrixTwo =
-						QvasrUtils.getCoherenceIdentityMatrix(coherenceClassTwo, concreteDimensionTwo);
+						QvasrUtils.getCoherenceIdentityMatrix(coherenceClassTwo, qvasrDimensionTwo);
 
 				final Rational[][] coherenceIdentitySimulationMatrixTwo = QvasrUtils
 						.rationalMatrixMultiplication(coherenceIdentityMatrixTwo, abstractionTwo.getSimulationMatrix());
+
 				final Pair<Rational[][], Rational[][]> pushedOut =
 						pushout(script, coherenceIdentitySimulationMatrixOne, coherenceIdentitySimulationMatrixTwo);
 
+				final Rational[][] toBeAppendedToS = QvasrUtils.rationalMatrixMultiplication(pushedOut.getFirst(),
+						coherenceIdentitySimulationMatrixOne);
+				final Rational[][] toBeAppendedToTOne =
+						QvasrUtils.rationalMatrixMultiplication(pushedOut.getFirst(), coherenceIdentityMatrixOne);
+				final Rational[][] toBeAppendedToTTwo =
+						QvasrUtils.rationalMatrixMultiplication(pushedOut.getSecond(), coherenceIdentityMatrixTwo);
+
+				simulationMatrixJoined = joinRationalMatricesHorizontally(simulationMatrixJoined, toBeAppendedToS);
+				tOne = joinRationalMatricesHorizontally(tOne, toBeAppendedToTOne);
+				tTwo = joinRationalMatricesHorizontally(tTwo, toBeAppendedToTTwo);
 			}
 		}
 		return null;
@@ -153,7 +168,7 @@ public final class QvasrAbstractionJoin {
 				splitRationalMatricesVertically(vectorBasis, lhs[0].length);
 		final Rational[][] lhsRational = splitVectorBase.getFirst();
 		final Rational[][] rhsRational = splitVectorBase.getSecond();
-		return null;
+		return new Pair<>(lhsRational, rhsRational);
 	}
 
 	/**
@@ -223,24 +238,37 @@ public final class QvasrAbstractionJoin {
 	}
 
 	/**
-	 * Splits a given {@link Rational} matrix vertically along the splitPoint.
+	 * Join two given {@link Rational} matrices horizontally. The number of columns need to be equal.
 	 *
-	 * @param matrix
-	 *            A still conjoined {@link Rational} matrix.
-	 * @param splitPoint
-	 *            The Point where the matrix will be split in two.
-	 * @return A pair of the left half and the right half of the original matrix.
+	 * @param upperMatrix
+	 *            The upper part of the new joined matrix.
+	 * @param lowerMatrix
+	 *            The lower part of the new joined matrix.
+	 * @return A horizontally joined matrix.
 	 */
-	public static Pair<Rational[][], Rational[][]> splitRationalMatricesVertically(final Rational[][] matrix,
-			final int splitPoint) {
-		final Rational[][] leftSide = new Rational[matrix.length][splitPoint];
-		final Rational[][] rightSide = new Rational[matrix.length][splitPoint];
+	public static Rational[][] joinRationalMatricesHorizontally(final Rational[][] upperMatrix,
+			final Rational[][] lowerMatrix) {
 
-		for (int i = 0; i < matrix.length; i++) {
-			leftSide[i] = Arrays.copyOfRange(matrix[i], 0, splitPoint);
-			rightSide[i] = Arrays.copyOfRange(matrix[i], splitPoint, matrix[0].length);
+		if (upperMatrix.length == 0 || upperMatrix[0].length == 0) {
+			return lowerMatrix;
 		}
-		return new Pair<>(leftSide, rightSide);
+
+		if (lowerMatrix.length == 0 || lowerMatrix[0].length == 0) {
+			return upperMatrix;
+		}
+
+		final int joinedMatrixLength = upperMatrix.length + lowerMatrix.length;
+		final Rational[][] horizontallyJoinedMatrix = new Rational[joinedMatrixLength][upperMatrix[0].length];
+		int i = 0;
+		while (i < upperMatrix.length) {
+			horizontallyJoinedMatrix[i] = Arrays.copyOf(upperMatrix[i], upperMatrix[0].length);
+			i++;
+		}
+		while (i < joinedMatrixLength) {
+			horizontallyJoinedMatrix[i] = Arrays.copyOf(lowerMatrix[i - upperMatrix.length], upperMatrix[0].length);
+			i++;
+		}
+		return horizontallyJoinedMatrix;
 	}
 
 	/**
@@ -271,6 +299,27 @@ public final class QvasrAbstractionJoin {
 			}
 		}
 		return joinedMatrix;
+	}
+
+	/**
+	 * Splits a given {@link Rational} matrix vertically along the splitPoint.
+	 *
+	 * @param matrix
+	 *            A still conjoined {@link Rational} matrix.
+	 * @param splitPoint
+	 *            The Point where the matrix will be split in two.
+	 * @return A pair of the left half and the right half of the original matrix.
+	 */
+	public static Pair<Rational[][], Rational[][]> splitRationalMatricesVertically(final Rational[][] matrix,
+			final int splitPoint) {
+		final Rational[][] leftSide = new Rational[matrix.length][splitPoint];
+		final Rational[][] rightSide = new Rational[matrix.length][splitPoint];
+
+		for (int i = 0; i < matrix.length; i++) {
+			leftSide[i] = Arrays.copyOfRange(matrix[i], 0, splitPoint);
+			rightSide[i] = Arrays.copyOfRange(matrix[i], splitPoint, matrix[0].length);
+		}
+		return new Pair<>(leftSide, rightSide);
 	}
 
 	/**
@@ -338,6 +387,10 @@ public final class QvasrAbstractionJoin {
 					}
 					final Term constTerm = Substitution.apply(script, subMap, equation);
 					matrixNoVars[i][varToColumn.get(var)] = constTerm;
+				}
+			} else {
+				for (final Term var : tvs) {
+					matrixNoVars[i][varToColumn.get(var)] = script.getScript().decimal("0");
 				}
 			}
 
