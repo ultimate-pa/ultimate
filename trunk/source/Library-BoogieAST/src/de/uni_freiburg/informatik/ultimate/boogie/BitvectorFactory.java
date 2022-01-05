@@ -211,7 +211,7 @@ public class BitvectorFactory {
 		case 1:
 			return simplifyUnaryBitvectorExpression(node, sbo, args);
 		case 2:
-			return simplifyBinaryBitvectorExpression(node.getLoc(), sbo, args);
+			return binaryBitvectorOperation(node.getLoc(), sbo, args);
 		default:
 			return node;
 		}
@@ -230,8 +230,8 @@ public class BitvectorFactory {
 		return node;
 	}
 
-	private static Expression simplifyBinaryBitvectorExpression(final ILocation loc,
-			final BvOp sbo, final Expression[] args) {
+	public static Expression binaryBitvectorOperation(final ILocation loc,
+			final BvOp sbo, final Expression... args) {
 		assert args.length == 2 : "Binary expression cannot have " + args.length + " arguments";
 		// check if one of the arguments is a neutral or annihilating literal
 		final BitvectorConstant left;

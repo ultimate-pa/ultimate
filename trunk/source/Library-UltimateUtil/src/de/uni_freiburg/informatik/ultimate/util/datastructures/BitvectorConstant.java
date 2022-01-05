@@ -277,17 +277,17 @@ public class BitvectorConstant {
 	}
 
 	public enum ExtendOperation {
-		sign_extend("sign_extend"),
-		zero_extend("zero_extend"),;
+		sign_extend(BvOp.sign_extend),
+		zero_extend(BvOp.zero_extend),;
 
-		private final String mSmtFunctionName;
+		private final BvOp mBvOp;
 
-		private ExtendOperation(final String smtFunctionName) {
-			mSmtFunctionName = smtFunctionName;
+		private ExtendOperation(final BvOp bvop) {
+			mBvOp = bvop;
 		}
 
-		public String getSmtFunctionName() {
-			return mSmtFunctionName;
+		public BvOp getBvOp() {
+			return mBvOp;
 		}
 
 	}
