@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  * Construct Boogie Expressions (and LeftHandSides), use this instead of the constructors. Functionalities:
@@ -603,15 +602,6 @@ public class ExpressionFactory {
 
 	/**
 	 * Construct a new {@link FunctionApplication} with the given C function identifier and the given Boogie arguments.
-	 * This method
-	 * <ul>
-	 * <li>Renames the C function identifier to a {@link BvOp} identifier if it is appropriate.
-	 * <li>Simplifies pure constant expressions (e.g., 1+2 is replaced by 3)
-	 * <li>Analyzes only this function application.
-	 * </ul>
-	 *
-	 * If you only want to rename _this_ function application and assume that all arguments are already correct, then
-	 * use {@link ExpressionFactory#constructFunctionApplication(ILocation, String, Expression[], BoogieType)}.
 	 *
 	 * @param loc
 	 *            A location
@@ -626,13 +616,7 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructFunctionApplication(final ILocation loc, final String identifier,
 			final Expression[] arguments, final BoogieType resultBoogieType) {
-		final String smtIdentifier = BitvectorFactory.getBitvectorSmtFunctionNameFromCFunctionName(identifier);
-		final BvOp sbo = BitvectorFactory.getSupportedBitvectorOperation(smtIdentifier);
-		final FunctionApplication funApp = new FunctionApplication(loc, resultBoogieType, identifier, arguments);
-		if (sbo == null) {
-			return funApp;
-		}
-		return BitvectorFactory.simplifyBitvectorExpression(funApp, sbo);
+	return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 	}
 
 

@@ -80,8 +80,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -212,11 +212,10 @@ public final class Term2Expression implements Serializable {
 					return translateWithSymbolTable(symb, type, termParams);
 				} else if (Arrays.asList(new String[] { "bvsle", "bvslt", "bvsge", "bvsgt", "bvule", "bvult", "bvuge", "bvugt" })
 						.contains(symb.getName())) {
-					final Integer bitsize = Integer.parseInt(symb.getParameterSorts()[0].getIndices()[0]);
-					return BitvectorFactory.constructInequalityFunction(params[0].getLocation(), params[0],
-							params[1], BvOp.valueOf(symb.getName()), bitsize);
+					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
+							BvOp.valueOf(symb.getName()), params);
 				} else if (Arrays.asList(new String[] { "zero_extend", "sign_extend" }).contains(symb.getName())) {
-					return BitvectorFactory.extend(null, ExtendOperation.valueOf(symb.getName()),
+					return BitvectorFactory.constructExtendOperation(null, ExtendOperation.valueOf(symb.getName()),
 							new BigInteger(symb.getIndices()[0]), params[0]);
 				} else if (Arrays.asList(new String[] { "bvnot", "bvneg" }).contains(symb.getName())) {
 					return BitvectorFactory.constructUnaryOperation(null,

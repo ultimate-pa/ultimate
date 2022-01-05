@@ -313,7 +313,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final int bitsize = computeBitsize(type1);
 		declareBitvectorFunction(loc, bvop, SFO.AUXILIARY_FUNCTION_PREFIX + bvop + bitsize, true,
 				new CPrimitive(CPrimitives.BOOL), null, type1, type2);
-		final Expression result = BitvectorFactory.binaryBitvectorOperation(loc, bvop, exp1, exp2);
+		final Expression result = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, exp1, exp2);
 		return result;
 	}
 
@@ -357,9 +357,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionName(bvop, computeBitsize(typeLeft));
 		declareBitvectorFunction(loc, bvop, boogieFunctionName, false, typeLeft, null, typeLeft, typeRight);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
-		return func;
+		return BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, new Expression[] { left, right });
 	}
 
 	@Override
@@ -391,22 +389,22 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
-		final BvOp funcname;
+		final BvOp bvop;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
-			funcname = BvOp.bvsub;
+			bvop = BvOp.bvsub;
 			break;
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_multiply:
-			funcname = BvOp.bvmul;
+			bvop = BvOp.bvmul;
 			break;
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
 			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
-				funcname = BvOp.bvudiv;
+				bvop = BvOp.bvudiv;
 			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
-				funcname = BvOp.bvsdiv;
+				bvop = BvOp.bvsdiv;
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned");
 			}
@@ -414,25 +412,24 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
 			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
-				funcname = BvOp.bvurem;
+				bvop = BvOp.bvurem;
 			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
-				funcname = BvOp.bvsrem;
+				bvop = BvOp.bvsrem;
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned");
 			}
 			break;
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_plus:
-			funcname = BvOp.bvadd;
+			bvop = BvOp.bvadd;
 			break;
 		default:
 			final String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname + computeBitsize(type1);
-		declareBitvectorFunction(loc, funcname, boogieFunctionName, false, type1, null, type1, type2);
-		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName, new Expression[] { exp1, exp2 },
-				mTypeHandler.getBoogieTypeForCType(type1));
+		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + bvop + computeBitsize(type1);
+		declareBitvectorFunction(loc, bvop, boogieFunctionName, false, type1, null, type1, type2);
+		return BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, new Expression[] { exp1, exp2 });
 	}
 
 	public void declareBitvectorFunction(final ILocation loc, final BvOp smtFunctionName,
@@ -609,14 +606,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			extendOperation = ExtendOperation.sign_extend;
 		}
-		final String boogieFunctionName = BitvectorFactory.constructBoogieFunctionNameForExtend(extendOperation,
+		final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionNameForExtend(extendOperation,
 				operandLength, resultLength);
 
 		final int[] indices = new int[] { resultLength - operandLength };
 		declareBitvectorFunction(loc, extendOperation.getBvOp(), boogieFunctionName, false, resultType, indices,
 				operandType);
 		final Expression operandExpression = operand.getLrValue().getValue();
-		final Expression func = BitvectorFactory.extend(loc, extendOperation, BigInteger.valueOf(indices[0]),
+		final Expression func = BitvectorFactory.constructExtendOperation(loc, extendOperation, BigInteger.valueOf(indices[0]),
 				operandExpression);
 		final RValue rVal = new RValue(func, resultType);
 		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();

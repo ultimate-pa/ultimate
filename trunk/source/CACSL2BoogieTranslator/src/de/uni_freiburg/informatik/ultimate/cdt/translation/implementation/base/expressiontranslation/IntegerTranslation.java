@@ -945,7 +945,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
-			final BvOp[] importantBvOps) {
+			final BvOp[] bvOps) {
 		throw new UnsupportedOperationException();
 	}
 
