@@ -635,6 +635,7 @@ public class ExpressionFactory {
 		return BitvectorFactory.simplifyBitvectorExpression(funApp, sbo);
 	}
 
+
 	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,
 			final String fieldName) {
 		final BoogieType type = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs((BoogieType) struct.getType(),

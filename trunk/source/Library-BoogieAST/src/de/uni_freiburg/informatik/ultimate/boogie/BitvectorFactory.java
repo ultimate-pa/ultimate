@@ -211,7 +211,7 @@ public class BitvectorFactory {
 		case 1:
 			return simplifyUnaryBitvectorExpression(node, sbo, args);
 		case 2:
-			return simplifyBinaryBitvectorExpression(node, sbo, args);
+			return simplifyBinaryBitvectorExpression(node.getLoc(), sbo, args);
 		default:
 			return node;
 		}
@@ -230,7 +230,7 @@ public class BitvectorFactory {
 		return node;
 	}
 
-	private static Expression simplifyBinaryBitvectorExpression(final FunctionApplication node,
+	private static Expression simplifyBinaryBitvectorExpression(final ILocation loc,
 			final BvOp sbo, final Expression[] args) {
 		assert args.length == 2 : "Binary expression cannot have " + args.length + " arguments";
 		// check if one of the arguments is a neutral or annihilating literal
@@ -261,38 +261,38 @@ public class BitvectorFactory {
 
 		// if both arguments are literals, just compute the result
 		if (left != null && right != null) {
-			return computeBinaryBitvectorExpression(node, sbo, left, right);
+			return computeBinaryBitvectorExpression(loc, sbo, left, right);
 		}
 
 		// we do nothing if both operands are non-constant
 		// TODO: We could still do things like (op (op c1 x) (op c2 y)) --> (op c3 op(x y)) with c3 = (op c1 c2) for
 		// certain ops
 		if (left == null && right == null) {
-			return node;
+			return constructBitvectorFunctionApplication(loc, sbo, args);
 		}
 
 		if (sbo.isCommutative()) {
-			return simplifyBinaryAssociativeExpression(node, sbo, args, left, right);
+			return simplifyBinaryAssociativeExpression(loc, sbo, args, left, right);
 		}
-		return node;
+		return constructBitvectorFunctionApplication(loc, sbo, args);
 	}
 
-	private static FunctionApplication simplifyBinaryAssociativeExpression(final FunctionApplication node,
-			final BvOp sbo, final Expression[] args, final BitvectorConstant left,
-			final BitvectorConstant right) {
-		// if this operator is associative, we move literals to the left and check if the right operand has the same
+	private static FunctionApplication simplifyBinaryAssociativeExpression(final ILocation loc, final BvOp bvop,
+			final Expression[] args, final BitvectorConstant left, final BitvectorConstant right) {
+		// if this operator is associative, we move literals to the left and check if
+		// the right operand has the same
 		// operator s.t. we can combine the literals to one.
 		if (right == null && args[1] instanceof FunctionApplication) {
 			final FunctionApplication rightFunApp = (FunctionApplication) args[1];
 			final String rightFunId = rightFunApp.getIdentifier();
-			final BvOp rightSbo =
-					getSupportedBitvectorOperation(BitvectorFactory.getBitvectorSmtFunctionNameFromCFunctionName(rightFunId));
-			if (sbo == rightSbo) {
+			final BvOp rightSbo = getSupportedBitvectorOperation(
+					BitvectorFactory.getBitvectorSmtFunctionNameFromCFunctionName(rightFunId));
+			if (bvop == rightSbo) {
 				final Expression innerLeft = rightFunApp.getArguments()[0];
 				if (innerLeft instanceof BitvecLiteral) {
-					final Expression newConst =
-							computeBinaryBitvectorExpression(node, sbo, left, toConstant((BitvecLiteral) innerLeft));
-					return new FunctionApplication(node.getLocation(), node.getType(), node.getIdentifier(),
+					final Expression newConst = computeBinaryBitvectorExpression(loc, bvop, left,
+							toConstant((BitvecLiteral) innerLeft));
+					return constructBitvectorFunctionApplication(loc, bvop,
 							new Expression[] { newConst, rightFunApp.getArguments()[1] });
 				}
 
@@ -300,24 +300,23 @@ public class BitvectorFactory {
 			// TODO: There are additional cases where we could compute the result
 		}
 		if (left == null) {
-			// we switch operands so that future calls on this function application can use a simple check
-			final FunctionApplication newNode = new FunctionApplication(node.getLocation(), node.getType(),
-					node.getIdentifier(), new Expression[] { args[1], args[0] });
-			return simplifyBinaryAssociativeExpression(newNode, sbo, newNode.getArguments(), right, left);
+			// we switch operands so that future calls on this function application can use
+			// a simple check
+			return simplifyBinaryAssociativeExpression(loc, bvop, new Expression[] { args[1], args[0] }, right, left);
 		}
-		return node;
+		return constructBitvectorFunctionApplication(loc, bvop, args);
 	}
 
-	private static Expression computeBinaryBitvectorExpression(final FunctionApplication node,
+	private static Expression computeBinaryBitvectorExpression(final ILocation loc,
 			final BvOp sbo, final BitvectorConstant left, final BitvectorConstant right) {
 		if (sbo.isBoolean()) {
 			final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, left, right);
 			assert result.isBoolean();
-			return toBooleanLiteral(node, result.getBooleanResult());
+			return toBooleanLiteral(loc, result.getBooleanResult());
 		}
 		final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, left, right);
 		assert !result.isBoolean();
-		return toBitvectorLiteral(node, result.getBvResult());
+		return toBitvectorLiteral(loc, result.getBvResult());
 	}
 
 	static BitvectorConstant toConstant(final BitvecLiteral lit) {
@@ -523,6 +522,63 @@ public class BitvectorFactory {
 
 	private static BooleanLiteral toBooleanLiteral(final FunctionApplication node, final boolean value) {
 		return new BooleanLiteral(node.getLoc(), node.getType(), value);
+	}
+
+	private static BooleanLiteral toBooleanLiteral(final ILocation loc, final boolean value) {
+		return new BooleanLiteral(loc, BoogieType.TYPE_BOOL, value);
+	}
+
+	/**
+	 * Construct function application for bitvector operation. No optimizations.
+	 */
+	private static FunctionApplication constructBitvectorFunctionApplication(final ILocation loc, final BvOp bvop,
+			final Expression... arguments) {
+		if (bvop.getArity() != arguments.length) {
+			throw new IllegalArgumentException("Wrong number of arguments");
+		}
+		final BoogieType resultBoogieType;
+		if (bvop.isBoolean()) {
+			resultBoogieType = BoogieType.TYPE_BOOL;
+		} else {
+			resultBoogieType = (BoogieType) arguments[0].getType();
+		}
+		switch (bvop) {
+		case bvadd:
+		case bvand:
+		case bvashr:
+		case bvlshr:
+		case bvmul:
+		case bvneg:
+		case bvnot:
+		case bvor:
+		case bvsdiv:
+		case bvsge:
+		case bvsgt:
+		case bvshl:
+		case bvsle:
+		case bvslt:
+		case bvsmod:
+		case bvsrem:
+		case bvsub:
+		case bvudiv:
+		case bvuge:
+		case bvugt:
+		case bvule:
+		case bvult:
+		case bvurem:
+		case bvxor:
+			final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionName(bvop,
+					BitvectorFactory.isBitvectorSort(arguments[0].getType()));
+			return new FunctionApplication(loc, resultBoogieType, boogieFunctionName, arguments);
+		case concat:
+		case extract:
+			throw new IllegalArgumentException("Boogie has native support for " + bvop);
+		case sign_extend:
+		case zero_extend:
+			throw new IllegalArgumentException("Should be handled by extend method." + bvop);
+		default:
+			throw new AssertionError("unknown bvop " + bvop);
+		}
 	}
 
 
