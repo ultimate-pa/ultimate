@@ -225,7 +225,7 @@ public final class Term2Expression implements Serializable {
 						.asList(new String[] { "bvadd", "bvsub", "bvmul", "bvudiv", "bvurem", "bvsdiv", "bvsrem",
 								"bvsmod", "bvand", "bvor", "bvxor", "bvshl", "bvlshr", "bvashr" })
 						.contains(symb.getName())) {
-					return BitvectorFactory.constructBinaryOperation(null,
+					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
 							BvOp.valueOf(symb.getName()), params);
 				} else {
 					throw new UnsupportedOperationException(

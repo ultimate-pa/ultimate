@@ -137,7 +137,7 @@ public class BitvectorFactory {
 		}
 	}
 
-	public static Expression constructBinaryOperation(final ILocation loc, final BvOp bvop,
+	public static Expression constructBinaryOperationForMultipleArguments(final ILocation loc, final BvOp bvop,
 			final Expression... exprs ) {
 		if (exprs.length <= 1) {
 			throw new IllegalArgumentException("not binary");
