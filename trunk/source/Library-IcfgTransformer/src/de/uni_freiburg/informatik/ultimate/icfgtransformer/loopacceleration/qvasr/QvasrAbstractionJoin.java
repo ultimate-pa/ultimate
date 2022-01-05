@@ -55,7 +55,7 @@ public final class QvasrAbstractionJoin {
 	}
 
 	/**
-	 * Join two given Qvasr abstractions (S_1, V_1) and (S_2, V_2) such that they form a best overapproximation.
+	 * Join two given {@link QvasrAbstraction} (S_1, V_1) and (S_2, V_2) such that they form a best overapproximation.
 	 *
 	 * @param script
 	 *            A {@link ManagedScript}
@@ -105,6 +105,7 @@ public final class QvasrAbstractionJoin {
 
 				final Rational[][] toBeAppendedToS = QvasrUtils.rationalMatrixMultiplication(pushedOut.getFirst(),
 						coherenceIdentitySimulationMatrixOne);
+
 				final Rational[][] toBeAppendedToTOne =
 						QvasrUtils.rationalMatrixMultiplication(pushedOut.getFirst(), coherenceIdentityMatrixOne);
 				final Rational[][] toBeAppendedToTTwo =
@@ -115,6 +116,11 @@ public final class QvasrAbstractionJoin {
 				tTwo = joinRationalMatricesHorizontally(tTwo, toBeAppendedToTTwo);
 			}
 		}
+		/**
+		 * TODO: check if the transition relation holds with these images.
+		 */
+		final Qvasr imageOne = image(abstractionOne.getQvasr(), tOne);
+		final Qvasr imageOnTwo = image(abstractionTwo.getQvasr(), tTwo);
 		return null;
 	}
 
@@ -128,7 +134,6 @@ public final class QvasrAbstractionJoin {
 	 */
 	private static Pair<Rational[][], Rational[][]> pushout(final ManagedScript script,
 			final Rational[][] abstractionOne, final Rational[][] abstractionTwo) {
-
 		final Map<Integer, TermVariable> columnToVar = new HashMap<>();
 		final Map<TermVariable, Integer> varToColumnOne = new HashMap<>();
 		final Map<TermVariable, Integer> varToColumnTwo = new HashMap<>();
@@ -169,6 +174,40 @@ public final class QvasrAbstractionJoin {
 		final Rational[][] lhsRational = splitVectorBase.getFirst();
 		final Rational[][] rhsRational = splitVectorBase.getSecond();
 		return new Pair<>(lhsRational, rhsRational);
+	}
+
+	private static Qvasr image(final Qvasr v, final Rational[][] t) {
+		final Qvasr abstractionImage = new Qvasr();
+		for (final Pair<Rational[], Rational[]> resetAdditionPair : v.getQvasrTransformer()) {
+			final Rational[][] resetVectorTransposed =
+					QvasrUtils.transposeRowToColumnVector(resetAdditionPair.getFirst());
+			final Rational[][] additionVectorTransposed =
+					QvasrUtils.transposeRowToColumnVector(resetAdditionPair.getSecond());
+			final Rational[][] resetVectorTranslated = translateVectorAlongMatrix(t, resetVectorTransposed);
+			final Rational[][] additionVectorTranslated =
+					QvasrUtils.rationalMatrixVectorMultiplication(t, additionVectorTransposed);
+
+			final Rational[] backTransposedResetTranslated =
+					QvasrUtils.transposeColumnToRowVector(resetVectorTranslated);
+			final Rational[] backTransposedAdditionTranslated =
+					QvasrUtils.transposeColumnToRowVector(additionVectorTranslated);
+			abstractionImage
+					.addTransformer(new Pair<>(backTransposedResetTranslated, backTransposedAdditionTranslated));
+		}
+		return abstractionImage;
+	}
+
+	private static Rational[][] translateVectorAlongMatrix(final Rational[][] t, final Rational[][] v) {
+		final Rational[][] translatedVector = new Rational[t.length][1];
+		for (int i = 0; i < t.length; i++) {
+			for (int j = 0; j < t[0].length; j++) {
+				if (t[i][j] != Rational.ZERO) {
+					translatedVector[i][0] = v[j][0];
+					break;
+				}
+			}
+		}
+		return translatedVector;
 	}
 
 	/**
@@ -370,7 +409,6 @@ public final class QvasrAbstractionJoin {
 	 */
 	private static Term[][] termMatrixRemoveVariables(final ManagedScript script, final Term[][] termMatrix,
 			final Map<TermVariable, Integer> varToColumn) {
-
 		final Set<TermVariable> tvs = varToColumn.keySet();
 		final int newMatrixLength = tvs.size();
 		final Term[][] matrixNoVars = new Term[termMatrix[0].length][newMatrixLength];

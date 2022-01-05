@@ -113,7 +113,7 @@ public final class QvasrUtils {
 		 * In case the matrix is a vector.
 		 */
 		if (matrixTwo.length == 1) {
-			matrixTwo = transposeVector(matrixTwo);
+			matrixTwo = transposeRowToColumnVector(matrixTwo);
 		}
 		final int vectorLength = vector.length;
 		final int rowMatrixTwo = matrixTwo.length;
@@ -165,6 +165,45 @@ public final class QvasrUtils {
 	}
 
 	/**
+	 * Standard vector matrix multiplication of a {@link Rational} matrix and a {@link Rational} vector. They are not
+	 * associative.
+	 *
+	 * @param script
+	 *            A {@link ManagedScript}
+	 *
+	 * @param vector
+	 *            A vector with {@link Term}
+	 *
+	 * @param matrix
+	 *            A {@link Rational} matrix.
+	 * @return The product of both.
+	 */
+	public static Rational[][] rationalMatrixVectorMultiplication(final Rational[][] matrix, Rational[][] vector) {
+		/*
+		 * In case the matrix is a vector.
+		 */
+		if (vector.length == 1) {
+			vector = transposeRowToColumnVector(vector);
+		}
+		final int vectorLength = vector.length;
+		final int colMatrix = matrix[0].length;
+		if (vectorLength != colMatrix) {
+			throw new UnsupportedOperationException();
+		}
+		final int rowMatrix = matrix.length;
+		final Rational[][] resultMatrix = new Rational[rowMatrix][1];
+		for (int j = 0; j < rowMatrix; j++) {
+			Rational sum = Rational.ZERO;
+			for (int k = 0; k < colMatrix; k++) {
+				final Rational mult = vector[k][0].mul(matrix[j][k]);
+				sum = sum.add(mult);
+				resultMatrix[j][0] = sum;
+			}
+		}
+		return resultMatrix;
+	}
+
+	/**
 	 * Standard matrix multiplication of two rational matrices.
 	 *
 	 * @param matrixOne
@@ -202,13 +241,13 @@ public final class QvasrUtils {
 	}
 
 	/**
-	 * Transpose a rational vector in form of a matrix.
+	 * Transpose a rational row vector to a rational column vector.
 	 *
 	 * @param vector
 	 *            A rational vector to be transposed.
 	 * @return The transposed vector.
 	 */
-	public static Rational[][] transposeVector(final Rational[][] vector) {
+	public static Rational[][] transposeRowToColumnVector(final Rational[][] vector) {
 		final Rational[][] transposedVector = new Rational[vector[0].length][1];
 		for (int i = 0; i < vector[0].length; i++) {
 			transposedVector[i][0] = vector[0][i];
@@ -217,16 +256,31 @@ public final class QvasrUtils {
 	}
 
 	/**
-	 * Transpose a rational vector.
+	 * Transpose a rational row vector to a rational column vector.
 	 *
 	 * @param vector
 	 *            A rational vector to be transposed.
 	 * @return The transposed vector.
 	 */
-	public static Rational[][] transposeVector(final Rational[] vector) {
+	public static Rational[][] transposeRowToColumnVector(final Rational[] vector) {
 		final Rational[][] transposedVector = new Rational[vector.length][1];
 		for (int i = 0; i < vector.length; i++) {
 			transposedVector[i][0] = vector[i];
+		}
+		return transposedVector;
+	}
+
+	/**
+	 * Transpose a rational row vector to a rational column vector.
+	 *
+	 * @param vector
+	 *            A rational vector to be transposed.
+	 * @return The transposed vector.
+	 */
+	public static Rational[] transposeColumnToRowVector(final Rational[][] vector) {
+		final Rational[] transposedVector = new Rational[vector.length];
+		for (int i = 0; i < vector.length; i++) {
+			transposedVector[i] = vector[i][0];
 		}
 		return transposedVector;
 	}
