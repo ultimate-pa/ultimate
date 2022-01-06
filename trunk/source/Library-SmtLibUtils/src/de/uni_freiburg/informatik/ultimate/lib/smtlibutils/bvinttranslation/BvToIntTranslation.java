@@ -650,6 +650,7 @@ public class BvToIntTranslation extends TermTransformer {
 						final Term intAnd =
 								mScript.term(mTc.getIntAndFunctionSymbol().getName(), translatedLHS, translatedRHS);
 						mTc.bvandConstraint(intAnd, width);
+						mIsOverapproximation = true;
 						setResult(intAnd);
 						return;
 					}
