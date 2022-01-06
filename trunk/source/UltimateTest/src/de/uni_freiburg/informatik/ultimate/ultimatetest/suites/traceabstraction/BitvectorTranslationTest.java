@@ -116,6 +116,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	@Override
 	protected ThreeTierTestResultDecider<?> constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new SvcompReachTestResultDecider(urd, true);
+//		return new SafetyCheckTestResultDecider(urd, true);
 	}
 
 	@Override
