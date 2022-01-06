@@ -92,15 +92,11 @@ public class BvToIntTranslation extends TermTransformer {
 			}
 
 			if (mTc.mMode.equals(ConstraintsForBitwiseOperations.NONE) && overaproxWithVars(appTerm)) {
-				final TermVariable overaproxVar =
-						mMgdScript.constructFreshTermVariable("overaproxVar", appTerm.getSort());
-				final Term intVar = translateVars(overaproxVar, false);
-				// final Term intVar = translateVars(term);
+				final Sort newSort = translateSort(mScript, appTerm.getSort());
+				final TermVariable overaproxVar = mMgdScript.constructFreshTermVariable("overaproxVar", newSort);
 				mOverapproxVariables.add(overaproxVar);
 				mIsOverapproximation = true;
-
-
-				setResult(intVar);
+				setResult(overaproxVar);
 				return;
 			}
 
@@ -805,6 +801,18 @@ public class BvToIntTranslation extends TermTransformer {
 			return true;
 		}
 		return false;
+	}
+
+	private Sort translateSort(final Script script, final Sort sort) {
+		final Sort result;
+		if (isBitVecSort(sort)) {
+			result = SmtSortUtils.getIntSort(script);
+		} else if (SmtSortUtils.isArraySort(sort)) {
+			result = translateArraySort(sort);
+		} else {
+			throw new UnsupportedOperationException("Unsupported sort: " + sort);
+		}
+		return result;
 	}
 
 	public LinkedHashMap<Term, Term> getVarMap() {
