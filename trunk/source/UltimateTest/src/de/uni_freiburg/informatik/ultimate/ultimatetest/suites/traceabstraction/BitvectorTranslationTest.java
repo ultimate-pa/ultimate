@@ -85,6 +85,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	};
 
 	private static final String[] mUltimateRepository = {
+			"examples/programs/bitvector",
 			"examples/programs/regression",
 			"examples/programs/quantifier/regression",
 			"examples/programs/recursive/regression",
