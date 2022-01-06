@@ -29,7 +29,7 @@ public class TranslationManager {
 
 
 
-	public TranslationManager(final ManagedScript mgdscript) {
+	public TranslationManager(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations cfbo) {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
 
@@ -37,7 +37,7 @@ public class TranslationManager {
 		mReversedVarMap = new LinkedHashMap<>();
 
 		mConstraintSet = new HashSet<Term>();
-		mTc = new TranslationConstrainer(mMgdScript, ConstraintsForBitwiseOperations.SUM);
+		mTc = new TranslationConstrainer(mMgdScript, cfbo);
 		mIntand = mTc.getIntAndFunctionSymbol();
 	}
 

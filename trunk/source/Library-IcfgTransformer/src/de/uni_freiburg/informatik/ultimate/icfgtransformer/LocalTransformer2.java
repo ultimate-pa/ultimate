@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationManager;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -92,6 +93,7 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 	private HashRelation<String, IProgramNonOldVar> mNewModifiableGlobals;
 	private VariableTranslation mVarTrans;
 	private IIcfgSymbolTable mNewSymbolTable;
+	private final ConstraintsForBitwiseOperations mCfbo;
 
 
 	/**
@@ -102,12 +104,14 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 	 * @param managedScript
 	 *            A {@link ManagedScript} instance used to convert {@link UnmodifiableTransFormula}s to
 	 *            {@link ModifiableTransFormula}s and back.
+	 * @param cfbo
 	 * @param replacementVarFactory
 	 *            A {@link ReplacementVarFactory} instance.
 	 */
-	public LocalTransformer2(final ManagedScript managedScript) {
+	public LocalTransformer2(final ManagedScript managedScript, final ConstraintsForBitwiseOperations cfbo) {
 		mMgdScript = Objects.requireNonNull(managedScript);
 		mSortTranslation = x -> BvToIntTransformation.bvToIntSort(mMgdScript, x);
+		mCfbo = cfbo;
 	}
 
 	@Override
@@ -177,7 +181,7 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 
 	private Triple<Term, Set<TermVariable>, Boolean> translateTerm(final ManagedScript mgdScript,
 			final Map<Term, Term> translationMap, final Term term) {
-		final TranslationManager translationManager = new TranslationManager(mgdScript);
+		final TranslationManager translationManager = new TranslationManager(mgdScript, mCfbo);
 		translationManager.setReplacementVarMaps(new LinkedHashMap<>(translationMap));
 		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(term);
 		return translated;

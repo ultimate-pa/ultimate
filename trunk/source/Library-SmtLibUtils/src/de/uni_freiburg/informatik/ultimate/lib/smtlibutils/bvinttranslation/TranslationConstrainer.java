@@ -20,7 +20,7 @@ public class TranslationConstrainer {
 	private final Script mScript;
 	private FunctionSymbol mIntand;
 
-	enum ConstraintsForBitwiseOperations {
+	public enum ConstraintsForBitwiseOperations {
 		/**
 		 * Default mode
 		 */

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationManager;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -140,7 +141,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		}
 
 		final TranslationManager mTranslationManager;
-		mTranslationManager = new TranslationManager(mgdScript);
+		mTranslationManager = new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM);
 		mTranslationManager.setReplacementVarMaps(varMap);
 
 		final Triple<Term, Set<TermVariable>, Boolean> translated = mTranslationManager

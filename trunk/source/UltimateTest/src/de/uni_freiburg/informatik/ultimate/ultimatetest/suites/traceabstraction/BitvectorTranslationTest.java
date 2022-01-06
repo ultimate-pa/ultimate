@@ -98,7 +98,10 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	};
 
 	private static final String[] mSettingsTransformation = {
-			"automizer/BvToIntTranslation.epf",
+			"automizer/BvToInt/BvToInt_SUM.epf",
+			"automizer/BvToInt/BvToInt_BITWISE.epf",
+			"automizer/BvToInt/BvToInt_LAZY.epf",
+			"automizer/BvToInt/BvToInt_NONE.epf",
 	};
 
 	/**

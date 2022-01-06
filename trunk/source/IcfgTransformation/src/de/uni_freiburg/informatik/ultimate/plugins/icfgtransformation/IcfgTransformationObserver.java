@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapeliminat
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntToBvBackTranslation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences.IcfgTransformationPreferences;
@@ -190,8 +191,18 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyRemoveDivMod(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
 			return applyModuloNeighbor(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
-		case BV_TO_INT:
-			return applyBvToIntTranslation(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
+		case BV_TO_INT_SUM:
+			return applyBvToIntTranslation(mLogger, icfg, locFac, outlocClass, backtranslationTracker, mServices,
+					ConstraintsForBitwiseOperations.SUM);
+		case BV_TO_INT_BITWISE:
+			return applyBvToIntTranslation(mLogger, icfg, locFac, outlocClass, backtranslationTracker, mServices,
+					ConstraintsForBitwiseOperations.BITWISE);
+		case BV_TO_INT_LAZY:
+			return applyBvToIntTranslation(mLogger, icfg, locFac, outlocClass, backtranslationTracker, mServices,
+					ConstraintsForBitwiseOperations.LAZY);
+		case BV_TO_INT_NONE:
+			return applyBvToIntTranslation(mLogger, icfg, locFac, outlocClass, backtranslationTracker, mServices,
+					ConstraintsForBitwiseOperations.NONE);
 		case MAP_ELIMINATION_MONNIAUX:
 			return (IIcfg<OUTLOC>) applyMapEliminationMonniaux((IIcfg<IcfgLocation>) icfg, backtranslationTracker);
 		default:
@@ -334,9 +345,9 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyBvToIntTranslation(
 			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
 			final Class<OUTLOC> outlocClass, final IcfgTransformationBacktranslator backtranslationTracker,
-			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services, final ConstraintsForBitwiseOperations cfbo) {
 
-		final LocalTransformer2 transformer = new LocalTransformer2(icfg.getCfgSmtToolkit().getManagedScript());
+		final LocalTransformer2 transformer = new LocalTransformer2(icfg.getCfgSmtToolkit().getManagedScript(), cfbo);
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		final Function<Term, Term> backtranslation = (x -> new IntToBvBackTranslation(

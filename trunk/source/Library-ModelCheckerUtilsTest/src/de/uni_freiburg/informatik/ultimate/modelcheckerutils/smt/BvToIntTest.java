@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.LoggingScriptForMainTrackBenchmarks;
@@ -85,7 +86,8 @@ public class BvToIntTest {
 	}
 
 	private Term translateQelimBacktranslate(final Term input) {
-		final TranslationManager translationManager = new TranslationManager(mMgdScript);
+		final TranslationManager translationManager = new TranslationManager(mMgdScript,
+				ConstraintsForBitwiseOperations.SUM);
 		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(input);
 		if (!translated.getSecond().isEmpty() || translated.getThird()) {
 			throw new UnsupportedOperationException();
