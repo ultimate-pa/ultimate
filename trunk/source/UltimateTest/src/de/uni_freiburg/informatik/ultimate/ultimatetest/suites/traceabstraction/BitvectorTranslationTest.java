@@ -82,6 +82,11 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 			new DirectoryFileEndingsPair("examples/svcomp/verifythis/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 			new DirectoryFileEndingsPair("examples/svcomp/nla-digbench/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 			new DirectoryFileEndingsPair("examples/svcomp/nla-digbench-scaling/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+
+			/*** Programs were we saw bugs ***/
+			new DirectoryFileEndingsPair("examples/svcomp/bitvector/parity.c", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+			new DirectoryFileEndingsPair("examples/svcomp/bitvector/soft_float_4-2a.c.cil.c", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+			new DirectoryFileEndingsPair("examples/svcomp/loop-invariants/bin-suffix-5.c", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 	};
 
 	private static final String[] mUltimateRepository = {
