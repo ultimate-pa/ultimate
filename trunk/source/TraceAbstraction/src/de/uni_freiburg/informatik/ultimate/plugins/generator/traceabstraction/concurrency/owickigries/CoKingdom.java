@@ -104,7 +104,13 @@ public final class CoKingdom<PLACE,LETTER> {
 	
 	public boolean getConflictFree() {
 		return mConflictFree;
+	}	
+
+	public Set<Realm<PLACE,LETTER>> getNegKingdom(){
+		return mNegKingdom;
 	}
 	
-
+	public Set<Realm<PLACE,LETTER>> getPosKingdom(){
+		return mPosKingdom;
+	}
 }

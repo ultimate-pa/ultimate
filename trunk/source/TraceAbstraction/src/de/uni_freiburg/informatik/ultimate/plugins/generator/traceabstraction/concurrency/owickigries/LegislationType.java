@@ -4,5 +4,6 @@ public enum LegislationType {
 	APPROVAL,
 	RATIFICATION,
 	ENACTMENT,
-	REJECTION
+	REJECTION,
+	NULL
 }

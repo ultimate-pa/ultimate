@@ -41,8 +41,8 @@ public final class Rook <PLACE, LETTER> {
 	
 	/**
 	 * Add a new town realm (only with specified condition) to Kingdom.
-	 * @param condition
-	 */
+	 * @param cond 
+	 * */
 	public void expansion(Condition<LETTER, PLACE> condition) {
 		Realm<PLACE, LETTER> realm =  new Realm<>(DataStructureUtils.toSet(condition));
 		mKingdom.addRealm(realm);
@@ -97,53 +97,13 @@ public final class Rook <PLACE, LETTER> {
 		return true;
 	}
 	
-	public final ColonizationType getColonizationStrategy(Condition<LETTER,PLACE> condition, 
-			BranchingProcess<LETTER,PLACE> bp) {
-		CoKingdom<PLACE,LETTER> coKingdom = new CoKingdom<PLACE,LETTER>(mKingdom, condition, bp);
-		CoLaw<PLACE,LETTER> coLaw = new CoLaw<PLACE,LETTER>(mLaw, condition, bp);
-		
-		if(coKingdom.getCoRelation() == CoRelationType.POSITIVE 
-				&& coLaw.getCoRelation() == CoRelationType.POSITIVE) {
-			return ColonizationType.EXPANSION;
-		}
-		else if(coKingdom.getCoRelation() == CoRelationType.PARTIAL
-				&& coLaw.getCoRelation() == CoRelationType.POSITIVE) {
-				if(coKingdom.getConflictFree()) {
-					return ColonizationType.IMMIGRATION;
-				}
-				else {
-					return ColonizationType.FOUNDATION;
-				}
-		}
-		else {
-			return ColonizationType.DEFEAT;
-		}	
+	public  Kingdom<PLACE,LETTER> getKingdom(){
+		return mKingdom;
 	}
 	
-	public final LegislationType getLegislationType(Condition<LETTER,PLACE> condition,
-			BranchingProcess<LETTER,PLACE> bp) {
-		CoKingdom<PLACE,LETTER> coKingdom = new CoKingdom<PLACE,LETTER>(mKingdom, condition, bp);
-		CoLaw<PLACE,LETTER> coLaw = new CoLaw<PLACE,LETTER>(mLaw, condition, bp);
-		
-		if(coKingdom.getCoRelation() == CoRelationType.POSITIVE 
-				&& coLaw.getCoRelation() == CoRelationType.POSITIVE) {
-			return LegislationType.APPROVAL;
-		}
-		else if(coKingdom.getCoRelation() == CoRelationType.POSITIVE
-				&& coLaw.getCoRelation() == CoRelationType.PARTIAL) {
-			return LegislationType.ENACTMENT;
-		}
-		else if(coKingdom.getCoRelation() == CoRelationType.PARTIAL
-				&& coLaw.getCoRelation() == CoRelationType.POSITIVE) {
-			return LegislationType.RATIFICATION;
-		}
-		else {
-			return LegislationType.REJECTION;
-		}	
+	public  KingdomLaw<PLACE,LETTER> getLaw(){
+		return mLaw;
 	}
-	
-	
-	
 	
 	
 	

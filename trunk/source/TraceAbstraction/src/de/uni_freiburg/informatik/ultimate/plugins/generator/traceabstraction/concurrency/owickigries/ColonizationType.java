@@ -4,5 +4,6 @@ public enum ColonizationType{
 	EXPANSION,
 	IMMIGRATION,
 	FOUNDATION,
-	DEFEAT
+	DEFEAT,
+	NULL
 }

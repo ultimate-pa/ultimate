@@ -35,7 +35,5 @@ public final class KingdomLaw<PLACE, LETTER>{
 	public Set<Condition<LETTER, PLACE>> getConditions(){
 		return mLaw;
 	}
-	//TODO: corelation types
-	
 	
 }

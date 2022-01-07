@@ -67,7 +67,7 @@ public final class CoRealm<PLACE,LETTER> {
 		
 	}
 	
-	public CoRelationType getCoRelation() {
+	public final CoRelationType getCoRelation() {
 		return mCoRel;
 	}	
 
