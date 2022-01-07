@@ -145,9 +145,14 @@ public class TranslationConstrainer {
 		return mScript.term("and", lowerBound, upperBoundPaper);
 	}
 
-	public void bvandConstraint(final Term intTerm, final int width) {
+	/**
+	 *
+	 * @return true iff the constraints define only an overapproximation of
+	 * bvand.
+	 */
+	public boolean bvandConstraint(final Term intTerm, final int width) {
 		if (mMode.equals(ConstraintsForBitwiseOperations.NONE)) {
-			return;
+			return true;
 		}
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 		if (!SmtSortUtils.isIntSort(intTerm.getSort())) {
@@ -179,7 +184,7 @@ public class TranslationConstrainer {
 				mConstraintSet.add(lowerBound);
 				mConstraintSet.add(upperBound);
 				mConstraintSet.add(lazy);
-				return;
+				return true;
 			}
 
 			case NONE: {
@@ -195,7 +200,9 @@ public class TranslationConstrainer {
 			final UnfTransformer unfT = new UnfTransformer(mScript);
 			final Term unfModeConstraint = unfT.transform(modeConstraint);
 			mConstraintSet.add(unfModeConstraint);
+			return false;
 		}
+		throw new AssertionError("method must be called on IntAnd");
 	}
 
 	private Term bvandSUMConstraints(final int width, final Term translatedLHS, final Term translatedRHS) {
