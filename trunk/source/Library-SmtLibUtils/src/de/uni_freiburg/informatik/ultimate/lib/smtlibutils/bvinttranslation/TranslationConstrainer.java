@@ -173,6 +173,11 @@ public class TranslationConstrainer {
 				break;
 			}
 			case BITWISE: {
+				final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), apterm);
+				final Term upperBound =
+						mScript.term("<", apterm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+				mConstraintSet.add(lowerBound);
+				mConstraintSet.add(upperBound);
 				modeConstraint = bvandBITWISEConstraints(width, translatedLHS, translatedRHS);
 				break;
 			}
