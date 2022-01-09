@@ -1,6 +1,6 @@
 //#Safe
 /* 
- * Simplified Boogie version of the SV-COMP benchmark
+ * Boogie version of the SV-COMP benchmark
  * loop-invariants/bin-suffix-5.c
  * 
  * Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
