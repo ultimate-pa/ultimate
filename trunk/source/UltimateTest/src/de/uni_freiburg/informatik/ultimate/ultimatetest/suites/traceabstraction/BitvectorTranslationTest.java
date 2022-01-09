@@ -99,15 +99,15 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 
 
 	private static final String[] mSettingsNoTransformation = {
-			"default/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
-			"default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_Default.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 	};
 
 	private static final String[] mSettingsTransformation = {
-			"automizer/BvToInt/BvToInt_SUM.epf",
-			"automizer/BvToInt/BvToInt_BITWISE.epf",
-			"automizer/BvToInt/BvToInt_LAZY.epf",
-			"automizer/BvToInt/BvToInt_NONE.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_SUM.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_BITWISE.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_LAZY.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_NONE.epf",
 	};
 
 	/**
