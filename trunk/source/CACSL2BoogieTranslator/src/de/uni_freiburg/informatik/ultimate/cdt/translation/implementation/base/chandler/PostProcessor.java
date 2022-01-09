@@ -244,7 +244,7 @@ public class PostProcessor {
 					decl.addAll(declareCurrentRoundingModeVar(loc));
 				}
 			}
-			final BvOp[] importantBvOperations = new BvOp[] { BvOp.bvadd };
+			final BvOp[] importantBvOperations = new BvOp[] { BvOp.bvadd, BvOp.bvneg };
 			mExpressionTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantBvOperations);
 		}
 		assert decl.stream().allMatch(Objects::nonNull);
