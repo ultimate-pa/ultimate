@@ -90,12 +90,24 @@ public class Qvasr {
 	 *            The reset and addition vector to be added.
 	 */
 	public void addTransformer(final Pair<Rational[], Rational[]> transformer) {
-		mDimension++;
+		mDimension = transformer.getFirst().length;
 		mTransformer.add(transformer);
 	}
 
+	/**
+	 * Beautify textual output.
+	 */
 	@Override
 	public String toString() {
-		return mTransformer.toString();
+		final StringBuilder sb = new StringBuilder();
+		for (final Pair<Rational[], Rational[]> transformer : mTransformer) {
+			sb.append("  R  A  \n");
+			for (int i = 0; i < transformer.getFirst().length; i++) {
+				sb.append("[ " + transformer.getFirst()[i].toString() + "  " + transformer.getSecond()[i].toString()
+						+ " ]");
+				sb.append("\n");
+			}
+		}
+		return sb.toString();
 	}
 }

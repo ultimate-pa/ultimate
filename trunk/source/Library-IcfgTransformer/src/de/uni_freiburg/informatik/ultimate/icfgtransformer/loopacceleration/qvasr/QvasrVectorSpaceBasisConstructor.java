@@ -189,6 +189,9 @@ public class QvasrVectorSpaceBasisConstructor {
 			}
 			assignedBasisVectors.add(vectorAssigned);
 		}
+		if (assignedBasisVectors.isEmpty()) {
+			return new Rational[0][0];
+		}
 		return toRational(assignedBasisVectors);
 	}
 

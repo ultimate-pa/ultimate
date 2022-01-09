@@ -94,6 +94,27 @@ public final class QvasrUtils {
 	}
 
 	/**
+	 * Construct a matrix of equal dimension where the diagonal entries are 1s and the rest 0s.
+	 *
+	 * @param dimension
+	 *            The dimension of the identity matrix.
+	 * @return An identity matrix of given dimension.
+	 */
+	public static Rational[][] getIdentityMatrix(final int dimension) {
+		final Rational[][] identityMatrix = new Rational[dimension][dimension];
+		for (int i = 0; i < dimension; i++) {
+			for (int j = 0; j < dimension; j++) {
+				if (i == j) {
+					identityMatrix[i][j] = Rational.ONE;
+				} else {
+					identityMatrix[i][j] = Rational.ZERO;
+				}
+			}
+		}
+		return identityMatrix;
+	}
+
+	/**
 	 * Standard vector matrix multiplication of a vector containing {@link Term} and a rational matrix. They are not
 	 * associative.
 	 *

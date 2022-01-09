@@ -68,6 +68,13 @@ public final class QvasrAbstractionJoin {
 	public static QvasrAbstraction join(final ManagedScript script, final QvasrAbstraction abstractionOne,
 			final QvasrAbstraction abstractionTwo) {
 
+		/*
+		 * In case of the first join, the Qvasr is empty, such that we return abstractionTwo.
+		 */
+		if (abstractionOne.getQvasr().getQvasrTransformer().isEmpty()) {
+			return abstractionTwo;
+		}
+
 		final Integer concreteDimensionOne = abstractionOne.getConcreteDimension();
 		final Integer concreteDimensionTwo = abstractionTwo.getConcreteDimension();
 		if (!concreteDimensionOne.equals(concreteDimensionTwo)) {
@@ -86,6 +93,10 @@ public final class QvasrAbstractionJoin {
 
 		final Integer qvasrDimensionOne = abstractionOne.getQvasr().getDimension();
 		final Integer qvasrDimensionTwo = abstractionTwo.getQvasr().getDimension();
+
+		/*
+		 * Compute a pushout of each coherence class.
+		 */
 		for (final Set<Integer> coherenceClassOne : abstractionOneCoherenceClasses) {
 			final Rational[][] coherenceIdentityMatrixOne =
 					QvasrUtils.getCoherenceIdentityMatrix(coherenceClassOne, qvasrDimensionOne);
@@ -116,12 +127,10 @@ public final class QvasrAbstractionJoin {
 				tTwo = joinRationalMatricesHorizontally(tTwo, toBeAppendedToTTwo);
 			}
 		}
-		/**
-		 * TODO: check if the transition relation holds with these images.
-		 */
 		final Qvasr imageOne = image(abstractionOne.getQvasr(), tOne);
-		final Qvasr imageOnTwo = image(abstractionTwo.getQvasr(), tTwo);
-		return null;
+		final Qvasr imageTwo = image(abstractionTwo.getQvasr(), tTwo);
+		final Qvasr joinedImages = joinQvasr(imageOne, imageTwo);
+		return new QvasrAbstraction(simulationMatrixJoined, joinedImages);
 	}
 
 	/**
@@ -245,6 +254,25 @@ public final class QvasrAbstractionJoin {
 			}
 		}
 		return changedSignMatrix;
+	}
+
+	/**
+	 * Join two {@link Qvasr} by computing the union of their transformers.
+	 *
+	 * @param qvasrOne
+	 *            {@link Qvasr} One
+	 * @param qvasrTwo
+	 *            {@link Qvasr} Two
+	 * @return A {@link Qvasr} containing the transformers of both input Qvasr.
+	 */
+	public static Qvasr joinQvasr(final Qvasr qvasrOne, final Qvasr qvasrTwo) {
+		if (qvasrOne.getDimension() != qvasrTwo.getDimension()) {
+			throw new UnsupportedOperationException("QVasr must have same dimension!");
+		}
+		for (final Pair<Rational[], Rational[]> transformer : qvasrTwo.getQvasrTransformer()) {
+			qvasrOne.addTransformer(transformer);
+		}
+		return qvasrOne;
 	}
 
 	/**
@@ -477,7 +505,7 @@ public final class QvasrAbstractionJoin {
 
 	/**
 	 * Get coherence classes of a given Qvasr abstraction. A coherence class is a set of rows i,j, where r_i = r_j in
-	 * the reset vector of the abstraction's qvasr.
+	 * the reset vector of the abstraction's qvasr for every transformer in the qvasr.
 	 *
 	 * @param qvasrAbstraction
 	 * @return

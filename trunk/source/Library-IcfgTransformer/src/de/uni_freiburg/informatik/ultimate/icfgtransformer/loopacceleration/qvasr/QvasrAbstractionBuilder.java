@@ -62,10 +62,17 @@ public final class QvasrAbstractionBuilder {
 		 * abstraction dimension d
 		 */
 		final int d = resetBasisSize + additionBasisSize;
+		int n;
 		/*
 		 * Concrete dimension n
 		 */
-		final int n = resetsBasis[0].length - 1;
+		if (resetBasisSize > additionBasisSize) {
+			n = resetsBasis[0].length - 1;
+		} else if (resetBasisSize < additionBasisSize) {
+			n = additionsBasis[0].length - 1;
+		} else {
+			n = 0;
+		}
 
 		final Rational[][] simulationMatrix = new Rational[d][n];
 		final Rational[] abstractionResetVector = new Rational[d];

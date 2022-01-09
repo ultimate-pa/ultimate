@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -80,20 +80,21 @@ public class QvasrSummarizer {
 		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
+		final int tfDimension = transitionFormula.getAssignedVars().size();
+		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
+		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
+
 		final QvasrAbstractor qvasrAbstractor = new QvasrAbstractor(mScript, mLogger, mServices);
 
 		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
 
 		for (final Term disjunct : disjuncts) {
-			final LBool isSat = SmtUtils.checkSatTerm(mScript.getScript(), disjunct);
-			if (isSat == LBool.SAT) {
-				final QvasrAbstraction qvasrAbstraction =
-						qvasrAbstractor.computeAbstraction(disjunct, transitionFormula);
-			} else {
-				// TODO:
-				continue;
-			}
+			final QvasrAbstraction qvasrAbstraction = qvasrAbstractor.computeAbstraction(disjunct, transitionFormula);
+			bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction);
 		}
+		/**
+		 * TODO extract formula from Qvasr.
+		 */
 		return transitionFormula;
 	}
 }
