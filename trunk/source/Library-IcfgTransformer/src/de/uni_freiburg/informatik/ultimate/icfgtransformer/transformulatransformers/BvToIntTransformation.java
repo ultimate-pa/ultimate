@@ -169,7 +169,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		} else if (SmtSortUtils.isBoolSort(sort)) {
 			return sort;
 		} else {
-			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
+			return sort;
+//			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
 		}
 
 	}
