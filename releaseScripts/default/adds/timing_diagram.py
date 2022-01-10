@@ -96,7 +96,7 @@ def main():
     plotSignal(signal, y_offset)
 
   # Set figure title.
-  ax.set_title(request['head']['text'])
+  # ax.set_title(request['head']['text'])
 
   # Set figure hight dependent on num signals.
   margins_y = fig.subplotpars.top - fig.subplotpars.bottom
