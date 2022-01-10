@@ -63,10 +63,6 @@ public class ConstrainedChainPattern extends PatternType<ConstrainedChainPattern
 		final CDD S = cdds[4];
 		final CDD T = cdds[3];
 		final CDD U = cdds[2];
-		final CDD V = cdds[1];
-		final CDD W = cdds[0];
-
-		assert S.equals(V) && T.equals(W); 
 
 		final List<CounterTrace> ct = new ArrayList<>();
 		if (scope instanceof SrParseScopeBefore) {
