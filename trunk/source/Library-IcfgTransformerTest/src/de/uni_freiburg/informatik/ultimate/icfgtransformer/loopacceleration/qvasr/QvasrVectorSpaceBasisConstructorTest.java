@@ -204,6 +204,21 @@ public class QvasrVectorSpaceBasisConstructorTest {
 			}
 		}
 		return matrixRational;
+
+	}
+
+	/**
+	 * Convert an integer vector to a rational vector. Needed for easier parsing of matrices.
+	 *
+	 * @param matrix
+	 * @return
+	 */
+	public static Rational[] integerVectorToRationalVector(final Integer[] matrix) {
+		final Rational[] matrixRational = new Rational[matrix.length];
+		for (int i = 0; i < matrix.length; i++) {
+			matrixRational[i] = Rational.valueOf(new BigInteger(matrix[i].toString()), BigInteger.ONE);
+		}
+		return matrixRational;
 	}
 
 	static void testBasisVectorEquality(final Rational[][] matrix1, final Rational[][] matrix2) {

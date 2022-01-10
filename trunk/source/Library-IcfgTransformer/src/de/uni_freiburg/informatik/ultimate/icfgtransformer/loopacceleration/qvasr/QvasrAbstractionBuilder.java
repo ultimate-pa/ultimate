@@ -43,6 +43,20 @@ public final class QvasrAbstractionBuilder {
 	}
 
 	/**
+	 * Construct a new {@link QvasrAbstraction} (S, V) using an already computed simulation matrix, and an already
+	 * existing qvasr.
+	 *
+	 * @param resetsBasis
+	 *            The vector space basis for the reset vector space.
+	 * @param additionsBasis
+	 *            The vector space basis for the addition vector space.
+	 * @return A newly constructed {@link QvasrAbstraction}
+	 */
+	public static QvasrAbstraction constructQvasrAbstraction(final Rational[][] simulationMatrix, final Qvasr qvasr) {
+		return new QvasrAbstraction(simulationMatrix, qvasr);
+	}
+
+	/**
 	 * Construct a new {@link QvasrAbstraction} (S, V) using a vector basis for the resets and additions. By forming the
 	 * {@link Qvasr} V and computing the corresponding simulation matrix S.
 	 *
@@ -68,10 +82,8 @@ public final class QvasrAbstractionBuilder {
 		 */
 		if (resetBasisSize > additionBasisSize) {
 			n = resetsBasis[0].length - 1;
-		} else if (resetBasisSize < additionBasisSize) {
-			n = additionsBasis[0].length - 1;
 		} else {
-			n = 0;
+			n = additionsBasis[0].length - 1;
 		}
 
 		final Rational[][] simulationMatrix = new Rational[d][n];

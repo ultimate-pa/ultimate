@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -511,19 +513,23 @@ public final class QvasrAbstractionJoin {
 	 * @return
 	 */
 	private static Set<Set<Integer>> getCoherenceClasses(final QvasrAbstraction qvasrAbstraction) {
-		final Qvasr qvasr = qvasrAbstraction.getQvasr();
+
 		final Set<Set<Integer>> coherenceClasses = new HashSet<>();
+		final int dimension = qvasrAbstraction.getQvasr().getDimension();
+		coherenceClasses.add(IntStream.range(0, dimension).boxed().collect(Collectors.toSet()));
+
+		final Qvasr qvasr = qvasrAbstraction.getQvasr();
 		for (final Pair<Rational[], Rational[]> transformer : qvasr.getQvasrTransformer()) {
-			final Rational[] resetVector = transformer.getFirst();
-			for (int i = 0; i < resetVector.length; i++) {
-				final Set<Integer> coherenceClass = new HashSet<>();
-				coherenceClass.add(i);
-				for (int j = 0; j < resetVector.length; j++) {
-					if (i != j && resetVector[i] == resetVector[j]) {
-						coherenceClass.add(j);
+			for (final Set<Integer> coherenceClass : coherenceClasses) {
+				final Integer[] coherenceAsArray = coherenceClass.toArray(new Integer[coherenceClass.size()]);
+				for (int i = 1; i < coherenceAsArray.length; i++) {
+					if (transformer.getFirst()[i] != transformer.getFirst()[0]) {
+						coherenceClass.remove(coherenceAsArray[i]);
+						final Set<Integer> newCoherenceClass = new HashSet<>();
+						newCoherenceClass.add(coherenceAsArray[i]);
+						coherenceClasses.add(newCoherenceClass);
 					}
 				}
-				coherenceClasses.add(coherenceClass);
 			}
 		}
 		return coherenceClasses;
