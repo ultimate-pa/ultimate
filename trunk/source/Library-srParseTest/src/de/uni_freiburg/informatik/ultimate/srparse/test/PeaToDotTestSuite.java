@@ -203,26 +203,38 @@ public class PeaToDotTestSuite {
 		}
 		fmt.format(LINE_SEP);
 
-		fmt.format("#### Examples%s%s", LINE_SEP, LINE_SEP);
-		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
-			fmt.format("| Positive Example { .negative-example } | Negative Example { .positive-example } |%s",
-					LINE_SEP);
-			fmt.format("| --- | --- |%s", LINE_SEP);
-
-			for (int i = 0; i < Math.max(posFailureImages.length, negFailureImages.length); i++) {
-				String lhs = "", rhs = "";
-
-				if (i < posFailureImages.length) {
-					lhs = "![](../" + DOCS_DIR.toPath().relativize(POS_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
-							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
-				}
-				if (i < negFailureImages.length) {
-					rhs = "![](../" + DOCS_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
-							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
-				}
-				fmt.format("| %s | %s |%s", lhs, rhs, LINE_SEP);
-			}
+		if (posFailureImages.length > 0) {
+			fmt.format("??? Example \"Positive Examples: %s - %s\"%s", patternNameShort, mScopeName, LINE_SEP);
 		}
+
+		for (int i = 0; i < posFailureImages.length; i++) {
+			String img = "";
+
+			if (i < posFailureImages.length) {
+				img = "    ![](../" + DOCS_DIR.toPath().relativize(POS_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+						+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg){ loading=lazy width=47% align=left }";
+			}
+
+			fmt.format("%s", img, LINE_SEP);
+			fmt.format(LINE_SEP);
+		}
+
+		// TODO: uncomment once negative failure paths examples are fixed
+//		if (negFailureImages.length > 0) {
+//			fmt.format("??? Example \"Negative Examples: %s - %s\"%s", patternNameShort, mScopeName, LINE_SEP);
+//		}
+//
+//		for (int i = 0; i < negFailureImages.length; i++) {
+//			String img = "";
+//
+//			if (i < posFailureImages.length) {
+//				img = "    ![](../" + DOCS_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+//						+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg){ loading=lazy width=47% align=left }";
+//			}
+//
+//			fmt.format("%s", img, LINE_SEP);
+//			fmt.format(LINE_SEP);
+//		}
 		fmt.format(LINE_SEP);
 
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(markdownFile, true));
