@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Dennis Wölfing
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2021-2022 Dennis Wölfing
+ * Copyright (C) 2021-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -28,13 +28,18 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LeftRightSplit.Direction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -53,6 +58,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 	private final Map<IProgramVar, DependencyRank> mVariables;
 	private final Map<IProgramVar, L> mLastWriteSt;
 	private final L mLastStatement;
+	private final Set<LeftRightSplit<L>> mLeftRightSplits;
 
 	/**
 	 * Constructs a new McrState for the initial state.
@@ -66,6 +72,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		mVariables = Collections.emptyMap();
 		mLastWriteSt = Collections.emptyMap();
 		mLastStatement = null;
+		mLeftRightSplits = Collections.emptySet();
 	}
 
 	/**
@@ -84,16 +91,29 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 	 */
 	public McrState(final S oldState, final Map<String, DependencyRank> threads,
 			final Map<IProgramVar, DependencyRank> variables, final Map<IProgramVar, L> lastWriteSt,
-			final L lastStatement) {
-		this.mOldState = oldState;
-		this.mThreads = threads;
-		this.mVariables = variables;
-		this.mLastWriteSt = lastWriteSt;
-		this.mLastStatement = lastStatement;
+			final L lastStatement, final Set<LeftRightSplit<L>> leftRightSplits) {
+		mOldState = oldState;
+		mThreads = threads;
+		mVariables = variables;
+		mLastWriteSt = lastWriteSt;
+		mLastStatement = lastStatement;
+		mLeftRightSplits = leftRightSplits;
 	}
 
 	public S getOldState() {
 		return mOldState;
+	}
+
+	private static <L extends IIcfgTransition<?>> String getThreadId(final L transition) {
+		if (transition instanceof IcfgForkThreadOtherTransition) {
+			return transition.getSucceedingProcedure();
+		}
+		if (transition instanceof IcfgJoinThreadOtherTransition) {
+			return transition.getPrecedingProcedure();
+		}
+
+		assert transition.getPrecedingProcedure().equals(transition.getSucceedingProcedure());
+		return transition.getPrecedingProcedure();
 	}
 
 	/**
@@ -110,7 +130,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		final Set<IProgramVar> reads = tf.getInVars().keySet();
 		final Set<IProgramVar> writes = tf.getOutVars().keySet();
 
-		DependencyRank deprank = mThreads.get(transition.getPrecedingProcedure());
+		DependencyRank deprank = mThreads.get(getThreadId(transition));
 		if (deprank == null) {
 			deprank = new DependencyRank();
 		}
@@ -121,55 +141,110 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		}
 
 		// TODO: hashCode is not good rank.
-		deprank = deprank.add(transition.hashCode());
+		final int rank = transition.hashCode();
+		deprank = deprank.add(rank);
 
 		DependencyRank lastStDeprank;
 		if (mLastStatement != null) {
-			lastStDeprank = mThreads.get(mLastStatement.getPrecedingProcedure());
+			lastStDeprank = mThreads.get(getThreadId(mLastStatement));
 			assert lastStDeprank != null;
 		} else {
 			lastStDeprank = null;
 		}
 
-		boolean dependentOnLast = mLastStatement == null
-				|| transition.getPrecedingProcedure().equals(mLastStatement.getPrecedingProcedure())
+		boolean dependentOnLast = mLastStatement == null || getThreadId(transition).equals(getThreadId(mLastStatement))
 				|| DataStructureUtils.haveNonEmptyIntersection(reads,
-						mLastStatement.getTransformula().getOutVars().keySet());
+						mLastStatement.getTransformula().getOutVars().keySet())
+				|| !(mLastStatement instanceof IcfgInternalTransition);
+
+		final Set<LeftRightSplit<L>> newLeftRightSplits = new HashSet<>();
+
+		for (final LeftRightSplit<L> split : mLeftRightSplits) {
+			final LeftRightSplit<L> newSplit = new LeftRightSplit<>(split);
+			newSplit.addStatement(transition, Direction.MIDDLE);
+			if (!newSplit.containsContradiction()) {
+				newLeftRightSplits.add(newSplit);
+			}
+		}
 
 		if (mLastStatement != null) {
+			boolean done = false;
+
+			for (final IProgramVar var : DataStructureUtils
+					.intersection(mLastStatement.getTransformula().getInVars().keySet(), writes)) {
+				// RWC
+				final DependencyRank dr = mVariables.get(var);
+				if (dr != null && dr.compareTo(deprank) <= 0) {
+					done = true;
+					deprank = deprank.getMax(lastStDeprank.add(rank));
+					dependentOnLast = true;
+				}
+			}
+
+			if (!done) {
+				for (final IProgramVar var : DataStructureUtils
+						.intersection(mLastStatement.getTransformula().getInVars().keySet(), writes)) {
+					// TODO: WRWC
+					dependentOnLast = true;
+				}
+			}
+
+			if (!done) {
+				for (final IProgramVar var : DataStructureUtils
+						.intersection(mLastStatement.getTransformula().getOutVars().keySet(), writes)) {
+					if (lastStDeprank.compareTo(deprank) > 0) {
+						deprank = deprank.getMax(lastStDeprank.add(rank));
+						final LeftRightSplit<L> split = new LeftRightSplit<>();
+						split.addStatement(mLastStatement, Direction.RIGHT);
+						split.addStatement(transition, Direction.LEFT);
+						newLeftRightSplits.add(split);
+						dependentOnLast = true;
+					}
+				}
+			}
+
 			if (DataStructureUtils.haveNonEmptyIntersection(mLastStatement.getTransformula().getInVars().keySet(),
 					writes)
 					|| DataStructureUtils
 							.haveNonEmptyIntersection(mLastStatement.getTransformula().getOutVars().keySet(), writes)) {
 				// TODO: properly handle each kind of conflict.
-				deprank = deprank.getMax(lastStDeprank.add(transition.hashCode()));
+				deprank = deprank.getMax(lastStDeprank.add(rank));
 				dependentOnLast = true;
 			}
 		}
 
-		if (!dependentOnLast && mLastStatement.hashCode() > transition.hashCode()) {
+		if (!dependentOnLast && mLastStatement.hashCode() > rank && transition instanceof IcfgInternalTransition) {
 			return null;
 		}
 
 		if (!dependentOnLast) {
-			deprank = deprank.getMax(lastStDeprank.add(transition.hashCode()));
+			deprank = deprank.getMax(lastStDeprank.add(rank));
 		}
 
 		if (lastStDeprank != null && lastStDeprank.compareTo(deprank) > 0) {
-			assert false;
+			// assert false;
 		}
 
 		final Map<String, DependencyRank> newThreads = new HashMap<>(mThreads);
 		final Map<IProgramVar, DependencyRank> newVariables = new HashMap<>(mVariables);
 		final Map<IProgramVar, L> newLastWriteSt = new HashMap<>(mLastWriteSt);
 
-		newThreads.put(transition.getPrecedingProcedure(), deprank);
+		newThreads.put(getThreadId(transition), deprank);
 		for (final IProgramVar var : writes) {
 			newVariables.put(var, deprank);
 			newLastWriteSt.put(var, transition);
 		}
 
-		return new McrState<>(successor, newThreads, newVariables, newLastWriteSt, transition);
+		return new McrState<>(successor, newThreads, newVariables, newLastWriteSt, transition, newLeftRightSplits);
+	}
+
+	/**
+	 * Checks whether the state contains no left-right splits.
+	 *
+	 * @return true if the state contains no left-right splits.
+	 */
+	public boolean containsNoSplits() {
+		return mLeftRightSplits.isEmpty();
 	}
 
 	@Override

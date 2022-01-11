@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Dennis Wölfing
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2021-2022 Dennis Wölfing
+ * Copyright (C) 2021-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -112,8 +112,8 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 
 	@Override
 	public boolean isFinal(final IPredicate state) {
-		// TODO: Change this when we implement the left-right split.
-		return mOperand.isFinal(mStateMap.get(state).getOldState());
+		final McrState<L, IPredicate> mcrState = mStateMap.get(state);
+		return mOperand.isFinal(mcrState.getOldState()) && mcrState.containsNoSplits();
 	}
 
 	@Override
