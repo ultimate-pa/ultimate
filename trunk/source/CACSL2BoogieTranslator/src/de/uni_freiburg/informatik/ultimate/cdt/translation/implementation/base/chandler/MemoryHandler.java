@@ -2088,8 +2088,9 @@ public class MemoryHandler {
 		if (writeMode == HeapWriteMode.STORE_CHECKED) {
 			swrite.addAll(constructPointerBaseValidityCheck(loc, inPtr, procName));
 
-			final Expression sizeWrite = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
-					writtenTypeSize, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+			final Expression sizeWrite = ExpressionFactory.constructIdentifierExpression(loc,
+					mTypeHandler.getBoogieTypeForPointerComponents(), writtenTypeSize,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
 			swrite.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeWrite, inPtr, procName));
 		}
 
@@ -2246,8 +2247,9 @@ public class MemoryHandler {
 		if (!unchecked) {
 			sread.addAll(constructPointerBaseValidityCheck(loc, ptrId, readProcedureName));
 
-			final Expression sizeRead = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
-					readTypeSize, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, readProcedureName));
+			final Expression sizeRead = ExpressionFactory.constructIdentifierExpression(loc,
+					mTypeHandler.getBoogieTypeForPointerComponents(), readTypeSize,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, readProcedureName));
 
 			sread.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeRead, ptrId, readProcedureName));
 		}
