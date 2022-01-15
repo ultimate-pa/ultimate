@@ -57,7 +57,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps Int Var to Bv Var
 	private final Set<Term> mConstraintSet; // Set of all constraints
 	private final FunctionSymbol mIntand;
-	// private final LinkedHashMap<Term, Integer> mWidthMap; // maps integer term to der corresponding Bv width
 
 	public IntToBvBackTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
 			final Set<Term> constraintSet, final FunctionSymbol intand) {
@@ -75,13 +74,11 @@ public class IntToBvBackTranslation extends TermTransformer {
 			return;
 		}
 		if (mVariableMap.containsKey(term)) {
-			// mGetWidth.put(mVariableMap.get(term), Integer.valueOf(mVariableMap.get(term).getSort().getIndices()[0]));
 			setResult(mVariableMap.get(term));
 			return;
 		} else
 
 			if (term instanceof ConstantTerm) {
-			// TODO 2^k and other special cases
 			setResult(translateConst((ConstantTerm) term));
 			return;
 		} else if (term instanceof TermVariable) {
@@ -98,6 +95,9 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 	}
 
+	/*
+	 * Optimization, Pattern match for uts function
+	 */
 	private boolean uts(final Term term, final int width) {
 		if (!SmtSortUtils.isIntSort(term.getSort())) {
 			return false;
@@ -114,7 +114,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 								if (twoTimesMod.getParameters()[1] instanceof ApplicationTerm) { // RHS is mod t 2^k-1
 									final ApplicationTerm mod = (ApplicationTerm) twoTimesMod.getParameters()[1];
 									if (mod.getParameters()[0] instanceof ApplicationTerm) {
-
 										if (mod.getParameters()[0].equals(appTerm.getParameters()[1])) {
 
 											if (mod.getParameters()[1] instanceof ConstantTerm) {
@@ -160,7 +159,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 	}
 
 	private Term bringTermToWidth(final Term term, final int targetwidth, final boolean argsigned) {
-		// TODO sign and zerofill
 		if (!SmtSortUtils.isBitvecSort(term.getSort())) {
 			return term;
 		}
@@ -185,7 +183,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 			final BigInteger[] indices = new BigInteger[1];
 			indices[0] = BigInteger.valueOf(extendby);
 			if (!argsigned) {
-				// TODO
 				return BitvectorUtils.termWithLocalSimplification(mScript, "zero_extend", indices, term);
 			} else {
 				return BitvectorUtils.termWithLocalSimplification(mScript, "sign_extend", indices, term);
@@ -202,15 +199,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 		}
 		throw new UnsupportedOperationException("Not a power of two");
 	}
-
-	// private boolean isPowerOfTwo(final Rational r) {
-	// final BigInteger i = r.numerator();
-	// if (i != BigInteger.ZERO) {
-	// return ((i.and((i.subtract(BigInteger.ONE)))) == BigInteger.ZERO);
-	// } else {
-	// return false;
-	// }
-	// }
 
 	private boolean isPowerOfTwo(final Rational r) {
 
@@ -258,7 +246,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 			return sign;
 		} else if (term instanceof QuantifiedFormula) {
-			throw new UnsupportedOperationException("TODO Sign");
+			throw new UnsupportedOperationException("Unsupported sign of quantified formula");
 		}
 		throw new UnsupportedOperationException("Unknown Sign");
 
@@ -296,7 +284,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 	/*
 	 * TODO non-recursive
-	 * TODO optimize, sollte aber korrekt sein geht nur kleinere width
+	 * TODO optimize, smaller widths
 	 */
 	private Integer getWidth(final Term term) {
 		int width = 0;
@@ -325,14 +313,14 @@ public class IntToBvBackTranslation extends TermTransformer {
 				if (SmtUtils.isConstant(appTerm)) {
 					throw new UnsupportedOperationException("Unknown width of AuxVar");
 				} else {
-					throw new UnsupportedOperationException("TODO handle here");
+					throw new UnsupportedOperationException("Unkexpected term: " + appTerm);
 				}
 				// return here
 			} else if (appTerm.getParameters().length == 1) {
 				if (appTerm.getFunction().getName().equals("-")) {
 					width = getWidth(appTerm.getParameters()[0]);
 				} else {
-					throw new UnsupportedOperationException("TODO handle here");
+					throw new UnsupportedOperationException("Unkexpected term: " + appTerm);
 				}
 				// return here
 			}
@@ -348,10 +336,15 @@ public class IntToBvBackTranslation extends TermTransformer {
 				final Sort valueSort = mdSort.getArrayValueSort();
 				width = Integer.valueOf(valueSort.getIndices()[0]);
 			} else {
+				int maxWidth;
 				if (!SmtSortUtils.isIntSort(appTerm.getParameters()[0].getSort())) {
-					throw new UnsupportedOperationException("Cannot calculate width " + term);
+					// TODO ite terms
+					// throw new UnsupportedOperationException("Cannot calculate width " + term);#
+					maxWidth = 1;
+				} else {
+					maxWidth = getWidth(appTerm.getParameters()[0]);
 				}
-				int maxWidth = getWidth(appTerm.getParameters()[0]);
+
 				for (int i = 1; i < appTerm.getParameters().length; i++) {
 					final Term argument = appTerm.getParameters()[i];
 					final int argWidth = getWidth(argument);
@@ -389,8 +382,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 					}
 					case "+": {
-						// TODO case t1 * 2^k + t2
-						// TODO nested +
 						width = maxWidth + 1;
 						break;
 					}
@@ -486,19 +477,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 				return;
 			}
 			case "<": {
-				// if (uts(appTerm.getParameters()[0], width) && uts(appTerm.getParameters()[1], width)) {
-				// if (newargs[0] instanceof ApplicationTerm) {
-				// final ApplicationTerm appArg = (ApplicationTerm) newargs[0];
-				// newargs[0] = appArg.getParameters()[1];
-				// }
-				// if (newargs[1] instanceof ApplicationTerm) {
-				// final ApplicationTerm appArg = (ApplicationTerm) newargs[1];
-				// newargs[1] = appArg.getParameters()[1];
-				// }
-				// setResult(
-				// BitvectorUtils.termWithLocalSimplification(mScript, "bvslt", null, newargs[0], newargs[1]));
-				// return;
-				// }
 				if (isSigned(appTerm)) {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
@@ -514,19 +492,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 				}
 			}
 			case "<=": {
-				// if (uts(appTerm.getParameters()[0], width) && uts(appTerm.getParameters()[1], width)) {
-				// if (newargs[0] instanceof ApplicationTerm) {
-				// final ApplicationTerm appArg = (ApplicationTerm) newargs[0];
-				// newargs[0] = appArg.getParameters()[1];
-				// }
-				// if (newargs[1] instanceof ApplicationTerm) {
-				// final ApplicationTerm appArg = (ApplicationTerm) newargs[1];
-				// newargs[1] = appArg.getParameters()[1];
-				// }
-				// setResult(
-				// BitvectorUtils.termWithLocalSimplification(mScript, "bvsle", null, newargs[0], newargs[1]));
-				// return;
-				// }
 				if (isSigned(appTerm)) {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
@@ -542,19 +507,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 				}
 			}
 			case ">=": {
-				// if (uts(appTerm.getParameters()[0], width) && uts(appTerm.getParameters()[1], width)) {
-				// if (newargs[0] instanceof ApplicationTerm) {
-				// final ApplicationTerm appArg = (ApplicationTerm) newargs[0];
-				// newargs[0] = appArg.getParameters()[1];
-				// }
-				// if (newargs[1] instanceof ApplicationTerm) {
-				// final ApplicationTerm appArg = (ApplicationTerm) newargs[1];
-				// newargs[1] = appArg.getParameters()[1];
-				// }
-				// setResult(
-				// BitvectorUtils.termWithLocalSimplification(mScript, "bvsge", null, newargs[0], newargs[1]));
-				// return;
-				// }
 				if (isSigned(appTerm)) {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
@@ -570,19 +522,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 				}
 			}
 			case ">": {
-				// if (uts(appTerm.getParameters()[0], width) && uts(appTerm.getParameters()[1], width)) {
-				// if (newargs[0] instanceof ApplicationTerm) {
-				// final ApplicationTerm appArg = (ApplicationTerm) newargs[0];
-				// newargs[0] = appArg.getParameters()[1];
-				// }
-				// if (newargs[1] instanceof ApplicationTerm) {
-				// final ApplicationTerm appArg = (ApplicationTerm) newargs[1];
-				// newargs[1] = appArg.getParameters()[1];
-				// }
-				// setResult(
-				// BitvectorUtils.termWithLocalSimplification(mScript, "bvsgt", null, newargs[0], newargs[1]));
-				// return;
-				// }
 				if (isSigned(appTerm)) {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
@@ -611,8 +550,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 					// case t * 2^i
 					final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[1];
 					final Rational value = (Rational) constTerm.getValue();
-					// TODO what if first arguent is signed?
-
 					if (isPowerOfTwo(value)) {
 
 						final Term extendby = BitvectorUtils.constructTerm(mScript,
@@ -651,8 +588,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 					// case t mod 2^i
 					final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[1];
 					final Rational value = (Rational) constTerm.getValue();
-					// TODO what if first arguent is signed?
-
 					if (isPowerOfTwo(value)) {
 						final BigInteger[] indices = new BigInteger[2];
 						indices[0] = BigInteger.valueOf(getTwoExponent(value) - 1);
@@ -694,15 +629,15 @@ public class IntToBvBackTranslation extends TermTransformer {
 					// case t mod 2^i
 					final ConstantTerm constTerm = (ConstantTerm) appTerm.getParameters()[1];
 					final Rational value = (Rational) constTerm.getValue();
-					// TODO what if first arguent is signed?
-
 					if (isPowerOfTwo(value)) {
 						final BigInteger[] indices = new BigInteger[2];
 						final int oldwidth = Integer.valueOf(args[0].getSort().getIndices()[0]);
 						final int twoExpo = getTwoExponent(value);
 
 						if(twoExpo > oldwidth - 1) {
-							setResult(args[0]);
+							final Term zero = BitvectorUtils.constructTerm(mScript,
+									new BitvectorConstant(BigInteger.ZERO, BigInteger.valueOf(1)));
+							setResult(zero);
 							return;
 						} else {
 
@@ -809,6 +744,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 			}
 		}
+
 		super.convertApplicationTerm(appTerm, newargs);
 	}
 

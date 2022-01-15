@@ -50,11 +50,6 @@ public class TranslationManager {
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
 
-	// private final HashMap<Term, Term> mTranslatedTerms; // Maps Bv term to Int
-	// private final HashMap<Term, Term> mReversedTranslationMap;
-
-
-
 	public TranslationManager(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations cfbo) {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
@@ -94,14 +89,13 @@ public class TranslationManager {
 	public Term translateIntBacktoBv(final Term integerFormula) {
 		// The preprocessing steps need also to be applied on the constraint, to ensure the map matches them.
 		final UnfTransformer unfT = new UnfTransformer(mScript);
-		final Term simplifiedInput = unfT.transform(integerFormula); // very helpfull
+		final Term simplifiedInput = unfT.transform(integerFormula);
 
 		final HashSet<Term> constraints = mConstraintSet;
 		constraints.addAll(mTc.getTvConstraints());
 
 		final IntToBvBackTranslation intToBv =
 				new IntToBvBackTranslation(mMgdScript, mReversedVarMap, constraints, mIntand);
-		// TODO postpreocessing select propagation
 
 		return intToBv.transform(simplifiedInput);
 	}

@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class BvToIntTranslation extends TermTransformer {
-	// private final HashMap<Term, Term> mTranslatedTerms; // Maps Bv term to Int
 	private final Script mScript;
 	private static final String BITVEC_CONST_PATTERN = "bv\\d+";
 	private boolean mNutzTransformation;
@@ -338,8 +337,6 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	private Term translateVars(final Term term, final boolean addToVarMap) {
-		// TODOaddToVarMap
-
 		if (mVariableMap.containsKey(term)) {
 			mReversedVarMap.put(mVariableMap.get(term), term);
 			return mVariableMap.get(term);

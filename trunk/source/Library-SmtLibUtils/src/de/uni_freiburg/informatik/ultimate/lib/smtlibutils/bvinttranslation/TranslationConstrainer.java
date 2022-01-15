@@ -48,19 +48,19 @@ public class TranslationConstrainer {
 
 	public enum ConstraintsForBitwiseOperations {
 		/**
-		 * Default mode
+		 * Precise "sum" constraints for bit-wise-and
 		 */
 		SUM,
 		/**
-		 * TODO
+		 * Precise "bit-wise" constraints for bit-wise-and
 		 */
 		BITWISE,
 		/**
-		 * TODO
+		 * Overapproximation of bit-wise-and by lazy constraints
 		 */
 		LAZY,
 		/**
-		 * TODO
+		 * Overapproximation of all bit-wise functions by auxiliary variables
 		 */
 		NONE
 	}
