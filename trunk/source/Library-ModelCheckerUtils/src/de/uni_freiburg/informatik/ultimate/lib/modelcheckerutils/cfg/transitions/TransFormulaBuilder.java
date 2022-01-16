@@ -409,9 +409,9 @@ public class TransFormulaBuilder {
 			final IProgramVar pv = lhs.get(i);
 			final TermVariable freshTv =
 					mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
-			substitutionMapping.put(pv.getTermVariable(), freshTv);
 			tfb.addOutVar(pv, freshTv);
 			if (lhsAreAlsoInVars) {
+				substitutionMapping.put(pv.getTermVariable(), freshTv);
 				tfb.addInVar(pv, freshTv);
 			}
 			final Term renamedRightHandSide = Substitution.apply(mgdScript, substitutionMapping, rhs.get(i));
