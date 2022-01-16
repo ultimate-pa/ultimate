@@ -104,16 +104,16 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		return mOldState;
 	}
 
-	private static <L extends IIcfgTransition<?>> String getThreadId(final L transition) {
+	private static <L extends IIcfgTransition<?>> Set<String> getThreadId(final L transition) {
 		if (transition instanceof IcfgForkThreadOtherTransition) {
-			return transition.getSucceedingProcedure();
+			return Set.of(transition.getPrecedingProcedure(), transition.getSucceedingProcedure());
 		}
 		if (transition instanceof IcfgJoinThreadOtherTransition) {
-			return transition.getPrecedingProcedure();
+			return Set.of(transition.getPrecedingProcedure(), transition.getSucceedingProcedure());
 		}
 
 		assert transition.getPrecedingProcedure().equals(transition.getSucceedingProcedure());
-		return transition.getPrecedingProcedure();
+		return Set.of(transition.getPrecedingProcedure());
 	}
 
 	/**
@@ -130,7 +130,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		final Set<IProgramVar> reads = tf.getInVars().keySet();
 		final Set<IProgramVar> writes = tf.getOutVars().keySet();
 
-		DependencyRank deprank = mThreads.get(getThreadId(transition));
+		DependencyRank deprank = mThreads.get(getThreadId(transition).iterator().next());
 		if (deprank == null) {
 			deprank = new DependencyRank();
 		}
@@ -146,13 +146,14 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 
 		DependencyRank lastStDeprank;
 		if (mLastStatement != null) {
-			lastStDeprank = mThreads.get(getThreadId(mLastStatement));
+			lastStDeprank = mThreads.get(getThreadId(mLastStatement).iterator().next());
 			assert lastStDeprank != null;
 		} else {
 			lastStDeprank = null;
 		}
 
-		boolean dependentOnLast = mLastStatement == null || getThreadId(transition).equals(getThreadId(mLastStatement))
+		boolean dependentOnLast = mLastStatement == null
+				|| DataStructureUtils.haveNonEmptyIntersection(getThreadId(transition), getThreadId(mLastStatement))
 				|| DataStructureUtils.haveNonEmptyIntersection(reads,
 						mLastStatement.getTransformula().getOutVars().keySet())
 				|| !(mLastStatement instanceof IcfgInternalTransition);
@@ -229,7 +230,9 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		final Map<IProgramVar, DependencyRank> newVariables = new HashMap<>(mVariables);
 		final Map<IProgramVar, L> newLastWriteSt = new HashMap<>(mLastWriteSt);
 
-		newThreads.put(getThreadId(transition), deprank);
+		for (final String thread : getThreadId(transition)) {
+			newThreads.put(thread, deprank);
+		}
 		for (final IProgramVar var : writes) {
 			newVariables.put(var, deprank);
 			newLastWriteSt.put(var, transition);
