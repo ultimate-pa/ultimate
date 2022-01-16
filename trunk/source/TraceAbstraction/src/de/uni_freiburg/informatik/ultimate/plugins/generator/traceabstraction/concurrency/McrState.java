@@ -162,9 +162,12 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 
 		for (final LeftRightSplit<L> split : mLeftRightSplits) {
 			final LeftRightSplit<L> newSplit = new LeftRightSplit<>(split);
-			newSplit.addStatement(transition, Direction.MIDDLE);
+			final LeftRightSplit<L> duplicatedSplit = newSplit.addStatement(transition, Direction.MIDDLE);
 			if (!newSplit.containsContradiction()) {
 				newLeftRightSplits.add(newSplit);
+			}
+			if (duplicatedSplit != null && !duplicatedSplit.containsContradiction()) {
+				newLeftRightSplits.add(duplicatedSplit);
 			}
 		}
 

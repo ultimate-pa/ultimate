@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
-import java.util.Iterator;
 import java.util.ListIterator;
 
 /**
@@ -35,7 +34,7 @@ import java.util.ListIterator;
  * @param <E>
  *            The type to iterate over.
  */
-public class ReversedIterator<E> implements Iterator<E> {
+public class ReversedIterator<E> implements ListIterator<E> {
 	private final ListIterator<E> mIter;
 
 	/**
@@ -56,5 +55,41 @@ public class ReversedIterator<E> implements Iterator<E> {
 	@Override
 	public E next() {
 		return mIter.previous();
+	}
+
+	@Override
+	public void add(final E arg0) {
+		throw new UnsupportedOperationException("ReversedIterator does not support modifying the list.");
+	}
+
+	@Override
+	public boolean hasPrevious() {
+		return mIter.hasNext();
+	}
+
+	@Override
+	public int nextIndex() {
+		return mIter.previousIndex();
+	}
+
+	@Override
+	public E previous() {
+		return mIter.next();
+	}
+
+	@Override
+	public int previousIndex() {
+		return mIter.nextIndex();
+	}
+
+	@Override
+	public void remove() {
+		throw new UnsupportedOperationException("ReversedIterator does not support modifying the list.");
+
+	}
+
+	@Override
+	public void set(final E arg0) {
+		throw new UnsupportedOperationException("ReversedIterator does not support modifying the list.");
 	}
 }
