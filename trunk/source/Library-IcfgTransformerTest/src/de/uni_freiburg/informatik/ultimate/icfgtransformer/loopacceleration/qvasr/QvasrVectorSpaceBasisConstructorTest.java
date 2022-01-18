@@ -45,12 +45,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
+/**
+ * Testsuite for the {@link QvasrVectorSpaceBasisConstructor}.
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ *
+ */
 public class QvasrVectorSpaceBasisConstructorTest {
 
-	private IUltimateServiceProvider mServices;
-	private Script mScript;
 	private ManagedScript mMgdScript;
-	private ILogger mLogger;
 
 	private Term mFour;
 	private Term mThree;
@@ -58,14 +61,17 @@ public class QvasrVectorSpaceBasisConstructorTest {
 	private Term mOne;
 	private Term mZero;
 
+	/**
+	 * Testsuite setup.
+	 */
 	@Before
 	public void setUp() {
-		mServices = UltimateMocks.createUltimateServiceProviderMock();
-		mScript = UltimateMocks.createZ3Script();
+		final IUltimateServiceProvider mServices = UltimateMocks.createUltimateServiceProviderMock();
+		final Script mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mLogger = mServices.getLoggingService().getLogger("log");
+		final ILogger mLogger = mServices.getLoggingService().getLogger("log");
 		mLogger.info("Before");
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
@@ -194,7 +200,8 @@ public class QvasrVectorSpaceBasisConstructorTest {
 	 * Convert an integer matrix to a rational matrix. Needed for easier parsing of matrices.
 	 *
 	 * @param matrix
-	 * @return
+	 *            The matrix that is to be converted.
+	 * @return Input matrix consisting of {@link Rational}.
 	 */
 	public static Rational[][] integerMatrixToRationalMatrix(final Integer[][] matrix) {
 		final Rational[][] matrixRational = new Rational[matrix.length][matrix[0].length];
@@ -210,13 +217,14 @@ public class QvasrVectorSpaceBasisConstructorTest {
 	/**
 	 * Convert an integer vector to a rational vector. Needed for easier parsing of matrices.
 	 *
-	 * @param matrix
-	 * @return
+	 * @param vector
+	 *            The vector that is to be converted.
+	 * @return Input vector consisting of {@link Rational}.
 	 */
-	public static Rational[] integerVectorToRationalVector(final Integer[] matrix) {
-		final Rational[] matrixRational = new Rational[matrix.length];
-		for (int i = 0; i < matrix.length; i++) {
-			matrixRational[i] = Rational.valueOf(new BigInteger(matrix[i].toString()), BigInteger.ONE);
+	public static Rational[] integerVectorToRationalVector(final Integer[] vector) {
+		final Rational[] matrixRational = new Rational[vector.length];
+		for (int i = 0; i < vector.length; i++) {
+			matrixRational[i] = Rational.valueOf(new BigInteger(vector[i].toString()), BigInteger.ONE);
 		}
 		return matrixRational;
 	}

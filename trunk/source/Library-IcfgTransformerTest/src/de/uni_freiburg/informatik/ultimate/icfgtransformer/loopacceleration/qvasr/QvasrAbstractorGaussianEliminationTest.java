@@ -52,10 +52,8 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  */
 public class QvasrAbstractorGaussianEliminationTest {
 
-	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
-	private ILogger mLogger;
 
 	private Term mX;
 	private Term mY;
@@ -65,14 +63,17 @@ public class QvasrAbstractorGaussianEliminationTest {
 	private Term mOne;
 	private Term mZero;
 
+	/**
+	 * Set up
+	 */
 	@Before
 	public void setUp() {
-		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		final IUltimateServiceProvider mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mLogger = mServices.getLoggingService().getLogger("log");
+		final ILogger mLogger = mServices.getLoggingService().getLogger("log");
 		mLogger.info("Before");
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
