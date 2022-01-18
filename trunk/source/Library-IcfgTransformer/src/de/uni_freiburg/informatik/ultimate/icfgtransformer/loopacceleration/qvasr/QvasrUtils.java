@@ -129,13 +129,7 @@ public final class QvasrUtils {
 	 * @return The product of both.
 	 */
 	public static Term[][] vectorMatrixMultiplicationWithVariables(final ManagedScript script, final Term[] vector,
-			Rational[][] matrixTwo) {
-		/*
-		 * In case the matrix is a vector.
-		 */
-		if (matrixTwo.length == 1) {
-			matrixTwo = transposeRowToColumnVector(matrixTwo);
-		}
+			final Rational[][] matrixTwo) {
 		final int vectorLength = vector.length;
 		final int rowMatrixTwo = matrixTwo.length;
 		if (vectorLength != rowMatrixTwo) {
@@ -154,6 +148,46 @@ public final class QvasrUtils {
 						matrixTwo[k][j].toTerm(SmtSortUtils.getRealSort(script)));
 				sum = SmtUtils.sum(script.getScript(), "+", sum, mult);
 				resultMatrix[0][j] = sum;
+			}
+		}
+		return resultMatrix;
+	}
+
+	/**
+	 * Standard vector matrix multiplication of a vector containing {@link Term} and a rational matrix. They are not
+	 * associative.
+	 *
+	 * @param script
+	 *            A {@link ManagedScript}
+	 *
+	 * @param vector
+	 *            A vector with {@link Term}
+	 *
+	 * @param matrixTwo
+	 *            A {@link Rational} matrix.
+	 * @return The product of both.
+	 */
+	public static Term[][] matrixVectorMultiplicationWithVariables(final ManagedScript script,
+			final Rational[][] matrixTwo, final Term[][] vector) {
+		final int vectorLength = vector.length;
+		final int colMatrixTwo = matrixTwo[0].length;
+		if (vectorLength != colMatrixTwo) {
+			throw new UnsupportedOperationException();
+		}
+		final int rowMatrixTwo = matrixTwo.length;
+
+		final Term[][] resultMatrix = new Term[vectorLength][1];
+		for (int i = 0; i < colMatrixTwo; i++) {
+			resultMatrix[i][0] = script.getScript().decimal("0");
+
+		}
+		for (int j = 0; j < rowMatrixTwo; j++) {
+			Term sum = script.getScript().decimal("0");
+			for (int k = 0; k < colMatrixTwo; k++) {
+				final Term mult = SmtUtils.mul(script.getScript(), "*", vector[k][0],
+						matrixTwo[j][k].toTerm(SmtSortUtils.getRealSort(script)));
+				sum = SmtUtils.sum(script.getScript(), "+", sum, mult);
+				resultMatrix[j][0] = sum;
 			}
 		}
 		return resultMatrix;
@@ -285,6 +319,21 @@ public final class QvasrUtils {
 	 */
 	public static Rational[][] transposeRowToColumnVector(final Rational[] vector) {
 		final Rational[][] transposedVector = new Rational[vector.length][1];
+		for (int i = 0; i < vector.length; i++) {
+			transposedVector[i][0] = vector[i];
+		}
+		return transposedVector;
+	}
+
+	/**
+	 * Transpose a rational row vector to a rational column vector.
+	 *
+	 * @param vector
+	 *            A rational vector to be transposed.
+	 * @return The transposed vector.
+	 */
+	public static Term[][] transposeRowToColumnTermVector(final Term[] vector) {
+		final Term[][] transposedVector = new Term[vector.length][1];
 		for (int i = 0; i < vector.length; i++) {
 			transposedVector[i][0] = vector[i];
 		}

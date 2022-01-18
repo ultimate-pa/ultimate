@@ -46,11 +46,11 @@ public final class QvasrAbstractionBuilder {
 	 * Construct a new {@link QvasrAbstraction} (S, V) using an already computed simulation matrix, and an already
 	 * existing qvasr.
 	 *
-	 * @param resetsBasis
-	 *            The vector space basis for the reset vector space.
-	 * @param additionsBasis
-	 *            The vector space basis for the addition vector space.
-	 * @return A newly constructed {@link QvasrAbstraction}
+	 * @param simulationMatrix
+	 *            A {@link Rational} 2D-matrix representing a linear simulation.
+	 * @param qvasr
+	 *            A {@link Qvasr} representing the simulated set of transformers.
+	 * @return A new {@link QvasrAbstraction}
 	 */
 	public static QvasrAbstraction constructQvasrAbstraction(final Rational[][] simulationMatrix, final Qvasr qvasr) {
 		return new QvasrAbstraction(simulationMatrix, qvasr);

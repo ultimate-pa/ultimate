@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -110,6 +111,7 @@ public class QvasrAbstractor {
 	 * Compute a Q-Vasr-abstraction for a given transition formula.
 	 *
 	 * @param transitionTerm
+	 *            TODO: Deal with singular disjuncts of the original loop tf
 	 * @param transitionFormula
 	 *            A transition formula from which an overapproximative qvasr-abstraction is computed.
 	 * @return A {@link QvasrAbstraction} that overapproximates the changes to variables of the transition formula.
@@ -117,8 +119,8 @@ public class QvasrAbstractor {
 	public QvasrAbstraction computeAbstraction(final Term transitionTerm,
 			final UnmodifiableTransFormula transitionFormula) {
 
-		final Map<Term, Term> updatesInFormulaAdditions = getUpdates(transitionFormula, BaseType.ADDITIONS);
-		final Map<Term, Term> updatesInFormulaResets = getUpdates(transitionFormula, BaseType.RESETS);
+		final Map<TermVariable, Term> updatesInFormulaAdditions = getUpdates(transitionFormula, BaseType.ADDITIONS);
+		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(transitionFormula, BaseType.RESETS);
 		final Term[][] newUpdatesMatrixResets = constructBaseMatrix(updatesInFormulaResets, transitionFormula);
 		final Term[][] newUpdatesMatrixAdditions = constructBaseMatrix(updatesInFormulaAdditions, transitionFormula);
 
@@ -136,12 +138,14 @@ public class QvasrAbstractor {
 				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mScript, solutionsResetGaussJordan);
 		final Rational[][] additionVectorSpaceBasis =
 				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mScript, solutionsAdditionsGaussJordan);
-
 		return QvasrAbstractionBuilder.constructQvasrAbstraction(resetVectorSpaceBasis, additionVectorSpaceBasis);
 	}
 
 	/**
 	 * Solve a given matrix, containing logical Terms such as {@link TermVariable}, using Gauss-Jordan Elimination.
+	 *
+	 * @param script
+	 *            A {@link ManagedScript}
 	 *
 	 * @param matrix
 	 *            A matrix representing changes to variables. Can contain logical terms.
@@ -566,10 +570,10 @@ public class QvasrAbstractor {
 	 * @return An out factored multiplication.
 	 */
 	public static Term expandRealMultiplication(final ManagedScript script, final List<Term> factors) {
-		Term result = script.getScript().decimal("0");
 		if (factors.size() < 2) {
 			return factors.get(0);
 		}
+		Term result = script.getScript().decimal("0");
 		final Deque<Term> factorStack = new ArrayDeque<>(factors);
 		while (!factorStack.isEmpty()) {
 			final Term factorOne = factorStack.pop();
@@ -607,6 +611,9 @@ public class QvasrAbstractor {
 
 	/**
 	 * Simplify a division of reals formed by paramters dividend and divisor. For example x/2x -> 1/2
+	 *
+	 * @param script
+	 *            A {@link ManagedScript}
 	 *
 	 * @param dividend
 	 *            The dividend of the division.
@@ -1208,7 +1215,8 @@ public class QvasrAbstractor {
 	 * @param outVariables
 	 * @return
 	 */
-	private Map<Term, Term> getUpdates(final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
+	private Map<TermVariable, Term> getUpdates(final UnmodifiableTransFormula transitionFormula,
+			final BaseType baseType) {
 		final SimultaneousUpdate su;
 		try {
 			su = SimultaneousUpdate.fromTransFormula(transitionFormula, mScript);
@@ -1221,8 +1229,9 @@ public class QvasrAbstractor {
 		final Map<Term, Term> realTvs = new HashMap<>();
 		final Map<IProgramVar, Term> updates = su.getDeterministicAssignment();
 		for (final IProgramVar pv : updates.keySet()) {
-			realTvs.put(pv.getTermVariable(), mScript.constructFreshTermVariable(pv.getGloballyUniqueId() + "_real",
-					SmtSortUtils.getRealSort(mScript)));
+			final TermVariable inVar = mScript.constructFreshTermVariable(pv.getGloballyUniqueId() + "_real",
+					SmtSortUtils.getRealSort(mScript));
+			realTvs.put(pv.getTermVariable(), inVar);
 		}
 		/*
 		 * Transform the updates to variables to real sort.
@@ -1233,7 +1242,7 @@ public class QvasrAbstractor {
 			final Term realUpdate = Substitution.apply(mScript, realTvs, intUpdate);
 			realUpdates.put(update.getKey(), realUpdate);
 		}
-		final Map<Term, Term> assignments = new HashMap<>();
+		final Map<TermVariable, Term> assignments = new LinkedHashMap<>();
 		for (final Entry<IProgramVar, Term> varUpdate : realUpdates.entrySet()) {
 			final IProgramVar progVar = varUpdate.getKey();
 			final Term varUpdateTerm = varUpdate.getValue();
@@ -1253,8 +1262,9 @@ public class QvasrAbstractor {
 				final Term realVar = realTvs.get(progVar.getTermVariable());
 				realTerm = SmtUtils.minus(mScript.getScript(), realTerm, realVar);
 			}
-			assignments.put(realTvs.get(progVar.getTermVariable()), realTerm);
+			assignments.put((TermVariable) realTvs.get(progVar.getTermVariable()), realTerm);
 		}
+
 		return assignments;
 	}
 
@@ -1293,7 +1303,7 @@ public class QvasrAbstractor {
 	 * @param typeOfBase
 	 * @return
 	 */
-	private Term[][] constructBaseMatrix(final Map<Term, Term> updates,
+	private Term[][] constructBaseMatrix(final Map<TermVariable, Term> updates,
 			final UnmodifiableTransFormula transitionFormula) {
 		final int columnDimension = transitionFormula.getOutVars().size();
 
@@ -1329,7 +1339,7 @@ public class QvasrAbstractor {
 					subMapping.put(tv, mZero);
 				}
 			}
-			for (final Entry<Term, Term> update : updates.entrySet()) {
+			for (final Entry<TermVariable, Term> update : updates.entrySet()) {
 				final Term updateTerm = update.getValue();
 				Term toBeUpdated;
 				toBeUpdated = Substitution.apply(mScript, subMapping, updateTerm);

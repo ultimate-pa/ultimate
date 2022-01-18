@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
-public class QvasrVectorSpaceBasisConstructor {
+public final class QvasrVectorSpaceBasisConstructor {
 	private QvasrVectorSpaceBasisConstructor() {
 		// Prevent instantiation of this utility class
 	}
@@ -189,6 +189,9 @@ public class QvasrVectorSpaceBasisConstructor {
 			}
 			assignedBasisVectors.add(vectorAssigned);
 		}
+		/*
+		 * No solutions -> basis is all 0.
+		 */
 		if (assignedBasisVectors.isEmpty()) {
 			return new Rational[0][0];
 		}

@@ -100,29 +100,26 @@ public final class QvasrAbstractionJoin {
 		 * Compute a pushout of each coherence class.
 		 */
 		for (final Set<Integer> coherenceClassOne : abstractionOneCoherenceClasses) {
-			final Rational[][] coherenceIdentityMatrixOne =
-					QvasrUtils.getCoherenceIdentityMatrix(coherenceClassOne, qvasrDimensionOne);
+			final Rational[][] piOne = QvasrUtils.getCoherenceIdentityMatrix(coherenceClassOne, qvasrDimensionOne);
 
-			final Rational[][] coherenceIdentitySimulationMatrixOne = QvasrUtils
-					.rationalMatrixMultiplication(coherenceIdentityMatrixOne, abstractionOne.getSimulationMatrix());
+			final Rational[][] piOneSOne =
+					QvasrUtils.rationalMatrixMultiplication(piOne, abstractionOne.getSimulationMatrix());
 
 			for (final Set<Integer> coherenceClassTwo : abstractionTwoCoherenceClasses) {
-				final Rational[][] coherenceIdentityMatrixTwo =
-						QvasrUtils.getCoherenceIdentityMatrix(coherenceClassTwo, qvasrDimensionTwo);
+				final Rational[][] piTwo = QvasrUtils.getCoherenceIdentityMatrix(coherenceClassTwo, qvasrDimensionTwo);
 
-				final Rational[][] coherenceIdentitySimulationMatrixTwo = QvasrUtils
-						.rationalMatrixMultiplication(coherenceIdentityMatrixTwo, abstractionTwo.getSimulationMatrix());
+				final Rational[][] piTwoSTwo =
+						QvasrUtils.rationalMatrixMultiplication(piTwo, abstractionTwo.getSimulationMatrix());
 
-				final Pair<Rational[][], Rational[][]> pushedOut =
-						pushout(script, coherenceIdentitySimulationMatrixOne, coherenceIdentitySimulationMatrixTwo);
+				final Pair<Rational[][], Rational[][]> pushedOut = pushout(script, piOneSOne, piTwoSTwo);
 
-				final Rational[][] toBeAppendedToS = QvasrUtils.rationalMatrixMultiplication(pushedOut.getFirst(),
-						coherenceIdentitySimulationMatrixOne);
+				final Rational[][] toBeAppendedToS =
+						QvasrUtils.rationalMatrixMultiplication(pushedOut.getFirst(), piOneSOne);
 
 				final Rational[][] toBeAppendedToTOne =
-						QvasrUtils.rationalMatrixMultiplication(pushedOut.getFirst(), coherenceIdentityMatrixOne);
+						QvasrUtils.rationalMatrixMultiplication(pushedOut.getFirst(), piOne);
 				final Rational[][] toBeAppendedToTTwo =
-						QvasrUtils.rationalMatrixMultiplication(pushedOut.getSecond(), coherenceIdentityMatrixTwo);
+						QvasrUtils.rationalMatrixMultiplication(pushedOut.getSecond(), piTwo);
 
 				simulationMatrixJoined = joinRationalMatricesHorizontally(simulationMatrixJoined, toBeAppendedToS);
 				tOne = joinRationalMatricesHorizontally(tOne, toBeAppendedToTOne);
@@ -149,10 +146,10 @@ public final class QvasrAbstractionJoin {
 		final Map<TermVariable, Integer> varToColumnOne = new HashMap<>();
 		final Map<TermVariable, Integer> varToColumnTwo = new HashMap<>();
 
-		final Term[] newVarsOne = new Term[abstractionOne[0].length];
-		final Term[] newVarsTwo = new Term[abstractionTwo[0].length];
+		final Term[] newVarsOne = new Term[abstractionOne.length];
+		final Term[] newVarsTwo = new Term[abstractionTwo.length];
 		Integer colCnt = 0;
-		for (int i = 0; i < abstractionOne[0].length; i++) {
+		for (int i = 0; i < abstractionOne.length; i++) {
 			final TermVariable newVar =
 					script.constructFreshTermVariable("t", SmtSortUtils.getRealSort(script.getScript()));
 			newVarsOne[i] = newVar;
@@ -160,7 +157,7 @@ public final class QvasrAbstractionJoin {
 			varToColumnOne.put(newVar, i);
 			colCnt++;
 		}
-		for (int i = 0; i < abstractionTwo[0].length; i++) {
+		for (int i = 0; i < abstractionTwo.length; i++) {
 			final TermVariable newVar =
 					script.constructFreshTermVariable("t", SmtSortUtils.getRealSort(script.getScript()));
 			newVarsTwo[i] = newVar;
@@ -510,9 +507,10 @@ public final class QvasrAbstractionJoin {
 	 * the reset vector of the abstraction's qvasr for every transformer in the qvasr.
 	 *
 	 * @param qvasrAbstraction
-	 * @return
+	 *            A {@link QvasrAbstraction} whose coherence classes we want to compute.
+	 * @return A set of sets of integers representing rows in the qvasr that are coherent.
 	 */
-	private static Set<Set<Integer>> getCoherenceClasses(final QvasrAbstraction qvasrAbstraction) {
+	public static Set<Set<Integer>> getCoherenceClasses(final QvasrAbstraction qvasrAbstraction) {
 
 		final Set<Set<Integer>> coherenceClasses = new HashSet<>();
 		final int dimension = qvasrAbstraction.getQvasr().getDimension();
