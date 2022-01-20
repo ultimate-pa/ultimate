@@ -134,7 +134,7 @@ public class QvasrAbstractionJoinTest {
 		final Qvasr qvasrResult = new Qvasr(resetVectorResultRationalOne, additionVectorResultRationalOne);
 		qvasrResult.addTransformer(new Pair<>(resetVectorResultRationalTwo, additionVectorResultTwo));
 
-		testQvasrEquality(qvasrResult, joinedAbstractions.getQvasr());
+		testQvasrEquality(qvasrResult, joinedAbstractions.getVasr());
 		testMatrixEquality(joinedAbstractions.getSimulationMatrix(), simulationMatrixResult);
 	}
 
@@ -148,13 +148,12 @@ public class QvasrAbstractionJoinTest {
 		}
 	}
 
-	static void testQvasrEquality(final Qvasr qvasrOne, final Qvasr qvasrTwo) {
-		MatcherAssert.assertThat(qvasrOne.getQvasrTransformer().size(),
-				IsEqual.equalTo(qvasrTwo.getQvasrTransformer().size()));
+	static void testQvasrEquality(final IVasr<Rational> qvasrOne, final IVasr<Rational> qvasrTwo) {
+		MatcherAssert.assertThat(qvasrOne.getTransformer().size(), IsEqual.equalTo(qvasrTwo.getTransformer().size()));
 		final Deque<Pair<Rational[], Rational[]>> transformerOne = new HashDeque<>();
 		final Deque<Pair<Rational[], Rational[]>> transformerTwo = new HashDeque<>();
-		transformerOne.addAll(qvasrOne.getQvasrTransformer());
-		transformerTwo.addAll(qvasrTwo.getQvasrTransformer());
+		transformerOne.addAll(qvasrOne.getTransformer());
+		transformerTwo.addAll(qvasrTwo.getTransformer());
 		while (!transformerOne.isEmpty()) {
 			final Pair<Rational[], Rational[]> toBecheckedOne = transformerOne.pop();
 			final Pair<Rational[], Rational[]> toBecheckedTwo = transformerTwo.pop();

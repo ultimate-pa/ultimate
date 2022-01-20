@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -373,5 +375,61 @@ public final class QvasrUtils {
 			joinedSet.add(varJoin);
 		}
 		return joinedSet;
+	}
+
+	/**
+	 * Convert a given {@link QvasrAbstraction} consisting of {@link Rational} to an {@link IntvasrAbstraction} by
+	 * computing the least common multiple of the simulation matrix and addition vectors, then multiplying the entries
+	 * with it. Resulting in an integral vector addition system.
+	 *
+	 * @param qvasrAbstraction
+	 *            The {@link QvasrAbstraction} that will be converted to an {@link IntvasrAbstraction}
+	 * @return The converted {@link IntvasrAbstraction}
+	 */
+	public static IntvasrAbstraction qvasrAbstractionToInt(final QvasrAbstraction qvasrAbstraction) {
+		BigInteger gcd = BigInteger.ZERO;
+		BigInteger mult = BigInteger.ONE;
+		for (int i = 0; i < qvasrAbstraction.getSimulationMatrix().length; i++) {
+			for (int j = 0; j < qvasrAbstraction.getSimulationMatrix()[0].length; j++) {
+				final Rational rational = qvasrAbstraction.getSimulationMatrix()[i][j];
+				if (!rational.isIntegral()) {
+					gcd = Rational.gcd(gcd, rational.denominator());
+					mult = mult.multiply(rational.denominator());
+				}
+			}
+		}
+		for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getVasr().getTransformer()) {
+			final Rational[] additionVector = transformer.getSecond();
+			for (int k = 0; k < additionVector.length; k++) {
+				if (!additionVector[k].isIntegral()) {
+					gcd = Rational.gcd(gcd, additionVector[k].denominator());
+					mult = mult.multiply(additionVector[k].denominator());
+				}
+			}
+		}
+		final BigInteger lcm = mult.divide(gcd);
+		final Integer[][] integerSimulationMatrix = new Integer[qvasrAbstraction
+				.getSimulationMatrix().length][qvasrAbstraction.getSimulationMatrix()[0].length];
+		for (int i = 0; i < integerSimulationMatrix.length; i++) {
+			for (int j = 0; j < integerSimulationMatrix[0].length; j++) {
+				final Rational oldRationalEntry = qvasrAbstraction.getSimulationMatrix()[i][j].mul(lcm);
+				assert oldRationalEntry.isIntegral();
+				integerSimulationMatrix[i][j] = oldRationalEntry.numerator().intValue();
+			}
+		}
+		final Intvasr intVasr = new Intvasr();
+		for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getVasr().getTransformer()) {
+			final Integer[] resetVectorInt = new Integer[transformer.getFirst().length];
+			final Integer[] additionVectorInt = new Integer[transformer.getFirst().length];
+			for (int i = 0; i < transformer.getFirst().length; i++) {
+				assert transformer.getFirst()[i].isIntegral();
+				resetVectorInt[i] = transformer.getFirst()[i].numerator().intValue();
+				final Rational oldRationalEntry = transformer.getSecond()[i].mul(lcm);
+				assert oldRationalEntry.isIntegral();
+				additionVectorInt[i] = oldRationalEntry.numerator().intValue();
+			}
+			intVasr.addTransformer(new Pair<>(resetVectorInt, additionVectorInt));
+		}
+		return new IntvasrAbstraction(integerSimulationMatrix, intVasr);
 	}
 }

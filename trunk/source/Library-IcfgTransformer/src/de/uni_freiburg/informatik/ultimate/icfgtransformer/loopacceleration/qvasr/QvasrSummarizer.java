@@ -108,6 +108,9 @@ public class QvasrSummarizer {
 		/**
 		 * TODO Error because something isn't integral?
 		 */
+
+		QvasrUtils.qvasrAbstractionToInt(bestAbstraction);
+
 		final UnmodifiableTransFormula qvasrAsTf =
 				qvasrAbstractionToFormula(mScript, bestAbstraction, transitionFormula);
 		return transitionFormula;
@@ -162,12 +165,12 @@ public class QvasrSummarizer {
 
 		final Map<Integer, TermVariable> kToTransformer = new HashMap<>();
 
-		for (int dimension = 0; dimension < qvasrAbstraction.getQvasr().getDimension(); dimension++) {
+		for (int dimension = 0; dimension < qvasrAbstraction.getVasr().getDimension(); dimension++) {
 			final Set<Term> dimensionDisjunction = new HashSet<>();
 			Term dimensionSumTerm = variableRelationsIn[dimension][0];
 			boolean incrementFlag = false;
 			int transformerId = 0;
-			for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getQvasr().getQvasrTransformer()) {
+			for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getVasr().getTransformer()) {
 				final Rational dimensionReset = transformer.getFirst()[dimension];
 				final Rational dimensionAddition = transformer.getSecond()[dimension];
 				if (dimensionReset == Rational.ZERO) {
@@ -175,7 +178,6 @@ public class QvasrSummarizer {
 							SmtUtils.binaryEquality(script.getScript(), variableRelationsOut[dimension][0],
 									dimensionAddition.toTerm(SmtSortUtils.getRealSort(script)));
 					dimensionDisjunction.add(equality);
-
 				} else {
 					TermVariable k;
 					if (kToTransformer.containsKey(transformerId)) {
@@ -258,10 +260,10 @@ public class QvasrSummarizer {
 				qvasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(outVarsReal));
 
 		final List<Term> qvasrDisjunction = new ArrayList<>();
-		for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getQvasr().getQvasrTransformer()) {
+		for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getVasr().getTransformer()) {
 			final TermVariable k = script.constructFreshTermVariable("k", SmtSortUtils.getRealSort(script));
 			final List<Term> qvasrConjuncts = new ArrayList<>();
-			for (int i = 0; i < qvasrAbstraction.getQvasr().getDimension(); i++) {
+			for (int i = 0; i < qvasrAbstraction.getVasr().getDimension(); i++) {
 				final Term reset =
 						SmtUtils.mul(script.getScript(), transformer.getFirst()[i], variableRelationsIn[i][0]);
 				final Term quantifiedAddition = SmtUtils.mul(script.getScript(), transformer.getSecond()[i], k);

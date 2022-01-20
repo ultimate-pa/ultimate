@@ -28,33 +28,32 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  *
- * This class represents a rational vector addition system with resets abstraction (Q-Vasr-abstraction). It is used to
- * overapproximate changes to variables by a transition formula by linear simulating the formula onto a {@link Qvasr}.
+ * This class represents an integer vector addition system with resets abstraction (Intvasr-abstraction). It is used to
+ * overapproximate changes to variables by a transition formula by linear simulating the formula onto a {@link Intvasr}.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
 
-public class QvasrAbstraction implements IVasrAbstraction<Rational> {
+public class IntvasrAbstraction implements IVasrAbstraction<Integer> {
 
-	private final Rational[][] mSimulationMatrix;
-	private final Qvasr mQvasr;
+	private final Integer[][] mSimulationMatrix;
+	private final Intvasr mIntvasr;
 
 	/**
-	 * Construct a new Q-Vasr-abstraction (S, V), which overapproximates a {@link UnmodifiableTransFormula} F by using
-	 * linear matrix S to simulate F to the {@link Qvasr} V.
+	 * Construct a new Integer-Vasr-abstraction (S, V), which overapproximates a {@link UnmodifiableTransFormula} F by
+	 * using linear matrix S to simulate F to the {@link Qvasr} V.
 	 *
 	 * @param simulationMatrix
 	 *            The initial simulation matrix S.
-	 * @param qvasr
-	 *            The initial {@link Qvasr} V.
+	 * @param intvasr
+	 *            The initial {@link Intvasr} V.
 	 */
-	public QvasrAbstraction(final Rational[][] simulationMatrix, final Qvasr qvasr) {
+	public IntvasrAbstraction(final Integer[][] simulationMatrix, final Intvasr intvasr) {
 		mSimulationMatrix = simulationMatrix;
-		mQvasr = qvasr;
+		mIntvasr = intvasr;
 	}
 
 	@Override
@@ -68,18 +67,18 @@ public class QvasrAbstraction implements IVasrAbstraction<Rational> {
 	 * @return
 	 */
 	@Override
-	public Rational[][] getSimulationMatrix() {
+	public Integer[][] getSimulationMatrix() {
 		return mSimulationMatrix;
 	}
 
 	/**
-	 * Return the Q-Vasr on to which a transition formula is simulated.
+	 * Return the Intvasr on to which a transition formula is simulated.
 	 *
 	 * @return
 	 */
 	@Override
-	public IVasr<Rational> getVasr() {
-		return mQvasr;
+	public IVasr<Integer> getVasr() {
+		return mIntvasr;
 	}
 
 	/**
@@ -98,7 +97,7 @@ public class QvasrAbstraction implements IVasrAbstraction<Rational> {
 			sb.append("\n");
 		}
 		sb.append("\nV: \n");
-		sb.append(mQvasr.toString());
+		sb.append(mIntvasr.toString());
 		return sb.toString();
 	}
 }

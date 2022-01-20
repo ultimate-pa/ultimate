@@ -73,7 +73,7 @@ public final class QvasrAbstractionJoin {
 		/*
 		 * In case of the first join, the Qvasr is empty, such that we return abstractionTwo.
 		 */
-		if (abstractionOne.getQvasr().getQvasrTransformer().isEmpty()) {
+		if (abstractionOne.getVasr().getTransformer().isEmpty()) {
 			return abstractionTwo;
 		}
 
@@ -93,8 +93,8 @@ public final class QvasrAbstractionJoin {
 		final Set<Set<Integer>> abstractionOneCoherenceClasses = getCoherenceClasses(abstractionOne);
 		final Set<Set<Integer>> abstractionTwoCoherenceClasses = getCoherenceClasses(abstractionTwo);
 
-		final Integer qvasrDimensionOne = abstractionOne.getQvasr().getDimension();
-		final Integer qvasrDimensionTwo = abstractionTwo.getQvasr().getDimension();
+		final Integer qvasrDimensionOne = abstractionOne.getVasr().getDimension();
+		final Integer qvasrDimensionTwo = abstractionTwo.getVasr().getDimension();
 
 		/*
 		 * Compute a pushout of each coherence class.
@@ -126,8 +126,8 @@ public final class QvasrAbstractionJoin {
 				tTwo = joinRationalMatricesHorizontally(tTwo, toBeAppendedToTTwo);
 			}
 		}
-		final Qvasr imageOne = image(abstractionOne.getQvasr(), tOne);
-		final Qvasr imageTwo = image(abstractionTwo.getQvasr(), tTwo);
+		final Qvasr imageOne = image(abstractionOne.getVasr(), tOne);
+		final Qvasr imageTwo = image(abstractionTwo.getVasr(), tTwo);
 		final Qvasr joinedImages = joinQvasr(imageOne, imageTwo);
 		return new QvasrAbstraction(simulationMatrixJoined, joinedImages);
 	}
@@ -184,9 +184,9 @@ public final class QvasrAbstractionJoin {
 		return new Pair<>(lhsRational, rhsRational);
 	}
 
-	private static Qvasr image(final Qvasr v, final Rational[][] t) {
+	private static Qvasr image(final IVasr<Rational> v, final Rational[][] t) {
 		final Qvasr abstractionImage = new Qvasr();
-		for (final Pair<Rational[], Rational[]> resetAdditionPair : v.getQvasrTransformer()) {
+		for (final Pair<Rational[], Rational[]> resetAdditionPair : v.getTransformer()) {
 			final Rational[][] resetVectorTransposed =
 					QvasrUtils.transposeRowToColumnVector(resetAdditionPair.getFirst());
 			final Rational[][] additionVectorTransposed =
@@ -268,7 +268,7 @@ public final class QvasrAbstractionJoin {
 		if (qvasrOne.getDimension() != qvasrTwo.getDimension()) {
 			throw new UnsupportedOperationException("QVasr must have same dimension!");
 		}
-		for (final Pair<Rational[], Rational[]> transformer : qvasrTwo.getQvasrTransformer()) {
+		for (final Pair<Rational[], Rational[]> transformer : qvasrTwo.getTransformer()) {
 			qvasrOne.addTransformer(transformer);
 		}
 		return qvasrOne;
@@ -513,11 +513,11 @@ public final class QvasrAbstractionJoin {
 	public static Set<Set<Integer>> getCoherenceClasses(final QvasrAbstraction qvasrAbstraction) {
 
 		final Set<Set<Integer>> coherenceClasses = new HashSet<>();
-		final int dimension = qvasrAbstraction.getQvasr().getDimension();
+		final int dimension = qvasrAbstraction.getVasr().getDimension();
 		coherenceClasses.add(IntStream.range(0, dimension).boxed().collect(Collectors.toSet()));
 
-		final Qvasr qvasr = qvasrAbstraction.getQvasr();
-		for (final Pair<Rational[], Rational[]> transformer : qvasr.getQvasrTransformer()) {
+		final IVasr<Rational> qvasr = qvasrAbstraction.getVasr();
+		for (final Pair<Rational[], Rational[]> transformer : qvasr.getTransformer()) {
 			for (final Set<Integer> coherenceClass : coherenceClasses) {
 				final Integer[] coherenceAsArray = coherenceClass.toArray(new Integer[coherenceClass.size()]);
 				for (int i = 1; i < coherenceAsArray.length; i++) {

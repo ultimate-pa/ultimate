@@ -30,42 +30,41 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * This class represents a rational vector addition system with resets that model the relations of input and output
+ * This class represents an Integer vector addition system with resets that model the relations of input and output
  * variables of transition formulas. They consist of a set of tuples of vectors called transformer. The first vector is
  * a binary reset vector indicating a reset to a variable, while the second vector represents an addition to a variable.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
-public class Qvasr implements IVasr<Rational> {
-	private final Set<Pair<Rational[], Rational[]>> mTransformer;
+public class Intvasr implements IVasr<Integer> {
+	private final Set<Pair<Integer[], Integer[]>> mTransformer;
 	private Integer mDimension;
 
 	/**
-	 * Construct a new Q-Vasr using a single initial transformer consiting of a reset and addition vector.
+	 * Construct a new IntVasr using a single initial transformer consisting of a reset and addition vector.
 	 *
 	 * @param resetVector
-	 *            The initial reset vector. A reset vector is binary, containing only 0s and 1s.
+	 *            The initial reset vector. A reset vector is binary, containing only 0s for reset and 1s for no reset.
 	 *
 	 * @param additionVector
-	 *            The initial addition vector. An addition vector contains rational numbers.
+	 *            The initial addition vector. An addition vector contains Integer numbers.
 	 */
-	public Qvasr(final Rational[] resetVector, final Rational[] additionVector) {
-		final Pair<Rational[], Rational[]> initialTransformer = new Pair<>(resetVector, additionVector);
-		final Set<Pair<Rational[], Rational[]>> initialTransformerSet = new HashSet<>();
+	public Intvasr(final Integer[] resetVector, final Integer[] additionVector) {
+		final Pair<Integer[], Integer[]> initialTransformer = new Pair<>(resetVector, additionVector);
+		final Set<Pair<Integer[], Integer[]>> initialTransformerSet = new HashSet<>();
 		initialTransformerSet.add(initialTransformer);
 		mDimension = resetVector.length;
 		mTransformer = initialTransformerSet;
 	}
 
 	/**
-	 * Construct an empty Q-Vasr using a single initial transformer consiting of a reset and addition vector.
+	 * Construct an empty Int-Vasr using a single initial transformer consiting of a reset and addition vector.
 	 */
-	public Qvasr() {
+	public Intvasr() {
 		mDimension = 0;
 		mTransformer = new HashSet<>();
 	}
@@ -81,7 +80,7 @@ public class Qvasr implements IVasr<Rational> {
 	 * @return
 	 */
 	@Override
-	public Set<Pair<Rational[], Rational[]>> getTransformer() {
+	public Set<Pair<Integer[], Integer[]>> getTransformer() {
 		return mTransformer;
 	}
 
@@ -92,7 +91,7 @@ public class Qvasr implements IVasr<Rational> {
 	 *            The reset and addition vector to be added.
 	 */
 	@Override
-	public void addTransformer(final Pair<Rational[], Rational[]> transformer) {
+	public void addTransformer(final Pair<Integer[], Integer[]> transformer) {
 		mDimension = transformer.getFirst().length;
 		mTransformer.add(transformer);
 	}
@@ -103,7 +102,7 @@ public class Qvasr implements IVasr<Rational> {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		for (final Pair<Rational[], Rational[]> transformer : mTransformer) {
+		for (final Pair<Integer[], Integer[]> transformer : mTransformer) {
 			sb.append("  R  A  \n");
 			for (int i = 0; i < transformer.getFirst().length; i++) {
 				sb.append("[ " + transformer.getFirst()[i].toString() + "  " + transformer.getSecond()[i].toString()
