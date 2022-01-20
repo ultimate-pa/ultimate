@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -105,15 +104,8 @@ public class QvasrSummarizer {
 			final QvasrAbstraction qvasrAbstraction = qvasrAbstractor.computeAbstraction(disjunct, transitionFormula);
 			bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction);
 		}
-		/**
-		 * TODO Error because something isn't integral?
-		 */
-
-		QvasrUtils.qvasrAbstractionToInt(bestAbstraction);
-
-		final UnmodifiableTransFormula qvasrAsTf =
-				qvasrAbstractionToFormula(mScript, bestAbstraction, transitionFormula);
-		return transitionFormula;
+		final IntvasrAbstraction intVasrAbstraction = QvasrUtils.qvasrAbstractionToInt(bestAbstraction);
+		return intVasrAbstractionToFormula(mScript, intVasrAbstraction, transitionFormula);
 	}
 
 	/**
@@ -122,72 +114,52 @@ public class QvasrSummarizer {
 	 *
 	 * @param script
 	 *            A {@link ManagedScript}
-	 * @param qvasrAbstraction
+	 * @param intvasrAbstraction
 	 *            A {@link QvasrAbstraction} whose reachability relation we want to compute.
 	 * @param tf
 	 *            The original {@link UnmodifiableTransFormula} of the loop.
 	 * @return An overapproximative loop summary computed from a qvasr abstraction.
 	 */
-	public static UnmodifiableTransFormula qvasrAbstractionToFormula(final ManagedScript script,
-			final QvasrAbstraction qvasrAbstraction, final UnmodifiableTransFormula tf) {
-
-		final Term[] inVars = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
-		final Term[] outVars = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
-		final IProgramVar[] inVarsPv = tf.getInVars().keySet().toArray(new IProgramVar[tf.getInVars().size()]);
-		final IProgramVar[] outVarsPv = tf.getOutVars().keySet().toArray(new IProgramVar[tf.getOutVars().size()]);
-
+	public static UnmodifiableTransFormula intVasrAbstractionToFormula(final ManagedScript script,
+			final IntvasrAbstraction intvasrAbstraction, final UnmodifiableTransFormula tf) {
 		final Term[] inVarsReal = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
 		final Term[] outVarsReal = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
 
-		final Map<IProgramVar, TermVariable> newInvars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> newOutvars = new HashMap<>();
-
-		for (int i = 0; i < inVars.length; i++) {
-			final TermVariable tv =
-					script.constructFreshTermVariable(inVars[i].toString() + "_real", SmtSortUtils.getRealSort(script));
-			inVarsReal[i] = tv;
-			newInvars.put(inVarsPv[i], tv);
-		}
-
-		for (int i = 0; i < outVars.length; i++) {
-			final TermVariable tv = script.constructFreshTermVariable(outVars[i].toString() + "_real_Primed",
-					SmtSortUtils.getRealSort(script));
-			outVarsReal[i] = tv;
-			newOutvars.put(outVarsPv[i], tv);
-		}
+		final Map<IProgramVar, TermVariable> newInvars = tf.getInVars();
+		final Map<IProgramVar, TermVariable> newOutvars = tf.getOutVars();
 
 		final Term[][] variableRelationsIn = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
-				qvasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(inVarsReal));
+				intvasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(inVarsReal));
 		final Term[][] variableRelationsOut = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
-				qvasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(outVarsReal));
+				intvasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(outVarsReal));
 
 		final List<Term> qvasrDimensionConjunction = new ArrayList<>();
 
 		final Map<Integer, TermVariable> kToTransformer = new HashMap<>();
 
-		for (int dimension = 0; dimension < qvasrAbstraction.getVasr().getDimension(); dimension++) {
+		for (int dimension = 0; dimension < intvasrAbstraction.getVasr().getDimension(); dimension++) {
 			final Set<Term> dimensionDisjunction = new HashSet<>();
 			Term dimensionSumTerm = variableRelationsIn[dimension][0];
 			boolean incrementFlag = false;
 			int transformerId = 0;
-			for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getVasr().getTransformer()) {
-				final Rational dimensionReset = transformer.getFirst()[dimension];
-				final Rational dimensionAddition = transformer.getSecond()[dimension];
-				if (dimensionReset == Rational.ZERO) {
+			for (final Pair<Integer[], Integer[]> transformer : intvasrAbstraction.getVasr().getTransformer()) {
+				final Integer dimensionReset = transformer.getFirst()[dimension];
+				final Integer dimensionAddition = transformer.getSecond()[dimension];
+				if (dimensionReset == 0) {
 					final Term equality =
 							SmtUtils.binaryEquality(script.getScript(), variableRelationsOut[dimension][0],
-									dimensionAddition.toTerm(SmtSortUtils.getRealSort(script)));
+									script.getScript().numeral(dimensionAddition.toString()));
 					dimensionDisjunction.add(equality);
 				} else {
 					TermVariable k;
 					if (kToTransformer.containsKey(transformerId)) {
 						k = kToTransformer.get(transformerId);
 					} else {
-						k = script.constructFreshTermVariable("k", SmtSortUtils.getRealSort(script));
+						k = script.constructFreshTermVariable("k", SmtSortUtils.getIntSort(script));
 						kToTransformer.put(transformerId, k);
 					}
-					final Term quantifiedAddition =
-							SmtUtils.mul(script.getScript(), transformer.getSecond()[dimension], k);
+					final Term quantifiedAddition = SmtUtils.mul(script.getScript(), "*",
+							script.getScript().numeral(transformer.getSecond()[dimension].toString()), k);
 					dimensionSumTerm = SmtUtils.sum(script.getScript(), "+", dimensionSumTerm, quantifiedAddition);
 					incrementFlag = true;
 				}
@@ -204,9 +176,6 @@ public class QvasrSummarizer {
 		Term loopSummary = SmtUtils.and(script.getScript(), qvasrDimensionConjunction);
 		loopSummary = SmtUtils.quantifier(script.getScript(), QuantifiedFormula.EXISTS, kToTransformer.values(),
 				SmtUtils.and(script.getScript(), loopSummary));
-		/*
-		 * Error because of non Theory constants?
-		 */
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInvars, newOutvars, true, null, true, null, true);
 		tfb.setFormula(loopSummary);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
@@ -220,65 +189,61 @@ public class QvasrSummarizer {
 	 *
 	 * @param script
 	 *            A {@link ManagedScript}
-	 * @param qvasrAbstraction
+	 * @param vasrAbstraction
 	 *            A {@link QvasrAbstraction} whose reachability relation we want to compute.
 	 * @param tf
 	 *            The original {@link UnmodifiableTransFormula} of the loop.
 	 * @return An overapproximative loop summary computed from a qvasr abstraction.
 	 */
-	public static UnmodifiableTransFormula qvasrAbstractionToFormulaMetaTrace(final ManagedScript script,
-			final QvasrAbstraction qvasrAbstraction, final UnmodifiableTransFormula tf) {
+	// public static UnmodifiableTransFormula qvasrAbstractionToFormulaMetaTrace(final ManagedScript script,
+	// final IVasrAbstraction<Rational> vasrAbstraction, final UnmodifiableTransFormula tf) {
+	//
+	// final Term[] inVars = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
+	// final Term[] outVars = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
+	// final IProgramVar[] inVarsPv = tf.getInVars().keySet().toArray(new IProgramVar[tf.getInVars().size()]);
+	// final IProgramVar[] outVarsPv = tf.getOutVars().keySet().toArray(new IProgramVar[tf.getOutVars().size()]);
+	//
+	// final Term[] inVarsReal = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
+	// final Term[] outVarsReal = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
+	//
+	// final Map<IProgramVar, TermVariable> newInvars = tf.getInVars();
+	// final Map<IProgramVar, TermVariable> newOutvars = tf.getOutVars();
 
-		final Term[] inVars = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
-		final Term[] outVars = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
-		final IProgramVar[] inVarsPv = tf.getInVars().keySet().toArray(new IProgramVar[tf.getInVars().size()]);
-		final IProgramVar[] outVarsPv = tf.getOutVars().keySet().toArray(new IProgramVar[tf.getOutVars().size()]);
+	/*
+	 * for (int i = 0; i < inVars.length; i++) { final TermVariable tv =
+	 * script.constructFreshTermVariable(inVars[i].toString() + "_real", SmtSortUtils.getRealSort(script));
+	 * inVarsReal[i] = tv; newInvars.put(inVarsPv[i], tv); }
+	 *
+	 * for (int i = 0; i < outVars.length; i++) { final TermVariable tv =
+	 * script.constructFreshTermVariable(outVars[i].toString() + "_real_Primed", SmtSortUtils.getRealSort(script));
+	 * outVarsReal[i] = tv; newOutvars.put(outVarsPv[i], tv); }
+	 */
 
-		final Term[] inVarsReal = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
-		final Term[] outVarsReal = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
+	// final Term[][] variableRelationsIn = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
+	// vasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(inVarsReal));
+	// final Term[][] variableRelationsOut = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
+	// vasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(outVarsReal));
 
-		final Map<IProgramVar, TermVariable> newInvars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> newOutvars = new HashMap<>();
-
-		for (int i = 0; i < inVars.length; i++) {
-			final TermVariable tv =
-					script.constructFreshTermVariable(inVars[i].toString() + "_real", SmtSortUtils.getRealSort(script));
-			inVarsReal[i] = tv;
-			newInvars.put(inVarsPv[i], tv);
-		}
-
-		for (int i = 0; i < outVars.length; i++) {
-			final TermVariable tv = script.constructFreshTermVariable(outVars[i].toString() + "_real_Primed",
-					SmtSortUtils.getRealSort(script));
-			outVarsReal[i] = tv;
-			newOutvars.put(outVarsPv[i], tv);
-		}
-
-		final Term[][] variableRelationsIn = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
-				qvasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(inVarsReal));
-		final Term[][] variableRelationsOut = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
-				qvasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(outVarsReal));
-
-		final List<Term> qvasrDisjunction = new ArrayList<>();
-		for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getVasr().getTransformer()) {
-			final TermVariable k = script.constructFreshTermVariable("k", SmtSortUtils.getRealSort(script));
-			final List<Term> qvasrConjuncts = new ArrayList<>();
-			for (int i = 0; i < qvasrAbstraction.getVasr().getDimension(); i++) {
-				final Term reset =
-						SmtUtils.mul(script.getScript(), transformer.getFirst()[i], variableRelationsIn[i][0]);
-				final Term quantifiedAddition = SmtUtils.mul(script.getScript(), transformer.getSecond()[i], k);
-				final Term addition = SmtUtils.sum(script.getScript(), "+", reset, quantifiedAddition);
-				final Term equality = SmtUtils.binaryEquality(script.getScript(), variableRelationsOut[i][0], addition);
-				qvasrConjuncts.add(equality);
-			}
-			final Term qvasrConjunctionQuantified = SmtUtils.quantifier(script.getScript(), QuantifiedFormula.EXISTS,
-					Arrays.asList(k), SmtUtils.and(script.getScript(), qvasrConjuncts));
-			qvasrDisjunction.add(qvasrConjunctionQuantified);
-		}
-		final Term loopSummary = SmtUtils.or(script.getScript(), qvasrDisjunction);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInvars, newOutvars, true, null, true, null, true);
-		tfb.setFormula(loopSummary);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(script);
-	}
+	// final List<Term> qvasrDisjunction = new ArrayList<>();
+	// for (final Pair<Rational[], Rational[]> transformer : vasrAbstraction.getVasr().getTransformer()) {
+	// final TermVariable k = script.constructFreshTermVariable("k", SmtSortUtils.getRealSort(script));
+	// final List<Term> qvasrConjuncts = new ArrayList<>();
+	// for (int i = 0; i < vasrAbstraction.getVasr().getDimension(); i++) {
+	// final Term reset =
+	// SmtUtils.mul(script.getScript(), transformer.getFirst()[i], variableRelationsIn[i][0]);
+	// final Term quantifiedAddition = SmtUtils.mul(script.getScript(), transformer.getSecond()[i], k);
+	// final Term addition = SmtUtils.sum(script.getScript(), "+", reset, quantifiedAddition);
+	// final Term equality = SmtUtils.binaryEquality(script.getScript(), variableRelationsOut[i][0], addition);
+	// qvasrConjuncts.add(equality);
+	// }
+	// final Term qvasrConjunctionQuantified = SmtUtils.quantifier(script.getScript(), QuantifiedFormula.EXISTS,
+	// Arrays.asList(k), SmtUtils.and(script.getScript(), qvasrConjuncts));
+	// qvasrDisjunction.add(qvasrConjunctionQuantified);
+	// }
+	// final Term loopSummary = SmtUtils.or(script.getScript(), qvasrDisjunction);
+	// final TransFormulaBuilder tfb = new TransFormulaBuilder(newInvars, newOutvars, true, null, true, null, true);
+	// tfb.setFormula(loopSummary);
+	// tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+	// return tfb.finishConstruction(script);
+	// }
 }

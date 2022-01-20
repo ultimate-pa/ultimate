@@ -170,7 +170,7 @@ public final class QvasrUtils {
 	 * @return The product of both.
 	 */
 	public static Term[][] matrixVectorMultiplicationWithVariables(final ManagedScript script,
-			final Rational[][] matrixTwo, final Term[][] vector) {
+			final Integer[][] matrixTwo, final Term[][] vector) {
 		final int vectorLength = vector.length;
 		final int colMatrixTwo = matrixTwo[0].length;
 		if (vectorLength != colMatrixTwo) {
@@ -180,14 +180,14 @@ public final class QvasrUtils {
 
 		final Term[][] resultMatrix = new Term[vectorLength][1];
 		for (int i = 0; i < colMatrixTwo; i++) {
-			resultMatrix[i][0] = script.getScript().decimal("0");
+			resultMatrix[i][0] = script.getScript().numeral("0");
 
 		}
 		for (int j = 0; j < rowMatrixTwo; j++) {
-			Term sum = script.getScript().decimal("0");
+			Term sum = script.getScript().numeral("0");
 			for (int k = 0; k < colMatrixTwo; k++) {
 				final Term mult = SmtUtils.mul(script.getScript(), "*", vector[k][0],
-						matrixTwo[j][k].toTerm(SmtSortUtils.getRealSort(script)));
+						script.getScript().numeral(matrixTwo[j][k].toString()));
 				sum = SmtUtils.sum(script.getScript(), "+", sum, mult);
 				resultMatrix[j][0] = sum;
 			}
@@ -406,6 +406,9 @@ public final class QvasrUtils {
 					mult = mult.multiply(additionVector[k].denominator());
 				}
 			}
+		}
+		if (gcd == BigInteger.ZERO) {
+			gcd = BigInteger.ONE;
 		}
 		final BigInteger lcm = mult.divide(gcd);
 		final Integer[][] integerSimulationMatrix = new Integer[qvasrAbstraction
