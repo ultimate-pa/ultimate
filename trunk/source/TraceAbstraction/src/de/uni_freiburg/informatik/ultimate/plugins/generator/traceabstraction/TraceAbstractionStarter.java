@@ -395,9 +395,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				&& isAnyForkInCycle(icfg)) {
 			final Set<IcfgLocation> inUseErrors = new HashSet<>(getInUseErrorNodeMap(icfg).values());
 			final Set<IcfgLocation> otherErrors = DataStructureUtils.difference(errNodesOfAllProc, inUseErrors);
-			final Pair<DebugIdentifier, Set<IcfgLocation>> inUse =
-					new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, otherErrors);
 			final Pair<DebugIdentifier, Set<IcfgLocation>> other =
+					new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, otherErrors);
+			final Pair<DebugIdentifier, Set<IcfgLocation>> inUse =
 					new Pair<>(InUseDebugIdentifier.INSTANCE, inUseErrors);
 			if (mPrefs.insufficientThreadErrorsVsProgramErrors() == InsufficientError.BEFORE) {
 				return List.of(inUse, other);
