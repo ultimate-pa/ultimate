@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.horn;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class Cfg2HornClauseUtils {
 	private Cfg2HornClauseUtils() {
@@ -24,15 +26,18 @@ public class Cfg2HornClauseUtils {
 
 	public static ManagedScript createSolver(final IUltimateServiceProvider services) {
 		// TODO: Other solvers?
-		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3, Logics.HORN);
+		final SolverSettings solverSettings =
+				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
+						.setUseExternalSolver(ExternalSolver.Z3, Logics.HORN);
 		return new ManagedScript(services,
 				SolverBuilder.buildAndInitializeSolver(services, solverSettings, "HornSolver"));
 	}
 
 	public static Cfg2HornClauses createHornClauses(final IIcfg<IcfgLocation> icfg, final ManagedScript managedScript,
 			final int maximumNumberOfThreads) {
-		final Map<String, Integer> numberOfThreads = getNumberOfThreads(icfg, maximumNumberOfThreads);
+		final Pair<Map<String, Integer>, Set<String>> pair =
+				getNumberOfThreadsAndExceedingBound(icfg, maximumNumberOfThreads);
+		final Map<String, Integer> numberOfThreads = pair.getFirst();
 		final Cfg2HornClauses result = new Cfg2HornClauses(numberOfThreads, managedScript, icfg.getCfgSmtToolkit());
 		result.assertInitially(icfg.getInitialNodes());
 		final Set<IcfgLocation> errorNodes =
@@ -41,6 +46,7 @@ public class Cfg2HornClauseUtils {
 		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
 		for (final String proc : numberOfThreads.keySet()) {
 			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
+			final boolean isUnbounded = pair.getSecond().contains(proc);
 			while (edges.hasNext()) {
 				// TODO: Add the handling of joins (needs thread id?)
 				final IcfgEdge edge = edges.next();
@@ -50,32 +56,42 @@ public class Cfg2HornClauseUtils {
 							List.of(edge.getTarget(), entryNodes.get(forked)));
 				}
 				result.assertInductivity(edge);
+				if (isUnbounded) {
+					result.assertNonInterference(edge);
+				}
 			}
 		}
-		// TODO: For unbounded threads we need non-interference!
 		return result;
 	}
 
-	public static Map<String, Integer> getNumberOfThreads(final IIcfg<IcfgLocation> icfg, final int maximum) {
+	private static Pair<Map<String, Integer>, Set<String>> getNumberOfThreadsAndExceedingBound(final IIcfg<?> icfg,
+			final int maximum) {
 		final var instanceMap = icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap();
-		final Map<String, Integer> result =
+		final Map<String, Integer> countMap =
 				icfg.getInitialNodes().stream().collect(Collectors.toMap(IcfgLocation::getProcedure, x -> 1));
+		final Set<String> unboundedThreads = new HashSet<>();
 		boolean changed = true;
 		while (changed) {
 			changed = false;
 			for (final var entry : instanceMap.entrySet()) {
 				final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork = entry.getKey();
-				if (!result.containsKey(fork.getPrecedingProcedure())) {
+				if (!countMap.containsKey(fork.getPrecedingProcedure())) {
 					continue;
 				}
 				final String proc = fork.getNameOfForkedProcedure();
-				final int count = result.getOrDefault(proc, 0);
+				final int count = countMap.getOrDefault(proc, 0);
 				if (count < maximum) {
 					changed = true;
-					result.put(proc, count + 1);
+					countMap.put(proc, count + 1);
+				} else {
+					unboundedThreads.add(proc);
 				}
 			}
 		}
-		return result;
+		return new Pair<>(countMap, unboundedThreads);
+	}
+
+	public static Map<String, Integer> getNumberOfThreads(final IIcfg<?> icfg, final int maximum) {
+		return getNumberOfThreadsAndExceedingBound(icfg, maximum).getFirst();
 	}
 }
