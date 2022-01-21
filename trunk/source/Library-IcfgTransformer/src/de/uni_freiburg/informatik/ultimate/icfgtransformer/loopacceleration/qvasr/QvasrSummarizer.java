@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -92,6 +93,25 @@ public class QvasrSummarizer {
 		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
+		final Map<IProgramVar, TermVariable> inVarsReal = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVarsReal = new HashMap<>();
+		final SimultaneousUpdate su;
+		try {
+			su = SimultaneousUpdate.fromTransFormula(transitionFormula, mScript);
+		} catch (final Exception e) {
+			throw new UnsupportedOperationException("Could not compute Simultaneous Update!");
+		}
+		for (final IProgramVar assVar : su.getDeterministicAssignment().keySet()) {
+			if (transitionFormula.getInVars().containsKey(assVar)) {
+				inVarsReal.put(assVar, transitionFormula.getInVars().get(assVar));
+			} else if (transitionFormula.getOutVars().containsKey(assVar)) {
+				inVarsReal.put(assVar, transitionFormula.getOutVars().get(assVar));
+			}
+			if (transitionFormula.getOutVars().containsKey(assVar)) {
+				outVarsReal.put(assVar, transitionFormula.getOutVars().get(assVar));
+			}
+		}
+
 		final int tfDimension = transitionFormula.getAssignedVars().size();
 		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
 		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
@@ -104,8 +124,9 @@ public class QvasrSummarizer {
 			final QvasrAbstraction qvasrAbstraction = qvasrAbstractor.computeAbstraction(disjunct, transitionFormula);
 			bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction);
 		}
+
 		final IntvasrAbstraction intVasrAbstraction = QvasrUtils.qvasrAbstractionToInt(bestAbstraction);
-		return intVasrAbstractionToFormula(mScript, intVasrAbstraction, transitionFormula);
+		return intVasrAbstractionToFormula(mScript, intVasrAbstraction, inVarsReal, outVarsReal);
 	}
 
 	/**
@@ -121,12 +142,13 @@ public class QvasrSummarizer {
 	 * @return An overapproximative loop summary computed from a qvasr abstraction.
 	 */
 	public static UnmodifiableTransFormula intVasrAbstractionToFormula(final ManagedScript script,
-			final IntvasrAbstraction intvasrAbstraction, final UnmodifiableTransFormula tf) {
-		final Term[] inVarsReal = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
-		final Term[] outVarsReal = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
+			final IntvasrAbstraction intvasrAbstraction, final Map<IProgramVar, TermVariable> invars,
+			final Map<IProgramVar, TermVariable> outvars) {
+		final Term[] inVarsReal = invars.values().toArray(new Term[invars.size()]);
+		final Term[] outVarsReal = outvars.values().toArray(new Term[outvars.size()]);
 
-		final Map<IProgramVar, TermVariable> newInvars = tf.getInVars();
-		final Map<IProgramVar, TermVariable> newOutvars = tf.getOutVars();
+		final Map<IProgramVar, TermVariable> newInvars = invars;
+		final Map<IProgramVar, TermVariable> newOutvars = outvars;
 
 		final Term[][] variableRelationsIn = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
 				intvasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(inVarsReal));

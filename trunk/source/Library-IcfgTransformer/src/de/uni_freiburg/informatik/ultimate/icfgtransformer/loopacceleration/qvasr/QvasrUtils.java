@@ -173,13 +173,11 @@ public final class QvasrUtils {
 			final Integer[][] matrixTwo, final Term[][] vector) {
 		final int vectorLength = vector.length;
 		final int colMatrixTwo = matrixTwo[0].length;
-		if (vectorLength != colMatrixTwo) {
-			throw new UnsupportedOperationException();
-		}
+		assert vectorLength == colMatrixTwo;
 		final int rowMatrixTwo = matrixTwo.length;
 
-		final Term[][] resultMatrix = new Term[vectorLength][1];
-		for (int i = 0; i < colMatrixTwo; i++) {
+		final Term[][] resultMatrix = new Term[rowMatrixTwo][1];
+		for (int i = 0; i < rowMatrixTwo; i++) {
 			resultMatrix[i][0] = script.getScript().numeral("0");
 
 		}
@@ -410,7 +408,10 @@ public final class QvasrUtils {
 		if (gcd == BigInteger.ZERO) {
 			gcd = BigInteger.ONE;
 		}
-		final BigInteger lcm = mult.divide(gcd);
+		BigInteger lcm = mult.divide(gcd);
+		if (lcm.equals(BigInteger.ONE)) {
+			lcm = gcd;
+		}
 		final Integer[][] integerSimulationMatrix = new Integer[qvasrAbstraction
 				.getSimulationMatrix().length][qvasrAbstraction.getSimulationMatrix()[0].length];
 		for (int i = 0; i < integerSimulationMatrix.length; i++) {
