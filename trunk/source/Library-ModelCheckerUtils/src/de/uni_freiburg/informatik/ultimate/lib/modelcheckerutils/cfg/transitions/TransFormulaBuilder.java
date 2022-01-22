@@ -388,7 +388,6 @@ public class TransFormulaBuilder {
 			if (!consts.isEmpty()) {
 				throw new UnsupportedOperationException("constants not yet supported");
 			}
-
 			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rhs.get(i), mgdScript, symbolTable);
 			rhsPvs.addAll(tvp.getVars());
 		}
@@ -397,25 +396,32 @@ public class TransFormulaBuilder {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
 		for (final IProgramVar pv : rhsPvs) {
-			final TermVariable freshTv =
-					mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
+			final TermVariable freshTv = mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(),
+					pv.getTermVariable().getSort());
 			substitutionMapping.put(pv.getTermVariable(), freshTv);
 			tfb.addInVar(pv, freshTv);
+			// outVar may be replaced later
 			tfb.addOutVar(pv, freshTv);
 		}
+		final List<Term> rhsRenamed = rhs.stream().map(x -> Substitution.apply(mgdScript, substitutionMapping, x))
+				.collect(Collectors.toList());
 
 		final List<Term> conjuncts = new ArrayList<>();
 		for (int i = 0; i < lhs.size(); i++) {
 			final IProgramVar pv = lhs.get(i);
-			final TermVariable freshTv =
-					mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
-			tfb.addOutVar(pv, freshTv);
-			if (lhsAreAlsoInVars) {
-				substitutionMapping.put(pv.getTermVariable(), freshTv);
-				tfb.addInVar(pv, freshTv);
+			TermVariable outVar = tfb.getOutVar(pv);
+			if (outVar == null || !lhsAreAlsoInVars) {
+				// create new variable if we do not yet have an outVar for pv
+				// or if the outVar should be different from the inVar
+				outVar = mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
+				tfb.addOutVar(pv, outVar);
+				if (lhsAreAlsoInVars) {
+					// if inVar and outVar should be similar, we entered the outer "if" only because
+					// there was not outVar yet, in this case we also have to add the inVar
+					tfb.addInVar(pv, outVar);
+				}
 			}
-			final Term renamedRightHandSide = Substitution.apply(mgdScript, substitutionMapping, rhs.get(i));
-			conjuncts.add(SmtUtils.binaryEquality(mgdScript.getScript(), freshTv, renamedRightHandSide));
+			conjuncts.add(SmtUtils.binaryEquality(mgdScript.getScript(), outVar, rhsRenamed.get(i)));
 		}
 
 		final Term conjunction = SmtUtils.and(mgdScript.getScript(), conjuncts);
