@@ -56,7 +56,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		LEFT, RIGHT, MIDDLE
 	}
 
-	private final List<Element> mElements;
+	protected final List<Element> mElements;
 	private boolean mContradiction;
 	private final HashSet<L> mLetters;
 
@@ -83,6 +83,10 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 
 		mLetters = new HashSet<>(other.mLetters);
 		mContradiction = other.mContradiction;
+	}
+
+	protected LeftRightSplit<L> duplicateThis() {
+		return new LeftRightSplit<>(this);
 	}
 
 	/**
@@ -114,7 +118,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 			}
 			final int index = iter.previousIndex();
 			if (mElements.get(index).mDirection == Direction.MIDDLE) {
-				duplicatedSplit = new LeftRightSplit<>(this);
+				duplicatedSplit = duplicateThis();
 				duplicatedSplit.moveEntry(index, letter, Direction.RIGHT);
 				duplicatedSplit.removeDuplicate(index);
 				moveEntry(index, letter, Direction.LEFT);
@@ -172,10 +176,25 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 				reads.removeAll(elem.mLetter.getTransformula().getOutVars().keySet());
 			}
 		}
+
+		if (mElements.get(index).mDirection == Direction.LEFT) {
+			final Set<IProgramVar> writes = mElements.get(index).mLetter.getTransformula().getOutVars().keySet();
+			final ListIterator<Element> iter = mElements.listIterator(index);
+			iter.next();
+			for (final Element elem : (Iterable<Element>) () -> iter) {
+				if (DataStructureUtils.haveNonEmptyIntersection(writes,
+						elem.mLetter.getTransformula().getInVars().keySet())) {
+					elem.mAnnotation3.addAll(DataStructureUtils.intersection(writes,
+							elem.mLetter.getTransformula().getOutVars().keySet()));
+				}
+				writes.removeAll(elem.mLetter.getTransformula().getOutVars().keySet());
+			}
+		}
+
 		mElements.remove(index);
 	}
 
-	private void moveEntry(final int index, final L letter, final Direction direction) {
+	protected void moveEntry(final int index, final L letter, final Direction direction) {
 		final Direction currentDirection = mElements.get(index).mDirection;
 		if (currentDirection == direction) {
 			return;
@@ -189,7 +208,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		applyRules(letter, index, direction);
 	}
 
-	private void applyRules(final L letter, final int index, final Direction direction) {
+	protected void applyRules(final L letter, final int index, final Direction direction) {
 		// Rule 1
 		if (direction == Direction.RIGHT) {
 			applyRule1(letter, index);
@@ -421,21 +440,20 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 				}
 
 				if (elem.mDirection == Direction.MIDDLE) {
-					final LeftRightSplit<L> leftTest = new LeftRightSplit<>(this);
+					final LeftRightSplit<L> leftTest = duplicateThis();
 					leftTest.moveEntry(iter.previousIndex(), elem.mLetter, Direction.LEFT);
-					leftTest.applyRule5();
 					if (leftTest.containsContradiction()) {
 						moveEntry(iter.previousIndex(), elem.mLetter, Direction.RIGHT);
 						changed = true;
 						continue;
 					}
 
-					final LeftRightSplit<L> rightTest = new LeftRightSplit<>(this);
+					final LeftRightSplit<L> rightTest = duplicateThis();
 					rightTest.moveEntry(iter.previousIndex(), elem.mLetter, Direction.RIGHT);
-					rightTest.applyRule5();
 					if (rightTest.containsContradiction()) {
 						moveEntry(iter.previousIndex(), elem.mLetter, Direction.LEFT);
 						changed = true;
+						continue;
 					}
 				}
 			}
@@ -476,17 +494,19 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		return "LeftRightSplit [mElements=" + mElements + "]";
 	}
 
-	private class Element {
-		private final L mLetter;
-		private Direction mDirection;
+	protected class Element {
+		protected final L mLetter;
+		protected Direction mDirection;
 		private final HashSet<IProgramVar> mAnnotation1;
 		private final HashSet<IProgramVar> mAnnotation2;
+		private final HashSet<IProgramVar> mAnnotation3;
 
 		public Element(final L letter, final Direction direction) {
 			mLetter = letter;
 			mDirection = direction;
 			mAnnotation1 = new HashSet<>();
 			mAnnotation2 = new HashSet<>();
+			mAnnotation3 = new HashSet<>();
 		}
 
 		public Element(final Element other) {
@@ -494,13 +514,14 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 			mDirection = other.mDirection;
 			mAnnotation1 = new HashSet<>(other.mAnnotation1);
 			mAnnotation2 = new HashSet<>(other.mAnnotation2);
+			mAnnotation3 = new HashSet<>(other.mAnnotation3);
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + Objects.hash(mDirection, mLetter, mAnnotation1, mAnnotation2);
+			result = prime * result + Objects.hash(mDirection, mLetter, mAnnotation1, mAnnotation2, mAnnotation3);
 			return result;
 		}
 
@@ -518,7 +539,14 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 			final Element other = (Element) obj;
 			return mDirection == other.mDirection && Objects.equals(mLetter, other.mLetter)
 					&& Objects.equals(mAnnotation1, other.mAnnotation1)
-					&& Objects.equals(mAnnotation2, other.mAnnotation2);
+					&& Objects.equals(mAnnotation2, other.mAnnotation2)
+					&& Objects.equals(mAnnotation3, other.mAnnotation3);
+		}
+
+		@Override
+		public String toString() {
+			return "Element [mLetter=" + mLetter.hashCode() + ", mDirection=" + mDirection + ", mAnnotation1="
+					+ mAnnotation1 + ", mAnnotation2=" + mAnnotation2 + ", mAnnotation3=" + mAnnotation3 + "]";
 		}
 	}
 }
