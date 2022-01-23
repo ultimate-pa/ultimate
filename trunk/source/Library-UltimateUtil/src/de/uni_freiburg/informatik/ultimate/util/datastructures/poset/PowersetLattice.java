@@ -40,8 +40,30 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of elements in the set
  */
 public class PowersetLattice<T> implements ILattice<Set<T>> {
+
+	private final Set<T> mTop;
+
+	/**
+	 * Creates the subset lattice for the given finite set.
+	 *
+	 * @param fullSet
+	 *            The set of all elements that may occur in compared sets.
+	 */
+	public PowersetLattice(final Set<T> fullSet) {
+		assert fullSet != null : "full set must not be null";
+		mTop = fullSet;
+	}
+
+	/**
+	 * Creates the lattice of all sets over the given element type. This lattice has no top element.
+	 */
+	public PowersetLattice() {
+		mTop = null;
+	}
+
 	@Override
 	public ComparisonResult compare(final Set<T> o1, final Set<T> o2) {
+		assert mTop == null || (mTop.containsAll(o1) && mTop.containsAll(o2)) : "set with unexpected elements";
 		if (o1.equals(o2)) {
 			return ComparisonResult.EQUAL;
 		}
@@ -61,16 +83,21 @@ public class PowersetLattice<T> implements ILattice<Set<T>> {
 
 	@Override
 	public Set<T> getTop() {
-		throw new UnsupportedOperationException("set lattice has no top element unless domain is finite");
+		if (mTop == null) {
+			throw new UnsupportedOperationException("set lattice has no top element unless domain is finite");
+		}
+		return mTop;
 	}
 
 	@Override
 	public Set<T> supremum(final Set<T> h1, final Set<T> h2) {
+		assert mTop == null || (mTop.containsAll(h1) && mTop.containsAll(h2)) : "set with unexpected elements";
 		return DataStructureUtils.union(h1, h2);
 	}
 
 	@Override
 	public Set<T> infimum(final Set<T> h1, final Set<T> h2) {
+		assert mTop == null || (mTop.containsAll(h1) && mTop.containsAll(h2)) : "set with unexpected elements";
 		return DataStructureUtils.intersection(h1, h2);
 	}
 }
