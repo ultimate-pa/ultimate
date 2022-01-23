@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Dennis Wölfing
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2021-2022 Dennis Wölfing
+ * Copyright (C) 2021-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -125,5 +125,10 @@ public class DependencyRank implements Comparable<DependencyRank> {
 		}
 		final DependencyRank other = (DependencyRank) obj;
 		return Objects.equals(mRanks, other.mRanks);
+	}
+
+	@Override
+	public String toString() {
+		return "DependencyRank [" + mRanks + "]";
 	}
 }

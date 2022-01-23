@@ -34,6 +34,8 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ReversedIterator;
@@ -74,7 +76,11 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	 *            The left-right split to copy.
 	 */
 	public LeftRightSplit(final LeftRightSplit<L> other) {
-		mElements = new ArrayList<>(other.mElements);
+		mElements = new ArrayList<>();
+		for (final Element elem : other.mElements) {
+			mElements.add(new Element(elem));
+		}
+
 		mLetters = new HashSet<>(other.mLetters);
 		mContradiction = other.mContradiction;
 	}
@@ -90,6 +96,10 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	 *         current left-right split is sufficient.
 	 */
 	public LeftRightSplit<L> addStatement(final L letter, final Direction direction) {
+		if (mContradiction) {
+			return null;
+		}
+
 		mElements.add(new Element(letter, Direction.MIDDLE));
 
 		moveEntry(mElements.size() - 1, letter, direction);
@@ -115,12 +125,20 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		return duplicatedSplit;
 	}
 
+	public void moveLast(final Direction direction) {
+		if (mElements.isEmpty()) {
+			mContradiction = true;
+			return;
+		}
+		moveEntry(mElements.size() - 1, mElements.get(mElements.size() - 1).mLetter, direction);
+	}
+
 	private void removeDuplicate(final int index) {
 		if (mElements.get(index).mDirection == Direction.RIGHT) {
 			final Set<IProgramVar> writes = mElements.get(index).mLetter.getTransformula().getOutVars().keySet();
-			final ListIterator<Element> iter2 = mElements.listIterator(index);
-			iter2.next();
-			for (final Element elem : (Iterable<Element>) () -> iter2) {
+			final ListIterator<Element> iter = mElements.listIterator(index);
+			iter.next();
+			for (final Element elem : (Iterable<Element>) () -> iter) {
 				if (elem.mDirection != Direction.RIGHT && DataStructureUtils.haveNonEmptyIntersection(writes,
 						elem.mLetter.getTransformula().getOutVars().keySet())) {
 					elem.mAnnotation1.addAll(DataStructureUtils.intersection(writes,
@@ -131,8 +149,8 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 
 		if (mElements.get(index).mDirection == Direction.LEFT) {
 			final Set<IProgramVar> writes = mElements.get(index).mLetter.getTransformula().getOutVars().keySet();
-			final ListIterator<Element> iter2 = new ReversedIterator<>(mElements.listIterator(index));
-			for (final Element elem : (Iterable<Element>) () -> iter2) {
+			final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
+			for (final Element elem : (Iterable<Element>) () -> iter) {
 				if (elem.mDirection != Direction.LEFT && DataStructureUtils.haveNonEmptyIntersection(writes,
 						elem.mLetter.getTransformula().getOutVars().keySet())) {
 					elem.mAnnotation1.addAll(DataStructureUtils.intersection(writes,
@@ -144,8 +162,8 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		if (mElements.get(index).mDirection == Direction.RIGHT) {
 			final Set<IProgramVar> reads =
 					new HashSet<>(mElements.get(index).mLetter.getTransformula().getInVars().keySet());
-			final ListIterator<Element> iter2 = new ReversedIterator<>(mElements.listIterator(index));
-			for (final Element elem : (Iterable<Element>) () -> iter2) {
+			final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
+			for (final Element elem : (Iterable<Element>) () -> iter) {
 				if (elem.mDirection != Direction.RIGHT && DataStructureUtils.haveNonEmptyIntersection(reads,
 						elem.mLetter.getTransformula().getOutVars().keySet())) {
 					elem.mAnnotation2.addAll(DataStructureUtils.intersection(reads,
@@ -192,7 +210,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 			applyRule4(letter, index);
 		}
 
-		if (direction == Direction.LEFT) {
+		if (direction == Direction.LEFT && !mElements.get(index).mAnnotation2.isEmpty()) {
 			final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
 			for (final Element elem : (Iterable<Element>) () -> iter) {
 				if (DataStructureUtils.haveNonEmptyIntersection(mElements.get(index).mAnnotation2,
@@ -214,7 +232,27 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		// Rule 5 is executed separately at the end because it is more costly than the other rules.
 	}
 
+	private static <L extends IIcfgTransition<?>> Set<String> getThreadId(final L transition) {
+		if (transition instanceof IcfgForkThreadOtherTransition) {
+			return Set.of(transition.getPrecedingProcedure(), transition.getSucceedingProcedure());
+		}
+		if (transition instanceof IcfgJoinThreadOtherTransition) {
+			return Set.of(transition.getPrecedingProcedure(), transition.getSucceedingProcedure());
+		}
+
+		assert transition.getPrecedingProcedure().equals(transition.getSucceedingProcedure());
+		return Set.of(transition.getPrecedingProcedure());
+	}
+
+	private boolean isInSameThread(final L letter1, final L letter2) {
+		return DataStructureUtils.haveNonEmptyIntersection(getThreadId(letter1), getThreadId(letter2));
+	}
+
 	private void applyRule1(final L letter, final int index) {
+		if (mContradiction) {
+			return;
+		}
+
 		final ListIterator<Element> iter = mElements.listIterator(index);
 		iter.next();
 		boolean foundSameThread = false;
@@ -222,7 +260,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 
 		for (final Element elem : (Iterable<Element>) () -> iter) {
 			boolean stronglyDependent = false;
-			if (!foundSameThread && elem.mLetter.getPrecedingProcedure().equals(letter.getPrecedingProcedure())) {
+			if (!foundSameThread && isInSameThread(elem.mLetter, letter)) {
 				foundSameThread = true;
 				stronglyDependent = true;
 			}
@@ -241,13 +279,17 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	}
 
 	private void applyRule2(final L letter, final int index) {
+		if (mContradiction) {
+			return;
+		}
+
 		final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
 		boolean foundSameThread = false;
 		final Set<IProgramVar> read = new HashSet<>(letter.getTransformula().getInVars().keySet());
 
 		for (final Element elem : (Iterable<Element>) () -> iter) {
 			boolean stronglyDependent = false;
-			if (!foundSameThread && elem.mLetter.getPrecedingProcedure().equals(letter.getPrecedingProcedure())) {
+			if (!foundSameThread && isInSameThread(elem.mLetter, letter)) {
 				foundSameThread = true;
 				stronglyDependent = true;
 			}
@@ -266,38 +308,45 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	}
 
 	private void applyRule3(final L letter, final int index) {
-		final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
+		if (mContradiction) {
+			return;
+		}
+
 		final Set<IProgramVar> read = new HashSet<>(letter.getTransformula().getInVars().keySet());
+		if (read.isEmpty()) {
+			return;
+		}
 
+		final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
 		for (final Element elem : (Iterable<Element>) () -> iter) {
-			if (DataStructureUtils.haveNonEmptyIntersection(read,
-					elem.mLetter.getTransformula().getOutVars().keySet())) {
-				final Set<IProgramVar> vars =
-						DataStructureUtils.intersection(read, elem.mLetter.getTransformula().getOutVars().keySet());
-				read.removeAll(vars);
+			final Set<IProgramVar> vars =
+					DataStructureUtils.intersection(read, elem.mLetter.getTransformula().getOutVars().keySet());
+			if (vars.isEmpty()) {
+				continue;
+			}
+			read.removeAll(vars);
 
-				if (elem.mDirection == Direction.LEFT) {
-					if (DataStructureUtils.haveNonEmptyIntersection(elem.mAnnotation1, vars)) {
-						mContradiction = true;
-						return;
+			if (elem.mDirection == Direction.LEFT) {
+				if (DataStructureUtils.haveNonEmptyIntersection(elem.mAnnotation1, vars)) {
+					mContradiction = true;
+					return;
+				}
+
+				final ListIterator<Element> iter2 =
+						new ReversedIterator<>(mElements.listIterator(iter.previousIndex()));
+				for (final Element elem2 : (Iterable<Element>) () -> iter2) {
+					if (DataStructureUtils.haveNonEmptyIntersection(vars,
+							elem2.mLetter.getTransformula().getOutVars().keySet())) {
+						moveEntry(iter2.previousIndex(), elem2.mLetter, Direction.LEFT);
 					}
+				}
 
-					final ListIterator<Element> iter2 =
-							new ReversedIterator<>(mElements.listIterator(iter.previousIndex()));
-					for (final Element elem2 : (Iterable<Element>) () -> iter2) {
-						if (DataStructureUtils.haveNonEmptyIntersection(vars,
-								elem2.mLetter.getTransformula().getOutVars().keySet())) {
-							moveEntry(iter2.previousIndex(), elem2.mLetter, Direction.LEFT);
-						}
-					}
-
-					final ListIterator<Element> iter3 = mElements.listIterator(index);
-					iter3.next();
-					for (final Element elem2 : (Iterable<Element>) () -> iter3) {
-						if (DataStructureUtils.haveNonEmptyIntersection(vars,
-								elem2.mLetter.getTransformula().getOutVars().keySet())) {
-							moveEntry(iter3.previousIndex(), elem2.mLetter, Direction.RIGHT);
-						}
+				final ListIterator<Element> iter3 = mElements.listIterator(index);
+				iter3.next();
+				for (final Element elem2 : (Iterable<Element>) () -> iter3) {
+					if (DataStructureUtils.haveNonEmptyIntersection(vars,
+							elem2.mLetter.getTransformula().getOutVars().keySet())) {
+						moveEntry(iter3.previousIndex(), elem2.mLetter, Direction.RIGHT);
 					}
 				}
 			}
@@ -306,39 +355,46 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 
 	// TODO: Rule 3 and rule 4 should be implemented as a single function.
 	private void applyRule4(final L letter, final int index) {
+		if (mContradiction) {
+			return;
+		}
+
 		final ListIterator<Element> iter = mElements.listIterator(index);
 		iter.next();
 		final Set<IProgramVar> writes = new HashSet<>(letter.getTransformula().getOutVars().keySet());
+		if (writes.isEmpty()) {
+			return;
+		}
 
 		for (final Element elem : (Iterable<Element>) () -> iter) {
-			if (DataStructureUtils.haveNonEmptyIntersection(writes,
-					elem.mLetter.getTransformula().getInVars().keySet())) {
-				final Set<IProgramVar> vars =
-						DataStructureUtils.intersection(writes, elem.mLetter.getTransformula().getInVars().keySet());
-				writes.removeAll(vars);
+			final Set<IProgramVar> vars =
+					DataStructureUtils.intersection(writes, elem.mLetter.getTransformula().getInVars().keySet());
+			if (vars.isEmpty()) {
+				continue;
+			}
+			writes.removeAll(vars);
 
-				if (elem.mDirection == Direction.RIGHT) {
-					if (DataStructureUtils.haveNonEmptyIntersection(mElements.get(index).mAnnotation1, vars)) {
-						mContradiction = true;
-						return;
+			if (elem.mDirection == Direction.RIGHT) {
+				if (DataStructureUtils.haveNonEmptyIntersection(mElements.get(index).mAnnotation1, vars)) {
+					mContradiction = true;
+					return;
+				}
+
+				final ListIterator<Element> iter2 =
+						new ReversedIterator<>(mElements.listIterator(iter.previousIndex()));
+				for (final Element elem2 : (Iterable<Element>) () -> iter2) {
+					if (DataStructureUtils.haveNonEmptyIntersection(vars,
+							elem2.mLetter.getTransformula().getOutVars().keySet())) {
+						moveEntry(iter2.previousIndex(), elem2.mLetter, Direction.LEFT);
 					}
+				}
 
-					final ListIterator<Element> iter2 =
-							new ReversedIterator<>(mElements.listIterator(iter.previousIndex()));
-					for (final Element elem2 : (Iterable<Element>) () -> iter2) {
-						if (DataStructureUtils.haveNonEmptyIntersection(vars,
-								elem2.mLetter.getTransformula().getOutVars().keySet())) {
-							moveEntry(iter2.previousIndex(), elem2.mLetter, Direction.LEFT);
-						}
-					}
-
-					final ListIterator<Element> iter3 = mElements.listIterator(index);
-					iter3.next();
-					for (final Element elem2 : (Iterable<Element>) () -> iter3) {
-						if (DataStructureUtils.haveNonEmptyIntersection(vars,
-								elem2.mLetter.getTransformula().getOutVars().keySet())) {
-							moveEntry(iter3.previousIndex(), elem2.mLetter, Direction.RIGHT);
-						}
+				final ListIterator<Element> iter3 = mElements.listIterator(index);
+				iter3.next();
+				for (final Element elem2 : (Iterable<Element>) () -> iter3) {
+					if (DataStructureUtils.haveNonEmptyIntersection(vars,
+							elem2.mLetter.getTransformula().getOutVars().keySet())) {
+						moveEntry(iter3.previousIndex(), elem2.mLetter, Direction.RIGHT);
 					}
 				}
 			}
@@ -346,12 +402,24 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	}
 
 	private void applyRule5() {
+		if (mElements.stream().allMatch(e -> e.mDirection == Direction.MIDDLE)) {
+			return;
+		}
+
+		if (mContradiction) {
+			return;
+		}
+
 		boolean changed;
 
 		do {
 			changed = false;
 			final ListIterator<Element> iter = mElements.listIterator();
 			for (final Element elem : (Iterable<Element>) () -> iter) {
+				if (mContradiction) {
+					return;
+				}
+
 				if (elem.mDirection == Direction.MIDDLE) {
 					final LeftRightSplit<L> leftTest = new LeftRightSplit<>(this);
 					leftTest.moveEntry(iter.previousIndex(), elem.mLetter, Direction.LEFT);
@@ -403,6 +471,11 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		return mContradiction == other.mContradiction && Objects.equals(mElements, other.mElements);
 	}
 
+	@Override
+	public String toString() {
+		return "LeftRightSplit [mElements=" + mElements + "]";
+	}
+
 	private class Element {
 		private final L mLetter;
 		private Direction mDirection;
@@ -414,6 +487,13 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 			mDirection = direction;
 			mAnnotation1 = new HashSet<>();
 			mAnnotation2 = new HashSet<>();
+		}
+
+		public Element(final Element other) {
+			mLetter = other.mLetter;
+			mDirection = other.mDirection;
+			mAnnotation1 = new HashSet<>(other.mAnnotation1);
+			mAnnotation2 = new HashSet<>(other.mAnnotation2);
 		}
 
 		@Override

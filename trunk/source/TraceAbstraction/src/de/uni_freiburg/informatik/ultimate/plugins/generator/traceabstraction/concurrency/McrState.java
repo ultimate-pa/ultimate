@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -155,8 +154,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		boolean dependentOnLast = mLastStatement == null
 				|| DataStructureUtils.haveNonEmptyIntersection(getThreadId(transition), getThreadId(mLastStatement))
 				|| DataStructureUtils.haveNonEmptyIntersection(reads,
-						mLastStatement.getTransformula().getOutVars().keySet())
-				|| !(mLastStatement instanceof IcfgInternalTransition);
+						mLastStatement.getTransformula().getOutVars().keySet());
 
 		final Set<LeftRightSplit<L>> newLeftRightSplits = new HashSet<>();
 
@@ -189,6 +187,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 				for (final IProgramVar var : DataStructureUtils
 						.intersection(mLastStatement.getTransformula().getInVars().keySet(), writes)) {
 					// TODO: WRWC
+					deprank = deprank.getMax(lastStDeprank.add(rank));
 					dependentOnLast = true;
 				}
 			}
@@ -206,18 +205,9 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 					}
 				}
 			}
-
-			if (DataStructureUtils.haveNonEmptyIntersection(mLastStatement.getTransformula().getInVars().keySet(),
-					writes)
-					|| DataStructureUtils
-							.haveNonEmptyIntersection(mLastStatement.getTransformula().getOutVars().keySet(), writes)) {
-				// TODO: properly handle each kind of conflict.
-				deprank = deprank.getMax(lastStDeprank.add(rank));
-				dependentOnLast = true;
-			}
 		}
 
-		if (!dependentOnLast && mLastStatement.hashCode() > rank && transition instanceof IcfgInternalTransition) {
+		if (!dependentOnLast && mLastStatement.hashCode() > rank) {
 			return null;
 		}
 
@@ -255,7 +245,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mLastStatement, mLastWriteSt, mOldState, mThreads, mVariables);
+		return Objects.hash(mLastStatement, mLastWriteSt, mLeftRightSplits, mOldState, mThreads, mVariables);
 	}
 
 	@Override
@@ -269,9 +259,17 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final McrState<?, ?> other = (McrState<?, ?>) obj;
+		final McrState other = (McrState) obj;
 		return Objects.equals(mLastStatement, other.mLastStatement) && Objects.equals(mLastWriteSt, other.mLastWriteSt)
+				&& Objects.equals(mLeftRightSplits, other.mLeftRightSplits)
 				&& Objects.equals(mOldState, other.mOldState) && Objects.equals(mThreads, other.mThreads)
 				&& Objects.equals(mVariables, other.mVariables);
+	}
+
+	@Override
+	public String toString() {
+		return "McrState [mOldState=" + mOldState + ", mThreads=" + mThreads + ", mVariables=" + mVariables
+				+ ", mLastWriteSt=" + mLastWriteSt + ", mLastStatement=" + mLastStatement + ", mLeftRightSplits="
+				+ mLeftRightSplits + "]";
 	}
 }

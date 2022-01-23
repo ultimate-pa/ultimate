@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Dennis Wölfing
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2021-2022 Dennis Wölfing
+ * Copyright (C) 2021-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -162,6 +162,11 @@ public class McrStateFactory<L extends IIcfgTransition<?>> implements IEmptyStac
 
 		public IPredicate getUnderlying() {
 			return mUnderlying;
+		}
+
+		@Override
+		public String toString() {
+			return "McrPredicate [" + mState + "]";
 		}
 	}
 }
