@@ -26,12 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 
+import java.util.Comparator;
+import java.util.Objects;
+
 /**
  * Comparator for partially ordered sets.
  *
  * @author Matthias Heizmann
  *
  * @param <T>
+ *            the type of compared elements
  */
 @FunctionalInterface
 public interface IPartialComparator<T> {
@@ -91,4 +95,31 @@ public interface IPartialComparator<T> {
 	 */
 	ComparisonResult compare(T o1, T o2);
 
+	/**
+	 * Converts a Java {@link Comparator} into a partial comparator.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <T>
+	 *            The type of compared objects
+	 *
+	 * @param comp
+	 *            The original comparator
+	 * @param isConsistent
+	 *            whether or not the given comparator is "consistent with equals", i.e., 0 is only returned for equal
+	 *            elements (the underlying order is total)
+	 * @return the new partial comparator
+	 */
+	static <T> IPartialComparator<T> fromNonPartialComparator(final Comparator<T> comp, final boolean isConsistent) {
+		if (isConsistent) {
+			return (x, y) -> ComparisonResult.fromNonPartialComparison(comp.compare(x, y));
+		}
+		return (x, y) -> {
+			final ComparisonResult result = ComparisonResult.fromNonPartialComparison(comp.compare(x, y));
+			if (result == ComparisonResult.EQUAL && !Objects.equals(x, y)) {
+				return ComparisonResult.INCOMPARABLE;
+			}
+			return result;
+		};
+	}
 }
