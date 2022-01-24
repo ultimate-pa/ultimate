@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class SemanticIndependenceConditionGeneratorTest {
-	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 10000000000000L;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
@@ -90,6 +90,8 @@ public class SemanticIndependenceConditionGeneratorTest {
 
 	private Term axioms;
 
+	// VariableAbstraction vaeX = new VariableAbstraction<>();
+	// VariableAbstraction in die ModelCheckerUtils
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);

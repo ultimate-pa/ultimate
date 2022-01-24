@@ -251,6 +251,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata,
    de.uni_freiburg.informatik.ultimate.core.model.models",
  de.uni_freiburg.informatik.ultimate.automata.partialorder,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction,
  de.uni_freiburg.informatik.ultimate.automata.petrinet;
   uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures,
    de.uni_freiburg.informatik.ultimate.util.datastructures.relation,

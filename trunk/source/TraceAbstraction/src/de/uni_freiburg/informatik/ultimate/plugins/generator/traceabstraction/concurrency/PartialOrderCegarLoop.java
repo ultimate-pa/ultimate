@@ -126,6 +126,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		// Compute the enhanced interpolant automaton
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
+		// auf dem RefinementResult hat man die Information, welche Ipredicates überhaupt in dem Automaten vorkommen
+		// können
+		// mRefinementResult.getUsedTracePredicates()
+		// ist eine Liste von qualified predicates, und da noch irgendwann predicates
+		// bekommt listen von prädikaten;
+		// Zustäne von automaten sind Konjunktionen von automaten. Uns reichen diese prädikate
+		// Menge der Prädikate
+		// wird neue Mehtode in PartialOrderCegarLoop; der VariableAbstraction nicht mehr Automaten, sondern Menge der
+		// Variablen
+
+		// todo: Diesem Kommentar in eine Methode verwandeln. Menge der benutzen Prädikaten berechnen.
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
@@ -145,7 +156,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
-
+		// TODO (Marcel 2022-01-12) New Variable Ábstraction provide abstracted variables here
+		final VariableAbstraction<L> varAb =
+				new VariableAbstraction<>((INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction);
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
