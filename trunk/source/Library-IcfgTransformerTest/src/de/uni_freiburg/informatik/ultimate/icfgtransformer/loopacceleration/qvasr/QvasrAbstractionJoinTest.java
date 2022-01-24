@@ -131,8 +131,8 @@ public class QvasrAbstractionJoinTest {
 		final Rational[] additionVectorResultTwo = { Rational.valueOf(new BigInteger("1"), BigInteger.ONE),
 				Rational.valueOf(new BigInteger("1"), BigInteger.TWO) };
 
-		final Qvasr qvasrResult = new Qvasr(resetVectorResultRationalOne, additionVectorResultRationalOne);
-		qvasrResult.addTransformer(new Pair<>(resetVectorResultRationalTwo, additionVectorResultTwo));
+		final Qvasr qvasrResult = new Qvasr(resetVectorResultRationalTwo, additionVectorResultTwo);
+		qvasrResult.addTransformer(new Pair<>(resetVectorResultRationalOne, additionVectorResultRationalOne));
 
 		testQvasrEquality(qvasrResult, joinedAbstractions.getVasr());
 		testMatrixEquality(joinedAbstractions.getSimulationMatrix(), simulationMatrixResult);

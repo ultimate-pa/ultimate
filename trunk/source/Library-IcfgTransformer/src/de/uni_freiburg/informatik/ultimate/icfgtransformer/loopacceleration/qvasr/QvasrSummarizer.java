@@ -89,18 +89,14 @@ public class QvasrSummarizer {
 	 * @return A summary of these changes in form of a {@link UnmodifiableTransFormula}
 	 */
 	public UnmodifiableTransFormula summarizeLoop(final UnmodifiableTransFormula transitionFormula) {
-		final Term transitionTerm = transitionFormula.getFormula();
-		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
-		final Map<IProgramVar, TermVariable> inVarsReal = new HashMap<>();
-		final Map<IProgramVar, TermVariable> outVarsReal = new HashMap<>();
 		final SimultaneousUpdate su;
 		try {
 			su = SimultaneousUpdate.fromTransFormula(transitionFormula, mScript);
 		} catch (final Exception e) {
 			throw new UnsupportedOperationException("Could not compute Simultaneous Update!");
 		}
+		final Map<IProgramVar, TermVariable> inVarsReal = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVarsReal = new HashMap<>();
 		for (final IProgramVar assVar : su.getDeterministicAssignment().keySet()) {
 			if (transitionFormula.getInVars().containsKey(assVar)) {
 				inVarsReal.put(assVar, transitionFormula.getInVars().get(assVar));
@@ -115,13 +111,15 @@ public class QvasrSummarizer {
 		final int tfDimension = transitionFormula.getAssignedVars().size();
 		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
 		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
-
+		final Term transitionTerm = transitionFormula.getFormula();
 		final QvasrAbstractor qvasrAbstractor = new QvasrAbstractor(mScript, mLogger, mServices);
-
+		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
 
 		for (final Term disjunct : disjuncts) {
-			final QvasrAbstraction qvasrAbstraction = qvasrAbstractor.computeAbstraction(disjunct, transitionFormula);
+			final UnmodifiableTransFormula disjunctTf = QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
+			final QvasrAbstraction qvasrAbstraction = qvasrAbstractor.computeAbstraction(disjunctTf);
 			bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction);
 		}
 
@@ -195,6 +193,10 @@ public class QvasrSummarizer {
 			qvasrDimensionConjunction.add(SmtUtils.or(script.getScript(), dimensionDisjunction));
 		}
 
+		for (final Term k : kToTransformer.values()) {
+			final Term kGeqZero = SmtUtils.geq(script.getScript(), k, script.getScript().numeral("0"));
+			qvasrDimensionConjunction.add(kGeqZero);
+		}
 		Term loopSummary = SmtUtils.and(script.getScript(), qvasrDimensionConjunction);
 		loopSummary = SmtUtils.quantifier(script.getScript(), QuantifiedFormula.EXISTS, kToTransformer.values(),
 				SmtUtils.and(script.getScript(), loopSummary));

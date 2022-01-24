@@ -110,14 +110,11 @@ public class QvasrAbstractor {
 	/**
 	 * Compute a Q-Vasr-abstraction for a given transition formula.
 	 *
-	 * @param transitionTerm
-	 *            TODO: Deal with singular disjuncts of the original loop tf
 	 * @param transitionFormula
 	 *            A transition formula from which an overapproximative qvasr-abstraction is computed.
 	 * @return A {@link QvasrAbstraction} that overapproximates the changes to variables of the transition formula.
 	 */
-	public QvasrAbstraction computeAbstraction(final Term transitionTerm,
-			final UnmodifiableTransFormula transitionFormula) {
+	public QvasrAbstraction computeAbstraction(final UnmodifiableTransFormula transitionFormula) {
 
 		final Map<TermVariable, Term> updatesInFormulaAdditions = getUpdates(transitionFormula, BaseType.ADDITIONS);
 		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(transitionFormula, BaseType.RESETS);
@@ -178,7 +175,6 @@ public class QvasrAbstractor {
 						final Term toBeDivided = matrix[i][k];
 						final Term mult =
 								QvasrAbstractor.simplifyRealMultiplication(script, toBeDivided, dividerInverse);
-						final Term division = QvasrAbstractor.simplifyRealDivision(script, toBeDivided, divider);
 						matrix[i][k] = mult;
 					}
 					break;
@@ -1305,7 +1301,7 @@ public class QvasrAbstractor {
 	 */
 	private Term[][] constructBaseMatrix(final Map<TermVariable, Term> updates,
 			final UnmodifiableTransFormula transitionFormula) {
-		final int columnDimension = transitionFormula.getOutVars().size();
+		final int columnDimension = transitionFormula.getAssignedVars().size();
 
 		final Set<Set<Term>> setToZero = new HashSet<>();
 		final Map<Term, Term> intToReal = new HashMap<>();

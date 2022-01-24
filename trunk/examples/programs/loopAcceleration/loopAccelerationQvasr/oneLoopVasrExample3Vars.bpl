@@ -7,16 +7,18 @@ procedure main() {
 	var x,y,z : int;
 	x := 0;
 	y := 0;
+	z := 0;
 	
-	while (x <= 5) {
-		if (x - 3 > 0) {
-			x := x + 1;
-			y := y + 2;
+	while (x <= 20) {
+		if (x <= 10) {
+			z := 4;
+			x := x + y;
+			y := y + 1;
 		} else {
-			x := x + 3;
-			y := y + 2;
+			x := x + 2;
+			y := y - 3;
+			z := z + 1;
 		}
-
 	}
-	assert x >= 6;
+	assert x < 20;
 }

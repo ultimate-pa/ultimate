@@ -187,7 +187,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				}
 				accelerationFinishedCorrectly = true;
 				final Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
-				final Term term = t;
 				// t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
 
@@ -239,7 +238,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
 			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
 				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
-				// final IPredicate[] refinedInterpolants = refineMetaInterpolants(tempInterpolants, metaTrace);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Is " + interpolator.getTraceCheckResult().toString());
 				}

@@ -157,7 +157,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		} else if ("QVASR".equals(accelerationMethod)) {
 			loopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
 			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
-					mIcfg.getCfgSmtToolkit(), Arrays.asList("ite", "mod", "!=", "not"));
+					mIcfg.getCfgSmtToolkit(), Arrays.asList("No DNF"));
 			loopAccelerator = new AcceleratorQvasr(mLogger, mScript, mServices);
 		} else {
 			throw new UnsupportedOperationException();
