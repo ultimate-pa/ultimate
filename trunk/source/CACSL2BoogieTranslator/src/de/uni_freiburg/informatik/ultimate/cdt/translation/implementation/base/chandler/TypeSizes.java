@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  * Provides the information if we want to use fixed sizes for types. If yes an object of this class also provides the
@@ -488,7 +488,7 @@ public class TypeSizes {
 				final FunctionApplication funApp = (FunctionApplication) expr;
 				final Expression[] args = funApp.getArguments();
 
-				final SupportedBitvectorOperations sbo =
+				final BvOp sbo =
 						getBitvectorSmtFunctionNameFromCFunctionName(funApp.getIdentifier());
 				if (sbo == null) {
 					return null;
@@ -526,10 +526,10 @@ public class TypeSizes {
 		return null;
 	}
 
-	private static SupportedBitvectorOperations getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
+	private static BvOp getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
 		final String funName = name.substring(1).replaceAll("\\d+", "");
 		try {
-			return BitvectorConstant.SupportedBitvectorOperations.valueOf(funName);
+			return BitvectorConstant.BvOp.valueOf(funName);
 		} catch (final IllegalArgumentException iae) {
 			return null;
 		}

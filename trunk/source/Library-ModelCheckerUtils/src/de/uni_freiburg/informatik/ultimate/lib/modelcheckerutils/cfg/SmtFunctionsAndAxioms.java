@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.NonDeclaringTermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -231,7 +231,7 @@ public class SmtFunctionsAndAxioms {
 				}
 				substitutionMapping.put(paramVar, newArgs[i]);
 			}
-			setResult(new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(body));
+			setResult(Substitution.apply(mMgdScript, substitutionMapping, body));
 		}
 	}
 

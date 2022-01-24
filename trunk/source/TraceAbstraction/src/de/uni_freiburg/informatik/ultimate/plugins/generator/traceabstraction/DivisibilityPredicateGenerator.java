@@ -115,7 +115,7 @@ public class DivisibilityPredicateGenerator {
 	private Term getDivisibilityTerm(final Term term, final Integer value) {
 		final Term divisor = SmtUtils.constructIntValue(mScript, BigInteger.valueOf(value));
 		final Term zero = SmtUtils.constructIntValue(mScript, BigInteger.ZERO);
-		final Term divisible = mScript.term("=", mScript.term("mod", term, divisor), zero);
+		final Term divisible = SmtUtils.binaryEquality(mScript, mScript.term("mod", term, divisor), zero);
 		return divisible;
 	}
 

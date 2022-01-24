@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -72,9 +72,9 @@ public class ArrayEqualityExplicator {
 					ber.getRhs(), newAuxVars);
 			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), elementwiseComparison);
 		}
-		mResultTerm = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(inputTerm);
-		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm, "and", "or",
-				"=") : "input not in commuhash normal form";
+		mResultTerm = Substitution.apply(mgdScript, substitutionMapping, inputTerm);
+		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm,
+				CommuhashUtils.COMMUTATIVE_OPERATORS) : "input not in commuhash normal form";
 		if (mResultTerm.equals(inputTerm)) {
 			throw new AssertionError("Substitution failed: " + substitutionMapping);
 		}

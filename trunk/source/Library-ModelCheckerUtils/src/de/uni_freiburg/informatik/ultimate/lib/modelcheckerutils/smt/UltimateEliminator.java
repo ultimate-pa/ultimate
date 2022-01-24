@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
@@ -174,7 +173,7 @@ public class UltimateEliminator extends WrapperScript {
 		// quantified formulas.
 		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
 			final Term pnf = new PrenexNormalForm(mMgdScript).transform(lessQuantifier);
-			final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+			final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
 			if (APPLY_SIMPLE_E_SKOLEMIZATION && qs.getNumberOfQuantifierBlocks() == 1
 					&& qs.getQuantifierBlocks().get(0).getQuantifier() == QuantifiedFormula.EXISTS) {
 				return doSimpleESkolemization(lessQuantifier, qs);
@@ -194,7 +193,7 @@ public class UltimateEliminator extends WrapperScript {
 			final Term constant = mMgdScript.getScript().term(identifier);
 			substitutionMapping.put(tv, constant);
 		}
-		final Term result = new Substitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
+		final Term result = Substitution.apply(mMgdScript, substitutionMapping, qs.getInnerTerm());
 		return result;
 	}
 

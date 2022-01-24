@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
@@ -35,11 +36,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationManager;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class BvToIntTransformation extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Translate Bitvectors to Integer Formulas";
@@ -138,16 +141,20 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		}
 
 		final TranslationManager mTranslationManager;
-		mTranslationManager = new TranslationManager(mgdScript);
+		mTranslationManager = new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM);
 		mTranslationManager.setReplacementVarMaps(varMap);
 
-		final Term newFormula = mTranslationManager.translateBvtoInt(tf.getFormula());
+		final Triple<Term, Set<TermVariable>, Boolean> translated = mTranslationManager
+				.translateBvtoInt(tf.getFormula());
+		if (!translated.getSecond().isEmpty() || translated.getThird()) {
+			throw new UnsupportedOperationException();
+		}
 
-		newIntTF.setFormula(newFormula);
+		newIntTF.setFormula(translated.getFirst());
 		return newIntTF;
 	}
 
-	private Sort bvToIntSort(final ManagedScript mgdScript, final Sort sort) {
+	public static Sort bvToIntSort(final ManagedScript mgdScript, final Sort sort) {
 		if (SmtSortUtils.isBitvecSort(sort)) {
 			return SmtSortUtils.getIntSort(mgdScript);
 		} else if (SmtSortUtils.isArraySort(sort)) {
@@ -162,7 +169,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		} else if (SmtSortUtils.isBoolSort(sort)) {
 			return sort;
 		} else {
-			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
+			return sort;
+//			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
 		}
 
 	}

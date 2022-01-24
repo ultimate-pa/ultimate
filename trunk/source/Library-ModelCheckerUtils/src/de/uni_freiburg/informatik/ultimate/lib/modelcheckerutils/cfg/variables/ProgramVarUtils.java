@@ -164,7 +164,7 @@ public class ProgramVarUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		return result;
 	}
 
@@ -178,7 +178,7 @@ public class ProgramVarUtils {
 				substitutionMapping.put(pv.getTermVariable(), nonoldVar.getTermVariable());
 			}
 		}
-		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		return result;
 	}
 

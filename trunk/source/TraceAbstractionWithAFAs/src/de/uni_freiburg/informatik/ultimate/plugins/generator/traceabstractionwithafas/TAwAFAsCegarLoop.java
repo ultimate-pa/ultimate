@@ -318,8 +318,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			}
 		}
 
-		final Term substitutedTerm = new Substitution(mCsToolkit.getManagedScript().getScript(), substitutionMapping)
-				.transform(nodeLabel.getBlock().getTransformula().getFormula());
+		final Term substitutedTerm = Substitution.apply(mCsToolkit.getManagedScript(), substitutionMapping,
+				nodeLabel.getBlock().getTransformula().getFormula());
 		return substitutedTerm;
 	}
 
@@ -375,14 +375,11 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		final IPredicate[] result = new IPredicate[interpolants.length];
 		final PredicateConstructionVisitor msfmv = new PredicateConstructionVisitor(constants2BoogieVar);
 
-		Substitution const2RepTvSubst;
-
 		final HashMap<Term, Term> const2RepTv = new HashMap<>();
 		for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 
-		const2RepTvSubst = new Substitution(mCsToolkit.getManagedScript().getScript(), const2RepTv);
 		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<>();
 
 		int craigInterpolPos = 0;
@@ -392,7 +389,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			result[resultPos] = withIndices2Predicate.get(withIndices);
 			if (result[resultPos] == null) {
 				msfmv.clearVarsAndProc();
-				final Term withoutIndices = const2RepTvSubst.transform(withIndices);
+				final Term withoutIndices = Substitution.apply(mCsToolkit.getManagedScript(), const2RepTv, withIndices);
 				result[resultPos] = mPredicateUnifier.getOrConstructPredicate(withoutIndices);
 				withIndices2Predicate.put(withIndices, result[resultPos]);
 			}

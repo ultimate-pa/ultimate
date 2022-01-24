@@ -79,7 +79,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		}
 		final STATE newSubState = mToolkit.handleAssumptionBySubdomain(tmpState.getSubState().addVariables(auxVars),
 				SmtUtils.and(script, constraints));
-		final Term newTerm = new Substitution(mToolkit.getManagedScript(), substitution).transform(term);
+		final Term newTerm = Substitution.apply(mToolkit.getManagedScript(), substitution, term);
 		return new Pair<>(tmpState.updateState(newSubState), newTerm);
 	}
 
@@ -205,7 +205,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		if (substitution.isEmpty()) {
 			constraints.add(assumption);
 		} else {
-			constraints.add(new Substitution(mToolkit.getManagedScript(), substitution).transform(assumption));
+			constraints.add(Substitution.apply(mToolkit.getManagedScript(), substitution, assumption));
 		}
 		final STATE newSubState =
 				mToolkit.handleAssumptionBySubdomain(newState.getSubState(), SmtUtils.and(script, constraints));

@@ -28,10 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
 import java.util.Arrays;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class for constructing a Qvasrabstraction using computed bases of resets and additions.
@@ -39,44 +37,72 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
-public class QvasrAbstractionBuilder {
+public final class QvasrAbstractionBuilder {
 	private QvasrAbstractionBuilder() {
 		// Prevent instantiation of this utility class
 	}
 
-	public static QvasrAbstraction constructQvasrAbstraction(final List<Pair<Rational[], Rational>> resetsBasis,
-			final List<Pair<Rational[], Rational>> additionsBasis) {
+	/**
+	 * Construct a new {@link QvasrAbstraction} (S, V) using an already computed simulation matrix, and an already
+	 * existing qvasr.
+	 *
+	 * @param simulationMatrix
+	 *            A {@link Rational} 2D-matrix representing a linear simulation.
+	 * @param qvasr
+	 *            A {@link Qvasr} representing the simulated set of transformers.
+	 * @return A new {@link QvasrAbstraction}
+	 */
+	public static QvasrAbstraction constructQvasrAbstraction(final Rational[][] simulationMatrix, final Qvasr qvasr) {
+		return new QvasrAbstraction(simulationMatrix, qvasr);
+	}
 
-		final int resetBasisSize = resetsBasis.size();
-		final int additionBasisSize = additionsBasis.size();
+	/**
+	 * Construct a new {@link QvasrAbstraction} (S, V) using a vector basis for the resets and additions. By forming the
+	 * {@link Qvasr} V and computing the corresponding simulation matrix S.
+	 *
+	 * @param resetsBasis
+	 *            The vector space basis for the reset vector space.
+	 * @param additionsBasis
+	 *            The vector space basis for the addition vector space.
+	 * @return A newly constructed {@link QvasrAbstraction}
+	 */
+	public static QvasrAbstraction constructQvasrAbstraction(final Rational[][] resetsBasis,
+			final Rational[][] additionsBasis) {
+
+		final int resetBasisSize = resetsBasis.length;
+		final int additionBasisSize = additionsBasis.length;
 
 		/*
 		 * abstraction dimension d
 		 */
 		final int d = resetBasisSize + additionBasisSize;
+		int n;
 		/*
 		 * Concrete dimension n
 		 */
-		final int n = resetsBasis.get(0).getFirst().length - 1;
+		if (resetBasisSize > additionBasisSize) {
+			n = resetsBasis[0].length - 1;
+		} else {
+			n = additionsBasis[0].length - 1;
+		}
 
 		final Rational[][] simulationMatrix = new Rational[d][n];
 		final Rational[] abstractionResetVector = new Rational[d];
 		final Rational[] abstractionAdditionVector = new Rational[d];
-		for (int i = 0; i < resetBasisSize; i++) {
-			final Pair<Rational[], Rational> resetBasisVector = resetsBasis.get(i);
-			simulationMatrix[i] = Arrays.copyOf(resetBasisVector.getFirst(), n);
-			abstractionResetVector[i] = Rational.ZERO;
-			abstractionAdditionVector[i] = resetBasisVector.getSecond();
-		}
-		for (int i = resetBasisSize; i < d; i++) {
-			final Pair<Rational[], Rational> additionsBasisVector = resetsBasis.get(i);
-			simulationMatrix[i] = Arrays.copyOf(additionsBasisVector.getFirst(), n);
-			abstractionResetVector[i] = Rational.ONE;
-			abstractionAdditionVector[i] = additionsBasisVector.getSecond();
-		}
 
+		for (int i = 0; i < resetBasisSize; i++) {
+			final Rational[] resetBasisVector = resetsBasis[i];
+			simulationMatrix[i] = Arrays.copyOf(resetBasisVector, n);
+			abstractionResetVector[i] = Rational.ZERO;
+			abstractionAdditionVector[i] = resetBasisVector[resetBasisVector.length - 1];
+		}
+		for (int i = 0; i < additionBasisSize; i++) {
+			final Rational[] additionsBasisVector = additionsBasis[i];
+			simulationMatrix[i + resetBasisSize] = Arrays.copyOf(additionsBasisVector, n);
+			abstractionResetVector[i + resetBasisSize] = Rational.ONE;
+			abstractionAdditionVector[i + resetBasisSize] = additionsBasisVector[additionsBasisVector.length - 1];
+		}
 		final Qvasr qvasr = new Qvasr(abstractionResetVector, abstractionAdditionVector);
 		return new QvasrAbstraction(simulationMatrix, qvasr);
 	}
-
 }

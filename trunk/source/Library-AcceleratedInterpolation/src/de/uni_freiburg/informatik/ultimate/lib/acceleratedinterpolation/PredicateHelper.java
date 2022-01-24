@@ -111,8 +111,7 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 			subMap.put(inVar.getValue(), inVar.getKey().getTermVariable());
 			inVars.put(inVar.getKey(), inVar.getKey().getTermVariable());
 		}
-		final Substitution sub = new Substitution(mScript, subMap);
-		final Term newTerm = sub.transform(tTerm);
+		final Term newTerm = Substitution.apply(mScript, subMap, tTerm);
 		return newTerm;
 	}
 
@@ -146,8 +145,7 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 				subMap.put(inVar.getValue(), newTV);
 				inVars.put(inVar.getKey(), newTV);
 			}
-			final Substitution sub = new Substitution(mScript, subMap);
-			newTerm = sub.transform(tTerm);
+			newTerm = Substitution.apply(mScript, subMap, tTerm);
 		} else {
 			inVars = new HashMap<>(tf.getInVars());
 			outVars = new HashMap<>(tf.getOutVars());

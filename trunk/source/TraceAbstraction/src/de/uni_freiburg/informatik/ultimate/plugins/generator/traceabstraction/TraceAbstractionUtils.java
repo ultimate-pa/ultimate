@@ -56,11 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -125,7 +121,7 @@ public final class TraceAbstractionUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = new Substitution(mgdScript, substitutionMapping).transform(ps.getFormula());
+		Term renamedFormula = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
 		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
 		return result;
@@ -145,8 +141,7 @@ public final class TraceAbstractionUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		final Term result =
-				new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(ps.getFormula());
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		return result;
 	}
 
@@ -170,36 +165,26 @@ public final class TraceAbstractionUtils {
 	}
 
 	/**
-	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
-	 * globalVar in term and remove the oldvar from vars.
-	 *
-	 * @param modifiableGlobals
-	 * @param script
+	 * For each oldVar in vars that is not modifiable by procedure proc: substitute
+	 * the oldVar by the corresponding globalVar in term and remove the oldvar from
+	 * vars.
 	 */
 	public static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
-			final Term term, final ModifiableGlobalsTable modifiableGlobals, final Script script) {
+			final Term term, final ModifiableGlobalsTable modifiableGlobals, final ManagedScript mgdScript) {
 		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
 		final List<IProgramVar> replacedOldVars = new ArrayList<>();
-
-		final ArrayList<TermVariable> replacees = new ArrayList<>();
-		final ArrayList<Term> replacers = new ArrayList<>();
-
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
 				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
 				if (!modifiableGlobalsOfProc.contains(pnov)) {
-					replacees.add(bv.getTermVariable());
-					replacers.add(((IProgramOldVar) bv).getNonOldVar().getTermVariable());
+					substitutionMapping.put(bv.getTermVariable(),
+							((IProgramOldVar) bv).getNonOldVar().getTermVariable());
 					replacedOldVars.add(bv);
 				}
 			}
 		}
-
-		final TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
-		final Term[] substValues = replacers.toArray(new Term[replacers.size()]);
-		Term result = script.let(substVars, substValues, term);
-		result = new FormulaUnLet().unlet(result);
-
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		for (final IProgramVar bv : replacedOldVars) {
 			vars.remove(bv);
 			vars.add(((IProgramOldVar) bv).getNonOldVar());

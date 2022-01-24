@@ -139,7 +139,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		mInterpolants = new IPredicate[mCounterexample.size()];
 		mInterpolants[0] = mPredUnifier.getTruePredicate();
 		mInterpolants[mCounterexample.size() - 1] = mPredUnifier.getFalsePredicate();
-
 	}
 
 	/**
@@ -187,9 +186,9 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 					break;
 				}
 				accelerationFinishedCorrectly = true;
-				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
+				final Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
 				final Term term = t;
-				t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
+				// t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
 
 				if (mLogger.isDebugEnabled()) {

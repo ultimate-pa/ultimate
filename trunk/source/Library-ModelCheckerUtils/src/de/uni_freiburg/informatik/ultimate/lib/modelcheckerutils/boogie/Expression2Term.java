@@ -32,8 +32,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -63,8 +63,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -275,7 +274,7 @@ public class Expression2Term {
 			final Term cond = translate(ite.getCondition());
 			final Term thenPart = translate(ite.getThenPart());
 			final Term elsePart = translate(ite.getElsePart());
-			final Term result = Util.ite(mScript, cond, thenPart, elsePart);
+			final Term result = SmtUtils.ite(mScript, cond, thenPart, elsePart);
 			assert result != null;
 			return result;
 
@@ -398,7 +397,7 @@ public class Expression2Term {
 			}
 
 			final String[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-			final SupportedBitvectorOperations sbo = ExpressionFactory.getSupportedBitvectorOperation(funcSymb);
+			final BvOp sbo = BitvectorFactory.getSupportedBitvectorOperation(funcSymb);
 			if (sbo == null) {
 				result = mScript.term(funcSymb, indices, null, parameters);
 			} else {

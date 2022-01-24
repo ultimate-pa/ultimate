@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -57,17 +57,17 @@ public class HoareAnnotation extends SPredicate {
 	private static final String KEY = HoareAnnotation.class.getSimpleName();
 	private static final long serialVersionUID = 72852101509650437L;
 
-	private final Script mScript;
+	private final ManagedScript mMgdScript;
 	@Visualizable
 	private final boolean mIsUnknown = false;
 
 	private final List<Term> mInvariants = new ArrayList<>();
 
 	public HoareAnnotation(final IcfgLocation programPoint, final int serialNumber,
-			final PredicateFactory predicateFactory, final Script script) {
-		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term("true"),
+			final PredicateFactory predicateFactory, final ManagedScript mgdScript) {
+		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, mgdScript.getScript().term("true"),
 				new HashSet<IProgramVar>(), null);
-		mScript = script;
+		mMgdScript = mgdScript;
 	}
 
 	public void addInvariant(final IPredicate pred) {
@@ -77,12 +77,12 @@ public class HoareAnnotation extends SPredicate {
 
 	@Override
 	public Term getFormula() {
-		return SmtUtils.and(mScript, mInvariants);
+		return SmtUtils.and(mMgdScript.getScript(), mInvariants);
 	}
 
 	@Override
 	public Term getClosedFormula() {
-		return PredicateUtils.computeClosedFormula(getFormula(), mVars, mScript);
+		return PredicateUtils.computeClosedFormula(getFormula(), mVars, mMgdScript);
 	}
 
 	@Override

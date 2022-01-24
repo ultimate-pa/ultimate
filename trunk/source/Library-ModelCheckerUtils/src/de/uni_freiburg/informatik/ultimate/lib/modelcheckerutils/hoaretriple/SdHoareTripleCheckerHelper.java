@@ -238,6 +238,10 @@ public class SdHoareTripleCheckerHelper {
 	}
 
 	public Validity sdecCall(final IPredicate pre, final ICallAction act, final IPredicate post) {
+		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, act.getPrecedingProcedure())
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, act.getSucceedingProcedure())) {
+			return null;
+		}
 		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
 				// if oldVar occurs this edge might be inductive since
@@ -286,6 +290,11 @@ public class SdHoareTripleCheckerHelper {
 
 	public Validity sdecReturn(final IPredicate pre, final IPredicate hier, final IReturnAction ret,
 			final IPredicate post) {
+		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, ret.getPrecedingProcedure())
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(hier, ret.getSucceedingProcedure())
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, ret.getSucceedingProcedure())) {
+			return null;
+		}
 		if (hierPostIndependent(hier, ret, post)
 				&& preHierNotFalse(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPrecedingProcedure())
 				&& prePostIndependent(pre, ret, post)) {

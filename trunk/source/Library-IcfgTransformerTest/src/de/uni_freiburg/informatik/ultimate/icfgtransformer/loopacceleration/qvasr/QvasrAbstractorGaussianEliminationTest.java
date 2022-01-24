@@ -52,12 +52,8 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  */
 public class QvasrAbstractorGaussianEliminationTest {
 
-	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
-	private ILogger mLogger;
-
-	private QvasrAbstractor mQAbstractor;
 
 	private Term mX;
 	private Term mY;
@@ -67,14 +63,17 @@ public class QvasrAbstractorGaussianEliminationTest {
 	private Term mOne;
 	private Term mZero;
 
+	/**
+	 * Set up
+	 */
 	@Before
 	public void setUp() {
-		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		final IUltimateServiceProvider mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mLogger = mServices.getLoggingService().getLogger("log");
+		final ILogger mLogger = mServices.getLoggingService().getLogger("log");
 		mLogger.info("Before");
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
@@ -87,9 +86,6 @@ public class QvasrAbstractorGaussianEliminationTest {
 		mZero = mScript.decimal("0");
 		mOne = mScript.decimal("1");
 		mTwo = mScript.decimal("2");
-
-		mQAbstractor = new QvasrAbstractor(mMgdScript, mLogger, mServices);
-
 	}
 
 	/**
@@ -98,7 +94,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 	@Test
 	public void testGaussianElimination0() {
 		Term[][] matrix = { { mOne, mZero, mZero }, { mZero, mOne, mZero } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term[][] result = { { mOne, mZero, mZero }, { mZero, mOne, mZero } };
 		testMatrixEquality(matrix, result);
 	}
@@ -109,7 +105,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 	@Test
 	public void testGaussianElimination1() {
 		Term[][] matrix = { { mX, mOne, mZero }, { mOne, mX, mZero } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term[][] result = { { mOne, mZero, mZero }, { mZero, mOne, mZero } };
 		testMatrixEquality(matrix, result);
 	}
@@ -120,7 +116,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 	@Test
 	public void testGaussianElimination2() {
 		Term[][] matrix = { { mX, mZero, mTwo }, { mOne, mTwo, mZero } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term div1 = TermParseUtils.parseTerm(mScript, "(/ 2.0 x)");
 		final Term div2 = TermParseUtils.parseTerm(mScript, "(/ (- 1.0) x)");
 		final Term[][] result = { { mOne, mZero, div1 }, { mZero, mOne, div2 } };
@@ -133,9 +129,9 @@ public class QvasrAbstractorGaussianEliminationTest {
 	@Test
 	public void testGaussianElimination3() {
 		Term[][] matrix = { { mX, mZero, mTwo }, { mOne, mY, mZero } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term div1 = TermParseUtils.parseTerm(mScript, "(/ 2.0 x)");
-		final Term div2 = TermParseUtils.parseTerm(mScript, "(/ (- 2.0) (* y x))");
+		final Term div2 = TermParseUtils.parseTerm(mScript, "(/ (- 2.0) (* x y))");
 		final Term[][] result = { { mOne, mZero, div1 }, { mZero, mOne, div2 } };
 		testMatrixEquality(matrix, result);
 	}
@@ -146,7 +142,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 	@Test
 	public void testGaussianElimination4() {
 		Term[][] matrix = { { mX, mZero, mY }, { mOne, mY, mZero } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term div1 = TermParseUtils.parseTerm(mScript, "(/ y x)");
 		final Term div2 = TermParseUtils.parseTerm(mScript, "(/ (- 1.0) x)");
 		final Term[][] result = { { mOne, mZero, div1 }, { mZero, mOne, div2 } };
@@ -163,7 +159,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 		final Term xP1 = TermParseUtils.parseTerm(mScript, "(+ x 1.0)");
 
 		Term[][] matrix = { { xP1, xPYP1, mA }, { mOne, yP1, mA }, { xP1, xP1, mA }, { mOne, mOne, mA } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term[][] result = { { mOne, mZero, mZero }, { mZero, mOne, mZero }, { mZero, mZero, mOne } };
 		testMatrixEquality(matrix, result);
 	}
@@ -176,7 +172,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 		final Term xP1 = TermParseUtils.parseTerm(mScript, "(+ x 1.0)");
 
 		Term[][] matrix = { { xP1, mTwo, mA }, { mOne, mTwo, mA }, { xP1, mTwo, mA }, { mOne, mTwo, mA } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term[][] result =
 				{ { mOne, mZero, mZero }, { mZero, mOne, TermParseUtils.parseTerm(mScript, "(/ a 2.0)") } };
 		testMatrixEquality(matrix, result);
@@ -190,7 +186,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 		final Term xPY = TermParseUtils.parseTerm(mScript, "(+ x y)");
 
 		Term[][] matrix = { { xPY, xPY, mA }, { mY, mY, mA }, { mX, mX, mA }, { mZero, mZero, mA } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term[][] result = { { mOne, mOne, mZero }, { mZero, mZero, mOne } };
 		testMatrixEquality(matrix, result);
 	}
@@ -205,7 +201,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 		final Term yPY = TermParseUtils.parseTerm(mScript, "(+ y y)");
 
 		Term[][] matrix = { { xPY, xPYPY, mA }, { mY, yPY, mA }, { mX, mX, mA }, { mZero, mZero, mA } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term[][] result = { { mOne, mZero, mZero }, { mZero, mOne, mZero }, { mZero, mZero, mOne } };
 		testMatrixEquality(matrix, result);
 	}
@@ -216,7 +212,7 @@ public class QvasrAbstractorGaussianEliminationTest {
 	@Test
 	public void testGaussianElimination9() {
 		Term[][] matrix = { { mOne, mOne, mOne }, { mOne, mOne, mZero } };
-		matrix = mQAbstractor.gaussianSolve(matrix);
+		matrix = QvasrAbstractor.gaussianSolve(mMgdScript, matrix);
 		final Term[][] result = { { mOne, mOne, mZero }, { mZero, mZero, mOne } };
 		testMatrixEquality(matrix, result);
 	}

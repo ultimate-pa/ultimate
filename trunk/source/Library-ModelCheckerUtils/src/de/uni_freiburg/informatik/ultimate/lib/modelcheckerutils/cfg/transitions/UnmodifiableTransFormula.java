@@ -171,7 +171,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Term auxVarConst = ProgramVarUtils.constructConstantForAuxVar(script, auxVarTv);
 			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
-		final Term closedTerm = new Substitution(script, substitutionMapping).transform(formula);
+		final Term closedTerm = Substitution.apply(script, substitutionMapping, formula);
 		return closedTerm;
 	}
 

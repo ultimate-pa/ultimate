@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -596,7 +596,7 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public Term getVersioneeredTerm() {
-			final Substitution subst = new Substitution(mTcScript, mSubstitutionMapping);
+			final PureSubstitution subst = new PureSubstitution(mTcScript, mSubstitutionMapping);
 			final Term result = subst.transform(mFormula);
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term: "
 					+ Arrays.stream(result.getFreeVars()).map(a -> a.toString()).collect(Collectors.joining(","));

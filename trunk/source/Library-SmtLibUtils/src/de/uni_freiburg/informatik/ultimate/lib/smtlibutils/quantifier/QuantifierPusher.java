@@ -572,8 +572,8 @@ public class QuantifierPusher extends TermTransformer {
 					if (substitutionMapping.isEmpty()) {
 						resultSubformula = innerQuantifiedFormula.getSubformula();
 					} else {
-						resultSubformula = new Substitution(mgdScript, substitutionMapping)
-								.transform(innerQuantifiedFormula.getSubformula());
+						resultSubformula = Substitution.apply(mgdScript, substitutionMapping,
+								innerQuantifiedFormula.getSubformula());
 					}
 					resultDualJuncts.add(resultSubformula);
 				}
@@ -873,7 +873,8 @@ public class QuantifierPusher extends TermTransformer {
 						SimplificationOccasion.AFTER_ELIMINATION_TECHNIQUES, SimplificationTechnique.POLY_PAC,
 						currentEt.getContext(), er.getEliminationTask().getTerm());
 				currentEt = currentEt.update(simplifiedTerm);
-				if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(), currentEt.getTerm())) {
+				if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(), currentEt.getTerm())
+						|| currentEt.getTerm() instanceof QuantifiedFormula) {
 					return currentEt.toTerm(mgdScript.getScript());
 				}
 			}

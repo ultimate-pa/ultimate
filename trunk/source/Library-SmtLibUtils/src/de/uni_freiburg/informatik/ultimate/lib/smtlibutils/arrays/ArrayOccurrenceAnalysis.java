@@ -356,6 +356,9 @@ public class ArrayOccurrenceAnalysis {
 						if (as != null && as.getArray().equals(mWantedArray)
 								&& as.getDimension() <= mDimensionUpperLimit) {
 							mArraySelects.add(as);
+							for (final Term indexEntry : as.getIndex()) {
+								walker.enqueueWalker(new MyWalker(indexEntry));
+							}
 						} else {
 							for (final Term t : term.getParameters()) {
 								walker.enqueueWalker(new MyWalker(t));

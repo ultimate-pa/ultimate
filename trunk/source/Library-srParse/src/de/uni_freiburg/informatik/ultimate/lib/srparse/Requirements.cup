@@ -294,6 +294,7 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 				{: RESULT = new PatternBuilder().setType(ResponseDelayBoundL2Pattern.class).addCdd(s,r).addDuration(c1, c2); :}						
   			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS FOR AT LEAST duration:c1
 				{: RESULT = new PatternBuilder().setType(InvarianceBoundL2Pattern.class).addCdd(s,r).addDuration(c1); :}
+  			/* BndEntryConditionPattern is deprecated. */
   			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS
 				{: RESULT = new PatternBuilder().setType(BndEntryConditionPattern.class).addCdd(s,r).addDuration(c1); :}
 			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:s HOLDS COMMA? THEN expression:t HOLDS

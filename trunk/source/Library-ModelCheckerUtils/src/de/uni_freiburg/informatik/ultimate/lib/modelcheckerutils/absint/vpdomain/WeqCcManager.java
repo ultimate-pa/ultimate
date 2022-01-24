@@ -891,14 +891,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			subsMap.put(fv, cons);
 		}
 
-		final Substitution substitution = new Substitution(mMgdScript, subsMap);
-
 		/*
 		 * check the implication
 		 */
-		mMgdScript.assertTerm(this, substitution.transform(ante));
+		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, subsMap,ante));
 
-		mMgdScript.assertTerm(this, SmtUtils.not(script, substitution.transform(succ)));
+		mMgdScript.assertTerm(this, SmtUtils.not(script, Substitution.apply(mMgdScript, subsMap, succ)));
 
 		final LBool satResult = mMgdScript.checkSat(this);
 

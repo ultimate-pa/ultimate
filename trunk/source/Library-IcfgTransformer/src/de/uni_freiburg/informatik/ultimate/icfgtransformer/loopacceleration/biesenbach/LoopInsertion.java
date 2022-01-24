@@ -92,8 +92,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				}
 			}
 
-			Substitution sub = new Substitution(mMgScript, substitute);
-			final Term transformedExitFormula = sub.transform(exitTransformula.getFormula());
+
+			final Term transformedExitFormula = Substitution.apply(mMgScript, substitute, exitTransformula.getFormula());
 
 			// Quantifier - Start
 
@@ -101,8 +101,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final TermVariable j = script.variable("j", script.sort("Int"));
 			final Map<Term, Term> substituteJ = new HashMap<>();
 			substituteJ.put(n, j);
-			final Substitution subJ = new Substitution(mMgScript, substituteJ);
-			final Term transformedExitFormulaJ = subJ.transform(transformedExitFormula);
+			final Term transformedExitFormulaJ = Substitution.apply(mMgScript, substituteJ, transformedExitFormula);
 
 			final Term conditions = script.term("xor", script.term(">=", j, n),
 					script.term("or", script.term("<", j, zero), transformedExitFormulaJ));
@@ -127,14 +126,12 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 					}
 				}
 
-				sub = new Substitution(mMgScript, substitute);
-				final Term remainingTransformedExitFormula = sub.transform(remainingExitTransformula.getFormula());
+				final Term remainingTransformedExitFormula = Substitution.apply(mMgScript, substitute, remainingExitTransformula.getFormula());
 
 				// replace n with k
 				final Map<Term, Term> substituteK = new HashMap<>();
 				substituteK.put(n, k);
-				final Substitution subK = new Substitution(mMgScript, substituteK);
-				final Term transformedExitFormulaK = subK.transform(remainingTransformedExitFormula);
+				final Term transformedExitFormulaK = Substitution.apply(mMgScript, substituteK, remainingTransformedExitFormula);
 				remainingExitFormulas.add(transformedExitFormulaK);
 			}
 			Term quantifiedFormulaK = TransFormulaBuilder.getTrivialTransFormula(mMgScript).getFormula();
@@ -199,8 +196,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				}
 			}
 
-			final Substitution sub = new Substitution(mMgScript, substitute);
-			final Term transformedExitFormula = script.term("not", sub.transform(exitTransformula.getFormula()));
+			final Term transformedExitFormula = script.term("not",
+					Substitution.apply(mMgScript, substitute, exitTransformula.getFormula()));
 
 			// Quantifier - Start
 
@@ -208,8 +205,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final TermVariable j = script.variable("j", script.sort("Int"));
 			final Map<Term, Term> substituteJ = new HashMap<>();
 			substituteJ.put(n, j);
-			final Substitution subJ = new Substitution(mMgScript, substituteJ);
-			final Term transformedExitFormulaJ = subJ.transform(transformedExitFormula);
+			final Term transformedExitFormulaJ = Substitution.apply(mMgScript, substituteJ, transformedExitFormula);
 
 			final Term zero = Rational.ZERO.toTerm(script.sort("Int"));
 

@@ -36,7 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate.ArrayUpdateExtractor;
@@ -144,7 +144,7 @@ public class SingleUpdateNormalFormTransformer {
 	}
 	
 	private void processNewArrayUpdates() {
-		final Substitution subst = new Substitution(mScript, mStore2TermVariable);
+		final PureSubstitution subst = new PureSubstitution(mScript, mStore2TermVariable);
 		for (final ArrayUpdate au : mArrayUpdates) {
 			for (final Term entry : au.getIndex()) {
 				final Term newEntry = subst.transform(entry);
@@ -179,7 +179,7 @@ public class SingleUpdateNormalFormTransformer {
 		final Term[] conjuncts = SmtUtils.getConjuncts(term);
 		final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
 		Term remainder = SmtUtils.and(mScript, aue.getRemainingTerms().toArray(new Term[0]));
-		remainder = (new Substitution(mScript, aue.getStore2TermVariable())).transform(remainder);
+		remainder = (new PureSubstitution(mScript, aue.getStore2TermVariable())).transform(remainder);
 		final List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(remainder);
 		if (mdStores.isEmpty()) {
 			return null;

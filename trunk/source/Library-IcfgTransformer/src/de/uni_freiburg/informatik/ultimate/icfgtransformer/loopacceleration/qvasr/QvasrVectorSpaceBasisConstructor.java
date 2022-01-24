@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -50,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
-public class QvasrVectorSpaceBasisConstructor {
+public final class QvasrVectorSpaceBasisConstructor {
 	private QvasrVectorSpaceBasisConstructor() {
 		// Prevent instantiation of this utility class
 	}
@@ -78,24 +77,29 @@ public class QvasrVectorSpaceBasisConstructor {
 		 * Resubstitute columns to actual variables.
 		 */
 		final Term[] lastRow = basisVectors[basisVectors.length - 1];
-		for (int i = 0; i < lastRow.length; i++) {
-			if (!QvasrAbstractor.checkTermEquiv(script, lastRow[i], script.getScript().decimal("0"))) {
-				final Term a = script.constructFreshTermVariable("a", SmtSortUtils.getRealSort(script));
-				final List<Term> defaultInit = new ArrayList<>();
-				if (i != lastRow.length - 1 && !QvasrAbstractor.checkTermEquiv(script, lastRow[lastRow.length - 1],
-						script.getScript().decimal("0"))) {
-					defaultInit.add(a);
-					freeVars.add(a);
-
-				} else {
-					defaultInit.add(script.getScript().decimal("0"));
+		boolean aIsZero = true;
+		for (int i = 0; i < basisVectors.length; i++) {
+			if (!QvasrUtils.checkTermEquiv(script, basisVectors[i][basisVectors[0].length - 1],
+					script.getScript().decimal("0"))) {
+				for (int j = 0; j < basisVectors[i].length - 1; j++) {
+					if (!QvasrUtils.checkTermEquiv(script, basisVectors[i][j], script.getScript().decimal("0"))) {
+						aIsZero = false;
+						break;
+					}
 				}
-				tvsForColumns.put(lastRow.length - 1, a);
-				columnsForTvs.put(a, lastRow.length - 1);
-				equations.put(a, defaultInit);
-				break;
 			}
 		}
+		final Term a = script.constructFreshTermVariable("a", SmtSortUtils.getRealSort(script));
+		final List<Term> defaultInit = new ArrayList<>();
+		if (!aIsZero) {
+			defaultInit.add(a);
+			freeVars.add(a);
+		} else {
+			defaultInit.add(script.getScript().decimal("0"));
+		}
+		tvsForColumns.put(lastRow.length - 1, a);
+		columnsForTvs.put(a, lastRow.length - 1);
+		equations.put(a, defaultInit);
 
 		/*
 		 * Construct equations for each column.
@@ -103,7 +107,7 @@ public class QvasrVectorSpaceBasisConstructor {
 		for (int j = 0; j < basisVectors.length; j++) {
 			final Term[] row = basisVectors[j];
 			for (int k = 0; k < row.length - 1; k++) {
-				if (!QvasrAbstractor.checkTermEquiv(script, row[k], script.getScript().decimal("0"))) {
+				if (!QvasrUtils.checkTermEquiv(script, row[k], script.getScript().decimal("0"))) {
 					final Term toBeSolvedFor = tvsForColumns.get(k);
 					final List<Term> factors = new ArrayList<>();
 					factors.add(SmtUtils.mul(script.getScript(), "*", row[row.length - 1],
@@ -123,9 +127,9 @@ public class QvasrVectorSpaceBasisConstructor {
 		 */
 		for (final Term var : tvsForColumns.values()) {
 			if (!equations.containsKey(var)) {
-				final List<Term> defaultInit = new ArrayList<>();
-				defaultInit.add(var);
-				equations.put(var, defaultInit);
+				final List<Term> defaultInitVars = new ArrayList<>();
+				defaultInitVars.add(var);
+				equations.put(var, defaultInitVars);
 				freeVars.add(var);
 			}
 		}
@@ -133,7 +137,6 @@ public class QvasrVectorSpaceBasisConstructor {
 		/*
 		 * Construct a proto-basisvector for each free variable.
 		 */
-
 		final Deque<Term> freeVarStack = new ArrayDeque<>();
 		freeVarStack.addAll(freeVars);
 		final List<Term[]> vectors = new ArrayList<>();
@@ -147,14 +150,13 @@ public class QvasrVectorSpaceBasisConstructor {
 					subMap.put(var, var);
 				}
 			}
-			final Substitution sub = new Substitution(script, subMap);
 			final Term[] vector = new Term[basisVectors[0].length];
 			for (final Entry<Term, List<Term>> solution : equations.entrySet()) {
 				final Term tv = solution.getKey();
 				final int position = columnsForTvs.get(tv);
 				final List<Term> summands = new ArrayList<>();
 				for (final Term equation : solution.getValue()) {
-					final Term equationUpdated = sub.transform(equation);
+					final Term equationUpdated = Substitution.apply(script, subMap, equation);
 					summands.add(equationUpdated);
 				}
 				Term sum;
@@ -178,16 +180,20 @@ public class QvasrVectorSpaceBasisConstructor {
 		}
 
 		final List<Term[]> assignedBasisVectors = new ArrayList<>();
-		final SubstitutionWithLocalSimplification subAssignments =
-				new SubstitutionWithLocalSimplification(script, assignments);
 		for (final Term[] vector : vectors) {
 			final Term[] vectorAssigned = new Term[vector.length];
 			for (int i = 0; i < vector.length; i++) {
 				final Term entry = vector[i];
-				final Term assigned = subAssignments.transform(entry);
+				final Term assigned = Substitution.apply(script, assignments, entry);
 				vectorAssigned[i] = assigned;
 			}
 			assignedBasisVectors.add(vectorAssigned);
+		}
+		/*
+		 * No solutions -> basis is all 0.
+		 */
+		if (assignedBasisVectors.isEmpty()) {
+			return new Rational[0][0];
 		}
 		return toRational(assignedBasisVectors);
 	}
@@ -228,12 +234,12 @@ public class QvasrVectorSpaceBasisConstructor {
 	private static boolean isConsistent(final ManagedScript script, final Term[][] basisVectors) {
 		for (int i = 0; i < basisVectors.length; i++) {
 			final Term[] row = basisVectors[i];
-			if (!QvasrAbstractor.checkTermEquiv(script, row[row.length - 1], script.getScript().decimal("0"))) {
+			if (!QvasrUtils.checkTermEquiv(script, row[row.length - 1], script.getScript().decimal("0"))) {
 				for (int j = 0; j < row.length; j++) {
 					if (j == row.length - 1 && row[j] instanceof ConstantTerm) {
 						return false;
 					}
-					if (!QvasrAbstractor.checkTermEquiv(script, row[j], script.getScript().decimal("0"))) {
+					if (!QvasrUtils.checkTermEquiv(script, row[j], script.getScript().decimal("0"))) {
 						break;
 					}
 				}

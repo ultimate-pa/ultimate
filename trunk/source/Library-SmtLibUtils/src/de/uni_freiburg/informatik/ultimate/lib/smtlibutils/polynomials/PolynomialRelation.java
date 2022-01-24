@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
@@ -484,9 +485,9 @@ public class PolynomialRelation implements IBinaryRelation {
 	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we
 	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
 	 */
-	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
+	public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Set<TermVariable> bannedForDivCapture) {
-		return SolveForSubjectUtils.solveForSubject(script, subject, xnf, this, bannedForDivCapture);
+		return SolveForSubjectUtils.solveForSubject(mgdScript, subject, xnf, this, bannedForDivCapture);
 	}
 
 	/**

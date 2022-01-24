@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -575,13 +575,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				}
 
 
-				final Term tempTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, newSubst)
-						.transform(atMostOneStore);
+				final Term tempTfTerm = Substitution.apply(mMgdScript, newSubst, atMostOneStore);
 
 				addendum.add(tempTfTerm);
 
-				final Term newTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, subst)
-						.transform(SmtUtils.and(script, addendum));
+				final Term newTfTerm = Substitution.apply(mMgdScript, subst, SmtUtils.and(script, addendum));
 
 				Term finalTfTerm = newTfTerm;
 
@@ -700,13 +698,11 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					}
 
 
-					final Term tempTfTerm2 = new SubstitutionWithLocalSimplification(mMgdScript, newSubst2)
-							.transform(iterDnf);
+					final Term tempTfTerm2 = Substitution.apply(mMgdScript, newSubst2, iterDnf);
 
 					iterAdd.add(tempTfTerm2);
 
-					finalTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, iterSubst)
-							.transform(SmtUtils.and(script, iterAdd));
+					finalTfTerm = Substitution.apply(mMgdScript, iterSubst, SmtUtils.and(script, iterAdd));
 
 
 
