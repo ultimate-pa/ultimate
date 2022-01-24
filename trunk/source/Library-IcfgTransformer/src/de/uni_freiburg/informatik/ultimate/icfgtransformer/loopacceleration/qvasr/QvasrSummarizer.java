@@ -112,15 +112,14 @@ public class QvasrSummarizer {
 		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
 		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
 		final Term transitionTerm = transitionFormula.getFormula();
-		final QvasrAbstractor qvasrAbstractor = new QvasrAbstractor(mScript, mLogger, mServices);
 		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
 
 		for (final Term disjunct : disjuncts) {
 			final UnmodifiableTransFormula disjunctTf = QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
-			final QvasrAbstraction qvasrAbstraction = qvasrAbstractor.computeAbstraction(disjunctTf);
-			bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction);
+			final QvasrAbstraction qvasrAbstraction = QvasrAbstractor.computeAbstraction(mScript, disjunctTf);
+			bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction).getThird();
 		}
 
 		final IntvasrAbstraction intVasrAbstraction = QvasrUtils.qvasrAbstractionToInt(bestAbstraction);
@@ -128,16 +127,20 @@ public class QvasrSummarizer {
 	}
 
 	/**
-	 * Compute a {@link UnmodifiableTransFormula} as loop summary. This version can deal with branching loops.
+	 * /** Compute a {@link UnmodifiableTransFormula} as loop summary. This version can deal with branching loops.
 	 *
 	 *
 	 * @param script
 	 *            A {@link ManagedScript}
 	 * @param intvasrAbstraction
 	 *            A {@link QvasrAbstraction} whose reachability relation we want to compute.
-	 * @param tf
-	 *            The original {@link UnmodifiableTransFormula} of the loop.
-	 * @return An overapproximative loop summary computed from a qvasr abstraction.
+	 *
+	 *
+	 * @param invars
+	 *            Invariables of the original loop formula.
+	 * @param outvars
+	 *            Outvariables of the original loopformula.
+	 * @return An overapproximative loop summary computed from an {@link IntvasrAbstraction}.
 	 */
 	public static UnmodifiableTransFormula intVasrAbstractionToFormula(final ManagedScript script,
 			final IntvasrAbstraction intvasrAbstraction, final Map<IProgramVar, TermVariable> invars,
@@ -205,69 +208,4 @@ public class QvasrSummarizer {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(script);
 	}
-
-	/**
-	 * Construct a {@link UnmodifiableTransFormula} as loop summary, tailored to the method of splitting loop formulas
-	 * into disjuncts, which then creates at maximum one {@link QvasrAbstraction}. Meaning in the original loop
-	 * transformula there is no branching.
-	 *
-	 * @param script
-	 *            A {@link ManagedScript}
-	 * @param vasrAbstraction
-	 *            A {@link QvasrAbstraction} whose reachability relation we want to compute.
-	 * @param tf
-	 *            The original {@link UnmodifiableTransFormula} of the loop.
-	 * @return An overapproximative loop summary computed from a qvasr abstraction.
-	 */
-	// public static UnmodifiableTransFormula qvasrAbstractionToFormulaMetaTrace(final ManagedScript script,
-	// final IVasrAbstraction<Rational> vasrAbstraction, final UnmodifiableTransFormula tf) {
-	//
-	// final Term[] inVars = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
-	// final Term[] outVars = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
-	// final IProgramVar[] inVarsPv = tf.getInVars().keySet().toArray(new IProgramVar[tf.getInVars().size()]);
-	// final IProgramVar[] outVarsPv = tf.getOutVars().keySet().toArray(new IProgramVar[tf.getOutVars().size()]);
-	//
-	// final Term[] inVarsReal = tf.getInVars().values().toArray(new Term[tf.getInVars().size()]);
-	// final Term[] outVarsReal = tf.getOutVars().values().toArray(new Term[tf.getOutVars().size()]);
-	//
-	// final Map<IProgramVar, TermVariable> newInvars = tf.getInVars();
-	// final Map<IProgramVar, TermVariable> newOutvars = tf.getOutVars();
-
-	/*
-	 * for (int i = 0; i < inVars.length; i++) { final TermVariable tv =
-	 * script.constructFreshTermVariable(inVars[i].toString() + "_real", SmtSortUtils.getRealSort(script));
-	 * inVarsReal[i] = tv; newInvars.put(inVarsPv[i], tv); }
-	 *
-	 * for (int i = 0; i < outVars.length; i++) { final TermVariable tv =
-	 * script.constructFreshTermVariable(outVars[i].toString() + "_real_Primed", SmtSortUtils.getRealSort(script));
-	 * outVarsReal[i] = tv; newOutvars.put(outVarsPv[i], tv); }
-	 */
-
-	// final Term[][] variableRelationsIn = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
-	// vasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(inVarsReal));
-	// final Term[][] variableRelationsOut = QvasrUtils.matrixVectorMultiplicationWithVariables(script,
-	// vasrAbstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(outVarsReal));
-
-	// final List<Term> qvasrDisjunction = new ArrayList<>();
-	// for (final Pair<Rational[], Rational[]> transformer : vasrAbstraction.getVasr().getTransformer()) {
-	// final TermVariable k = script.constructFreshTermVariable("k", SmtSortUtils.getRealSort(script));
-	// final List<Term> qvasrConjuncts = new ArrayList<>();
-	// for (int i = 0; i < vasrAbstraction.getVasr().getDimension(); i++) {
-	// final Term reset =
-	// SmtUtils.mul(script.getScript(), transformer.getFirst()[i], variableRelationsIn[i][0]);
-	// final Term quantifiedAddition = SmtUtils.mul(script.getScript(), transformer.getSecond()[i], k);
-	// final Term addition = SmtUtils.sum(script.getScript(), "+", reset, quantifiedAddition);
-	// final Term equality = SmtUtils.binaryEquality(script.getScript(), variableRelationsOut[i][0], addition);
-	// qvasrConjuncts.add(equality);
-	// }
-	// final Term qvasrConjunctionQuantified = SmtUtils.quantifier(script.getScript(), QuantifiedFormula.EXISTS,
-	// Arrays.asList(k), SmtUtils.and(script.getScript(), qvasrConjuncts));
-	// qvasrDisjunction.add(qvasrConjunctionQuantified);
-	// }
-	// final Term loopSummary = SmtUtils.or(script.getScript(), qvasrDisjunction);
-	// final TransFormulaBuilder tfb = new TransFormulaBuilder(newInvars, newOutvars, true, null, true, null, true);
-	// tfb.setFormula(loopSummary);
-	// tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-	// return tfb.finishConstruction(script);
-	// }
 }

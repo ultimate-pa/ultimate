@@ -31,16 +31,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrLoopSummarization;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
+ * A loop accelerator used in accelerated inteprolation using the {@link QvasrLoopSummarization} method of acceleration.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
- *         {@link AcceleratedInterpolation} using the qvasr summarization scheme.
+ *         {@link AcceleratedInterpolation}
  */
-
 public class AcceleratorQvasr implements IAccelerator {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
@@ -48,10 +49,16 @@ public class AcceleratorQvasr implements IAccelerator {
 	private boolean mFoundAcceleration;
 
 	/**
-	 * Loop Accelerator using the Qvasr acceleration scheme.
+	 * Construct a new loop accelerator using {@link QvasrLoopSummarization}.
 	 *
 	 * @param logger
+	 *            A {@link ILogger}
 	 * @param managedScript
+	 *            A {@link ManagedScript}
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
+	 * @param symbolTable
+	 *            {@link IIcfgSymbolTable}
 	 */
 	public AcceleratorQvasr(final ILogger logger, final ManagedScript managedScript,
 			final IUltimateServiceProvider services) {

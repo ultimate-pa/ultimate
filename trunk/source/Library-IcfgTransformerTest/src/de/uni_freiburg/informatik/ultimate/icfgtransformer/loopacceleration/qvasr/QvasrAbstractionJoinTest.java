@@ -111,7 +111,7 @@ public class QvasrAbstractionJoinTest {
 		final QvasrAbstraction abstractionTwo =
 				QvasrAbstractionBuilder.constructQvasrAbstraction(simulationMatrixTwoRational, qvasrTwo);
 		final QvasrAbstraction joinedAbstractions =
-				QvasrAbstractionJoin.join(mMgdScript, abstractionOne, abstractionTwo);
+				QvasrAbstractionJoin.join(mMgdScript, abstractionOne, abstractionTwo).getThird();
 		final Rational[][] simulationMatrixResult = {
 				{ Rational.valueOf(new BigInteger("1"), BigInteger.ONE),
 						Rational.valueOf(new BigInteger("0"), BigInteger.ONE) },

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Jonas Werner (wernerj@informatik.uni-freiburg.de)
- * Copyright (C) 2020 University of Freiburg
+ * Copyright (C) 2021 Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE accelerated interpolation library .
  *
@@ -29,9 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopacc
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.JordanLoopAccelerationResult;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.JordanLoopAccelerationResult.AccelerationStatus;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrLoopSummarization;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasrs.QvasrsLoopSummarization;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -39,19 +38,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
- * A loop accelerator used in accelerated inteprolation using the {@link JordanLoopAcceleration} method of acceleration.
+ * A loop accelerator used in accelerated inteprolation using the {@link QvasrsLoopSummarization} method of
+ * acceleration.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
  *         {@link AcceleratedInterpolation}
  */
-public class AcceleratorJordan implements IAccelerator {
+public class AcceleratorQvasrs implements IAccelerator {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private boolean mFoundAcceleration;
 
 	/**
-	 * Construct a new loop accelerator using {@link JordanLoopAcceleration}.
+	 * Construct a new loop accelerator using {@link QvasrLoopSummarization}.
 	 *
 	 * @param logger
 	 *            A {@link ILogger}
@@ -62,7 +62,7 @@ public class AcceleratorJordan implements IAccelerator {
 	 * @param symbolTable
 	 *            {@link IIcfgSymbolTable}
 	 */
-	public AcceleratorJordan(final ILogger logger, final ManagedScript managedScript,
+	public AcceleratorQvasrs(final ILogger logger, final ManagedScript managedScript,
 			final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mScript = managedScript;
@@ -81,24 +81,14 @@ public class AcceleratorJordan implements IAccelerator {
 	@Override
 	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop, final IcfgLocation loopHead) {
 		try {
-			mLogger.debug("Accelerating Loop using Jordan Transformation");
-			final JordanLoopAccelerationResult jla =
-					JordanLoopAcceleration.accelerateLoop(mServices, mScript, loop, true);
-			mLogger.info("Jordan loop acceleration statistics: " + jla.getJordanLoopAccelerationStatistics());
-			if (jla.getAccelerationStatus() != AccelerationStatus.SUCCESS) {
-				mLogger.warn("Jordan acceleration failed, because " + jla.getAccelerationStatus().toString());
-				return loop;
-			}
+			mLogger.debug("Accelerating Loop using Qvasr Summarization");
+			final QvasrsLoopSummarization qvasr = new QvasrsLoopSummarization(mLogger, mServices, mScript);
+			final UnmodifiableTransFormula loopSummary = qvasr.getQvasrsAcceleration(loop);
 			mFoundAcceleration = true;
-			return jla.getTransFormula();
-
+			return loopSummary;
 		} catch (final UnsupportedOperationException ue) {
-			/*
-			 * Unsupported Operation error because FastUPR could not accelerate the loop. Either return null, to make
-			 * the program unknown, or just return the loop for possible worse performance.
-			 */
 			mFoundAcceleration = false;
-			mLogger.info("Jordan could not accelerate loop because " + ue);
+			mLogger.info("Qvasrs could not accelerate loop because " + ue);
 			return loop;
 		}
 	}
