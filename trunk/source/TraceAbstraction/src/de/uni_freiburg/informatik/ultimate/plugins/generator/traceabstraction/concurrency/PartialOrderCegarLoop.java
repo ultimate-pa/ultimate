@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -123,7 +125,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return input;
 	}
 
-	public List<QualifiedTracePredicates>getallPredicates
+	// returns the set of all variables that are used to describe states of the automaton
+	public Set<IProgramVar> getAllConstrainingVariables() {
+		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
+		final Set<IProgramVar> constrainingVars = new HashSet<>();
+
+		for (final QualifiedTracePredicates qtp : usedTracePredicates) {
+			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
+			for (final IPredicate ip : lp) {
+				constrainingVars.addAll(ip.getVars());
+			}
+		}
+		return constrainingVars;
+	}
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
@@ -138,8 +152,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		// Menge der Prädikate
 		// wird neue Mehtode in PartialOrderCegarLoop; der VariableAbstraction nicht mehr Automaten, sondern Menge der
 		// Variablen
-		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
-		usedTracePredicates.get(0).getTracePredicates();
 
 		// todo: Diesem Kommentar in eine Methode verwandeln. Menge der benutzen Prädikaten berechnen.
 		final IHoareTripleChecker htc = getHoareTripleChecker();
