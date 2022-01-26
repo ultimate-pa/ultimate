@@ -111,7 +111,7 @@ public class QvasrAbstractionJoinTest {
 		final QvasrAbstraction abstractionTwo =
 				QvasrAbstractionBuilder.constructQvasrAbstraction(simulationMatrixTwoRational, qvasrTwo);
 		final QvasrAbstraction joinedAbstractions =
-				QvasrAbstractionJoin.join(mMgdScript, abstractionOne, abstractionTwo);
+				QvasrAbstractionJoin.join(mMgdScript, abstractionOne, abstractionTwo).getThird();
 		final Rational[][] simulationMatrixResult = {
 				{ Rational.valueOf(new BigInteger("1"), BigInteger.ONE),
 						Rational.valueOf(new BigInteger("0"), BigInteger.ONE) },
@@ -131,8 +131,8 @@ public class QvasrAbstractionJoinTest {
 		final Rational[] additionVectorResultTwo = { Rational.valueOf(new BigInteger("1"), BigInteger.ONE),
 				Rational.valueOf(new BigInteger("1"), BigInteger.TWO) };
 
-		final Qvasr qvasrResult = new Qvasr(resetVectorResultRationalOne, additionVectorResultRationalOne);
-		qvasrResult.addTransformer(new Pair<>(resetVectorResultRationalTwo, additionVectorResultTwo));
+		final Qvasr qvasrResult = new Qvasr(resetVectorResultRationalTwo, additionVectorResultTwo);
+		qvasrResult.addTransformer(new Pair<>(resetVectorResultRationalOne, additionVectorResultRationalOne));
 
 		testQvasrEquality(qvasrResult, joinedAbstractions.getVasr());
 		testMatrixEquality(joinedAbstractions.getSimulationMatrix(), simulationMatrixResult);

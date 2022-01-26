@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Class for computing the join of two Qvasr abstractions to form a least upper bound.
@@ -67,14 +68,15 @@ public final class QvasrAbstractionJoin {
 	 *            {@link QvasrAbstraction} (S_2, V_2)
 	 * @return A joined {@link QvasrAbstraction}
 	 */
-	public static QvasrAbstraction join(final ManagedScript script, final QvasrAbstraction abstractionOne,
-			final QvasrAbstraction abstractionTwo) {
+	public static Triple<Rational[][], Rational[][], QvasrAbstraction> join(final ManagedScript script,
+			final QvasrAbstraction abstractionOne, final QvasrAbstraction abstractionTwo) {
 
 		/*
 		 * In case of the first join, the Qvasr is empty, such that we return abstractionTwo.
 		 */
 		if (abstractionOne.getVasr().getTransformer().isEmpty()) {
-			return abstractionTwo;
+			return new Triple<>(abstractionTwo.getSimulationMatrix(), abstractionTwo.getSimulationMatrix(),
+					abstractionTwo);
 		}
 
 		final Integer concreteDimensionOne = abstractionOne.getConcreteDimension();
@@ -129,7 +131,7 @@ public final class QvasrAbstractionJoin {
 		final Qvasr imageOne = image(abstractionOne.getVasr(), tOne);
 		final Qvasr imageTwo = image(abstractionTwo.getVasr(), tTwo);
 		final Qvasr joinedImages = joinQvasr(imageOne, imageTwo);
-		return new QvasrAbstraction(simulationMatrixJoined, joinedImages);
+		return new Triple<>(tOne, tTwo, new QvasrAbstraction(simulationMatrixJoined, joinedImages));
 	}
 
 	/**

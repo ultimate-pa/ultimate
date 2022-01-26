@@ -103,29 +103,30 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 			}
 			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
 			for (final List<L> loopActions : loopSet.getValue()) {
-
 				UnmodifiableTransFormula interprocedualTransformula = SequentialComposition
 						.getInterproceduralTransFormula(mCsToolkit, false, false, false, false, mLogger, mServices,
 								loopActions, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 								SimplificationTechnique.SIMPLIFY_DDA);
-
-				/*
-				 * final List<UnmodifiableTransFormula> loopTransitions = convertActionToFormula(loopActions); final
-				 * UnmodifiableTransFormula loopRelation = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-				 * mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				 * SimplificationTechnique.SIMPLIFY_DDA, loopTransitions); /* Transform found unsupported operations:
-				 */
+				boolean noSplit = false;
 				for (final String option : mOptions) {
 					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
 					if (!applicationTermFinder.findMatchingSubterms(interprocedualTransformula.getFormula())
 							.isEmpty()) {
 						interprocedualTransformula = preProcessing(option, interprocedualTransformula);
 					}
+					if ("no DNF".equals(option)) {
+						noSplit = true;
+					}
 					mLogger.debug("Preprocess");
 				}
 				final ModifiableTransFormula modTf = ModifiableTransFormulaUtils
 						.buildTransFormula(interprocedualTransformula, mReplacementVarFactory, mScript);
-				disjuncts.addAll(LoopPreprocessorTransformulaTransformer.splitDisjunction(modTf, mScript, mServices));
+				if (noSplit) {
+					disjuncts.add(interprocedualTransformula);
+				} else {
+					disjuncts.addAll(
+							LoopPreprocessorTransformulaTransformer.splitDisjunction(modTf, mScript, mServices));
+				}
 			}
 			result.put(loophead, disjuncts);
 			mLogger.debug("Loop preprocessed");
@@ -154,16 +155,25 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 				/*
 				 * Transform found unsupported operations:
 				 */
+				boolean noSplit = false;
 				for (final String option : mOptions) {
 					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
 					if (!applicationTermFinder.findMatchingSubterms(loopRelation.getFormula()).isEmpty()) {
 						loopRelation = preProcessing(option, loopRelation);
 					}
+					if ("no DNF".equals(option)) {
+						noSplit = true;
+					}
 					mLogger.debug("Preprocess");
 				}
 				final ModifiableTransFormula modTf =
 						ModifiableTransFormulaUtils.buildTransFormula(loopRelation, mReplacementVarFactory, mScript);
-				disjuncts.addAll(LoopPreprocessorTransformulaTransformer.splitDisjunction(modTf, mScript, mServices));
+				if (noSplit) {
+					disjuncts.add(loopRelation);
+				} else {
+					disjuncts.addAll(
+							LoopPreprocessorTransformulaTransformer.splitDisjunction(modTf, mScript, mServices));
+				}
 			}
 			result.put(loophead, disjuncts);
 			mLogger.debug("Loop preprocessed");

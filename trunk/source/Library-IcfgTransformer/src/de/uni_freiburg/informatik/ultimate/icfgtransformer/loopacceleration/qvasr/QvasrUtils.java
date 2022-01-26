@@ -34,6 +34,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -217,6 +220,28 @@ public final class QvasrUtils {
 	 */
 	public static boolean isApplicationTerm(final Term term) {
 		return term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0;
+	}
+
+	/**
+	 * Construct a new {@link UnmodifiableTransFormula} from a term. This term is part of the DNF of the original
+	 * formula. There eligible.
+	 *
+	 * @param origin
+	 *            Original {@link UnmodifiableTransFormula}
+	 * @param term
+	 *            Disjunct term of the new formula.
+	 * @param managedScript
+	 *            A {@link ManagedScript}
+	 * @return A new {@link UnmodifiableTransFormula}
+	 */
+	public static UnmodifiableTransFormula buildFormula(final UnmodifiableTransFormula origin, final Term term,
+			final ManagedScript managedScript) {
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(origin.getInVars(), origin.getOutVars(), true, null, true, null, false);
+		tfb.setFormula(term);
+		tfb.addAuxVarsButRenameToFreshCopies(origin.getAuxVars(), managedScript);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(managedScript);
 	}
 
 	/**
