@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -122,6 +123,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return input;
 	}
 
+	public List<QualifiedTracePredicates>getallPredicates
+
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		// Compute the enhanced interpolant automaton
@@ -135,6 +138,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		// Menge der Prädikate
 		// wird neue Mehtode in PartialOrderCegarLoop; der VariableAbstraction nicht mehr Automaten, sondern Menge der
 		// Variablen
+		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
+		usedTracePredicates.get(0).getTracePredicates();
 
 		// todo: Diesem Kommentar in eine Methode verwandeln. Menge der benutzen Prädikaten berechnen.
 		final IHoareTripleChecker htc = getHoareTripleChecker();
