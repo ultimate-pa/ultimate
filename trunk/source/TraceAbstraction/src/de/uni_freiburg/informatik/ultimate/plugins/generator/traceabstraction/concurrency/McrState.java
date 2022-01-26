@@ -36,8 +36,13 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LeftRightSplit.Direction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -51,8 +56,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @param <S>
  *            The type of states in the input automaton.
  */
-public class McrState<L extends IIcfgTransition<?>, S> {
-	private final S mOldState;
+public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
+	private final IMLPredicate mOldState;
 	private final Map<String, DependencyRank> mThreads;
 	private final Map<IProgramVar, DependencyRank> mVariables;
 	private final Map<IProgramVar, L> mLastWriteSt;
@@ -65,7 +70,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 	 * @param state
 	 *            The initial state in the input automaton.
 	 */
-	public McrState(final S state) {
+	public McrState(final IMLPredicate state) {
 		mOldState = state;
 		mThreads = Collections.emptyMap();
 		mVariables = Collections.emptyMap();
@@ -87,8 +92,10 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 	 *            The last write statement for each variable.
 	 * @param lastStatement
 	 *            The last statement executed.
+	 * @param leftRightSplits
+	 *            The set of left-right splits.
 	 */
-	public McrState(final S oldState, final Map<String, DependencyRank> threads,
+	public McrState(final IMLPredicate oldState, final Map<String, DependencyRank> threads,
 			final Map<IProgramVar, DependencyRank> variables, final Map<IProgramVar, L> lastWriteSt,
 			final L lastStatement, final Set<LeftRightSplit<L>> leftRightSplits) {
 		mOldState = oldState;
@@ -99,7 +106,8 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		mLeftRightSplits = leftRightSplits;
 	}
 
-	public S getOldState() {
+	@Override
+	public IMLPredicate getOldState() {
 		return mOldState;
 	}
 
@@ -124,7 +132,8 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 	 *            The state of the input automaton after executing the statement.
 	 * @return The new McrState.
 	 */
-	public McrState<L, S> execute(final L transition, final S successor) {
+	@Override
+	public McrState<L> getNextState(final L transition, final IMLPredicate successor) {
 		final UnmodifiableTransFormula tf = transition.getTransformula();
 		final Set<IProgramVar> reads = tf.getInVars().keySet();
 		final Set<IProgramVar> writes = tf.getOutVars().keySet();
@@ -239,7 +248,8 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 	 *
 	 * @return true if the state contains no left-right splits.
 	 */
-	public boolean containsNoSplits() {
+	@Override
+	public boolean isRepresentative() {
 		return mLeftRightSplits.isEmpty();
 	}
 
@@ -259,7 +269,7 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final McrState other = (McrState) obj;
+		final McrState<?> other = (McrState<?>) obj;
 		return Objects.equals(mLastStatement, other.mLastStatement) && Objects.equals(mLastWriteSt, other.mLastWriteSt)
 				&& Objects.equals(mLeftRightSplits, other.mLeftRightSplits)
 				&& Objects.equals(mOldState, other.mOldState) && Objects.equals(mThreads, other.mThreads)
@@ -271,5 +281,40 @@ public class McrState<L extends IIcfgTransition<?>, S> {
 		return "McrState [mOldState=" + mOldState + ", mThreads=" + mThreads + ", mVariables=" + mVariables
 				+ ", mLastWriteSt=" + mLastWriteSt + ", mLastStatement=" + mLastStatement + ", mLeftRightSplits="
 				+ mLeftRightSplits + "]";
+	}
+
+	@Override
+	public Term getFormula() {
+		return mOldState.getFormula();
+	}
+
+	@Override
+	public Term getClosedFormula() {
+		return mOldState.getClosedFormula();
+	}
+
+	@Override
+	public String[] getProcedures() {
+		return mOldState.getProcedures();
+	}
+
+	@Override
+	public Set<IProgramVar> getVars() {
+		return mOldState.getVars();
+	}
+
+	@Override
+	public IcfgLocation[] getProgramPoints() {
+		return mOldState.getProgramPoints();
+	}
+
+	@Override
+	public Set<IProgramConst> getConstants() {
+		return mOldState.getConstants();
+	}
+
+	@Override
+	public Set<IProgramFunction> getFunctions() {
+		return mOldState.getFunctions();
 	}
 }

@@ -221,11 +221,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, mIndependence, mDfsOrder,
 					mSleepFactory, mPersistent, visitor);
 			break;
-		case MAXIMAL_CAUSALITY_REDUCTION:
-			new DepthFirstTraversal<>(mAutomataServices,
+		case MCR_WITH_DEPRANKS:
+		case MCR_WITHOUT_DEPRANKS:
+			final MaximalCausalityReduction<L> mcr =
 					new MaximalCausalityReduction<>(mAutomataServices.getLoggingService(), input,
-							new McrStateFactory<>(mPredicateFactory)),
-					mDfsOrder, visitor);
+							new McrStateFactory<>(mPredicateFactory, mMode == PartialOrderMode.MCR_WITH_DEPRANKS));
+			new DepthFirstTraversal<>(mAutomataServices, mcr, mDfsOrder, visitor);
 			break;
 		case NONE:
 			new DepthFirstTraversal<>(mAutomataServices, input, mDfsOrder, visitor);

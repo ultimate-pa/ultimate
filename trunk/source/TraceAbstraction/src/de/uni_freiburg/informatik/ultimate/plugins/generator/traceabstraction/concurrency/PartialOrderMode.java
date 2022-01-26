@@ -61,7 +61,9 @@ public enum PartialOrderMode {
 	PERSISTENT_SLEEP_NEW_STATES(true, true, true, false),
 	PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER(true, true, true, true),
 
-	MAXIMAL_CAUSALITY_REDUCTION(false, false, false, false);
+	MCR_WITH_DEPRANKS(false, false, false, false),
+
+	MCR_WITHOUT_DEPRANKS(false, false, false, false);
 
 	private final boolean mHasSleepSets;
 	private final boolean mHasPersistentSets;

@@ -31,6 +31,12 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LeftRightSplit.Direction;
 
 /**
@@ -43,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.co
  * @param <S>
  *            The type of states in the input automaton.
  */
-public class McrState2<L extends IIcfgTransition<?>, S> {
-	private final S mOldState;
+public class McrState2<L extends IIcfgTransition<?>> implements IMcrState<L> {
+	private final IMLPredicate mOldState;
 	private final Set<LeftRightSplit<L>> mTemplates;
 	private final Set<ReducingLeftRightSplit<L>> mSplits;
 
@@ -54,7 +60,7 @@ public class McrState2<L extends IIcfgTransition<?>, S> {
 	 * @param state
 	 *            The initial state in the input automaton.
 	 */
-	public McrState2(final S state) {
+	public McrState2(final IMLPredicate state) {
 		mOldState = state;
 		mTemplates = Set.of(new LeftRightSplit<>());
 		mSplits = new HashSet<>();
@@ -70,14 +76,15 @@ public class McrState2<L extends IIcfgTransition<?>, S> {
 	 * @param splits
 	 *            The set of reducing left-right splits.
 	 */
-	public McrState2(final S oldState, final Set<LeftRightSplit<L>> templates,
+	public McrState2(final IMLPredicate oldState, final Set<LeftRightSplit<L>> templates,
 			final Set<ReducingLeftRightSplit<L>> splits) {
 		mOldState = oldState;
 		mTemplates = templates;
 		mSplits = splits;
 	}
 
-	public S getOldState() {
+	@Override
+	public IMLPredicate getOldState() {
 		return mOldState;
 	}
 
@@ -101,7 +108,8 @@ public class McrState2<L extends IIcfgTransition<?>, S> {
 	 *            The state of the input automaton after executing the statement.
 	 * @return The new McrState.
 	 */
-	public McrState2<L, S> execute(final L transition, final S successor) {
+	@Override
+	public McrState2<L> getNextState(final L transition, final IMLPredicate successor) {
 		final Set<LeftRightSplit<L>> newTemplates = new HashSet<>();
 		final Set<ReducingLeftRightSplit<L>> newSplits = new HashSet<>();
 
@@ -129,7 +137,8 @@ public class McrState2<L extends IIcfgTransition<?>, S> {
 	 *
 	 * @return true if the state contains no left-right splits.
 	 */
-	public boolean containsNoSplits() {
+	@Override
+	public boolean isRepresentative() {
 		return mSplits.isEmpty();
 	}
 
@@ -149,7 +158,7 @@ public class McrState2<L extends IIcfgTransition<?>, S> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final McrState2 other = (McrState2) obj;
+		final McrState2<?> other = (McrState2<?>) obj;
 		return Objects.equals(mOldState, other.mOldState) && Objects.equals(mSplits, other.mSplits)
 				&& Objects.equals(mTemplates, other.mTemplates);
 	}
@@ -157,5 +166,40 @@ public class McrState2<L extends IIcfgTransition<?>, S> {
 	@Override
 	public String toString() {
 		return "McrState2 [mOldState=" + mOldState + ", mTemplates=" + mTemplates + ", mSplits=" + mSplits + "]";
+	}
+
+	@Override
+	public Term getFormula() {
+		return mOldState.getFormula();
+	}
+
+	@Override
+	public Term getClosedFormula() {
+		return mOldState.getClosedFormula();
+	}
+
+	@Override
+	public String[] getProcedures() {
+		return mOldState.getProcedures();
+	}
+
+	@Override
+	public Set<IProgramVar> getVars() {
+		return mOldState.getVars();
+	}
+
+	@Override
+	public IcfgLocation[] getProgramPoints() {
+		return mOldState.getProgramPoints();
+	}
+
+	@Override
+	public Set<IProgramConst> getConstants() {
+		return mOldState.getConstants();
+	}
+
+	@Override
+	public Set<IProgramFunction> getFunctions() {
+		return mOldState.getFunctions();
 	}
 }

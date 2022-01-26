@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -56,9 +56,7 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 	private final ILogger mLogger;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mOperand;
 	private final McrStateFactory<L> mStateFactory;
-	private final McrState<L, IPredicate> mInitial;
-	private final IPredicate mInitialPredicate;
-	private final BidirectionalMap<IPredicate, McrState<L, IPredicate>> mStateMap;
+	private final IMcrState<L> mInitial;
 
 	/**
 	 * Constructor.
@@ -78,11 +76,9 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 		mLogger = loggingService.getLogger(MaximalCausalityReduction.class);
 		mOperand = operand;
 		final IPredicate oldInitial = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
-		mInitial = new McrState<>(oldInitial);
-		mStateMap = new BidirectionalMap<>();
+		assert oldInitial instanceof IMLPredicate;
 		mStateFactory = stateFactory;
-		mInitialPredicate = mStateFactory.createState(oldInitial, mInitial);
-		mStateMap.put(mInitialPredicate, mInitial);
+		mInitial = mStateFactory.createState(oldInitial);
 	}
 
 	@Override
@@ -102,18 +98,18 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 
 	@Override
 	public Iterable<IPredicate> getInitialStates() {
-		return Set.of(mInitialPredicate);
+		return Set.of(mInitial);
 	}
 
 	@Override
 	public boolean isInitial(final IPredicate state) {
-		return mInitialPredicate.equals(state);
+		return mInitial.equals(state);
 	}
 
 	@Override
 	public boolean isFinal(final IPredicate state) {
-		final McrState<L, IPredicate> mcrState = mStateMap.get(state);
-		return mOperand.isFinal(mcrState.getOldState()) && mcrState.containsNoSplits();
+		final IMcrState<L> mcrState = (IMcrState<L>) state;
+		return mOperand.isFinal(mcrState.getOldState()) && mcrState.isRepresentative();
 	}
 
 	@Override
@@ -129,7 +125,7 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 	@Override
 	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(final IPredicate state,
 			final L letter) {
-		final McrState<L, IPredicate> mcrState = mStateMap.get(state);
+		final IMcrState<L> mcrState = (IMcrState<L>) state;
 
 		final var transition = DataStructureUtils.getOnly(mOperand.internalSuccessors(mcrState.getOldState(), letter),
 				"must be deterministic");
@@ -137,20 +133,14 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 			return Collections.emptySet();
 		}
 		final IPredicate successorState = transition.get().getSucc();
+		assert successorState instanceof IMLPredicate;
 
-		final McrState<L, IPredicate> newState = mcrState.execute(letter, successorState);
+		final IMcrState<L> newState = mStateFactory.createNextState(mcrState, letter, (IMLPredicate) successorState);
 		if (newState == null) {
-			mLogger.debug("discard " + state + ": " + letter);
 			return Collections.emptySet();
 		}
-		IPredicate newPredicate;
-		if (mStateMap.containsValue(newState)) {
-			newPredicate = mStateMap.inverse().get(newState);
-		} else {
-			newPredicate = mStateFactory.createState(successorState, newState);
-			mStateMap.put(newPredicate, newState);
-		}
-		return Set.of(new OutgoingInternalTransition<>(letter, newPredicate));
+
+		return Set.of(new OutgoingInternalTransition<>(letter, newState));
 	}
 
 	@Override
