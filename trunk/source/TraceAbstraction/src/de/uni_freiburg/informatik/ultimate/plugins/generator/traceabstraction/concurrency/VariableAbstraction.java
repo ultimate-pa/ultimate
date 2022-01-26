@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2021 Marcel Rogg
- * Copyright (C) 2021 University of Freiburg
+
+ * Copyright (C) 2022 Marcel Rogg
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
