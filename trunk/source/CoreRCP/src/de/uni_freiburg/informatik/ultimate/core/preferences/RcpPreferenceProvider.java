@@ -328,6 +328,21 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		return rtr;
 	}
 
+	public Map<String, Object> getPreferences() {
+		final Map<String, Object> rtr = new HashMap<>();
+		try {
+			final IEclipsePreferences instance = getInstance();
+			final IEclipsePreferences defaults = getDefault();
+			for (final String key : instance.keys()) {
+				final Object value = instance.get(key, defaults.get(key, null));
+				rtr.put(key, value);
+			}
+		} catch (final BackingStoreException e) {
+			throw new PreferenceException(mPluginID, e);
+		}
+		return rtr;
+	}
+
 	@Override
 	public String getSingleLinePreferenceString() {
 		final StringBuilder sb = new StringBuilder();

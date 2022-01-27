@@ -224,8 +224,7 @@ public class ParsedParameter {
 			dir = new File(".").getAbsolutePath();
 		}
 
-		final List<File> files = new ArrayList<>();
-		files.addAll(Arrays.asList(getInputFiles()));
+		final List<File> files = new ArrayList<>(Arrays.asList(getInputFiles()));
 		if (hasSettings()) {
 			files.add(new File(getSettingsFile()));
 		}
