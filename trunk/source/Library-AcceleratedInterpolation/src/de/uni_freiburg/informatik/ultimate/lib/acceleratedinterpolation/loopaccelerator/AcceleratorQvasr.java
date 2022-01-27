@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Accelera
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
@@ -46,6 +47,7 @@ public class AcceleratorQvasr implements IAccelerator {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
+	private final IPredicateUnifier mPredUnifier;
 	private boolean mFoundAcceleration;
 
 	/**
@@ -61,10 +63,11 @@ public class AcceleratorQvasr implements IAccelerator {
 	 *            {@link IIcfgSymbolTable}
 	 */
 	public AcceleratorQvasr(final ILogger logger, final ManagedScript managedScript,
-			final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services, final IPredicateUnifier predUnifier) {
 		mLogger = logger;
 		mScript = managedScript;
 		mServices = services;
+		mPredUnifier = predUnifier;
 		mFoundAcceleration = false;
 	}
 
@@ -80,7 +83,7 @@ public class AcceleratorQvasr implements IAccelerator {
 	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop, final IcfgLocation loopHead) {
 		try {
 			mLogger.debug("Accelerating Loop using Qvasr Summarization");
-			final QvasrLoopSummarization qvasr = new QvasrLoopSummarization(mLogger, mServices, mScript);
+			final QvasrLoopSummarization qvasr = new QvasrLoopSummarization(mLogger, mServices, mScript, mPredUnifier);
 			final UnmodifiableTransFormula loopSummary = qvasr.getQvasrAcceleration(loop);
 			mFoundAcceleration = true;
 			return loopSummary;
