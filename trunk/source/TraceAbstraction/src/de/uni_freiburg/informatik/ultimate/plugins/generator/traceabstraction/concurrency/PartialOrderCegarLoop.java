@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
@@ -130,14 +131,30 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	public Set<IProgramVar> getAllConstrainingVariables() {
 		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
 		final Set<IProgramVar> constrainingVars = new HashSet<>();
+		final Set<TermVariable> freeVars = new HashSet<>();
 
 		for (final QualifiedTracePredicates qtp : usedTracePredicates) {
 			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
 			for (final IPredicate ip : lp) {
 				constrainingVars.addAll(ip.getVars());
+				freeVars.addAll(Arrays.asList(ip.getFormula().getFreeVars()));
+
 			}
 		}
 		return constrainingVars;
+	}
+
+	// returns the set of all free variables that are used to describe states of the automaton
+	public Set<TermVariable> getAllConstrainingFreeVariables() {
+		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
+		final Set<TermVariable> freeVars = new HashSet<>();
+		for (final QualifiedTracePredicates qtp : usedTracePredicates) {
+			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
+			for (final IPredicate ip : lp) {
+				freeVars.addAll(Arrays.asList(ip.getFormula().getFreeVars()));
+			}
+		}
+		return freeVars;
 	}
 
 	@Override

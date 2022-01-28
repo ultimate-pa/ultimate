@@ -28,12 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -46,24 +43,28 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 
-	public VariableAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton) {
-		this.automaton = automaton;
-		final Set<IProgramVar> allVars = new HashSet<>();
-		for (final IPredicate s : this.automaton.getInitialStates()) {
-			final Set<IProgramVar> vars = s.getVars();
-			final Iterator<IProgramVar> iti = vars.iterator();
-			allVars.addAll(vars);
-			final Iterable<OutgoingInternalTransition<L, IPredicate>> nextStates = automaton.internalSuccessors(s);
-			// I dont untestand what this gives back
-			// while (s.)
-
-		}
+	public VariableAbstraction() {
+		this.automaton = null;
+		/*
+		 * this.automaton = automaton; final Set<IProgramVar> allVars = new HashSet<>(); for (final IPredicate s :
+		 * this.automaton.getInitialStates()) { final Set<IProgramVar> vars = s.getVars(); final Iterator<IProgramVar>
+		 * iti = vars.iterator(); allVars.addAll(vars); final Iterable<OutgoingInternalTransition<L, IPredicate>>
+		 * nextStates = automaton.internalSuccessors(s); // I dont untestand what this gives back // while (s.)
+		 *
+		 * }
+		 */
 	}
 
 	@Override
 	public L abstractLetter(final L inLetter, final Set<IProgramVar> setVariables) {
-		final UnmodifiableTransFormula transform = inLetter.getTransformula();
-		transform.getAssignedVars();
+		final Set<IProgramVar> transform = inLetter.getTransformula().getAssignedVars();
+
+		// Wenn variablen von inLetter nicht in setVariables vorkommen, dann können die Outvariablen gehavoced werden
+		transform.removeAll(setVariables);
+		for (final IProgramVar v : transform) {
+			// Here I need to refind th Level where i have to quantify the variables
+		}
+
 		// UnmodifiableTransFormulaBuilder
 		// andere abstractionsmethode aufrufen
 

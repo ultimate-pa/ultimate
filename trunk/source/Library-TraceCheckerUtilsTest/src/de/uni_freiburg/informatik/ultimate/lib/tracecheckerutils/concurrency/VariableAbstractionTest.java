@@ -40,11 +40,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independence.SemanticIndependenceConditionGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
@@ -71,7 +74,7 @@ public class VariableAbstractionTest {
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
-	// private SemanticIndependenceConditionGenerator mGenerator;
+	private SemanticIndependenceConditionGenerator mGenerator;
 
 	// variables for SimpleSet example
 	private IProgramVar x, y, a, b, sz, r1, r2, s1, s2;
@@ -81,8 +84,9 @@ public class VariableAbstractionTest {
 
 	private Term axioms;
 
-	// VariableAbstraction vaeX = new VariableAbstraction<>();
+	VariableAbstraction<IIcfgTransition<?>> vaeX = new VariableAbstraction<>();
 	// VariableAbstraction in die ModelCheckerUtils
+
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);
@@ -97,8 +101,8 @@ public class VariableAbstractionTest {
 		setupSimpleSet();
 		setupArrayStack();
 
-		// mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript, new
-		// BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
+		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript,
+				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
 
 	}
 
@@ -187,8 +191,8 @@ public class VariableAbstractionTest {
 
 	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term expected) {
 		// TODO Actually run tests against SemanticIndependenceRelation: Check if result is sufficient for independence.
+		final IPredicate actual = mGenerator.generateCondition(tfA, tfB);
 
-		final IPredicate actual = null; // mGenerator.generateCondition(tfA, tfB);
 		if (expected == null) {
 			assert actual == null : "No commutativity condition expected, but found " + actual.getFormula();
 		} else {
