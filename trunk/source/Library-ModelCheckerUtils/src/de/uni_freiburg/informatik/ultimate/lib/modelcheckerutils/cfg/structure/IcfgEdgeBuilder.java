@@ -291,6 +291,16 @@ public class IcfgEdgeBuilder {
 		return rtr;
 	}
 
+	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final UnmodifiableTransFormula tf, final UnmodifiableTransFormula tfWithBe) {
+		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
+		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBe);
+		source.addOutgoing(rtr);
+		target.addIncoming(rtr);
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		return rtr;
+	}
+
 	private static <K, V> Map<K, V> filterValues(final Map<K, V> map, final Predicate<V> funValueTest) {
 		if (map == null) {
 			return Collections.emptyMap();

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -18,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -49,10 +51,11 @@ public class CegarLoopUtils {
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation, final Concurrency automataType,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+			final IPLBECompositionFactory<L> compositionFactory,
+			final Supplier<ICopyActionFactory<L>> copyFactorySupplier, final Class<L> transitionClazz) {
 		final BasicCegarLoop<L> cegarLoop = constructCegarLoop(services, name, root, taPrefs, root.getCfgSmtToolkit(),
 				predicateFactory, errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, automataType,
-				compositionFactory, transitionClazz, witnessAutomaton);
+				compositionFactory, copyFactorySupplier, transitionClazz, witnessAutomaton);
 		return cegarLoop.runCegar();
 	}
 
@@ -62,7 +65,8 @@ public class CegarLoopUtils {
 			final Set<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation, final Concurrency automataType,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz,
+			final IPLBECompositionFactory<L> compositionFactory,
+			final Supplier<ICopyActionFactory<L>> copyFactorySupplier, final Class<L> transitionClazz,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final LanguageOperation languageOperation = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
@@ -90,7 +94,7 @@ public class CegarLoopUtils {
 					}
 					result = new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
-							transitionClazz);
+							copyFactorySupplier.get(), transitionClazz);
 					break;
 				case PETRI_NET:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {

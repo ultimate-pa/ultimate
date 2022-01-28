@@ -97,8 +97,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
+	private final ICopyActionFactory<L> mCopyFactory;
+
 	private final PartialOrderMode mPartialOrderMode;
-	private final IIntersectionStateFactory<IPredicate> mFactory;
+	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
 	private final DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, IDfsVisitor<L, IPredicate>> mVisitor;
 	private final PartialOrderReductionFacade<L> mPOR;
 
@@ -108,11 +110,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+			final IPLBECompositionFactory<L> compositionFactory, final ICopyActionFactory<L> copyFactory,
+			final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
+		mCopyFactory = copyFactory;
 		mPartialOrderMode = mPref.getPartialOrderMode();
-		mFactory = new InformationStorageFactory();
 
 		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
