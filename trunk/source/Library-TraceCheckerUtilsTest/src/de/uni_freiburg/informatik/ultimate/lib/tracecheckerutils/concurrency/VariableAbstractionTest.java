@@ -190,7 +190,7 @@ public class VariableAbstractionTest {
 	}
 
 	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term expected) {
-		// TODO Actually run tests against SemanticIndependenceRelation: Check if result is sufficient for independence.
+
 		final IPredicate actual = mGenerator.generateCondition(tfA, tfB);
 
 		if (expected == null) {

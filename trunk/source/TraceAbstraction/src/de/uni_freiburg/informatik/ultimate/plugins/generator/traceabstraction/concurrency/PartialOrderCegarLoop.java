@@ -131,13 +131,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	public Set<IProgramVar> getAllConstrainingVariables() {
 		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
 		final Set<IProgramVar> constrainingVars = new HashSet<>();
-		final Set<TermVariable> freeVars = new HashSet<>();
-
 		for (final QualifiedTracePredicates qtp : usedTracePredicates) {
 			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
 			for (final IPredicate ip : lp) {
 				constrainingVars.addAll(ip.getVars());
-				freeVars.addAll(Arrays.asList(ip.getFormula().getFreeVars()));
 
 			}
 		}
@@ -192,8 +189,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
 		// TODO (Marcel 2022-01-12) New Variable Ábstraction provide abstracted variables here
-		final VariableAbstraction<L> varAb =
-				new VariableAbstraction<>((INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction);
+		final VariableAbstraction<L> varAb = new VariableAbstraction<>();
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
