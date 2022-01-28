@@ -209,24 +209,9 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	}
 
 	protected void applyRules(final L letter, final int index, final Direction direction) {
-		// Rule 1
-		if (direction == Direction.RIGHT) {
-			applyRule1(letter, index);
-		}
-
-		// Rule 2
-		if (direction == Direction.LEFT) {
-			applyRule2(letter, index);
-		}
-
-		// Rule 3
-		if (direction == Direction.RIGHT) {
-			applyRule3(letter, index);
-		}
-
-		// Rule 4
-		if (direction == Direction.LEFT) {
-			applyRule4(letter, index);
+		if (direction != Direction.MIDDLE) {
+			applyRule1Or2(letter, index, direction);
+			applyRule3Or4(letter, index, direction);
 		}
 
 		if (direction == Direction.LEFT && !mElements.get(index).mAnnotation2.isEmpty()) {
@@ -267,15 +252,27 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		return DataStructureUtils.haveNonEmptyIntersection(getThreadId(letter1), getThreadId(letter2));
 	}
 
-	private void applyRule1(final L letter, final int index) {
+	private Set<IProgramVar> getVars(final L letter, final boolean writtenVars) {
+		if (writtenVars) {
+			return letter.getTransformula().getOutVars().keySet();
+		}
+		return letter.getTransformula().getInVars().keySet();
+	}
+
+	private void applyRule1Or2(final L letter, final int index, final Direction direction) {
 		if (mContradiction) {
 			return;
 		}
 
-		final ListIterator<Element> iter = mElements.listIterator(index);
-		iter.next();
+		final ListIterator<Element> iter;
+		if (direction == Direction.RIGHT) {
+			iter = mElements.listIterator(index);
+			iter.next();
+		} else {
+			iter = new ReversedIterator<>(mElements.listIterator(index));
+		}
 		boolean foundSameThread = false;
-		final Set<IProgramVar> written = new HashSet<>(letter.getTransformula().getOutVars().keySet());
+		final Set<IProgramVar> variables = new HashSet<>(getVars(letter, direction == Direction.RIGHT));
 
 		for (final Element elem : (Iterable<Element>) () -> iter) {
 			boolean stronglyDependent = false;
@@ -284,68 +281,46 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 				stronglyDependent = true;
 			}
 
-			if (DataStructureUtils.haveNonEmptyIntersection(written,
-					elem.mLetter.getTransformula().getInVars().keySet())) {
+			if (DataStructureUtils.haveNonEmptyIntersection(variables,
+					getVars(elem.mLetter, direction == Direction.LEFT))) {
 				stronglyDependent = true;
 			}
 
-			written.removeAll(elem.mLetter.getTransformula().getOutVars().keySet());
+			variables.removeAll(getVars(elem.mLetter, true));
 
 			if (stronglyDependent) {
-				moveEntry(iter.previousIndex(), elem.mLetter, Direction.RIGHT);
+				moveEntry(iter.previousIndex(), elem.mLetter, direction);
 			}
 		}
 	}
 
-	private void applyRule2(final L letter, final int index) {
+	private void applyRule3Or4(final L letter, final int index, final Direction direction) {
 		if (mContradiction) {
 			return;
 		}
 
-		final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
-		boolean foundSameThread = false;
-		final Set<IProgramVar> read = new HashSet<>(letter.getTransformula().getInVars().keySet());
-
-		for (final Element elem : (Iterable<Element>) () -> iter) {
-			boolean stronglyDependent = false;
-			if (!foundSameThread && isInSameThread(elem.mLetter, letter)) {
-				foundSameThread = true;
-				stronglyDependent = true;
-			}
-
-			if (DataStructureUtils.haveNonEmptyIntersection(read,
-					elem.mLetter.getTransformula().getOutVars().keySet())) {
-				stronglyDependent = true;
-			}
-
-			read.removeAll(elem.mLetter.getTransformula().getInVars().keySet());
-
-			if (stronglyDependent) {
-				moveEntry(iter.previousIndex(), elem.mLetter, Direction.LEFT);
-			}
-		}
-	}
-
-	private void applyRule3(final L letter, final int index) {
-		if (mContradiction) {
+		final Set<IProgramVar> variables = new HashSet<>(getVars(letter, direction == Direction.LEFT));
+		if (variables.isEmpty()) {
 			return;
 		}
 
-		final Set<IProgramVar> read = new HashSet<>(letter.getTransformula().getInVars().keySet());
-		if (read.isEmpty()) {
-			return;
+		final ListIterator<Element> iter;
+		if (direction == Direction.RIGHT) {
+			iter = new ReversedIterator<>(mElements.listIterator(index));
+		} else {
+			iter = mElements.listIterator(index);
+			iter.next();
 		}
 
-		final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
 		for (final Element elem : (Iterable<Element>) () -> iter) {
 			final Set<IProgramVar> vars =
-					DataStructureUtils.intersection(read, elem.mLetter.getTransformula().getOutVars().keySet());
+					DataStructureUtils.intersection(variables, getVars(elem.mLetter, direction == Direction.RIGHT));
 			if (vars.isEmpty()) {
 				continue;
 			}
-			read.removeAll(vars);
+			variables.removeAll(vars);
 
-			if (elem.mDirection == Direction.LEFT) {
+			if (elem.mDirection != direction && elem.mDirection != Direction.MIDDLE) {
 				if (DataStructureUtils.haveNonEmptyIntersection(elem.mAnnotation1, vars)) {
 					mContradiction = true;
 					return;
@@ -354,8 +329,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 				final ListIterator<Element> iter2 =
 						new ReversedIterator<>(mElements.listIterator(iter.previousIndex()));
 				for (final Element elem2 : (Iterable<Element>) () -> iter2) {
-					if (DataStructureUtils.haveNonEmptyIntersection(vars,
-							elem2.mLetter.getTransformula().getOutVars().keySet())) {
+					if (DataStructureUtils.haveNonEmptyIntersection(vars, getVars(elem2.mLetter, true))) {
 						moveEntry(iter2.previousIndex(), elem2.mLetter, Direction.LEFT);
 					}
 				}
@@ -363,56 +337,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 				final ListIterator<Element> iter3 = mElements.listIterator(index);
 				iter3.next();
 				for (final Element elem2 : (Iterable<Element>) () -> iter3) {
-					if (DataStructureUtils.haveNonEmptyIntersection(vars,
-							elem2.mLetter.getTransformula().getOutVars().keySet())) {
-						moveEntry(iter3.previousIndex(), elem2.mLetter, Direction.RIGHT);
-					}
-				}
-			}
-		}
-	}
-
-	// TODO: Rule 3 and rule 4 should be implemented as a single function.
-	private void applyRule4(final L letter, final int index) {
-		if (mContradiction) {
-			return;
-		}
-
-		final ListIterator<Element> iter = mElements.listIterator(index);
-		iter.next();
-		final Set<IProgramVar> writes = new HashSet<>(letter.getTransformula().getOutVars().keySet());
-		if (writes.isEmpty()) {
-			return;
-		}
-
-		for (final Element elem : (Iterable<Element>) () -> iter) {
-			final Set<IProgramVar> vars =
-					DataStructureUtils.intersection(writes, elem.mLetter.getTransformula().getInVars().keySet());
-			if (vars.isEmpty()) {
-				continue;
-			}
-			writes.removeAll(vars);
-
-			if (elem.mDirection == Direction.RIGHT) {
-				if (DataStructureUtils.haveNonEmptyIntersection(mElements.get(index).mAnnotation1, vars)) {
-					mContradiction = true;
-					return;
-				}
-
-				final ListIterator<Element> iter2 =
-						new ReversedIterator<>(mElements.listIterator(iter.previousIndex()));
-				for (final Element elem2 : (Iterable<Element>) () -> iter2) {
-					if (DataStructureUtils.haveNonEmptyIntersection(vars,
-							elem2.mLetter.getTransformula().getOutVars().keySet())) {
-						moveEntry(iter2.previousIndex(), elem2.mLetter, Direction.LEFT);
-					}
-				}
-
-				final ListIterator<Element> iter3 = mElements.listIterator(index);
-				iter3.next();
-				for (final Element elem2 : (Iterable<Element>) () -> iter3) {
-					if (DataStructureUtils.haveNonEmptyIntersection(vars,
-							elem2.mLetter.getTransformula().getOutVars().keySet())) {
+					if (DataStructureUtils.haveNonEmptyIntersection(vars, getVars(elem2.mLetter, true))) {
 						moveEntry(iter3.previousIndex(), elem2.mLetter, Direction.RIGHT);
 					}
 				}
