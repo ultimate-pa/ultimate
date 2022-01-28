@@ -504,7 +504,16 @@ public class BitabsTranslation {
 //		final ExpressionResult rightOperand = (ExpressionResult) main.dispatch(node.getOperand2());
 		// We need to create a new id expression to store the expression here.
 		// leftOperand we supposed to be an idExpression, implicit cast
-		IdentifierExpression id_left = (IdentifierExpression) leftOperand.getLrValue().getValue();
+		System.out.println("leftOperand expression: " + leftOperand.getLrValue().toString());
+		LRValue left_Rvalue = leftOperand.getLrValue();
+		IdentifierExpression id_left;
+		if (left_Rvalue instanceof HeapLValue ) {
+			id_left = (IdentifierExpression) ((HeapLValue)left_Rvalue).getAddress();
+		} else {
+			id_left = (IdentifierExpression) left_Rvalue.getValue();
+		}
+	//	IdentifierExpression id_left = (IdentifierExpression) ((RValue)leftOperand.getLrValue()).getValue();
+		 			
 
 		BoogieType bType = (BoogieType) id_left.getType();
 		// Create the LRValue for the assignment statement.
@@ -577,8 +586,11 @@ public class BitabsTranslation {
 				if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryAnd) {
 
 					Expression rhs_ite = ExpressionFactory.constructIfThenElseExpression(loc, cond_rhs, opr1, opr2);
+//					Expression formula_left = ExpressionFactory.newBinaryExpression(loc,
+//							BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), bit_var);
 					Expression formula_left = ExpressionFactory.newBinaryExpression(loc,
-							BinaryExpression.Operator.COMPLT, leftOperand.getLrValue().getValue(), bit_var);
+							BinaryExpression.Operator.COMPLT, id_left, bit_var);
+					
 					IfStatement ifstmt_and = assumeIte(chandler, mProcedureManager, builder, lType, node, leftOperand,
 							mNameHandler, mAuxVarInfoBuilder, symbolTable, exprResultTransformer,
 							mExpressionTranslation, main, rhs_bit, opr1, opr2, rhs_ite, formula_left, idLhs);
