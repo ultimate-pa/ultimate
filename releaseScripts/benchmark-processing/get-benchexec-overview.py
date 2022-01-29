@@ -114,7 +114,7 @@ class Run:
 
     @staticmethod
     def __time_to_float(val: str) -> float:
-        """Remove second unit from benchexec time and convert to float """
+        """Remove second unit from benchexec time and convert to float"""
         num, unit = Run.split_number_and_unit(val)
         if not unit or unit == "s":
             return float(num) if val else None
@@ -123,7 +123,7 @@ class Run:
 
     @staticmethod
     def __byte_to_int(val: str) -> int:
-        """Remove byte unit from benchexec time and convert to float """
+        """Remove byte unit from benchexec time and convert to float"""
         return int(val[:-1]) if val else None
 
     @staticmethod
