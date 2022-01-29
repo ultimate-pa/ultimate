@@ -246,7 +246,12 @@ public class ThreadInstanceAdder {
 				ef.createForkThreadOtherTransition(callerNode, calleeEntryLoc, null, forkTransformula, fct);
 		integrateForkEdge(fct, backtranslator, callerNode, calleeEntryLoc, forkThreadOther);
 
-		// TODO Matthias 2018-09-15: Set overapproximations for both edges
+		// TODO Matthias 2018-09-15: Set overapproximations
+		// Write tests that are run nightly.
+		// Check if overapproximation flag "arrives" here
+		// Think! Do we have to pass the overapproximation flag to both fork edges or is the "other" edge sufficient.
+		// If source is Boogie program this happens only if we have a function symbol in arguments or thread ID.
+		// Hence pthread programs are not sufficient for testing.
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		if (!overapproximations.isEmpty()) {
 			new Overapprox(overapproximations).annotate(fct);
