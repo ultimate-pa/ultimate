@@ -291,6 +291,13 @@ def parse_args() -> argparse.Namespace:
         sys.exit(1)
 
 
+def match_version(line: str):
+    version_match = version_matcher.findall(line)
+    if version_match:
+        return version_match[0]
+    return "Unknown"
+
+
 def scan_line(
     line: str, result: Optional[Classification], line_iter: Iterator[str]
 ) -> Classification:
@@ -387,7 +394,7 @@ def process_wrapper_script_log(file: str) -> List[Result]:
                     call += [line]
             else:
                 if line.startswith("This is Ultimate"):
-                    new_version = version_matcher.findall(line)[0]
+                    new_version = match_version(line)
                     if version and not new_version == version:
                         raise ValueError(
                             "Found different Ultimate versions in one log file. First was {} and second was {}".format(
@@ -440,7 +447,7 @@ def process_direct_call_log(file: str) -> List[Result]:
                 call = line
                 debug("Found Ultimate call {}".format(call))
             elif line.startswith("This is Ultimate"):
-                version = version_matcher.findall(line)[0]
+                version = match_version(line)
                 debug("Found Ultimate version {}".format(version))
             else:
                 result = scan_line(line, result, lines)
