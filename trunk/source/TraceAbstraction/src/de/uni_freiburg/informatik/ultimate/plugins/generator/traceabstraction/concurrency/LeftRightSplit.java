@@ -27,9 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -49,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ReversedIterator;
  *            The type of the letters.
  */
 public class LeftRightSplit<L extends IIcfgTransition<?>> {
+	private static final boolean OPTIMIZE_DUPLICATED_SPLITS = true;
+
 	/**
 	 * The direction in which a statement is put in the left-right split.
 	 */
@@ -142,7 +146,22 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 			}
 
 			removeDuplicate(index);
+
+			if (OPTIMIZE_DUPLICATED_SPLITS && duplicatedSplit != null) {
+				boolean canOptimize = true;
+				for (int i = 0; i < mElements.size(); i++) {
+					if (mElements.get(i).mDirection != duplicatedSplit.mElements.get(i).mDirection
+							&& mElements.get(i).mDirection != Direction.MIDDLE) {
+						canOptimize = false;
+						break;
+					}
+				}
+				if (canOptimize) {
+					return null;
+				}
+			}
 		}
+
 		return duplicatedSplit;
 	}
 
@@ -446,6 +465,33 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	 */
 	public boolean containsContradiction() {
 		return mContradiction;
+	}
+
+	/**
+	 * Checks whether the left-right split will never result in a contradiction if further events are always added in
+	 * the middle.
+	 *
+	 * @return true if no contradiction will occur when adding statements in the middle.
+	 */
+	public boolean willNeverContradict() {
+		final Map<IProgramVar, Element> lastWrites = new HashMap<>();
+		final ListIterator<Element> iter = mElements.listIterator();
+		for (final Element elem : (Iterable<Element>) () -> iter) {
+			for (final IProgramVar var : getVars(elem.mLetter, true)) {
+				lastWrites.put(var, elem);
+			}
+		}
+
+		// TODO: We might be able to find a less restrictive condition.
+		final LeftRightSplit<L> check = duplicateThis();
+		for (final Element elem : lastWrites.values()) {
+			check.moveEntry(mElements.indexOf(elem), elem.mLetter, Direction.RIGHT);
+			if (check.mContradiction) {
+				return false;
+			}
+		}
+		check.applyRule5();
+		return !check.mContradiction;
 	}
 
 	@Override

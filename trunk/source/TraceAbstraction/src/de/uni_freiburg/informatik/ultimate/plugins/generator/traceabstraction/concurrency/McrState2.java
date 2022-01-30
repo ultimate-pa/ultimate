@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.co
  *            The type of states in the input automaton.
  */
 public class McrState2<L extends IIcfgTransition<?>> implements IMcrState<L> {
+	private static final boolean OPTIMIZE_DEAD_ENDS = true;
+
 	private final IMLPredicate mOldState;
 	private final Set<LeftRightSplit<L>> mTemplates;
 	private final Set<ReducingLeftRightSplit<L>> mSplits;
@@ -88,15 +90,22 @@ public class McrState2<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		return mOldState;
 	}
 
-	private <SPLIT extends LeftRightSplit<L>> void addStatementToSplit(final SPLIT split, final L letter,
-			final Direction direction, final Set<SPLIT> set) {
+	private <SPLIT extends LeftRightSplit<L>> boolean addStatementToSplit(final SPLIT split, final L letter,
+			final Direction direction, final Set<SPLIT> set, final boolean optimizeDeadEnds) {
 		final SPLIT duplicate = (SPLIT) split.addStatement(letter, direction);
 		if (!split.containsContradiction()) {
+			if (optimizeDeadEnds && split.willNeverContradict()) {
+				return false;
+			}
 			set.add(split);
 		}
 		if (duplicate != null && !duplicate.containsContradiction()) {
+			if (optimizeDeadEnds && duplicate.willNeverContradict()) {
+				return false;
+			}
 			set.add(split);
 		}
+		return true;
 	}
 
 	/**
@@ -116,17 +125,19 @@ public class McrState2<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		for (final LeftRightSplit<L> template : mTemplates) {
 			final ReducingLeftRightSplit<L> split = new ReducingLeftRightSplit<>(template);
 			split.moveLast(Direction.RIGHT);
-			addStatementToSplit(split, transition, Direction.LEFT, newSplits);
+			addStatementToSplit(split, transition, Direction.LEFT, newSplits, false);
 		}
 
 		for (final ReducingLeftRightSplit<L> split : mSplits) {
 			final ReducingLeftRightSplit<L> copy = new ReducingLeftRightSplit<>(split);
-			addStatementToSplit(copy, transition, Direction.MIDDLE, newSplits);
+			if (!addStatementToSplit(copy, transition, Direction.MIDDLE, newSplits, OPTIMIZE_DEAD_ENDS)) {
+				return null;
+			}
 		}
 
 		for (final LeftRightSplit<L> template : mTemplates) {
 			final LeftRightSplit<L> copy = new LeftRightSplit<>(template);
-			addStatementToSplit(copy, transition, Direction.MIDDLE, newTemplates);
+			addStatementToSplit(copy, transition, Direction.MIDDLE, newTemplates, false);
 		}
 
 		return new McrState2<>(successor, newTemplates, newSplits);

@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of states in the input automaton.
  */
 public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
+	private static final boolean OPTIMIZE_DEAD_ENDS = true;
+
 	private final IMLPredicate mOldState;
 	private final Map<String, DependencyRank> mThreads;
 	private final Map<IProgramVar, DependencyRank> mVariables;
@@ -171,9 +173,15 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			final LeftRightSplit<L> newSplit = new LeftRightSplit<>(split);
 			final LeftRightSplit<L> duplicatedSplit = newSplit.addStatement(transition, Direction.MIDDLE);
 			if (!newSplit.containsContradiction()) {
+				if (OPTIMIZE_DEAD_ENDS && newSplit.willNeverContradict()) {
+					return null;
+				}
 				newLeftRightSplits.add(newSplit);
 			}
 			if (duplicatedSplit != null && !duplicatedSplit.containsContradiction()) {
+				if (OPTIMIZE_DEAD_ENDS && duplicatedSplit.willNeverContradict()) {
+					return null;
+				}
 				newLeftRightSplits.add(duplicatedSplit);
 			}
 		}
