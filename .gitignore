@@ -295,3 +295,5 @@ releaseScripts/default/UReqCheck-win32/
 /trunk/source/JavaCup/bootstrap/com/github/jhoenicke/javacup
 /trunk/source/JavaCup/classes/com/github/jhoenicke/javacup
 /trunk/source/JavaCup/java/com/github/jhoenicke/javacup
+/releaseScripts/.idea
+/releaseScripts/default/update-smtinterpol-firestation.sh
