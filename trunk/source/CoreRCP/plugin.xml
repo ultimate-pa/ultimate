@@ -30,8 +30,8 @@
    </extension>
    
    <extension point="org.eclipse.core.runtime.products" id="CLI">
-      <product application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" name="UltimateEliminator">
-         <property name="appName" value="UltimateEliminator" />
+      <product application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" name="Ultimate-CommandLine">
+         <property name="appName" value="Ultimate-CommandLine" />
          <property name="aboutText"
                value="Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files." />
       </product>
