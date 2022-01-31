@@ -280,7 +280,7 @@ public class NnfTransformer {
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}
-					final Term newBody = new Substitution(mScript, substitutionMapping).transform(qf.getSubformula());
+					final Term newBody = Substitution.apply(mMgdScript, substitutionMapping, qf.getSubformula());
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"

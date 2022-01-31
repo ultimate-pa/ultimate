@@ -8,6 +8,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.Backbone;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.Loop;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.LoopAcceleratorLite;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -19,6 +21,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * A loop accelerator used in accelerated inteprolation using the {@link WernerLoopAccelerationIcfgTransformer} method
+ * of acceleration.
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
+ *         {@link AcceleratedInterpolation}
+ */
 public class AcceleratorWernerOverapprox implements IAccelerator {
 
 	private final ILogger mLogger;
@@ -26,7 +35,20 @@ public class AcceleratorWernerOverapprox implements IAccelerator {
 	private final IUltimateServiceProvider mServices;
 	private boolean mFoundAcceleration;
 	private final IIcfgSymbolTable mSymbolTable;
+	private final boolean mIsOverapprox;
 
+	/**
+	 * Construct a new loop accelerator using {@link WernerLoopAccelerationIcfgTransformer}.
+	 *
+	 * @param logger
+	 *            A {@link ILogger}
+	 * @param managedScript
+	 *            A {@link ManagedScript}
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
+	 * @param symbolTable
+	 *            {@link IIcfgSymbolTable}
+	 */
 	public AcceleratorWernerOverapprox(final ILogger logger, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable) {
 		mLogger = logger;
@@ -34,6 +56,7 @@ public class AcceleratorWernerOverapprox implements IAccelerator {
 		mServices = services;
 		mFoundAcceleration = false;
 		mSymbolTable = symbolTable;
+		mIsOverapprox = true;
 	}
 
 	@Override
@@ -67,6 +90,11 @@ public class AcceleratorWernerOverapprox implements IAccelerator {
 	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
+	}
+
+	@Override
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 
 }

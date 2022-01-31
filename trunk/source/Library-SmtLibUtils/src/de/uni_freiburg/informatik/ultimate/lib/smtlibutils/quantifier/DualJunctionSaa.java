@@ -148,14 +148,14 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 
 	private EliminationResult tryToEliminateOne2(final EliminationTask inputEt) {
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
 		final Term term = qs.getInnerTerm();
 		final EliminationTask et = inputEt.update(term);
 		final EliminationResult res = tryToEliminateOne3(et);
 		if (res == null) {
 			return null;
 		} else {
-			final QuantifierSequence qsForResult = new QuantifierSequence(mScript, res.getEliminationTask().getTerm(),
+			final QuantifierSequence qsForResult = new QuantifierSequence(mMgdScript, res.getEliminationTask().getTerm(),
 					qs.getQuantifierBlocks());
 			final Term resultTerm = qsForResult.toTerm();
 			return new EliminationResult(res.getEliminationTask().update(resultTerm), res.getNewEliminatees());

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -251,7 +251,7 @@ public class IndexAnalyzer {
 		allTvs.addAll(CoreUtil.filter(mTransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
 		allTvs.addAll(CoreUtil.filter(mTransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
 		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, allTvs, true);
-		final Substitution subst = new Substitution(mScript, substitutionMapping);
+		final PureSubstitution subst = new PureSubstitution(mScript, substitutionMapping);
 		mScript.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (final Doubleton<Term> doubleton : doubletons) {
 			if (allVarsOccurInFormula(doubleton, termWithAdditionalInvariants)) {

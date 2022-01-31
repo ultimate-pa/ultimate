@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public class PredicateUnifier implements IPredicateUnifier {
 
-	protected final ManagedScript mMgnScript;
+	protected final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final Map<Term, IPredicate> mTerm2Predicates;
 	private final LinkedHashSet<IPredicate> mKnownPredicates = new LinkedHashSet<>();
@@ -105,13 +105,13 @@ public class PredicateUnifier implements IPredicateUnifier {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mMgnScript = mgdScript;
+		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mScript = mgdScript.getScript();
 		mSymbolTable = symbolTable;
 		mServices = services;
 		mLogger = logger;
-		mImplicationChecker = new MonolithicImplicationChecker(mServices, mMgnScript);
+		mImplicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 		mTerm2Predicates = new HashMap<>();
 		final Term trueTerm = mScript.term("true");
 		IPredicate truePredicate = null;
@@ -311,7 +311,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	private IPredicate getOrConstructPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
 			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate) {
 
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mScript, mSymbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
 		mPredicateUnifierBenchmarkGenerator.continueTime();
 		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
 		assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());
@@ -357,7 +357,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			simplifiedTerm = commuNF;
 		} else {
 			try {
-				final Term tmp = SmtUtils.simplify(mMgnScript, commuNF, mServices, mSimplificationTechnique);
+				final Term tmp = SmtUtils.simplify(mMgdScript, commuNF, mServices, mSimplificationTechnique);
 				simplifiedTerm = new CommuhashNormalForm(mServices, mScript).transform(tmp);
 			} catch (final ToolchainCanceledException tce) {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "unifying predicates"));
@@ -472,7 +472,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 */
 	@Override
 	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
-		final Term[] conjuncts = SmtUtils.cannibalize(mMgnScript, mServices, splitNumericEqualities, term);
+		final Term[] conjuncts = SmtUtils.cannibalize(mMgdScript, mServices, splitNumericEqualities, term);
 		final Set<IPredicate> result = new HashSet<>();
 		for (final Term conjunct : conjuncts) {
 			final IPredicate predicate = getOrConstructPredicate(conjunct);
@@ -766,7 +766,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				mExpliedPredicates = expliedPredicates;
 			}
 			mTerm = term;
-			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mScript);
+			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mMgdScript);
 			mTermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
 
 			mScript.echo(new QuotedObject("begin unification"));
@@ -995,9 +995,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 		private String generateQuantifierInformation(final Term closedTerm) {
 			final String result;
-			final Term pnf = new PrenexNormalForm(mMgnScript).transform(closedTerm);
+			final Term pnf = new PrenexNormalForm(mMgdScript).transform(closedTerm);
 			if (pnf instanceof QuantifiedFormula) {
-				final QuantifierSequence qs = new QuantifierSequence(mScript, pnf);
+				final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
 				result = "quantified with " + (qs.getNumberOfQuantifierBlocks() - 1) + "quantifier alternations";
 			} else {
 				result = "quantifier-free";

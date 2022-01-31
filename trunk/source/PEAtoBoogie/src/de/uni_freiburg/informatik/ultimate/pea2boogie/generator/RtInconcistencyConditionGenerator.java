@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -147,7 +147,7 @@ public class RtInconcistencyConditionGenerator {
 	private int mQuantifiedQuery;
 	private int mQelimQuery;
 
-	private final Substitution mConstInliner;
+	private final PureSubstitution mConstInliner;
 
 	private final ILogger mPQELogger;
 	private final IEpsilonTransformer mEpsilonTransformer;
@@ -197,7 +197,7 @@ public class RtInconcistencyConditionGenerator {
 			mEpsilonTransformer = IEpsilonTransformer.identity();
 		}
 		final Map<Term, Term> constToValue = createConst2Value(mScript, mReqSymboltable, mBoogie2Smt);
-		mConstInliner = new Substitution(mScript, constToValue);
+		mConstInliner = new PureSubstitution(mScript, constToValue);
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = toNormalform(constructPrimedStateInvariant(reqPeas));
@@ -399,7 +399,7 @@ public class RtInconcistencyConditionGenerator {
 			subst.put(var, newVar);
 		}
 		assert subst.values().stream().anyMatch(oldVars::contains) : "Var with same name already exists";
-		final Term subForm = new Substitution(mScript, subst).transform(formula.getSubformula());
+		final Term subForm = new PureSubstitution(mScript, subst).transform(formula.getSubformula());
 		final Term renamedQuantifiedFormula =
 				mScript.quantifier(formula.getQuantifier(), newQuantVars, subForm, new Term[0]);
 		mLogger.info(prefix + ": Renamed quantified formula: " + renamedQuantifiedFormula.toStringDirect());

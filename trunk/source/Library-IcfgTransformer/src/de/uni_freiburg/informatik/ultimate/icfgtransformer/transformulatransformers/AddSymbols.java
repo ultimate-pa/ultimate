@@ -82,8 +82,7 @@ public class AddSymbols extends TransitionPreprocessor {
 			tf.addOutVar(repVar, repVar.getTermVariable());
 			substitutionMapping.put(constVar, repVar.getTermVariable());
 		}
-		final Term axioms =
-				new Substitution(script, substitutionMapping).transform(SmtUtils.and(script.getScript(), mAxioms));
+		final Term axioms = Substitution.apply(script, substitutionMapping, SmtUtils.and(script.getScript(), mAxioms));
 		Term formula = tf.getFormula();
 		formula = SmtUtils.and(script.getScript(), formula, axioms);
 		tf.setFormula(formula);

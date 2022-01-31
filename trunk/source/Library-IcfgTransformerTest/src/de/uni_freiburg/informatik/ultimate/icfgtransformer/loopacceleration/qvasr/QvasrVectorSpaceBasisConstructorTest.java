@@ -45,12 +45,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
+/**
+ * Testsuite for the {@link QvasrVectorSpaceBasisConstructor}.
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ *
+ */
 public class QvasrVectorSpaceBasisConstructorTest {
 
-	private IUltimateServiceProvider mServices;
-	private Script mScript;
 	private ManagedScript mMgdScript;
-	private ILogger mLogger;
 
 	private Term mFour;
 	private Term mThree;
@@ -58,14 +61,17 @@ public class QvasrVectorSpaceBasisConstructorTest {
 	private Term mOne;
 	private Term mZero;
 
+	/**
+	 * Testsuite setup.
+	 */
 	@Before
 	public void setUp() {
-		mServices = UltimateMocks.createUltimateServiceProviderMock();
-		mScript = UltimateMocks.createZ3Script();
+		final IUltimateServiceProvider mServices = UltimateMocks.createUltimateServiceProviderMock();
+		final Script mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mLogger = mServices.getLoggingService().getLogger("log");
+		final ILogger mLogger = mServices.getLoggingService().getLogger("log");
 		mLogger.info("Before");
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
@@ -166,17 +172,59 @@ public class QvasrVectorSpaceBasisConstructorTest {
 	}
 
 	/**
+	 * Test Vector basis for {{1, 0, 2, 3}, {0, 1, -3, 4}} = {{3, 4, 0, 1}, {-2, 3, 1, 0}}
+	 */
+	@Test
+	public void testSolutionBuilding7() {
+		final Term negThree = mMgdScript.getScript().decimal("-3");
+		final Term[][] matrix = { { mOne, mZero, mTwo, mThree }, { mZero, mOne, negThree, mFour } };
+		final Rational[][] vectorSpaceBasis =
+				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mMgdScript, matrix);
+		final Integer[][] vectorSpaceBasisResult = { { 3, 4, 0, 1 }, { -2, 3, 1, 0 } };
+		testBasisVectorEquality(vectorSpaceBasis, integerMatrixToRationalMatrix(vectorSpaceBasisResult));
+	}
+
+	/**
+	 * Test Vector basis for {{1, 0, 1}, {0, 1, 0}} = {{1, 0, 1}}
+	 */
+	@Test
+	public void testSolutionBuilding8() {
+		final Term[][] matrix = { { mOne, mZero, mOne }, { mZero, mOne, mZero } };
+		final Rational[][] vectorSpaceBasis =
+				QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(mMgdScript, matrix);
+		final Integer[][] vectorSpaceBasisResult = { { 1, 0, 1 } };
+		testBasisVectorEquality(vectorSpaceBasis, integerMatrixToRationalMatrix(vectorSpaceBasisResult));
+	}
+
+	/**
 	 * Convert an integer matrix to a rational matrix. Needed for easier parsing of matrices.
 	 *
 	 * @param matrix
-	 * @return
+	 *            The matrix that is to be converted.
+	 * @return Input matrix consisting of {@link Rational}.
 	 */
-	static Rational[][] integerMatrixToRationalMatrix(final Integer[][] matrix) {
+	public static Rational[][] integerMatrixToRationalMatrix(final Integer[][] matrix) {
 		final Rational[][] matrixRational = new Rational[matrix.length][matrix[0].length];
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[0].length; j++) {
 				matrixRational[i][j] = Rational.valueOf(new BigInteger(matrix[i][j].toString()), BigInteger.ONE);
 			}
+		}
+		return matrixRational;
+
+	}
+
+	/**
+	 * Convert an integer vector to a rational vector. Needed for easier parsing of matrices.
+	 *
+	 * @param vector
+	 *            The vector that is to be converted.
+	 * @return Input vector consisting of {@link Rational}.
+	 */
+	public static Rational[] integerVectorToRationalVector(final Integer[] vector) {
+		final Rational[] matrixRational = new Rational[vector.length];
+		for (int i = 0; i < vector.length; i++) {
+			matrixRational[i] = Rational.valueOf(new BigInteger(vector[i].toString()), BigInteger.ONE);
 		}
 		return matrixRational;
 	}

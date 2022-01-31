@@ -49,7 +49,19 @@ public class CommuhashUtils {
 		// do not instantiate
 	}
 
-	public final static Comparator<Term> HASH_BASED_COMPERATOR = Comparator.comparing(Term::hashCode);
+	/**
+	 * Dangerous! A function may be commutative in some theory but it is not in
+	 * e.g., QF_UF
+	 */
+	public static final String[] COMMUTATIVE_OPERATORS = new String[] { "and", "or", "=", "distinct", "+", "*", "bvadd",
+			"bvmul", "bvand", "bvor", "bvxor" };
+
+	public final static Comparator<Term> HASH_BASED_COMPERATOR = new Comparator<Term>() {
+		@Override
+		public int compare(final Term arg0, final Term arg1) {
+			return Integer.compare(arg0.hashCode(), arg1.hashCode());
+		}
+	};
 
 	/**
 	 * Dangerous! A function may be commutative in some theory but it is not in e.g., QF_UF
@@ -66,6 +78,11 @@ public class CommuhashUtils {
 		case "distinct":
 		case "+":
 		case "*":
+		case "bvadd":
+		case "bvmul":
+		case "bvand":
+		case "bvor":
+		case "bvxor":
 			return true;
 		default:
 			return false;
@@ -87,7 +104,7 @@ public class CommuhashUtils {
 	}
 
 	public static boolean isInCommuhashNormalForm(final Term term, final String... operators) {
-		final Predicate<Term> property = x -> !rootInCommuhashNormalForm(x, operators);
+		final Predicate<Term> property = (x -> !rootInCommuhashNormalForm(x, operators));
 		return !new SubtermPropertyChecker(property).isSatisfiedBySomeSubterm(term);
 	}
 

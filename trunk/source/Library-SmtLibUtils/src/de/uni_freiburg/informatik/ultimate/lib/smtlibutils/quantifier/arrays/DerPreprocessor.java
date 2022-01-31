@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
@@ -149,8 +149,7 @@ public class DerPreprocessor extends TermTransformer {
 					eliminatee, quantifier, airc, aiem);
 			mIntroducedDerPossibility = false;
 		}
-		final Term inputReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)
-				.transform(input);
+		final Term inputReplacement = Substitution.apply(mgdScript, substitutionMapping, input);
 		final Term allAuxVarDefs = airc.constructDefinitions(mgdScript.getScript(), quantifier);
 		mNewAuxVars = new ArrayList<>(airc.getConstructedAuxVars());
 		mResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, inputReplacement,

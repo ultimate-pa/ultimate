@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2020 Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 University of Freiburg
+ *
+ * This file is part of the ULTIMATE accelerated interpolation library .
+ *
+ * The ULTIMATE framework is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE accelerated interpolation library . If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE PDR library , or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE accelerated interpolation library grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
 import java.util.ArrayList;
@@ -12,6 +39,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpolator.InterpolationMethod;
@@ -49,6 +78,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * The core routine of the accelerated interpolation scheme.
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The letter class.
+ */
 public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 
 	/**
@@ -77,11 +114,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IRun<L, IPredicate> mCounterexampleTrace;
 	private final List<L> mCounterexample;
-	private final List<UnmodifiableTransFormula> mCounterexampleTf;
-
 	private final Map<IcfgLocation, Set<List<L>>> mLoops;
 	private final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
-	private final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mNestedLoopsAsTf;
 	private final Map<IcfgLocation, IcfgLocation> mNestingRelation;
 	private final Map<IcfgLocation, Set<List<L>>> mNestedLoops;
 	private Map<IcfgLocation, List<UnmodifiableTransFormula>> mNestedLoopsTf;
@@ -112,7 +146,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		mLoopPreprocessor = loopPreprocessor;
 		mLoops = mLoopdetector.getLoops();
 		mLoopsAsTf = mLoopdetector.getLoopsTf();
-		mNestedLoopsAsTf = mLoopdetector.getNestedLoopsTf();
 		mNestingRelation = mLoopdetector.getNestingRelation();
 		mNestedLoops = mLoopdetector.getNestedLoops();
 		mLoopSize = mLoopdetector.getLoopSize();
@@ -134,22 +167,20 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
 		mMetaTraceTransformer = new MetaTraceTransformer<>(mLogger, mScript, mCounterexample, mPredUnifier, mServices,
 				mPredTransformer, mIcfg.getCfgSmtToolkit());
-		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
 
 		mInterpolants = new IPredicate[mCounterexample.size()];
 		mInterpolants[0] = mPredUnifier.getTruePredicate();
 		mInterpolants[mCounterexample.size() - 1] = mPredUnifier.getFalsePredicate();
-
 	}
 
 	/**
-	 * Main function of accelInterpol
+	 * Determine whether a give counterexample contains a loop, if so accelerate and compute a meta-trace which is
+	 * checked for satisfiability.
 	 */
 	public LBool acceleratedInterpolationCoreIsCorrect() {
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
-
 		if (!mNestedLoops.isEmpty()) {
 			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered = new HashMap<>(mNestedLoops);
 			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
@@ -165,12 +196,10 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				accelerateNestedLoops(nesting.getKey(), nesting.getValue());
 			}
 		}
-
 		if (mLoopPreprocessor != null) {
 			mLoopsTf = mLoopPreprocessor.preProcessLoopInterprocedual(mLoops);
 			mLogger.debug("Done Preprocessing");
 		}
-
 		final Iterator<Entry<IcfgLocation, Set<List<L>>>> loopheadIterator = mLoops.entrySet().iterator();
 		while (loopheadIterator.hasNext()) {
 			final Entry<IcfgLocation, Set<List<L>>> loophead = loopheadIterator.next();
@@ -187,18 +216,15 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 					break;
 				}
 				accelerationFinishedCorrectly = true;
-				Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
-				final Term term = t;
-				t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
+				final Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
+				// t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
-
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
 					mLogger.debug("Simplified: " + SmtUtils
 							.simplify(mScript, tf.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA)
 							.toStringDirect());
 				}
-
 				accelerations.add(tf);
 			}
 			if (!accelerationFinishedCorrectly) {
@@ -240,7 +266,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
 			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
 				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
-				// final IPredicate[] refinedInterpolants = refineMetaInterpolants(tempInterpolants, metaTrace);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Is " + interpolator.getTraceCheckResult().toString());
 				}
@@ -359,6 +384,11 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 					final UnmodifiableTransFormula epsilon = constructEpsilon();
 					final L epsilonTransition = (L) mIcfgEdgeFactory.createInternalTransition(newExitLocation, target,
 							target.getPayload(), epsilon);
+
+					if (mAccelerator.isOverapprox()) {
+						new Overapprox("Because of loopacceleration", (ILocation) target)
+								.annotate(acceleratedTransition);
+					}
 
 					final Term acceleratedTransitionDefaultVars = mPredHelper.normalizeTerm(loopAcceleration);
 					final Term epsilonDefaultVars = mPredHelper.normalizeTerm(epsilon);

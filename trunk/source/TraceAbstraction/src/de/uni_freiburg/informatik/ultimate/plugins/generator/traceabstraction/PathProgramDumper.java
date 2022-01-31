@@ -685,7 +685,7 @@ public class PathProgramDumper {
 		}
 		final Map<TermVariable, TermVariable> substitutionMapping = TransFormulaUtils
 				.constructInvarsToDefaultvarsMap(guardTf);
-		return new Substitution(mgdScript, substitutionMapping).transform(guardTf.getFormula());
+		return Substitution.apply(mgdScript, substitutionMapping, guardTf.getFormula());
 	}
 
 

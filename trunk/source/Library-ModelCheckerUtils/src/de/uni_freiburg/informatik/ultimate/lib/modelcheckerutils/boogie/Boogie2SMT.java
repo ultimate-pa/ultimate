@@ -89,7 +89,7 @@ public class Boogie2SMT {
 
 		final List<Term> axiomList = declareAxioms(boogieDeclarations, script, mExpression2Term,
 				mBoogie2SmtSymbolTable);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), script,
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), mScript,
 				mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
 		if (!(script instanceof HistoryRecordingScript)) {

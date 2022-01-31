@@ -85,7 +85,7 @@ public class IncrementalPlicationChecker {
 	private final ManagedScript mMgdScript;
 	private final Term mLhs;
 	private boolean mLhsIsAsserted;
-	private Substitution mVar2ConstSubstitution;
+	private Map<TermVariable, Term> mVar2ConstSubstitution;
 	private final Plication mPlication;
 
 
@@ -114,7 +114,7 @@ public class IncrementalPlicationChecker {
 		default:
 			throw new AssertionError("unknown case");
 		}
-		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(assertTerm));
+		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
 		mLhsIsAsserted = true;
 	}
 
@@ -122,13 +122,12 @@ public class IncrementalPlicationChecker {
 	 * Construct a substitution that replaces all free TermVariables of lhs
 	 * by constants and declares these constants.
 	 */
-	private Substitution constructVar2ConstSubstitution(final Term term) {
+	private Map<TermVariable, Term> constructVar2ConstSubstitution(final Term term) {
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(term.getFreeVars()));
-		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
-		final Substitution subst = new Substitution(mMgdScript, substitutionMapping);
-		return subst;
+		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(),
+				allTvs, true);
+		return substitutionMapping;
 	}
-
 
 	public Validity checkPlication(final Term rhs) {
 		if (!mLhsIsAsserted) {
@@ -146,7 +145,7 @@ public class IncrementalPlicationChecker {
 		default:
 			throw new AssertionError("unknown case");
 		}
-		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(assertTerm));
+		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
 		final LBool isSat = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
 		return IncrementalPlicationChecker.convertLBool2Validity(isSat);
@@ -169,7 +168,7 @@ public class IncrementalPlicationChecker {
 		default:
 			throw new AssertionError("unknown case");
 		}
-		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(assertTerm));
+		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
 		final LBool isSat = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
 		return isSat;

@@ -45,7 +45,7 @@ public class BitvectorConstant {
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	public enum SupportedBitvectorOperations {
+	public enum BvOp {
 		/**
 		 * ((_ sign_extend i) x)
 		 *
@@ -247,7 +247,7 @@ public class BitvectorConstant {
 		private final boolean mIsBoolean;
 		private final boolean mIsAssociative;
 
-		private SupportedBitvectorOperations(final int arity, final boolean isBoolean, final boolean isAssoc) {
+		private BvOp(final int arity, final boolean isBoolean, final boolean isAssoc) {
 			mArity = arity;
 			mIsBoolean = isBoolean;
 			mIsAssociative = isAssoc;
@@ -277,17 +277,17 @@ public class BitvectorConstant {
 	}
 
 	public enum ExtendOperation {
-		sign_extend("sign_extend"),
-		zero_extend("zero_extend"),;
+		sign_extend(BvOp.sign_extend),
+		zero_extend(BvOp.zero_extend),;
 
-		private final String mSmtFunctionName;
+		private final BvOp mBvOp;
 
-		private ExtendOperation(final String smtFunctionName) {
-			mSmtFunctionName = smtFunctionName;
+		private ExtendOperation(final BvOp bvop) {
+			mBvOp = bvop;
 		}
 
-		public String getSmtFunctionName() {
-			return mSmtFunctionName;
+		public BvOp getBvOp() {
+			return mBvOp;
 		}
 
 	}
@@ -602,7 +602,7 @@ public class BitvectorConstant {
 		return toSignedInt(mValue, mIndex);
 	}
 
-	public static BitvectorConstantOperationResult apply(final SupportedBitvectorOperations sbo,
+	public static BitvectorConstantOperationResult apply(final BvOp sbo,
 			final BitvectorConstant... operands) {
 		if (operands == null) {
 			throw new IllegalArgumentException("No operands");

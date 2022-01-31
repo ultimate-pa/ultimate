@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -157,8 +158,7 @@ public class ProcedureMultiplier {
 			}
 		}
 		backtranslator.setTermTranslator(
-				x -> new Substitution(icfg.getCfgSmtToolkit().getManagedScript(), variableBacktranslationMapping)
-						.transform(x));
+				x -> Substitution.apply(icfg.getCfgSmtToolkit().getManagedScript(), variableBacktranslationMapping, x));
 		icfg.getCfgSmtToolkit().getManagedScript().unlock(this);
 
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
@@ -294,9 +294,9 @@ public class ProcedureMultiplier {
 
 	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,
 			final Map<Term, Term> defaultVariableMadefaultVariableMappingpping2, final ManagedScript managedScript) {
-		final Term[] terms = new Substitution(managedScript, defaultVariableMadefaultVariableMappingpping2)
-				.transform(Arrays.asList(oldProcedureArguments.getTerms()))
-				.toArray(new Term[oldProcedureArguments.getTerms().length]);
+		final Function<Term, Term> subst = (x -> Substitution.apply(managedScript,
+				defaultVariableMadefaultVariableMappingpping2, x));
+		final Term[] terms = Arrays.stream(oldProcedureArguments.getTerms()).map(subst).toArray(Term[]::new);
 		final Collection<TermVariable> auxiliaryVars = oldProcedureArguments.getAuxiliaryVars();
 		final Map<String, ILocation> overapproximations = oldProcedureArguments.getOverappoximations();
 		final MultiTermResult copy = new MultiTermResult(overapproximations, auxiliaryVars, terms);

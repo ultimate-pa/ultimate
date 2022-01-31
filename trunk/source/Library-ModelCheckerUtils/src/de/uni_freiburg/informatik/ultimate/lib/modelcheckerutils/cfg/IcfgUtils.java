@@ -251,7 +251,8 @@ public class IcfgUtils {
 	 * @param isTarget
 	 *            Identifies target edges.
 	 * @param prune
-	 *            Used to prune edges if paths though such an edges should not be considered.
+	 *            Used to prune edges if paths through such edges should not be considered. However, such edges are
+	 *            still considered as target edges.
 	 * @param getCachedResult
 	 *            A function that retrieves a cached reachability result. SAT represents reachability, UNSAT represents
 	 *            non-reachability.
@@ -322,15 +323,15 @@ public class IcfgUtils {
 			for (final IcfgEdge edge : outgoing) {
 				final IcfgLocation succ = edge.getTarget();
 
-				// Ignore explicitly pruned edges.
-				if (prune.test(edge)) {
-					continue;
-				}
-
 				// Abort when reachability is confirmed.
 				if (isTarget.test(edge)) {
 					canReach = LBool.SAT;
 					break;
+				}
+
+				// Ignore successors of explicitly pruned edges.
+				if (prune.test(edge)) {
+					continue;
 				}
 
 				final int stackIndex;

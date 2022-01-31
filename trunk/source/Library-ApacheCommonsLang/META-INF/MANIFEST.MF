@@ -2,17 +2,22 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-ApacheCommonsLang
 Bundle-SymbolicName: org.apache.commons.lang
-Bundle-Version: 3.3.2
-Bundle-Vendor: http://commons.apache.org/proper/commons-lang/
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-Version: 3.12.0
+Bundle-Vendor: https://commons.apache.org/proper/commons-lang
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: org.apache.commons.lang3,
+ org.apache.commons.lang3.arch,
  org.apache.commons.lang3.builder,
+ org.apache.commons.lang3.compare,
  org.apache.commons.lang3.concurrent,
+ org.apache.commons.lang3.concurrent.locks,
  org.apache.commons.lang3.event,
  org.apache.commons.lang3.exception,
+ org.apache.commons.lang3.function,
  org.apache.commons.lang3.math,
  org.apache.commons.lang3.mutable,
  org.apache.commons.lang3.reflect,
+ org.apache.commons.lang3.stream,
  org.apache.commons.lang3.text,
  org.apache.commons.lang3.text.translate,
  org.apache.commons.lang3.time,

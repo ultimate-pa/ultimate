@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -100,7 +100,7 @@ public class HCHoareTripleChecker {
 				subs.put(headVar.getTermVariable(), bodyArg);
 			}
 
-			final Term preCondConjunct = new Substitution(mManagedScript, subs).transform(currentPre.getFormula());
+			final Term preCondConjunct = new PureSubstitution(mManagedScript, subs).transform(currentPre.getFormula());
 			final Term closedPreCondConjunct = close(preCondConjunct);
 			mManagedScript.assertTerm(this, closedPreCondConjunct);
 		}
@@ -165,7 +165,7 @@ public class HCHoareTripleChecker {
 			substitution.put(fv, pv.getDefaultConstant());
 		}
 
-		return new Substitution(mManagedScript, substitution).transform(term);
+		return new PureSubstitution(mManagedScript, substitution).transform(term);
 	}
 
 	public Validity check(final TreeAutomatonRule<HornClause, IPredicate> rule) {

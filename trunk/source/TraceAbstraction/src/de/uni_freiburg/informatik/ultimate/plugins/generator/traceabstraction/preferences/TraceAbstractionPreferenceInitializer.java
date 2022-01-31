@@ -118,7 +118,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
 	public static final String LABEL_CEGAR_RESTART_BEHAVIOUR = "CEGAR restart behaviour";
 	public static final String LABEL_ERROR_AUTOMATON_MODE = "Error locations removal mode";
-	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_LAST = "Check the insufficient thread errors last";
+	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS =
+			"When to check the insufficient erros location relative to the other error locations";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Enhance during reuse of Floyd-Hoare automata";
@@ -215,7 +216,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.SIMPLE_ERROR_AUTOMATON;
 
-	public static final boolean DEF_INSUFFICIENT_THREAD_ERRORS_LAST = false;
+	public static final InsufficientError DEF_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS = InsufficientError.TOGETHER;
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
@@ -269,7 +270,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			+ "\"ONE_CEGAR_PER_ERROR_LOCATION\", i.e., if one CEGAR loop analyzes multiple error locations, reachable "
 			+ "error locations are removed by refinining the abstraction with an error automaton specified by this mode.";
 
-	private static final String DESC_INSUFFICIENT_THREAD_ERRORS_LAST = null;
+	private static final String DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS = null;
 
 	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
 	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
@@ -376,8 +377,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_CEGAR_RESTART_BEHAVIOUR, PreferenceType.Combo, CegarRestartBehaviour.values()),
 				new UltimatePreferenceItem<>(LABEL_ERROR_AUTOMATON_MODE, DEF_ERROR_AUTOMATON_MODE,
 						DESC_ERROR_AUTOMATON_MODE, PreferenceType.Combo, ErrorAutomatonType.values()),
-				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_LAST, DEF_INSUFFICIENT_THREAD_ERRORS_LAST,
-						DESC_INSUFFICIENT_THREAD_ERRORS_LAST, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS,
+						DEF_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS,
+						DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS, PreferenceType.Combo,
+						InsufficientError.values()),
 
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
 						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
@@ -797,6 +800,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum AcceleratedInterpolationLoopAccelerationTechnique {
-		FAST_UPR, WERNER_OVERAPPROX, JORDAN, QVASR
+		FAST_UPR, WERNER_OVERAPPROX, JORDAN, QVASR, QVASRS
+	}
+
+	public enum InsufficientError {
+		BEFORE, TOGETHER, AFTER
 	}
 }

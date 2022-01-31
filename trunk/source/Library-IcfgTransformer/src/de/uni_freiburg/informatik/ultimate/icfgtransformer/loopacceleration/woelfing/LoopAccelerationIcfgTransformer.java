@@ -458,7 +458,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			Term term = tf.getFormula();
 			term = iteratedSymbolicMemory.getSymbolicMemory(i).replaceTermVars(term, null);
 			term = iteratedSymbolicMemory.replaceTermVars(term, tf.getInVars());
-			term = new Substitution(mScript, substitutionMapping).transform(term);
+			term = Substitution.apply(mScript, substitutionMapping, term);
 
 			final List<TermVariable> quantifiers = new ArrayList<>();
 			for (int j = 0; j < numLoops; j++) {

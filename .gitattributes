@@ -1,0 +1,4 @@
+## configuration for linguist (GitHub language detection), see https://github.com/github/linguist/blob/master/docs/overrides.md
+trunk/examples/** linguist-vendored
+trunk/examples/settings/** -linguist-vendored
+trunk/examples/toolchains/** -linguist-vendored

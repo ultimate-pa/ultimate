@@ -954,7 +954,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		private boolean assertValidPredicate(final AbsIntPredicate<?> pred) {
-			final Script script = mMgnScript.getScript();
+			final Script script = mMgdScript.getScript();
 			final List<Term> terms =
 					pred.getAbstractStates().stream().map(a -> a.getTerm(script)).collect(Collectors.toList());
 			final Term stateTerm = SmtUtils.and(script, terms);
@@ -965,15 +965,15 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 			mLogger.fatal("Invalid predicate! Predicate and state conjunction should be equal, but it is not.");
 			mLogger.fatal("Pred: "
-					+ SmtUtils.simplify(mMgnScript, pred.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA)
+					+ SmtUtils.simplify(mMgdScript, pred.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA)
 							.toStringDirect());
 			mLogger.fatal("States: " + SmtUtils
-					.simplify(mMgnScript, stateTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
+					.simplify(mMgdScript, stateTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
 			mLogger.fatal("Conjunctive states: ");
 			for (final IAbstractState<?> state : pred.getAbstractStates()) {
 				mLogger.fatal(state.toLogString());
 				mLogger.fatal(SmtUtils
-						.simplify(mMgnScript, state.getTerm(script), mServices, SimplificationTechnique.SIMPLIFY_DDA)
+						.simplify(mMgdScript, state.getTerm(script), mServices, SimplificationTechnique.SIMPLIFY_DDA)
 						.toStringDirect());
 			}
 			return false;

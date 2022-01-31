@@ -9,8 +9,14 @@ procedure main() {
 	y := 0;
 	
 	while (x <= 5) {
-		x := x + 1;
-		y := 3;
+		if (x - 3 > 0) {
+			x := x + 1;
+			y := y + 2;
+		} else {
+			x := x + 3;
+			y := y + 2;
+		}
+
 	}
-	assert x == 3;
+	assert x >= 6;
 }

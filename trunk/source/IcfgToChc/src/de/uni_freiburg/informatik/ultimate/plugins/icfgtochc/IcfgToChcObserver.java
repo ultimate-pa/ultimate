@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -320,7 +320,7 @@ public class IcfgToChcObserver extends BaseObserver {
 			final Term constraintRaw = SmtUtils.and(mMgdScript.getScript(),
 					SmtUtils.not(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable()),
 					equateGlobalsWithTheirOldVars);
-			final Term constraintFinal = new Substitution(mMgdScript, substitutionMapping).transform(constraintRaw);
+			final Term constraintFinal = new PureSubstitution(mMgdScript, substitutionMapping).transform(constraintRaw);
 
 			updateLogicWrtConstraint(constraintFinal);
 
@@ -606,11 +606,11 @@ public class IcfgToChcObserver extends BaseObserver {
 								secondBodyPredAssertionViolatedVar.getTermVariable()));
 
 		final Term constraint = SmtUtils.and(mMgdScript.getScript(),
-				new Substitution(mMgdScript, substitutionForAssignmentOfCall)
+				new PureSubstitution(mMgdScript, substitutionForAssignmentOfCall)
 						.transform(localVarsAssignmentOfCall.getFormula()),
-				new Substitution(mMgdScript, substitutionForAssignmentOfReturn)
+				new PureSubstitution(mMgdScript, substitutionForAssignmentOfReturn)
 						.transform(assignmentOfReturn.getFormula()),
-				new Substitution(mMgdScript, substitutionForOldVarsAssignment)
+				new PureSubstitution(mMgdScript, substitutionForOldVarsAssignment)
 						.transform(oldVarsAssignment.getFormula()),
 				updateAssertionViolatedVar);
 
@@ -768,7 +768,7 @@ public class IcfgToChcObserver extends BaseObserver {
 		}
 
 		final Term constraintAndAssertionViolated = SmtUtils.and(mMgdScript.getScript(),
-				new Substitution(mMgdScript, substitutionMapping).transform(tf.getFormula()),
+				new PureSubstitution(mMgdScript, substitutionMapping).transform(tf.getFormula()),
 				assertionViolatedHeadVar.getTermVariable());
 
 		final Term constraintFinal = constraintAndAssertionViolated;
@@ -900,7 +900,7 @@ public class IcfgToChcObserver extends BaseObserver {
 
 		final Term constraintOrAssertionViolated;
 		{
-			final Term constraint = new Substitution(mMgdScript, substitutionMapping).transform(tf.getFormula());
+			final Term constraint = new PureSubstitution(mMgdScript, substitutionMapping).transform(tf.getFormula());
 			constraintOrAssertionViolated =
 					SmtUtils.or(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable(), constraint);
 		}

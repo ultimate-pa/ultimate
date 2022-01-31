@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
@@ -81,6 +80,8 @@ public class PolynomialRelationTest {
 	private static final String DEFAULT_SOLVER_COMMAND = null;
 
 	private static final boolean USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK = false;
+
+	private final IUltimateServiceProvider mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 	private Script mScript;
 
 	@Before
@@ -593,9 +594,9 @@ public class PolynomialRelationTest {
 		}
 		mScript = script;
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
-		final MultiCaseSolvedBinaryRelation sbr =
-				PolynomialRelation.convert(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
-						.solveForSubject(mScript, subject, Xnf.DNF, Collections.emptySet());
+		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
+				.convert(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
+				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet());
 		Assert.assertNull(sbr);
 	}
 
@@ -638,7 +639,7 @@ public class PolynomialRelationTest {
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
 		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(mScript, inputAsTerm)
-				.solveForSubject(mScript, x, xnf, Collections.emptySet());
+				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet());
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
 		final Term tmp;

@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -118,7 +118,7 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 						final IProgramVar newVar = mToolkit.createValueVar(v.getSort());
 						final Term oldConstraint =
 								SmtUtils.filterFormula(newState.getSubTerm(), Collections.singleton(tv), script);
-						constraints.add(new Substitution(script, Collections.singletonMap(tv, newVar.getTermVariable()))
+						constraints.add(new PureSubstitution(script, Collections.singletonMap(tv, newVar.getTermVariable()))
 								.transform(oldConstraint));
 						newValues.add(newVar);
 					}

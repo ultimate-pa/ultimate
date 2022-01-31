@@ -37,7 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -216,8 +216,7 @@ public class TransFormulaUnification {
 	 * @return A term for the unified transition formula.
 	 */
 	private Term computeUnifiedFormula(final UnmodifiableTransFormula tf, final Map<Term, Term> substitution) {
-		final Term renamedFormula =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(tf.getFormula());
+		final Term renamedFormula = Substitution.apply(mMgdScript, substitution, tf.getFormula());
 		final Term equalities = generateExplicitEqualities(tf);
 		return SmtUtils.and(mMgdScript.getScript(), renamedFormula, equalities);
 	}
@@ -244,7 +243,7 @@ public class TransFormulaUnification {
 				final TermVariable termOutVar = mOutVars.get(pv);
 				assert termOutVar != null;
 
-				equalities.add(mMgdScript.getScript().term("=", termInVar, termOutVar));
+				equalities.add(SmtUtils.binaryEquality(mMgdScript.getScript(), termInVar, termOutVar));
 			}
 		}
 		return SmtUtils.and(mMgdScript.getScript(), equalities);

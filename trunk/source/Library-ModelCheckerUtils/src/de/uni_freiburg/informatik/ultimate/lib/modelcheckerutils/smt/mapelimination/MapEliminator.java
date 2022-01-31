@@ -515,7 +515,7 @@ public class MapEliminator {
 						getReplacementVar(functionCall, transformula, mScript, mReplacementVarFactory, mAuxVars));
 			}
 		}
-		return new Substitution(mManagedScript, substitution).transform(term);
+		return Substitution.apply(mManagedScript, substitution, term);
 	}
 
 	/**
@@ -551,8 +551,11 @@ public class MapEliminator {
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(newTerm)));
 		conjuncts.addAll(auxVarEqualities);
-		final Substitution substitution = new Substitution(mManagedScript, substitutionMap);
-		return substitution.transform(substitution.transform(SmtUtils.and(mScript, conjuncts)));
+		// 20211226 Matthias: I am wondering why the substitution is applied twice.
+		// Because we often have two-dimensional arrays? Shouldn't we apply the
+		// substitution until a fixpoint is reached?
+		return Substitution.apply(mManagedScript, substitutionMap,
+				Substitution.apply(mManagedScript, substitutionMap, SmtUtils.and(mScript, conjuncts)));
 	}
 
 	/**
@@ -570,7 +573,7 @@ public class MapEliminator {
 				}
 			}
 		}
-		return new Substitution(mManagedScript, substitutionMap).transform(term);
+		return Substitution.apply(mManagedScript, substitutionMap, term);
 	}
 
 	/**
