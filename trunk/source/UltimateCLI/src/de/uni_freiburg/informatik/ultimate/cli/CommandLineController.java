@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
+import de.uni_freiburg.informatik.ultimate.preferencejson.PreferenceUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -125,6 +126,16 @@ public class CommandLineController implements IController<RunDefinition> {
 			return IApplication.EXIT_OK;
 		}
 
+		if (toolchainStageParams.isFrontendSettingsRequested()) {
+			mLogger.info(PreferenceUtil.generateFrontendSettingsJsonFromDefaultSettings(core));
+			return IApplication.EXIT_OK;
+		}
+
+		if (toolchainStageParams.isBackendWhitelistRequested()) {
+			mLogger.info(PreferenceUtil.generateBackendWhitelistJsonFromDefaultSettings(core));
+			return IApplication.EXIT_OK;
+		}
+
 		if (!toolchainStageParams.hasToolchain()) {
 			if (toolchainStageParams.isHelpRequested()) {
 				printHelp(onlyCliHelpParser, toolchainStageParams);
@@ -164,6 +175,18 @@ public class CommandLineController implements IController<RunDefinition> {
 			}
 			final IToolchainData<RunDefinition> currentToolchain = prepareToolchain(core, fullParams);
 			assert currentToolchain == mToolchain;
+
+			if (fullParams.isFrontendSettingsDeltaRequested()) {
+				mLogger.info(
+						PreferenceUtil.generateFrontendSettingsJsonFromDeltaSettings(mToolchain.getServices(), core));
+				return IApplication.EXIT_OK;
+			}
+			if (fullParams.isBackendWhitelistDeltaRequested()) {
+				mLogger.info(
+						PreferenceUtil.generateBackendWhitelistJsonFromDeltaSettings(mToolchain.getServices(), core));
+				return IApplication.EXIT_OK;
+			}
+
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
 			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(currentToolchain, mLogger), "SigIntTrap"));
 			startExecutingToolchain(core, fullParams, mLogger, currentToolchain);
