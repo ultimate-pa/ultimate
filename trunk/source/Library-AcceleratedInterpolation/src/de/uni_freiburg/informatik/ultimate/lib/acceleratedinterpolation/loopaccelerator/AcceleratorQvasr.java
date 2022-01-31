@@ -62,6 +62,8 @@ public class AcceleratorQvasr implements IAccelerator {
 	 *            {@link IUltimateServiceProvider}
 	 * @param symbolTable
 	 *            {@link IIcfgSymbolTable}
+	 * @param predUnifier
+	 *            A {@link IPredicateUnifier}
 	 */
 	public AcceleratorQvasr(final ILogger logger, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final IPredicateUnifier predUnifier) {

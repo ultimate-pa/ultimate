@@ -128,6 +128,30 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
 
+	/**
+	 * Main function of the {@link AcceleratedInterpolation} interpolant generation scheme.
+	 *
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
+	 * @param logger
+	 *            An {@link ILogger}
+	 * @param script
+	 *            A {@link ManagedScript}
+	 * @param predicateUnifier
+	 *            A {@link IPredicateUnifier}
+	 * @param prefs
+	 *            {@link ITraceCheckPreferences}
+	 * @param counterexample
+	 *            A possible counterexample
+	 * @param icfg
+	 *            An {@link IIcfg}
+	 * @param loopdetector
+	 *            A {@link ILoopdetector}
+	 * @param loopPreprocessor
+	 *            A {@link ILoopPreprocessor}
+	 * @param accelerator
+	 *            An {@link IAccelerator}
+	 */
 	public AcceleratedInterpolationCore(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
 			final IRun<L, IPredicate> counterexample, final IIcfg<?> icfg,
