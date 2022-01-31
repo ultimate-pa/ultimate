@@ -94,9 +94,6 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 
 	public static final String LABEL_USE_ABSTRACT_INTERPRETATION = "Use predicates from abstract interpretation";
 
-	public static final String LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
-			TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER;
-
 	public static final Checker DEF_CHECKER = Checker.ULTIMATE;
 
 	public static final boolean DEF_MEMOIZENORMALEDGECHECKS = true;
@@ -155,12 +152,8 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 						PredicateUnification.values()),
 				new UltimatePreferenceItem<>(LABEL_EDGECHECKOPTIMIZATION, DEF_EDGECHECKOPTIMIZATION,
 						PreferenceType.Combo, EdgeCheckOptimization.values()),
-				new UltimatePreferenceItem<>(LABEL_EDGECHECKOPTIMIZATION, DEF_EDGECHECKOPTIMIZATION,
-						PreferenceType.Combo, EdgeCheckOptimization.values()),
 				new UltimatePreferenceItem<>(
 						TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
-						DEF_EDGECHECKOPTIMIZATION, PreferenceType.Combo, EdgeCheckOptimization.values()),
-				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
 						TraceAbstractionPreferenceInitializer.DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
 						TraceAbstractionPreferenceInitializer.DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
 						PreferenceType.Boolean),

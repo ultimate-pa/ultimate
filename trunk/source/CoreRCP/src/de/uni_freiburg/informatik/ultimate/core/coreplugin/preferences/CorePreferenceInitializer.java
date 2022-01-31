@@ -27,8 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
@@ -217,10 +220,11 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 		final UltimatePreferenceItemContainer pluginSpecificLevels =
 				new UltimatePreferenceItemContainer("Plugin-specific log levels");
 
-		final String[] plugins = UltimateCore.getPluginNames();
-		Arrays.sort(plugins);
-		for (int i = 0; i < plugins.length; i++) {
-			pluginSpecificLevels.addItem(new UltimatePreferenceItem<>(getLabelLogLevelForSpecificPlugin(plugins[i]),
+		final List<String> plugins =
+				new ArrayList<>(Arrays.stream(UltimateCore.getPluginNames()).collect(Collectors.toSet()));
+		Collections.sort(plugins);
+		for (final String plugin : plugins) {
+			pluginSpecificLevels.addItem(new UltimatePreferenceItem<>(getLabelLogLevelForSpecificPlugin(plugin),
 					InheritableLogLevel.INHERITED, PreferenceType.Combo, InheritableLogLevel.values()));
 		}
 
