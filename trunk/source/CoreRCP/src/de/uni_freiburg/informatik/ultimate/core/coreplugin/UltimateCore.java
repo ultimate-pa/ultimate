@@ -315,7 +315,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			}
 			return;
 		}
-		assert controller != null;
+		assert controller != null : "There is no controller";
 		mCurrentController = controller;
 	}
 
@@ -396,7 +396,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 
 		@Override
 		public void done(final IJobChangeEvent event) {
-			if ((event == null) || (event.getResult() == null) || (event.getResult().getException() == null)) {
+			if (event == null || event.getResult() == null || event.getResult().getException() == null) {
 				return;
 			}
 			mLogger.error("Error during toolchain job processing:", event.getResult().getException());
