@@ -49,6 +49,7 @@ public class AcceleratorQvasrs implements IAccelerator {
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private boolean mFoundAcceleration;
+	private final boolean mIsOverapprox;
 
 	/**
 	 * Construct a new loop accelerator using {@link QvasrLoopSummarization}.
@@ -68,6 +69,7 @@ public class AcceleratorQvasrs implements IAccelerator {
 		mScript = managedScript;
 		mServices = services;
 		mFoundAcceleration = false;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -96,5 +98,10 @@ public class AcceleratorQvasrs implements IAccelerator {
 	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
+	}
+
+	@Override
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 }

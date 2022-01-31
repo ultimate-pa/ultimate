@@ -72,6 +72,7 @@ public class QvasrSummarizer {
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private final IPredicateUnifier mPredUnifier;
+	private boolean mIsOverapprox;
 
 	/**
 	 * Construct a new ({@link UnmodifiableTransFormula}) summarizer based on rational vector addition systems with
@@ -92,6 +93,7 @@ public class QvasrSummarizer {
 		mScript = script;
 		mServices = services;
 		mPredUnifier = predUnifier;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -132,6 +134,10 @@ public class QvasrSummarizer {
 			final UnmodifiableTransFormula disjunctTf = QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
 			final QvasrAbstraction qvasrAbstraction = QvasrAbstractor.computeAbstraction(mScript, disjunctTf);
 			bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction).getThird();
+		}
+
+		if (bestAbstraction.getVasr().getTransformer().size() > 1) {
+			mIsOverapprox = true;
 		}
 
 		final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer =
@@ -246,5 +252,9 @@ public class QvasrSummarizer {
 		tfb.setFormula(loopSummary);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(script);
+	}
+
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 }

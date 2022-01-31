@@ -39,6 +39,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpolator.InterpolationMethod;
@@ -382,6 +384,11 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 					final UnmodifiableTransFormula epsilon = constructEpsilon();
 					final L epsilonTransition = (L) mIcfgEdgeFactory.createInternalTransition(newExitLocation, target,
 							target.getPayload(), epsilon);
+
+					if (mAccelerator.isOverapprox()) {
+						new Overapprox("Because of loopacceleration", (ILocation) target)
+								.annotate(acceleratedTransition);
+					}
 
 					final Term acceleratedTransitionDefaultVars = mPredHelper.normalizeTerm(loopAcceleration);
 					final Term epsilonDefaultVars = mPredHelper.normalizeTerm(epsilon);

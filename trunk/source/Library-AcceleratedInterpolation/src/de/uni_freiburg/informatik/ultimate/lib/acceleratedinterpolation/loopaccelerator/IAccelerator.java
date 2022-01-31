@@ -50,4 +50,6 @@ public interface IAccelerator {
 	UnmodifiableTransFormula accelerateLoop(UnmodifiableTransFormula loop, final IcfgLocation loopHead);
 
 	boolean accelerationFinishedCorrectly();
+
+	boolean isOverapprox();
 }

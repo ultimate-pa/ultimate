@@ -46,6 +46,7 @@ public class QvasrLoopSummarization {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mScript;
 	private final IPredicateUnifier mPredUnifier;
+	private boolean mIsOverapprox;
 
 	/**
 	 * Construct a new Qvasr-Loopsummarizer.
@@ -65,6 +66,7 @@ public class QvasrLoopSummarization {
 		mServices = services;
 		mScript = script;
 		mPredUnifier = predUnifier;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -76,7 +78,13 @@ public class QvasrLoopSummarization {
 	 */
 	public UnmodifiableTransFormula getQvasrAcceleration(final UnmodifiableTransFormula loopTransitionFormula) {
 		final QvasrSummarizer qvasrSummarizer = new QvasrSummarizer(mLogger, mServices, mScript, mPredUnifier);
-		return qvasrSummarizer.summarizeLoop(loopTransitionFormula);
+		final UnmodifiableTransFormula loopSummary = qvasrSummarizer.summarizeLoop(loopTransitionFormula);
+		mIsOverapprox = qvasrSummarizer.isOverapprox();
+		return loopSummary;
+	}
+
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 
 }

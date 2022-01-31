@@ -48,6 +48,7 @@ public class AcceleratorFastUPR implements IAccelerator {
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private boolean mFoundAcceleration;
+	private final boolean mIsOverapprox;
 	private final IIcfgSymbolTable mSymbolTable;
 
 	/**
@@ -69,6 +70,7 @@ public class AcceleratorFastUPR implements IAccelerator {
 		mServices = services;
 		mFoundAcceleration = false;
 		mSymbolTable = symbolTable;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -103,5 +105,10 @@ public class AcceleratorFastUPR implements IAccelerator {
 	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
+	}
+
+	@Override
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 }

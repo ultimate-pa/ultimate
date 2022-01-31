@@ -49,6 +49,7 @@ public class AcceleratorQvasr implements IAccelerator {
 	private final IUltimateServiceProvider mServices;
 	private final IPredicateUnifier mPredUnifier;
 	private boolean mFoundAcceleration;
+	private boolean mIsOverapprox;
 
 	/**
 	 * Construct a new loop accelerator using {@link QvasrLoopSummarization}.
@@ -69,6 +70,7 @@ public class AcceleratorQvasr implements IAccelerator {
 		mServices = services;
 		mPredUnifier = predUnifier;
 		mFoundAcceleration = false;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -86,6 +88,7 @@ public class AcceleratorQvasr implements IAccelerator {
 			final QvasrLoopSummarization qvasr = new QvasrLoopSummarization(mLogger, mServices, mScript, mPredUnifier);
 			final UnmodifiableTransFormula loopSummary = qvasr.getQvasrAcceleration(loop);
 			mFoundAcceleration = true;
+			mIsOverapprox = qvasr.isOverapprox();
 			return loopSummary;
 		} catch (final UnsupportedOperationException ue) {
 			mFoundAcceleration = false;
@@ -97,5 +100,10 @@ public class AcceleratorQvasr implements IAccelerator {
 	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
+	}
+
+	@Override
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 }
