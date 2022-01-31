@@ -128,7 +128,7 @@ public class QvasrSummarizer {
 		final Term transitionTerm = transitionFormula.getFormula();
 		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
+		final Set<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
 
 		for (final Term disjunct : disjuncts) {
 			final UnmodifiableTransFormula disjunctTf = QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);

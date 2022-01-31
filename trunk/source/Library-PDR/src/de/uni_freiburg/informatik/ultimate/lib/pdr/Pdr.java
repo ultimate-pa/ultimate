@@ -244,6 +244,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			mTraceCheckFinishedNormally = false;
 			mIsTraceCorrect = LBool.UNKNOWN;
 			mReasonUnknown = TraceCheckReasonUnknown.constructReasonUnknown(e);
+
 		} finally {
 			mPdrBenchmark.stop(PdrStatisticsDefinitions.PDR_RUNTIME);
 		}
@@ -494,7 +495,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 					if (res == LBool.SAT) {
 						Term pre = mPredTrans.pre(toBeBlocked, predTF);
 						final Term term = pre;
-						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+								SimplificationTechnique.SIMPLIFY_DDA, term);
 						final IPredicate prePred = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						final ProofObligation newProofObligation =
@@ -586,7 +588,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						Term pre =
 								mPredTrans.preReturn(toBeBlocked, callPred, assOfRet, assOfCall, oldVarAssign, modVars);
 						final Term term = pre;
-						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+								SimplificationTechnique.SIMPLIFY_DDA, term);
 						poPostReturn = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						// Other idea: create formula of old(y) = y and add that to the frames.
@@ -603,7 +606,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 							substitutionMappingPrePred.put(outVars.getValue(), outVars.getKey().getTermVariable());
 						}
 
-						final Term newOldies = Substitution.apply(mScript, substitutionMappingPrePred, oldies.getFormula());
+						final Term newOldies =
+								Substitution.apply(mScript, substitutionMappingPrePred, oldies.getFormula());
 						final IPredicate oldiePred = mLocalPredicateUnifier.getOrConstructPredicate(newOldies);
 					}
 
@@ -637,7 +641,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						Term pre = mPredTrans.preReturn(newProofObligation.getToBeBlocked(), callPred, assOfRet,
 								assOfCall, oldVarAssign, modVars);
 						final Term term = pre;
-						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
+						pre = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+								SimplificationTechnique.SIMPLIFY_DDA, term);
 						poPostReturn = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						final ProofObligation newLocalProofObligation;
@@ -809,8 +814,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			}
 		}
 
-		final Term transformedPrePred = Substitution.apply(mScript, substitutionMappingPrePred,
-				prePred.getClosedFormula());
+		final Term transformedPrePred =
+				Substitution.apply(mScript, substitutionMappingPrePred, prePred.getClosedFormula());
 
 		Term transformedTrans = Substitution.apply(mScript, substitutionMappingTrans, frameAndTrans);
 		transformedTrans = SmtUtils.and(mScript.getScript(), transformedTrans, equalities);
@@ -829,8 +834,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		}
 
 		// unprime
-		final Term transformedInterpolant = Substitution.apply(mScript, reverseMappingPrePred,
-				interpolPair.getSecond());
+		final Term transformedInterpolant =
+				Substitution.apply(mScript, reverseMappingPrePred, interpolPair.getSecond());
 
 		final IPredicate interpolatedPreCondition =
 				mLocalPredicateUnifier.getOrConstructPredicate(transformedInterpolant);
@@ -1227,7 +1232,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 					withPdr = SmtUtils.and(mScript.getScript(), pred.getFormula(), pdrTerm);
 				}
 				final Term term = withPdr;
-				final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_QUICK, term);
+				final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+						SimplificationTechnique.SIMPLIFY_QUICK, term);
 				final IPredicate result = mLocalPredicateUnifier.getOrConstructPredicate(afterQuantElim);
 				assert result != null;
 				return result;

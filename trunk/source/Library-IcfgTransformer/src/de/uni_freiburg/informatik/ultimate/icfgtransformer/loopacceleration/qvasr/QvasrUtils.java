@@ -28,10 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -63,8 +61,8 @@ public final class QvasrUtils {
 	 *            A term in disjunctive normal form.
 	 * @return A list of terms representing each disjunct.
 	 */
-	public static List<Term> splitDisjunction(final Term term) {
-		final List<Term> result = new ArrayList<>();
+	public static Set<Term> splitDisjunction(final Term term) {
+		final Set<Term> result = new HashSet<>();
 		final ApplicationTerm dnfAppTerm = (ApplicationTerm) term;
 		if (!"or".equals(dnfAppTerm.getFunction().getName())) {
 			result.add(term);
