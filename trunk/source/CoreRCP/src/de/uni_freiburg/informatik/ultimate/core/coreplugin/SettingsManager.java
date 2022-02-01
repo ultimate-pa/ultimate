@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -98,7 +97,7 @@ public final class SettingsManager {
 		} : mLogger::info;
 		if (filename != null && !filename.isEmpty()) {
 			mLogger.debug("--------------------------------------------------------------------------------");
-			infoLogger.accept("Beginning loading settings from " + filename);
+			infoLogger.accept("Loading settings from " + filename);
 			if (mLogger.isDebugEnabled()) {
 				infoLogger.accept("Preferences different from defaults before loading file:");
 				logPreferencesDifferentFromDefaults(core);
@@ -110,7 +109,7 @@ public final class SettingsManager {
 				if (!status.isOK()) {
 					mLogger.warn("Failed to load preferences. Status is: " + status);
 				} else {
-					infoLogger.accept("Loading preferences was successful");
+					mLogger.debug("Loading preferences was successful");
 				}
 				infoLogger.accept("Preferences different from defaults after loading the file:");
 				if (!silent) {
@@ -162,11 +161,7 @@ public final class SettingsManager {
 
 			fis.flush();
 			fis.close();
-		} catch (final FileNotFoundException e) {
-			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
-		} catch (final IOException e) {
-			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
-		} catch (final CoreException e) {
+		} catch (final IOException | CoreException e) {
 			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
 		}
 	}
@@ -178,14 +173,13 @@ public final class SettingsManager {
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final IPreferenceInitializer preferences = plugin.getPreferences();
 			if (preferences != null) {
-				log.accept("Resetting " + plugin.getPluginName() + " preferences to default values");
+				mLogger.debug("Resetting " + plugin.getPluginName() + " preferences to default values");
 				RcpPreferenceBinder.resetToDefaultPreferences(plugin.getPluginID(), preferences.getPreferenceItems());
 			} else {
-				log.accept(plugin.getPluginName() + " provides no preferences, ignoring...");
+				mLogger.debug(plugin.getPluginName() + " provides no preferences, ignoring...");
 			}
 
 		}
-		log.accept("Finished resetting all preferences to default values...");
 	}
 
 	private void logDefaultPreferences(final String pluginID, final String pluginName) {
