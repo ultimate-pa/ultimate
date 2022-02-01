@@ -48,20 +48,16 @@ pipeline {
       steps {
         script {
           scmVars = checkout scm
-          echo "Building for ${currentBuild.changeSets.size()} changes"
         }
         sh 'git clean -f -x -d'
       }
     }
     stage('Check environment') {
-      when { expression { return !currentBuild.changeSets.isEmpty() } }
       steps {
         sh(label: 'check solvers', script: 'releaseScripts/default/check_solvers.sh')
       }
     }
     stage('Build and run basic tests') {
-      // TODO: Try and run some of the tests directly, e.g. https://stackoverflow.com/questions/28721925/is-it-possible-to-configure-tycho-surefire-to-run-in-the-test-phase
-      when { expression { return !currentBuild.changeSets.isEmpty() } }
       steps {
         withMaven(options: [artifactsPublisher(disabled: true)]) {
           sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install'
