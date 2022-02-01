@@ -272,8 +272,6 @@
 <setEntry value="de.uni_freiburg.informatik.ultimate.smtsolver.external@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.source.smtparser@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.ultimatetest@default:default"/>
-<setEntry value="de.uni_freiburg.informatik.ultimate.webbridge@default:default"/>
-<setEntry value="de.uni_freiburg.informatik.ultimate.webinterface@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.witnessparser@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.witnessprinter@default:default"/>
 <setEntry value="edu.uci.ics.jung@default:default"/>

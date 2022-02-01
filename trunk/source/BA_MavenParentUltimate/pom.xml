@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
@@ -17,6 +19,9 @@
 		<ultimate-version>0.2.3</ultimate-version>
 
 		<!-- maven plugin versions -->
+		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
+		<tycho-version>1.7.0</tycho-version>
+		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
 		<sonar-version>3.9.0.2155</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
 		<jacoco-version>0.8.7</jacoco-version>
@@ -65,24 +70,20 @@
 		<srparseparserDir>${workspaceDir}/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse</srparseparserDir>
 		<crocottaDir>${workspaceDir}/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta</crocottaDir>
 		<examplesDir>${workspaceDir}/../examples</examplesDir>
-		<websiteExamplesDir>${workspaceDir}/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples</websiteExamplesDir>
 		<websiteHtmlDir>${workspaceDir}/Website/html</websiteHtmlDir>
 		<websiteJsonDir>${workspaceDir}/Website/WebContent/json</websiteJsonDir>
 
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<!-- Path to dir were jacoco should append all the coverage metrics -->
-		<jacoco.reportDir>${project.basedir}/../target</jacoco.reportDir>
-
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
 		<sonar.java.source>11</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-		<sonar.jacoco.reportPath>${jacoco.reportDir}/jacoco.exec</sonar.jacoco.reportPath>
 		<sonar.showProfiling>false</sonar.showProfiling>
 		<sonar.verbose>false</sonar.verbose>
 		<sonar.log.level>WARN</sonar.log.level>
+		<sonar.cpd.cross_project>true</sonar.cpd.cross_project>
 
 		<!-- TODO: add sonar.junit.reportPaths -->
 
@@ -335,58 +336,6 @@
 		<coverage-argline>-Xmx4g -ea</coverage-argline>
 	</properties>
 
-	<repositories>
-		<!-- We proxy repositories via monteverdi to reduce load and speed up the 
-			build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url> 
-			The user/password is managed by DD The original URLs are <url>http://download.eclipse.org/releases/mars/</url> 
-			<url>http://download.eclipse.org/releases/neon/</url> <url>http://download.eclipse.org/releases/2018-09/</url> -->
-
-		<repository>
-			<id>eclipse-mars</id>
-			<layout>p2</layout>
-			<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-mars/</url>
-
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-
-
-		<repository>
-			<id>javaxRepository</id>
-			<name>Java.net Repository for Maven</name>
-			<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/javaxRepository/</url>
-			<layout>default</layout>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-
-
-		<repository>
-			<id>Jetty</id>
-			<name>Jetty</name>
-			<url>http://download.eclipse.org/jetty/updates/jetty-bundles-9.x</url>
-			<layout>p2</layout>
-
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-
-		<repository>
-			<id>Orbit R20191126223242</id>
-			<name>Orbit R20191126223242</name>
-			<url>https://download.eclipse.org/tools/orbit/downloads/drops/R20191126223242/repository</url>
-			<layout>p2</layout>
-
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-
-	</repositories>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -402,15 +351,7 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
-					<!-- 					<filters>
-						<filter>
-							<type>eclipse-plugin</type>
-							<id>javax.activation</id>
-							<restrictTo>
-								<version>2.0.0.v20200505-1431</version>
-							</restrictTo>
-						</filter>
-					</filters> -->
+					<!-- TODO: I am not sure if this is necessary. -->
 					<environments>
 						<environment>
 							<os>win32</os>
@@ -450,7 +391,7 @@
 					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
 					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
 					<format>properties</format>
-					<useNativeGit>false</useNativeGit>
+					<useNativeGit>true</useNativeGit>
 
 					<skipPoms>false</skipPoms>
 					<runOnlyOnce>true</runOnlyOnce>
@@ -484,8 +425,6 @@
 				<version>${tycho-version}</version>
 				<configuration>
 					<encoding>${project.build.sourceEncoding}</encoding>
-					<!-- Cannot enable this target until all projects are safely on Java11 compatibility -->
-					<!-- <release>11</release> -->
 				</configuration>
 			</plugin>
 		</plugins>
@@ -738,10 +677,13 @@
 								<goals>
 									<goal>prepare-agent</goal>
 								</goals>
-								<configuration>
-									<destFile>${sonar.jacoco.reportPath}</destFile>
-									<append>true</append>
-								</configuration>
+							</execution>
+							<execution>
+								<id>report</id>
+								<goals>
+									<goal>report-aggregate</goal>
+								</goals>
+								<phase>verify</phase>
 							</execution>
 						</executions>
 					</plugin>
@@ -822,10 +764,13 @@
 								<goals>
 									<goal>prepare-agent</goal>
 								</goals>
-								<configuration>
-									<destFile>${sonar.jacoco.reportPath}</destFile>
-									<append>true</append>
-								</configuration>
+							</execution>
+							<execution>
+								<id>report</id>
+								<goals>
+									<goal>report-aggregate</goal>
+								</goals>
+								<phase>verify</phase>
 							</execution>
 						</executions>
 					</plugin>

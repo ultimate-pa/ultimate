@@ -69,26 +69,6 @@
 						<version>${maven-resources-version}</version>
 						<executions>
 							<execution>
-								<id>copy-resources-backend-config</id>
-								<phase>package</phase>
-								<goals>
-									<goal>copy-resources</goal>
-								</goals>
-								<configuration>
-									<outputDirectory>${basedir}/target/products</outputDirectory>
-									<resources>
-										<resource>
-											<directory>${basedir}/../WebBackend</directory>
-											<includes>
-												<include>settings_whitelist.json.dist</include>
-												<include>web.config.properties.dist</include>
-												<include>README.md</include>
-											</includes>
-										</resource>
-									</resources>
-								</configuration>
-							</execution>
-							<execution>
 								<id>copy-resources-frontend</id>
 								<phase>package</phase>
 								<goals>

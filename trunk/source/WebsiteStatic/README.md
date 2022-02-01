@@ -1,7 +1,8 @@
+# WebsiteStatic
 This is the **Ultimate** framework website. It provides a front-end for the Ultimate framework web API implemented by ``WebBackend``.
 It needs access to a running ``WebBackend`` applications API to run Ultimate jobs.
 
-# Glossary
+## Glossary
 * **Tool**: An Ultimate tool, for example "Ultimate Automizer".
   * Defined in [config.js](config/config.js) under the key `tools`.
   * Assigned to a unique `tool.id`.
@@ -10,16 +11,16 @@ It needs access to a running ``WebBackend`` applications API to run Ultimate job
   * Each worker of the website needs a unique id `id`.
   * Each worker needs a toolchain XML in [ultimate_toolchain_xmls](config/ultimate_toolchain_xmls) named `<id>.xml`
 
-# Configuration and Setup.
+## Configuration and Setup
 All configuration is set in `config/config.js`.
 * Copy [config/config.dist.js](config/config.dist.js) to `config/config.js`.
 * Edit `config/config.js` to your needs. The `config/config.dist.js` file is commented to guide the configuration.
 
-## Toolchain configuration.
+### Toolchain configuration
 For each worker in `config.tools.worker` a toolchain named `<worker.id>.xml` must be available in
 `config/ultimate_toolchain_xmls`. This toolchain XML can be edited to alter the toolchain.
 
-## Code examples
+### Code examples
 All code examples for a specific worker are stored in `config/code_examples/<worker.id>`.
 
 To **add or alter examples**:
@@ -29,19 +30,20 @@ To **add or alter examples**:
 To recreate the initial examples available, go to `config/code_examples` and run `copy_initial_examples.py` and then
  `refresh_index.py`.
 
-## Tool details page
+### Tool details page
 Each tool is associated with a details page. To alter its content, edit the page matching the `tool_id` in the
 [config/too_pages](config/tool_pages) folder.
 
-## Homepage contents
+### Homepage contents
 The content sections are determined by the files in [config/home_page](config/home_page).
 
-# Development
+## Development
 
-## Setup development environment
-* Download a node package manager (for Windows, use https://github.com/coreybutler/nvm-windows/releases)
-* 
-## Expected result response example
+### Setup development environment
+* Download a node package manager (for Windows, use <https://github.com/coreybutler/nvm-windows/releases>)
+*
+### Expected result response example
+
 ```json
 "results": [
     {
@@ -58,11 +60,11 @@ The content sections are determined by the files in [config/home_page](config/ho
 ]
 ```
 
-## Configure theme & style
-### Bootstrap theming
+### Configure theme & style
+#### Bootstrap theming
 Edit [bootstrap_dev/scss/main.scss](bootstrap_dev/scss/main.scss) and then run `npm run css` to apply changes.
 
-## Dependencies
+### Dependencies
 * [ace-editor](https://ace.c9.io/)
 * [jquery](https://jquery.com/)
 * [handlebars](https://handlebarsjs.com/)
